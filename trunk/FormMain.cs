@@ -22,7 +22,13 @@ namespace Tep32
             s_fileConnSett = new FIleConnSett(@"connsett.ini", FIleConnSett.MODE.FILE);
             s_listFormConnectionSettings = new List<FormConnectionSettings> ();
             s_listFormConnectionSettings.Add(new FormConnectionSettings(-1, s_fileConnSett.ReadSettingsFile, s_fileConnSett.SaveSettingsFile));
-            s_listFormConnectionSettings.Add(null);
+
+            int idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.CONFIG_DB].getConnSett(), false, @"CONFIG_DB");
+
+            ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
+            s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
+
+            DbSources.Sources().UnRegister(idListener);
         }
 
         protected override void HideGraphicsSettings() { }
@@ -70,8 +76,8 @@ namespace Tep32
         {
             int iRes = -1;
 
-            //ProgramBase.s_iAppID = Resources.Properties.AppID;
-            
+            ProgramBase.s_iAppID = Int32.Parse((string)Properties.Resources.AppID);
+
             if (!(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.CONFIG_DB].Ready == 0))
             {
                 //Есть вызов 'Initialize...'
@@ -98,8 +104,26 @@ namespace Tep32
 
             s_formParameters = new FormParameters_DB(s_listFormConnectionSettings [(int)CONN_SETT_TYPE.CONFIG_DB].getConnSett ());
 
-            if (iRes == 0)
+            if (iRes == 0) {
+                //Если ранее тип логирования не был назанчен...
+                if (Logging.s_mode == Logging.LOG_MODE.UNKNOWN)
+                {
+                    //назначить тип логирования - БД
+                    Logging.s_mode = Logging.LOG_MODE.DB;
+                }
+                else { }
+
+                if (Logging.s_mode == Logging.LOG_MODE.DB)
+                {
+                    //Инициализация БД-логирования
+                    int err = -1;
+                    DataRow rowConnSettLog = null;
+                    HClassLibrary.Logging.ConnSett = new ConnectionSettings(rowConnSettLog);
+                }
+                else { }
+
                 Start ();
+            }
             else {
                 s_formParameters = null;
             }
@@ -144,9 +168,27 @@ namespace Tep32
         }
 
         protected override bool  UpdateStatusString () {
-            bool bRes = true;
+            bool have_eror = false;
+            m_lblDescError.Text = m_lblDateError.Text = string.Empty;
 
-            return bRes;
+            if (m_report.actioned_state == true)
+            {
+                m_lblDateError.Text = m_report.last_time_action.ToString();
+                m_lblDescError.Text = m_report.last_action;
+            }
+            else
+                ;
+
+            if (m_report.errored_state == true)
+            {
+                have_eror = true;
+                m_lblDateError.Text = m_report.last_time_error.ToString();
+                m_lblDescError.Text = m_report.last_error;
+            }
+            else
+                ;
+
+            return have_eror;
         }
 
         protected override void timer_Start()
