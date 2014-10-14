@@ -48,6 +48,7 @@
             this.сервисToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.настройкаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.бДКонфигурацииToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.бДИсточникиДанныхToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.параметрыToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.оПрограммеToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
@@ -192,7 +193,8 @@
             // настройкаToolStripMenuItem
             // 
             this.настройкаToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.бДКонфигурацииToolStripMenuItem});
+            this.бДКонфигурацииToolStripMenuItem,
+            this.бДИсточникиДанныхToolStripMenuItem});
             this.настройкаToolStripMenuItem.Name = "настройкаToolStripMenuItem";
             this.настройкаToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.настройкаToolStripMenuItem.Text = "Настройка";
@@ -204,11 +206,19 @@
             this.бДКонфигурацииToolStripMenuItem.Text = "БД конфигурации";
             this.бДКонфигурацииToolStripMenuItem.Click += new System.EventHandler(this.бДКонфигурацииToolStripMenuItem_Click);
             // 
+            // бДИсточникиДанныхToolStripMenuItem
+            // 
+            this.бДИсточникиДанныхToolStripMenuItem.Name = "бДИсточникиДанныхToolStripMenuItem";
+            this.бДИсточникиДанныхToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.бДИсточникиДанныхToolStripMenuItem.Text = "БД - источники данных";
+            this.бДИсточникиДанныхToolStripMenuItem.Click += new System.EventHandler(this.бДИсточникиДанныхToolStripMenuItem_Click);
+            // 
             // параметрыToolStripMenuItem
             // 
             this.параметрыToolStripMenuItem.Name = "параметрыToolStripMenuItem";
             this.параметрыToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.параметрыToolStripMenuItem.Text = "Параметры ";
+            this.параметрыToolStripMenuItem.Click += new System.EventHandler(this.параметрыToolStripMenuItem_Click);
             // 
             // оПрограммеToolStripMenuItem
             // 
@@ -258,6 +268,7 @@
         private System.Windows.Forms.ToolStripMenuItem сервисToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem настройкаToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem бДКонфигурацииToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem бДИсточникиДанныхToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem параметрыToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
 
