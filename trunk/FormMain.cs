@@ -8,10 +8,11 @@ using System.Text;
 using System.Windows.Forms;
 
 using HClassLibrary;
+using TepCommon;
 
 namespace Tep32
 {
-    public partial class FormMain : FormMainBaseWithStatusStrip
+    public partial class FormMain : FormMainBaseWithStatusStrip, ISourceHost, IFuncHost
     {        
         private static FormParameters s_formParameters;
         
@@ -32,7 +33,17 @@ namespace Tep32
         }
 
         protected override void HideGraphicsSettings() { }
-        protected override void UpdateActiveGui() { }
+        protected override void UpdateActiveGui(int type) { }
+
+        public bool Register(ISource plug)
+        {
+            return true;
+        }
+
+        public bool Register(IFunc plug)
+        {
+            return true;
+        }
 
         /// <summary>
         /// Обработчик выбора пункта меню 'Файл - выход'
