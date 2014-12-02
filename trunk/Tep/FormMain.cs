@@ -15,7 +15,7 @@ namespace Tep32
     public partial class FormMain : FormMainBaseWithStatusStrip, ISourceHost, IFuncHost
     {        
         private static FormParameters s_formParameters;
-        
+
         public FormMain()
         {
             InitializeComponent();
@@ -200,6 +200,14 @@ namespace Tep32
                 ;
 
             return have_eror;
+        }
+
+        private void FormMain_OnLoad (object obj, EventArgs ev) {
+            this.Focus ();
+        }
+
+        private void FormMain_OnActivated(object obj, EventArgs ev)
+        {
         }
 
         protected override void timer_Start()
