@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using HClassLibrary;
 using TepCommon;
 
-namespace Tep32
+namespace Tep64
 {
     public partial class FormMain : FormMainBaseWithStatusStrip, ISourceHost, IFuncHost
     {        
@@ -115,7 +115,12 @@ namespace Tep32
             int iRes = 0;
             strErr = string.Empty;
 
-            s_formParameters = new FormParameters_DB(s_listFormConnectionSettings [(int)CONN_SETT_TYPE.CONFIG_DB].getConnSett ());
+            try {
+                s_formParameters = new FormParameters_DB(s_listFormConnectionSettings [(int)CONN_SETT_TYPE.CONFIG_DB].getConnSett ());
+            } catch (Exception e) {
+                iRes = -1;
+                strErr = e.Message;
+            }
 
             if (iRes == 0) {
                 //Если ранее тип логирования не был назанчен...

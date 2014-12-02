@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("Tep32")]
+[assembly: AssemblyTitle("Tep64")]
 [assembly: AssemblyDescription("Расчет ТЭП")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("ЗАО ИТС")]
-[assembly: AssemblyProduct("Tep32")]
+[assembly: AssemblyProduct("Tep64")]
 [assembly: AssemblyCopyright("ЗАО ИТС Copyright ©  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

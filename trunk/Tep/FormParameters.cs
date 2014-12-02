@@ -5,7 +5,7 @@ using System.Data.Common;
 
 using HClassLibrary;
 
-namespace Tep32
+namespace Tep64
 {
     public abstract partial class FormParameters : FormParametersBase
     {
@@ -143,9 +143,17 @@ namespace Tep32
             int idListener = DbSources.Sources().Register(m_connSett, false, @"CONFIG_DB");
             m_dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
-            loadParam();
+            if ((! (m_dbConn == null)) && (err == 0))
+                loadParam();
+            else
+                ;
 
             DbSources.Sources().UnRegister(idListener);
+
+            if ((m_dbConn == null) || (! (err == 0)))
+                throw new Exception (@"Нет связи с БД конфигурации");
+            else
+                ;
         }
 
         public override void loadParam()

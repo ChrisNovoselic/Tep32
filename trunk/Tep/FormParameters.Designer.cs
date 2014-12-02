@@ -1,6 +1,6 @@
 using System.Windows.Forms;
 
-namespace Tep32
+namespace Tep64
 {
     partial class FormParameters
     {

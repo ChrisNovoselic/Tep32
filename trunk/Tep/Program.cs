@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 using HClassLibrary;
 
-namespace Tep32
+namespace Tep64
 {
     static class Program
     {
