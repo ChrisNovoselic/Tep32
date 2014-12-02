@@ -185,9 +185,6 @@
             this.MainMenuStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
-            this.Load += new System.EventHandler(FormMain_OnLoad);
-            this.Activated += new System.EventHandler(FormMain_OnActivated);
         }
 
         #endregion

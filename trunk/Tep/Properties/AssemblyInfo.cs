@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("Tep")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Tep32")]
+[assembly: AssemblyDescription("Расчет ТЭП")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Tep")]
-[assembly: AssemblyCopyright("Copyright ©  2014")]
+[assembly: AssemblyCompany("ЗАО ИТС")]
+[assembly: AssemblyProduct("Tep32")]
+[assembly: AssemblyCopyright("ЗАО ИТС Copyright ©  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Следующий GUID служит для идентификации библиотеки типов, если этот проект будет видимым для COM
-[assembly: Guid("851307fd-872d-4f65-84a5-e8d499fa0231")]
+[assembly: Guid("a7eb7ba9-1424-4862-a7cb-47d33a4e94e1")]
 
 // Сведения о версии сборки состоят из следующих четырех значений:
 //

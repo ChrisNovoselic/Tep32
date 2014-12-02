@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Tep.Properties
+namespace Tep32.Properties
 {
 
 

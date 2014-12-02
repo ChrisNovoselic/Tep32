@@ -102,6 +102,8 @@ namespace Tep32
                 } else {
                 }
             }
+
+            this.Focus();
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -200,14 +202,6 @@ namespace Tep32
                 ;
 
             return have_eror;
-        }
-
-        private void FormMain_OnLoad (object obj, EventArgs ev) {
-            this.Focus ();
-        }
-
-        private void FormMain_OnActivated(object obj, EventArgs ev)
-        {
         }
 
         protected override void timer_Start()
