@@ -130,11 +130,15 @@ namespace Tep64
                                                     @"Users DomainName", @"Users ID_TEC", @"Users ID_ROLE"
                                                     //, @"ID_APP"
                                                     };
-        
+
         private ConnectionSettings m_connSett;
         private DbConnection m_dbConn;
 
         //public FormParameters_DB(int idListener)
+        //    : base()
+        //{
+        //}
+
         public FormParameters_DB(ConnectionSettings connSett) : base ()
         {
             m_connSett = connSett;
@@ -150,10 +154,15 @@ namespace Tep64
 
             DbSources.Sources().UnRegister(idListener);
 
-            if ((m_dbConn == null) || (! (err == 0)))
+            if ((m_dbConn == null) || (! (err == 0))) {
+                m_dbConn = null;
+
                 throw new Exception (@"Нет связи с БД конфигурации");
+            }
             else
                 ;
+
+            m_dbConn = null;
         }
 
         public override void loadParam()

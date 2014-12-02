@@ -7,6 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
+using System.Data.Common; //DbConnection
+using System.Reflection; //Assembly
+using System.IO; //Stream
+
 using HClassLibrary;
 using TepCommon;
 
@@ -103,6 +107,10 @@ namespace Tep64
                 }
             }
 
+            //System.ComponentModel.ComponentResourceManager resources = System.ComponentModel.ComponentResourceManager(typeof (...;
+            //Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TepCommon.MainForm.ico");
+            this.Icon = (Icon)TepCommon.Properties.Resources.MainForm;
+
             this.Focus();
         }
 
@@ -115,12 +123,19 @@ namespace Tep64
             int iRes = 0;
             strErr = string.Empty;
 
+            s_formParameters = null;
+
+            int idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.CONFIG_DB].getConnSett(), false, @"CONFIG_DB");
+            DbConnection dbConn = DbSources.Sources().GetConnection (idListener, out iRes); 
+
             try {
                 s_formParameters = new FormParameters_DB(s_listFormConnectionSettings [(int)CONN_SETT_TYPE.CONFIG_DB].getConnSett ());
             } catch (Exception e) {
                 iRes = -1;
                 strErr = e.Message;
             }
+
+            DbSources.Sources().UnRegister(idListener);
 
             if (iRes == 0) {
                 //Если ранее тип логирования не был назанчен...
@@ -143,7 +158,7 @@ namespace Tep64
                 Start ();
             }
             else {
-                s_formParameters = null;
+                ;
             }
 
             return iRes;
