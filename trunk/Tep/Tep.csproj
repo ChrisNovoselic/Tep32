@@ -141,6 +141,10 @@
       <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
       <Name>HClassLibrary</Name>
     </ProjectReference>
+    <ProjectReference Include="..\InterfacePlugIn\InterfacePlugIn.csproj">
+      <Project>{25637BE7-4002-46BE-A0D4-4C7EAAAA5148}</Project>
+      <Name>InterfacePlugIn</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TepCommon\TepCommon.csproj">
       <Project>{96E92AAE-CC42-4F6B-B737-C9AADA560D20}</Project>
       <Name>TepCommon</Name>
