@@ -28,7 +28,7 @@ namespace Tep64
             s_listFormConnectionSettings = new List<FormConnectionSettings> ();
             s_listFormConnectionSettings.Add(new FormConnectionSettings(-1, s_fileConnSett.ReadSettingsFile, s_fileConnSett.SaveSettingsFile));
 
-            int idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.CONFIG_DB].getConnSett(), false, @"CONFIG_DB");
+            int idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString ());
 
             ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
             s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
@@ -61,18 +61,7 @@ namespace Tep64
 
         private void бДКонфигурацииToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            int iRes = connectionSettings (CONN_SETT_TYPE.CONFIG_DB);
-        }
-
-        private void бДИсточникиДанныхToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if ((s_listFormConnectionSettings == null) ||
-                (!((int)CONN_SETT_TYPE.LIST_SOURCE < s_listFormConnectionSettings.Count)) ||
-                (s_listFormConnectionSettings[(int)CONN_SETT_TYPE.LIST_SOURCE] == null))
-                    Abort(@"Невозможно отобразить окно для редактирования параметров соединения с источниками данных", false);
-            else {
-                DialogResult result = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.LIST_SOURCE].ShowDialog(this);
-            }
+            int iRes = connectionSettings(CONN_SETT_TYPE.MAIN_DB);
         }
 
         private void параметрыToolStripMenuItem_Click(object sender, EventArgs e)
@@ -93,10 +82,10 @@ namespace Tep64
 
             ProgramBase.s_iAppID = Int32.Parse((string)Properties.Resources.AppID);
 
-            if (!(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.CONFIG_DB].Ready == 0))
+            if (!(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].Ready == 0))
             {
                 //Есть вызов 'Initialize...'
-                iRes = connectionSettings(CONN_SETT_TYPE.CONFIG_DB);
+                iRes = connectionSettings(CONN_SETT_TYPE.MAIN_DB);
             } else {
                 string msg = string.Empty;
                 iRes = Initialize (out msg);
@@ -119,47 +108,116 @@ namespace Tep64
             Stop ();
         }
 
+        private void loadPlugin (string name) {
+            
+        }
+
         private int Initialize (out string strErr) {
             int iRes = 0;
             strErr = string.Empty;
 
             s_formParameters = null;
 
-            int idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.CONFIG_DB].getConnSett(), false, @"CONFIG_DB");
-            DbConnection dbConn = DbSources.Sources().GetConnection (idListener, out iRes); 
+            int idListener = -1;
+            DbConnection dbConn = null;
+            DataTable tableRes = null;
+            string strUserDomainName = string.Empty;
 
-            try {
-                s_formParameters = new FormParameters_DB(s_listFormConnectionSettings [(int)CONN_SETT_TYPE.CONFIG_DB].getConnSett ());
-            } catch (Exception e) {
+            idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, @"MAIN_DB");
+            dbConn = DbSources.Sources().GetConnection (idListener, out iRes);
+            strUserDomainName = Environment.UserDomainName + @"\" + Environment.UserName;
+
+            try
+            {
+                s_formParameters = new FormParameters_DB(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett());
+            }
+            catch (Exception e)
+            {
                 iRes = -1;
                 strErr = e.Message;
             }
 
+            if (iRes == 0)
+            {
+                HUsers.GetUsers(ref dbConn, @"DOMAIN_NAME='" + strUserDomainName + @"'", string.Empty, out tableRes, out iRes);
+
+                if (iRes == 0) {
+                    HUsers.GetRoles(ref dbConn, @"ID_EXT=" + tableRes.Rows[0][@"ID_ROLE"], string.Empty, out tableRes, out iRes);
+
+                    if (iRes == 0) {
+                        //Если ранее тип логирования не был назанчен...
+                        if (Logging.s_mode == Logging.LOG_MODE.UNKNOWN)
+                        {
+                            //назначить тип логирования - БД
+                            Logging.s_mode = Logging.LOG_MODE.DB;
+                        }
+                        else { }
+                        if (Logging.s_mode == Logging.LOG_MODE.DB)
+                        {
+                            //Инициализация БД-логирования
+                            int err = -1;
+                            //Вариант №1
+                            //DataRow rowConnSettLog = null;
+                            //HClassLibrary.Logging.ConnSett = new ConnectionSettings(rowConnSettLog);
+                            //Вариант №2
+                            HClassLibrary.Logging.ConnSett = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
+                        }
+                        else { }
+
+                        int i = -1;
+                        //Сформировать список идентификаторов плюгинов
+                        string strIdPlugins = string.Empty;
+
+                        //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
+                        for (i = 0; i < tableRes.Rows.Count; i++)
+                        {
+                            //Проверить разрешение использовать плюгин
+                            if (Int16.Parse(tableRes.Rows[i][@"USE"].ToString()) == 1)
+                            {
+                                strIdPlugins += tableRes.Rows[i][@"ID_PLUGIN"].ToString() + @",";
+                            } else {
+                            }
+                        }
+                        //Удалить крайний символ
+                        strIdPlugins = strIdPlugins.Substring(0, strIdPlugins.Length - 1);
+
+                        //Прочитать наименования плюгинов
+                        tableRes = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM plugins WHERE ID IN (" + strIdPlugins + @")", null, null, out iRes);
+
+                        //Проверить рез-т чтения наименования плюгина
+                        if (iRes == 0)
+                        {
+                            //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
+                            for (i = 0; i < tableRes.Rows.Count; i++)
+                            {
+                                //Загрузить плюгин
+                                loadPlugin(tableRes.Rows [i][@"NAME"].ToString ());
+                            }
+
+                            if (! (i < tableRes.Rows.Count))
+                                //Успешный запуск на выполнение приложения
+                                Start();
+                            else {
+                                iRes = -1;
+                                strErr = @"Не удалось загрузить все разрешенные для использования модули из списка";
+                            }
+                        }
+                        else
+                        {
+                            strErr = @"Не удалось сформировать список разрешенных для использования модулей";
+                        }
+                    } else {
+                        strErr = @"Не удалось сформировать правила для роли пользователя";
+                    }
+                }
+                else {
+                    strErr = @"Не удалось идентифицировать пользователя";
+                }
+            } else {
+                //Сообщение уже сформировано
+            }
+
             DbSources.Sources().UnRegister(idListener);
-
-            if (iRes == 0) {
-                //Если ранее тип логирования не был назанчен...
-                if (Logging.s_mode == Logging.LOG_MODE.UNKNOWN)
-                {
-                    //назначить тип логирования - БД
-                    Logging.s_mode = Logging.LOG_MODE.DB;
-                }
-                else { }
-
-                if (Logging.s_mode == Logging.LOG_MODE.DB)
-                {
-                    //Инициализация БД-логирования
-                    int err = -1;
-                    DataRow rowConnSettLog = null;
-                    HClassLibrary.Logging.ConnSett = new ConnectionSettings(rowConnSettLog);
-                }
-                else { }
-
-                Start ();
-            }
-            else {
-                ;
-            }
 
             return iRes;
         }

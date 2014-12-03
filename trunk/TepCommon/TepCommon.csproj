@@ -43,11 +43,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HDictEdit.cs">
+    <Compile Include="HPanelEdit.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="HDictEdit.Designer.cs">
-      <DependentUpon>HDictEdit.cs</DependentUpon>
+    <Compile Include="HPanelEdit.Designer.cs">
+      <DependentUpon>HPanelEdit.cs</DependentUpon>
     </Compile>
     <Compile Include="ISource.cs" />
     <Compile Include="IFunc.cs" />

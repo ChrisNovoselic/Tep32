@@ -144,7 +144,7 @@ namespace Tep64
             m_connSett = connSett;
 
             int err = -1;
-            int idListener = DbSources.Sources().Register(m_connSett, false, @"CONFIG_DB");
+            int idListener = DbSources.Sources().Register(m_connSett, false, TepCommon.CONN_SETT_TYPE.MAIN_DB.ToString());
             m_dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
             if ((! (m_dbConn == null)) && (err == 0))
@@ -194,9 +194,9 @@ namespace Tep64
         public override void saveParam()
         {
             int err = -1;
-            int idListener = DbSources.Sources().Register(m_connSett, false, @"CONFIG_DB");
+            int idListener = DbSources.Sources().Register(m_connSett, false, TepCommon.CONN_SETT_TYPE.MAIN_DB.ToString());
             m_dbConn = DbSources.Sources().GetConnection(idListener, out err);
-            
+
             for (PARAMETR_SETUP i = PARAMETR_SETUP.POLL_TIME; i < PARAMETR_SETUP.COUNT_PARAMETR_SETUP; i++)
                 writeString(NAME_PARAMETR_SETUP[(int)i], m_arParametrSetup[(int)i]);
 
