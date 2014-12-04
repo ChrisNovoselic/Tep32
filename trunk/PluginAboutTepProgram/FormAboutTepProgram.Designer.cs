@@ -28,22 +28,23 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.m_pictureBox = new System.Windows.Forms.PictureBox();
             this.m_btnOk = new System.Windows.Forms.Button();
             this.m_lblVersion = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.m_linkLblAuthor = new System.Windows.Forms.LinkLabel();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.m_pictureBox)).BeginInit();
             this.SuspendLayout();
             // 
-            // pictureBox1
+            // m_pictureBox
             // 
-            this.pictureBox1.Location = new System.Drawing.Point(12, 12);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(64, 64);
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
+            this.m_pictureBox.Location = new System.Drawing.Point(12, 12);
+            this.m_pictureBox.Name = "m_pictureBox";
+            this.m_pictureBox.Size = new System.Drawing.Size(64, 64);
+            this.m_pictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.m_pictureBox.TabIndex = 0;
+            this.m_pictureBox.TabStop = false;
             // 
             // m_btnOk
             // 
@@ -103,7 +104,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.m_lblVersion);
             this.Controls.Add(this.m_btnOk);
-            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.m_pictureBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -111,7 +112,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "AboutTepForm";
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.m_pictureBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -119,7 +120,7 @@
 
         #endregion
 
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox m_pictureBox;
         private System.Windows.Forms.Button m_btnOk;
         private System.Windows.Forms.Label m_lblVersion;
         private System.Windows.Forms.Label label1;

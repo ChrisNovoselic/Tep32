@@ -36,6 +36,28 @@ namespace PluginAboutTepProgram
         {
             this.Hide();
         }
+
+        public void UpdateGUI (object obj) {
+            if (this.InvokeRequired == true)
+                this.BeginInvoke (new DelegateObjectFunc (updateGUI), obj);
+            else
+                ;
+        }
+
+        private void updateGUI  (object obj) {
+            switch (((EventArgsDataHost)obj).id)
+            {
+                case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
+                    this.Icon = (Icon)((EventArgsDataHost)obj).par;
+                    this.m_pictureBox.Image = this.Icon.ToBitmap ();
+                    break;
+                case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
+                    this.m_lblVersion.Text = (string)((EventArgsDataHost)obj).par;
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     public class PlugIn : HFunc
@@ -47,11 +69,22 @@ namespace PluginAboutTepProgram
             _Id = 1;
         }
         
-        protected override void createObject () {
-            if (_object == null)
+        /// <summary>
+        /// Создание объекта(объектов) библиотеки
+        /// </summary>
+        /// <returns>признак создания</returns>
+        protected override bool createObject () {
+            bool bRes = false;
+            
+            if (_object == null) {
                 _object = new FormAboutTepProgram (this);
+
+                bRes = true; //Объект только создан
+            }
             else
                 ;
+
+            return bRes;
         }
 
         public override string NameOwnerMenuItem
@@ -71,16 +104,27 @@ namespace PluginAboutTepProgram
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject ();
-
-            DataAskedHost (666);
+            if (createObject () == true) {
+                DataAskedHost ((int)ID_DATAASKED_HOST.ICON_MAINFORM);
+                DataAskedHost((int)ID_DATAASKED_HOST.STR_VERSION);
+            } else
+                ;
 
             ((FormAboutTepProgram)_object).ShowDialog (Host as IWin32Window);
         }
 
         public override void OnEvtDataRecievedHost(object obj)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+
+            switch (((EventArgsDataHost)obj).id) {
+                case (int)ID_DATAASKED_HOST.ICON_MAINFORM:
+                case (int)ID_DATAASKED_HOST.STR_VERSION:
+                    ((FormAboutTepProgram)_object).UpdateGUI(obj);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

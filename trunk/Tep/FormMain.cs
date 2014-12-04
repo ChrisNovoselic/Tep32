@@ -190,21 +190,26 @@ namespace Tep64
 
                             if (! (iRes < 0)) {
                                 idPlugIn = Int16.Parse (tableRes.Rows[i][@"ID"].ToString ());
-                                m_dictPlugins.Add (idPlugIn, plugIn);
+                                if (((HPlugIn)plugIn)._Id == idPlugIn)
+                                {
+                                    m_dictPlugins.Add (idPlugIn, plugIn);
 
-                                miOwner = FindMainMenuItemOfText (((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
+                                    miOwner = FindMainMenuItemOfText (((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
 
-                                if (miOwner == null) {
-                                    this.MainMenuStrip.Items.Add(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
-                                    miOwner = FindMainMenuItemOfText(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
+                                    if (miOwner == null) {
+                                        this.MainMenuStrip.Items.Add(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
+                                        miOwner = FindMainMenuItemOfText(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
+                                    } else {
+                                    }
+
+                                    item = miOwner.DropDownItems.Add(((HPlugIn)m_dictPlugins[idPlugIn]).NameMenuItem) as ToolStripMenuItem;
+                                    item.Click += ((HPlugIn)m_dictPlugins[idPlugIn]).OnClickMenuItem;
+                                    ((HPlugIn)m_dictPlugins[idPlugIn]).EvtDataAskedHost += new DelegateObjectFunc(FormMain_EvtDataAskedHost);
+
+                                    initializePlugIn(plugIn);
                                 } else {
+                                    iRes = -2; //Несоответствие идентификатроов
                                 }
-
-                                item = miOwner.DropDownItems.Add(((HPlugIn)m_dictPlugins[idPlugIn]).NameMenuItem) as ToolStripMenuItem;
-                                item.Click += ((HPlugIn)m_dictPlugins[idPlugIn]).OnClickMenuItem;
-                                ((HPlugIn)m_dictPlugins[idPlugIn]).EvtDataAskedHost += new DelegateObjectFunc(FormMain_EvtDataAskedHost);
-
-                                initializePlugIn(plugIn);
                             } else {
                             }
                         }
@@ -213,7 +218,15 @@ namespace Tep64
                             //Успешный запуск на выполнение приложения
                             Start();
                         else {
-                            strErr = @"Не удалось загрузить все разрешенные для использования модули из списка";
+                            switch (iRes) {
+                                case -2:
+                                    strErr = @"Не удалось загрузить все разрешенные для использования модули из списка (несоответствие идентификатроов)";
+                                    break;
+                                case -1:
+                                default:
+                                    strErr = @"Не удалось загрузить все разрешенные для использования модули из списка";
+                                    break;
+                            }
                         }
                     }
                     else
@@ -235,8 +248,26 @@ namespace Tep64
 
         void FormMain_EvtDataAskedHost(object obj)
         {
-            object rec = -666;
-            ((HPlugIn)m_dictPlugins[((EventArgsDataAskedHost)obj).id]).OnEvtDataRecievedHost (rec);
+            object rec = null;
+
+            switch ((int)((EventArgsDataHost)obj).id) {
+                case 1: //FormAboutTepProgram
+                    switch ((int)((EventArgsDataHost)obj).par) {
+                        case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
+                            rec = TepCommon.Properties.Resources.MainForm;
+                            break;
+                        case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
+                            rec = Application.ProductVersion;                            
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            ((HPlugIn)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par, rec));            
         }
 
         private IPlugIn loadPlugin(string name, out int iRes)
