@@ -46,10 +46,10 @@
                 , настройкаToolStripMenuItem 
             });
             this.MainMenuStrip.Location = new System.Drawing.Point(0, 0);
-            this.MainMenuStrip.Name = "menuStrip1";
+            this.MainMenuStrip.Name = "MainMenuStrip";
             this.MainMenuStrip.Size = new System.Drawing.Size(923, 24);
             this.MainMenuStrip.TabIndex = 0;
-            this.MainMenuStrip.Text = "menuStrip1";
+            this.MainMenuStrip.Text = "MainMenuStrip";
             // 
             // файлToolStripMenuItem
             // 
@@ -98,7 +98,7 @@
             this.MinimizeBox = false;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Расчет ТЭП";
+            this.Text = "ПК ЭТАП";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.MainMenuStrip.ResumeLayout(false);

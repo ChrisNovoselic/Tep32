@@ -20,13 +20,13 @@ namespace Tep64
     public partial class FormMain : FormMainBaseWithStatusStrip, IPlugInHost
     {        
         private static FormParameters s_formParameters;
-        private List <IPlugIn> m_plugins;
+        private Dictionary <int, IPlugIn> m_dictPlugins;
 
         public FormMain()
         {
             InitializeComponent();
 
-            m_plugins = new List<IPlugIn> ();
+            m_dictPlugins = new Dictionary<int, IPlugIn> ();
 
             s_fileConnSett = new FIleConnSett(@"connsett.ini", FIleConnSett.MODE.FILE);
             s_listFormConnectionSettings = new List<FormConnectionSettings> ();
@@ -107,6 +107,12 @@ namespace Tep64
             Stop ();
         }
 
+        private void initializePlugIn (IPlugIn plugIn) {
+            if (plugIn is HFunc) {
+            } else {
+            }
+        }
+
         private void initializeLogging () {
             //Если ранее тип логирования не был назанчен...
             if (Logging.s_mode == Logging.LOG_MODE.UNKNOWN)
@@ -172,15 +178,33 @@ namespace Tep64
                     //Проверить рез-т чтения наименования плюгина
                     if (iRes == 0)
                     {
+                        IPlugIn plugIn = null;
+                        ToolStripMenuItem miOwner = null
+                            , item = null;
+                        int idPlugIn = -1;
                         //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
                         for (i = 0; (i < tableRes.Rows.Count) && (iRes == 0); i++)
                         {
                             //Загрузить плюгин
-                            iRes = loadPlugin(tableRes.Rows [i][@"NAME"].ToString ().Trim ());
+                            plugIn = loadPlugin(tableRes.Rows[i][@"NAME"].ToString().Trim(), out iRes);
 
                             if (! (iRes < 0)) {
-                                //iRes = индекс в списке 'm_plugins'
-                                this.MainMenuStrip.Items.IndexOf(((HPlugIn)m_plugins[iRes]).NameOwnerMenuItem);
+                                idPlugIn = Int16.Parse (tableRes.Rows[i][@"ID"].ToString ());
+                                m_dictPlugins.Add (idPlugIn, plugIn);
+
+                                miOwner = FindMainMenuItemOfText (((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
+
+                                if (miOwner == null) {
+                                    this.MainMenuStrip.Items.Add(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
+                                    miOwner = FindMainMenuItemOfText(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
+                                } else {
+                                }
+
+                                item = miOwner.DropDownItems.Add(((HPlugIn)m_dictPlugins[idPlugIn]).NameMenuItem) as ToolStripMenuItem;
+                                item.Click += ((HPlugIn)m_dictPlugins[idPlugIn]).OnClickMenuItem;
+                                ((HPlugIn)m_dictPlugins[idPlugIn]).EvtDataAskedHost += new DelegateObjectFunc(FormMain_EvtDataAskedHost);
+
+                                initializePlugIn(plugIn);
                             } else {
                             }
                         }
@@ -209,16 +233,23 @@ namespace Tep64
             return iRes;
         }
 
-        private int loadPlugin (string name) {
-            int iRes = 0;
+        void FormMain_EvtDataAskedHost(object obj)
+        {
+            object rec = -666;
+            ((HPlugIn)m_dictPlugins[((EventArgsDataAskedHost)obj).id]).OnEvtDataRecievedHost (rec);
+        }
+
+        private IPlugIn loadPlugin(string name, out int iRes)
+        {
+            IPlugIn plugInRes = null;
+            iRes = -1;
 
             Type objType = null;
             try
             {
                 Assembly ass = null;
                 ass = Assembly.LoadFrom (Environment.CurrentDirectory + @"\" + name + @".dll");
-                var s = ass.FullName;
-                if (ass != null)
+                if (! (ass == null))
                 {
                     objType = ass.GetType(name + ".PlugIn");
                 }
@@ -227,28 +258,25 @@ namespace Tep64
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Nmae = " + name);                
-                iRes = -1;
+                Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Nmae = " + name);
             }
 
-            if (iRes == 0)
+            if (! (objType == null))
                 try
                 {
-                    if (objType != null)
-                    {
-                        m_plugins.Add((IPlugIn)Activator.CreateInstance(objType));
-                        m_plugins[m_plugins.Count - 1].Host = (IPlugInHost)this;
-                    }
+                    plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
+                    plugInRes.Host = (IPlugInHost)this;
+
+                    iRes = 0;
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Nmae = " + name);                
-                    iRes = -1;
+                    Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Nmae = " + name);
                 }
             else
                 ;
 
-            return iRes;
+            return plugInRes;
         }
 
         private int Initialize (out string strErr) {

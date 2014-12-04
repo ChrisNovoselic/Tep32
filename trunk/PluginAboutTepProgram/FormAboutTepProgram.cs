@@ -21,27 +21,66 @@ namespace PluginAboutTepProgram
         {
             InitializeComponent();
             this._iFuncPlugin = iFunc;
+
+            this.FormClosing += new FormClosingEventHandler(FormAboutTepProgram_FormClosing);
+        }
+
+        void FormAboutTepProgram_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = true;
+
+            this.Hide ();
+        }
+
+        private void m_btnOk_Click(object sender, EventArgs e)
+        {
+            this.Hide();
         }
     }
 
     public class PlugIn : HFunc
     {
-        public override object Object {
-            get {
-                if (_object == null)
-                    _object = new FormAboutTepProgram (this);
-                else
-                    ;
-
-                return _object;
-            }
+        const string _nameOwnerMenuItem = @"Помощь"
+            , _nameMenuItem = @"О программе";
+        
+        public PlugIn () : base () {            
+            _Id = 1;
+        }
+        
+        protected override void createObject () {
+            if (_object == null)
+                _object = new FormAboutTepProgram (this);
+            else
+                ;
         }
 
         public override string NameOwnerMenuItem
         {
             get {
-                return @"О программе";
+                return _nameOwnerMenuItem;
             }
+        }
+
+        public override string NameMenuItem
+        {
+            get
+            {
+                return _nameMenuItem;
+            }
+        }
+
+        public override void OnClickMenuItem(object obj, EventArgs ev)
+        {
+            createObject ();
+
+            DataAskedHost (666);
+
+            ((FormAboutTepProgram)_object).ShowDialog (Host as IWin32Window);
+        }
+
+        public override void OnEvtDataRecievedHost(object obj)
+        {
+            throw new NotImplementedException();
         }
     }
 }
