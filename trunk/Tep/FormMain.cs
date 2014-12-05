@@ -107,6 +107,10 @@ namespace Tep64
             Stop ();
         }
 
+        /// <summary>
+        /// Допполнительные действия по инициализации плюг'ина
+        /// </summary>
+        /// <param name="plugIn">объект плюг'ина</param>
         private void initializePlugIn (IPlugIn plugIn) {
             if (plugIn is HFunc) {
             } else {
@@ -189,21 +193,29 @@ namespace Tep64
                             plugIn = loadPlugin(tableRes.Rows[i][@"NAME"].ToString().Trim(), out iRes);
 
                             if (! (iRes < 0)) {
+                                //Идентификатор плюг'ина
                                 idPlugIn = Int16.Parse (tableRes.Rows[i][@"ID"].ToString ());
+                                //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
                                 if (((HPlugIn)plugIn)._Id == idPlugIn)
                                 {
                                     m_dictPlugins.Add (idPlugIn, plugIn);
 
+                                    //Поиск пункта "родительского" пункта меню для плюг'ина
                                     miOwner = FindMainMenuItemOfText (((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
 
+                                    //Проверка найден ли "родительский" пункт меню для плюг'ина
                                     if (miOwner == null) {
+                                        //НЕ найден - создаем
                                         this.MainMenuStrip.Items.Add(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
                                         miOwner = FindMainMenuItemOfText(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
                                     } else {
                                     }
 
+                                    //Добавить пункт меню для плюг'ина
                                     item = miOwner.DropDownItems.Add(((HPlugIn)m_dictPlugins[idPlugIn]).NameMenuItem) as ToolStripMenuItem;
+                                    //Обработку выбора пункта меню предоставить плюг'ину
                                     item.Click += ((HPlugIn)m_dictPlugins[idPlugIn]).OnClickMenuItem;
+                                    //Добавить обработчик запросов для плюг'ина от главной формы
                                     ((HPlugIn)m_dictPlugins[idPlugIn]).EvtDataAskedHost += new DelegateObjectFunc(FormMain_EvtDataAskedHost);
 
                                     initializePlugIn(plugIn);
@@ -369,6 +381,9 @@ namespace Tep64
                 ;
 
             return iRes;
+        }
+
+        private void TabCtrl_OnSelectedIndexChanged (object obj, EventArgs ev) {
         }
 
         protected override bool  UpdateStatusString () {

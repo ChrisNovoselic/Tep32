@@ -1,4 +1,6 @@
-﻿namespace Tep64
+﻿using HClassLibrary;
+
+namespace Tep64
 {
     partial class FormMain
     {
@@ -35,6 +37,8 @@
 
             this.настройкаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.бДКонфигурацииToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+
+            this.m_TabCtrl = new HTabCtrlEx ();
 
             this.MainMenuStrip.SuspendLayout();
             this.SuspendLayout();
@@ -87,6 +91,18 @@
             this.бДКонфигурацииToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.бДКонфигурацииToolStripMenuItem.Text = "БД конфигурации";
             this.бДКонфигурацииToolStripMenuItem.Click += new System.EventHandler(this.бДКонфигурацииToolStripMenuItem_Click);
+            //
+            // m_TabCtrl
+            //
+            this.m_TabCtrl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.m_TabCtrl.Location = new System.Drawing.Point(0, 24);
+            this.m_TabCtrl.Name = "tabCtrl";
+            this.m_TabCtrl.SelectedIndex = 0;
+            this.m_TabCtrl.Size = new System.Drawing.Size(982, 735);
+            this.m_TabCtrl.TabIndex = 3;
+            this.m_TabCtrl.SelectedIndexChanged += new System.EventHandler(this.TabCtrl_OnSelectedIndexChanged);
             // 
             // MainForm
             // 
@@ -103,19 +119,21 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.MainMenuStrip.ResumeLayout(false);
             this.MainMenuStrip.PerformLayout();
+
             this.ResumeLayout(false);
             this.PerformLayout();
         }
 
         #endregion
 
-        //private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem файлToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem выходToolStripMenuItem;
         
         private System.Windows.Forms.ToolStripMenuItem настройкаToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem бДКонфигурацииToolStripMenuItem;
+
+        private HClassLibrary.HTabCtrlEx m_TabCtrl;
     }
 }
 

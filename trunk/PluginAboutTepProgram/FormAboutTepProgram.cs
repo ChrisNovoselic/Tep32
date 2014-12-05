@@ -61,50 +61,19 @@ namespace PluginAboutTepProgram
     }
 
     public class PlugIn : HFunc
-    {
-        const string _nameOwnerMenuItem = @"Помощь"
-            , _nameMenuItem = @"О программе";
-        
+    {      
         public PlugIn () : base () {            
             _Id = 1;
-        }
-        
-        /// <summary>
-        /// Создание объекта(объектов) библиотеки
-        /// </summary>
-        /// <returns>признак создания</returns>
-        protected override bool createObject () {
-            bool bRes = false;
-            
-            if (_object == null) {
-                _object = new FormAboutTepProgram (this);
 
-                bRes = true; //Объект только создан
-            }
-            else
-                ;
-
-            return bRes;
-        }
-
-        public override string NameOwnerMenuItem
-        {
-            get {
-                return _nameOwnerMenuItem;
-            }
-        }
-
-        public override string NameMenuItem
-        {
-            get
-            {
-                return _nameMenuItem;
-            }
+            _nameOwnerMenuItem = @"Помощь";
+            _nameMenuItem = @"О программе";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            if (createObject () == true) {
+            //if (createObject<FormAboutTepProgram>() == true)
+            if (createObject(typeof (FormAboutTepProgram)) == true)
+            {
                 DataAskedHost ((int)ID_DATAASKED_HOST.ICON_MAINFORM);
                 DataAskedHost((int)ID_DATAASKED_HOST.STR_VERSION);
             } else
