@@ -4,7 +4,10 @@ namespace TepCommon
 {
     partial class HPanelEdit
     {
-        protected enum INDEX_BUTTON { ADD, DELETE, SAVE, UPDATE, INDEX_BUTTON_COUNT, };
+        protected enum INDEX_CONTROL { BUTTON_ADD, BUTTON_DELETE, BUTTON_SAVE, BUTTON_UPDATE
+                                        , DGV_DICT_EDIT, DGV_DICT_PROP
+                                        , LABEL_PROP_DESC
+                                        , INDEX_CONTROL_COUNT, };
         
         /// <summary>
         /// Требуется переменная конструктора.
@@ -39,7 +42,13 @@ namespace TepCommon
 
             this.Dock = DockStyle.Fill;
 
-            m_arBtnDatabase = new Button[(int)INDEX_BUTTON.INDEX_BUTTON_COUNT] { new Button(), new Button(), new Button(), new Button() };
+            m_arBtnDatabase = new Button[] { new Button(), new Button(), new Button(), new Button() };
+
+            // --BUTTON_ADD--
+            m_arBtnDatabase [(int)INDEX_CONTROL.BUTTON_ADD].Location = new System.Drawing.Point (1, 1);
+            m_arBtnDatabase [(int)INDEX_CONTROL.BUTTON_ADD].Size = new System.Drawing.Size (79, 23);
+            m_arBtnDatabase [(int)INDEX_CONTROL.BUTTON_ADD].Text = @"";
+            this.Controls.Add(m_arBtnDatabase[(int)INDEX_CONTROL.BUTTON_ADD], );                
 
             m_dgvDictEdit = new DataGridView ();
             m_dgvDictEdit.Dock = DockStyle.Fill;
