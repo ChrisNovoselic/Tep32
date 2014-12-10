@@ -38,7 +38,7 @@ namespace Tep64
             this.настройкаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.бДКонфигурацииToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 
-            this.m_TabCtrl = new HTabCtrlEx ();
+            this.m_TabCtrl = new HTepTabCtrlEx ();
 
             this.MainMenuStrip.SuspendLayout();
             this.SuspendLayout();
@@ -103,6 +103,7 @@ namespace Tep64
             this.m_TabCtrl.Size = new System.Drawing.Size(982, 735);
             this.m_TabCtrl.TabIndex = 3;
             this.m_TabCtrl.SelectedIndexChanged += new System.EventHandler(this.TabCtrl_OnSelectedIndexChanged);
+            this.Controls.Add(this.m_TabCtrl);
             // 
             // MainForm
             // 
@@ -133,7 +134,7 @@ namespace Tep64
         private System.Windows.Forms.ToolStripMenuItem настройкаToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem бДКонфигурацииToolStripMenuItem;
 
-        private HClassLibrary.HTabCtrlEx m_TabCtrl;
+        private HTepTabCtrlEx m_TabCtrl;
     }
 }
 

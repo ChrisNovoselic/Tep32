@@ -108,6 +108,12 @@
     <Compile Include="FormParameters.Designer.cs">
       <DependentUpon>FormParameters.cs</DependentUpon>
     </Compile>
+    <Compile Include="HTepTabCtrlEx.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HTepTabCtrlEx.Designer.cs">
+      <DependentUpon>HTepTabCtrlEx.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="FormMain.resx">

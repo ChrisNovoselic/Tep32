@@ -262,24 +262,69 @@ namespace Tep64
         {
             object rec = null;
 
-            switch ((int)((EventArgsDataHost)obj).id) {
-                case 1: //FormAboutTepProgram
-                    switch ((int)((EventArgsDataHost)obj).par) {
-                        case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
-                            rec = TepCommon.Properties.Resources.MainForm;
-                            break;
-                        case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                            rec = Application.ProductVersion;                            
+            switch ((int)((EventArgsDataHost)obj).par) {
+                case (int)HFunc.ID_DATAASKED_HOST.HIDE_PLIGIN:
+                    break;
+                case (int)HFunc.ID_DATAASKED_HOST.HIDE_PLIGIN:
+                    break;
+                default: //Индивидуальные для каждого плюг'ина
+                    switch ((int)((EventArgsDataHost)obj).id) {
+                        case 1: //FormAboutTepProgram
+                            switch ((int)((EventArgsDataHost)obj).par)
+                            {
+                                case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
+                                    rec = TepCommon.Properties.Resources.MainForm;
+                                    break;
+                                case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
+                                    rec = Application.ProductVersion;
+                                    break;
+                                default:
+                                    break;
+                            }
                             break;
                         default:
                             break;
                     }
                     break;
-                default:
-                    break;
             }
+            if (((EventArgsDataHost)obj).par.GetType ().IsEnum == true) {
+                switch ((int)((EventArgsDataHost)obj).id) {
+                    case 1: //FormAboutTepProgram
+                        switch ((int)((EventArgsDataHost)obj).par) {
+                            case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
+                                rec = TepCommon.Properties.Resources.MainForm;
+                                break;
+                            case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
+                                rec = Application.ProductVersion;                            
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case 2: //PanelTepDictPlugIns
+                        switch ((int)((EventArgsDataHost)obj).par) {
+                            default:
+                                break;
+                        }
+                        break;
+                    default:
+                        break;
+                }
 
-            ((HPlugIn)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par, rec));            
+                ((HPlugIn)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par, rec));
+            }
+            else {
+                try {
+                    this.BeginInvoke(new DelegateIntFunc(addTabPage), (int)((EventArgsDataHost)obj).id); 
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, @"FormMain_EvtDataAskedHost () - [id] = " + (int)((EventArgsDataHost)obj).id);
+                }
+            }
+        }
+
+        private void addTabPage (int id_pligIn) {
+            m_TabCtrl.AddTabPage(((HPlugIn)m_dictPlugins[id_pligIn]).NameMenuItem);
+            m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)((HPlugIn)m_dictPlugins[id_pligIn]).Object);
         }
 
         private IPlugIn loadPlugin(string name, out int iRes)
