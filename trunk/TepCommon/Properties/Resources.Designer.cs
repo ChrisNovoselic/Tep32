@@ -63,6 +63,16 @@ namespace TepCommon.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
         /// </summary>
+        public static System.Drawing.Icon IconTep {
+            get {
+                object obj = ResourceManager.GetObject("IconTep", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
+        /// </summary>
         public static System.Drawing.Icon MainForm {
             get {
                 object obj = ResourceManager.GetObject("MainForm", resourceCulture);
