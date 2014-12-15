@@ -91,25 +91,12 @@ namespace Tep64
             this.бДКонфигурацииToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.бДКонфигурацииToolStripMenuItem.Text = "БД конфигурации";
             this.бДКонфигурацииToolStripMenuItem.Click += new System.EventHandler(this.бДКонфигурацииToolStripMenuItem_Click);
-            //
-            // m_TabCtrl
-            //
-            this.m_TabCtrl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.m_TabCtrl.Location = new System.Drawing.Point(0, 24);
-            this.m_TabCtrl.Name = "tabCtrl";
-            this.m_TabCtrl.SelectedIndex = 0;
-            this.m_TabCtrl.Size = new System.Drawing.Size(982, 735);
-            this.m_TabCtrl.TabIndex = 3;
-            this.m_TabCtrl.SelectedIndexChanged += new System.EventHandler(this.TabCtrl_OnSelectedIndexChanged);
-            this.Controls.Add(this.m_TabCtrl);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(923, 665);
+            this.ClientSize = new System.Drawing.Size(982, 665);
             this.Controls.Add(this.MainMenuStrip);
             //this.MainMenuStrip = this.menuStrip1;
             this.MinimizeBox = false;
@@ -120,6 +107,20 @@ namespace Tep64
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.MainMenuStrip.ResumeLayout(false);
             this.MainMenuStrip.PerformLayout();
+            //
+            // m_TabCtrl
+            //
+            this.m_TabCtrl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            //this.m_TabCtrl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_TabCtrl.Location = new System.Drawing.Point(0, MainMenuStrip.ClientSize.Height);
+            this.m_TabCtrl.Name = "tabCtrl";
+            this.m_TabCtrl.SelectedIndex = 0;
+            this.m_TabCtrl.Size = new System.Drawing.Size(this.ClientSize.Width, this.ClientSize.Height - MainMenuStrip.ClientSize.Height - m_statusStripMain.ClientSize.Height);
+            this.m_TabCtrl.TabIndex = 3;
+            this.m_TabCtrl.SelectedIndexChanged += new System.EventHandler(this.TabCtrl_OnSelectedIndexChanged);
+            this.Controls.Add(this.m_TabCtrl);
 
             this.ResumeLayout(false);
             this.PerformLayout();

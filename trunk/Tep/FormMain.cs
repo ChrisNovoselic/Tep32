@@ -22,7 +22,7 @@ namespace Tep64
         private static FormParameters s_formParameters;
         private Dictionary <int, IPlugIn> m_dictPlugins;
 
-        public FormMain()
+        public FormMain() : base ()
         {
             InitializeComponent();
 
@@ -100,6 +100,8 @@ namespace Tep64
             //System.ComponentModel.ComponentResourceManager resources = System.ComponentModel.ComponentResourceManager(typeof (...;
             //Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TepCommon.MainForm.ico");
             this.Icon = (Icon)TepCommon.Properties.Resources.MainForm;
+
+            m_report.ActionReport (@"Загрузка главного окна");
 
             this.Focus();
         }
@@ -314,6 +316,7 @@ namespace Tep64
             if (((ToolStripMenuItem)((EventArgsDataHost)obj).par).Checked == true) {
                 m_TabCtrl.AddTabPage(((HPlugIn)m_dictPlugins[id_plugIn]).NameMenuItem);
                 m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)((HPlugIn)m_dictPlugins[id_plugIn]).Object);
+                //m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(new HPanelEdit ());
             } else {
                 m_TabCtrl.TabPages.RemoveAt(m_TabCtrl.IndexOfItemControl((Control)((HPlugIn)m_dictPlugins[id_plugIn]).Object));
             }
