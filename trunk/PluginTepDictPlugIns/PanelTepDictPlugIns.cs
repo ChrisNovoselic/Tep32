@@ -35,29 +35,10 @@ namespace PluginTepDictPlugIns
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            bool bNowCreateObject = createObject (typeof(PanelTepDictPlugIns));
-            //if (createObject<PanelTepDictPlugIns>() == true)
-            if (bNowCreateObject == true)
-            {//При необходимости запросить асихронно данные
-                //DataAskedHost((int)...);
-            }
-            else
-                ;
-
-            object par = null; //Параметр для передачи в главную форму
-            //Изменить состояние пункта меню
-            ((ToolStripMenuItem)obj).Checked = ! ((ToolStripMenuItem)obj).Checked;
-            //Проверить состояние пункта меню
-            if (((ToolStripMenuItem)obj).Checked == true)
-            {
-                //Передать главной форме объект плюг'ина
-                par = Object;
-            } else {
-                par = ID_DATAASKED_HOST.HIDE_PLIGIN;
-            }
+            createObject (typeof(PanelTepDictPlugIns));
 
             //Передать главной форме параметр
-            DataAskedHost(par);
+            DataAskedHost(obj);
         }
 
         public override void OnEvtDataRecievedHost(object obj)

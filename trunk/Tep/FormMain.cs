@@ -38,6 +38,8 @@ namespace Tep64
             s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
 
             DbSources.Sources().UnRegister(idListener);
+
+            m_TabCtrl.OnClose += new HTabCtrlEx.DelegateOnCloseTab(onCloseTabPage);
         }
 
         protected override void HideGraphicsSettings() { }
@@ -262,32 +264,7 @@ namespace Tep64
         {
             object rec = null;
 
-            switch ((int)((EventArgsDataHost)obj).par) {
-                case (int)HFunc.ID_DATAASKED_HOST.HIDE_PLIGIN:
-                    break;
-                case (int)HFunc.ID_DATAASKED_HOST.HIDE_PLIGIN:
-                    break;
-                default: //Индивидуальные для каждого плюг'ина
-                    switch ((int)((EventArgsDataHost)obj).id) {
-                        case 1: //FormAboutTepProgram
-                            switch ((int)((EventArgsDataHost)obj).par)
-                            {
-                                case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
-                                    rec = TepCommon.Properties.Resources.MainForm;
-                                    break;
-                                case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                                    rec = Application.ProductVersion;
-                                    break;
-                                default:
-                                    break;
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-            }
-            if (((EventArgsDataHost)obj).par.GetType ().IsEnum == true) {
+            if (((EventArgsDataHost)obj).par.GetType ().IsPrimitive == true) {
                 switch ((int)((EventArgsDataHost)obj).id) {
                     case 1: //FormAboutTepProgram
                         switch ((int)((EventArgsDataHost)obj).par) {
@@ -311,20 +288,44 @@ namespace Tep64
                         break;
                 }
 
-                ((HPlugIn)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par, rec));
+                //Отправить ответ (исходный идентификатор + требуемый объект)
+                ((HPlugIn)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost (new EventArgsDataHost((int)((EventArgsDataHost)obj).par, rec));
             }
             else {
-                try {
-                    this.BeginInvoke(new DelegateIntFunc(addTabPage), (int)((EventArgsDataHost)obj).id); 
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, @"FormMain_EvtDataAskedHost () - [id] = " + (int)((EventArgsDataHost)obj).id);
+                if (((EventArgsDataHost)obj).par is ToolStripMenuItem) {
+                    try
+                    {
+                        this.BeginInvoke(new DelegateObjectFunc(onClickMenuItem), obj);
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception(e, @"FormMain_EvtDataAskedHost () - BeginInvoke (addTabPage) [id] = " + (int)((EventArgsDataHost)obj).id);
+                    }
+                }
+                else {
                 }
             }
         }
 
-        private void addTabPage (int id_pligIn) {
-            m_TabCtrl.AddTabPage(((HPlugIn)m_dictPlugins[id_pligIn]).NameMenuItem);
-            m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)((HPlugIn)m_dictPlugins[id_pligIn]).Object);
+        private void onClickMenuItem (object obj) {
+            int id_plugIn = (int)((EventArgsDataHost)obj).id;
+            ((ToolStripMenuItem)((EventArgsDataHost)obj).par).Checked = ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par).Checked;
+
+            if (((ToolStripMenuItem)((EventArgsDataHost)obj).par).Checked == true) {
+                m_TabCtrl.AddTabPage(((HPlugIn)m_dictPlugins[id_plugIn]).NameMenuItem);
+                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)((HPlugIn)m_dictPlugins[id_plugIn]).Object);
+            } else {
+                m_TabCtrl.TabPages.RemoveAt(m_TabCtrl.IndexOfItemControl((Control)((HPlugIn)m_dictPlugins[id_plugIn]).Object));
+            }
+        }
+
+        private void onCloseTabPage (object sender, CloseTabEventArgs e) {
+            ////Вариант №1
+            //FindMainMenuItemOfText (e.TabHeaderText).Checked = false;
+            //m_TabCtrl.TabPages.RemoveAt (e.TabIndex);
+
+            //Вариант №2
+            FindMainMenuItemOfText (e.TabHeaderText).PerformClick ();
         }
 
         private IPlugIn loadPlugin(string name, out int iRes)
