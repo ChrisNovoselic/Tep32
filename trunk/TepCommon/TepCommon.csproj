@@ -74,6 +74,10 @@
       <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
       <Name>HClassLibrary</Name>
     </ProjectReference>
+    <ProjectReference Include="..\InterfacePlugIn\InterfacePlugIn.csproj">
+      <Project>{25637BE7-4002-46BE-A0D4-4C7EAAAA5148}</Project>
+      <Name>InterfacePlugIn</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

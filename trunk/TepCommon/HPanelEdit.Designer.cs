@@ -5,12 +5,6 @@ namespace TepCommon
 {
     partial class HPanelEdit
     {
-        protected enum INDEX_CONTROL { BUTTON_ADD, BUTTON_DELETE, BUTTON_SAVE, BUTTON_UPDATE
-                                        , DGV_DICT_EDIT, DGV_DICT_PROP
-                                        , LABEL_PROP_DESC
-                                        , INDEX_CONTROL_COUNT, };
-        private static string [] m_arButtonText  = {@"Добавить", @"Удалить", @"Сохранить", @"Обновить"};
-
         /// <summary>
         /// Требуется переменная конструктора.
         /// </summary>
@@ -41,8 +35,6 @@ namespace TepCommon
         }
 
         #region Код, автоматически созданный конструктором компонентов
-
-        protected Dictionary <int, Control> m_dictControls;
 
         /// <summary>
         /// Обязательный метод для поддержки конструктора - не изменяйте
