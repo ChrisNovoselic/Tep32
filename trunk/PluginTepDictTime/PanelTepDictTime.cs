@@ -2,56 +2,63 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms; //ToolStripMenuItem
+using System.Windows.Forms;
 
 using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepDictPlugIns
+namespace PanelTepDictTime
 {
-    public class PanelTepDictPlugIns : HPanelEdit
+    public class PanelTepDictTime : HPanelEdit
     {
         IPlugIn _iFuncPlugin;
 
-        public PanelTepDictPlugIns(IPlugIn iFunc) : base (@"plugins")
+        public PanelTepDictTime(IPlugIn iFunc)
+            : base(@"time")
         {
             InitializeComponent();
             this._iFuncPlugin = iFunc;
         }
 
-        private void InitializeComponent () {
+        private void InitializeComponent()
+        {
         }
 
         public void Initialize(object obj)
         {
-            try {
+            try
+            {
                 if (this.IsHandleCreated == true)
-                //if (this.InvokeRequired == true)
+                    //if (this.InvokeRequired == true)
                     this.BeginInvoke(new DelegateObjectFunc(initialize), obj);
                 else
                     ;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Logging.Logg().Exception(e, @"PanelTepDictPlugIns::Initialize () - BeginInvoke (initialize) - ...");
             }
         }
     }
 
     public class PlugIn : HFunc
-    {      
-        public PlugIn () : base () {            
-            _Id = 2;
+    {
+        public PlugIn()
+            : base()
+        {
+            _Id = 3;
 
             _nameOwnerMenuItem = @"Настройка";
-            _nameMenuItem = @"Состав плюгин'ов";
+            _nameMenuItem = @"Интервалы времени";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject (typeof(PanelTepDictPlugIns));
+            createObject(typeof(PanelTepDictTime));
 
             if (m_markDataHost.IsMarked((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB) == false)
-                DataAskedHost ((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
+                DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
             else
                 ;
 
@@ -68,7 +75,7 @@ namespace PluginTepDictPlugIns
             switch (((EventArgsDataHost)obj).id)
             {
                 case (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB:
-                    ((PanelTepDictPlugIns)_object).Initialize(obj);
+                    ((PanelTepDictTime)_object).Initialize(obj);
                     break;
                 default:
                     break;

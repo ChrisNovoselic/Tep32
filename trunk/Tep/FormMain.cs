@@ -267,27 +267,31 @@ namespace Tep64
             object rec = null;
 
             if (((EventArgsDataHost)obj).par.GetType ().IsPrimitive == true) {
-                switch ((int)((EventArgsDataHost)obj).id) {
-                    case 1: //FormAboutTepProgram
-                        switch ((int)((EventArgsDataHost)obj).par) {
-                            case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
-                                rec = TepCommon.Properties.Resources.MainForm;
-                                break;
-                            case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                                rec = Application.ProductVersion;                            
-                                break;
-                            default:
-                                break;
-                        }
-                        break;
-                    case 2: //PanelTepDictPlugIns
-                        switch ((int)((EventArgsDataHost)obj).par) {
-                            default:
-                                break;
-                        }
-                        break;
-                    default:
-                        break;
+                if ((int)((EventArgsDataHost)obj).par == (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB) {
+                    rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett ();
+                } else {
+                    switch ((int)((EventArgsDataHost)obj).id) {
+                        case 1: //FormAboutTepProgram
+                            switch ((int)((EventArgsDataHost)obj).par) {
+                                case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
+                                    rec = TepCommon.Properties.Resources.MainForm;
+                                    break;
+                                case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
+                                    rec = Application.ProductVersion;                            
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        case 2: //PanelTepDictPlugIns
+                            switch ((int)((EventArgsDataHost)obj).par) {
+                                default:
+                                    break;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
                 }
 
                 //Отправить ответ (исходный идентификатор + требуемый объект)

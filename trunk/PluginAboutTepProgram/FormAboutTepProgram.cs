@@ -72,11 +72,16 @@ namespace PluginAboutTepProgram
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
             //if (createObject<FormAboutTepProgram>() == true)
-            if (createObject(typeof (FormAboutTepProgram)) == true)
-            {
+            createObject(typeof (FormAboutTepProgram));
+            
+            if (m_markDataHost.IsMarked ((int)ID_DATAASKED_HOST.ICON_MAINFORM) == false)
                 DataAskedHost ((int)ID_DATAASKED_HOST.ICON_MAINFORM);
+            else
+                ;
+
+            if (m_markDataHost.IsMarked ((int)ID_DATAASKED_HOST.STR_VERSION) == false)                
                 DataAskedHost((int)ID_DATAASKED_HOST.STR_VERSION);
-            } else
+            else
                 ;
 
             ((FormAboutTepProgram)_object).ShowDialog (Host as IWin32Window);
@@ -85,6 +90,8 @@ namespace PluginAboutTepProgram
         public override void OnEvtDataRecievedHost(object obj)
         {
             //throw new NotImplementedException();
+
+            base.OnEvtDataRecievedHost(obj);
 
             switch (((EventArgsDataHost)obj).id) {
                 case (int)ID_DATAASKED_HOST.ICON_MAINFORM:
