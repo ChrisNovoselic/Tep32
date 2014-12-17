@@ -7,14 +7,14 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepDictTime
+namespace PluginTepDictPlugIns
 {
-    public class PanelTepDictTime : HPanelEdit
+    public class PanelTepDictMessage : HPanelEdit
     {
         IPlugIn _iFuncPlugin;
 
-        public PanelTepDictTime(IPlugIn iFunc)
-            : base(@"time")
+        public PanelTepDictMessage(IPlugIn iFunc)
+            : base(@"messages")
         {
             InitializeComponent();
             this._iFuncPlugin = iFunc;
@@ -30,18 +30,18 @@ namespace PluginTepDictTime
         public PlugIn()
             : base()
         {
-            _Id = 3;
+            _Id = 4;
 
             _nameOwnerMenuItem = @"Настройка";
-            _nameMenuItem = @"Интервалы времени";
+            _nameMenuItem = @"Типы сообщений журнала";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PanelTepDictTime));
+            createObject(typeof(PanelTepDictMessage));
             //createObject(this.GetType());
 
-            base.OnClickMenuItem (obj, ev);
+            base.OnClickMenuItem(obj, ev);
         }
     }
 }
