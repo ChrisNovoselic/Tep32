@@ -5,6 +5,20 @@ namespace TepCommon
 {
     partial class HPanelEdit
     {
+        protected enum INDEX_CONTROL
+        {
+            BUTTON_ADD, BUTTON_DELETE, BUTTON_SAVE,
+            BUTTON_UPDATE
+                , DGV_DICT_EDIT,
+            DGV_DICT_PROP
+                ,
+            LABEL_PROP_DESC
+                , INDEX_CONTROL_COUNT,
+        };
+        protected static string[] m_arButtonText = { @"Добавить", @"Удалить", @"Сохранить", @"Обновить" };
+
+        protected Dictionary<int, Control> m_dictControls;
+        
         /// <summary>
         /// Требуется переменная конструктора.
         /// </summary>

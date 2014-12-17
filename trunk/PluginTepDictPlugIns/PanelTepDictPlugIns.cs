@@ -22,22 +22,9 @@ namespace PluginTepDictPlugIns
 
         private void InitializeComponent () {
         }
-
-        public void Initialize(object obj)
-        {
-            try {
-                if (this.IsHandleCreated == true)
-                //if (this.InvokeRequired == true)
-                    this.BeginInvoke(new DelegateObjectFunc(initialize), obj);
-                else
-                    ;
-            } catch (Exception e) {
-                Logging.Logg().Exception(e, @"PanelTepDictPlugIns::Initialize () - BeginInvoke (initialize) - ...");
-            }
-        }
     }
 
-    public class PlugIn : HFunc
+    public class PlugIn : HFuncDictEdit
     {      
         public PlugIn () : base () {            
             _Id = 2;
@@ -48,31 +35,10 @@ namespace PluginTepDictPlugIns
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject (typeof(PanelTepDictPlugIns));
+            createObject(typeof(PanelTepDictPlugIns));
+            //createObject(this.GetType());
 
-            if (m_markDataHost.IsMarked((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB) == false)
-                DataAskedHost ((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
-            else
-                ;
-
-            //Передать главной форме параметр
-            DataAskedHost(obj);
-        }
-
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            //throw new NotImplementedException();
-
-            base.OnEvtDataRecievedHost(obj);
-
-            switch (((EventArgsDataHost)obj).id)
-            {
-                case (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB:
-                    ((PanelTepDictPlugIns)_object).Initialize(obj);
-                    break;
-                default:
-                    break;
-            }
+            base.OnClickMenuItem(obj, ev);
         }
     }
 }

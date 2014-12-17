@@ -26,7 +26,7 @@ namespace PluginTepDictTime
         }
     }
 
-    public class PlugIn : HFunc
+    public class PlugIn : HFuncDictEdit
     {
         public PlugIn()
             : base()
@@ -35,6 +35,14 @@ namespace PluginTepDictTime
 
             _nameOwnerMenuItem = @"Настройка";
             _nameMenuItem = @"Интервалы времени";
+        }
+
+        public override void OnClickMenuItem(object obj, EventArgs ev)
+        {
+            createObject(typeof(PanelTepDictTime));
+            //createObject(this.GetType());
+
+            base.OnClickMenuItem (obj, ev);
         }
     }
 }
