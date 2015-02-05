@@ -7,14 +7,14 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepDictPlugIns
+namespace PluginTepDictMessage
 {
     public class PanelTepDictMessage : HPanelEdit
     {
         IPlugIn _iFuncPlugin;
 
         public PanelTepDictMessage(IPlugIn iFunc)
-            : base(@"messages")
+            : base(@"messages", @"DESCRIPTION")
         {
             InitializeComponent();
             this._iFuncPlugin = iFunc;

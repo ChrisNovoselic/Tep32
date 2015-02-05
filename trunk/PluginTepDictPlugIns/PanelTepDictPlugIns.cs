@@ -13,13 +13,20 @@ namespace PluginTepDictPlugIns
     {
         IPlugIn _iFuncPlugin;
 
-        public PanelTepDictPlugIns(IPlugIn iFunc) : base (@"plugins")
+        public PanelTepDictPlugIns(IPlugIn iFunc) : base (@"plugins", @"DESCRIPTION")
         {
             InitializeComponent();
             this._iFuncPlugin = iFunc;
+
+            //Дополнительные действия при сохранении значений
+            delegateSaveAdding = saveAdding;
         }
 
         private void InitializeComponent () {
+        }
+
+        private void saveAdding(int iListenerId)
+        {
         }
     }
 

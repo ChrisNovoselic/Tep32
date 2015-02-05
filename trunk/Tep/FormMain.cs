@@ -354,7 +354,7 @@ namespace Tep64
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Nmae = " + name);
+                Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name);
             }
 
             if (! (objType == null))
@@ -367,10 +367,10 @@ namespace Tep64
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Nmae = " + name);
+                    Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Name = " + name);
                 }
             else
-                ;
+                Logging.Logg().Error(@"FormMain::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name);
 
             return plugInRes;
         }

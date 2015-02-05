@@ -14,7 +14,7 @@ namespace PluginTepDictTime
         IPlugIn _iFuncPlugin;
 
         public PanelTepDictTime(IPlugIn iFunc)
-            : base(@"time")
+            : base(@"time", @"DESCRIPTION")
         {
             InitializeComponent();
             this._iFuncPlugin = iFunc;
