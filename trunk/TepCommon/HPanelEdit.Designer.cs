@@ -37,15 +37,15 @@ namespace TepCommon
             base.Dispose(disposing);
         }
 
-        private void addButton (int indx) {
-            m_dictControls.Add (indx, new Button ());
+        private void addButton (int id) {
+            m_dictControls.Add (id, new Button ());
 
-            m_dictControls[indx].Location = new System.Drawing.Point(1, 1);
+            m_dictControls[id].Location = new System.Drawing.Point(1, 1);
             //m_dictControls[indx].Size = new System.Drawing.Size(79, 23);
-            m_dictControls[indx].Dock = DockStyle.Fill;
-            m_dictControls[indx].Text = m_arButtonText [indx];
-            this.Controls.Add(m_dictControls[indx], 0, indx);
-            this.SetColumnSpan(m_dictControls[indx], 1);
+            m_dictControls[id].Dock = DockStyle.Fill;
+            m_dictControls[id].Text = m_arButtonText [id];
+            this.Controls.Add(m_dictControls[id], 0, id);
+            this.SetColumnSpan(m_dictControls[id], 1);
         }
 
         #region Код, автоматически созданный конструктором компонентов
@@ -138,6 +138,12 @@ namespace TepCommon
             gbDesc.Controls.Add (m_dictControls[(int)i]);
 
             this.ResumeLayout ();
+
+            //Обработчика нажатия кнопок
+            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_ADD]).Click += new System.EventHandler(HPanelEdit_btnAdd_Click);
+            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_DELETE]).Click += new System.EventHandler(HPanelEdit_btnDelete_Click);
+            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_SAVE]).Click += new System.EventHandler(HPanelEdit_btnSave_Click);
+            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_UPDATE]).Click += new System.EventHandler(HPanelEdit_btnUpdate_Click);
         }
 
         #endregion

@@ -89,12 +89,16 @@ namespace TepCommon
                             dgv.Rows.Add(new object[] { m_tblEdit.Columns[i].ColumnName, string.Empty }); ;
                         }
 
+                        //Обработчик события "Выбор строки"
                         ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_EDIT]).SelectionChanged += new EventHandler(HPanelEdit_SelectionChanged);
                         dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_EDIT]);
                         for (i = 0; i < m_tblEdit.Rows.Count; i++)
                         {
                             dgv.Rows.Add(new object[] { m_tblEdit.Rows[i][@"DESCRIPTION"].ToString().Trim() });
                         }
+
+                        //Обработчик события "Выбор строки"
+                        ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_EDIT]).MouseDoubleClick += new MouseEventHandler(HPanelEdit_MouseDoubleClick);
                     }
                     else
                     {
@@ -126,7 +130,7 @@ namespace TepCommon
         {
             int indx = -1;
 
-            if (((DataGridView)obj).SelectedRows.Count > 0)
+            if (((DataGridView)obj).SelectedRows.Count == 1)
             {
                 indx = ((DataGridView)obj).SelectedRows[0].Index;
 
@@ -134,11 +138,34 @@ namespace TepCommon
                     for (int i = 0; i < ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).NewRowIndex; i++)
                         ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).Rows[i].Cells[1].Value = m_tblEdit.Rows[indx][((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).Rows[i].Cells[0].Value.ToString()].ToString().Trim();
                 else
-                    ;
+                    for (int i = 0; i < ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).NewRowIndex; i++)
+                        ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).Rows[i].Cells[1].Value = string.Empty;
             }
             else
             {
+                Logging.Logg().Error(@"HPanelEdit::HPanelEdit_SelectionChanged () - выделена НЕ 1 строка");
             }
+        }
+
+        private void HPanelEdit_MouseDoubleClick(object obj, MouseEventArgs ev)
+        {
+            int indx = ((DataGridView)obj).SelectedRows[0].Index;
+        }
+
+        private void HPanelEdit_btnAdd_Click(object obj, EventArgs ev)
+        {
+        }
+
+        private void HPanelEdit_btnDelete_Click(object obj, EventArgs ev)
+        {
+        }
+
+        private void HPanelEdit_btnSave_Click(object obj, EventArgs ev)
+        {
+        }
+
+        private void HPanelEdit_btnUpdate_Click(object obj, EventArgs ev)
+        {
         }
     }
 }
