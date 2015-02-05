@@ -48,11 +48,11 @@ namespace PluginAboutTepProgram
             switch (((EventArgsDataHost)obj).id)
             {
                 case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
-                    this.Icon = (Icon)((EventArgsDataHost)obj).par;
+                    this.Icon = (Icon)((EventArgsDataHost)obj).par[0];
                     this.m_pictureBox.Image = this.Icon.ToBitmap ();
                     break;
                 case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                    this.m_lblVersion.Text = (string)((EventArgsDataHost)obj).par;
+                    this.m_lblVersion.Text = (string)((EventArgsDataHost)obj).par[0];
                     break;
                 default:
                     break;

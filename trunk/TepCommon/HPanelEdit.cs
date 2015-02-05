@@ -60,9 +60,9 @@ namespace TepCommon
                 , iListenerId = -1;
             string errMsg = string.Empty;
 
-            if (((EventArgsDataHost)obj).par is ConnectionSettings)
+            if (((EventArgsDataHost)obj).par[0] is ConnectionSettings)
             {
-                m_connSett = (ConnectionSettings)((EventArgsDataHost)obj).par;
+                m_connSett = (ConnectionSettings)((EventArgsDataHost)obj).par[0];
 
                 err = 0;
             }

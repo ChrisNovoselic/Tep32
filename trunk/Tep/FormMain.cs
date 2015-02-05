@@ -266,13 +266,13 @@ namespace Tep64
         {
             object rec = null;
 
-            if (((EventArgsDataHost)obj).par.GetType ().IsPrimitive == true) {
-                if ((int)((EventArgsDataHost)obj).par == (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB) {
+            if (((EventArgsDataHost)obj).par[0].GetType ().IsPrimitive == true) {
+                if ((int)((EventArgsDataHost)obj).par[0] == (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB) {
                     rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett ();
                 } else {
                     switch ((int)((EventArgsDataHost)obj).id) {
                         case 1: //FormAboutTepProgram
-                            switch ((int)((EventArgsDataHost)obj).par) {
+                            switch ((int)((EventArgsDataHost)obj).par[0]) {
                                 case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
                                     rec = TepCommon.Properties.Resources.MainForm;
                                     break;
@@ -284,7 +284,7 @@ namespace Tep64
                             }
                             break;
                         case 2: //PanelTepDictPlugIns
-                            switch ((int)((EventArgsDataHost)obj).par) {
+                            switch ((int)((EventArgsDataHost)obj).par[0]) {
                                 default:
                                     break;
                             }
@@ -295,10 +295,10 @@ namespace Tep64
                 }
 
                 //Отправить ответ (исходный идентификатор + требуемый объект)
-                ((HPlugIn)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost (new EventArgsDataHost((int)((EventArgsDataHost)obj).par, rec));
+                ((HPlugIn)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost (new EventArgsDataHost((int)((EventArgsDataHost)obj).par[0], new object [] { rec }));
             }
             else {
-                if (((EventArgsDataHost)obj).par is ToolStripMenuItem) {
+                if (((EventArgsDataHost)obj).par[0] is ToolStripMenuItem) {
                     try
                     {
                         this.BeginInvoke(new DelegateObjectFunc(onClickMenuItem), obj);
@@ -315,9 +315,9 @@ namespace Tep64
 
         private void onClickMenuItem (object obj) {
             int id_plugIn = (int)((EventArgsDataHost)obj).id;
-            ((ToolStripMenuItem)((EventArgsDataHost)obj).par).Checked = ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par).Checked;
+            ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked = ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
 
-            if (((ToolStripMenuItem)((EventArgsDataHost)obj).par).Checked == true) {
+            if (((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked == true) {
                 m_TabCtrl.AddTabPage(((HPlugIn)m_dictPlugins[id_plugIn]).NameMenuItem);
                 m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)((HPlugIn)m_dictPlugins[id_plugIn]).Object);
                 //m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(new HPanelEdit ());

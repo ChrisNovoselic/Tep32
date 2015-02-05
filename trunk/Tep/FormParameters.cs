@@ -88,10 +88,15 @@ namespace Tep64
             //ProgramBase.s_iAppID = Int32.Parse(m_arParametrSetup[(int)PARAMETR_SETUP.ID_APP]);
             //ProgramBase.s_iAppID = Properties.s
 
-            loadParam();
+            loadParam(true);
         }
 
-        public override void loadParam()
+        public override void Update(out int err)
+        {
+            err = -1;
+        }
+
+        protected override void loadParam(bool bInit)
         {
             string strDefault = string.Empty;
 
@@ -117,7 +122,7 @@ namespace Tep64
             }
         }
 
-        public override void saveParam()
+        protected override void saveParam()
         {
             for (PARAMETR_SETUP i = PARAMETR_SETUP.POLL_TIME; i < PARAMETR_SETUP.COUNT_PARAMETR_SETUP; i++)
                 m_FileINI.WriteString(NAME_SECTION_MAIN, NAME_PARAMETR_SETUP[(int)i], m_arParametrSetup[(int)i]);
@@ -148,7 +153,7 @@ namespace Tep64
             m_dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
             if ((! (m_dbConn == null)) && (err == 0))
-                loadParam();
+                loadParam(true);
             else
                 ;
 
@@ -165,40 +170,101 @@ namespace Tep64
             m_dbConn = null;
         }
 
-        public override void loadParam()
+        public override void Update(out int err)
         {
-            string strDefault = string.Empty;
+            err = -1;
+            int idListener = DbSources.Sources().Register(m_connSett, false, @"CONFIG_DB");
+            m_dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
+            if (err == 0)
+                loadParam(false);
+            else
+                ;
+
+            DbSources.Sources().UnRegister(idListener);
+        }
+
+        protected void setDataGUI(bool bInit)
+        {
             for (PARAMETR_SETUP i = PARAMETR_SETUP.POLL_TIME; i < PARAMETR_SETUP.COUNT_PARAMETR_SETUP; i++)
             {
-                m_arParametrSetup[(int)i] = readString(KEYDB_PARAMETR_SETUP[(int)i], strDefault);
-                if (m_arParametrSetup[(int)i].Equals(strDefault) == true)
+                if (bInit == true)
                 {
-                    m_arParametrSetup[(int)i] = m_arParametrSetupDefault[(int)i];
-                    writeString(NAME_PARAMETR_SETUP[(int)i], m_arParametrSetup[(int)i]);
+                    m_dgvData.Rows.Insert((int)i, new object[] { NAME_PARAMETR_SETUP[(int)i], m_arParametrSetup[(int)i], NAMESI_PARAMETR_SETUP[(int)i] });
+
+                    m_dgvData.Rows[(int)i].Height = 19;
+                    m_dgvData.Rows[(int)i].Resizable = System.Windows.Forms.DataGridViewTriState.False;
+                    m_dgvData.Rows[(int)i].HeaderCell.Value = ((int)i).ToString();
                 }
                 else
-                    ;
-            }
-
-            for (PARAMETR_SETUP i = PARAMETR_SETUP.POLL_TIME; i < PARAMETR_SETUP.COUNT_PARAMETR_SETUP; i++)
-            {
-                m_dgvData.Rows.Insert((int)i, new object[] { KEYDB_PARAMETR_SETUP[(int)i], m_arParametrSetup[(int)i], NAMESI_PARAMETR_SETUP[(int)i] });
-
-                m_dgvData.Rows[(int)i].Height = 19;
-                m_dgvData.Rows[(int)i].Resizable = System.Windows.Forms.DataGridViewTriState.False;
-                m_dgvData.Rows[(int)i].HeaderCell.Value = ((int)i).ToString();
+                    m_dgvData.Rows[(int)i].Cells[1].Value = m_arParametrSetup[(int)i];
             }
         }
 
-        public override void saveParam()
+        protected override void loadParam(bool bInit)
         {
             int err = -1;
-            int idListener = DbSources.Sources().Register(m_connSett, false, TepCommon.CONN_SETT_TYPE.MAIN_DB.ToString());
+
+            string query = string.Empty;
+            //query = @"SELECT * FROM [dbo].[setup] WHERE [KEY]='" + key + @"'";
+            query = string.Format(@"SELECT * FROM setup");
+            DataTable table = DbTSQLInterface.Select(ref m_dbConn, query, null, null, out err);
+            DataRow[] rowRes;
+            if (err == (int)DbTSQLInterface.Error.NO_ERROR)
+                if (!(table == null))
+                {
+                    query = string.Empty;
+
+                    for (PARAMETR_SETUP i = PARAMETR_SETUP.POLL_TIME; i < PARAMETR_SETUP.COUNT_PARAMETR_SETUP; i++)
+                    {
+                        //strRead = readString(NAME_PARAMETR_SETUP[(int)i], strDefault, out err);
+                        rowRes = table.Select(@"KEY='" + NAME_PARAMETR_SETUP[(int)i].ToString() + @"'");
+                        switch (rowRes.Length)
+                        {
+                            case 1:
+                                m_arParametrSetup[(int)i] =
+                                m_arParametrSetupDefault[(int)i] =
+                                    rowRes[0][@"VALUE"].ToString().Trim();
+                                break;
+                            case 0:
+                                m_arParametrSetup[(int)i] = m_arParametrSetupDefault[(int)i];
+                                query += getWriteStringRequest(NAME_PARAMETR_SETUP[(int)i], m_arParametrSetup[(int)i], true) + @";";
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    if (query.Equals(string.Empty) == false)
+                        DbTSQLInterface.ExecNonQuery(ref m_dbConn, query, null, null, out err);
+                    else
+                        ;
+                }
+                else
+                    err = (int)DbTSQLInterface.Error.TABLE_NULL;
+            else
+                ;
+
+            setDataGUI(bInit);
+        }
+
+        protected override void saveParam()
+        {
+            int err = -1;
+            int idListener = DbSources.Sources().Register(m_connSett, false, @"CONFIG_DB");
+            string query = string.Empty;
             m_dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
-            for (PARAMETR_SETUP i = PARAMETR_SETUP.POLL_TIME; i < PARAMETR_SETUP.COUNT_PARAMETR_SETUP; i++)
-                writeString(NAME_PARAMETR_SETUP[(int)i], m_arParametrSetup[(int)i]);
+            if (err == 0)
+                for (PARAMETR_SETUP i = PARAMETR_SETUP.POLL_TIME; i < PARAMETR_SETUP.COUNT_PARAMETR_SETUP; i++)
+                    query += getWriteStringRequest(NAME_PARAMETR_SETUP[(int)i], m_arParametrSetup[(int)i], false) + @";";
+            else
+                ;
+
+            if (query.Equals(string.Empty) == false)
+                DbTSQLInterface.ExecNonQuery(ref m_dbConn, query, null, null, out err);
+            else
+                ;
 
             DbSources.Sources().UnRegister(idListener);
         }
@@ -241,6 +307,19 @@ namespace Tep64
                 query = @"UPDATE [dbo].[setup] SET [VALUE] = '" + val + @"' WHERE [KEY]='" + key + @"'";
 
             DbTSQLInterface.ExecNonQuery (ref m_dbConn, query, null, null, out err);
+        }
+
+        private string getWriteStringRequest(string key, string val, bool bInsert)
+        {
+            int err = -1;
+            string strRes = string.Empty;
+            if (bInsert == false)
+                //query = @"UPDATE [dbo].[setup] SET [VALUE] = '" + val + @"' WHERE [KEY]='" + key + @"'";
+                strRes = string.Format(@"UPDATE setup SET [VALUE]='{0}', [LAST_UPDATE]=GETDATE() WHERE [KEY]='{1}'", val, key);
+            else
+                strRes = string.Format(@"INSERT INTO [setup] ([VALUE],[KEY],[LAST_UPADTE],[ID_UNIT]) VALUES ('{0}','{1}',GETDATE(),{2})", val, key, -1);
+
+            return strRes;
         }
     }
 }
