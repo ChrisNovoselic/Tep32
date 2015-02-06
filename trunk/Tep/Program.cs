@@ -39,7 +39,7 @@ namespace Tep64
                 {
                     strHeader = "Ошибка запуска приложения";
                     MessageBox.Show((IWin32Window)null, e.Message + Environment.NewLine + ProgramBase.MessageAppAbort, strHeader);
-                    Logging.Logg().Exception(e, strHeader);
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, strHeader);
                 }
 
                 if (!(formMain == null))
@@ -48,7 +48,7 @@ namespace Tep64
                     {
                         strHeader = "Ошибка выполнения приложения";
                         MessageBox.Show((IWin32Window)null, e.Message + Environment.NewLine + ProgramBase.MessageAppAbort, strHeader);
-                        Logging.Logg().Exception(e, strHeader);
+                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, strHeader);
                     }
                 else
                     ;
