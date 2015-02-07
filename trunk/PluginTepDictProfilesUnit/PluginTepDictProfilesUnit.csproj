@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{ABC1626C-B382-4E5B-9F83-E7A5BC2C007E}</ProjectGuid>
+    <ProjectGuid>{924FBA6E-A72A-430B-8E24-0B20B5262FE2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTepDictRolesUnit</RootNamespace>
-    <AssemblyName>PluginTepDictRolesUnit</AssemblyName>
+    <RootNamespace>PluginTepDictProfilesUnit</RootNamespace>
+    <AssemblyName>PluginTepDictProfilesUnit</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -42,7 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PluginTepDictRolesUnit.cs">
+    <Compile Include="PluginTepDictProfilesUnit.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
