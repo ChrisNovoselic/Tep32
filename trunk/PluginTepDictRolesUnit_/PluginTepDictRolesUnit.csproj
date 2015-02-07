@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>e088128a-350c-4692-8267-0fd6527dd4fe</ProjectGuid>
+    <ProjectGuid>{4A53E83B-29FA-48C3-9AB7-141B345BF2A3}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>PluginTepDictRolesUnit</RootNamespace>
@@ -19,7 +19,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Tep\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -33,6 +33,30 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="PluginTepDictRolesUnit.cs">
+      <SubType>Component</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
+      <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
+      <Name>HClassLibrary</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\InterfacePlugIn\InterfacePlugIn.csproj">
+      <Project>{25637BE7-4002-46BE-A0D4-4C7EAAAA5148}</Project>
+      <Name>InterfacePlugIn</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TepCommon\TepCommon.csproj">
+      <Project>{96E92AAE-CC42-4F6B-B737-C9AADA560D20}</Project>
+      <Name>TepCommon</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

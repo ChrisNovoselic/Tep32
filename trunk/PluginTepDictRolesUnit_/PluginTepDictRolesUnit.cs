@@ -7,7 +7,7 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepDictRolelesUnit
+namespace PluginTepDictRolesUnit
 {
     public class PanelTepDictRolesUnit : HPanelEdit
     {
@@ -30,7 +30,7 @@ namespace PluginTepDictRolelesUnit
         public PlugIn()
             : base()
         {
-            _Id = 4;
+            _Id = 5;
 
             _nameOwnerMenuItem = @"Настройка";
             _nameMenuItem = @"Роли(группы) пользователей";
