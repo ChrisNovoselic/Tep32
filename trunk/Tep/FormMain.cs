@@ -209,8 +209,17 @@ namespace Tep64
 
                                     //Проверка найден ли "родительский" пункт меню для плюг'ина
                                     if (miOwner == null) {
+                                        int indx = -1;
+                                        string strNameItem = ((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem;
+                                        if (strNameItem.Equals(@"Помощь") == false)
+                                            indx = this.MainMenuStrip.Items.Count - 1;
+                                        else
+                                            ;
                                         //НЕ найден - создаем
-                                        this.MainMenuStrip.Items.Add(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
+                                        if (indx < 0)
+                                            this.MainMenuStrip.Items.Add(new ToolStripMenuItem(strNameItem));
+                                        else
+                                            this.MainMenuStrip.Items.Insert(indx, new ToolStripMenuItem (strNameItem));
                                         miOwner = FindMainMenuItemOfText(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
                                     } else {
                                     }

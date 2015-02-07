@@ -32,7 +32,7 @@ namespace PluginTepDictRolesUnit
         {
             _Id = 5;
 
-            _nameOwnerMenuItem = @"Настройка";
+            _nameOwnerMenuItem = @"Проект";
             _nameMenuItem = @"Роли(группы) пользователей";
         }
 
