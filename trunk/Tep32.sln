@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTepDictRolesUnit", "P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTepDictProfilesUnit", "PluginTepDictProfilesUnit\PluginTepDictProfilesUnit.csproj", "{924FBA6E-A72A-430B-8E24-0B20B5262FE2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTepDictRoles", "PluginTepDictRoles\PluginTepDictRoles.csproj", "{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -132,6 +134,16 @@ Global
 		{924FBA6E-A72A-430B-8E24-0B20B5262FE2}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{924FBA6E-A72A-430B-8E24-0B20B5262FE2}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{924FBA6E-A72A-430B-8E24-0B20B5262FE2}.Release|x86.ActiveCfg = Release|Any CPU
+		{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{833503F6-DA7C-4E24-8F16-CB0E8AA2545D}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
