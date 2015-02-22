@@ -11,12 +11,10 @@ namespace PluginTepDictPlugIns
 {
     public class PanelTepDictPlugIns : HPanelEdit
     {
-        IPlugIn _iFuncPlugin;
-
-        public PanelTepDictPlugIns(IPlugIn iFunc) : base (@"plugins", @"DESCRIPTION")
+        public PanelTepDictPlugIns(IPlugIn iFunc)
+            : base(iFunc, @"plugins", @"DESCRIPTION")
         {
             InitializeComponent();
-            this._iFuncPlugin = iFunc;
 
             //Дополнительные действия при сохранении значений
             delegateSaveAdding = saveAdding;

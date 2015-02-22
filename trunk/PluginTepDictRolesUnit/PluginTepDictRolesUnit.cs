@@ -11,13 +11,10 @@ namespace PluginTepDictRolesUnit
 {
     public class PanelTepDictRolesUnit : HPanelEdit
     {
-        IPlugIn _iFuncPlugin;
-
         public PanelTepDictRolesUnit(IPlugIn iFunc)
-            : base(@"roles_unit", @"DESCRIPTION")
+            : base(iFunc, @"roles_unit", @"DESCRIPTION")
         {
             InitializeComponent();
-            this._iFuncPlugin = iFunc;
         }
 
         private void InitializeComponent()

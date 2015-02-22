@@ -448,28 +448,28 @@ namespace Tep64
         private void TabCtrl_OnSelectedIndexChanged (object obj, EventArgs ev) {
         }
 
-        protected override bool  UpdateStatusString () {
-            bool have_eror = false;
-            m_lblDescError.Text = m_lblDateError.Text = string.Empty;
+        protected override int UpdateStatusString () {
+            int haveError = 0;
+            m_lblDescMessage.Text = m_lblDateMessage.Text = string.Empty;
 
             if (m_report.actioned_state == true)
             {
-                m_lblDateError.Text = m_report.last_time_action.ToString();
-                m_lblDescError.Text = m_report.last_action;
+                m_lblDateMessage.Text = m_report.last_time_action.ToString();
+                m_lblDescMessage.Text = m_report.last_action;
             }
             else
                 ;
 
             if (m_report.errored_state == true)
             {
-                have_eror = true;
-                m_lblDateError.Text = m_report.last_time_error.ToString();
-                m_lblDescError.Text = m_report.last_error;
+                haveError = -1;
+                m_lblDateMessage.Text = m_report.last_time_error.ToString();
+                m_lblDescMessage.Text = m_report.last_error;
             }
             else
                 ;
 
-            return have_eror;
+            return haveError;
         }
 
         protected override void timer_Start()

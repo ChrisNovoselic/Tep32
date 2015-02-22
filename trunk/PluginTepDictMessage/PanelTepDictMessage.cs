@@ -11,13 +11,10 @@ namespace PluginTepDictMessage
 {
     public class PanelTepDictMessage : HPanelEdit
     {
-        IPlugIn _iFuncPlugin;
-
         public PanelTepDictMessage(IPlugIn iFunc)
-            : base(@"messages", @"DESCRIPTION")
+            : base(iFunc, @"messages", @"DESCRIPTION")
         {
             InitializeComponent();
-            this._iFuncPlugin = iFunc;
         }
 
         private void InitializeComponent()

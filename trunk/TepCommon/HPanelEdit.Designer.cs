@@ -13,8 +13,6 @@ namespace TepCommon
             , INDEX_CONTROL_COUNT,
         };
         protected static string[] m_arButtonText = { @"Добавить", @"Удалить", @"Сохранить", @"Обновить" };
-
-        protected Dictionary<int, Control> m_dictControls;
         
         /// <summary>
         /// Требуется переменная конструктора.

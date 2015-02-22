@@ -14,42 +14,16 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public partial class HPanelEdit : TableLayoutPanel, IObjectDictEdit
+    public abstract class HPanelTepCommon : TableLayoutPanel, IObjectDictEdit
     {
-        private DataTable m_tblEdit
-            , m_tblOrigin;
-        private ConnectionSettings m_connSett;
-        protected string m_nameTable
-            , m_nameDescField;
-        private string m_query;
+        protected ConnectionSettings m_connSett;
+        protected IPlugIn _iFuncPlugin;
 
-        //Дополнительные действия при сохранении значений
-        protected DelegateIntFunc delegateSaveAdding;
+        protected Dictionary<int, Control> m_dictControls;
 
-        public HPanelEdit(string nameTable, string nameDescField)
+        public HPanelTepCommon(IPlugIn plugIn)
         {
-            InitializeComponent();
-
-            m_nameTable = nameTable;
-            m_nameDescField = nameDescField;
-        }
-
-        public HPanelEdit(IContainer container, string nameTable, string nameDescField)
-            : this(nameTable, nameDescField)
-        {
-            container.Add(this);
-        }
-
-        protected void Activate (bool activate) {
-        }
-
-        private void clear()
-        {
-            ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).Rows.Clear();
-            ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_EDIT]).Rows.Clear();
-
-            m_tblEdit.Clear();
-            m_tblOrigin.Clear();
+            this._iFuncPlugin = plugIn;
         }
 
         public void Initialize(object obj)
@@ -64,72 +38,8 @@ namespace TepCommon
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"PanelTepDictPlugIns::Initialize () - BeginInvoke (initialize) - ...");
+                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HPanelEdit::Initialize () - BeginInvoke (initialize) - ...");
             }
-        }
-
-        private void initialize(out int err, out string errMsg)
-        {
-            int i = -1
-                , iListenerId = -1;
-
-            err = -1;
-            errMsg = string.Empty;
-
-            iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB");
-            DbConnection dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
-
-            if ((!(dbConn == null)) && (err == 0))
-            {
-                m_query = @"SELECT * FROM " + m_nameTable;
-                m_tblEdit = DbTSQLInterface.Select(ref dbConn, m_query, null, null, out err);
-                m_tblOrigin = m_tblEdit.Copy();
-
-                if (err == 0)
-                {
-                    Logging.Logg().Debug(@"HPanelEdit::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                    DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
-                    //Обработчик события "Выбор строки"
-                    dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvDictPropSelectionChanged);
-                    ////Обработчик события "Редактирование свойства"
-                    //dgv.CellStateChanged += new DataGridViewCellStateChangedEventHandler(HPanelEdit_dgvDictPropStateChanged);
-                    //Обработчик события "Редактирование свойства"
-                    dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEdit_dgvDictPropCellEndEdit);
-                    //Запретить удаление строк
-                    dgv.AllowUserToDeleteRows = false;
-                    //Заполнение содержимым...
-                    for (i = 0; i < m_tblEdit.Columns.Count; i++)
-                        dgv.Rows.Add(new object[] { m_tblEdit.Columns[i].ColumnName, string.Empty });
-                    //Только "для чтения", если строк нет
-                    dgv.ReadOnly = ! (m_tblEdit.Rows.Count > 0);
-
-                    dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_EDIT]);
-                    //Обработчик события "Выбор строки"
-                    dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvDictEditSelectionChanged);
-                    ////Обработчик события "Редактирование строки"
-                    //dgv.CellStateChanged += new DataGridViewCellEventHandler(HPanelEdit_dgvDictEditCellStateChanged);
-                    //Обработчик события "Редактирование строки"
-                    dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEdit_dgvDictEditCellEndEdit);
-                    //Запретить удаление строк
-                    dgv.AllowUserToDeleteRows = false;
-                    //Заполнение содержимым...
-                    for (i = 0; i < m_tblEdit.Rows.Count; i++)
-                        dgv.Rows.Add(new object[] { m_tblEdit.Rows[i][m_nameDescField].ToString().Trim() });
-                }
-                else
-                {
-                    errMsg = @"не удалось получить значения из целевой таблицы [" + m_nameTable + @"]";
-                    err = -1;
-                }
-            }
-            else
-            {
-                errMsg = @"нет соединения с БД";
-                err = -1;
-            }
-
-            DbSources.Sources().UnRegister(iListenerId);
         }
 
         private void initialize(object obj)
@@ -159,6 +69,138 @@ namespace TepCommon
             }
             else
             {
+            }
+        }
+
+        private void initialize(out int err, out string errMsg)
+        {
+            int iListenerId = -1;
+
+            err = -1;
+            errMsg = string.Empty;
+
+            iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB");
+            DbConnection dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
+
+            if ((!(dbConn == null)) && (err == 0))
+            {
+                initialize(ref dbConn, out err, out errMsg);
+            }
+            else
+            {
+                errMsg = @"нет соединения с БД";
+                err = -1;
+            }
+
+            DbSources.Sources().UnRegister(iListenerId);
+        }
+
+        protected virtual void clear()
+        {
+            int err = -1;
+            string errMsg = string.Empty;
+
+            initialize(out err, out errMsg);
+
+            if (!(err == 0))
+            {
+                throw new Exception(@"HPanelTepCommon::clear () - " + errMsg);
+            }
+            else
+            {
+            }
+        }
+
+        protected abstract void initialize(ref DbConnection dbConn, out int err, out string errMsg);
+    }
+
+    public partial class HPanelEdit : HPanelTepCommon
+    {
+        private DataTable m_tblEdit
+            , m_tblOrigin;
+        protected string m_nameTable
+            , m_nameDescField;
+        private string m_query;
+
+        //Дополнительные действия при сохранении значений
+        protected DelegateIntFunc delegateSaveAdding;
+
+        public HPanelEdit(IPlugIn plugIn, string nameTable, string nameDescField)
+            : base (plugIn)
+        {
+            InitializeComponent();
+
+            m_nameTable = nameTable;
+            m_nameDescField = nameDescField;
+        }
+
+        public HPanelEdit(IContainer container, IPlugIn plugIn, string nameTable, string nameDescField)
+            : this(plugIn, nameTable, nameDescField)
+        {
+            container.Add(this);
+        }
+
+        protected void Activate (bool activate) {
+        }
+
+        protected virtual void clear()
+        {
+            ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).Rows.Clear();
+            ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_EDIT]).Rows.Clear();
+
+            m_tblEdit.Clear();
+            m_tblOrigin.Clear();
+
+            base.clear();
+        }
+
+        protected override void initialize(ref DbConnection dbConn, out int err, out string errMsg)
+        {
+            int i = -1;
+
+            err = -1;
+            errMsg = string.Empty;
+
+            m_query = @"SELECT * FROM " + m_nameTable;
+            m_tblEdit = DbTSQLInterface.Select(ref dbConn, m_query, null, null, out err);
+            m_tblOrigin = m_tblEdit.Copy();
+
+            if (err == 0)
+            {
+                Logging.Logg().Debug(@"HPanelEdit::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
+                //Обработчик события "Выбор строки"
+                dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvDictPropSelectionChanged);
+                ////Обработчик события "Редактирование свойства"
+                //dgv.CellStateChanged += new DataGridViewCellStateChangedEventHandler(HPanelEdit_dgvDictPropStateChanged);
+                //Обработчик события "Редактирование свойства"
+                dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEdit_dgvDictPropCellEndEdit);
+                //Запретить удаление строк
+                dgv.AllowUserToDeleteRows = false;
+                //Заполнение содержимым...
+                for (i = 0; i < m_tblEdit.Columns.Count; i++)
+                    dgv.Rows.Add(new object[] { m_tblEdit.Columns[i].ColumnName, string.Empty });
+                //Только "для чтения", если строк нет
+                dgv.ReadOnly = !(m_tblEdit.Rows.Count > 0);
+
+                dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_EDIT]);
+                //Обработчик события "Выбор строки"
+                dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvDictEditSelectionChanged);
+                ////Обработчик события "Редактирование строки"
+                //dgv.CellStateChanged += new DataGridViewCellEventHandler(HPanelEdit_dgvDictEditCellStateChanged);
+                //Обработчик события "Редактирование строки"
+                dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEdit_dgvDictEditCellEndEdit);
+                //Запретить удаление строк
+                dgv.AllowUserToDeleteRows = false;
+                //Заполнение содержимым...
+                for (i = 0; i < m_tblEdit.Rows.Count; i++)
+                    dgv.Rows.Add(new object[] { m_tblEdit.Rows[i][m_nameDescField].ToString().Trim() });
+            }
+            else
+            {
+                errMsg = @"не удалось получить значения из целевой таблицы [" + m_nameTable + @"]";
+                err = -1;
             }
         }
 
@@ -339,19 +381,6 @@ namespace TepCommon
         private void HPanelEdit_btnUpdate_Click(object obj, EventArgs ev)
         {
             clear();
-
-            int err = -1;
-            string errMsg = string.Empty;
-
-            initialize (out err, out errMsg);
-
-            if (!(err == 0))
-            {
-                throw new Exception(@"HPanelEdit::HPanelEdit_btnUpdate_Click () - " + errMsg);
-            }
-            else
-            {
-            }
         }
     }
 }

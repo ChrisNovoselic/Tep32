@@ -11,13 +11,10 @@ namespace PluginTepDictTime
 {
     public class PanelTepDictTime : HPanelEdit
     {
-        IPlugIn _iFuncPlugin;
-
         public PanelTepDictTime(IPlugIn iFunc)
-            : base(@"time", @"DESCRIPTION")
+            : base(iFunc, @"time", @"DESCRIPTION")
         {
             InitializeComponent();
-            this._iFuncPlugin = iFunc;
         }
 
         private void InitializeComponent()

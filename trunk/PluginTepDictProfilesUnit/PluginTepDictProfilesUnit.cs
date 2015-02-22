@@ -11,13 +11,10 @@ namespace PluginTepDictProfilesUnit
 {
     public class PluginTepDictProfilesUnit : HPanelEdit
     {
-        IPlugIn _iFuncPlugin;
-
         public PluginTepDictProfilesUnit(IPlugIn iFunc)
-            : base(@"profiles_unit", @"DESCRIPTION")
+            : base(iFunc, @"profiles_unit", @"DESCRIPTION")
         {
             InitializeComponent();
-            this._iFuncPlugin = iFunc;
         }
 
         private void InitializeComponent()
