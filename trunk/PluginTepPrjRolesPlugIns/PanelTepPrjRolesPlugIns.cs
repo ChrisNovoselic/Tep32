@@ -25,9 +25,9 @@ namespace PluginTepPrjRolesPlugIns
             , INDEX_CONTROL_COUNT,
         };
         protected static string[] m_arButtonText = { @"Сохранить", @"Обновить" };
-        
-        public PanelTepPrjRolesPlugIns(IPlugIn iFunc, string nameTable, string keyFields)
-            : base(iFunc, nameTable, keyFields)
+
+        public PanelTepPrjRolesPlugIns(IPlugIn iFunc)
+            : base(iFunc, @"roles", @"ID_EXT,ID_PLUGIN")
         {
             InitializeComponent();
         }
