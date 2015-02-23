@@ -17,16 +17,145 @@ using InterfacePlugIn;
 
 namespace Tep64
 {
-    public partial class FormMain : FormMainBaseWithStatusStrip, IPlugInHost
+    public partial class FormMain : FormMainBaseWithStatusStrip
     {        
         private static FormParameters s_formParameters;
-        private Dictionary <int, IPlugIn> m_dictPlugins;
+
+        private static HPlugIns s_plugIns;
+        class HPlugIns : IPlugInHost
+        {
+            private Dictionary<int, IPlugIn> m_dictPlugins;
+
+            public DelegateObjectFunc delegateOnClickMenuPluginItem;
+
+            public HPlugIns(DelegateObjectFunc fClickMenuItem)
+            {
+                m_dictPlugins = new Dictionary<int, IPlugIn>();
+                delegateOnClickMenuPluginItem = fClickMenuItem;
+            }
+
+            public bool Register(IPlugIn plug)
+            {
+                return true;
+            }
+
+            public void Add(int id, IPlugIn plugIn)
+            {
+                m_dictPlugins.Add(id, plugIn);
+            }
+
+            public IPlugIn Load(string name, out int iRes)
+            {
+                IPlugIn plugInRes = null;
+                iRes = -1;
+
+                Type objType = null;
+                try
+                {
+                    Assembly ass = null;
+                    ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name + @".dll");
+                    if (!(ass == null))
+                    {
+                        objType = ass.GetType(name + ".PlugIn");
+                    }
+                    else
+                        ;
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name);
+                }
+
+                if (!(objType == null))
+                    try
+                    {
+                        plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
+                        plugInRes.Host = (IPlugInHost)this;
+
+                        iRes = 0;
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Name = " + name);
+                    }
+                else
+                    Logging.Logg().Error(@"FormMain::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
+
+                return plugInRes;
+            }
+
+            public HPlugIn Find(int id)
+            {
+                return m_dictPlugins[id] as HPlugIn;
+            }
+
+            public void OnEvtDataAskedHost(object obj)
+            {
+                object rec = null;
+
+                if (((EventArgsDataHost)obj).par[0].GetType().IsPrimitive == true)
+                {
+                    if ((int)((EventArgsDataHost)obj).par[0] == (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB)
+                    {
+                        rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
+                    }
+                    else
+                    {
+                        switch ((int)((EventArgsDataHost)obj).id)
+                        {
+                            case 1: //FormAboutTepProgram
+                                switch ((int)((EventArgsDataHost)obj).par[0])
+                                {
+                                    case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
+                                        rec = TepCommon.Properties.Resources.MainForm;
+                                        break;
+                                    case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
+                                        rec = Application.ProductVersion;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                break;
+                            case 2: //PanelTepDictPlugIns
+                                switch ((int)((EventArgsDataHost)obj).par[0])
+                                {
+                                    default:
+                                        break;
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    //Отправить ответ (исходный идентификатор + требуемый объект)
+                    ((HPlugIn)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par[0], new object[] { rec }));
+                }
+                else
+                {
+                    if (((EventArgsDataHost)obj).par[0] is ToolStripMenuItem)
+                    {
+                        try
+                        {
+                            delegateOnClickMenuPluginItem(obj);
+                        }
+                        catch (Exception e)
+                        {
+                            Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain_EvtDataAskedHost () - BeginInvoke (addTabPage) [id] = " + (int)((EventArgsDataHost)obj).id);
+                        }
+                    }
+                    else
+                    {
+                    }
+                }
+            }
+        }
 
         public FormMain() : base ()
         {
             InitializeComponent();
 
-            m_dictPlugins = new Dictionary<int, IPlugIn> ();
+            s_plugIns = new HPlugIns(FormMain_EvtDataAskedHost);
 
             s_fileConnSett = new FIleConnSett(@"connsett.ini", FIleConnSett.MODE.FILE);
             s_listFormConnectionSettings = new List<FormConnectionSettings> ();
@@ -44,11 +173,6 @@ namespace Tep64
 
         protected override void HideGraphicsSettings() { }
         protected override void UpdateActiveGui(int type) { }
-
-        public bool Register(IPlugIn plug)
-        {
-            return true;
-        }
 
         /// <summary>
         /// Обработчик выбора пункта меню 'Файл - выход'
@@ -109,6 +233,11 @@ namespace Tep64
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             Stop ();
+        }
+
+        private void FormMain_EvtDataAskedHost(object obj)
+        {
+            this.BeginInvoke(new DelegateObjectFunc(onClickMenuItem), obj);
         }
 
         /// <summary>
@@ -194,7 +323,7 @@ namespace Tep64
                         for (i = 0; (i < tableRes.Rows.Count) && (iRes == 0); i++)
                         {
                             //Загрузить плюгин
-                            plugIn = loadPlugin(tableRes.Rows[i][@"NAME"].ToString().Trim(), out iRes);
+                            plugIn = s_plugIns.Load(tableRes.Rows[i][@"NAME"].ToString().Trim(), out iRes);
 
                             if (! (iRes < 0)) {
                                 //Идентификатор плюг'ина
@@ -202,15 +331,15 @@ namespace Tep64
                                 //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
                                 if (((HPlugIn)plugIn)._Id == idPlugIn)
                                 {
-                                    m_dictPlugins.Add (idPlugIn, plugIn);
+                                    s_plugIns.Add(idPlugIn, plugIn);
 
                                     //Поиск пункта "родительского" пункта меню для плюг'ина
-                                    miOwner = FindMainMenuItemOfText (((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
+                                    miOwner = FindMainMenuItemOfText ((plugIn as HPlugIn).NameOwnerMenuItem);
 
                                     //Проверка найден ли "родительский" пункт меню для плюг'ина
                                     if (miOwner == null) {
                                         int indx = -1;
-                                        string strNameItem = ((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem;
+                                        string strNameItem = (plugIn as HPlugIn).NameOwnerMenuItem;
                                         if (strNameItem.Equals(@"Помощь") == false)
                                             indx = this.MainMenuStrip.Items.Count - 1;
                                         else
@@ -220,16 +349,16 @@ namespace Tep64
                                             this.MainMenuStrip.Items.Add(new ToolStripMenuItem(strNameItem));
                                         else
                                             this.MainMenuStrip.Items.Insert(indx, new ToolStripMenuItem (strNameItem));
-                                        miOwner = FindMainMenuItemOfText(((HPlugIn)m_dictPlugins[idPlugIn]).NameOwnerMenuItem);
+                                        miOwner = FindMainMenuItemOfText((plugIn as HPlugIn).NameOwnerMenuItem);
                                     } else {
                                     }
 
                                     //Добавить пункт меню для плюг'ина
-                                    item = miOwner.DropDownItems.Add(((HPlugIn)m_dictPlugins[idPlugIn]).NameMenuItem) as ToolStripMenuItem;
+                                    item = miOwner.DropDownItems.Add((plugIn as HPlugIn).NameMenuItem) as ToolStripMenuItem;
                                     //Обработку выбора пункта меню предоставить плюг'ину
-                                    item.Click += ((HPlugIn)m_dictPlugins[idPlugIn]).OnClickMenuItem;
+                                    item.Click += (plugIn as HPlugIn).OnClickMenuItem;
                                     //Добавить обработчик запросов для плюг'ина от главной формы
-                                    ((HPlugIn)m_dictPlugins[idPlugIn]).EvtDataAskedHost += new DelegateObjectFunc(FormMain_EvtDataAskedHost);
+                                    (plugIn as HPlugIn).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
 
                                     initializePlugIn(plugIn);
                                 } else {
@@ -271,67 +400,16 @@ namespace Tep64
             return iRes;
         }
 
-        void FormMain_EvtDataAskedHost(object obj)
-        {
-            object rec = null;
-
-            if (((EventArgsDataHost)obj).par[0].GetType ().IsPrimitive == true) {
-                if ((int)((EventArgsDataHost)obj).par[0] == (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB) {
-                    rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett ();
-                } else {
-                    switch ((int)((EventArgsDataHost)obj).id) {
-                        case 1: //FormAboutTepProgram
-                            switch ((int)((EventArgsDataHost)obj).par[0]) {
-                                case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
-                                    rec = TepCommon.Properties.Resources.MainForm;
-                                    break;
-                                case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                                    rec = Application.ProductVersion;                            
-                                    break;
-                                default:
-                                    break;
-                            }
-                            break;
-                        case 2: //PanelTepDictPlugIns
-                            switch ((int)((EventArgsDataHost)obj).par[0]) {
-                                default:
-                                    break;
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                //Отправить ответ (исходный идентификатор + требуемый объект)
-                ((HPlugIn)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost (new EventArgsDataHost((int)((EventArgsDataHost)obj).par[0], new object [] { rec }));
-            }
-            else {
-                if (((EventArgsDataHost)obj).par[0] is ToolStripMenuItem) {
-                    try
-                    {
-                        this.BeginInvoke(new DelegateObjectFunc(onClickMenuItem), obj);
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain_EvtDataAskedHost () - BeginInvoke (addTabPage) [id] = " + (int)((EventArgsDataHost)obj).id);
-                    }
-                }
-                else {
-                }
-            }
-        }
-
         private void onClickMenuItem (object obj) {
-            int id_plugIn = (int)((EventArgsDataHost)obj).id;
+            HPlugIn plugIn = s_plugIns.Find((int)((EventArgsDataHost)obj).id);
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked = ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
 
             if (((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked == true) {
-                m_TabCtrl.AddTabPage(((HPlugIn)m_dictPlugins[id_plugIn]).NameMenuItem);
-                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)((HPlugIn)m_dictPlugins[id_plugIn]).Object);
+                m_TabCtrl.AddTabPage(plugIn.NameMenuItem);
+                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.Object);
                 //m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(new HPanelEdit ());
             } else {
-                m_TabCtrl.TabPages.RemoveAt(m_TabCtrl.IndexOfItemControl((Control)((HPlugIn)m_dictPlugins[id_plugIn]).Object));
+                m_TabCtrl.TabPages.RemoveAt(m_TabCtrl.IndexOfItemControl((Control)plugIn.Object));
             }
         }
 
@@ -342,46 +420,6 @@ namespace Tep64
 
             //Вариант №2
             FindMainMenuItemOfText (e.TabHeaderText).PerformClick ();
-        }
-
-        private IPlugIn loadPlugin(string name, out int iRes)
-        {
-            IPlugIn plugInRes = null;
-            iRes = -1;
-
-            Type objType = null;
-            try
-            {
-                Assembly ass = null;
-                ass = Assembly.LoadFrom (Environment.CurrentDirectory + @"\" + name + @".dll");
-                if (! (ass == null))
-                {
-                    objType = ass.GetType(name + ".PlugIn");
-                }
-                else
-                    ;
-            }
-            catch (Exception e)
-            {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name);
-            }
-
-            if (! (objType == null))
-                try
-                {
-                    plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
-                    plugInRes.Host = (IPlugInHost)this;
-
-                    iRes = 0;
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Name = " + name);
-                }
-            else
-                Logging.Logg().Error(@"FormMain::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-
-            return plugInRes;
         }
 
         private int Initialize (out string strErr) {

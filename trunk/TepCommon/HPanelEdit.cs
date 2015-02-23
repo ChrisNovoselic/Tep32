@@ -112,6 +112,8 @@ namespace TepCommon
         }
 
         protected abstract void initialize(ref DbConnection dbConn, out int err, out string errMsg);
+
+        protected abstract void Activate(bool activate);
     }
 
     public partial class HPanelEdit : HPanelTepCommon
@@ -140,10 +142,10 @@ namespace TepCommon
             container.Add(this);
         }
 
-        protected void Activate (bool activate) {
+        protected override void Activate (bool activate) {
         }
 
-        protected virtual void clear()
+        protected override void clear()
         {
             ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).Rows.Clear();
             ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_EDIT]).Rows.Clear();
