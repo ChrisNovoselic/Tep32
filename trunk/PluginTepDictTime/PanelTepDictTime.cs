@@ -9,10 +9,10 @@ using InterfacePlugIn;
 
 namespace PluginTepDictTime
 {
-    public class PanelTepDictTime : HPanelEdit
+    public class PanelTepDictTime : HPanelEditList
     {
         public PanelTepDictTime(IPlugIn iFunc)
-            : base(iFunc, @"time", @"DESCRIPTION")
+            : base(iFunc, @"time", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
         }

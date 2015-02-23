@@ -9,10 +9,10 @@ using InterfacePlugIn;
 
 namespace PluginTepDictProfilesUnit
 {
-    public class PluginTepDictProfilesUnit : HPanelEdit
+    public class PluginTepDictProfilesUnit : HPanelEditList
     {
         public PluginTepDictProfilesUnit(IPlugIn iFunc)
-            : base(iFunc, @"profiles_unit", @"DESCRIPTION")
+            : base(iFunc, @"profiles_unit", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
         }

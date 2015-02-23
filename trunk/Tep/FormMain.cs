@@ -22,7 +22,7 @@ namespace Tep64
         private static FormParameters s_formParameters;
 
         private static HPlugIns s_plugIns;
-        class HPlugIns : IPlugInHost
+        class HPlugIns : IPlugInHost //, IEnumerable <int>
         {
             private Dictionary<int, IPlugIn> m_dictPlugins;
 
@@ -300,7 +300,7 @@ namespace Tep64
                     for (i = 0; i < tableRes.Rows.Count; i++)
                     {
                         //Проверить разрешение использовать плюгин
-                        if (Int16.Parse(tableRes.Rows[i][@"USE"].ToString()) == 1)
+                        if (Int16.Parse(tableRes.Rows[i][@"IsUse"].ToString()) == 1)
                         {
                             strIdPlugins += tableRes.Rows[i][@"ID_PLUGIN"].ToString() + @",";
                         } else {

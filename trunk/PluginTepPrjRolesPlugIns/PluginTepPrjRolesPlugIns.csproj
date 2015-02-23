@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{96E92AAE-CC42-4F6B-B737-C9AADA560D20}</ProjectGuid>
+    <ProjectGuid>{9B12B796-9E55-43D9-A2DA-A076842A3EB0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TepCommon</RootNamespace>
-    <AssemblyName>TepCommon</AssemblyName>
+    <RootNamespace>PluginTepPrjRolesPlugIns</RootNamespace>
+    <AssemblyName>PluginTepPrjRolesPlugIns</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Tep\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -34,7 +34,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -43,34 +42,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Define.cs" />
-    <Compile Include="HPanelEdit.cs">
+    <Compile Include="PanelTepPrjRolesPlugIns.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="HPanelEditList.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="HPanelEditTree.cs">
-      <SubType>Component</SubType>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\MainForm.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\IconTep.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
@@ -80,6 +55,10 @@
     <ProjectReference Include="..\InterfacePlugIn\InterfacePlugIn.csproj">
       <Project>{25637BE7-4002-46BE-A0D4-4C7EAAAA5148}</Project>
       <Name>InterfacePlugIn</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TepCommon\TepCommon.csproj">
+      <Project>{96E92AAE-CC42-4F6B-B737-C9AADA560D20}</Project>
+      <Name>TepCommon</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

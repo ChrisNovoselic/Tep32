@@ -9,10 +9,10 @@ using InterfacePlugIn;
 
 namespace PluginTepDictRolesUnit
 {
-    public class PanelTepDictRolesUnit : HPanelEdit
+    public class PanelTepDictRolesUnit : HPanelEditList
     {
         public PanelTepDictRolesUnit(IPlugIn iFunc)
-            : base(iFunc, @"roles_unit", @"DESCRIPTION")
+            : base(iFunc, @"roles_unit", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
         }

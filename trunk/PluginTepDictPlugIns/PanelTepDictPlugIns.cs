@@ -9,10 +9,10 @@ using InterfacePlugIn;
 
 namespace PluginTepDictPlugIns
 {
-    public class PanelTepDictPlugIns : HPanelEdit
+    public class PanelTepDictPlugIns : HPanelEditList
     {
         public PanelTepDictPlugIns(IPlugIn iFunc)
-            : base(iFunc, @"plugins", @"DESCRIPTION")
+            : base(iFunc, @"plugins", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
 

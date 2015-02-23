@@ -9,10 +9,10 @@ using InterfacePlugIn;
 
 namespace PluginTepDictMessage
 {
-    public class PanelTepDictMessage : HPanelEdit
+    public class PanelTepDictMessage : HPanelEditList
     {
         public PanelTepDictMessage(IPlugIn iFunc)
-            : base(iFunc, @"messages", @"DESCRIPTION")
+            : base(iFunc, @"messages", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
         }
