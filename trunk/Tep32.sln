@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTepDictProfilesUnit",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTepPrjRolesPlugIns", "PluginTepPrjRolesPlugIns\PluginTepPrjRolesPlugIns.csproj", "{9B12B796-9E55-43D9-A2DA-A076842A3EB0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTepPrjInParameters", "PluginTepPrjInParameters\PluginTepPrjInParameters.csproj", "{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -144,6 +146,16 @@ Global
 		{9B12B796-9E55-43D9-A2DA-A076842A3EB0}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{9B12B796-9E55-43D9-A2DA-A076842A3EB0}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{9B12B796-9E55-43D9-A2DA-A076842A3EB0}.Release|x86.ActiveCfg = Release|Any CPU
+		{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{235EF223-D03D-4E2D-9D2A-BF1CFEDE84BD}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

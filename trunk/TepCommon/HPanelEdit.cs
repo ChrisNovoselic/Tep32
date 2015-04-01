@@ -16,11 +16,6 @@ namespace TepCommon
 {
     public abstract class HPanelTepCommon : TableLayoutPanel, IObjectDictEdit
     {
-        protected DataTable m_tblEdit
-            , m_tblOrigin;
-        protected string m_nameTable;
-        protected string m_strKeyFields;
-
         //Дополнительные действия при сохранении значений
         protected DelegateIntFunc delegateSaveAdding;
 
@@ -47,20 +42,17 @@ namespace TepCommon
             base.Dispose(disposing);
         }
 
-        public HPanelTepCommon(IPlugIn plugIn, string nameTable, string keyFields)
+        public HPanelTepCommon(IPlugIn plugIn)
         {
             this._iFuncPlugin = plugIn;
 
             //Создать объект "словарь" дочерних элементов управления
             m_dictControls = new Dictionary<int, Control>();
 
-            m_nameTable = nameTable;
-            m_strKeyFields = keyFields;
-
             InitializeComponent();
         }
 
-        private void InitializeComponent ()
+        private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
 
@@ -154,9 +146,6 @@ namespace TepCommon
             int err = -1;
             string errMsg = string.Empty;
 
-            m_tblEdit.Clear();
-            m_tblOrigin.Clear();
-
             initialize(out err, out errMsg);
 
             if (!(err == 0))
@@ -172,6 +161,17 @@ namespace TepCommon
 
         protected abstract void Activate(bool activate);
 
+        protected void addLabelDesc(int id)
+        {
+            GroupBox gbDesc = new GroupBox();
+            gbDesc.Text = @"Описание";
+            gbDesc.Dock = DockStyle.Fill;
+            this.Controls.Add(gbDesc, 5, 10);
+            this.SetColumnSpan(gbDesc, 8); this.SetRowSpan(gbDesc, 3);
+
+            m_dictControls.Add(id, new Label());
+        }
+
         protected void addButton(int id, string text)
         {
             m_dictControls.Add(id, new Button());
@@ -184,7 +184,7 @@ namespace TepCommon
             this.SetColumnSpan(m_dictControls[id], 1);
         }
 
-        protected void HPanelEdit_btnSave_Click(object obj, EventArgs ev)
+        protected void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
         {
             int iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB")
                 , err = -1;
@@ -193,15 +193,15 @@ namespace TepCommon
 
             if ((!(dbConn == null)) && (err == 0))
             {
-                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, m_nameTable, m_strKeyFields, m_tblOrigin, m_tblEdit, out err);
+                recUpdateInsertDelete(ref dbConn, out err);
 
                 if (!(err == 0))
                 {
                     errMsg = @"HPanelEdit::HPanelEdit_btnSave_Click () - DbTSQLInterface.RecUpdateInsertDelete () - ...";
                 }
                 else
-                {
-                    m_tblOrigin = m_tblEdit.Copy();
+                {                    
+                    successRecUpdateInsertDelete();
 
                     if (!(delegateSaveAdding == null))
                         delegateSaveAdding(iListenerId);
@@ -226,9 +226,12 @@ namespace TepCommon
             }
         }
 
-        protected void HPanelEdit_btnUpdate_Click(object obj, EventArgs ev)
+        protected abstract void recUpdateInsertDelete(ref DbConnection dbConn, out int err);
+        protected abstract void successRecUpdateInsertDelete();
+
+        protected void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
             clear();
         }
-    }
+    }    
 }

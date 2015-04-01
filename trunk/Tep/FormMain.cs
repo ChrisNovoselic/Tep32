@@ -168,7 +168,7 @@ namespace Tep64
 
             DbSources.Sources().UnRegister(idListener);
 
-            m_TabCtrl.OnClose += new HTabCtrlEx.DelegateOnCloseTab(onCloseTabPage);
+            m_TabCtrl.OnClose += new HTabCtrlEx.DelegateOnHTabCtrlEx(onCloseTabPage);
         }
 
         protected override void HideGraphicsSettings() { }
@@ -405,15 +405,16 @@ namespace Tep64
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked = ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
 
             if (((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked == true) {
-                m_TabCtrl.AddTabPage(plugIn.NameMenuItem);
+                m_TabCtrl.AddTabPage(plugIn.NameMenuItem, plugIn._Id, HTabCtrlEx.TYPE_TAB.FIXED);
                 m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.Object);
                 //m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(new HPanelEdit ());
             } else {
-                m_TabCtrl.TabPages.RemoveAt(m_TabCtrl.IndexOfItemControl((Control)plugIn.Object));
+                m_TabCtrl.RemoveTabPage(plugIn.NameMenuItem);
             }
         }
 
-        private void onCloseTabPage (object sender, CloseTabEventArgs e) {
+        private void onCloseTabPage(object sender, HTabCtrlExEventArgs e)
+        {
             ////Вариант №1
             //FindMainMenuItemOfText (e.TabHeaderText).Checked = false;
             //m_TabCtrl.TabPages.RemoveAt (e.TabIndex);

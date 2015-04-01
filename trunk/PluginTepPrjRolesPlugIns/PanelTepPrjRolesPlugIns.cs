@@ -12,12 +12,12 @@ using InterfacePlugIn;
 
 namespace PluginTepPrjRolesPlugIns
 {
-    public class PanelTepPrjRolesPlugIns : HPanelTepCommon
+    public class PanelTepPrjRolesPlugIns : HPanelEditListCommon
     {
         string m_query;
         DataTable m_tblItem, m_tblAccessUnit;
 
-        protected enum INDEX_CONTROL
+        private enum INDEX_CONTROL
         {
             BUTTON_SAVE, BUTTON_UPDATE
             , DGV_PRJ_ITEM, DGV_PRJ_ACCESS
@@ -104,22 +104,13 @@ namespace PluginTepPrjRolesPlugIns
             //Ширина столбца по ширине род./элемента управления
             dgv.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 
-            GroupBox gbDesc = new GroupBox();
-            gbDesc.Text = @"Описание";
-            gbDesc.Dock = DockStyle.Fill;
-            this.Controls.Add(gbDesc, 5, 10);
-            this.SetColumnSpan(gbDesc, 8); this.SetRowSpan(gbDesc, 3);
-
-            i = INDEX_CONTROL.LABEL_ACCESS_DESC;
-            m_dictControls.Add((int)i, new Label());
-            m_dictControls[(int)i].Dock = DockStyle.Fill;
-            gbDesc.Controls.Add(m_dictControls[(int)i]);
+            addLabelDesc((int)INDEX_CONTROL.LABEL_ACCESS_DESC);
 
             this.ResumeLayout();
 
             //Обработчика нажатия кнопок
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_SAVE]).Click += new System.EventHandler(HPanelEdit_btnSave_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_UPDATE]).Click += new System.EventHandler(HPanelEdit_btnUpdate_Click);
+            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_SAVE]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
+            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_UPDATE]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
 
         protected override void initialize(ref DbConnection dbConn, out int err, out string strErr)

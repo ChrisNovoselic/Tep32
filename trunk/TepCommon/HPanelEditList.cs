@@ -14,6 +14,39 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
+    public abstract class HPanelEditListCommon : HPanelTepCommon
+    {
+        protected DataTable m_tblEdit
+            , m_tblOrigin;
+        protected string m_nameTable;
+        protected string m_strKeyFields;
+
+        public HPanelEditListCommon(IPlugIn plugIn, string nameTable, string keyFields)
+            : base(plugIn)
+        {
+            m_nameTable = nameTable;
+            m_strKeyFields = keyFields;
+        }
+
+        protected override void clear()
+        {
+            m_tblEdit.Clear();
+            m_tblOrigin.Clear();
+
+            base.clear();
+        }
+
+        protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
+        {
+            DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, m_nameTable, m_strKeyFields, m_tblOrigin, m_tblEdit, out err);
+        }
+
+        protected override void successRecUpdateInsertDelete()
+        {
+            m_tblOrigin = m_tblEdit.Copy();
+        }
+    }
+
     partial class HPanelEditList
     {
         protected enum INDEX_CONTROL
@@ -35,7 +68,7 @@ namespace TepCommon
         {
             this.SuspendLayout();
 
-            //Добавить кропки
+            //Добавить кнопки
             INDEX_CONTROL i = INDEX_CONTROL.BUTTON_ADD;
             for (i = INDEX_CONTROL.BUTTON_ADD; i < (INDEX_CONTROL.BUTTON_UPDATE + 1); i++)
                 addButton((int)i, m_arButtonText[(int)i]);
@@ -83,30 +116,21 @@ namespace TepCommon
             //Ширина столбца по ширине род./элемента управления
             ((DataGridView)m_dictControls[(int)i]).Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 
-            GroupBox gbDesc = new GroupBox();
-            gbDesc.Text = @"Описание";
-            gbDesc.Dock = DockStyle.Fill;
-            this.Controls.Add(gbDesc, 5, 10);
-            this.SetColumnSpan(gbDesc, 8); this.SetRowSpan(gbDesc, 3);
-
-            i = INDEX_CONTROL.LABEL_PROP_DESC;
-            m_dictControls.Add((int)i, new Label());
-            m_dictControls[(int)i].Dock = DockStyle.Fill;
-            gbDesc.Controls.Add(m_dictControls[(int)i]);
+            addLabelDesc((int)INDEX_CONTROL.LABEL_PROP_DESC);
 
             this.ResumeLayout();
 
             //Обработчика нажатия кнопок
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_ADD]).Click += new System.EventHandler(HPanelEdit_btnAdd_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_DELETE]).Click += new System.EventHandler(HPanelEdit_btnDelete_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_SAVE]).Click += new System.EventHandler(HPanelEdit_btnSave_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_UPDATE]).Click += new System.EventHandler(HPanelEdit_btnUpdate_Click);
+            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_ADD]).Click += new System.EventHandler(HPanelEditList_btnAdd_Click);
+            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_DELETE]).Click += new System.EventHandler(HPanelEditList_btnDelete_Click);
+            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_SAVE]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
+            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_UPDATE]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
 
         #endregion
     }
 
-    public partial class HPanelEditList : HPanelTepCommon
+    public partial class HPanelEditList : HPanelEditListCommon
     {
         protected string m_nameDescField;
 
@@ -296,14 +320,14 @@ namespace TepCommon
                 ; //Отмена редактирования
         }
 
-        private void HPanelEdit_btnAdd_Click(object obj, EventArgs ev)
+        private void HPanelEditList_btnAdd_Click(object obj, EventArgs ev)
         {
             DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);
             dgv.Rows[dgv.NewRowIndex].Cells[0].Selected = true;
             dgv.BeginEdit(false);
         }
 
-        private void HPanelEdit_btnDelete_Click(object obj, EventArgs ev)
+        private void HPanelEditList_btnDelete_Click(object obj, EventArgs ev)
         {
             int indx = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows[0].Index;
 
