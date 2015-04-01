@@ -34,6 +34,8 @@ namespace TepCommon
         public HPanelEditTree(IPlugIn plugIn)
             : base(plugIn)
         {
+            m_arNameTables = new string[] { @"inalg", @"input" };
+
             m_arTableOrigin = new DataTable[(int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER];
             m_arTableEdit = new DataTable[(int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER];
             
@@ -96,29 +98,43 @@ namespace TepCommon
 
         protected override void initialize(ref DbConnection dbConn, out int err, out string strErr)
         {
+            int i = -1;
+            
             err = 0;
             strErr = string.Empty;
 
             //Заполнить оригинальные таблицы из БД...
-            m_arTableOrigin [(int)INDEX_PARAMETER.ALGORITM] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM inalg", null, null, out err);
+            for (i = 0; i < (int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER; i ++)
+            {
+                m_arTableOrigin[i] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + m_arNameTables[i], null, null, out err);
+
+                if (! (err == 0))
+                    break;
+                else
+                    ;
+            }
+
             if (err == 0)
             {
-                m_arTableOrigin[(int)INDEX_PARAMETER.PUT] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM input", null, null, out err);
-
-                if (err == 0)
+                string[] arNameTableKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { @"time", @"comp_list", @"task" }
+                    , arErrKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { @"словарь 'интервалы времени'"
+                                                                                        , @"словарь 'компоненты станции'"
+                                                                                        , @"проект 'список задач ПК'" };
+                for (i = 0; i < (int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY; i++)
                 {
-                    m_tblTime = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM time", null, null, out err);
+                    m_arTableKey[(int)i] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + m_arNameTables[(int)i], null, null, out err);
 
-                    if (err == 0)
-                        m_tblCompList = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM comp_list", null, null, out err);
+                    if (!(err == 0))
+                        break;
                     else
-                        strErr = @"HPanelEditTree::initialize () - заполнение таблицы со значенями из словаря 'интервалы времени' ...";
+                        ;
                 }
-                else
-                    strErr = @"HPanelEditTree::initialize () - заполнение таблицы с параметрами ...";
+
             }
             else
+            {
                 strErr = @"HPanelEditTree::initialize () - заполнение таблицы с параметрами АЛГоритма ...";
+            }
 
             if (err == 0)
             {//Только если обе выборки  рез-м = 0 (УСПЕХ)
@@ -177,6 +193,11 @@ namespace TepCommon
             base.clear();
         }
 
+        private object[] rowInsDefault
+        {
+            get { return new object [] {}; }
+        }
+
         private void HPanelEditTree_btnAdd_Click(object obj, EventArgs ev)
         {
             TreeNode nodeSel = m_ctrlTreeView.SelectedNode;
@@ -188,7 +209,15 @@ namespace TepCommon
                 switch (level)
                 {
                     case 0:
-                        nodeSel.Nodes.Add((nodeSel.Nodes.Count + 1) + @"-ый параметр");
+                        m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Add(new object [] {
+                            DbTSQLInterface.GetIdNext (m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM]) + 1001
+                            , @"НаимКраткое"
+                            , @"НаимПолное"
+                            , "НомАлгоритм"
+                            , @"Описание_параметра..."
+                            , 0
+                        });
+                        nodeSel.Nodes.Add(m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows[m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Count - 1][@"N_ALG"].ToString ().Trim ());
                         break;
                     default:
                         break;
@@ -200,26 +229,59 @@ namespace TepCommon
 
         private void HPanelEditTree_btnDelete_Click(object obj, EventArgs ev)
         {
-            throw new NotImplementedException();
+            TreeNode nodeSel = m_ctrlTreeView.SelectedNode;
+
+            if (!(nodeSel == null))
+            {
+                int level = nodeSel.Level;
+
+                switch (level)
+                {
+                    case 0:
+                        m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Remove(m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Select (@"ID=" + nodeSel.Name)[0]);
+                        nodeSel.Nodes.Remove(nodeSel);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+                ;
         }
     }
 
     partial class HPanelEditTree
     {
         private enum INDEX_PARAMETER {ALGORITM, PUT, COUNT_INDEX_PARAMETER};
+        private enum INDEX_TABLE_KEY { TIME, COMP_LIST, TASK, COUNT_INDEX_TABLE_KEY };
+        string[] m_arNameTables;
         private DataTable [] m_arTableOrigin
             , m_arTableEdit;
-        private DataTable m_tblTime
-            , m_tblCompList;
+        private DataTable [] m_arTableKey;
 
         protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
         {
-            throw new NotImplementedException();
+            err = 0;
+
+            for (INDEX_PARAMETER i = INDEX_PARAMETER.ALGORITM; i < INDEX_PARAMETER.COUNT_INDEX_PARAMETER; i++)
+            {
+                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn
+                                            , m_arNameTables[(int)i]
+                                            , @"ID"
+                                            , m_arTableOrigin[(int)i]
+                                            , m_arTableEdit[(int)i]
+                                            , out err);
+
+                if (!(err == 0))
+                    break;
+                else
+                    ;
+            }
         }
 
         protected override void successRecUpdateInsertDelete()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         private void TreeView_PrjAlgAfterSelect(object obj, TreeViewEventArgs ev)
