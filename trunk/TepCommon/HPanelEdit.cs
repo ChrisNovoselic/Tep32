@@ -172,6 +172,11 @@ namespace TepCommon
             m_dictControls.Add(id, new Label());
         }
 
+        //Для отображения актуальной "подсказки" для свойства
+        protected void HPanelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
+        {
+        }
+
         protected void addButton(int id, string text)
         {
             m_dictControls.Add(id, new Button());

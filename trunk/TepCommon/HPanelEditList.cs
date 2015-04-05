@@ -176,7 +176,7 @@ namespace TepCommon
 
                 DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
                 //Обработчик события "Выбор строки"
-                dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvDictPropSelectionChanged);
+                dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvPropSelectionChanged);
                 ////Обработчик события "Редактирование свойства"
                 //dgv.CellStateChanged += new DataGridViewCellStateChangedEventHandler(HPanelEdit_dgvDictPropStateChanged);
                 //Обработчик события "Редактирование свойства"
@@ -185,7 +185,7 @@ namespace TepCommon
                 dgv.AllowUserToDeleteRows = false;
                 //Заполнение содержимым...
                 for (i = 0; i < m_tblEdit.Columns.Count; i++)
-                    dgv.Rows.Add(new object[] { m_tblEdit.Columns[i].ColumnName, string.Empty });
+                    dgv.Rows.Add(new object[] { m_tblEdit.Columns[i].ColumnName, string.Empty } );
                 //Только "для чтения", если строк нет
                 dgv.ReadOnly = !(m_tblEdit.Rows.Count > 0);
 
@@ -219,11 +219,6 @@ namespace TepCommon
                 //1-ый столбец "для чтения"
             dgv.Columns[0].ReadOnly =
                 true;
-        }
-
-        //Для отображения актуальной "подсказки" для свойства
-        private void HPanelEdit_dgvDictPropSelectionChanged(object obj, EventArgs ev)
-        {
         }
 
         //В том числе и для отображения актуальной "подсказки" для свойства
