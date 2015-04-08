@@ -10,12 +10,12 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepPrjInParameters
+namespace PluginTepPrjOutParameters
 {
-    public class PluginTepPrjInParameters : HPanelEditTree
+    public class PluginTepPrjOutParameters : HPanelEditTree
     {
-        public PluginTepPrjInParameters(IPlugIn iFunc)
-            : base(iFunc, @"inalg, input")
+        public PluginTepPrjOutParameters(IPlugIn iFunc)
+            : base(iFunc, @"outalg, output")
         {
             InitializeComponent();
         }
@@ -30,15 +30,15 @@ namespace PluginTepPrjInParameters
         public PlugIn()
             : base()
         {
-            _Id = 8;
+            _Id = 12;
 
             _nameOwnerMenuItem = @"Проект";
-            _nameMenuItem = @"Входные параметры";
+            _nameMenuItem = @"Выходные параметры";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTepPrjInParameters));
+            createObject(typeof(PluginTepPrjOutParameters));
 
             base.OnClickMenuItem(obj, ev);
         }

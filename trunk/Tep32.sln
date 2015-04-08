@@ -29,6 +29,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTepDictMeasure", "Plu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTepPrjTask", "PluginTepPrjTask\PluginTepPrjTask.csproj", "{BF3826EE-7B20-4E32-A806-22D683200BE7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTepPrjRolesProfiles", "PluginTepPrjRolesProfiles\PluginTepPrjRolesProfiles.csproj", "{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTepPrjOutParameters", "PluginTepPrjOutParameters\PluginTepPrjOutParameters.csproj", "{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -180,6 +184,26 @@ Global
 		{BF3826EE-7B20-4E32-A806-22D683200BE7}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{BF3826EE-7B20-4E32-A806-22D683200BE7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{BF3826EE-7B20-4E32-A806-22D683200BE7}.Release|x86.ActiveCfg = Release|Any CPU
+		{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}.Release|x86.ActiveCfg = Release|Any CPU
+		{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

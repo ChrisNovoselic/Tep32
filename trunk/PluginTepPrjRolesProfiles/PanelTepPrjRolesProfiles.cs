@@ -10,12 +10,12 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepPrjInParameters
+namespace PluginTepPrjRolesProfiles
 {
-    public class PluginTepPrjInParameters : HPanelEditTree
+    public class PanelTepPrjRolesProfiles : PanelTepPrjRolesAccess
     {
-        public PluginTepPrjInParameters(IPlugIn iFunc)
-            : base(iFunc, @"inalg, input")
+        public PanelTepPrjRolesProfiles(IPlugIn iFunc)
+            : base(iFunc, @"profiles", @"ID_EXT,ID_UNIT", @"profiles_unit")
         {
             InitializeComponent();
         }
@@ -30,15 +30,15 @@ namespace PluginTepPrjInParameters
         public PlugIn()
             : base()
         {
-            _Id = 8;
+            _Id = 11;
 
             _nameOwnerMenuItem = @"Проект";
-            _nameMenuItem = @"Входные параметры";
+            _nameMenuItem = @"Права доступа элементов интерфейса";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTepPrjInParameters));
+            createObject(typeof(PanelTepPrjRolesProfiles));
 
             base.OnClickMenuItem(obj, ev);
         }
