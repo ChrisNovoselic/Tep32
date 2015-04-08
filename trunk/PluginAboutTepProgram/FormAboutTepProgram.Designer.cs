@@ -111,7 +111,7 @@
             this.Name = "FormAboutTepProgram";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "AboutTepForm";
+            this.Text = "О программе";
             ((System.ComponentModel.ISupportInitialize)(this.m_pictureBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

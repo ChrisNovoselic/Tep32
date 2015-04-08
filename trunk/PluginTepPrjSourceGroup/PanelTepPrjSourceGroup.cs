@@ -2,27 +2,24 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Data; //DataTable
-using System.Data.Common; //DbConnection
-using System.Windows.Forms; //DataGridView...
 
 using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepPrjRolesProfiles
+namespace PluginTepPrjSourceGroup
 {
-    public class PanelTepPrjRolesProfiles : PanelTepPrjRolesAccess
+    public class PanelTepPrjSourceGroup : HPanelEditList
     {
-        public PanelTepPrjRolesProfiles(IPlugIn iFunc)
-            : base(iFunc, @"profiles", @"ID_EXT,ID_UNIT", @"profiles_unit", @"VALUE")
+        public PanelTepPrjSourceGroup(IPlugIn iFunc)
+            : base(iFunc, @"source_group", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
         }
 
         private void InitializeComponent()
-        {            
-        }        
+        {
+        }
     }
 
     public class PlugIn : HFuncDictEdit
@@ -30,15 +27,16 @@ namespace PluginTepPrjRolesProfiles
         public PlugIn()
             : base()
         {
-            _Id = 11;
+            _Id = 14;
 
             _nameOwnerMenuItem = @"Проект";
-            _nameMenuItem = @"Права доступа элементов интерфейса";
+            _nameMenuItem = @"Группы источников данных";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PanelTepPrjRolesProfiles));
+            createObject(typeof(PanelTepPrjSourceGroup));
+            //createObject(this.GetType());
 
             base.OnClickMenuItem(obj, ev);
         }

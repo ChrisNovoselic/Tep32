@@ -16,6 +16,7 @@ namespace TepCommon
         string m_query;
         string m_nameTableAccessUnit;
         DataTable m_tblItem, m_tblAccessUnit;
+        string m_strNameFieldValue;
 
         private enum INDEX_CONTROL
         {
@@ -26,10 +27,11 @@ namespace TepCommon
         };
         protected static string[] m_arButtonText = { @"Сохранить", @"Обновить" };
 
-        public PanelTepPrjRolesAccess(IPlugIn iFunc, string nameTableTarget, string idFields, string nameTableAccessUnit)
+        public PanelTepPrjRolesAccess(IPlugIn iFunc, string nameTableTarget, string idFields, string nameTableAccessUnit, string strNameFieldValue)
             : base(iFunc, nameTableTarget, idFields)
         {
             m_nameTableAccessUnit = nameTableAccessUnit;
+            m_strNameFieldValue = strNameFieldValue;
 
             InitializeComponent();
         }
@@ -140,15 +142,12 @@ namespace TepCommon
                     }
 
                     //Обработчик события "Выбор строки"
-                    dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjAccessSelectionChanged);
-                    //Обработчик события "Редактирование свойства"
-                    dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellEndEdit);
-                    //dgv.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellEndEdit);
+                    dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjAccessSelectionChanged);                    
                 }
                 else
                     //Только "для чтения", если строк нет
                     dgv.ReadOnly = true;
-                
+
                 dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ITEM] as DataGridView;
                 if (m_tblItem.Rows.Count > 0)
                 {
@@ -163,6 +162,16 @@ namespace TepCommon
                 else
                     //Только "для чтения", если строк нет
                     dgv.ReadOnly = true;
+
+                dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
+                if (m_tblAccessUnit.Rows.Count > 0)
+                {
+                    //Обработчик события "Редактирование свойства"
+                    //dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellEndEdit);
+                    dgv.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellValueChanged);
+                }
+                else
+                    ;
             }
 
             else
@@ -183,17 +192,22 @@ namespace TepCommon
 
         private void HPanelEditTree_dgvPrjItemSelectionChanged(object obj, EventArgs ev)
         {
+            ((DataGridView)obj).CellValueChanged -= HPanelEditTree_dgvPrjAccessCellValueChanged;
+            
             if (((DataGridView)obj).SelectedRows.Count == 1)
                 setPrjAccessValues(((DataGridView)obj).SelectedRows[0].Index);
             else
                 ;
+
+            ((DataGridView)obj).CellValueChanged += HPanelEditTree_dgvPrjAccessCellValueChanged;
         }
 
         private void HPanelEditTree_dgvPrjAccessSelectionChanged(object obj, EventArgs ev)
         {
         }
 
-        private void HPanelEditTree_dgvPrjAccessCellEndEdit(object obj, DataGridViewCellEventArgs ev)
+        //private void HPanelEditTree_dgvPrjAccessCellEndEdit(object obj, DataGridViewCellEventArgs ev)
+        private void HPanelEditTree_dgvPrjAccessCellValueChanged(object obj, DataGridViewCellEventArgs ev)
         {
             DataGridView dgvItem = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ITEM] as DataGridView
                 , dgvAccess = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
@@ -203,7 +217,7 @@ namespace TepCommon
 
             if (rowsAccess.Length == 1)
             {
-                rowsAccess[0][@"IsUse"] = (((DataGridViewCheckBoxCell)dgvAccess.Rows[ev.RowIndex].Cells[ev.ColumnIndex]).Value.ToString() == true.ToString ()) ? 1 : 0;
+                rowsAccess[0][m_strNameFieldValue] = (((DataGridViewCheckBoxCell)dgvAccess.Rows[ev.RowIndex].Cells[ev.ColumnIndex]).Value.ToString() == true.ToString ()) ? 1 : 0;
             }
             else
                 ; //??? Ошибка...
@@ -216,7 +230,7 @@ namespace TepCommon
             DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
             for (int i = 0; i < dgv.Rows.Count; i++)
             {
-                ((DataGridViewCheckBoxCell)dgv.Rows[i].Cells[1]).Value = Int16.Parse(rowsAccessUnit[i][@"IsUse"].ToString()) == 1;
+                ((DataGridViewCheckBoxCell)dgv.Rows[i].Cells[1]).Value = Int16.Parse(rowsAccessUnit[i][m_strNameFieldValue].ToString()) == 1;
             }
         }
     }

@@ -114,6 +114,7 @@
     <Compile Include="HTepTabCtrlEx.Designer.cs">
       <DependentUpon>HTepTabCtrlEx.cs</DependentUpon>
     </Compile>
+    <Compile Include="HTepUsers.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="FormMain.resx">

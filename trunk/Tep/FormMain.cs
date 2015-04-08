@@ -205,6 +205,8 @@ namespace Tep64
         {
             int iRes = -1;
 
+            m_report.ActionReport(@"Загрузка главного окна");
+
             ProgramBase.s_iAppID = Int32.Parse((string)Properties.Resources.AppID);
 
             if (!(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].Ready == 0))
@@ -223,11 +225,11 @@ namespace Tep64
 
             //System.ComponentModel.ComponentResourceManager resources = System.ComponentModel.ComponentResourceManager(typeof (...;
             //Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TepCommon.MainForm.ico");
-            this.Icon = (Icon)TepCommon.Properties.Resources.MainForm;
-
-            m_report.ActionReport (@"Загрузка главного окна");
+            this.Icon = (Icon)TepCommon.Properties.Resources.MainForm;            
 
             this.Focus();
+
+            m_report.ClearStates(false);
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -286,24 +288,30 @@ namespace Tep64
 
             HUsers.GetUsers(ref dbConn, @"DOMAIN_NAME='" + strUserDomainName + @"'", string.Empty, out tableRes, out iRes);
 
-            if (iRes == 0) {
+            if ((iRes == 0)
+                && (! (tableRes == null))
+                && (tableRes.Rows.Count > 0)) {
                 HUsers.GetRoles(ref dbConn, @"ID_EXT=" + tableRes.Rows[0][@"ID_ROLE"], string.Empty, out tableRes, out iRes);
 
-                if (iRes == 0) {
+                if ((iRes == 0)
+                    && (! (tableRes == null))
+                    && (tableRes.Rows.Count > 0)) {
                     initializeLogging ();
 
                     int i = -1;
                     //Сформировать список идентификаторов плюгинов
                     string strIdPlugins = string.Empty;
 
-                    //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
+                    //Циклл по строкам - идентификатрам/разрешениям использовать плюгин                    
                     for (i = 0; i < tableRes.Rows.Count; i++)
                     {
                         //Проверить разрешение использовать плюгин
                         if (Int16.Parse(tableRes.Rows[i][@"IsUse"].ToString()) == 1)
                         {
                             strIdPlugins += tableRes.Rows[i][@"ID_PLUGIN"].ToString() + @",";
-                        } else {
+                        }
+                        else
+                        {
                         }
                     }
                     //Удалить крайний символ
@@ -325,19 +333,21 @@ namespace Tep64
                             //Загрузить плюгин
                             plugIn = s_plugIns.Load(tableRes.Rows[i][@"NAME"].ToString().Trim(), out iRes);
 
-                            if (! (iRes < 0)) {
+                            if (!(iRes < 0))
+                            {
                                 //Идентификатор плюг'ина
-                                idPlugIn = Int16.Parse (tableRes.Rows[i][@"ID"].ToString ());
+                                idPlugIn = Int16.Parse(tableRes.Rows[i][@"ID"].ToString());
                                 //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
                                 if (((HPlugIn)plugIn)._Id == idPlugIn)
                                 {
                                     s_plugIns.Add(idPlugIn, plugIn);
 
                                     //Поиск пункта "родительского" пункта меню для плюг'ина
-                                    miOwner = FindMainMenuItemOfText ((plugIn as HPlugIn).NameOwnerMenuItem);
+                                    miOwner = FindMainMenuItemOfText((plugIn as HPlugIn).NameOwnerMenuItem);
 
                                     //Проверка найден ли "родительский" пункт меню для плюг'ина
-                                    if (miOwner == null) {
+                                    if (miOwner == null)
+                                    {
                                         int indx = -1;
                                         string strNameItem = (plugIn as HPlugIn).NameOwnerMenuItem;
                                         if (strNameItem.Equals(@"Помощь") == false)
@@ -348,9 +358,11 @@ namespace Tep64
                                         if (indx < 0)
                                             this.MainMenuStrip.Items.Add(new ToolStripMenuItem(strNameItem));
                                         else
-                                            this.MainMenuStrip.Items.Insert(indx, new ToolStripMenuItem (strNameItem));
+                                            this.MainMenuStrip.Items.Insert(indx, new ToolStripMenuItem(strNameItem));
                                         miOwner = FindMainMenuItemOfText((plugIn as HPlugIn).NameOwnerMenuItem);
-                                    } else {
+                                    }
+                                    else
+                                    {
                                     }
 
                                     //Добавить пункт меню для плюг'ина
@@ -361,18 +373,24 @@ namespace Tep64
                                     (plugIn as HPlugIn).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
 
                                     initializePlugIn(plugIn);
-                                } else {
+                                }
+                                else
+                                {
                                     iRes = -2; //Несоответствие идентификатроов
                                 }
-                            } else {
+                            }
+                            else
+                            {
                             }
                         }
 
                         if (iRes == 0)
                             //Успешный запуск на выполнение приложения
                             Start();
-                        else {
-                            switch (iRes) {
+                        else
+                        {
+                            switch (iRes)
+                            {
                                 case -2:
                                     strErr = @"Не удалось загрузить все разрешенные для использования модули из списка (несоответствие идентификатроов)";
                                     break;
@@ -385,13 +403,16 @@ namespace Tep64
                     }
                     else
                     {
+                        if (iRes == 0) iRes = -1; else ;
                         strErr = @"Не удалось сформировать список разрешенных для использования модулей";
                     }
                 } else {
+                    if (iRes == 0) iRes = -1; else ;
                     strErr = @"Не удалось сформировать правила для роли пользователя";
                 }
             }
             else {
+                if (iRes == 0) iRes = -1; else ;
                 strErr = @"Не удалось идентифицировать пользователя";
             }
 

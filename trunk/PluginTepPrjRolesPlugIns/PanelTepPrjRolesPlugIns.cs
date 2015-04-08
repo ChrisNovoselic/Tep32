@@ -15,7 +15,7 @@ namespace PluginTepPrjRolesPlugIns
     public class PanelTepPrjRolesPlugIns : PanelTepPrjRolesAccess
     {
         public PanelTepPrjRolesPlugIns(IPlugIn iFunc)
-            : base(iFunc, @"roles", @"ID_EXT,ID_PLUGIN", @"plugins")
+            : base(iFunc, @"roles", @"ID_EXT,ID_PLUGIN", @"plugins", @"IsUse")
         {
             InitializeComponent();
         }
