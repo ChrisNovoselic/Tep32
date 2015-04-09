@@ -32,7 +32,10 @@ namespace Tep64
         {
             this.MainMenuStrip = new System.Windows.Forms.MenuStrip();
             this.файлToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.профайлToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.профайлЗагрузитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.профайлСохранитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.профайлАвтоЗагрузитьСохранитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.выходToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 
             this.настройкаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -58,16 +61,41 @@ namespace Tep64
             // файлToolStripMenuItem
             // 
             this.файлToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripSeparator1,
+            this.профайлToolStripMenuItem,
+            new System.Windows.Forms.ToolStripSeparator(),
             this.выходToolStripMenuItem});
             this.файлToolStripMenuItem.Name = "файлToolStripMenuItem";
             this.файлToolStripMenuItem.Size = new System.Drawing.Size(45, 20);
             this.файлToolStripMenuItem.Text = "Файл";
             // 
-            // toolStripSeparator1
+            // профайлToolStripMenuItem
             // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(104, 6);
+            this.профайлToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.профайлЗагрузитьToolStripMenuItem,
+            this.профайлСохранитьToolStripMenuItem,
+            new System.Windows.Forms.ToolStripSeparator(),
+            this.профайлАвтоЗагрузитьСохранитьToolStripMenuItem});
+            this.профайлToolStripMenuItem.Name = "профайлToolStripMenuItem";
+            this.профайлToolStripMenuItem.Text = "Профайл";            
+            // 
+            // профайлЗагрузитьToolStripMenuItem
+            // 
+            this.профайлЗагрузитьToolStripMenuItem.Name = "профайлЗагрузитьToolStripMenuItem";
+            this.профайлЗагрузитьToolStripMenuItem.Text = "Загрузить";
+            this.профайлЗагрузитьToolStripMenuItem.Click += new System.EventHandler(this.профайлЗагрузитьToolStripMenuItem_Click);
+            // 
+            // профайлСохранитьToolStripMenuItem
+            // 
+            this.профайлСохранитьToolStripMenuItem.Name = "профайлСохранитьToolStripMenuItem";
+            this.профайлСохранитьToolStripMenuItem.Text = "Сохранить";
+            this.профайлСохранитьToolStripMenuItem.Click += new System.EventHandler(this.профайлСохранитьToolStripMenuItem_Click);
+            // 
+            // профайлАвтоЗагрузитьСохранитьToolStripMenuItem
+            // 
+            this.профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Name = "профайлАвтоЗагрузитьСохранитьToolStripMenuItem";
+            this.профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Text = "АвтоЗагрузить/Сохранить";
+            this.профайлАвтоЗагрузитьСохранитьToolStripMenuItem.CheckOnClick = true;
+            this.профайлАвтоЗагрузитьСохранитьToolStripMenuItem.CheckedChanged += new System.EventHandler(this.профайлАвтоЗагрузитьСохранитьToolStripMenuItem_CheckedChanged);
             // 
             // выходToolStripMenuItem
             // 
@@ -129,7 +157,10 @@ namespace Tep64
         #endregion
 
         private System.Windows.Forms.ToolStripMenuItem файлToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem профайлToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem профайлЗагрузитьToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem профайлСохранитьToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem профайлАвтоЗагрузитьСохранитьToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem выходToolStripMenuItem;
         
         private System.Windows.Forms.ToolStripMenuItem настройкаToolStripMenuItem;

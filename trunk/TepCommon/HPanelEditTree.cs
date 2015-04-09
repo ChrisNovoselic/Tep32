@@ -245,6 +245,7 @@ namespace TepCommon
             m_ctrlTreeView.HideSelection = false;
             //m_ctrlTreeView.BeforeSelect += new TreeViewCancelEventHandler(TreeView_BeforeSelect);
             m_ctrlTreeView.AfterSelect += new TreeViewEventHandler(TreeView_AfterSelect);
+            m_ctrlTreeView.AfterLabelEdit += new NodeLabelEditEventHandler(TreeView_AfterLabelEdit);
 
             //Добавить "список" свойств словарной величины
             DataGridView dgv;
@@ -278,6 +279,8 @@ namespace TepCommon
             dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             //Ширина столбца по ширине род./элемента управления
             dgv.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            //Обработчик события "Выбор строки"
+            dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvPropSelectionChanged);
 
             //Создать "список" дополн./парамеиров (TIME, COMP)
             i = INDEX_CONTROL.DGV_PRJ_DETAIL;
@@ -307,6 +310,10 @@ namespace TepCommon
             dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             //Ширина столбца по ширине род./элемента управления
             dgv.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            //Обработчик события "Выбор строки"
+            dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjDetailSelectionChanged);
+            //dgv.CellEndEdit += new DataGridViewCellEventHandler (HPanelEditTree_dgvPrjDetailCellEndEdit);
+            dgv.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjDetailCellValueChanged);
 
             addLabelDesc((int)INDEX_CONTROL.LABEL_PARAM_DESC);
 
@@ -434,24 +441,17 @@ namespace TepCommon
                     }
                     else
                     {
-                        addNodeNull(nodeTask);                        
+                        addNodeNull(nodeTask);
                     }
                 }
 
-                m_ctrlTreeView.AfterLabelEdit += new NodeLabelEditEventHandler(TreeView_AfterLabelEdit);
-                
-                DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP]);
-                //Обработчик события "Выбор строки"
-                dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvPropSelectionChanged);
+                DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP]);                
                 //Только для чтения
                 dgv.ReadOnly = true;
 
                 dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_DETAIL]);
-                //Обработчик события "Выбор строки"
-                dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjDetailSelectionChanged);
-                dgv.Columns[0].ReadOnly = true;
-                //dgv.CellEndEdit += new DataGridViewCellEventHandler (HPanelEditTree_dgvPrjDetailCellEndEdit);
-                dgv.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjDetailCellValueChanged);
+                //Только для чтения
+                dgv.Columns[0].ReadOnly = true;                
 
                 m_Level = INDEX_LEVEL.TASK;
                 m_ctrlTreeView.SelectedNode = m_ctrlTreeView.Nodes[0];

@@ -20,6 +20,7 @@ namespace Tep64
     public partial class FormMain : FormMainBaseWithStatusStrip
     {        
         private static FormParameters s_formParameters;
+        private static HTepUsers m_User;
 
         private static HPlugIns s_plugIns;
         class HPlugIns : IPlugInHost //, IEnumerable <int>
@@ -163,6 +164,8 @@ namespace Tep64
 
             int idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString ());
 
+            m_User = new HTepUsers(idListener);
+
             ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
             s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
 
@@ -174,6 +177,64 @@ namespace Tep64
         protected override void HideGraphicsSettings() { }
         protected override void UpdateActiveGui(int type) { }
 
+        private void loadProfile()
+        {
+            HPlugIn plugIn;
+            string ids = HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS)
+                , strNameOwnerMenuItem = string.Empty, strNameMenuItem = string.Empty;
+            string[] arIds = ids.Split(',');
+            ////Вариант №1
+            //ToolStripItem[] menuItems;
+            //Вариант №2
+            ToolStripItem menuItem;
+
+            foreach (string id in arIds)
+            {
+                plugIn = s_plugIns.Find(Convert.ToInt32(id));
+                strNameOwnerMenuItem = plugIn.NameOwnerMenuItem;
+                strNameMenuItem = plugIn.NameMenuItem;
+
+                ////Вариант №1
+                //menuItems = this.MainMenuStrip.Items.Find(strNameMenuItem, true);
+                //menuItem = menuItems[0];
+                //Вариант №2
+                menuItem = FindMainMenuItemOfText(strNameMenuItem);
+
+                if ((menuItem as ToolStripMenuItem).Checked == false)
+                    menuItem.PerformClick();
+                else
+                    ;
+            }
+        }
+
+        private void профайлЗагрузитьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            loadProfile();
+        }
+
+        private void saveProfile()
+        {
+            int iListenerId = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString());
+
+            string ids = m_TabCtrl.VisibleIDs;
+
+            HTepUsers.SetAllowed(iListenerId, (int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS, ids);
+
+            DbSources.Sources().UnRegister(iListenerId);
+        }
+
+        private void профайлСохранитьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            saveProfile();
+        }
+
+        private void профайлАвтоЗагрузитьСохранитьToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
+        {
+            профайлЗагрузитьToolStripMenuItem.Enabled =
+            профайлСохранитьToolStripMenuItem.Enabled =
+                ! (sender as ToolStripMenuItem).Checked;
+        }
+
         /// <summary>
         /// Обработчик выбора пункта меню 'Файл - выход'
         /// </summary>
@@ -182,7 +243,7 @@ namespace Tep64
         private void выходToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Close ();
-        }
+        }        
 
         private void бДКонфигурацииToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -230,6 +291,14 @@ namespace Tep64
             this.Focus();
 
             m_report.ClearStates(false);
+        }
+
+        protected override void Abort(string msg, bool bThrow = false, bool bSupport = true)
+        {
+            //???Удалить все пункты меню...
+
+
+            base.Abort(msg, bThrow, bSupport);
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -284,14 +353,10 @@ namespace Tep64
 
             idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, @"MAIN_DB");
             dbConn = DbSources.Sources().GetConnection (idListener, out iRes);
-            strUserDomainName = Environment.UserDomainName + @"\" + Environment.UserName;
 
-            HUsers.GetUsers(ref dbConn, @"DOMAIN_NAME='" + strUserDomainName + @"'", string.Empty, out tableRes, out iRes);
-
-            if ((iRes == 0)
-                && (! (tableRes == null))
-                && (tableRes.Rows.Count > 0)) {
-                HUsers.GetRoles(ref dbConn, @"ID_EXT=" + tableRes.Rows[0][@"ID_ROLE"], string.Empty, out tableRes, out iRes);
+            if (iRes == 0) {
+                //HUsers.GetRoles(ref dbConn, @"ID_EXT=" + tableRes.Rows[0][@"ID_ROLE"], string.Empty, out tableRes, out iRes);
+                HUsers.GetRoles(ref dbConn, @"ID_EXT=" + HTepUsers.Role, string.Empty, out tableRes, out iRes);
 
                 if ((iRes == 0)
                     && (! (tableRes == null))
@@ -385,8 +450,13 @@ namespace Tep64
                         }
 
                         if (iRes == 0)
+                        {
+                            профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Checked = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED));
+                            профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Enabled = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_ACCESS));
+
                             //Успешный запуск на выполнение приложения
                             Start();
+                        }
                         else
                         {
                             switch (iRes)
@@ -432,6 +502,12 @@ namespace Tep64
             } else {
                 m_TabCtrl.RemoveTabPage(plugIn.NameMenuItem);
             }
+
+            if ((профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true)
+                //профайлСохранитьToolStripMenuItem.PerformClick();
+                saveProfile();
+            else
+                ;
         }
 
         private void onCloseTabPage(object sender, HTabCtrlExEventArgs e)
@@ -462,6 +538,15 @@ namespace Tep64
             if (iRes == 0)
             {
                 iRes = initializeMenu(out strErr);
+
+                if (iRes == 0)
+                    if ((профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true)
+                        //профайлЗагрузитьToolStripMenuItem.PerformClick();
+                        loadProfile();
+                    else
+                        ;
+                else
+                    ;
             } else {
                 //Сообщение уже сформировано
             }

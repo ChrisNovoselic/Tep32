@@ -22,7 +22,7 @@ namespace PluginTepPrjRolesPlugIns
 
         private void InitializeComponent()
         {            
-        }        
+        }
     }
 
     public class PlugIn : HFuncDictEdit

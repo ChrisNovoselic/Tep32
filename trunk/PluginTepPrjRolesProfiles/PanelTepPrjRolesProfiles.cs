@@ -22,7 +22,28 @@ namespace PluginTepPrjRolesProfiles
 
         private void InitializeComponent()
         {            
-        }        
+        }
+
+        protected override void selectAccessUnit(ref DbConnection dbConn, out int err)
+        {
+            base.selectAccessUnit(ref dbConn, out err);
+
+            List<int> listIdNotAccessUnit = new List<int> ();
+            DataRow[] rowsNotAccessUnit = m_tblAccessUnit.Select(@"NOT ID_UNIT=" + 8);
+            foreach (DataRow r in rowsNotAccessUnit)
+            {
+                listIdNotAccessUnit.Add(Int32.Parse (r[@"ID"].ToString().Trim()));
+                m_tblAccessUnit.Rows.Remove(r);
+            }
+
+            foreach (int id in listIdNotAccessUnit)
+            {
+                rowsNotAccessUnit = m_tblEdit.Select(m_strKeyFields.Split(',')[1] + @"=" + id);
+
+                foreach (DataRow r in rowsNotAccessUnit)
+                    m_tblEdit.Rows.Remove(r);
+            }
+        }
     }
 
     public class PlugIn : HFuncDictEdit

@@ -73,48 +73,67 @@ namespace TepCommon
             for (i = INDEX_CONTROL.BUTTON_ADD; i < (INDEX_CONTROL.BUTTON_UPDATE + 1); i++)
                 addButton((int)i, m_arButtonText[(int)i]);
 
+            DataGridView dgv = null;
             //Добавить "список" словарных величин
             i = INDEX_CONTROL.DGV_DICT_ITEM;
             m_dictControls.Add((int)i, new DataGridView());
-            m_dictControls[(int)i].Dock = DockStyle.Fill;
+            dgv = ((DataGridView)m_dictControls[(int)i]);
+            dgv.Dock = DockStyle.Fill;
             //Разместить эл-т упр-я
-            this.Controls.Add(m_dictControls[(int)i], 1, 0);
-            this.SetColumnSpan(m_dictControls[(int)i], 4); this.SetRowSpan(m_dictControls[(int)i], 13);
+            this.Controls.Add(dgv, 1, 0);
+            this.SetColumnSpan(dgv, 4); this.SetRowSpan(dgv, 13);
             //Добавить столбец
-            ((DataGridView)m_dictControls[(int)i]).Columns.AddRange(new DataGridViewColumn[] {
+            dgv.Columns.AddRange(new DataGridViewColumn[] {
                 new DataGridViewTextBoxColumn ()
                 });
             //Запретить выделение "много" строк
-            ((DataGridView)m_dictControls[(int)i]).MultiSelect = false;
+            dgv.MultiSelect = false;
             //Установить режим выделения - "полная" строка
-            ((DataGridView)m_dictControls[(int)i]).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             //Установить режим "невидимые" заголовки столбцов
-            ((DataGridView)m_dictControls[(int)i]).ColumnHeadersVisible = false;
+            dgv.ColumnHeadersVisible = false;
             //Ширина столбца по ширине род./элемента управления
-            ((DataGridView)m_dictControls[(int)i]).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dgv.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            //Обработчик события "Выбор строки"
+            dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvDictEditSelectionChanged);
+            ////Обработчик события "Редактирование строки"
+            //dgv.CellStateChanged += new DataGridViewCellEventHandler(HPanelEdit_dgvDictEditCellStateChanged);
+            //Обработчик события "Редактирование строки"
+            dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEdit_dgvDictEditCellEndEdit);
+            //Запретить удаление строк
+            dgv.AllowUserToDeleteRows = false;
 
             //Добавить "список" свойств словарной величины
             i = INDEX_CONTROL.DGV_DICT_PROP;
             m_dictControls.Add((int)i, new DataGridView());
-            m_dictControls[(int)i].Dock = DockStyle.Fill;
+            dgv = ((DataGridView)m_dictControls[(int)i]);
+            dgv.Dock = DockStyle.Fill;
             //Разместить эл-т упр-я
-            this.Controls.Add(m_dictControls[(int)i], 5, 0);
-            this.SetColumnSpan(m_dictControls[(int)i], 8); this.SetRowSpan(m_dictControls[(int)i], 10);
+            this.Controls.Add(dgv, 5, 0);
+            this.SetColumnSpan(dgv, 8); this.SetRowSpan(m_dictControls[(int)i], 10);
             //Добавить столбцы
-            ((DataGridView)m_dictControls[(int)i]).Columns.AddRange(new DataGridViewColumn[] {
+            dgv.Columns.AddRange(new DataGridViewColumn[] {
                     new DataGridViewTextBoxColumn ()
                     , new DataGridViewTextBoxColumn ()
                 });
             //1-ый столбец
-            ((DataGridView)m_dictControls[(int)i]).Columns[0].HeaderText = @"Свойство"; ((DataGridView)m_dictControls[(int)i]).Columns[0].ReadOnly = true;
+            dgv.Columns[0].HeaderText = @"Свойство"; ((DataGridView)m_dictControls[(int)i]).Columns[0].ReadOnly = true;
             //Ширина столбца по ширине род./элемента управления
-            ((DataGridView)m_dictControls[(int)i]).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dgv.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             //2-ой столбец
-            ((DataGridView)m_dictControls[(int)i]).Columns[1].HeaderText = @"Значение";
+            dgv.Columns[1].HeaderText = @"Значение";
             //Установить режим выделения - "полная" строка
-            ((DataGridView)m_dictControls[(int)i]).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             //Ширина столбца по ширине род./элемента управления
-            ((DataGridView)m_dictControls[(int)i]).Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dgv.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;            
+            //Обработчик события "Выбор строки"
+            dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvPropSelectionChanged);
+            ////Обработчик события "Редактирование свойства"
+            //dgv.CellStateChanged += new DataGridViewCellStateChangedEventHandler(HPanelEdit_dgvDictPropStateChanged);
+            //Обработчик события "Редактирование свойства"
+            dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEdit_dgvDictPropCellEndEdit);
+            //Запретить удаление строк
+            dgv.AllowUserToDeleteRows = false;
 
             addLabelDesc((int)INDEX_CONTROL.LABEL_PROP_DESC);
 
@@ -175,29 +194,13 @@ namespace TepCommon
                 Logging.Logg().Debug(@"HPanelEdit::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
-                //Обработчик события "Выбор строки"
-                dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvPropSelectionChanged);
-                ////Обработчик события "Редактирование свойства"
-                //dgv.CellStateChanged += new DataGridViewCellStateChangedEventHandler(HPanelEdit_dgvDictPropStateChanged);
-                //Обработчик события "Редактирование свойства"
-                dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEdit_dgvDictPropCellEndEdit);
-                //Запретить удаление строк
-                dgv.AllowUserToDeleteRows = false;
                 //Заполнение содержимым...
                 for (i = 0; i < m_tblEdit.Columns.Count; i++)
                     dgv.Rows.Add(new object[] { m_tblEdit.Columns[i].ColumnName, string.Empty } );
                 //Только "для чтения", если строк нет
                 dgv.ReadOnly = !(m_tblEdit.Rows.Count > 0);
 
-                dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);
-                //Обработчик события "Выбор строки"
-                dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvDictEditSelectionChanged);
-                ////Обработчик события "Редактирование строки"
-                //dgv.CellStateChanged += new DataGridViewCellEventHandler(HPanelEdit_dgvDictEditCellStateChanged);
-                //Обработчик события "Редактирование строки"
-                dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEdit_dgvDictEditCellEndEdit);
-                //Запретить удаление строк
-                dgv.AllowUserToDeleteRows = false;
+                dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);                
                 //Заполнение содержимым...
                 for (i = 0; i < m_tblEdit.Rows.Count; i++)
                     dgv.Rows.Add(new object[] { m_tblEdit.Rows[i][m_nameDescField].ToString().Trim() });

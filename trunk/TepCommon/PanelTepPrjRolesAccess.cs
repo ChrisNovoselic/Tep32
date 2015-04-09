@@ -11,14 +11,15 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public class PanelTepPrjRolesAccess : HPanelEditListCommon
+    public abstract class PanelTepPrjRolesAccess : HPanelEditListCommon
     {
         string m_query;
         string m_nameTableAccessUnit;
-        DataTable m_tblItem, m_tblAccessUnit;
+        DataTable m_tblItem;
+        protected DataTable m_tblAccessUnit;
         string m_strNameFieldValue;
 
-        private enum INDEX_CONTROL
+        protected enum INDEX_CONTROL
         {
             BUTTON_SAVE, BUTTON_UPDATE
             , DGV_PRJ_ITEM, DGV_PRJ_ACCESS
@@ -76,6 +77,8 @@ namespace TepCommon
             dgv.Columns[0].ReadOnly = true;
             //Ширина столбца по ширине род./элемента управления
             dgv.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            //Обработчик события "Выбор строки"
+            dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjItemSelectionChanged);
 
             //Добавить "список" свойств словарной величины
             m_dictControls.Add((int)INDEX_CONTROL.DGV_PRJ_ACCESS, new DataGridView());
@@ -107,6 +110,11 @@ namespace TepCommon
             dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             //Ширина столбца по ширине род./элемента управления
             dgv.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            //Обработчик события "Выбор строки"
+            dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjAccessSelectionChanged);
+            //Обработчик события "Редактирование свойства"
+            //dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellEndEdit);
+            dgv.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellValueChanged);
 
             addLabelDesc((int)INDEX_CONTROL.LABEL_ACCESS_DESC);
 
@@ -124,10 +132,11 @@ namespace TepCommon
             err = 0;
             strErr = string.Empty;
             m_query = @"SELECT * FROM " + m_nameTable;
-            m_tblEdit = DbTSQLInterface.Select(ref dbConn, m_query, null, null, out err);
-            m_tblOrigin = m_tblEdit.Copy();
+            m_tblEdit = DbTSQLInterface.Select(ref dbConn, m_query, null, null, out err);            
             m_tblItem = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + @"roles_unit", null, null, out err);
-            m_tblAccessUnit = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + m_nameTableAccessUnit, null, null, out err);
+
+            selectAccessUnit(ref dbConn, out err);
+            m_tblOrigin = m_tblEdit.Copy();
 
             if (err == 0)
             {
@@ -135,15 +144,8 @@ namespace TepCommon
 
                 DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
                 if (m_tblAccessUnit.Rows.Count > 0)
-                {
                     for (i = 0; i < m_tblAccessUnit.Rows.Count; i++)
-                    {
                         dgv.Rows.Add(new object[] { m_tblAccessUnit.Rows[i][@"DESCRIPTION"], false });
-                    }
-
-                    //Обработчик события "Выбор строки"
-                    dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjAccessSelectionChanged);                    
-                }
                 else
                     //Только "для чтения", если строк нет
                     dgv.ReadOnly = true;
@@ -154,9 +156,6 @@ namespace TepCommon
                     for (i = 0; i < m_tblItem.Rows.Count; i++)
                         dgv.Rows.Add(new object[] { m_tblItem.Rows[i][@"DESCRIPTION"] });
 
-                    //Обработчик события "Выбор строки"
-                    dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjItemSelectionChanged);
-
                     setPrjAccessValues(0);
                 }
                 else
@@ -165,10 +164,7 @@ namespace TepCommon
 
                 dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
                 if (m_tblAccessUnit.Rows.Count > 0)
-                {
-                    //Обработчик события "Редактирование свойства"
-                    //dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellEndEdit);
-                    dgv.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellValueChanged);
+                {                    
                 }
                 else
                     ;
@@ -190,16 +186,22 @@ namespace TepCommon
             base.clear();
         }
 
+        protected virtual void selectAccessUnit(ref DbConnection dbConn, out int err)
+        {
+            m_tblAccessUnit = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + m_nameTableAccessUnit, null, null, out err);
+        }
+
         private void HPanelEditTree_dgvPrjItemSelectionChanged(object obj, EventArgs ev)
         {
-            ((DataGridView)obj).CellValueChanged -= HPanelEditTree_dgvPrjAccessCellValueChanged;
+            DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
+            dgv.CellValueChanged -= HPanelEditTree_dgvPrjAccessCellValueChanged;
             
             if (((DataGridView)obj).SelectedRows.Count == 1)
                 setPrjAccessValues(((DataGridView)obj).SelectedRows[0].Index);
             else
                 ;
 
-            ((DataGridView)obj).CellValueChanged += HPanelEditTree_dgvPrjAccessCellValueChanged;
+            dgv.CellValueChanged += HPanelEditTree_dgvPrjAccessCellValueChanged;
         }
 
         private void HPanelEditTree_dgvPrjAccessSelectionChanged(object obj, EventArgs ev)
@@ -211,16 +213,20 @@ namespace TepCommon
         {
             DataGridView dgvItem = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ITEM] as DataGridView
                 , dgvAccess = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
-            DataRow[] rowsAccess = m_tblEdit.Select(m_strKeyFields.Split(',')[0] + @"=" + m_tblItem.Rows[dgvItem.SelectedRows[0].Index][@"ID"]
+            DataRow [] rowsUnit = m_tblAccessUnit.Select (@"DESCRIPTION='" + dgvAccess.SelectedRows[0].Cells[0].Value + @"'")
+                , rowsAccess = m_tblEdit.Select(m_strKeyFields.Split(',')[0] + @"=" + m_tblItem.Rows[dgvItem.SelectedRows[0].Index][@"ID"]
                                     + @" AND "
-                                    + m_strKeyFields.Split(',')[1] + @"=" + m_tblAccessUnit.Rows [dgvAccess.SelectedRows[0].Index][@"ID"]);
+                                    + m_strKeyFields.Split(',')[1] + @"="
+                                        //+ m_tblAccessUnit.Rows [dgvAccess.SelectedRows[0].Index][@"ID"]);
+                                        + rowsUnit[0][@"ID"]);
 
             if (rowsAccess.Length == 1)
             {
                 rowsAccess[0][m_strNameFieldValue] = (((DataGridViewCheckBoxCell)dgvAccess.Rows[ev.RowIndex].Cells[ev.ColumnIndex]).Value.ToString() == true.ToString ()) ? 1 : 0;
             }
             else
-                ; //??? Ошибка...
+                //??? Ошибка...
+                throw new Exception(@"HPanelTepPrjRolesaccess::HPanelEditTree_dgvPrjAccessCellValueChanged () - дублирование(отсутствие) параметра...");
         }
 
         private void setPrjAccessValues(int indx)
