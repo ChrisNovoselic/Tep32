@@ -21,6 +21,11 @@ namespace Tep64
     {        
         private static FormParameters s_formParameters;
         private static HTepUsers m_User;
+        /// <summary>
+        /// Признак процесса авто/загрузки вкладок
+        /// для предотвращения сохранения их в режиме "реальное время"
+        /// </summary>
+        private static int m_iAutoActionTabs = 0;
 
         private static HPlugIns s_plugIns;
         class HPlugIns : IPlugInHost //, IEnumerable <int>
@@ -201,7 +206,10 @@ namespace Tep64
                 menuItem = FindMainMenuItemOfText(strNameMenuItem);
 
                 if ((menuItem as ToolStripMenuItem).Checked == false)
+                {
+                    m_iAutoActionTabs++;
                     menuItem.PerformClick();
+                }
                 else
                     ;
             }
@@ -217,7 +225,6 @@ namespace Tep64
             int iListenerId = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString());
 
             string ids = m_TabCtrl.VisibleIDs;
-
             HTepUsers.SetAllowed(iListenerId, (int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS, ids);
 
             DbSources.Sources().UnRegister(iListenerId);
@@ -233,6 +240,10 @@ namespace Tep64
             профайлЗагрузитьToolStripMenuItem.Enabled =
             профайлСохранитьToolStripMenuItem.Enabled =
                 ! (sender as ToolStripMenuItem).Checked;
+
+            int iListenerId = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString());
+            HTepUsers.SetAllowed(iListenerId, (int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED, Convert.ToString((sender as ToolStripMenuItem).Checked == true ? 1 : 0));
+            DbSources.Sources().UnRegister(iListenerId);
         }
 
         /// <summary>
@@ -242,7 +253,11 @@ namespace Tep64
         /// <param name="e"></param>
         private void выходToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            m_iAutoActionTabs = 1;
+
             Close ();
+
+            m_iAutoActionTabs = 0;
         }        
 
         private void бДКонфигурацииToolStripMenuItem_Click(object sender, EventArgs e)
@@ -503,9 +518,15 @@ namespace Tep64
                 m_TabCtrl.RemoveTabPage(plugIn.NameMenuItem);
             }
 
-            if ((профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true)
+            if ((m_iAutoActionTabs == 0)
+                && (профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true)
                 //профайлСохранитьToolStripMenuItem.PerformClick();
                 saveProfile();
+            else
+                ;
+
+            if (m_iAutoActionTabs > 0)
+                m_iAutoActionTabs--;
             else
                 ;
         }
@@ -541,8 +562,10 @@ namespace Tep64
 
                 if (iRes == 0)
                     if ((профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true)
+                    {
                         //профайлЗагрузитьToolStripMenuItem.PerformClick();
                         loadProfile();
+                    }
                     else
                         ;
                 else
