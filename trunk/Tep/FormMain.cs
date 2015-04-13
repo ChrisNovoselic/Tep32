@@ -92,7 +92,10 @@ namespace Tep64
 
             public HPlugIn Find(int id)
             {
-                return m_dictPlugins[id] as HPlugIn;
+                if (m_dictPlugins.ContainsKey (id) == true)
+                    return m_dictPlugins[id] as HPlugIn;
+                else
+                    return null;
             }
 
             public void OnEvtDataAskedHost(object obj)
@@ -169,10 +172,19 @@ namespace Tep64
 
             int idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString ());
 
-            m_User = new HTepUsers(idListener);
+            if (! (idListener < 0))
+            {
+                try {
+                    m_User = new HTepUsers(idListener);
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::FormMain() - new HTepUsers (iListenerId=" + idListener + @") ...");
+                }
 
-            ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
-            s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
+                ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
+                s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
+            }
+            else
+                ;
 
             DbSources.Sources().UnRegister(idListener);
 
@@ -196,6 +208,10 @@ namespace Tep64
             foreach (string id in arIds)
             {
                 plugIn = s_plugIns.Find(Convert.ToInt32(id));
+                if (plugIn == null)
+                    continue;
+                else
+                    ;
                 strNameOwnerMenuItem = plugIn.NameOwnerMenuItem;
                 strNameMenuItem = plugIn.NameMenuItem;
 
