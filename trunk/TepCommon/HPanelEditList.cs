@@ -5,9 +5,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-using System.Windows.Forms;
+using System.Windows.Forms; //DataGridView
+using System.Data.Common; //DbConnection
 using System.Data; //DataTable
-using System.Data.Common;
 
 using HClassLibrary;
 using InterfacePlugIn;
@@ -95,13 +95,13 @@ namespace TepCommon
             //Ширина столбца по ширине род./элемента управления
             dgv.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             //Обработчик события "Выбор строки"
-            dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvDictEditSelectionChanged);
+            dgv.SelectionChanged += new EventHandler(HPanelEditList_dgvDictEditSelectionChanged);
             ////Обработчик события "Редактирование строки"
             //dgv.CellStateChanged += new DataGridViewCellEventHandler(HPanelEdit_dgvDictEditCellStateChanged);
             //Обработчик события "Редактирование строки"
-            dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEdit_dgvDictEditCellEndEdit);
+            dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditList_dgvDictEditCellEndEdit);
             //Запретить удаление строк
-            dgv.AllowUserToDeleteRows = false;
+            dgv.AllowUserToDeleteRows = false;            
 
             //Добавить "список" свойств словарной величины
             i = INDEX_CONTROL.DGV_DICT_PROP;
@@ -134,6 +134,8 @@ namespace TepCommon
             dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEdit_dgvDictPropCellEndEdit);
             //Запретить удаление строк
             dgv.AllowUserToDeleteRows = false;
+            //Запретить вставку строк
+            dgv.AllowUserToAddRows = false;
 
             addLabelDesc((int)INDEX_CONTROL.LABEL_PROP_DESC);
 
@@ -165,7 +167,7 @@ namespace TepCommon
             : this(plugIn, nameTable, keyFields, nameDescField)
         {
             container.Add(this);
-        }
+        }        
 
         protected override void Activate(bool activate)
         {
@@ -191,8 +193,6 @@ namespace TepCommon
 
             if (err == 0)
             {
-                Logging.Logg().Debug(@"HPanelEdit::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
-
                 DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
                 //Заполнение содержимым...
                 for (i = 0; i < m_tblEdit.Columns.Count; i++)
@@ -204,6 +204,8 @@ namespace TepCommon
                 //Заполнение содержимым...
                 for (i = 0; i < m_tblEdit.Rows.Count; i++)
                     dgv.Rows.Add(new object[] { m_tblEdit.Rows[i][m_nameDescField].ToString().Trim() });
+
+                Logging.Logg().Debug(@"HPanelEditList::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             else
             {
@@ -217,15 +219,27 @@ namespace TepCommon
             DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
             //Строка с полем в 'DictEdit' "для чтения"
             dgv.Rows[m_tblEdit.Columns.IndexOf(m_nameDescField)].ReadOnly =
-                //Крайняя строка "для чтения"
-            dgv.Rows[m_tblEdit.Columns.Count].ReadOnly =
-                //1-ый столбец "для чтения"
+            ////Крайняя строка "для чтения" - только, если в грид можно добавлть строки (AllowRowsAddedUser = true, NewRowIndex > -1)
+            //dgv.Rows[m_tblEdit.Columns.Count].ReadOnly =
+            //1-ый столбец "для чтения"
             dgv.Columns[0].ReadOnly =
                 true;
         }
 
+        /// <summary>
+        /// Получение значения для объекта 'DataGridView'
+        /// </summary>
+        /// <param name="dgvProp">объект 'DataGridView' для отображения свойств</param>
+        /// <param name="indxItem">индекс записи в таблице со словарными велечинами</param>
+        /// <param name="indxProp">индекс строки объекта 'DataGridView' для отображения свойств</param>
+        /// <returns>значение поля (по 'indxProp') записи (по 'indxItem') редактируемой таблицы</returns>
+        protected virtual string getTableEditValue(DataGridView dgvProp, int indxItem, int indxProp)
+        {
+            return m_tblEdit.Rows[indxItem][dgvProp.Rows[indxProp].Cells[0].Value.ToString()].ToString().Trim();
+        }
+
         //В том числе и для отображения актуальной "подсказки" для свойства
-        private void HPanelEdit_dgvDictEditSelectionChanged(object obj, EventArgs ev)
+        private void HPanelEditList_dgvDictEditSelectionChanged(object obj, EventArgs ev)
         {
             int indx = -1;
 
@@ -233,38 +247,60 @@ namespace TepCommon
             {
                 indx = ((DataGridView)obj).SelectedRows[0].Index;
 
-                ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).ReadOnly = !((!(indx < 0)) && (indx < m_tblEdit.Rows.Count));
+                DataGridView dgvProp = m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP] as DataGridView;
+                bool bReadOnly = !((!(indx < 0)) && (indx < m_tblEdit.Rows.Count));
 
-                if (((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).ReadOnly == false)
-                {
-                    for (int i = 0; i < ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).NewRowIndex; i++)
-                        ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).Rows[i].Cells[1].Value = m_tblEdit.Rows[indx][((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).Rows[i].Cells[0].Value.ToString()].ToString().Trim();
-
-                    setCellsReadOnly();
-                }
+                if (bReadOnly == false)
+                    for (int i = 0; i < dgvProp.RowCount; i++)
+                        dgvProp.Rows[i].Cells[1].Value = getTableEditValue(dgvProp, indx, i);
                 else
-                    for (int i = 0; i < ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).NewRowIndex; i++)
-                        ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).Rows[i].Cells[1].Value = string.Empty;
+                    for (int i = 0; i < dgvProp.RowCount; i++)
+                        dgvProp.Rows[i].Cells[1].Value = string.Empty;
+
+                dgvProp.ReadOnly = bReadOnly;
+                if (bReadOnly == false)
+                    setCellsReadOnly();
+                else
+                    ;
+
+                Console.WriteLine(@"HPanelEditList_dgvDictEditSelectionChanged () - dgvProp.ReadOnly = " + dgvProp.ReadOnly + @" ...");
             }
             else
-                Logging.Logg().Error(@"HPanelEdit::HPanelEdit_SelectionChanged () - выделена НЕ 1 строка", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Error(@"HPanelEditList::HPanelEdit_SelectionChanged () - выделена НЕ 1 строка", Logging.INDEX_MESSAGE.NOT_SET);
+        }
+
+        protected virtual void setTableEditValue(DataGridView dgvProp, int indxRow, int indxCol)
+        {
+            m_tblEdit.Rows[((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows[0].Index][m_tblEdit.Columns[indxRow].ColumnName] =
+                dgvProp.Rows[indxRow].Cells[indxCol].Value as string;
         }
 
         //Для редактирования свойства
         private void HPanelEdit_dgvDictPropCellEndEdit(object obj, DataGridViewCellEventArgs ev)
         {
             if (!(((DataGridView)obj).Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value == null))
-                if (m_tblEdit.Rows[((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows[0].Index][m_tblEdit.Columns[ev.RowIndex].ColumnName].ToString().Equals(
-                    ((DataGridView)obj).Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value as string) == false)
-                    m_tblEdit.Rows[((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows[0].Index][m_tblEdit.Columns[ev.RowIndex].ColumnName] =
-                        ((DataGridView)obj).Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value as string;
+            {
+                string strItemProp = getTableEditValue(obj as DataGridView
+                                                    , ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows[0].Index
+                                                    , ev.RowIndex);
+
+                //Сравнить предыдущее и текущее свойство
+                if (strItemProp.Equals(((DataGridView)obj).Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value as string) == false)
+                    //Если разные, то присвоить новое значение
+                    setTableEditValue(obj as DataGridView, ev.RowIndex, ev.ColumnIndex);
                 else
                     ; //Отмена редактирования
+            }
             else
                 ; //Отмена редактирования
         }
 
-        private void HPanelEdit_dgvDictEditCellEndEdit(object obj, DataGridViewCellEventArgs ev)
+        protected virtual void addRecItem(object [] vals)
+        {
+            m_tblEdit.Rows.Add(vals);
+        }
+
+        private void HPanelEditList_dgvDictEditCellEndEdit(object obj, DataGridViewCellEventArgs ev)
         {
             int indx = ((DataGridView)obj).SelectedRows[0].Index;
             string valEdit = ((DataGridView)obj).Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value as string;
@@ -282,7 +318,10 @@ namespace TepCommon
                 {//Добавили новую
                     if (valEdit.Equals(string.Empty) == false)
                     {
-                        DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
+                        DataGridView dgv;
+                        //dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);
+                        //string valEdit = dgv.Rows[dgv.RowCount].Cells[0].Value as string; //??? 0 == ev.ColumnIndex, dgv.RowCount == ev.RowIndex
+                        dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
                         //Заполнение содержимым...
                         object valProp;
                         object[] values = new object[m_tblEdit.Columns.Count];
@@ -305,9 +344,9 @@ namespace TepCommon
                                     valEdit;
                             }
 
-                        m_tblEdit.Rows.Add(values);
+                        addRecItem(values);
 
-                        dgv.ReadOnly = false;
+                        ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).ReadOnly = false;
                         setCellsReadOnly();
                     }
                     else
@@ -325,14 +364,19 @@ namespace TepCommon
             dgv.BeginEdit(false);
         }
 
+        protected virtual void delRecItem(int indx)
+        {
+            m_tblEdit.Rows[indx].Delete();
+            m_tblEdit.AcceptChanges();
+        }
+
         private void HPanelEditList_btnDelete_Click(object obj, EventArgs ev)
         {
             int indx = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows[0].Index;
 
             if ((!(indx < 0)) && (indx < m_tblEdit.Rows.Count))
             {//Удаление существующей записи
-                m_tblEdit.Rows[indx].Delete();
-                m_tblEdit.AcceptChanges();
+                delRecItem(indx);
 
                 ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).Rows.RemoveAt(indx);                
             }

@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using System.Windows.Forms; //DataGridView
+using System.Data.Common; //DbConnection
+using System.Data; //DataTable
+
 using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
@@ -11,14 +15,216 @@ namespace PluginTepPrjSources
 {
     public class PanelTepPrjSources : HPanelEditList
     {
+        private static int s_iIdSourceData = 501;
+        private static string s_strPswdPropName = @"PASSWORD";
+        private DataTable m_tblOriginPswd, m_tblEditPswd;
+
         public PanelTepPrjSources(IPlugIn iFunc)
-            : base(iFunc, @"SOURCE", @"ID", @"DESCRIPTION")
+            : base(iFunc, @"SOURCE", @"ID", @"NAME_SHR")
         {
             InitializeComponent();
         }
 
+        private DataGridView m_dgvProp
+        {
+            get { return ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]); }
+        }
+
         private void InitializeComponent()
         {
+            //m_dgvProp.CellValueChanged += new DataGridViewCellEventHandler(HPanelTepPrjSources_CellValueChanged);
+            m_dgvProp.CellFormatting += new DataGridViewCellFormattingEventHandler(HPanelTepPrjSources_CellFormatting);
+        }
+
+        protected override void initialize(ref DbConnection dbConn, out int err, out string errMsg)
+        {
+            base.initialize(ref dbConn, out err, out errMsg);
+
+            if (err == 0)
+            {
+                m_tblEditPswd = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM passwords WHERE ID_ROLE=" + s_iIdSourceData, null, null, out err);
+                m_tblOriginPswd = m_tblEditPswd.Copy();
+
+                //Заполнить список из таблицы с паролями...
+                //m_listPasswords.Add...
+
+                m_dgvProp.Rows.Add(new object[] { s_strPswdPropName, string.Empty });
+                //m_dgvProp.Rows[m_dgvProp.RowCount - 1].Cells[1].Style.Format = s_strFormatPswd;
+            }
+            else
+            {
+            }
+        }
+
+        protected override void addRecItem(object [] vals)
+        {
+            base.addRecItem(vals);
+
+            //??? Идентификатор из крайней строки...
+            m_tblEditPswd.Rows.Add(new object[] {
+                                    Int32.Parse (m_tblEdit.Rows[m_tblEdit.Rows.Count - 1][@"ID"].ToString ().Trim ())
+                                    , s_iIdSourceData
+                                    , string.Empty }
+                                );
+        }
+
+        protected override void delRecItem(int indx)
+        {
+            DataRow rowPswd = getPassword(indx);
+
+            if (!(rowPswd == null))
+            {
+                m_tblEditPswd.Rows.Remove(rowPswd);
+                m_tblEditPswd.AcceptChanges();
+            }
+            else
+                ;
+
+            base.delRecItem(indx);
+        }
+
+        protected override void clear()
+        {
+            m_tblEditPswd.Clear();
+            m_tblOriginPswd.Clear();
+
+            base.clear();
+        }
+
+        private DataRow getPassword(int indx)
+        {
+            if ((!(m_tblEdit == null))
+                && (!(m_tblEditPswd == null))
+                && (indx < m_tblEdit.Rows.Count)
+                )
+            {
+                DataRow[] rowsPswd = m_tblEditPswd.Select(@"ID_EXT=" + m_tblEdit.Rows[indx][@"ID"]
+                    //+ @" AND " + @"ID_ROLE=" + s_iIdSourceData
+                         );
+
+                if (rowsPswd.Length > 1)
+                    //??? Ошибка...
+                    throw new Exception(@"HPanelTepPrjSources::getPassword (indx=" + indx + @") - ...");
+                else
+                    if (rowsPswd.Length == 1)
+                        return rowsPswd[0];
+                    else
+                        ;
+            }
+            else
+                ;
+
+            return null;
+        }
+
+        protected override string getTableEditValue(DataGridView dgvProp, int indxItem, int indxProp)
+        {
+            string strRes = string.Empty;
+
+            //if (indxProp == m_dgvProp.RowCount - 1)
+            if (m_dgvProp.Rows[indxProp].Cells[0].Value.ToString().Trim().Equals(s_strPswdPropName) == true) 
+            {//Возвратиить пароль...
+                DataRow rowPswd = getPassword(indxItem);
+                if (!(rowPswd == null))
+                    strRes = rowPswd[@"HASH"].ToString().Trim();
+                else
+                    ; //Оставить 'Empty'
+            }
+            else
+            {//Стандартная обработка...
+                strRes = base.getTableEditValue(m_dgvProp, indxItem, indxProp);
+            }
+
+            return strRes;
+        }
+
+        //Для редактирования свойства
+        protected override void setTableEditValue(DataGridView dgvProp, int indxRow, int indxCol)
+        {
+            if (indxRow == m_dgvProp.RowCount - 1)
+            {//Обработка окончания редактирования строки пароля...
+                DataRow rowPswd = getPassword(((DataGridView)m_dictControls [(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows [0].Index);
+                if (!(rowPswd == null))
+                    rowPswd[@"HASH"] = m_dgvProp.Rows[indxRow].Cells[indxCol].Value;
+                else
+                    ; //Оставить 'Empty'
+            }
+            else
+            {                
+                //??? Индекс строки - признак строки с 'ID' ...
+                if (indxRow == 0)
+                {//Изменен 'ID': в 'm_tblEdit' - "старый", в 'DataGridView' - "новый"
+
+                }
+                else
+                    ;
+
+                base.setTableEditValue(m_dgvProp, indxRow, indxCol);
+            }
+        }
+
+        //private void HPanelTepPrjSources_CellValueChanged(object obj, DataGridViewCellEventArgs ev)
+        //{
+        //    if ((ev.RowIndex == m_dgvProp.RowCount - 1)
+        //        //&& (m_dgvProp.ReadOnly == false)
+        //        )
+        //    {
+        //        m_strPassword = m_dgvProp.Rows[ev.RowIndex].Cells[1].Value.ToString();
+        //    }
+        //    else
+        //    {
+        //    }
+        //}
+
+        private void HPanelTepPrjSources_CellFormatting(object obj, DataGridViewCellFormattingEventArgs ev)
+        {
+            if ((ev.RowIndex == m_dgvProp.RowCount - 1)
+                && (ev.ColumnIndex == 1))
+            {                
+                DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM] as DataGridView;
+
+                if (dgv.SelectedRows.Count == 1)
+                {
+                    DataRow rowPswd = getPassword(dgv.SelectedRows[0].Index);
+
+                    if (! (rowPswd == null))
+                    {
+                        int lPswd = rowPswd[@"HASH"].ToString ().Trim ().Length;
+                        if (lPswd > 0)
+                        {
+                            ev.Value = new string('#', lPswd);
+
+                            Console.WriteLine(@"HPanelTepPrjSources_CellFormatting () - ...");
+                        }
+                        else
+                            ; //Длина пароля == 0
+                    }
+                    else
+                        ; //Пароь не найден
+                }
+                else
+                    ; //Выделена НЕ одна (0 или более) словарная величина...
+            }
+            else
+            {
+            }
+        }
+
+        protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
+        {
+            DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, @"passwords", @"ID_EXT, ID_ROLE", m_tblOriginPswd, m_tblEditPswd, out err);
+
+            if (err == 0)
+                base.recUpdateInsertDelete(ref dbConn, out err);
+            else
+                throw new Exception(@"HPanelTepPrjSources::recUpdateInsertDelete () - err=" + err + @" ...");
+        }
+
+        protected override void successRecUpdateInsertDelete()
+        {
+            m_tblOriginPswd = m_tblEditPswd.Copy();
+
+            base.successRecUpdateInsertDelete();
         }
     }
 
