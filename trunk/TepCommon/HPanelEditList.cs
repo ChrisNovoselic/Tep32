@@ -181,10 +181,8 @@ namespace TepCommon
             base.clear();
         }
 
-        protected override void initialize(ref DbConnection dbConn, out int err, out string errMsg)
+        protected virtual void initProp(ref DbConnection dbConn, out int err, out string errMsg)
         {
-            int i = -1;
-
             err = -1;
             errMsg = string.Empty;
 
@@ -195,12 +193,27 @@ namespace TepCommon
             {
                 DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
                 //Заполнение содержимым...
-                for (i = 0; i < m_tblEdit.Columns.Count; i++)
-                    dgv.Rows.Add(new object[] { m_tblEdit.Columns[i].ColumnName, string.Empty } );
+                for (int i = 0; i < m_tblEdit.Columns.Count; i++)
+                    dgv.Rows.Add(new object[] { m_tblEdit.Columns[i].ColumnName, string.Empty });
                 //Только "для чтения", если строк нет
                 dgv.ReadOnly = !(m_tblEdit.Rows.Count > 0);
+            }
+            else
+            {
+                errMsg = @"не удалось получить значения из целевой таблицы [" + m_nameTable + @"]";
+                err = -1;
+            }
+        }
 
-                dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);                
+        protected override void initialize(ref DbConnection dbConn, out int err, out string errMsg)
+        {
+            int i = -1;
+
+            initProp(ref dbConn, out err, out errMsg);
+
+            if (err == 0)
+            {
+                DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);
                 //Заполнение содержимым...
                 for (i = 0; i < m_tblEdit.Rows.Count; i++)
                     dgv.Rows.Add(new object[] { m_tblEdit.Rows[i][m_nameDescField].ToString().Trim() });
@@ -208,10 +221,7 @@ namespace TepCommon
                 Logging.Logg().Debug(@"HPanelEditList::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             else
-            {
-                errMsg = @"не удалось получить значения из целевой таблицы [" + m_nameTable + @"]";
-                err = -1;
-            }
+                ;
         }
 
         private void setCellsReadOnly()

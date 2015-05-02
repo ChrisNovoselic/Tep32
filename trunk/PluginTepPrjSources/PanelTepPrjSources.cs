@@ -5,6 +5,7 @@ using System.Text;
 
 using System.Windows.Forms; //DataGridView
 using System.Data.Common; //DbConnection
+using System.Drawing;
 using System.Data; //DataTable
 
 using HClassLibrary;
@@ -32,40 +33,57 @@ namespace PluginTepPrjSources
 
         private void InitializeComponent()
         {
+            m_dgvProp.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(HPanelTepPrjSources_EditingControlShowing);
             //m_dgvProp.CellValueChanged += new DataGridViewCellEventHandler(HPanelTepPrjSources_CellValueChanged);
             m_dgvProp.CellFormatting += new DataGridViewCellFormattingEventHandler(HPanelTepPrjSources_CellFormatting);
         }
 
-        protected override void initialize(ref DbConnection dbConn, out int err, out string errMsg)
+        private void initTablePswd ()
         {
-            base.initialize(ref dbConn, out err, out errMsg);
+            m_tblOriginPswd = m_tblEditPswd.Copy();
+
+            //!!!Дешифрация паролей
+            foreach (DataRow r in m_tblEditPswd.Rows)
+                r["HASH"] = Crypt.Crypting().Decrypt(r["HASH"].ToString(), Crypt.KEY);
+        }
+
+        protected override void initProp(ref DbConnection dbConn, out int err, out string errMsg)
+        {
+            base.initProp(ref dbConn, out err, out errMsg);
 
             if (err == 0)
             {
                 m_tblEditPswd = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM passwords WHERE ID_ROLE=" + s_iIdSourceData, null, null, out err);
-                m_tblOriginPswd = m_tblEditPswd.Copy();
-
-                //Заполнить список из таблицы с паролями...
-                //m_listPasswords.Add...
+                initTablePswd ();
 
                 m_dgvProp.Rows.Add(new object[] { s_strPswdPropName, string.Empty });
-                //m_dgvProp.Rows[m_dgvProp.RowCount - 1].Cells[1].Style.Format = s_strFormatPswd;
+                //DataGridViewTextBoxCell cell;
+                //cell = new DataGridViewPasswordTextBoxCell();
+                //m_dgvProp.Rows[m_dgvProp.RowCount - 1].Cells[1] = new DataGridViewPasswordTextBoxCell();
+                //cell = m_dgvProp.Rows[m_dgvProp.RowCount - 1].Cells[1] as DataGridViewTextBoxCell;
             }
             else
             {
             }
         }
 
+        private object[] getRecItemValues(string pswd)
+        {
+            //??? Идентификатор из крайней строки... ??? по индексу
+            int indx = (m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM] as DataGridView).SelectedRows[0].Index;
+
+            return new object[] {
+                                    //Int32.Parse (m_tblEdit.Rows[m_tblEdit.Rows.Count - 1][@"ID"].ToString ().Trim ())
+                                    Int32.Parse (m_tblEdit.Rows[indx][@"ID"].ToString ().Trim ())
+                                    , s_iIdSourceData
+                                    , pswd };
+        }
+
         protected override void addRecItem(object [] vals)
         {
             base.addRecItem(vals);
 
-            //??? Идентификатор из крайней строки...
-            m_tblEditPswd.Rows.Add(new object[] {
-                                    Int32.Parse (m_tblEdit.Rows[m_tblEdit.Rows.Count - 1][@"ID"].ToString ().Trim ())
-                                    , s_iIdSourceData
-                                    , string.Empty }
-                                );
+            m_tblEditPswd.Rows.Add(getRecItemValues (string.Empty));
         }
 
         protected override void delRecItem(int indx)
@@ -144,10 +162,16 @@ namespace PluginTepPrjSources
             if (indxRow == m_dgvProp.RowCount - 1)
             {//Обработка окончания редактирования строки пароля...
                 DataRow rowPswd = getPassword(((DataGridView)m_dictControls [(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows [0].Index);
+                string pswd = m_dgvProp.Rows[indxRow].Cells[indxCol].Value.ToString ().Trim ();
                 if (!(rowPswd == null))
-                    rowPswd[@"HASH"] = m_dgvProp.Rows[indxRow].Cells[indxCol].Value;
+                    rowPswd[@"HASH"] = pswd;
                 else
-                    ; //Оставить 'Empty'
+                {
+                    m_tblEditPswd.Rows.Add(getRecItemValues(pswd));
+                    //m_tblEditPswd.AcceptChanges();
+                }
+
+                Console.WriteLine(@"HPanelTepPrjSources::setTableEditValue () - ...");
             }
             else
             {                
@@ -163,13 +187,35 @@ namespace PluginTepPrjSources
             }
         }
 
+        private void HPanelTepPrjSources_EditingControlShowing(object obj, DataGridViewEditingControlShowingEventArgs ev)
+        {
+            if ((m_dgvProp.SelectedRows [0].Index == m_dgvProp.RowCount - 1)
+                //&& (m_dgvProp.SelectedCells [0].ColumnIndex == 1)
+                )
+            {
+                TextBox pswd = ev.Control as TextBox;
+                ////Вариант №1
+                //if (pswd.UseSystemPasswordChar == false)
+                //    pswd.UseSystemPasswordChar = true;
+                //else
+                //    ;
+                //Вариант №2
+                if (pswd.PasswordChar == 0)
+                    pswd.PasswordChar = '#';
+                else
+                    ;                
+            }
+            else
+                ;
+        }
+
         //private void HPanelTepPrjSources_CellValueChanged(object obj, DataGridViewCellEventArgs ev)
         //{
         //    if ((ev.RowIndex == m_dgvProp.RowCount - 1)
-        //        //&& (m_dgvProp.ReadOnly == false)
+        //        && (m_dgvProp.Rows[ev.RowIndex].Cells[0].Value.Equals (s_strPswdPropName) == true)
         //        )
         //    {
-        //        m_strPassword = m_dgvProp.Rows[ev.RowIndex].Cells[1].Value.ToString();
+        //        ((DataGridViewPasswordTextBoxCell)m_dgvProp.Rows[ev.RowIndex].Cells[1]).SetValue ();
         //    }
         //    else
         //    {
@@ -187,20 +233,21 @@ namespace PluginTepPrjSources
                 {
                     DataRow rowPswd = getPassword(dgv.SelectedRows[0].Index);
 
+                    int lPswd = -1;
                     if (! (rowPswd == null))
                     {
-                        int lPswd = rowPswd[@"HASH"].ToString ().Trim ().Length;
+                        lPswd = rowPswd[@"HASH"].ToString ().Trim ().Length;
                         if (lPswd > 0)
                         {
-                            ev.Value = new string('#', lPswd);
-
-                            Console.WriteLine(@"HPanelTepPrjSources_CellFormatting () - ...");
+                            ev.Value = new string('#', lPswd);                            
                         }
                         else
                             ; //Длина пароля == 0
                     }
                     else
                         ; //Пароь не найден
+
+                    Console.WriteLine(@"HPanelTepPrjSources_CellFormatting () - пароль=" + (rowPswd == null ? @"Нет" : @"Да") + @", длина=" + lPswd);
                 }
                 else
                     ; //Выделена НЕ одна (0 или более) словарная величина...
@@ -212,6 +259,10 @@ namespace PluginTepPrjSources
 
         protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
         {
+            //!!!Шифрация паролей
+            foreach (DataRow r in m_tblEditPswd.Rows)
+                r["HASH"] = Crypt.Crypting().Encrypt(r["HASH"].ToString().Trim(), Crypt.KEY);
+
             DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, @"passwords", @"ID_EXT, ID_ROLE", m_tblOriginPswd, m_tblEditPswd, out err);
 
             if (err == 0)
@@ -222,7 +273,7 @@ namespace PluginTepPrjSources
 
         protected override void successRecUpdateInsertDelete()
         {
-            m_tblOriginPswd = m_tblEditPswd.Copy();
+            initTablePswd();
 
             base.successRecUpdateInsertDelete();
         }
