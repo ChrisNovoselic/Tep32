@@ -142,6 +142,13 @@ namespace TepCommon
                 else
                     ;
 
+            dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP] as DataGridView;
+            dgv.ReadOnly = !(newLevel == INDEX_LEVEL.N_ALG);
+            if (dgv.ReadOnly == false)
+                dgv.Columns[0].ReadOnly = true;
+            else
+                ;                
+
             _level = newLevel;
         }
 
@@ -281,6 +288,8 @@ namespace TepCommon
             dgv.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             //Обработчик события "Выбор строки"
             dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvPropSelectionChanged);
+            //Обработчик события "Редактирование значения" (только для алгоритма)
+            dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditTree_dgvPropCellEndEdit);
 
             //Создать "список" дополн./парамеиров (TIME, COMP)
             i = INDEX_CONTROL.DGV_PRJ_DETAIL;
@@ -758,6 +767,42 @@ namespace TepCommon
                 default:
                     break;
             }
+        }
+
+        private void HPanelEditTree_dgvPropCellEndEdit(object obj, DataGridViewCellEventArgs ev)
+        {
+            string strThrow = string.Empty;
+
+            if ((m_Level == INDEX_LEVEL.N_ALG)
+                && (ev.ColumnIndex == 1)            
+                )
+            {
+                DataGridView dgv = obj as DataGridView;
+                DataRow[] rowsAlg = m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Select(@"ID=" + m_idAlg);
+
+                if (rowsAlg.Length == 1)
+                {
+                    string strNameField = dgv.Rows[ev.RowIndex].Cells[0].Value.ToString().Trim()
+                        , strVal = dgv.Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value.ToString().Trim();
+                    rowsAlg[0][strNameField] = strVal;
+
+                    if (strNameField.Equals(@"N_ALG") == true)
+                    {//Изменить подпись в "дереве"
+                        (m_dictControls[(int)INDEX_CONTROL.TREECTRL_PRJ_ALG] as TreeView).SelectedNode.Text = strVal;
+                    }
+                    else
+                        ;
+                }
+                else
+                    strThrow = @"найдено " + rowsAlg.Length + @" записей";
+            }
+            else
+                strThrow = @"редактирование запрещено";
+
+            if (strThrow.Equals(string.Empty) == false)
+                throw new Exception(@"HPanelEditTree_dgvPropCellEndEdit () - " + strThrow + @"...");
+            else
+                ;
         }
 
         private void HPanelEditTree_dgvPrjDetailSelectionChanged(object obj, EventArgs ev)

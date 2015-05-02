@@ -305,6 +305,38 @@ namespace TepCommon
                 ; //Отмена редактирования
         }
 
+        //Заполнение содержимым...
+        protected virtual object[] getValues(string valCellEditing)
+        {
+            DataGridView dgv;
+            //dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);
+            //string valEdit = dgv.Rows[dgv.RowCount].Cells[0].Value as string; //??? 0 == ev.ColumnIndex, dgv.RowCount == ev.RowIndex
+            dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
+            
+            object valProp;
+            object[] arRes = new object[m_tblEdit.Columns.Count];
+            for (int i = 0; i < m_tblEdit.Columns.Count; i++)
+                if (m_tblEdit.Columns[i].ColumnName.Equals(m_nameDescField) == false)
+                {
+                    if (m_tblEdit.Columns[i].DataType.IsPrimitive == true)
+                        valProp = m_tblEdit.Rows.Count + 1;
+                    else
+                        valProp = m_tblEdit.Columns[i].ColumnName;
+
+                    dgv.Rows[i].Cells[1].Value =
+                    arRes[i] =
+                        valProp;
+                }
+                else
+                {
+                    dgv.Rows[i].Cells[1].Value =
+                    arRes[i] =
+                        valCellEditing;
+                }
+
+            return arRes;
+        }
+
         protected virtual void addRecItem(object [] vals)
         {
             m_tblEdit.Rows.Add(vals);
@@ -328,33 +360,8 @@ namespace TepCommon
                 {//Добавили новую
                     if (valEdit.Equals(string.Empty) == false)
                     {
-                        DataGridView dgv;
-                        //dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);
-                        //string valEdit = dgv.Rows[dgv.RowCount].Cells[0].Value as string; //??? 0 == ev.ColumnIndex, dgv.RowCount == ev.RowIndex
-                        dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
                         //Заполнение содержимым...
-                        object valProp;
-                        object[] values = new object[m_tblEdit.Columns.Count];
-                        for (int i = 0; i < m_tblEdit.Columns.Count; i++)
-                            if (m_tblEdit.Columns[i].ColumnName.Equals(m_nameDescField) == false)
-                            {
-                                if (m_tblEdit.Columns[i].DataType.IsPrimitive == true)
-                                    valProp = m_tblEdit.Rows.Count + 1;
-                                else
-                                    valProp = m_tblEdit.Columns[i].ColumnName;
-
-                                dgv.Rows[i].Cells[1].Value =
-                                values[i] =
-                                    valProp;
-                            }
-                            else
-                            {
-                                dgv.Rows[i].Cells[1].Value =
-                                values[i] =
-                                    valEdit;
-                            }
-
-                        addRecItem(values);
+                        addRecItem(getValues (valEdit));
 
                         ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).ReadOnly = false;
                         setCellsReadOnly();
