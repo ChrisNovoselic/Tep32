@@ -83,7 +83,7 @@ namespace Tep64
 
         public FormParameters_FIleINI(string nameSetupFileINI)
         {
-            m_FileINI = new FileINI(nameSetupFileINI);
+            m_FileINI = new FileINI(nameSetupFileINI, false);
             //ProgramBase.s_iAppID = (int)ProgramBase.ID_APP.STATISTIC;
             //ProgramBase.s_iAppID = Int32.Parse(m_arParametrSetup[(int)PARAMETR_SETUP.ID_APP]);
             //ProgramBase.s_iAppID = Properties.s
