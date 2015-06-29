@@ -7,7 +7,7 @@ using HClassLibrary;
 
 namespace InterfacePlugIn
 {
-    public abstract class HFunc : HPlugIn
+    public abstract class HFunc : PlugInMenuItem
     {
         public enum ID_DATAASKED_HOST { ICON_MAINFORM, STR_VERSION //Запросить данные у главной формы
                                     , CONNSET_MAIN_DB

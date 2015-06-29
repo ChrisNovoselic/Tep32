@@ -90,10 +90,10 @@ namespace Tep64
                 return plugInRes;
             }
 
-            public HPlugIn Find(int id)
+            public PlugInMenuItem Find(int id)
             {
                 if (m_dictPlugins.ContainsKey (id) == true)
-                    return m_dictPlugins[id] as HPlugIn;
+                    return m_dictPlugins[id] as PlugInMenuItem;
                 else
                     return null;
             }
@@ -138,7 +138,7 @@ namespace Tep64
                     }
 
                     //Отправить ответ (исходный идентификатор + требуемый объект)
-                    ((HPlugIn)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par[0], new object[] { rec }));
+                    ((PlugInBase)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par[0], new object[] { rec }));
                 }
                 else
                 {
@@ -188,7 +188,7 @@ namespace Tep64
 
             DbSources.Sources().UnRegister(idListener);
 
-            m_TabCtrl.OnClose += new HTabCtrlEx.DelegateOnHTabCtrlEx(onCloseTabPage);
+            m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
         }
 
         protected override void HideGraphicsSettings() { }
@@ -196,7 +196,7 @@ namespace Tep64
 
         private void loadProfile()
         {
-            HPlugIn plugIn;
+            PlugInMenuItem plugIn;
             string ids = HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS)
                 , strNameOwnerMenuItem = string.Empty, strNameMenuItem = string.Empty;
             string[] arIds = ids.Split(',');
@@ -434,18 +434,18 @@ namespace Tep64
                                 //Идентификатор плюг'ина
                                 idPlugIn = Int16.Parse(tableRes.Rows[i][@"ID"].ToString());
                                 //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
-                                if (((HPlugIn)plugIn)._Id == idPlugIn)
+                                if (((PlugInBase)plugIn)._Id == idPlugIn)
                                 {
                                     s_plugIns.Add(idPlugIn, plugIn);
 
                                     //Поиск пункта "родительского" пункта меню для плюг'ина
-                                    miOwner = FindMainMenuItemOfText((plugIn as HPlugIn).NameOwnerMenuItem);
+                                    miOwner = FindMainMenuItemOfText((plugIn as PlugInMenuItem).NameOwnerMenuItem);
 
                                     //Проверка найден ли "родительский" пункт меню для плюг'ина
                                     if (miOwner == null)
                                     {
                                         int indx = -1;
-                                        string strNameItem = (plugIn as HPlugIn).NameOwnerMenuItem;
+                                        string strNameItem = (plugIn as PlugInMenuItem).NameOwnerMenuItem;
                                         if (strNameItem.Equals(@"Помощь") == false)
                                             indx = this.MainMenuStrip.Items.Count - 1;
                                         else
@@ -455,18 +455,18 @@ namespace Tep64
                                             this.MainMenuStrip.Items.Add(new ToolStripMenuItem(strNameItem));
                                         else
                                             this.MainMenuStrip.Items.Insert(indx, new ToolStripMenuItem(strNameItem));
-                                        miOwner = FindMainMenuItemOfText((plugIn as HPlugIn).NameOwnerMenuItem);
+                                        miOwner = FindMainMenuItemOfText((plugIn as PlugInMenuItem).NameOwnerMenuItem);
                                     }
                                     else
                                     {
                                     }
 
                                     //Добавить пункт меню для плюг'ина
-                                    item = miOwner.DropDownItems.Add((plugIn as HPlugIn).NameMenuItem) as ToolStripMenuItem;
+                                    item = miOwner.DropDownItems.Add((plugIn as PlugInMenuItem).NameMenuItem) as ToolStripMenuItem;
                                     //Обработку выбора пункта меню предоставить плюг'ину
-                                    item.Click += (plugIn as HPlugIn).OnClickMenuItem;
+                                    item.Click += (plugIn as PlugInMenuItem).OnClickMenuItem;
                                     //Добавить обработчик запросов для плюг'ина от главной формы
-                                    (plugIn as HPlugIn).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
+                                    (plugIn as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
 
                                     initializePlugIn(plugIn);
                                 }
@@ -523,7 +523,7 @@ namespace Tep64
         }
 
         private void onClickMenuItem (object obj) {
-            HPlugIn plugIn = s_plugIns.Find((int)((EventArgsDataHost)obj).id);
+            PlugInMenuItem plugIn = s_plugIns.Find((int)((EventArgsDataHost)obj).id);
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked = ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
 
             if (((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked == true) {

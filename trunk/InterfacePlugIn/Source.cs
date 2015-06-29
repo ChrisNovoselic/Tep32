@@ -7,7 +7,7 @@ using HClassLibrary;
 
 namespace InterfacePlugIn
 {
-    //public abstract class HSource : HPlugIn
+    //public abstract class HSource : PlugInBase
     //{
     //}
 }
