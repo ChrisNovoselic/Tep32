@@ -31,7 +31,7 @@ namespace Tep64
 
         public static int Role
         {
-            get { return (int)m_DataRegistration[(int)INDEX_REGISTRATION.ROLE]; }
+            get { return (int)(m_DataRegistration[(int)INDEX_REGISTRATION.ROLE] == null ? -1 : m_DataRegistration[(int)INDEX_REGISTRATION.ROLE]); }
         }
     }
 }
