@@ -16,11 +16,29 @@ namespace TepCommon
 {
     public partial class HPanelEditTree : HPanelTepCommon
     {
-        //Перечисление для индексироания уровней "дерева"
-        private enum INDEX_LEVEL { TASK /*Задача*/, N_ALG /*Параметр алгоритма*/, TIME /*Интервал времени*/, COMP /*Компонент станции*/
-            , PUT };
+        /// <summary>
+        /// Перечисление для индексироания уровней "дерева" параметров алгоритма
+        /// </summary>
+        protected enum ID_LEVEL
+        {
+            TASK /*Задача*/, N_ALG /*Параметр алгоритма*/, TIME /*Интервал времени*/, COMP /*Компонент станции*/
+            , PUT
+        };
+        /// <summary>
+        /// Массив признаков отображения доп./информациии на панели
+        ///  в зависимости от выбранного уровня в "дереве"
+        ///  - индекс признака соответствует игдексу идентификатора уровня в 'ID_LEVEL'
+        /// </summary>
+        protected bool[] m_arIsShowDetailLevels;
+        /// <summary>
+        /// Список идентификаторов уровней для постронения "дерева" параметров алгоритма
+        /// </summary>
+        protected List<ID_LEVEL> m_listIDLevels;
+        //private Dictionary <int, List<ID_LEVEL>> m_dictIDTaskLevels;
 
-        //Перечисление для индексирования элементов управления на панели
+        /// <summary>
+        /// Перечисление для индексирования элементов управления на панели
+        /// </summary>
         private enum INDEX_CONTROL
         {
             BUTTON_ADD, BUTTON_DELETE, BUTTON_SAVE, BUTTON_UPDATE //Кнопки
@@ -30,12 +48,26 @@ namespace TepCommon
             , LABEL_PARAM_DESC //Описание
             , INDEX_CONTROL_COUNT, //Общее кол-во элементов
         };
-        //Надписи для кнопок
+        /// <summary>
+        /// Надписи для кнопок
+        /// </summary>
         protected static string[] m_arButtonText = { @"Добавить", @"Удалить", @"Сохранить", @"Обновить" };
 
-        //Текущий(выбранный) уровень "дерева"
-        private INDEX_LEVEL _level;
-        private INDEX_LEVEL m_Level
+        /// <summary>
+        /// Текущий(выбранный) идентификатор задачи в "дереве" авпаметров алгоритма расчета
+        /// , ??? (на будущее - для схем построения "дерева" для различных задач)
+        /// </summary>
+        private int _task;
+        private int m_Task
+        {
+            get { return _task; }
+        }
+
+        /// <summary>
+        /// Текущий(выбранный) уровень "дерева"
+        /// </summary>
+        private ID_LEVEL  _level;
+        private ID_LEVEL m_Level
         {
             get { return _level; }
 
@@ -45,79 +77,90 @@ namespace TepCommon
         /// "Обработка" события - изменение значения уровня "дерева"
         /// </summary>
         /// <param name="newLevel"></param>
-        private void levelChanged(INDEX_LEVEL newLevel)
+        private void levelChanged(ID_LEVEL newLevel)
         {
             DataGridView dgv;
             //Очистить список "детализации"
             clearPrjDetail();
 
+            bool bIsShowDetail = m_arIsShowDetailLevels[(int)_level]
+                , bNewIsShowDetail = m_arIsShowDetailLevels[(int)newLevel];
+
             int iShowDetail = 0;
 
-            switch (_level)
-            {
-                case INDEX_LEVEL.TASK:
-                    switch (newLevel)
-                    {
-                        //case INDEX_LEVEL.TASK:
-                        //    break;
-                        case INDEX_LEVEL.N_ALG: //Параметр алгоритма
-                        case INDEX_LEVEL.TIME:
-                            iShowDetail = 1;
-                            break;                        
-                        case INDEX_LEVEL.COMP:
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case INDEX_LEVEL.N_ALG:
-                    switch (newLevel)
-                    {
-                        case INDEX_LEVEL.TASK:
-                        case INDEX_LEVEL.COMP:
-                            iShowDetail = -1;
-                            break;
-                        //case INDEX_LEVEL.N_ALG:
-                        //    break;
-                        case INDEX_LEVEL.TIME:
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case INDEX_LEVEL.TIME:
-                    switch (newLevel)
-                    {
-                        case INDEX_LEVEL.TASK:
-                        case INDEX_LEVEL.COMP:
-                            iShowDetail = -1;
-                            break;
-                        case INDEX_LEVEL.N_ALG:
-                            break;
-                        //case INDEX_LEVEL.TIME:
-                        //    break;
-                        default:
-                            break;
-                    }
-                    break;
-                case INDEX_LEVEL.COMP:
-                    switch (newLevel)
-                    {
-                        case INDEX_LEVEL.TASK:
-                            break;
-                        case INDEX_LEVEL.N_ALG:
-                        case INDEX_LEVEL.TIME:
-                            iShowDetail = 1;
-                            break;
-                        //case INDEX_LEVEL.COMP:
-                        //    break;
-                        default:
-                            break;
-                    }
-                    break;
-                default:
-                    break;
-            }
+            if (!(bIsShowDetail == bNewIsShowDetail))
+                if (bNewIsShowDetail == true)
+                    iShowDetail = 1;
+                else
+                    iShowDetail = -1;
+            else
+                ;
+
+            //switch (_level)
+            //{
+            //    case INDEX_LEVEL.TASK:
+            //        switch (newLevel)
+            //        {
+            //            //case INDEX_LEVEL.TASK:
+            //            //    break;
+            //            case INDEX_LEVEL.N_ALG: //Параметр алгоритма
+            //            case INDEX_LEVEL.TIME:
+            //                iShowDetail = 1;
+            //                break;                        
+            //            case INDEX_LEVEL.COMP:
+            //                break;
+            //            default:
+            //                break;
+            //        }
+            //        break;
+            //    case INDEX_LEVEL.N_ALG:
+            //        switch (newLevel)
+            //        {
+            //            case INDEX_LEVEL.TASK:
+            //            case INDEX_LEVEL.COMP:
+            //                iShowDetail = -1;
+            //                break;
+            //            //case INDEX_LEVEL.N_ALG:
+            //            //    break;
+            //            case INDEX_LEVEL.TIME:
+            //                break;
+            //            default:
+            //                break;
+            //        }
+            //        break;
+            //    case INDEX_LEVEL.TIME:
+            //        switch (newLevel)
+            //        {
+            //            case INDEX_LEVEL.TASK:
+            //            case INDEX_LEVEL.COMP:
+            //                iShowDetail = -1;
+            //                break;
+            //            case INDEX_LEVEL.N_ALG:
+            //                break;
+            //            //case INDEX_LEVEL.TIME:
+            //            //    break;
+            //            default:
+            //                break;
+            //        }
+            //        break;
+            //    case INDEX_LEVEL.COMP:
+            //        switch (newLevel)
+            //        {
+            //            case INDEX_LEVEL.TASK:
+            //                break;
+            //            case INDEX_LEVEL.N_ALG:
+            //            case INDEX_LEVEL.TIME:
+            //                iShowDetail = 1;
+            //                break;
+            //            //case INDEX_LEVEL.COMP:
+            //            //    break;
+            //            default:
+            //                break;
+            //        }
+            //        break;
+            //    default:
+            //        break;
+            //}
 
             if (iShowDetail == 1)
             {
@@ -143,7 +186,7 @@ namespace TepCommon
                     ;
 
             dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP] as DataGridView;
-            dgv.ReadOnly = !(newLevel == INDEX_LEVEL.N_ALG);
+            dgv.ReadOnly = !(newLevel == ID_LEVEL.N_ALG);
             if (dgv.ReadOnly == false)
                 dgv.Columns[0].ReadOnly = true;
             else
@@ -229,7 +272,7 @@ namespace TepCommon
             m_arTableOrigin = new DataTable[(int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER];
             m_arTableEdit = new DataTable[(int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER];
             m_arTableKey = new DataTable[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY];
-            
+
             InitializeComponent();
         }
 
@@ -333,17 +376,43 @@ namespace TepCommon
             ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_DELETE]).Click += new System.EventHandler(HPanelEditTree_btnDelete_Click);
             ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_SAVE]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
             ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_UPDATE]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
-        }        
+        }
 
-        protected override void initialize(ref DbConnection dbConn, out int err, out string strErr)
+        private void fillTableKeys(ref DbConnection dbConn, out int err, out string strErr)
         {
-            int i = -1;
-            
             err = 0;
             strErr = string.Empty;
 
-            //Заполнить "оригинальные" таблицы из БД...
-            for (i = 0; i < (int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER; i ++)
+            string[] arNameTableKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { @"time", @"comp_list", @"task" }
+                    , arErrKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { @"словарь 'интервалы времени'"
+                                                                                        , @"словарь 'компоненты станции'"
+                                                                                        , @"проект 'список задач ПК'" };
+            for (int i = 0; i < (int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY; i++)
+            {
+                m_arTableKey[(int)i] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + arNameTableKey[(int)i], null, null, out err);
+
+                if (!(m_arTableKey[(int)i].Rows.Count > 0))
+                    err = -1;
+                else
+                    ;
+
+                if (!(err == 0))
+                {
+                    strErr = @"HPanelEditTree::initialize () - заполнение таблицы " + arErrKey[i] + @"...";
+
+                    break;
+                }
+                else
+                    ;
+            }
+        }
+
+        private void fillTableEdits(ref DbConnection dbConn, out int err, out string strErr)
+        {
+            err = 0;
+            strErr = string.Empty;
+
+            for (int i = 0; i < (int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER; i ++)
             {
                 m_arTableEdit[i] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + m_arNameTables[i], null, null, out err);
 
@@ -363,33 +432,167 @@ namespace TepCommon
                 else
                     ;
             }
+        }
 
-            if (err == 0)
+        private int reAddNodes(int indxLevel, TreeNode node_parent, string id_parent)
+        {
+            int iRes = 0;
+
+            TreeNode node = null;
+            TreeNodeCollection nodes;
+            string strId = string.Empty
+                , strKey = string.Empty;
+            DataRow[] rows;
+            int iAdd = 0;
+
+            if (indxLevel < m_listLevelParameters.Count)
             {
-                string[] arNameTableKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { @"time", @"comp_list", @"task" }
-                    , arErrKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { @"словарь 'интервалы времени'"
-                                                                                        , @"словарь 'компоненты станции'"
-                                                                                        , @"проект 'список задач ПК'" };
-                for (i = 0; i < (int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY; i++)
+                if (node_parent == null)
+                    nodes = m_ctrlTreeView.Nodes;
+                else
+                    nodes = node_parent.Nodes;
+                
+                rows = m_listLevelParameters[indxLevel].Select(id_parent);
+
+                foreach (DataRow r in rows)
                 {
-                    m_arTableKey[(int)i] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + arNameTableKey[(int)i], null, null, out err);
-
-                    if (!(m_arTableKey[(int)i].Rows.Count > 0))
-                        err = -1;
+                    //Строка с идентификатором задачи
+                    //strId = r[m_listLevelParameters[indxLevel].id].ToString().Trim();
+                    strId = m_listLevelParameters[indxLevel].GetId(r);
+                    if (strId.Equals(string.Empty) == false)
+                        strKey = concatIdNode(node_parent, strId);
                     else
-                        ;
+                        strKey = id_parent;
 
-                    if (!(err == 0))
+                    if (nodes.Find(strKey, false).Length == 0)
                     {
-                        strErr = @"HPanelEditTree::initialize () - заполнение таблицы " + arErrKey[i] + @"...";
+                        //Элемент дерева для очередной задачи
+                        if (m_listLevelParameters[indxLevel].desc.Equals(string.Empty) == false)
+                        {
+                            node = nodes.Add(strKey, r[m_listLevelParameters[indxLevel].desc].ToString().Trim());
+                            iRes++;
+                        }
+                        else
+                        {
+                            node = node_parent;
+                        }
 
-                        break;
+                        if ((indxLevel + 1) < m_listLevelParameters.Count)
+                        {
+                            iAdd = reAddNodes(indxLevel + 1, node, strKey);
+                            if (iAdd == 0)
+                            {
+                                if (indxLevel > 0)
+                                {
+                                    nodes.Remove(node);
+                                    iRes--;
+                                }
+                                else
+                                    addNodeNull(node);
+                            }
+                            else
+                                iRes += iAdd;
+                        }
+                        else
+                            ;
                     }
                     else
                         ;
                 }
-
             }
+            else
+                ;
+
+            return iRes;
+        }
+
+        protected class LEVEL_PARAMETERS
+        {
+            public DataTable table;
+            private string id;
+                //, id_sel
+            public string dep
+                , desc;
+
+            public LEVEL_PARAMETERS(DataTable table, string id, /*string id_sel,*/ string dep, string desc)
+            {
+                this.table = table;
+                this.id = id;
+                //this.id_sel = id_sel;
+                this.dep = dep;
+                this.desc = desc;
+            }
+
+            public DataRow[] Select(string id_parent)
+            {
+                string sel = string.Empty;
+                string[] ids = id_parent.Split(new string[] { @"::" }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (dep.Equals(string.Empty) == false)
+                {
+                    if (!(this.dep.IndexOf(@"{ID_PARENT_0}") < 0))
+                        sel = this.dep.Replace(@"{ID_PARENT_0}", ids[ids.Length - 1]);
+                    else
+                        sel = this.dep;
+
+                    if (!(sel.IndexOf(@"{ID_PARENT_1}") < 0))
+                        if (ids.Length > 1)
+                            sel = sel.Replace(@"{ID_PARENT_1}", ids[ids.Length - 2]);
+                        else
+                            Logging.Logg().Error(@"LEVEL_PARAMETERS::Select (id_parent=" + id_parent + @") - отсутствует необходимый параметр...", Logging.INDEX_MESSAGE.NOT_SET);
+                    else
+                        ;
+                }
+                else
+                    ;
+
+                return table.Select(sel);
+            }
+
+            public string GetId(DataRow r)
+            {
+                string strRes = string.Empty;
+                string[] localIds = id.Split(new string [] { @"," }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (localIds.Length == 1)
+                    strRes = r[id].ToString().Trim();
+                else
+                    if (localIds.Length > 1)
+                    {
+                        foreach (string localId in localIds)
+                            strRes += r[localId].ToString().Trim() + @"::";
+
+                        strRes = strRes.Substring(0, strRes.Length - @"::".Length);
+                    }
+                    else
+                        ;
+
+                return strRes;
+            }
+        }
+
+        protected List<LEVEL_PARAMETERS> m_listLevelParameters;
+
+        protected virtual void initTreeNodes()
+        {
+            if (!(m_listLevelParameters == null))
+                reAddNodes(0, null, string.Empty);
+            else
+                Logging.Logg().Error(@"HPanelEditTree::initTreeNodes () - не инициализирован список 'm_listLevelParameters' ...", Logging.INDEX_MESSAGE.NOT_SET);
+        }
+
+        protected override void initialize(ref DbConnection dbConn, out int err, out string strErr)
+        {
+            int i = -1;
+
+            err = 0;
+            strErr = string.Empty;
+
+            //Заполнить редактируемые "оригинальные" таблицы из БД...
+            fillTableEdits(ref dbConn, out err, out strErr);
+
+            if (err == 0)
+                fillTableKeys(ref dbConn, out err, out strErr);
             else
                 ; //Строка с описанием ошибки заполнена
 
@@ -398,61 +601,73 @@ namespace TepCommon
                 //Копии оригинальных таблиц для редактирования и последующего сравнения с оригигальными...
                 successRecUpdateInsertDelete();
 
-                TreeNode nodeTask
-                    , nodeAlg
-                    , nodeTime
-                    , nodePut;
-                DataRow[] rowAlgs
-                    , rowPuts;
-                string strIdTask = string.Empty
-                    , strIdAlg = string.Empty
-                    , strIdTime = string.Empty
-                    , strIdPut = string.Empty;
+                //Вариант №1
+                initTreeNodes();
 
-                //Заполнить "дерево" элементами 1-го уровня (ALGORITM)
-                foreach (DataRow rTask in m_arTableKey[(int)INDEX_TABLE_KEY.TASK].Rows)
-                {
-                    //Строка с идентификатором задачи
-                    strIdTask = rTask[@"ID"].ToString().Trim();
-                    //Элемент дерева для очередной задачи
-                    nodeTask = m_ctrlTreeView.Nodes.Add(strIdTask, rTask[@"DESCRIPTION"].ToString().Trim());
+                ////Вариант №2
+                //List<TreeNode> listNodes;
+                //DataRow[] rowAlgs
+                //    , rowPuts;
+                //List<string> strIds;
 
-                    //Массив строк таблицы параметров алгоритма для задачи с очередным ID
-                    rowAlgs = m_arTableOrigin[(int)INDEX_PARAMETER.ALGORITM].Select(@"ID_TASK=" + rTask[@"ID"]);
+                //listNodes = new List<TreeNode>();
+                //strIds = new List<string>();
+                //for (i = 0; i < m_listIDLevels.Count; i++)
+                //{
+                //    listNodes.Add(null);
+                //    strIds.Add(string.Empty);
+                //}
+                ////Заполнить "дерево" элементами 1-го уровня (ALGORITM-задача)
+                //foreach (DataRow r0 in m_arTableKey[(int)INDEX_TABLE_KEY.TASK].Rows)
+                //{
+                //    //Строка с идентификатором задачи
+                //    strIds[0] = r0[@"ID"].ToString().Trim();
+                //    //Элемент дерева для очередной задачи
+                //    listNodes[0] = m_ctrlTreeView.Nodes.Add(strIds[0], r0[@"DESCRIPTION"].ToString().Trim());
 
-                    //Заполнить "дерево" элементами 1-го уровня (ALGORITM)
-                    if (rowAlgs.Length > 0)
-                    {
-                        foreach (DataRow rAlg in rowAlgs)
-                        {
-                            //Строка с идентификатором параметра алгоритма
-                            strIdAlg = rAlg[@"ID"].ToString().Trim();
-                            //Элемент дерева для очередного параметра алгоритма
-                            nodeAlg = nodeTask.Nodes.Add(concatIdNode(nodeTask, strIdAlg), rAlg[@"N_ALG"].ToString().Trim());
+                //    //Массив строк таблицы параметров алгоритма для задачи с очередным ID
+                //    rowAlgs = m_arTableOrigin[(int)INDEX_PARAMETER.ALGORITM].Select(@"ID_TASK=" + r0[@"ID"]);
 
-                            foreach (DataRow rTime in m_arTableKey[(int)INDEX_TABLE_KEY.TIME].Rows)
-                            {
-                                rowPuts = m_arTableOrigin[(int)INDEX_PARAMETER.PUT].Select(@"ID_ALG=" + strIdAlg + @" AND ID_TIME=" + rTime[@"ID"]);
-                                if (rowPuts.Length > 0)
-                                {
-                                    strIdTime = rTime[@"ID"].ToString().Trim();
-                                    nodeTime = nodeAlg.Nodes.Add(concatIdNode(nodeAlg, strIdTime), rTime[@"DESCRIPTION"].ToString().Trim());
-                                    foreach (DataRow rPut in rowPuts)
-                                    {
-                                        strIdPut = rPut[@"ID"].ToString().Trim();
-                                        nodePut = nodeTime.Nodes.Add(concatIdNode(concatIdNode(nodeTime, strIdTime), strIdPut), m_arTableKey[(int)INDEX_TABLE_KEY.COMP_LIST].Select(@"ID=" + rPut[@"ID_COMP"])[0][@"DESCRIPTION"].ToString().Trim());
-                                    }
-                                }
-                                else
-                                    continue;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        addNodeNull(nodeTask);
-                    }
-                }
+                //    //Проверить наличие строк для "задачи"
+                //    if (rowAlgs.Length > 0)
+                //    {
+                //        //Заполнить "дерево" элементами 2-го уровня (ALGORITM-номалг)
+                //        foreach (DataRow r1 in rowAlgs)
+                //        {
+                //            //Вариант №1
+                //            //Строка с идентификатором параметра алгоритма
+                //            strIds[1] = r1[@"ID"].ToString().Trim();
+                //            //Элемент дерева для очередного параметра алгоритма
+                //            listNodes[1] = listNodes[0].Nodes.Add(concatIdNode(listNodes[0], strIds[1]), r1[@"N_ALG"].ToString().Trim());
+                //            //Заполнить "дерево" элементами 3-го уровня (Интервал)
+                //            foreach (DataRow r2 in m_arTableKey[(int)INDEX_TABLE_KEY.TIME].Rows)
+                //            {
+                //                rowPuts = m_arTableOrigin[(int)INDEX_PARAMETER.PUT].Select(@"ID_ALG=" + strIds[1] + @" AND ID_TIME=" + r2[@"ID"]);
+                //                if (rowPuts.Length > 0)
+                //                {
+                //                    strIds[2] = r2[@"ID"].ToString().Trim();
+                //                    listNodes[2] = listNodes[1].Nodes.Add(concatIdNode(listNodes[1], strIds[2]), r2[@"DESCRIPTION"].ToString().Trim());
+                //                    //Заполнить "дерево" элементами 4-го уровня (Компонент)
+                //                    foreach (DataRow r3 in rowPuts)
+                //                    {
+                //                        strIds[3] = r3[@"ID_COMP"].ToString().Trim();
+                //                        strIds[4] = r3[@"ID"].ToString().Trim();
+                //                        listNodes[3] = listNodes[2].Nodes.Add(
+                //                            //concatIdNode(concatIdNode(listNodes[2], strIds[2]), strIds[4])
+                //                            concatIdNode(listNodes[2], strIds[4])
+                //                            , m_arTableKey[(int)INDEX_TABLE_KEY.COMP_LIST].Select(@"ID=" + r3[@"ID_COMP"])[0][@"DESCRIPTION"].ToString().Trim());
+                //                    }
+                //                }
+                //                else
+                //                    continue;
+                //            }
+                //        }
+                //    }
+                //    else
+                //    {
+                //        addNodeNull(listNodes[0]);
+                //    }
+                //}
 
                 DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP]);                
                 //Только для чтения
@@ -462,7 +677,7 @@ namespace TepCommon
                 //Только для чтения
                 dgv.Columns[0].ReadOnly = true;                
 
-                m_Level = INDEX_LEVEL.TASK;
+                m_Level = ID_LEVEL.TASK;
                 m_ctrlTreeView.SelectedNode = m_ctrlTreeView.Nodes[0];
             }
             else
@@ -482,33 +697,90 @@ namespace TepCommon
 
         private static string concatIdNode (TreeNode nodeParent, string id)
         {
-            return concatIdNode (nodeParent.Name, id);
+            if (nodeParent == null)
+                return id;
+            else
+                return concatIdNode (nodeParent.Name, id);
         }
 
         private static string concatIdNode(string strIdParent, string id)
         {
             return strIdParent + @"::" + id;
         }
-
-        private static string getIdNodePart(string id, INDEX_LEVEL lev)
+        /// <summary>
+        /// Возвратить часть полного идентификатора элемента "дерева"
+        /// </summary>
+        /// <param name="id">Строка - полный идентификатор элемента "дерева"</param>
+        /// <param name="level">Уровень "дерева" - идентификатор уровня</param>
+        /// <returns>Строка - часть полного идентификатора</returns>
+        private string getIdNodePart(string id, ID_LEVEL level)
+        {
+            return getIdNodePart(id, m_listIDLevels.IndexOf (level));
+        }
+        /// <summary>
+        /// Возвратить часть полного идентификатора элемента "дерева"
+        /// </summary>
+        /// <param name="id">Строка - полный идентификатор элемента "дерева"</param>
+        /// <param name="indxLev">Уровень элемента "дерева"</param>
+        /// <returns>Строка - часть полного идентификатора</returns>
+        private static string getIdNodePart(string id, int indxLev)
         {
             if (id.Equals(string.Empty) == false)
             {
                 string []ids = id.Split(new string[] { @"::" }, StringSplitOptions.None);
-                if ((int)lev < ids.Length)
-                    return ids[(int)lev];
+                if (indxLev < ids.Length)
+                    return ids[indxLev];
                 else
                     return string.Empty;
             }
             else
                 return string.Empty;
         }
-
+        /// <summary>
+        /// Добавить пустой элемент "дерева"
+        /// </summary>
+        /// <param name="nodeParent">Элемент "дерева" - родительский для пустого элемента</param>
         private void addNodeNull(TreeNode nodeParent)
         {
-            nodeParent.Nodes.Add(null, @"Параметры отсутствуют...");
+            addNodeNull(nodeParent.Nodes);
         }
+        /// <summary>
+        /// Добавить пустой элемент "дерева"
+        /// </summary>
+        /// <param name="nodes">Коллекция элементов</param>
+        private void addNodeNull(TreeNodeCollection nodes)
+        {
+            nodes.Add(null, @"Параметры отсутствуют...");
+        }
+        /// <summary>
+        /// Возвратить массив объектов - значений для полей новой (добавляемой строки)
+        /// </summary>
+        /// <param name="nodeSelName"></param>
+        /// <returns></returns>
+        protected virtual object[] getRowAdd(INDEX_PARAMETER indxPar, string nodeSelName)
+        {
+            object[] arObjRes = null;
 
+            int id = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)indxPar]);
+            if (id == 0) id += 10001; else ;
+
+            arObjRes = new object[] {
+                            id
+                        , @"НаимКраткое"
+                        //, @"НаимПолное"
+                        , "НомАлгоритм"
+                        , @"Описание_параметра..."
+                        , 0
+                        , Int32.Parse(nodeSelName)
+                    };
+
+            return arObjRes;
+        }
+        /// <summary>
+        /// Обработчик события нажатия кнопки "Добавить"
+        /// </summary>
+        /// <param name="obj">Объект инициировавший событие - "кнопка"</param>
+        /// <param name="ev">Аргумент события</param>
         private void HPanelEditTree_btnAdd_Click(object obj, EventArgs ev)
         {
             TreeNode nodeSel = m_ctrlTreeView.SelectedNode;
@@ -519,18 +791,8 @@ namespace TepCommon
 
                 switch (level)
                 {
-                    case (int)INDEX_LEVEL.TASK:
-                        int id = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM]);
-                        if (id == 0) id += 10001; else ;
-                        m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Add(new object [] {
-                             id
-                            , @"НаимКраткое"
-                            //, @"НаимПолное"
-                            , "НомАлгоритм"
-                            , @"Описание_параметра..."
-                            , 0
-                            , Int32.Parse(nodeSel.Name)
-                        });
+                    case (int)ID_LEVEL.TASK:
+                        DataRow rowAdd = m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Add(getRowAdd(INDEX_PARAMETER.ALGORITM, nodeSel.Name));
                         //Удалить элемент 'Параметры отсутствуют...'
                         if ((nodeSel.Nodes.Count == 1)
                             && ((nodeSel.Nodes[0].Name == null) || (nodeSel.Nodes[0].Name.Equals (string.Empty) == true)))
@@ -538,11 +800,13 @@ namespace TepCommon
                         else
                             ;
 
-                        TreeNode nodeAdd = nodeSel.Nodes.Add(concatIdNode(nodeSel, id.ToString())
-                            , m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows[m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Count - 1][@"N_ALG"].ToString ().Trim ());
+                        TreeNode nodeAdd = nodeSel.Nodes.Add(concatIdNode(nodeSel
+                            , rowAdd[@"ID"].ToString())
+                            , rowAdd[@"N_ALG"].ToString().Trim());
                         //nodeAdd.La
                         break;
                     default:
+                        // в других случаях кн. "Добавить" - вЫкл.
                         break;
                 }
             }
@@ -557,13 +821,13 @@ namespace TepCommon
 
             if (!(nodeSel == null))
             {
-                INDEX_LEVEL level = (INDEX_LEVEL)nodeSel.Level;
+                ID_LEVEL level = (ID_LEVEL)nodeSel.Level;
 
                 switch (level)
                 {
-                    case INDEX_LEVEL.TASK:                        
+                    case ID_LEVEL.TASK:                        
                         break;
-                    case INDEX_LEVEL.N_ALG:                        
+                    case ID_LEVEL.N_ALG:                        
                         m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Remove(m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Select(@"ID=" + getIdNodePart(nodeSel.Name, level))[0]);
                         nodeParent.Nodes.Remove(nodeSel);
 
@@ -583,12 +847,12 @@ namespace TepCommon
 
     partial class HPanelEditTree
     {
-        private enum INDEX_PARAMETER {ALGORITM, PUT, COUNT_INDEX_PARAMETER};
-        private enum INDEX_TABLE_KEY { TIME, COMP_LIST, TASK, COUNT_INDEX_TABLE_KEY };
+        protected enum INDEX_PARAMETER {ALGORITM, PUT, COUNT_INDEX_PARAMETER};
+        protected enum INDEX_TABLE_KEY { TIME, COMP_LIST, TASK, COUNT_INDEX_TABLE_KEY };
         string[] m_arNameTables;
-        private DataTable [] m_arTableOrigin
+        protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
-        private DataTable [] m_arTableKey;
+        protected DataTable [] m_arTableKey;
 
         protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
         {
@@ -626,23 +890,23 @@ namespace TepCommon
             TreeNode nodeSel = ev.Node;
 
             //Индекс текущего уровня в "дереве"
-            m_Level = (INDEX_LEVEL)ev.Node.Level;
+            m_Level = m_listIDLevels[ev.Node.Level];
 
             //Строка с идентификатором параметра алгоритма расчета ТЭП
-            string strIdAlg = getIdNodePart(nodeSel.Name, INDEX_LEVEL.N_ALG);
+            string strIdAlg = getIdNodePart(nodeSel.Name, ID_LEVEL.N_ALG);
             //Идентификатор текущего параметра алгоритма
             if ((strIdAlg == null) || (strIdAlg.Equals (string.Empty) == true))
-                m_idAlg = -1; //Если выбран "верхний" уровень, или выбран "пкстой" параметр
+                m_idAlg = -1; //Если выбран "верхний" уровень, или выбран "пустой" параметр
             else
-                m_idAlg = Convert.ToInt32(getIdNodePart(nodeSel.Name, INDEX_LEVEL.N_ALG));
+                m_idAlg = Convert.ToInt32(getIdNodePart(nodeSel.Name, ID_LEVEL.N_ALG));
 
-            switch (ev.Node.Level)
+            switch (m_Level)
             {
-                case (int)INDEX_LEVEL.TASK: //Задача
-                    iRes = nodeAfterSelect(ev.Node, m_arTableKey[(int)INDEX_TABLE_KEY.TASK], INDEX_LEVEL.TASK, true);
+                case ID_LEVEL.TASK: //Задача
+                    iRes = nodeAfterSelect(ev.Node, m_arTableKey[(int)INDEX_TABLE_KEY.TASK], m_Level, false);
                     break;
-                case (int)INDEX_LEVEL.N_ALG: //Параметр алгоритма
-                    iRes = nodeAfterSelect(ev.Node, m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], (INDEX_LEVEL)ev.Node.Level, false);
+                case ID_LEVEL.N_ALG: //Параметр алгоритма
+                    iRes = nodeAfterSelect(ev.Node, m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], m_Level, false);
                     if (iRes == 0)
                         nodeAfterSelectDetail(INDEX_TABLE_KEY.TIME, @"ID_TIME=", strIdAlg);
                     else
@@ -657,15 +921,15 @@ namespace TepCommon
                                 break;
                         }
                     break;
-                case (int)INDEX_LEVEL.TIME:
-                    iRes = nodeAfterSelect(ev.Node, m_arTableKey[(int)INDEX_TABLE_KEY.TIME], (INDEX_LEVEL)ev.Node.Level, false);
+                case ID_LEVEL.TIME:
+                    iRes = nodeAfterSelect(ev.Node, m_arTableKey[(int)INDEX_TABLE_KEY.TIME], m_Level, false);
                     if (iRes == 0)
-                        nodeAfterSelectDetail(INDEX_TABLE_KEY.COMP_LIST, @"ID_TIME=" + getIdNodePart (ev.Node.Name, INDEX_LEVEL.TIME) + @" AND ID_COMP=", strIdAlg);
+                        nodeAfterSelectDetail(INDEX_TABLE_KEY.COMP_LIST, @"ID_TIME=" + getIdNodePart (ev.Node.Name, m_Level) + @" AND ID_COMP=", strIdAlg);
                     else
                         ;
                     break;
-                case (int)INDEX_LEVEL.COMP:
-                    iRes = nodeAfterSelect(ev.Node, m_arTableEdit[(int)INDEX_PARAMETER.PUT], INDEX_LEVEL.PUT, false);
+                case ID_LEVEL.COMP:
+                    iRes = nodeAfterSelect(ev.Node, m_arTableEdit[(int)INDEX_PARAMETER.PUT], ID_LEVEL.PUT, false);
                     break;
                 default:
                     break;
@@ -673,14 +937,14 @@ namespace TepCommon
         }
 
         /// <summary>
-        /// Заполнение 'DataGridView' со свойствами выранного в "деоеве" элемента
+        /// Заполнение 'DataGridView' со свойствами выбранного в "дереве" элемента
         /// </summary>
         /// <param name="node">выбранный элемент "дерева"</param>
         /// <param name="tblProp">целевая таблица свойств</param>
         /// <param name="level">уровень элемента "дерева"</param>
         /// <param name="bThrow">признак формирования исключения при ошибке</param>
         /// <returns></returns>
-        private int nodeAfterSelect(TreeNode node, DataTable tblProp, INDEX_LEVEL level, bool bThrow)
+        private int nodeAfterSelect(TreeNode node, DataTable tblProp, ID_LEVEL level, bool bThrow)
         {
             int iErr = 0;
             DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP]);
@@ -754,15 +1018,15 @@ namespace TepCommon
 
         private void TreeView_AfterLabelEdit(object obj, NodeLabelEditEventArgs ev)
         {
-            switch (ev.Node.Level)
+            switch (m_listIDLevels[ev.Node.Level])
             {
-                case (int)INDEX_LEVEL.TASK: //Задача - не редактируется
-                case (int)INDEX_LEVEL.TIME: //Интервал времени - не редактируется
-                case (int)INDEX_LEVEL.COMP: //Компонент станции - не редактируется
+                case ID_LEVEL.TASK: //Задача - не редактируется
+                case ID_LEVEL.TIME: //Интервал времени - не редактируется
+                case ID_LEVEL.COMP: //Компонент станции - не редактируется
                     ev.CancelEdit = true;
                     break;
-                case (int)INDEX_LEVEL.N_ALG: //Параметр алгоритма
-                    DataRow[] rowsProp = m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Select(@"ID=" + getIdNodePart (ev.Node.Name, (INDEX_LEVEL)ev.Node.Level));
+                case ID_LEVEL.N_ALG: //Параметр алгоритма
+                    DataRow[] rowsProp = m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Select(@"ID=" + getIdNodePart(ev.Node.Name, m_listIDLevels[ev.Node.Level]));
                     break;
                 default:
                     break;
@@ -773,7 +1037,7 @@ namespace TepCommon
         {
             string strThrow = string.Empty;
 
-            if ((m_Level == INDEX_LEVEL.N_ALG)
+            if ((m_Level == ID_LEVEL.N_ALG)
                 && (ev.ColumnIndex == 1)            
                 )
             {
@@ -827,11 +1091,11 @@ namespace TepCommon
 
                 switch (m_Level)
                 {
-                    case INDEX_LEVEL.N_ALG:
+                    case ID_LEVEL.N_ALG:
                         iKey = (int)INDEX_TABLE_KEY.TIME;
                         strErr = @"интервала времени";
                         break;
-                    case INDEX_LEVEL.TIME:
+                    case ID_LEVEL.TIME:
                         iKey = (int)INDEX_TABLE_KEY.COMP_LIST;
                         strErr = @"компонента станции";
                         idPut = 0;
@@ -869,8 +1133,8 @@ namespace TepCommon
                             {//Только для реального параметра (для компонента станции)
                                 m_arTableEdit[(int)INDEX_PARAMETER.PUT].Rows.Add(new object[] {
                                      idPut
-                                    , Convert.ToInt32(getIdNodePart (strIdDetail, INDEX_LEVEL.N_ALG)) //ALG
-                                    , Convert.ToInt32(getIdNodePart (strIdDetail, INDEX_LEVEL.TIME)) //TIME
+                                    , Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.N_ALG)) //ALG
+                                    , Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.TIME)) //TIME
                                     , id //COMP
                                     , 0
                                 });
@@ -905,7 +1169,7 @@ namespace TepCommon
                                 if (node.Text.Equals(strDetail) == true)
                                 {
                                     strIdDetail = node.Name; 
-                                    idPut = Convert.ToInt32(getIdNodePart(strIdDetail, INDEX_LEVEL.PUT));
+                                    idPut = Convert.ToInt32(getIdNodePart(strIdDetail, ID_LEVEL.PUT));
                                     //Массив строк таблицы для удаления
                                     rowsToDelete = m_arTableEdit[(int)INDEX_PARAMETER.PUT].Select(@"ID=" + idPut);
                                     //Проверить кол-во строк (д.б. ОДНа и ТОЬКО ОДНа)
@@ -928,7 +1192,7 @@ namespace TepCommon
                             TreeNode node = m_ctrlTreeView.SelectedNode.Nodes.Find(strIdDetail, false)[0].FirstNode;
                             while (!(node == null))
                             {
-                                strIdToDelete = getIdNodePart(node.Name, INDEX_LEVEL.PUT);
+                                strIdToDelete = getIdNodePart(node.Name, ID_LEVEL.PUT);
                                 rowsToDelete = m_arTableEdit[(int)INDEX_PARAMETER.PUT].Select(@"ID=" + strIdToDelete);
                                 //Проверить кол-во строк (д.б. ОДНа и ТОЬКО ОДНа)
                                 if (rowsToDelete.Length == 1)
