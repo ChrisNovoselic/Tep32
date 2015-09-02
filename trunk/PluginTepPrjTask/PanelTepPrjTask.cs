@@ -30,7 +30,7 @@ namespace PluginTepPrjTask
             _Id = 9;
 
             _nameOwnerMenuItem = @"Проект";
-            _nameMenuItem = @"Список задач ПК";
+            _nameMenuItem = @"Список задач ИРС";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)

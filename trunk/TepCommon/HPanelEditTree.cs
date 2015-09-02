@@ -386,7 +386,7 @@ namespace TepCommon
             string[] arNameTableKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { @"time", @"comp_list", @"task" }
                     , arErrKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { @"словарь 'интервалы времени'"
                                                                                         , @"словарь 'компоненты станции'"
-                                                                                        , @"проект 'список задач ПК'" };
+                                                                                        , @"проект 'список задач ИРС'" };
             for (int i = 0; i < (int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY; i++)
             {
                 m_arTableKey[(int)i] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + arNameTableKey[(int)i], null, null, out err);

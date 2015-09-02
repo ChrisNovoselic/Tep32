@@ -199,7 +199,7 @@ namespace Tep64
             PlugInMenuItem plugIn;
             string ids = HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS)
                 , strNameOwnerMenuItem = string.Empty, strNameMenuItem = string.Empty;
-            string[] arIds = ids.Split(',');
+            string[] arIds = ids.Split(new char [] {','}, StringSplitOptions.RemoveEmptyEntries);
             ////Вариант №1
             //ToolStripItem[] menuItems;
             //Вариант №2

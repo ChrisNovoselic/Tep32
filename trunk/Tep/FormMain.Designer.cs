@@ -130,7 +130,7 @@ namespace Tep64
             this.MinimizeBox = false;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "ПК ЭТАП";
+            this.Text = "ИРС ЭТАП";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.MainMenuStrip.ResumeLayout(false);
