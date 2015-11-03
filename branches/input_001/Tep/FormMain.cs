@@ -27,138 +27,7 @@ namespace Tep64
         /// </summary>
         private static int m_iAutoActionTabs = 0;
 
-        private static HPlugIns s_plugIns;
-        class HPlugIns : IPlugInHost //, IEnumerable <int>
-        {
-            private Dictionary<int, IPlugIn> m_dictPlugins;
-
-            public DelegateObjectFunc delegateOnClickMenuPluginItem;
-
-            public HPlugIns(DelegateObjectFunc fClickMenuItem)
-            {
-                m_dictPlugins = new Dictionary<int, IPlugIn>();
-                delegateOnClickMenuPluginItem = fClickMenuItem;
-            }
-
-            public bool Register(IPlugIn plug)
-            {
-                return true;
-            }
-
-            public void Add(int id, IPlugIn plugIn)
-            {
-                m_dictPlugins.Add(id, plugIn);
-            }
-
-            public IPlugIn Load(string name, out int iRes)
-            {
-                IPlugIn plugInRes = null;
-                iRes = -1;
-
-                Type objType = null;
-                try
-                {
-                    Assembly ass = null;
-                    ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name + @".dll");
-                    if (!(ass == null))
-                    {
-                        objType = ass.GetType(name + ".PlugIn");
-                    }
-                    else
-                        ;
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name);
-                }
-
-                if (!(objType == null))
-                    try
-                    {
-                        plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
-                        plugInRes.Host = (IPlugInHost)this;
-
-                        iRes = 0;
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Name = " + name);
-                    }
-                else
-                    Logging.Logg().Error(@"FormMain::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-
-                return plugInRes;
-            }
-
-            public PlugInMenuItem Find(int id)
-            {
-                if (m_dictPlugins.ContainsKey (id) == true)
-                    return m_dictPlugins[id] as PlugInMenuItem;
-                else
-                    return null;
-            }
-
-            public void OnEvtDataAskedHost(object obj)
-            {
-                object rec = null;
-
-                if (((EventArgsDataHost)obj).par[0].GetType().IsPrimitive == true)
-                {
-                    if ((int)((EventArgsDataHost)obj).par[0] == (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB)
-                    {
-                        rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
-                    }
-                    else
-                    {
-                        switch ((int)((EventArgsDataHost)obj).id)
-                        {
-                            case 1: //FormAboutTepProgram
-                                switch ((int)((EventArgsDataHost)obj).par[0])
-                                {
-                                    case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
-                                        rec = TepCommon.Properties.Resources.MainForm;
-                                        break;
-                                    case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                                        rec = Application.ProductVersion;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                                break;
-                            case 2: //PanelTepDictPlugIns
-                                switch ((int)((EventArgsDataHost)obj).par[0])
-                                {
-                                    default:
-                                        break;
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-                    //Отправить ответ (исходный идентификатор + требуемый объект)
-                    ((PlugInBase)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par[0], new object[] { rec }));
-                }
-                else
-                {
-                    if (((EventArgsDataHost)obj).par[0] is ToolStripMenuItem)
-                    {
-                        try
-                        {
-                            delegateOnClickMenuPluginItem(obj);
-                        }
-                        catch (Exception e)
-                        {
-                            Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain_EvtDataAskedHost () - BeginInvoke (addTabPage) [id] = " + (int)((EventArgsDataHost)obj).id);
-                        }
-                    }
-                    else
-                    {
-                    }
-                }
-            }
-        }
+        private static HPlugIns s_plugIns;        
 
         public FormMain() : base ()
         {
@@ -374,110 +243,57 @@ namespace Tep64
         }
 
         private int initializeMenu (out string strErr) {
-            int iRes = -1;
+            int iRes = -1
+                , idListener = -1;
             strErr = string.Empty;
 
-            int idListener = -1;
-            DbConnection dbConn = null;
-            DataTable tableRes = null;
             string strUserDomainName = string.Empty;
 
             idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, @"MAIN_DB");
-            dbConn = DbSources.Sources().GetConnection (idListener, out iRes);
 
             if (iRes == 0) {
-                //HUsers.GetRoles(ref dbConn, @"ID_EXT=" + tableRes.Rows[0][@"ID_ROLE"], string.Empty, out tableRes, out iRes);
-                HUsers.GetRoles(ref dbConn, @"ID_EXT=" + HTepUsers.Role, string.Empty, out tableRes, out iRes);
+                initializeLogging ();
 
-                if ((iRes == 0)
-                    && (! (tableRes == null))
-                    && (tableRes.Rows.Count > 0)) {
-                    initializeLogging ();
+                s_plugIns.Load(HTepUsers.GetPlugins(idListener, out iRes));
 
-                    int i = -1;
-                    //Сформировать список идентификаторов плюгинов
-                    string strIdPlugins = string.Empty;
-
-                    //Циклл по строкам - идентификатрам/разрешениям использовать плюгин                    
-                    for (i = 0; i < tableRes.Rows.Count; i++)
-                    {
-                        //Проверить разрешение использовать плюгин
-                        if (Int16.Parse(tableRes.Rows[i][@"IsUse"].ToString()) == 1)
-                        {
-                            strIdPlugins += tableRes.Rows[i][@"ID_PLUGIN"].ToString() + @",";
-                        }
-                        else
-                        {
-                        }
-                    }
-                    //Удалить крайний символ
-                    strIdPlugins = strIdPlugins.Substring(0, strIdPlugins.Length - 1);
-
-                    //Прочитать наименования плюгинов
-                    tableRes = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM plugins WHERE ID IN (" + strIdPlugins + @")", null, null, out iRes);
-
+                if (iRes == 0) {
                     //Проверить рез-т чтения наименования плюгина
                     if (iRes == 0)
                     {
-                        IPlugIn plugIn = null;
                         ToolStripMenuItem miOwner = null
                             , item = null;
-                        int idPlugIn = -1;
                         //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
-                        for (i = 0; (i < tableRes.Rows.Count) && (iRes == 0); i++)
-                        {
-                            //Загрузить плюгин
-                            plugIn = s_plugIns.Load(tableRes.Rows[i][@"NAME"].ToString().Trim(), out iRes);
+                        foreach (IPlugIn plugIn in s_plugIns.Values) {
+                            //Поиск пункта "родительского" пункта меню для плюг'ина
+                            miOwner = FindMainMenuItemOfText((plugIn as PlugInMenuItem).NameOwnerMenuItem);
 
-                            if (!(iRes < 0))
+                            //Проверка найден ли "родительский" пункт меню для плюг'ина
+                            if (miOwner == null)
                             {
-                                //Идентификатор плюг'ина
-                                idPlugIn = Int16.Parse(tableRes.Rows[i][@"ID"].ToString());
-                                //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
-                                if (((PlugInBase)plugIn)._Id == idPlugIn)
-                                {
-                                    s_plugIns.Add(idPlugIn, plugIn);
-
-                                    //Поиск пункта "родительского" пункта меню для плюг'ина
-                                    miOwner = FindMainMenuItemOfText((plugIn as PlugInMenuItem).NameOwnerMenuItem);
-
-                                    //Проверка найден ли "родительский" пункт меню для плюг'ина
-                                    if (miOwner == null)
-                                    {
-                                        int indx = -1;
-                                        string strNameItem = (plugIn as PlugInMenuItem).NameOwnerMenuItem;
-                                        if (strNameItem.Equals(@"Помощь") == false)
-                                            indx = this.MainMenuStrip.Items.Count - 1;
-                                        else
-                                            ;
-                                        //НЕ найден - создаем
-                                        if (indx < 0)
-                                            this.MainMenuStrip.Items.Add(new ToolStripMenuItem(strNameItem));
-                                        else
-                                            this.MainMenuStrip.Items.Insert(indx, new ToolStripMenuItem(strNameItem));
-                                        miOwner = FindMainMenuItemOfText((plugIn as PlugInMenuItem).NameOwnerMenuItem);
-                                    }
-                                    else
-                                    {
-                                    }
-
-                                    //Добавить пункт меню для плюг'ина
-                                    item = miOwner.DropDownItems.Add((plugIn as PlugInMenuItem).NameMenuItem) as ToolStripMenuItem;
-                                    //Обработку выбора пункта меню предоставить плюг'ину
-                                    item.Click += (plugIn as PlugInMenuItem).OnClickMenuItem;
-                                    //Добавить обработчик запросов для плюг'ина от главной формы
-                                    (plugIn as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
-
-                                    initializePlugIn(plugIn);
-                                }
+                                int indx = -1;
+                                string strNameItem = (plugIn as PlugInMenuItem).NameOwnerMenuItem;
+                                if (strNameItem.Equals(@"Помощь") == false)
+                                    indx = this.MainMenuStrip.Items.Count - 1;
                                 else
-                                {
-                                    iRes = -2; //Несоответствие идентификатроов
-                                }
+                                    ;
+                                //НЕ найден - создаем
+                                if (indx < 0)
+                                    this.MainMenuStrip.Items.Add(new ToolStripMenuItem(strNameItem));
+                                else
+                                    this.MainMenuStrip.Items.Insert(indx, new ToolStripMenuItem(strNameItem));
+                                miOwner = FindMainMenuItemOfText((plugIn as PlugInMenuItem).NameOwnerMenuItem);
                             }
                             else
-                            {
-                            }
+                                ;
+
+                            //Добавить пункт меню для плюг'ина
+                            item = miOwner.DropDownItems.Add((plugIn as PlugInMenuItem).NameMenuItem) as ToolStripMenuItem;
+                            //Обработку выбора пункта меню предоставить плюг'ину
+                            item.Click += (plugIn as PlugInMenuItem).OnClickMenuItem;
+                            //Добавить обработчик запросов для плюг'ина от главной формы
+                            (plugIn as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
+
+                            initializePlugIn(plugIn);                            
                         }
 
                         if (iRes == 0)
