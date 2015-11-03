@@ -44,22 +44,46 @@ namespace Tep64
 
             DataTable tableRoles = null;
 
-            HUsers.GetRoles(ref dbConn, @"ID_EXT=" + Role + @" OR ID_EXT=" + Id, string.Empty, out tableRoles, out iRes);
+            HUsers.GetRoles(ref dbConn, @"(ID_EXT=" + Role + @" AND IS_ROLE=1)"
+                + @" OR (ID_EXT=" + Id + @" AND IS_ROLE=0)"
+                , string.Empty, out tableRoles, out iRes);
 
-            int i = -1;
+            int i = -1
+                , idPlugin = -1;
             //Сформировать список идентификаторов плюгинов
             string strIdPlugins = string.Empty;
             DataRow[] rowsIsUse;
+            List <int> listIdParsedPlugins = new List<int> ();
 
             //Цикл по строкам - идентификатрам/разрешениям использовать плюгин                    
             for (i = 0; i < tableRoles.Rows.Count; i++)
             {
-                rowsIsUse = tableRoles.Select(@"ID_PLUGIN=");
-                //Проверить разрешение использовать плюгин
-                if (Int16.Parse(tableRoles.Rows[i][@"IsUse"].ToString()) == 1)
-                    strIdPlugins += tableRoles.Rows[i][@"ID_PLUGIN"].ToString() + @",";
+                idPlugin = (int)tableRoles.Rows[i][@"ID_PLUGIN"];
+                if (listIdParsedPlugins.IndexOf(idPlugin) < 0)
+                {
+                    listIdParsedPlugins.Add (idPlugin);
+                    //??? возможна повторная обработка
+                    rowsIsUse = tableRoles.Select(@"ID_PLUGIN=" + idPlugin);
+                    //Проверить разрешение использовать плюгин
+                    switch (rowsIsUse.Length)
+                    {
+                        case 0:
+                            break;
+                        case 1:
+                        
+                            break;
+                        case 2:
+                            break;
+                        default:
+                            throw new Exception(@"HTepUsers::GetIdIsUsePlugins (ID_PLUGIN=" + tableRoles.Rows[i][@"ID_PLUGIN"]);
+                    }
+                    if (Int16.Parse(tableRoles.Rows[i][@"IsUse"].ToString()) == 1)
+                        strIdPlugins += tableRoles.Rows[i][@"ID_PLUGIN"].ToString() + @",";
+                    else
+                        ;
+                }
                 else
-                    ;
+                    ; // плюгИн e;t j,hf,jnfy
             }
             //Удалить крайний символ
             strIdPlugins = strIdPlugins.Substring(0, strIdPlugins.Length - 1);
