@@ -55,6 +55,8 @@ namespace TepCommon
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+
+            initializeLayoutStyle();
         }
 
         protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
