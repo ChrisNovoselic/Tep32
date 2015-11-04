@@ -10,12 +10,11 @@ using InterfacePlugIn;
 
 namespace PluginTepTaskInval
 {
-    public class PluginTepTaskInval : HPanelTepCommon
+    public class PluginTepTaskInval : PanelTepTaskValues
     {
         public PluginTepTaskInval(IPlugIn iFunc)
             : base(iFunc)
         {
-
             InitializeComponent();
         }
 
@@ -25,12 +24,12 @@ namespace PluginTepTaskInval
 
         protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
         {
-            throw new NotImplementedException();
+            err = 0;
+            errMsg = string.Empty;
         }
 
         protected override void Activate(bool activate)
         {
-            throw new NotImplementedException();
         }
 
         protected override void successRecUpdateInsertDelete()
@@ -52,7 +51,7 @@ namespace PluginTepTaskInval
             _Id = 17;
 
             _nameOwnerMenuItem = @"Задача\Расчет ТЭП";
-            _nameMenuItem = @"Входные параметры";
+            _nameMenuItem = @"Входные данные";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)

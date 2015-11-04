@@ -76,7 +76,7 @@ namespace Tep64
 
             foreach (string id in arIds)
             {
-                plugIn = s_plugIns.Find(Convert.ToInt32(id));
+                plugIn = s_plugIns[Convert.ToInt32(id)] as PlugInMenuItem;
                 if (plugIn == null)
                     continue;
                 else
@@ -212,7 +212,7 @@ namespace Tep64
         }
 
         /// <summary>
-        /// Допполнительные действия по инициализации плюг'ина
+        /// Дополнительные действия по инициализации плюг'ина
         /// </summary>
         /// <param name="plugIn">объект плюг'ина</param>
         private void initializePlugIn (IPlugIn plugIn) {
@@ -241,7 +241,12 @@ namespace Tep64
             }
             else { }
         }
-
+        /// <summary>
+        /// Инициализация п.п. главного меню
+        ///  в ~ от разрешенных к загрузке плюгИнов
+        /// </summary>
+        /// <param name="strErr"></param>
+        /// <returns></returns>
         private int initializeMenu (out string strErr) {
             int iRes = -1
                 , idListener = -1;
@@ -250,6 +255,13 @@ namespace Tep64
             string strUserDomainName = string.Empty;
 
             idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, @"MAIN_DB");
+
+            try {
+                using (HTepUsers users = new HTepUsers(idListener)) { ; }
+
+                iRes = 0;
+            }
+            catch (Exception e) { }
 
             if (iRes == 0) {
                 initializeLogging ();
@@ -261,35 +273,50 @@ namespace Tep64
                     if (iRes == 0)
                     {
                         ToolStripMenuItem miOwner = null
-                            , item = null;
+                            , miItem = null;
+                        string[] arHierarchyOwnerMenuItems;
                         //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
                         foreach (IPlugIn plugIn in s_plugIns.Values) {
+                            arHierarchyOwnerMenuItems =
+                                (plugIn as PlugInMenuItem).NameOwnerMenuItem.Split(new char [] {'\\'}, StringSplitOptions.None);;
                             //Поиск пункта "родительского" пункта меню для плюг'ина
-                            miOwner = FindMainMenuItemOfText((plugIn as PlugInMenuItem).NameOwnerMenuItem);
-
+                            miOwner = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[0]);
                             //Проверка найден ли "родительский" пункт меню для плюг'ина
                             if (miOwner == null)
-                            {
-                                int indx = -1;
-                                string strNameItem = (plugIn as PlugInMenuItem).NameOwnerMenuItem;
-                                if (strNameItem.Equals(@"Помощь") == false)
+                            {//НЕ найден - создаем
+                                int indx = -1; // индекс для добавляемого пункта                                
+                                if (arHierarchyOwnerMenuItems[0].Equals(@"Помощь") == false)
+                                    // индекс для всех пунктов кроме "Помощь"
                                     indx = this.MainMenuStrip.Items.Count - 1;
                                 else
                                     ;
-                                //НЕ найден - создаем
+
                                 if (indx < 0)
-                                    this.MainMenuStrip.Items.Add(new ToolStripMenuItem(strNameItem));
+                                    // для пункта "Помощь" - он всегда крайний
+                                    //  , и не имеет сложной иерархии
+                                    this.MainMenuStrip.Items.Add(miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
                                 else
-                                    this.MainMenuStrip.Items.Insert(indx, new ToolStripMenuItem(strNameItem));
-                                miOwner = FindMainMenuItemOfText((plugIn as PlugInMenuItem).NameOwnerMenuItem);
+                                    // для всех пунктов кроме "Помощь"
+                                    this.MainMenuStrip.Items.Insert(indx, miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
                             }
                             else
                                 ;
+                            //Реализовать иерархию п.п. (признак наличия иерархии - длина массива)
+                            for (int i = 1; i < arHierarchyOwnerMenuItems.Length; i++) {
+                                //Найти п. меню очередного уровня
+                                miItem = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[i]);
+                                if (miItem == null)
+                                    // в случае отсутствия добавить к ранее найденному
+                                    miOwner.DropDownItems.Add(miItem = new ToolStripMenuItem(arHierarchyOwnerMenuItems[i]));
+                                else
+                                    ;
 
+                                miOwner = miItem;
+                            }
                             //Добавить пункт меню для плюг'ина
-                            item = miOwner.DropDownItems.Add((plugIn as PlugInMenuItem).NameMenuItem) as ToolStripMenuItem;
+                            miItem = miOwner.DropDownItems.Add((plugIn as PlugInMenuItem).NameMenuItem) as ToolStripMenuItem;
                             //Обработку выбора пункта меню предоставить плюг'ину
-                            item.Click += (plugIn as PlugInMenuItem).OnClickMenuItem;
+                            miItem.Click += (plugIn as PlugInMenuItem).OnClickMenuItem;
                             //Добавить обработчик запросов для плюг'ина от главной формы
                             (plugIn as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
 
@@ -339,7 +366,7 @@ namespace Tep64
         }
 
         private void onClickMenuItem (object obj) {
-            PlugInMenuItem plugIn = s_plugIns.Find((int)((EventArgsDataHost)obj).id);
+            PlugInMenuItem plugIn = s_plugIns[(int)((EventArgsDataHost)obj).id];
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked = ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
 
             if (((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked == true) {

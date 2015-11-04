@@ -16,7 +16,7 @@ namespace Tep64
 {
     public partial class FormMain
     {
-        class HPlugIns : Dictionary <int, IPlugIn>, IPlugInHost
+        class HPlugIns : Dictionary <int, PlugInMenuItem>, IPlugInHost
             //, IEnumerable <IPlugIn>
         {
             //public IPlugIn GetEnumerator () {
@@ -55,9 +55,9 @@ namespace Tep64
             //    _dictPlugins.Add(id, plugIn);
             //}
 
-            public IPlugIn Load(string name, out int iRes)
+            public PlugInMenuItem Load(string name, out int iRes)
             {
-                IPlugIn plugInRes = null;
+                PlugInMenuItem plugInRes = null;
                 iRes = -1;
 
                 Type objType = null;
@@ -80,7 +80,7 @@ namespace Tep64
                 if (!(objType == null))
                     try
                     {
-                        plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
+                        plugInRes = ((PlugInMenuItem)Activator.CreateInstance(objType));
                         plugInRes.Host = (IPlugInHost)this;
 
                         iRes = 0;
@@ -93,14 +93,6 @@ namespace Tep64
                     Logging.Logg().Error(@"FormMain::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
 
                 return plugInRes;
-            }
-
-            public PlugInMenuItem Find(int id)
-            {
-                if (this.ContainsKey(id) == true)
-                    return this[id] as PlugInMenuItem;
-                else
-                    return null;
             }
 
             public void OnEvtDataAskedHost(object obj)
@@ -168,7 +160,7 @@ namespace Tep64
             {
                 int iRes = 0
                     , idPlugIn = -1;
-                IPlugIn plugIn = null;
+                PlugInMenuItem plugIn = null;
 
                 //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
                 for (int i = 0; (i < tableNamePlugins.Rows.Count) && (iRes == 0); i++)

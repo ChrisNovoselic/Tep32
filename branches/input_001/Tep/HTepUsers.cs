@@ -49,44 +49,62 @@ namespace Tep64
                 , string.Empty, out tableRoles, out iRes);
 
             int i = -1
+                , indxRow = -1
                 , idPlugin = -1;
             //Сформировать список идентификаторов плюгинов
-            string strIdPlugins = string.Empty;
             DataRow[] rowsIsUse;
             List <int> listIdParsedPlugins = new List<int> ();
 
             //Цикл по строкам - идентификатрам/разрешениям использовать плюгин                    
             for (i = 0; i < tableRoles.Rows.Count; i++)
             {
-                idPlugin = (int)tableRoles.Rows[i][@"ID_PLUGIN"];
+                idPlugin = (Int16)tableRoles.Rows[i][@"ID_PLUGIN"];
                 if (listIdParsedPlugins.IndexOf(idPlugin) < 0)
                 {
                     listIdParsedPlugins.Add (idPlugin);
                     //??? возможна повторная обработка
+                    indxRow = -1;
                     rowsIsUse = tableRoles.Select(@"ID_PLUGIN=" + idPlugin);
                     //Проверить разрешение использовать плюгин
                     switch (rowsIsUse.Length)
                     {
                         case 0:
                             break;
-                        case 1:
-                        
+                        case 1: // в БД указано разрешение только для группы (пользователя)
+                            indxRow = 0;
                             break;
-                        case 2:
+                        case 2: // в БД указаны значения как для группы так для пользователя
+                            foreach (DataRow r in rowsIsUse)
+                            {
+                                indxRow++;
+
+                                if ((Byte)r[@"IS_ROLE"] == 0)
+                                    // приоритет индивидуальной настройки
+                                    break;
+                                else
+                                    ;
+                            }
                             break;
                         default:
                             throw new Exception(@"HTepUsers::GetIdIsUsePlugins (ID_PLUGIN=" + tableRoles.Rows[i][@"ID_PLUGIN"]);
                     }
-                    if (Int16.Parse(tableRoles.Rows[i][@"IsUse"].ToString()) == 1)
-                        strIdPlugins += tableRoles.Rows[i][@"ID_PLUGIN"].ToString() + @",";
+
+                    if (!(indxRow < 0))
+                        if ((Byte)rowsIsUse[indxRow][@"IsUse"] == 1)
+                            strRes += idPlugin + @",";
+                        else
+                            ;
                     else
                         ;
                 }
                 else
-                    ; // плюгИн e;t j,hf,jnfy
+                    ; // плюгИн уже обработан
             }
             //Удалить крайний символ
-            strIdPlugins = strIdPlugins.Substring(0, strIdPlugins.Length - 1);
+            if (strRes.Length > 0)
+                strRes = strRes.Substring(0, strRes.Length - 1);
+            else
+                ;
 
             return strRes;
         }

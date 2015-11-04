@@ -12,7 +12,7 @@ using InterfacePlugIn;
 
 namespace PluginTepPrjInParameters
 {
-    public class PluginTepPrjInParameters : HPanelEditTree
+    public class PluginTepPrjInParameters : PanelTepPrjParametersEditTree
     {
         public PluginTepPrjInParameters(IPlugIn iFunc)
             : base(iFunc, @"inalg, input")
@@ -61,8 +61,8 @@ namespace PluginTepPrjInParameters
         {
             _Id = 8;
 
-            _nameOwnerMenuItem = @"Проект";
-            _nameMenuItem = @"Входные параметры";
+            _nameOwnerMenuItem = @"Проект\Параметры";
+            _nameMenuItem = @"Входные";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)

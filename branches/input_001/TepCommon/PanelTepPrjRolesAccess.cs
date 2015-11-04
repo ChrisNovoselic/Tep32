@@ -215,7 +215,7 @@ namespace TepCommon
                 , dgvAccess = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
             DataRow [] rowsUnit = m_tblAccessUnit.Select (@"DESCRIPTION='" + dgvAccess.SelectedRows[0].Cells[0].Value + @"'")
                 , rowsAccess = m_tblEdit.Select(m_strKeyFields.Split(',')[0] + @"=" + m_tblItem.Rows[dgvItem.SelectedRows[0].Index][@"ID"]
-                                    + @" AND "
+                                    + @" AND IS_ROLE=1 AND "
                                     + m_strKeyFields.Split(',')[1] + @"="
                                         //+ m_tblAccessUnit.Rows [dgvAccess.SelectedRows[0].Index][@"ID"]);
                                         + rowsUnit[0][@"ID"]);
@@ -231,13 +231,16 @@ namespace TepCommon
 
         private void setPrjAccessValues(int indx)
         {
-            DataRow[] rowsAccessUnit = m_tblEdit.Select(m_strKeyFields.Split(',')[0] + @"=" + m_tblItem.Rows[indx][@"ID"]);
-
+            DataRow[] rowsAccessUnit = m_tblEdit.Select(m_strKeyFields.Split(',')[0] + @"=" + m_tblItem.Rows[indx][@"ID"]
+                + @" AND IS_ROLE=1");
+            
             DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
-            for (int i = 0; i < dgv.Rows.Count; i++)
-            {
-                ((DataGridViewCheckBoxCell)dgv.Rows[i].Cells[1]).Value = Int16.Parse(rowsAccessUnit[i][m_strNameFieldValue].ToString()) == 1;
-            }
+
+            if (rowsAccessUnit.Length == dgv.Rows.Count)
+                for (int i = 0; i < dgv.Rows.Count; i++)
+                    ((DataGridViewCheckBoxCell)dgv.Rows[i].Cells[1]).Value = Int16.Parse(rowsAccessUnit[i][m_strNameFieldValue].ToString()) == 1;
+            else
+                throw new Exception(@"PanelTepPrjRolesAccess::setPrjAccessValues () - кол-во строк в БД и элементе упр-я НЕ совпадает...");
         }
     }
 }

@@ -32,8 +32,8 @@ namespace PluginTepPrjRolesPlugIns
         {
             _Id = 7;
 
-            _nameOwnerMenuItem = @"Проект";
-            _nameMenuItem = @"Права доступа ролей(групп)";
+            _nameOwnerMenuItem = @"Проект\Права доступа";
+            _nameMenuItem = @"Роли (группы)";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)

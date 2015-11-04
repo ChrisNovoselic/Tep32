@@ -46,7 +46,13 @@
     <Compile Include="HPanelEdit.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="PanelTepPrjParametersEditTree.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PanelTepPrjRolesAccess.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelTepTaskValues.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
