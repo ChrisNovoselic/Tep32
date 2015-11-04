@@ -64,6 +64,10 @@ namespace InterfacePlugIn
     }
 
     public interface IObjectDictEdit {
+        /// <summary>
+        /// Инициализация значением, полученным от главной формы
+        /// </summary>
+        /// <param name="obj">Массив объектов для инициализации</param>
         void Initialize (object obj);
     }
 }

@@ -14,7 +14,7 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public abstract class HPanelTepCommon : TableLayoutPanel, IObjectDictEdit
+    public abstract class HPanelTepCommon : HPanelCommon, IObjectDictEdit
     {
         //Дополнительные действия при сохранении значений
         protected DelegateIntFunc delegateSaveAdding;
@@ -42,7 +42,7 @@ namespace TepCommon
             base.Dispose(disposing);
         }
 
-        public HPanelTepCommon(IPlugIn plugIn)
+        public HPanelTepCommon(IPlugIn plugIn) : base (13, 13)
         {
             this._iFuncPlugin = plugIn;
 
@@ -55,21 +55,11 @@ namespace TepCommon
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+        }
 
-            this.Dock = DockStyle.Fill;
-            // для отладки - "видимые" границы ячеек
-            //this.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
-
-            //Установить кол-во строк/столбцов
-            this.RowCount = 13; this.ColumnCount = 13;
-
-            //Добавить стили "ширина" столлбцов
-            for (int s = 0; s < this.ColumnCount; s++)
-                this.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, (float)100 / this.ColumnCount));
-
-            //Добавить стили "высота" строк
-            for (int s = 0; s < this.RowCount; s++)
-                this.RowStyles.Add(new RowStyle(SizeType.Percent, (float)100 / this.RowCount));
+        protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
+        {
+            initializeLayoutStyleEvenly(cols, rows);
         }
 
         public void Initialize(object obj)
