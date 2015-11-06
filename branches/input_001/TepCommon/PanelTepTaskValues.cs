@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Data;
 
 using HClassLibrary;
 using TepCommon;
@@ -40,6 +41,26 @@ namespace TepCommon
             PerformLayout ();
         }
 
+        protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
+        {
+            err = 0;
+            errMsg = string.Empty;
+
+            DataTable tablePeriod = null;
+
+            tablePeriod = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM [time] WHERE [ID] IN (13, 18, 19, 24)", null, null, out err);
+
+            if (err == 0)
+            {
+                foreach (DataRow r in tablePeriod.Rows)
+                    (m_dictControls[(int)INDEX_CONTROL.CB_PERIOD] as ComboBox).Items.Add (r[@"DESCRIPTION"]);
+
+                (m_dictControls[(int)INDEX_CONTROL.CB_PERIOD] as ComboBox).SelectedIndex = 0;
+            }
+            else
+                errMsg = @"";
+        }
+
         protected class DataGridViewTEPValues : DataGridView
         {
             public DataGridViewTEPValues ()
@@ -57,42 +78,80 @@ namespace TepCommon
         {
             private class HDateTimePicker : HPanelCommon
             {
-                public HDateTimePicker () : base (12, 1)
+                private int _iYear
+                    , _iMonth
+                    , _iDay
+                    , _iHour;
+
+                public HDateTimePicker(int year, int month, int day, int hour = 1)
+                    : base(12, 1)
                 {
-                    InitializeComponents ();
+                    _iYear = year;
+                    _iMonth = month;
+                    _iDay = day;
+                    _iHour = hour;
+
+                    InitializeComponents();
                 }
+                
+                private string[] months = { @"январь", @"февраль", @"март"
+                    , @"апрель", @"май", @"июнь"
+                    , @"июль", @"август", @"сентябрь"
+                    , @"октябрь", @"ноябрь", @"декабрь" };
+                
+                //public HDateTimePicker () : base (12, 1)
+                //{
+                //    InitializeComponents ();
+                //}
 
                 private void InitializeComponents()
                 {
                     Control ctrl;
+                    int i = -1;
 
                     SuspendLayout();
 
                     initializeLayoutStyle ();
 
                     //Дата - номер дня
-                    ctrl = new NumericUpDown ();
+                    ctrl = new ComboBox();
                     ctrl.Dock = DockStyle.Fill;
+                    (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                     Controls.Add (ctrl, 0, 0);
                     SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
+                    for (i = 0; i < 31; i ++)
+                        (ctrl as ComboBox).Items.Add (i + 1);
+                    (ctrl as ComboBox).SelectedIndex = _iDay - 1;
 
                     //Дата - наименование месяца
                     ctrl = new ComboBox ();
                     ctrl.Dock = DockStyle.Fill;
+                    (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                     Controls.Add(ctrl, 2, 0);
                     SetColumnSpan(ctrl, 5); SetRowSpan(ctrl, 1);
+                    for (i = 0; i < 12; i++)
+                        (ctrl as ComboBox).Items.Add(months[i]);
+                    (ctrl as ComboBox).SelectedIndex = _iMonth - 1;
 
                     //Дата - год
-                    ctrl = new NumericUpDown();
+                    ctrl = new ComboBox();
                     ctrl.Dock = DockStyle.Fill;
+                    (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                     Controls.Add(ctrl, 7, 0);
                     SetColumnSpan(ctrl, 3); SetRowSpan(ctrl, 1);
+                    for (i = 10; i < 21; i++)
+                        (ctrl as ComboBox).Items.Add(@"20" + i.ToString ());
+                    (ctrl as ComboBox).SelectedIndex = _iYear - (2000 + 10);
 
                     //Время - час
-                    ctrl = new NumericUpDown();
+                    ctrl = new ComboBox();
                     ctrl.Dock = DockStyle.Fill;
+                    (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                     Controls.Add(ctrl, 10, 0);
                     SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
+                    for (i = 0; i < 24; i++)
+                        (ctrl as ComboBox).Items.Add(i + 1);
+                    (ctrl as ComboBox).SelectedIndex = _iHour - 1;
 
                     ResumeLayout(false);
                     PerformLayout();
@@ -120,19 +179,26 @@ namespace TepCommon
 
                 posRow = 0;
                 //Период расчета
-                //Период расчета - подпись
-                ctrl = new System.Windows.Forms.Label();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Период:";
-                this.Controls.Add(ctrl, 0, posRow);
-                SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
+                ////Период расчета - подпись
+                //ctrl = new System.Windows.Forms.Label();
+                //ctrl.Dock = DockStyle.Bottom;
+                //(ctrl as System.Windows.Forms.Label).Text = @"Период:";
+                //this.Controls.Add(ctrl, 0, posRow);
+                //SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
                 //Период расчета - значение
                 ctrl = new ComboBox ();
                 ctrl.Name = INDEX_CONTROL.CB_PERIOD.ToString ();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
-                this.Controls.Add(ctrl, 2, posRow);
-                SetColumnSpan(ctrl, 6); SetRowSpan(ctrl, 1);
+                this.Controls.Add(ctrl, 0, posRow);
+                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                //Расчет - выполнить
+                ctrl = new Button();
+                ctrl.Name = INDEX_CONTROL.BUTTON_RUN.ToString();
+                ctrl.Text = @"Выполнить";
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 4, posRow);
+                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
 
                 //Дата/время начала периода расчета
                 //Дата/время начала периода расчета - подпись
@@ -142,7 +208,7 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время начала периода расчета - значения
-                ctrl = new HDateTimePicker();
+                ctrl = new HDateTimePicker(2015, 1, 1);
                 ctrl.Name = INDEX_CONTROL.HDTP_BEGIN.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
@@ -155,7 +221,7 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время  окончания периода расчета - значения
-                ctrl = new HDateTimePicker();
+                ctrl = new HDateTimePicker(2015, 1, 1, 24);
                 ctrl.Name = INDEX_CONTROL.HDTP_END.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
@@ -243,7 +309,8 @@ namespace TepCommon
 
     public partial class PanelTepTaskValues
     {
-        protected enum INDEX_CONTROL { CB_PERIOD, HDTP_BEGIN, HDTP_END
+        protected enum INDEX_CONTROL { BUTTON_RUN
+            , CB_PERIOD, HDTP_BEGIN, HDTP_END
             , CBX_COMP_CALCULATED, CBX_PARAMETER_CALCULATED
             , BUTTON_LOAD, BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
             , CBX_COMP_VISIBLED, CBX_PARAMETER_VISIBLED

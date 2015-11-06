@@ -24,8 +24,7 @@ namespace PluginTepTaskOutval
 
         protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
         {
-            err = 0;
-            errMsg = string.Empty;
+            base.initialize(ref dbConn, out err, out errMsg);
         }
 
         public override bool Activate(bool activate)
