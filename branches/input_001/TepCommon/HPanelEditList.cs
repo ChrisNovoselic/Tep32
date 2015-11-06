@@ -169,8 +169,11 @@ namespace TepCommon
             container.Add(this);
         }        
 
-        protected override void Activate(bool activate)
+        public override bool Activate(bool activate)
         {
+            bool bRes = base.Activate(activate);
+
+            return bRes;
         }
 
         protected override void clear()
