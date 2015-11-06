@@ -118,7 +118,7 @@ namespace TepCommon
                     ctrl.Dock = DockStyle.Fill;
                     (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                     Controls.Add (ctrl, 0, 0);
-                    SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
+                    SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);                    
                     for (i = 0; i < 31; i ++)
                         (ctrl as ComboBox).Items.Add (i + 1);
                     (ctrl as ComboBox).SelectedIndex = _iDay - 1;
