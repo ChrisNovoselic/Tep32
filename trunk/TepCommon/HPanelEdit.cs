@@ -232,6 +232,7 @@ namespace TepCommon
         }
 
         protected abstract void recUpdateInsertDelete(ref DbConnection dbConn, out int err);
+
         protected abstract void successRecUpdateInsertDelete();
 
         protected void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)

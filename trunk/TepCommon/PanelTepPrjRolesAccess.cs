@@ -209,6 +209,7 @@ namespace TepCommon
         }
 
         //private void HPanelEditTree_dgvPrjAccessCellEndEdit(object obj, DataGridViewCellEventArgs ev)
+
         private void HPanelEditTree_dgvPrjAccessCellValueChanged(object obj, DataGridViewCellEventArgs ev)
         {
             DataGridView dgvItem = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ITEM] as DataGridView
