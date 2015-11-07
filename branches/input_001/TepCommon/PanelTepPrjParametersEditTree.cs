@@ -36,6 +36,8 @@ namespace TepCommon
         protected List<ID_LEVEL> m_listIDLevels;
         //private Dictionary <int, List<ID_LEVEL>> m_dictIDTaskLevels;
 
+        private DataGridView m_dgvPrjProp
+            , m_dgvPrjDetail;
         /// <summary>
         /// Перечисление для индексирования элементов управления на панели
         /// </summary>
@@ -52,9 +54,8 @@ namespace TepCommon
         /// Надписи для кнопок
         /// </summary>
         protected static string[] m_arButtonText = { @"Добавить", @"Удалить", @"Сохранить", @"Обновить" };
-
         /// <summary>
-        /// Текущий(выбранный) идентификатор задачи в "дереве" авпаметров алгоритма расчета
+        /// Текущий(выбранный) идентификатор задачи в "дереве" параметров алгоритма расчета
         /// , ??? (на будущее - для схем построения "дерева" для различных задач)
         /// </summary>
         private int _task;
@@ -79,7 +80,6 @@ namespace TepCommon
         /// <param name="newLevel"></param>
         private void levelChanged(ID_LEVEL newLevel)
         {
-            DataGridView dgv;
             //Очистить список "детализации"
             clearPrjDetail();
 
@@ -165,30 +165,25 @@ namespace TepCommon
             if (iShowDetail == 1)
             {
                 //Уменьшить кол-во строк для 'DataGridView' c ID = DGV_PRJ_PPOP
-                dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP] as DataGridView;
-                this.SetColumnSpan(dgv, 8); this.SetRowSpan(dgv, 5);
+                this.SetColumnSpan(m_dgvPrjProp, 8); this.SetRowSpan(m_dgvPrjProp, 5);
                 //Размесить 'DataGridView' c ID = DGV_PRJ_DETAIL
-                dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_DETAIL] as DataGridView;
-                this.Controls.Add(dgv, 5, 5);
-                this.SetColumnSpan(dgv, 8); this.SetRowSpan(dgv, 5);
+                this.Controls.Add(m_dgvPrjDetail, 5, 5);
+                this.SetColumnSpan(m_dgvPrjDetail, 8); this.SetRowSpan(m_dgvPrjDetail, 5);
             }
             else
                 if (iShowDetail == -1)
                 {
                     //Удалить с панели 'DataGridView' c ID = DGV_PRJ_DETAIL
-                    dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_DETAIL] as DataGridView;
-                    this.Controls.Remove(dgv);
+                    this.Controls.Remove(m_dgvPrjDetail);
                     //Увеличить кол-во строк для 'DataGridView' c ID = DGV_PRJ_PPOP
-                    dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP] as DataGridView;
-                    this.SetColumnSpan(dgv, 8); this.SetRowSpan(dgv, 10);
+                    this.SetColumnSpan(m_dgvPrjProp, 8); this.SetRowSpan(m_dgvPrjProp, 10);
                 }
                 else
                     ;
 
-            dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP] as DataGridView;
-            dgv.ReadOnly = !(newLevel == ID_LEVEL.N_ALG);
-            if (dgv.ReadOnly == false)
-                dgv.Columns[0].ReadOnly = true;
+            m_dgvPrjProp.ReadOnly = !(newLevel == ID_LEVEL.N_ALG);
+            if (m_dgvPrjProp.ReadOnly == false)
+                m_dgvPrjProp.Columns[0].ReadOnly = true;
             else
                 ;                
 
@@ -247,18 +242,17 @@ namespace TepCommon
             
             _idAlg = newIdAlg;
         }
-
         /// <summary>
         /// Очистить список "детализации"
         /// </summary>
         private void clearPrjDetail()
         {
-            (m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_DETAIL] as DataGridView).Rows.Clear();
+            m_dgvPrjDetail.Rows.Clear();
         }
         
         protected TreeView m_ctrlTreeView
         {
-            get { return m_dictControls[(int)INDEX_CONTROL.TREECTRL_PRJ_ALG] as TreeView; }
+            get { return Controls.Find(INDEX_CONTROL.TREECTRL_PRJ_ALG.ToString(), true)[0] as TreeView; }
         }
 
         public PanelTepPrjParametersEditTree(IPlugIn plugIn, string tableNames)
@@ -278,104 +272,107 @@ namespace TepCommon
 
         private void InitializeComponent()
         {
+            Control ctrl = null;
+
             this.SuspendLayout();
 
             //Добавить кнопки
             INDEX_CONTROL i = INDEX_CONTROL.BUTTON_ADD;
             for (i = INDEX_CONTROL.BUTTON_ADD; i < (INDEX_CONTROL.BUTTON_UPDATE + 1); i++)
-                addButton((int)i, m_arButtonText[(int)i]);
+                addButton(i.ToString(), (int)i, m_arButtonText[(int)i]);
 
             //Добавить "список" словарных величин
+            ctrl = new TreeView();
+            ctrl.Name = INDEX_CONTROL.TREECTRL_PRJ_ALG.ToString();
             i = INDEX_CONTROL.TREECTRL_PRJ_ALG;
-            m_dictControls.Add((int)i, new TreeView());
-            m_dictControls[(int)i].Dock = DockStyle.Fill;
+            ctrl.Dock = DockStyle.Fill;
             //Разместить эл-т упр-я
-            this.Controls.Add(m_dictControls[(int)i], 1, 0);
-            this.SetColumnSpan(m_dictControls[(int)i], 4); this.SetRowSpan(m_dictControls[(int)i], 13);
+            this.Controls.Add(ctrl, 1, 0);
+            this.SetColumnSpan(ctrl, 4); this.SetRowSpan(ctrl, 13);
             m_ctrlTreeView.HideSelection = false;
             //m_ctrlTreeView.BeforeSelect += new TreeViewCancelEventHandler(TreeView_BeforeSelect);
             m_ctrlTreeView.AfterSelect += new TreeViewEventHandler(TreeView_AfterSelect);
             m_ctrlTreeView.AfterLabelEdit += new NodeLabelEditEventHandler(TreeView_AfterLabelEdit);
 
             //Добавить "список" свойств словарной величины
-            DataGridView dgv;
+            m_dgvPrjProp = new DataGridView();
+            m_dgvPrjProp.Name = INDEX_CONTROL.DGV_PRJ_PPOP.ToString ();
             i = INDEX_CONTROL.DGV_PRJ_PPOP;
-            m_dictControls.Add((int)i, new DataGridView());
-            dgv = m_dictControls[(int)i] as DataGridView;
-            dgv.Dock = DockStyle.Fill;
+            m_dgvPrjProp.Dock = DockStyle.Fill;
             //Разместить эл-т упр-я
-            this.Controls.Add(dgv, 5, 0);
-            this.SetColumnSpan(dgv, 8); this.SetRowSpan(dgv, 10);
+            this.Controls.Add(m_dgvPrjProp, 5, 0);
+            this.SetColumnSpan(m_dgvPrjProp, 8); this.SetRowSpan(m_dgvPrjProp, 10);
             //Добавить столбцы
-            dgv.Columns.AddRange(new DataGridViewColumn[] {
+            m_dgvPrjProp.Columns.AddRange(new DataGridViewColumn[] {
                     new DataGridViewTextBoxColumn ()
                     , new DataGridViewTextBoxColumn ()
                 });
             //Отменить возможность добавления строк
-            dgv.AllowUserToAddRows = false;
+            m_dgvPrjProp.AllowUserToAddRows = false;
             //Отменить возможность удаления строк
-            dgv.AllowUserToDeleteRows = false;
+            m_dgvPrjProp.AllowUserToDeleteRows = false;
             //Отменить возможность изменения порядка следования столбцов строк
-            dgv.AllowUserToOrderColumns = false;
+            m_dgvPrjProp.AllowUserToOrderColumns = false;
             //Не отображать заголовки строк
-            dgv.RowHeadersVisible = false;
+            m_dgvPrjProp.RowHeadersVisible = false;
             //1-ый столбец
-            dgv.Columns[0].HeaderText = @"Свойство"; ((DataGridView)m_dictControls[(int)i]).Columns[0].ReadOnly = true;
+            m_dgvPrjProp.Columns[0].HeaderText = @"Свойство"; m_dgvPrjProp.Columns[0].ReadOnly = true;
             //Ширина столбца по ширине род./элемента управления
-            dgv.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            m_dgvPrjProp.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             //2-ой столбец
-            dgv.Columns[1].HeaderText = @"Значение";
+            m_dgvPrjProp.Columns[1].HeaderText = @"Значение";
             //Установить режим выделения - "полная" строка
-            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            m_dgvPrjProp.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             //Ширина столбца по ширине род./элемента управления
-            dgv.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            m_dgvPrjProp.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             //Обработчик события "Выбор строки"
-            dgv.SelectionChanged += new EventHandler(HPanelEdit_dgvPropSelectionChanged);
+            m_dgvPrjProp.SelectionChanged += new EventHandler(HPanelEdit_dgvPropSelectionChanged);
             //Обработчик события "Редактирование значения" (только для алгоритма)
-            dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditTree_dgvPropCellEndEdit);
+            m_dgvPrjProp.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditTree_dgvPropCellEndEdit);
 
             //Создать "список" дополн./парамеиров (TIME, COMP)
+            m_dgvPrjDetail = new DataGridView();
+            m_dgvPrjDetail.Name = INDEX_CONTROL.DGV_PRJ_DETAIL.ToString ();
             i = INDEX_CONTROL.DGV_PRJ_DETAIL;
-            m_dictControls.Add((int)i, new DataGridView());
-            dgv = m_dictControls[(int)i] as DataGridView;
-            dgv.Dock = DockStyle.Fill;
+            m_dgvPrjDetail.Dock = DockStyle.Fill;
+
             //Добавить столбцы
-            dgv.Columns.AddRange(new DataGridViewColumn[] {
+            m_dgvPrjDetail.Columns.AddRange(new DataGridViewColumn[] {
                     new DataGridViewTextBoxColumn ()
                     , new DataGridViewCheckBoxColumn ()
                 });
             //Отменить возможность добавления строк
-            dgv.AllowUserToAddRows = false;
+            m_dgvPrjDetail.AllowUserToAddRows = false;
             //Отменить возможность удаления строк
-            dgv.AllowUserToDeleteRows = false;
+            m_dgvPrjDetail.AllowUserToDeleteRows = false;
             //Отменить возможность изменения порядка следования столбцов строк
-            dgv.AllowUserToOrderColumns = false;
+            m_dgvPrjDetail.AllowUserToOrderColumns = false;
             //Не отображать заголовки строк
-            dgv.RowHeadersVisible = false;
+            m_dgvPrjDetail.RowHeadersVisible = false;
             //1-ый столбец (только "для чтения")
-            dgv.Columns[0].HeaderText = @"Свойство"; dgv.Columns[0].ReadOnly = true;
+            m_dgvPrjDetail.Columns[0].HeaderText = @"Свойство"; m_dgvPrjDetail.Columns[0].ReadOnly = true;
             //Ширина столбца по ширине род./элемента управления
-            dgv.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            m_dgvPrjDetail.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             //2-ой столбец
-            dgv.Columns[1].HeaderText = @"Наличие";
+            m_dgvPrjDetail.Columns[1].HeaderText = @"Наличие";
             //Установить режим выделения - "полная" строка
-            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            m_dgvPrjDetail.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             //Ширина столбца по ширине род./элемента управления
-            dgv.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            m_dgvPrjDetail.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             //Обработчик события "Выбор строки"
-            dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjDetailSelectionChanged);
-            //dgv.CellEndEdit += new DataGridViewCellEventHandler (HPanelEditTree_dgvPrjDetailCellEndEdit);
-            dgv.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjDetailCellValueChanged);
+            m_dgvPrjDetail.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjDetailSelectionChanged);
+            //m_dgvPrjDetail.CellEndEdit += new DataGridViewCellEventHandler (HPanelEditTree_dgvPrjDetailCellEndEdit);
+            m_dgvPrjDetail.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjDetailCellValueChanged);
 
-            addLabelDesc((int)INDEX_CONTROL.LABEL_PARAM_DESC);
+            addLabelDesc(INDEX_CONTROL.LABEL_PARAM_DESC.ToString ());
 
             this.ResumeLayout(false);
 
             //Обработчики нажатия кнопок
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_ADD]).Click += new System.EventHandler(HPanelEditTree_btnAdd_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_DELETE]).Click += new System.EventHandler(HPanelEditTree_btnDelete_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_SAVE]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_UPDATE]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
+            ((Button)Controls.Find (INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]).Click += new System.EventHandler(HPanelEditTree_btnAdd_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]).Click += new System.EventHandler(HPanelEditTree_btnDelete_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
 
         private void fillTableKeys(ref DbConnection dbConn, out int err, out string strErr)
@@ -669,13 +666,10 @@ namespace TepCommon
                 //    }
                 //}
 
-                DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP]);                
                 //Только для чтения
-                dgv.ReadOnly = true;
-
-                dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_DETAIL]);
+                m_dgvPrjProp.ReadOnly = true;
                 //Только для чтения
-                dgv.Columns[0].ReadOnly = true;                
+                m_dgvPrjDetail.Columns[0].ReadOnly = true;                
 
                 m_Level = ID_LEVEL.TASK;
                 m_ctrlTreeView.SelectedNode = m_ctrlTreeView.Nodes[0];
@@ -950,8 +944,7 @@ namespace TepCommon
         private int nodeAfterSelect(TreeNode node, DataTable tblProp, ID_LEVEL level, bool bThrow)
         {
             int iErr = 0;
-            DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_PPOP]);
-            dgv.Rows.Clear();
+            m_dgvPrjProp.Rows.Clear();
             string strIdNode = getIdNodePart(node.Name, level);
             if (strIdNode.Equals(string.Empty) == false)
             {
@@ -960,7 +953,7 @@ namespace TepCommon
                 {
                     //Заполнение содержимым...
                     foreach (DataColumn col in tblProp.Columns)
-                        dgv.Rows.Add(new object[] { col.ColumnName, rowsProp[0][col.ColumnName].ToString().Trim() });
+                        m_dgvPrjProp.Rows.Add(new object[] { col.ColumnName, rowsProp[0][col.ColumnName].ToString().Trim() });
                 }
                 else
                     iErr = -1;
@@ -991,13 +984,12 @@ namespace TepCommon
         /// <param name="where">Дополнительное условие отбора записей в таблице</param>        
         private void nodeAfterSelectDetail(INDEX_TABLE_KEY key, string strIdAlg, string where) {
             DataRow[] rowsPut;
-            DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_DETAIL] as DataGridView;
-            bool bUpdate = dgv.Rows.Count == m_arTableKey[(int)key].Rows.Count;
+            bool bUpdate = m_dgvPrjDetail.Rows.Count == m_arTableKey[(int)key].Rows.Count;
             int indxRow = -1;
 
             //Отменить обработку события
             //if (bUpdate == true)
-                dgv.CellValueChanged -= HPanelEditTree_dgvPrjDetailCellValueChanged;
+            m_dgvPrjDetail.CellValueChanged -= HPanelEditTree_dgvPrjDetailCellValueChanged;
             //else ;
 
             foreach (DataRow rDetail in m_arTableKey[(int)key].Rows)
@@ -1010,16 +1002,16 @@ namespace TepCommon
                 //if (indxRow < dgv.Rows.Count)
                 if (bUpdate == false)
                     //Заполнить "список" детализации
-                    dgv.Rows.Add(new object[] { rDetail[@"DESCRIPTION"], rowsPut.Length > 0 });
+                    m_dgvPrjDetail.Rows.Add(new object[] { rDetail[@"DESCRIPTION"], rowsPut.Length > 0 });
                 else
                     //Обновить "список" детализации
                     //???снова используется индекс...
-                    dgv.Rows[++indxRow].Cells[1].Value = rowsPut.Length > 0;
+                    m_dgvPrjDetail.Rows[++indxRow].Cells[1].Value = rowsPut.Length > 0;
             }
 
             //Добавить обработку события
             //if (bUpdate == true)
-                dgv.CellValueChanged += HPanelEditTree_dgvPrjDetailCellValueChanged;
+                m_dgvPrjDetail.CellValueChanged += HPanelEditTree_dgvPrjDetailCellValueChanged;
             //else ;
         }
 
@@ -1059,7 +1051,7 @@ namespace TepCommon
 
                     if (strNameField.Equals(@"N_ALG") == true)
                     {//Изменить подпись в "дереве"
-                        (m_dictControls[(int)INDEX_CONTROL.TREECTRL_PRJ_ALG] as TreeView).SelectedNode.Text = strVal;
+                        (Controls.Find(INDEX_CONTROL.TREECTRL_PRJ_ALG.ToString(), true)[0] as TreeView).SelectedNode.Text = strVal;
                     }
                     else
                         ;

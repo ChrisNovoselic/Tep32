@@ -28,7 +28,7 @@ namespace PluginTepDictPlugIns
         }
     }
 
-    public class PlugIn : HFuncDictEdit
+    public class PlugIn : HFuncDbEdit
     {      
         public PlugIn () : base () {            
             _Id = 2;

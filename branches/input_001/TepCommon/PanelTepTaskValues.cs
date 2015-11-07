@@ -6,12 +6,31 @@ using System.Windows.Forms;
 using System.Data;
 
 using HClassLibrary;
+using InterfacePlugIn;
 using TepCommon;
 
 namespace TepCommon
 {
     public abstract partial class PanelTepTaskValues : HPanelTepCommon
     {
+        protected int[] m_arIdPeriods;
+
+        protected string m_strIdPeriods
+        {
+            get
+            {
+                string strRes = string.Empty;
+
+                for (int i = 0; i < m_arIdPeriods.Length; i++)
+                {
+                    strRes += m_arIdPeriods[i] + @",";
+                }
+                strRes = strRes.Substring(0, strRes.Length - 1);
+
+                return strRes;
+            }
+        }
+        
         public PanelTepTaskValues(IPlugIn iFunc)
             : base(iFunc)
         {
@@ -20,6 +39,8 @@ namespace TepCommon
 
         private void InitializeComponents()
         {
+            m_arIdPeriods = new int[] { 13, 18, 19, 24 };
+            
             m_panelManagement = new PanelManagement ();
             m_dgvValues = new DataGridViewTEPValues ();
             int posColdgvTEPValues = 4
@@ -35,7 +56,7 @@ namespace TepCommon
             Controls.Add(m_dgvValues, posColdgvTEPValues, 0);
             SetColumnSpan(m_dgvValues, this.ColumnCount - posColdgvTEPValues); SetRowSpan(m_dgvValues, hightRowdgvTEPValues);
 
-            addLabelDesc((int)INDEX_CONTROL.LABEL_DESC, posColdgvTEPValues, hightRowdgvTEPValues);
+            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), posColdgvTEPValues, hightRowdgvTEPValues);
 
             ResumeLayout (false);
             PerformLayout ();
@@ -46,19 +67,51 @@ namespace TepCommon
             err = 0;
             errMsg = string.Empty;
 
-            DataTable tablePeriod = null;
+            DataTable tableRes = null;
+            Control ctrl = null;
+            CheckedListBox clbxCompCalculated
+                , clbxCompVisibled;
+            string strItem = string.Empty;
 
-            tablePeriod = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM [time] WHERE [ID] IN (13, 18, 19, 24)", null, null, out err);
+            tableRes = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM [time] WHERE [ID] IN (" + m_strIdPeriods + @")", null, null, out err);
 
             if (err == 0)
             {
-                foreach (DataRow r in tablePeriod.Rows)
-                    (m_dictControls[(int)INDEX_CONTROL.CB_PERIOD] as ComboBox).Items.Add (r[@"DESCRIPTION"]);
+                ctrl = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0];
+                foreach (DataRow r in tableRes.Rows)
+                    (ctrl as ComboBox).Items.Add (r[@"DESCRIPTION"]);
 
-                (m_dictControls[(int)INDEX_CONTROL.CB_PERIOD] as ComboBox).SelectedIndex = 0;
+                (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
+                (ctrl as ComboBox).SelectedIndex = 0;
+
+                tableRes = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM [comp_list] "
+                    + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
+                    + @" OR ([ID_COMP] = 1000)"
+                        , null, null, out err);
+
+                if (err == 0)
+                {
+                    clbxCompCalculated = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
+                    clbxCompVisibled = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
+                    foreach (DataRow r in tableRes.Rows)
+                    {
+                        strItem = (string)r[@"DESCRIPTION"];
+                        clbxCompCalculated.Items.Add(strItem);
+                        clbxCompVisibled.Items.Add(strItem);
+                    }
+                }
+                else
+                    errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
             }
             else
-                errMsg = @"";
+                errMsg = @"Получение интервалов времени для периода расчета";
+        }
+
+        private void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
+        {
+            ComboBox cbx = obj as ComboBox;
+
+            ((PlugInBase)_iFuncPlugin).DataAskedHost(new object[] { (int)HFunc.ID_DATAASKED_HOST.SELECT, @"SELECT" });
         }
 
         protected class DataGridViewTEPValues : DataGridView
@@ -187,7 +240,7 @@ namespace TepCommon
                 //SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
                 //Период расчета - значение
                 ctrl = new ComboBox ();
-                ctrl.Name = INDEX_CONTROL.CB_PERIOD.ToString ();
+                ctrl.Name = INDEX_CONTROL.CBX_PERIOD.ToString ();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                 this.Controls.Add(ctrl, 0, posRow);
@@ -236,13 +289,13 @@ namespace TepCommon
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Признак для включения/исключения из расчета компонента
                 ctrl = new CheckedListBox();
-                ctrl.Name = INDEX_CONTROL.CBX_COMP_CALCULATED.ToString();
+                ctrl.Name = INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 3);
                 //Признак для включения/исключения из расчета параметра
                 ctrl = new CheckedListBox();
-                ctrl.Name = INDEX_CONTROL.CBX_PARAMETER_CALCULATED.ToString();
+                ctrl.Name = INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 3);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 3);
@@ -285,13 +338,13 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 ctrl = new CheckedListBox();
-                ctrl.Name = INDEX_CONTROL.CBX_COMP_VISIBLED.ToString();
+                ctrl.Name = INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 3);
                 //Признак для включения/исключения для отображения параметра
                 ctrl = new CheckedListBox();
-                ctrl.Name = INDEX_CONTROL.CBX_PARAMETER_VISIBLED.ToString();
+                ctrl.Name = INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 3);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 3);
@@ -310,13 +363,21 @@ namespace TepCommon
     public partial class PanelTepTaskValues
     {
         protected enum INDEX_CONTROL { BUTTON_RUN
-            , CB_PERIOD, HDTP_BEGIN, HDTP_END
-            , CBX_COMP_CALCULATED, CBX_PARAMETER_CALCULATED
+            , CBX_PERIOD, HDTP_BEGIN, HDTP_END
+            , CLBX_COMP_CALCULATED, CLBX_PARAMETER_CALCULATED
             , BUTTON_LOAD, BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
-            , CBX_COMP_VISIBLED, CBX_PARAMETER_VISIBLED
+            , CLBX_COMP_VISIBLED, CLBX_PARAMETER_VISIBLED
             , LABEL_DESC }
 
         protected PanelManagement m_panelManagement;
         protected DataGridViewTEPValues m_dgvValues;
+    }
+
+    public class PlugInTepTaskValues : HFuncDbEdit
+    {
+        public override void OnEvtDataRecievedHost(object obj)
+        {
+            base.OnEvtDataRecievedHost(obj);
+        }
     }
 }

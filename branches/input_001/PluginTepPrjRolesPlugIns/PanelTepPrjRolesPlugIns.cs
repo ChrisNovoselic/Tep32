@@ -25,7 +25,7 @@ namespace PluginTepPrjRolesPlugIns
         }
     }
 
-    public class PlugIn : HFuncDictEdit
+    public class PlugIn : HFuncDbEdit
     {
         public PlugIn()
             : base()

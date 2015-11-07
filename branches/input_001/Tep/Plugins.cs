@@ -101,37 +101,49 @@ namespace Tep64
 
                 if (((EventArgsDataHost)obj).par[0].GetType().IsPrimitive == true)
                 {
-                    if ((int)((EventArgsDataHost)obj).par[0] == (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB)
+                    switch ((int)((EventArgsDataHost)obj).par[0])
                     {
-                        rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
-                    }
-                    else
-                    {
-                        switch ((int)((EventArgsDataHost)obj).id)
-                        {
-                            case 1: //FormAboutTepProgram
-                                switch ((int)((EventArgsDataHost)obj).par[0])
-                                {
-                                    case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
-                                        rec = TepCommon.Properties.Resources.MainForm;
-                                        break;
-                                    case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                                        rec = Application.ProductVersion;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                                break;
-                            case 2: //PanelTepDictPlugIns
-                                switch ((int)((EventArgsDataHost)obj).par[0])
-                                {
-                                    default:
-                                        break;
-                                }
-                                break;
-                            default:
-                                break;
-                        }
+                        case (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB:
+                            rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
+                            break;
+                        case (int)HFunc.ID_DATAASKED_HOST.SELECT:
+                            rec = new object[] { -666.666, 666.666 };
+                            break;
+                        default:
+                            switch ((int)((EventArgsDataHost)obj).id)
+                            {
+                                case 1: //FormAboutTepProgram
+                                    switch ((int)((EventArgsDataHost)obj).par[0])
+                                    {
+                                        case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
+                                            rec = TepCommon.Properties.Resources.MainForm;
+                                            break;
+                                        case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
+                                            rec = Application.ProductVersion;
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    break;
+                                case 2: //PanelTepDictPlugIns
+                                    switch ((int)((EventArgsDataHost)obj).par[0])
+                                    {
+                                        default:
+                                            break;
+                                    }
+                                    break;
+                                case 17: //PanelTepTaskValues, Расчет ТЭП - входные значения
+                                case 18: //PanelTepTaskValues, Расчет ТЭП - вЫходные значения
+                                    switch ((int)((EventArgsDataHost)obj).par[0])
+                                    {
+                                        default:
+                                            break;
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
                     }
 
                     //Отправить ответ (исходный идентификатор + требуемый объект)

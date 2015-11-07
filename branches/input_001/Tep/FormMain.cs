@@ -130,24 +130,25 @@ namespace Tep64
             HTepUsers.SetAllowed(iListenerId, (int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED, Convert.ToString((sender as ToolStripMenuItem).Checked == true ? 1 : 0));
             DbSources.Sources().UnRegister(iListenerId);
         }
-
         /// <summary>
         /// Обработчик выбора пункта меню 'Файл - выход'
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект, инициировавший событие (пункт меню)</param>
+        /// <param name="e">Аргумент события</param>
         private void выходToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            //Установить признак автоматических действий с вкладками (закрытие)
             m_iAutoActionTabs = 1;
 
             Close ();
-
+            //Снять признак автоматических действий с вкладками (закрытие)
             m_iAutoActionTabs = 0;
         }        
 
         private void бДКонфигурацииToolStripMenuItem_Click(object sender, EventArgs e)
         {
             int iRes = connectionSettings(CONN_SETT_TYPE.MAIN_DB);
+            //??? не оработан рез-т выполнения функции
         }
 
         private void параметрыToolStripMenuItem_Click(object sender, EventArgs e)
@@ -205,12 +206,14 @@ namespace Tep64
         {
             Stop ();
         }
-
+        /// <summary>
+        /// Делегат обработки события - выбор п. меню
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (плюгИн вкладки)</param>
         private void FormMain_EvtDataAskedHost(object obj)
         {
             this.BeginInvoke(new DelegateObjectFunc(onClickMenuItem), obj);
         }
-
         /// <summary>
         /// Дополнительные действия по инициализации плюг'ина
         /// </summary>
@@ -220,7 +223,9 @@ namespace Tep64
             } else {
             }
         }
-
+        /// <summary>
+        /// Инициализация логгирования
+        /// </summary>
         private void initializeLogging () {
             //Если ранее тип логирования не был назанчен...
             if (Logging.s_mode == Logging.LOG_MODE.UNKNOWN)
@@ -245,8 +250,8 @@ namespace Tep64
         /// Инициализация п.п. главного меню
         ///  в ~ от разрешенных к загрузке плюгИнов
         /// </summary>
-        /// <param name="strErr"></param>
-        /// <returns></returns>
+        /// <param name="strErr">Сообщение об ошибке</param>
+        /// <returns>Результат инициализации меню</returns>
         private int initializeMenu (out string strErr) {
             int iRes = -1
                 , idListener = -1;
@@ -327,7 +332,6 @@ namespace Tep64
                         {
                             профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Checked = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED));
                             профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Enabled = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_ACCESS));
-
                             //Успешный запуск на выполнение приложения
                             Start();
                         }
@@ -364,22 +368,25 @@ namespace Tep64
 
             return iRes;
         }
-
+        /// <summary>
+        /// Обработчик события выбора (отобразить/закрыть вкладку) п. меню
+        /// </summary>
+        /// <param name="obj">Объект загруженной библиотеки вкладки</param>
         private void onClickMenuItem (object obj) {
             PlugInMenuItem plugIn = s_plugIns[(int)((EventArgsDataHost)obj).id];
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked = ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
 
             if (((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked == true) {
+                //Отобразить вкладку
                 m_TabCtrl.AddTabPage(plugIn.NameMenuItem, plugIn._Id, HTabCtrlEx.TYPE_TAB.FIXED);
                 m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.Object);
-                //m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(new HPanelEdit ());
             } else {
+                //Закрыть вкладку
                 m_TabCtrl.RemoveTabPage(plugIn.NameMenuItem);
             }
 
             if ((m_iAutoActionTabs == 0)
-                && (профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true)
-                //профайлСохранитьToolStripMenuItem.PerformClick();
+                && ((профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true))
                 saveProfile();
             else
                 ;

@@ -45,7 +45,7 @@ namespace PluginTepTaskOutval
         }
     }
 
-    public class PlugIn : HFuncDictEdit
+    public class PlugIn : PlugInTepTaskValues
     {
         public PlugIn()
             : base()
@@ -61,6 +61,11 @@ namespace PluginTepTaskOutval
             createObject(typeof(PluginTepTaskOutval));
 
             base.OnClickMenuItem(obj, ev);
+        }
+
+        public override void OnEvtDataRecievedHost(object obj)
+        {
+            base.OnEvtDataRecievedHost(obj);
         }
     }
 }

@@ -14,15 +14,18 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public abstract class HPanelTepCommon : HPanelCommon, IObjectDictEdit
+    public abstract class HPanelTepCommon : HPanelCommon, IObjectDbEdit
     {
         //Дополнительные действия при сохранении значений
         protected DelegateIntFunc delegateSaveAdding;
 
         protected ConnectionSettings m_connSett;
         protected IPlugIn _iFuncPlugin;
-
-        protected Dictionary<int, Control> m_dictControls;
+        ///// <summary>
+        ///// Словарь с элементами управления на панели
+        /////  , в т.ч. и "вложенных"
+        ///// </summary>
+        //protected Dictionary<int, Control> m_dictControls;
 
         /// <summary>
         /// Требуется переменная конструктора.
@@ -46,8 +49,8 @@ namespace TepCommon
         {
             this._iFuncPlugin = plugIn;
 
-            //Создать объект "словарь" дочерних элементов управления
-            m_dictControls = new Dictionary<int, Control>();
+            ////Создать объект "словарь" дочерних элементов управления
+            //m_dictControls = new Dictionary<int, Control>();
 
             InitializeComponent();
         }
@@ -158,7 +161,7 @@ namespace TepCommon
         /// <param name="id">Идентификатор</param>
         /// <param name="posCol">Позиция-столбец для размещения области описания</param>
         /// <param name="posRow">Позиция-строка для размещения области описания</param>
-        protected void addLabelDesc(int id, int posCol = 5, int posRow = 10)
+        protected void addLabelDesc(string id, int posCol = 5, int posRow = 10)
         {
             GroupBox gbDesc = new GroupBox();
             gbDesc.Text = @"Описание";
@@ -166,7 +169,10 @@ namespace TepCommon
             this.Controls.Add(gbDesc, posCol, posRow);
             this.SetColumnSpan(gbDesc, this.ColumnCount - posCol); this.SetRowSpan(gbDesc, this.RowCount - posRow);
 
-            m_dictControls.Add(id, new Label());
+            Label ctrl = new Label();
+            ctrl.Name = id;
+            ctrl.Dock = DockStyle.Top;
+            gbDesc.Controls.Add(ctrl);
         }
 
         //Для отображения актуальной "подсказки" для свойства
@@ -174,17 +180,17 @@ namespace TepCommon
         {
         }
 
-        protected void addButton(int id, string text)
+        protected void addButton(string id, int posCol, string text)
         {
-            m_dictControls.Add(id, new Button());
+            Button ctrl = new Button();
+            ctrl.Name = id;
 
-            m_dictControls[id].Location = new System.Drawing.Point(1, 1);
-            //m_dictControls[indx].Size = new System.Drawing.Size(79, 23);
-            m_dictControls[id].Dock = DockStyle.Fill;
-            m_dictControls[id].Text = text;
+            ctrl.Location = new System.Drawing.Point(1, 1);
+            ctrl.Dock = DockStyle.Fill;
+            ctrl.Text = text;
             //??? Идентификатор является позицией-столбцом
-            this.Controls.Add(m_dictControls[id], 0, id);
-            this.SetColumnSpan(m_dictControls[id], 1);
+            this.Controls.Add(ctrl, 0, posCol);
+            this.SetColumnSpan(ctrl, 1);
         }
 
         protected void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)

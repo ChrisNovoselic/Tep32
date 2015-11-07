@@ -9,8 +9,9 @@ namespace InterfacePlugIn
 {
     public abstract class HFunc : PlugInMenuItem
     {
-        public enum ID_DATAASKED_HOST { ICON_MAINFORM, STR_VERSION //Запросить данные у главной формы
-                                    , CONNSET_MAIN_DB
+        public enum ID_DATAASKED_HOST { ICON_MAINFORM = 1001, STR_VERSION = 1002 //Запросить данные у главной формы
+                                    , CONNSET_MAIN_DB = 10001
+                                    , SELECT
                                     };
 
         protected string _nameOwnerMenuItem
@@ -33,7 +34,7 @@ namespace InterfacePlugIn
         }
     }
 
-    public abstract class HFuncDictEdit : HFunc
+    public abstract class HFuncDbEdit : HFunc
     {
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
@@ -55,7 +56,7 @@ namespace InterfacePlugIn
             switch (((EventArgsDataHost)obj).id)
             {
                 case (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB:
-                    ((IObjectDictEdit)_object).Initialize(obj);
+                    ((IObjectDbEdit)_object).Initialize(obj);
                     break;
                 default:
                     break;
@@ -63,7 +64,7 @@ namespace InterfacePlugIn
         }
     }
 
-    public interface IObjectDictEdit {
+    public interface IObjectDbEdit {
         /// <summary>
         /// Инициализация значением, полученным от главной формы
         /// </summary>

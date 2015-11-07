@@ -28,7 +28,7 @@ namespace PluginTepPrjSources
 
         private DataGridView m_dgvProp
         {
-            get { return ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]); }
+            get { return ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]); }
         }
 
         private void InitializeComponent()
@@ -70,7 +70,7 @@ namespace PluginTepPrjSources
         private object[] getRecItemValues(string pswd)
         {
             //??? Идентификатор из крайней строки... ??? по индексу
-            int indx = (m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM] as DataGridView).SelectedRows[0].Index;
+            int indx = (Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0] as DataGridView).SelectedRows[0].Index;
 
             return new object[] {
                                     //Int32.Parse (m_tblEdit.Rows[m_tblEdit.Rows.Count - 1][@"ID"].ToString ().Trim ())
@@ -161,7 +161,7 @@ namespace PluginTepPrjSources
         {
             if (indxRow == m_dgvProp.RowCount - 1)
             {//Обработка окончания редактирования строки пароля...
-                DataRow rowPswd = getPassword(((DataGridView)m_dictControls [(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows [0].Index);
+                DataRow rowPswd = getPassword(((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]).SelectedRows[0].Index);
                 string pswd = m_dgvProp.Rows[indxRow].Cells[indxCol].Value.ToString ().Trim ();
                 if (!(rowPswd == null))
                     rowPswd[@"HASH"] = pswd;
@@ -226,8 +226,8 @@ namespace PluginTepPrjSources
         {
             if ((ev.RowIndex == m_dgvProp.RowCount - 1)
                 && (ev.ColumnIndex == 1))
-            {                
-                DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM] as DataGridView;
+            {
+                DataGridView dgv = Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0] as DataGridView;
 
                 if (dgv.SelectedRows.Count == 1)
                 {
@@ -279,7 +279,7 @@ namespace PluginTepPrjSources
         }
     }
 
-    public class PlugIn : HFuncDictEdit
+    public class PlugIn : HFuncDbEdit
     {
         public PlugIn()
             : base()
