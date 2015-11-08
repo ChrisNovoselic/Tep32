@@ -409,9 +409,17 @@ namespace TepCommon
             err = 0;
             strErr = string.Empty;
 
+            string query = string.Empty;
+
             for (int i = 0; i < (int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER; i ++)
             {
-                m_arTableEdit[i] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + m_arNameTables[i], null, null, out err);
+                query = @"SELECT * FROM " + m_arNameTables[i];
+                if (i == (int)INDEX_PARAMETER.ALGORITM)
+                    query += @" ORDER BY [N_ALG]";
+
+                m_arTableEdit[i] = DbTSQLInterface.Select(ref dbConn
+                    , query
+                    , null, null, out err);
 
                 if (!(err == 0))
                 {

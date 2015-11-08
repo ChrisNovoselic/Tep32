@@ -13,8 +13,20 @@ namespace TepCommon
 {
     public abstract partial class PanelTepTaskValues : HPanelTepCommon
     {
+        private enum INDEX_TABLE_DICTPRJ : uint { PERIOD, COMPONENT, PARAMETER
+            , COUNT_TABLE_DICTPRJ }
+        /// <summary>
+        /// Наименования таблиц с парметрами для расчета
+        /// </summary>
+        private string m_strNameTableAlg
+            , m_strNameTablePut;
+        /// <summary>
+        /// Массив с идентификаторами периодов расчетов, использующихся на форме
+        /// </summary>
         protected int[] m_arIdPeriods;
-
+        /// <summary>
+        /// Строка для запроса информации по периодам расчетов
+        /// </summary>
         protected string m_strIdPeriods
         {
             get
@@ -30,17 +42,36 @@ namespace TepCommon
                 return strRes;
             }
         }
-        
-        public PanelTepTaskValues(IPlugIn iFunc)
+        /// <summary>
+        /// Таблицы со значениями словарных, проектных данных
+        /// </summary>
+        private DataTable []m_arTableDictPrjs;
+
+        private List<int> m_listIdParameters;
+        /// <summary>
+        /// Таблицы со значениями для редактирования
+        /// </summary>
+        protected DataTable m_tblEdit
+            , m_tblOrigin;
+        /// <summary>
+        /// Конструктор - основной (с параметром)
+        /// </summary>
+        /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
+        public PanelTepTaskValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut)
             : base(iFunc)
         {
+            m_strNameTableAlg = strNameTableAlg;
+            m_strNameTablePut = strNameTablePut;
+
             InitializeComponents();
         }
 
         private void InitializeComponents()
         {
             m_arIdPeriods = new int[] { 13, 18, 19, 24 };
-            
+            m_arTableDictPrjs = new DataTable [(int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ];
+            m_listIdParameters = new List<int>();
+
             m_panelManagement = new PanelManagement ();
             m_dgvValues = new DataGridViewTEPValues ();
             int posColdgvTEPValues = 4
@@ -60,6 +91,9 @@ namespace TepCommon
 
             ResumeLayout (false);
             PerformLayout ();
+
+            (Controls.Find(INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnUpdate_Click);
+            (Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
         }
 
         protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
@@ -67,51 +101,120 @@ namespace TepCommon
             err = 0;
             errMsg = string.Empty;
 
-            DataTable tableRes = null;
             Control ctrl = null;
             CheckedListBox clbxCompCalculated
                 , clbxCompVisibled;
             string strItem = string.Empty;
+            int i = -1;
+            //Заполнить таблицы со словарными, проектными величинами
+            string[] arQueryDictPrj = new string[]
+            {
+                @"SELECT * FROM [time] WHERE [ID] IN (" + m_strIdPeriods + @")"
+                , @"SELECT * FROM [comp_list] "
+                    + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
+                        + @" OR ([ID_COMP] = 1000)"
+                , @"SELECT put.*, alg.* FROM [dbo].[" + m_strNameTablePut + @"] as put"
+                    + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as alg ON alg.ID_TASK = 1 AND alg.ID = put.ID_ALG AND put.ID_TIME in (" + m_strIdPeriods + @")"
+            };
 
-            tableRes = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM [time] WHERE [ID] IN (" + m_strIdPeriods + @")", null, null, out err);
+            for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
+            {
+                m_arTableDictPrjs[i] = DbTSQLInterface.Select(ref dbConn, arQueryDictPrj[i], null, null, out err);
+
+                if (!(err == 0))
+                    break;
+                else
+                    ;
+            }
 
             if (err == 0)
             {
+                //Заполнить элемент управления с периодами расчета
                 ctrl = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0];
-                foreach (DataRow r in tableRes.Rows)
+                foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
                     (ctrl as ComboBox).Items.Add (r[@"DESCRIPTION"]);
 
                 (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
                 (ctrl as ComboBox).SelectedIndex = 0;
 
-                tableRes = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM [comp_list] "
-                    + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
-                    + @" OR ([ID_COMP] = 1000)"
-                        , null, null, out err);
-
-                if (err == 0)
+                //Заполнить элементы управления с компонентами станции
+                clbxCompCalculated = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
+                clbxCompVisibled = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
+                foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
                 {
-                    clbxCompCalculated = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
-                    clbxCompVisibled = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
-                    foreach (DataRow r in tableRes.Rows)
-                    {
-                        strItem = (string)r[@"DESCRIPTION"];
-                        clbxCompCalculated.Items.Add(strItem);
-                        clbxCompVisibled.Items.Add(strItem);
-                    }
+                    strItem = (string)r[@"DESCRIPTION"];
+                    clbxCompCalculated.Items.Add(strItem);
+                    clbxCompVisibled.Items.Add(strItem);
                 }
-                else
-                    errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
             }
             else
-                errMsg = @"Получение интервалов времени для периода расчета";
+                switch ((INDEX_TABLE_DICTPRJ)i)
+                {
+                    case INDEX_TABLE_DICTPRJ.PERIOD:
+                        errMsg = @"Получение интервалов времени для периода расчета";
+                        break;
+                    case INDEX_TABLE_DICTPRJ.COMPONENT:
+                        errMsg = @"Получение списка компонентов станции";
+                        break;
+                    case INDEX_TABLE_DICTPRJ.PARAMETER:
+                        errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
+                        break;
+                    default:
+                        break;
+                }
+        }
+
+        public override bool Activate(bool activate)
+        {
+            bool bRes = base.Activate(activate);
+
+            return bRes;
+        }
+
+        protected override void successRecUpdateInsertDelete()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void recUpdateInsertDelete(ref System.Data.Common.DbConnection dbConn, out int err)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
+        {
         }
 
         private void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
         {
             ComboBox cbx = obj as ComboBox;
+            int id_alg = -1;
+            string strItem = string.Empty;
+            CheckedListBox clbxParsCalculated = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as CheckedListBox
+                , clbxParsVisibled = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
+            clbxParsCalculated.Items.Clear();
+            clbxParsVisibled.Items.Clear();
+            m_listIdParameters.Clear();
+            ////Запросить значения у главной формы
+            //((PlugInBase)_iFuncPlugin).DataAskedHost(new object[] { (int)HFunc.ID_DATAASKED_HOST.SELECT, @"SELECT..." });
+            DataRow[] rowsParameter =
+                m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(@"ID_TIME=" + m_arIdPeriods[cbx.SelectedIndex], @"N_ALG");
+            //Заполнить элементы управления с компонентами станции 
+            foreach (DataRow r in rowsParameter)
+            {
+                id_alg = (int)r[@"ID_ALG"];
 
-            ((PlugInBase)_iFuncPlugin).DataAskedHost(new object[] { (int)HFunc.ID_DATAASKED_HOST.SELECT, @"SELECT" });
+                if (m_listIdParameters.IndexOf(id_alg) < 0)
+                {
+                    m_listIdParameters.Add (id_alg);
+
+                    strItem = ((string)r[@"N_ALG"]).Trim () + @" (" + ((string)r[@"NAME_SHR"]).Trim() + @")";
+                    clbxParsCalculated.Items.Add(strItem);
+                    clbxParsVisibled.Items.Add(strItem);
+                }
+                else
+                    ;
+            }
         }
 
         protected class DataGridViewTEPValues : DataGridView

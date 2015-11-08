@@ -13,35 +13,13 @@ namespace PluginTepTaskOutval
     public class PluginTepTaskOutval : PanelTepTaskValues
     {
         public PluginTepTaskOutval(IPlugIn iFunc)
-            : base(iFunc)
+            : base(iFunc, @"outalg", @"output")
         {
             InitializeComponent();
         }
 
         private void InitializeComponent()
         {
-        }
-
-        protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
-        {
-            base.initialize(ref dbConn, out err, out errMsg);
-        }
-
-        public override bool Activate(bool activate)
-        {
-            bool bRes = base.Activate(activate);
-
-            return bRes;
-        }
-
-        protected override void successRecUpdateInsertDelete()
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void recUpdateInsertDelete(ref System.Data.Common.DbConnection dbConn, out int err)
-        {
-            throw new NotImplementedException();
         }
     }
 

@@ -193,7 +193,7 @@ namespace TepCommon
             this.SetColumnSpan(ctrl, 1);
         }
 
-        protected void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
+        protected virtual void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
         {
             int iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB")
                 , err = -1;
@@ -231,14 +231,13 @@ namespace TepCommon
                 throw new Exception(@"HPanelEdit::HPanelEdit_btnSave_Click () - " + errMsg);
             }
             else
-            {
-            }
+                ;
         }
 
         protected abstract void recUpdateInsertDelete(ref DbConnection dbConn, out int err);
         protected abstract void successRecUpdateInsertDelete();
 
-        protected void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
+        protected virtual void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
             clear();
         }

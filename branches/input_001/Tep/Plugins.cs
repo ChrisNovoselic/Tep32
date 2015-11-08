@@ -15,28 +15,10 @@ using InterfacePlugIn;
 namespace Tep64
 {
     public partial class FormMain
-    {
+    {        
         class HPlugIns : Dictionary <int, PlugInMenuItem>, IPlugInHost
             //, IEnumerable <IPlugIn>
         {
-            //public IPlugIn GetEnumerator () {
-            //    IPlugIn plugInRes = null;
-
-            //    return plugInRes;
-            //}
-
-            //public IPlugIn MoveNext ()
-            //{
-            //    IPlugIn plugInRes = null;
-
-            //    return plugInRes;
-            //}
-
-            //private int _key_current;
-            //public IPlugIn Current { get { return m_dictPlugins[_key_current]; } }
-            
-            //private Dictionary<int, IPlugIn> _dictPlugins;
-
             public DelegateObjectFunc delegateOnClickMenuPluginItem;
 
             public HPlugIns(DelegateObjectFunc fClickMenuItem)
@@ -44,17 +26,22 @@ namespace Tep64
                 //_dictPlugins = new Dictionary<int, IPlugIn>();
                 delegateOnClickMenuPluginItem = fClickMenuItem;
             }
-
-            public bool Register(IPlugIn plug)
+            /// <summary>
+            /// Установить взамосвязь
+            /// </summary>
+            /// <param name="plug">Загружаемый плюгИн</param>
+            /// <returns>Признак успешности загрузки</returns>
+            public int Register(IPlugIn plug)
             {
-                return true;
+                //??? важная функция для взимного обмена сообщенями
+                return 0;
             }
-
-            //public override void Add(int id, IPlugIn plugIn)
-            //{
-            //    _dictPlugins.Add(id, plugIn);
-            //}
-
+            /// <summary>
+            /// Загрузить плюгИн с указанным наименованием
+            /// </summary>
+            /// <param name="name">Наименование плюгИна</param>
+            /// <param name="iRes">Результат загрузки (код ошибки)</param>
+            /// <returns>Загруженный плюгИн</returns>
             public PlugInMenuItem Load(string name, out int iRes)
             {
                 PlugInMenuItem plugInRes = null;
@@ -81,7 +68,7 @@ namespace Tep64
                     try
                     {
                         plugInRes = ((PlugInMenuItem)Activator.CreateInstance(objType));
-                        plugInRes.Host = (IPlugInHost)this;
+                        plugInRes.Host = (IPlugInHost)this; //Вызов 'Register'
 
                         iRes = 0;
                     }
@@ -94,7 +81,10 @@ namespace Tep64
 
                 return plugInRes;
             }
-
+            /// <summary>
+            /// Обработчик запросов от загруженных плюгИнов
+            /// </summary>
+            /// <param name="obj">Детализация запроса (объект 'EventArgsDataHost')</param>
             public void OnEvtDataAskedHost(object obj)
             {
                 object rec = null;
@@ -106,21 +96,18 @@ namespace Tep64
                         case (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB:
                             rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
                             break;
-                        case (int)HFunc.ID_DATAASKED_HOST.SELECT:
-                            rec = new object[] { -666.666, 666.666 };
+                        case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
+                            rec = TepCommon.Properties.Resources.MainForm;
                             break;
-                        default:
+                        case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
+                            rec = Application.ProductVersion;
+                            break;
+                        default: // обработка индивидуальных для каждой вкладки запросов
                             switch ((int)((EventArgsDataHost)obj).id)
                             {
                                 case 1: //FormAboutTepProgram
                                     switch ((int)((EventArgsDataHost)obj).par[0])
-                                    {
-                                        case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
-                                            rec = TepCommon.Properties.Resources.MainForm;
-                                            break;
-                                        case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                                            rec = Application.ProductVersion;
-                                            break;
+                                    {                                        
                                         default:
                                             break;
                                     }
@@ -145,7 +132,6 @@ namespace Tep64
                             }
                             break;
                     }
-
                     //Отправить ответ (исходный идентификатор + требуемый объект)
                     ((PlugInBase)this[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par[0], new object[] { rec }));
                 }
@@ -163,11 +149,18 @@ namespace Tep64
                         }
                     }
                     else
-                    {
-                    }
+                        if (((EventArgsDataHost)obj).par[0] is object [])
+                        {
+                            object[] pars = ((EventArgsDataHost)obj).par[0] as object[];
+                        }
+                        else
+                            ;
                 }
             }
-
+            /// <summary>
+            /// Загрузить все плюгИны
+            /// </summary>
+            /// <param name="tableNamePlugins">Таблица с наименованиями</param>
             public void Load (DataTable tableNamePlugins)
             {
                 int iRes = 0
