@@ -70,6 +70,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTaskTepForm3Tech", "P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTaskTepForm15506", "PluginTaskTepForm15506\PluginTaskTepForm15506.csproj", "{ACE8D973-5030-4B24-A332-938ECCED64D9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTaskTepRealTime", "PluginTaskTepRealTime\PluginTaskTepRealTime.csproj", "{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = Tep32.vsmdi
@@ -394,6 +396,16 @@ Global
 		{ACE8D973-5030-4B24-A332-938ECCED64D9}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{ACE8D973-5030-4B24-A332-938ECCED64D9}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{ACE8D973-5030-4B24-A332-938ECCED64D9}.Release|x86.ActiveCfg = Release|Any CPU
+		{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

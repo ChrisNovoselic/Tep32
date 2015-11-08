@@ -8,11 +8,11 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTaskEng6Graf
+namespace PluginTaskTepRealTime
 {
-    public class PluginTaskEng6Graf : HPanelTepCommon
+    public class PluginTaskTepRealTime : HPanelTepCommon
     {
-        public PluginTaskEng6Graf(IPlugIn iFunc)
+        public PluginTaskTepRealTime(IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -44,15 +44,15 @@ namespace PluginTaskEng6Graf
         public PlugIn()
             : base()
         {
-            _Id = 26;
+            _Id = 27;
 
-            _nameOwnerMenuItem = @"Задача";
-            _nameMenuItem = @"Графики 3-х мин";
+            _nameOwnerMenuItem = @"Задача\Расчет ТЭП";
+            _nameMenuItem = @"Оперативно";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTaskEng6Graf));
+            createObject(typeof(PluginTaskTepRealTime));
 
             base.OnClickMenuItem(obj, ev);
         }

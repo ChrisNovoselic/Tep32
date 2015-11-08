@@ -24,7 +24,8 @@ namespace PluginTaskEJournal
 
         protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
         {
-            throw new NotImplementedException();
+            err = 0;
+            errMsg = string.Empty;
         }
 
         protected override void recUpdateInsertDelete(ref System.Data.Common.DbConnection dbConn, out int err)
