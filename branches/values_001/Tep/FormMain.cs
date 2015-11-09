@@ -20,7 +20,7 @@ namespace Tep64
     public partial class FormMain : FormMainBaseWithStatusStrip
     {        
         private static FormParameters s_formParameters;
-        private static HTepUsers m_User;
+        //private static HTepUsers m_User;
         /// <summary>
         /// Признак процесса авто/загрузки вкладок
         /// для предотвращения сохранения их в режиме "реальное время"
@@ -44,7 +44,7 @@ namespace Tep64
             if (! (idListener < 0))
             {
                 try {
-                    m_User = new HTepUsers(idListener);
+                    using (HTepUsers users = new HTepUsers(idListener)) { ; }
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::FormMain() - new HTepUsers (iListenerId=" + idListener + @") ...");
                 }
@@ -254,115 +254,103 @@ namespace Tep64
         /// <returns>Результат инициализации меню</returns>
         private int initializeMenu (out string strErr) {
             int iRes = -1
-                , idListener = -1;
+                , idListener = -1
+                ;
             strErr = string.Empty;
 
             string strUserDomainName = string.Empty;
 
             idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, @"MAIN_DB");
 
-            try {
-                using (HTepUsers users = new HTepUsers(idListener)) { ; }
+            initializeLogging ();
 
-                iRes = 0;
-            }
-            catch (Exception e) { }
+            s_plugIns.Load(HTepUsers.GetPlugins(idListener, out iRes));
 
             if (iRes == 0) {
-                initializeLogging ();
-
-                s_plugIns.Load(HTepUsers.GetPlugins(idListener, out iRes));
-
-                if (iRes == 0) {
-                    //Проверить рез-т чтения наименования плюгина
-                    if (iRes == 0)
-                    {
-                        ToolStripMenuItem miOwner = null
-                            , miItem = null;
-                        string[] arHierarchyOwnerMenuItems;
-                        //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
-                        foreach (IPlugIn plugIn in s_plugIns.Values) {
-                            arHierarchyOwnerMenuItems =
-                                (plugIn as PlugInMenuItem).NameOwnerMenuItem.Split(new char [] {'\\'}, StringSplitOptions.None);;
-                            //Поиск пункта "родительского" пункта меню для плюг'ина
-                            miOwner = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[0]);
-                            //Проверка найден ли "родительский" пункт меню для плюг'ина
-                            if (miOwner == null)
-                            {//НЕ найден - создаем
-                                int indx = -1; // индекс для добавляемого пункта                                
-                                if (arHierarchyOwnerMenuItems[0].Equals(@"Помощь") == false)
-                                    // индекс для всех пунктов кроме "Помощь"
-                                    indx = this.MainMenuStrip.Items.Count - 1;
-                                else
-                                    ;
-
-                                if (indx < 0)
-                                    // для пункта "Помощь" - он всегда крайний
-                                    //  , и не имеет сложной иерархии
-                                    this.MainMenuStrip.Items.Add(miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
-                                else
-                                    // для всех пунктов кроме "Помощь"
-                                    this.MainMenuStrip.Items.Insert(indx, miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
-                            }
+                //Проверить рез-т чтения наименования плюгина
+                if (iRes == 0)
+                {
+                    ToolStripMenuItem miOwner = null
+                        , miItem = null;
+                    string[] arHierarchyOwnerMenuItems;
+                    //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
+                    foreach (IPlugIn plugIn in s_plugIns.Values) {
+                        arHierarchyOwnerMenuItems =
+                            (plugIn as PlugInMenuItem).NameOwnerMenuItem.Split(new char [] {'\\'}, StringSplitOptions.None);;
+                        //Поиск пункта "родительского" пункта меню для плюг'ина
+                        miOwner = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[0]);
+                        //Проверка найден ли "родительский" пункт меню для плюг'ина
+                        if (miOwner == null)
+                        {//НЕ найден - создаем
+                            int indx = -1; // индекс для добавляемого пункта                                
+                            if (arHierarchyOwnerMenuItems[0].Equals(@"Помощь") == false)
+                                // индекс для всех пунктов кроме "Помощь"
+                                indx = this.MainMenuStrip.Items.Count - 1;
                             else
                                 ;
-                            //Реализовать иерархию п.п. (признак наличия иерархии - длина массива)
-                            for (int i = 1; i < arHierarchyOwnerMenuItems.Length; i++) {
-                                //Найти п. меню очередного уровня
-                                miItem = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[i]);
-                                if (miItem == null)
-                                    // в случае отсутствия добавить к ранее найденному
-                                    miOwner.DropDownItems.Add(miItem = new ToolStripMenuItem(arHierarchyOwnerMenuItems[i]));
-                                else
-                                    ;
 
-                                miOwner = miItem;
-                            }
-                            //Добавить пункт меню для плюг'ина
-                            miItem = miOwner.DropDownItems.Add((plugIn as PlugInMenuItem).NameMenuItem) as ToolStripMenuItem;
-                            //Обработку выбора пункта меню предоставить плюг'ину
-                            miItem.Click += (plugIn as PlugInMenuItem).OnClickMenuItem;
-                            //Добавить обработчик запросов для плюг'ина от главной формы
-                            (plugIn as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
-
-                            initializePlugIn(plugIn);                            
-                        }
-
-                        if (iRes == 0)
-                        {
-                            профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Checked = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED));
-                            профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Enabled = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_ACCESS));
-                            //Успешный запуск на выполнение приложения
-                            Start();
+                            if (indx < 0)
+                                // для пункта "Помощь" - он всегда крайний
+                                //  , и не имеет сложной иерархии
+                                this.MainMenuStrip.Items.Add(miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
+                            else
+                                // для всех пунктов кроме "Помощь"
+                                this.MainMenuStrip.Items.Insert(indx, miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
                         }
                         else
-                        {
-                            switch (iRes)
-                            {
-                                case -2:
-                                    strErr = @"Не удалось загрузить все разрешенные для использования модули из списка (несоответствие идентификатроов)";
-                                    break;
-                                case -1:
-                                default:
-                                    strErr = @"Не удалось загрузить все разрешенные для использования модули из списка";
-                                    break;
-                            }
+                            ;
+                        //Реализовать иерархию п.п. (признак наличия иерархии - длина массива)
+                        for (int i = 1; i < arHierarchyOwnerMenuItems.Length; i++) {
+                            //Найти п. меню очередного уровня
+                            miItem = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[i]);
+                            if (miItem == null)
+                                // в случае отсутствия добавить к ранее найденному
+                                miOwner.DropDownItems.Add(miItem = new ToolStripMenuItem(arHierarchyOwnerMenuItems[i]));
+                            else
+                                ;
+
+                            miOwner = miItem;
                         }
+                        //Добавить пункт меню для плюг'ина
+                        miItem = miOwner.DropDownItems.Add((plugIn as PlugInMenuItem).NameMenuItem) as ToolStripMenuItem;
+                        //Обработку выбора пункта меню предоставить плюг'ину
+                        miItem.Click += (plugIn as PlugInMenuItem).OnClickMenuItem;
+                        //Добавить обработчик запросов для плюг'ина от главной формы
+                        (plugIn as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
+
+                        initializePlugIn(plugIn);                            
+                    }
+
+                    if (iRes == 0)
+                    {
+                        профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Checked = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED));
+                        профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Enabled = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_ACCESS));
+                        //Успешный запуск на выполнение приложения
+                        Start();
                     }
                     else
                     {
-                        if (iRes == 0) iRes = -1; else ;
-                        strErr = @"Не удалось сформировать список разрешенных для использования модулей";
+                        switch (iRes)
+                        {
+                            case -2:
+                                strErr = @"Не удалось загрузить все разрешенные для использования модули из списка (несоответствие идентификатроов)";
+                                break;
+                            case -1:
+                            default:
+                                strErr = @"Не удалось загрузить все разрешенные для использования модули из списка";
+                                break;
+                        }
                     }
-                } else {
-                    if (iRes == 0) iRes = -1; else ;
-                    strErr = @"Не удалось сформировать правила для роли пользователя";
                 }
-            }
-            else {
+                else
+                {
+                    if (iRes == 0) iRes = -1; else ;
+                    strErr = @"Не удалось сформировать список разрешенных для использования модулей";
+                }
+            } else {
                 if (iRes == 0) iRes = -1; else ;
-                strErr = @"Не удалось идентифицировать пользователя";
-            }
+                strErr = @"Не удалось сформировать правила для роли пользователя";
+            }            
 
             DbSources.Sources().UnRegister(idListener);
 

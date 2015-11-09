@@ -21,21 +21,17 @@ namespace TepCommon
         private string m_strNameTableAlg
             , m_strNameTablePut;
         /// <summary>
-        /// Массив с идентификаторами периодов расчетов, использующихся на форме
-        /// </summary>
-        protected int[] m_arIdPeriods;
-        /// <summary>
         /// Строка для запроса информации по периодам расчетов
-        /// </summary>
+        /// </summary>        
         protected string m_strIdPeriods
         {
             get
             {
                 string strRes = string.Empty;
 
-                for (int i = 0; i < m_arIdPeriods.Length; i++)
+                for (int i = 0; i < m_arListIds[(int)INDEX_ID.PERIOD].Count; i++)
                 {
-                    strRes += m_arIdPeriods[i] + @",";
+                    strRes += m_arListIds[(int)INDEX_ID.PERIOD][i] + @",";
                 }
                 strRes = strRes.Substring(0, strRes.Length - 1);
 
@@ -46,8 +42,19 @@ namespace TepCommon
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
         private DataTable []m_arTableDictPrjs;
-
-        private List<int> m_listIdParameters;
+        /// <summary>
+        /// Индексы массива списков идентификаторов
+        /// </summary>
+        private enum INDEX_ID { UNKNOWN = -1
+            , PERIOD // идентификаторы периодов расчетов, использующихся на форме
+            , ALL_COMPONENT, ALL_PARAMETER // все идентификаторы компонентов ТЭЦ/параметров
+            , DENY_COMP_CALCULATED, DENY_PARAMETER_CALCULATED //запрещенных для расчета
+            , DENY_COMP_VISIBLED, DENY_PARAMETER_VISIBLED // запрещенных для отображения
+            , COUNT_INDEX_ID }
+        /// <summary>
+        /// Массив списков идентификаторов компонентов ТЭЦ/параметров
+        /// </summary>
+        private List<int> [] m_arListIds;
         /// <summary>
         /// Таблицы со значениями для редактирования
         /// </summary>
@@ -68,9 +75,17 @@ namespace TepCommon
 
         private void InitializeComponents()
         {
-            m_arIdPeriods = new int[] { 13, 18, 19, 24 };
+            #region Код, не относящийся к инициализации элементов управления
+            m_arListIds = new List<int>[(int)INDEX_ID.COUNT_INDEX_ID];
+            for (INDEX_ID i = INDEX_ID.PERIOD; i < INDEX_ID.COUNT_INDEX_ID; i++)
+                if (i == INDEX_ID.PERIOD)
+                    m_arListIds[(int)i] = new List<int> { 13, 18, 19, 24 };
+                else
+                    //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
+                    m_arListIds[(int)i] = new List<int>();
+            #endregion
+
             m_arTableDictPrjs = new DataTable [(int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ];
-            m_listIdParameters = new List<int>();
 
             m_panelManagement = new PanelManagement ();
             m_dgvValues = new DataGridViewTEPValues ();
@@ -105,7 +120,8 @@ namespace TepCommon
             CheckedListBox clbxCompCalculated
                 , clbxCompVisibled;
             string strItem = string.Empty;
-            int i = -1;
+            int i = -1
+                , id_comp = -1;
             //Заполнить таблицы со словарными, проектными величинами
             string[] arQueryDictPrj = new string[]
             {
@@ -137,15 +153,21 @@ namespace TepCommon
                 (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
                 (ctrl as ComboBox).SelectedIndex = 0;
 
+                m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
                 //Заполнить элементы управления с компонентами станции
                 clbxCompCalculated = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
                 clbxCompVisibled = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
                 foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
                 {
+                    id_comp = (Int16)r[@"ID"];
+                    m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add (id_comp);
                     strItem = (string)r[@"DESCRIPTION"];
-                    clbxCompCalculated.Items.Add(strItem);
-                    clbxCompVisibled.Items.Add(strItem);
+                    clbxCompCalculated.Items.Add(strItem, m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf (id_comp) < 0);
+                    clbxCompVisibled.Items.Add(strItem, m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0);
                 }
+
+                clbxCompCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
+                clbxCompVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
             }
             else
                 switch ((INDEX_TABLE_DICTPRJ)i)
@@ -192,30 +214,81 @@ namespace TepCommon
             string strItem = string.Empty;
             CheckedListBox clbxParsCalculated = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as CheckedListBox
                 , clbxParsVisibled = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
+            //Отменить обработку событий
+            clbxParsCalculated.ItemCheck -= clbx_ItemCheck;
+            clbxParsVisibled.ItemCheck -= clbx_ItemCheck;
+            //Очистиить списки
             clbxParsCalculated.Items.Clear();
             clbxParsVisibled.Items.Clear();
-            m_listIdParameters.Clear();
+            m_arListIds[(int)INDEX_ID.ALL_PARAMETER].Clear();
             ////Запросить значения у главной формы
             //((PlugInBase)_iFuncPlugin).DataAskedHost(new object[] { (int)HFunc.ID_DATAASKED_HOST.SELECT, @"SELECT..." });
             DataRow[] rowsParameter =
-                m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(@"ID_TIME=" + m_arIdPeriods[cbx.SelectedIndex], @"N_ALG");
+                m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(@"ID_TIME=" + m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex], @"N_ALG");
             //Заполнить элементы управления с компонентами станции 
             foreach (DataRow r in rowsParameter)
             {
                 id_alg = (int)r[@"ID_ALG"];
 
-                if (m_listIdParameters.IndexOf(id_alg) < 0)
+                if (m_arListIds[(int)INDEX_ID.ALL_PARAMETER].IndexOf(id_alg) < 0)
                 {
-                    m_listIdParameters.Add (id_alg);
+                    m_arListIds[(int)INDEX_ID.ALL_PARAMETER].Add(id_alg);
 
                     strItem = ((string)r[@"N_ALG"]).Trim () + @" (" + ((string)r[@"NAME_SHR"]).Trim() + @")";
-                    clbxParsCalculated.Items.Add(strItem);
-                    clbxParsVisibled.Items.Add(strItem);
+                    clbxParsCalculated.Items.Add(strItem, m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0);
+                    clbxParsVisibled.Items.Add(strItem, m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0);
                 }
                 else
                     ;
             }
+            //Возобновить обработку событий
+            clbxParsCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
+            clbxParsVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
+            //Создать структуру 'DataGridView'
+            createHeaders ();
+            //Выполнить запрос на получение значений для заполнения 'DataGridView'
+            ;
         }
+
+        private void clbx_ItemCheck(object obj, ItemCheckEventArgs ev)
+        {
+            INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN;
+            string strId = (obj as Control).Name;
+            
+            if (strId.Equals (INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString ()) == true)
+                id = INDEX_CONTROL.CLBX_COMP_CALCULATED;
+            else
+                if (strId.Equals (INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString ()) == true)
+                    id = INDEX_CONTROL.CLBX_PARAMETER_CALCULATED;
+                else
+                    if (strId.Equals (INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString ()) == true)
+                        id = INDEX_CONTROL.CLBX_COMP_VISIBLED;
+                    else
+                        if (strId.Equals (INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString ()) == true)
+                            id = INDEX_CONTROL.CLBX_PARAMETER_VISIBLED;
+                        else
+                            ;
+            //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
+            ;
+            //Изменить структуру 'DataGridView'
+            updateHeaders();
+        }
+
+        //private void clbxCompCalculated_ItemCheck(object obj, ItemCheckEventArgs ev)
+        //{
+        //}
+
+        //private void clbxCompVisibled_ItemCheck(object obj, ItemCheckEventArgs ev)
+        //{
+        //}
+
+        //private void clbxParsCalculated_ItemCheck(object obj, ItemCheckEventArgs ev)
+        //{
+        //}
+
+        //private void clbxParsVisibled_ItemCheck(object obj, ItemCheckEventArgs ev)
+        //{
+        //}
 
         protected class DataGridViewTEPValues : DataGridView
         {
@@ -227,7 +300,32 @@ namespace TepCommon
             private void InitializeComponents()
             {
                 this.Dock = DockStyle.Fill;
+
+                MultiSelect = false;
+                AllowUserToAddRows = false;
+                AllowUserToDeleteRows = false;
+                AllowUserToOrderColumns = false;
+                AllowUserToResizeRows = false;
             }
+        }
+
+        private void createHeaders()
+        {
+            CheckedListBox clbxCompCalculated = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox
+                , clbxParsCalculated = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as CheckedListBox
+                , clbxCompVisibled = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox
+                , clbxParsVisibled = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
+
+            m_dgvValues.Rows.Clear();
+            m_dgvValues.Columns.Clear();
+
+            foreach (int indx in clbxCompVisibled.CheckedIndices)
+            {
+            }
+        }
+
+        private void updateHeaders()
+        {
         }
 
         protected class PanelManagement : HPanelCommon
@@ -465,11 +563,13 @@ namespace TepCommon
 
     public partial class PanelTepTaskValues
     {
-        protected enum INDEX_CONTROL { BUTTON_RUN
+        protected enum INDEX_CONTROL { UNKNOWN = -1
+            , BUTTON_RUN
             , CBX_PERIOD, HDTP_BEGIN, HDTP_END
             , CLBX_COMP_CALCULATED, CLBX_PARAMETER_CALCULATED
             , BUTTON_LOAD, BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
             , CLBX_COMP_VISIBLED, CLBX_PARAMETER_VISIBLED
+            , DGV_DATA
             , LABEL_DESC }
 
         protected PanelManagement m_panelManagement;
