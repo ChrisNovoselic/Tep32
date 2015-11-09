@@ -12,15 +12,15 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepPrjSources
+namespace PluginPrjSources
 {
-    public class PanelTepPrjSources : HPanelEditList
+    public class PanelPrjSources : HPanelEditList
     {
         private static int s_iIdSourceData = 501;
         private static string s_strPswdPropName = @"PASSWORD";
         private DataTable m_tblOriginPswd, m_tblEditPswd;
 
-        public PanelTepPrjSources(IPlugIn iFunc)
+        public PanelPrjSources(IPlugIn iFunc)
             : base(iFunc, @"SOURCE", @"ID", @"NAME_SHR")
         {
             InitializeComponent();
@@ -292,7 +292,7 @@ namespace PluginTepPrjSources
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PanelTepPrjSources));
+            createObject(typeof(PanelPrjSources));
             //createObject(this.GetType());
 
             base.OnClickMenuItem(obj, ev);

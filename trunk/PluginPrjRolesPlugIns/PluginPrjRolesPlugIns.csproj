@@ -8,8 +8,8 @@
     <ProjectGuid>{9B12B796-9E55-43D9-A2DA-A076842A3EB0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTepPrjRolesPlugIns</RootNamespace>
-    <AssemblyName>PluginTepPrjRolesPlugIns</AssemblyName>
+    <RootNamespace>PluginPrjRolesPlugIns</RootNamespace>
+    <AssemblyName>PluginPrjRolesPlugIns</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PanelTepPrjRolesPlugIns.cs">
+    <Compile Include="PanelPrjRolesPlugIns.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

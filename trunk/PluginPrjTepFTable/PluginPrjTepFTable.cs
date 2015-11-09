@@ -32,9 +32,9 @@ namespace PluginPrjTepFTable
 
         protected static string[] m_arButtonText = { @"Сохранить", @"Обновить", @"Добавить", @"Удалить" };
 
-        protected override void Activate(bool activate)
+        public override bool Activate(bool activate)
         {
-            throw new NotImplementedException();
+            return base.Activate (activate);
         }
 
         protected override void initialize(ref DbConnection dbConn, out int err, out string errMsg)
@@ -47,15 +47,15 @@ namespace PluginPrjTepFTable
             m_tblOrign = DbTSQLInterface.Select(ref dbConn, m_query, null, null, out err);
             m_tableEdit = m_tblOrign.Copy();
 
-            DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_fTABLE]);
-            dgv.DataSource = m_tableEdit;
+            //DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_fTABLE]);
+            //dgv.DataSource = m_tableEdit;
 
-            dgv.Columns[0].Width = 30;
-            dgv.Columns[1].Width = 70;
-            dgv.Columns[2].Width = 45;
-            dgv.Columns[3].Width = 45;
-            dgv.Columns[4].Width = 45;
-            dgv.Columns[5].Width = 50;
+            //dgv.Columns[0].Width = 30;
+            //dgv.Columns[1].Width = 70;
+            //dgv.Columns[2].Width = 45;
+            //dgv.Columns[3].Width = 45;
+            //dgv.Columns[4].Width = 45;
+            //dgv.Columns[5].Width = 50;
 
 
             /* for (int j = 0; j < m_tableEdit.Columns.Count; j++)
@@ -93,11 +93,11 @@ namespace PluginPrjTepFTable
             //Добавить кнопки
             INDEX_CONTROL i = INDEX_CONTROL.BUTTON_SAVE;
             for (i = INDEX_CONTROL.BUTTON_SAVE; i < (INDEX_CONTROL.BUTTON_UPDATE + 1); i++)
-                addButton((int)i, m_arButtonText[(int)i]);
+                addButton(i.ToString(), (int)i, m_arButtonText[(int)i]);
 
             //Добавить "список" словарных величин
-            m_dictControls.Add((int)INDEX_CONTROL.DGV_fTABLE, new DataGridView());
-            DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_fTABLE] as DataGridView;
+            DataGridView dgv = new DataGridView();
+            dgv.Name = INDEX_CONTROL.DGV_fTABLE.ToString ();
             dgv.Dock = DockStyle.Fill;
             //Разместить эл-т упр-я
             this.Controls.Add(dgv, 1, 0);
@@ -119,16 +119,16 @@ namespace PluginPrjTepFTable
             //Не отображать заголовки строк
             dgv.RowHeadersVisible = false;
 
-            addLabelDesc((int)INDEX_CONTROL.LABEL_DESC);
+            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString ());
 
             this.ResumeLayout();
 
 
             //Обработчика нажатия кнопок
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_ADD]).Click += new System.EventHandler(HPanelfTable_btnAdd_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_DELETE]).Click += new System.EventHandler(HPanelfTAble_btnDelete_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_SAVE]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_UPDATE]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]).Click += new System.EventHandler(HPanelfTable_btnAdd_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]).Click += new System.EventHandler(HPanelfTAble_btnDelete_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace PluginPrjTepFTable
         /// <param name="ev"></param>
         private void HPanelfTable_btnAdd_Click(object obj, EventArgs ev)
         {
-            DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_fTABLE]);
+            DataGridView dgv = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_fTABLE.ToString(), true)[0]);
             dgv.Rows[dgv.NewRowIndex].Cells[0].Selected = true;
             dgv.BeginEdit(false);
         }
@@ -150,13 +150,14 @@ namespace PluginPrjTepFTable
         /// <param name="ev"></param>
         private void HPanelfTAble_btnDelete_Click(object obj, EventArgs ev)
         {
-            int indx = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_fTABLE]).SelectedRows[0].Index;
+            DataGridView dgv = Controls.Find(INDEX_CONTROL.DGV_fTABLE.ToString(), true)[0]as DataGridView;
+            int indx = dgv.SelectedRows[0].Index;
 
             if ((!(indx < 0)) && (indx < m_tableEdit.Rows.Count))
             {//Удаление существующей записи
                 delRecItem(indx);
 
-                ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_fTABLE]).Rows.RemoveAt(indx);
+                dgv.Rows.RemoveAt(indx);
             }
             else
                 ;

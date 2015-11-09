@@ -5,13 +5,14 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{3104EC20-31E6-4363-BEA7-E2225E521A72}</ProjectGuid>
+    <ProjectGuid>{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTepTaskOutval</RootNamespace>
-    <AssemblyName>PluginTepTaskOutval</AssemblyName>
+    <RootNamespace>PluginPrjRolesProfiles</RootNamespace>
+    <AssemblyName>PluginPrjRolesProfiles</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -40,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PanelTepTaskOutval.cs">
+    <Compile Include="PanelPrjRolesProfiles.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

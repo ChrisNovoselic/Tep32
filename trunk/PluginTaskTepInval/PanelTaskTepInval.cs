@@ -8,12 +8,12 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepTaskOutval
+namespace PluginTaskTepInval
 {
-    public class PluginTepTaskOutval : PanelTepTaskValues
+    public class PanelTaskTepInval : PanelTepTaskValues
     {
-        public PluginTepTaskOutval(IPlugIn iFunc)
-            : base(iFunc, @"outalg", @"output")
+        public PanelTaskTepInval(IPlugIn iFunc)
+            : base(iFunc, @"inalg", @"input")
         {
             InitializeComponent();
         }
@@ -28,15 +28,15 @@ namespace PluginTepTaskOutval
         public PlugIn()
             : base()
         {
-            _Id = 18;
+            _Id = 17;
 
             _nameOwnerMenuItem = @"Задача\Расчет ТЭП";
-            _nameMenuItem = @"Выходные данные";
+            _nameMenuItem = @"Входные данные";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTepTaskOutval));
+            createObject(typeof(PanelTaskTepInval));
 
             base.OnClickMenuItem(obj, ev);
         }

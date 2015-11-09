@@ -5,14 +5,13 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}</ProjectGuid>
+    <ProjectGuid>{FA1358B5-435A-4FDF-AB38-9BE7C8049F8D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTepPrjRolesProfiles</RootNamespace>
-    <AssemblyName>PluginTepPrjRolesProfiles</AssemblyName>
+    <RootNamespace>PluginTaskTepInval</RootNamespace>
+    <AssemblyName>PluginTaskTepInval</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,7 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PanelTepPrjRolesProfiles.cs">
+    <Compile Include="PanelTaskTepInval.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -7,11 +7,11 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepPrjSourceGroup
+namespace PluginPrjSourceGroup
 {
-    public class PanelTepPrjSourceGroup : HPanelEditList
+    public class PanelPrjSourceGroup : HPanelEditList
     {
-        public PanelTepPrjSourceGroup(IPlugIn iFunc)
+        public PanelPrjSourceGroup(IPlugIn iFunc)
             : base(iFunc, @"source_group", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
@@ -35,7 +35,7 @@ namespace PluginTepPrjSourceGroup
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PanelTepPrjSourceGroup));
+            createObject(typeof(PanelPrjSourceGroup));
             //createObject(this.GetType());
 
             base.OnClickMenuItem(obj, ev);

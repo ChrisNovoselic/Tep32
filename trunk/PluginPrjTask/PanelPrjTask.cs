@@ -7,11 +7,11 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepPrjTask
+namespace PluginPrjTask
 {
-    public class PanelTepPrjTask : HPanelEditList
+    public class PanelPrjTask : HPanelEditList
     {
-        public PanelTepPrjTask(IPlugIn iFunc)
+        public PanelPrjTask(IPlugIn iFunc)
             : base(iFunc, @"task", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
@@ -35,7 +35,7 @@ namespace PluginTepPrjTask
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PanelTepPrjTask));
+            createObject(typeof(PanelPrjTask));
             //createObject(this.GetType());
 
             base.OnClickMenuItem(obj, ev);

@@ -5,14 +5,13 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{BDD2CC67-E0BB-4CED-9E68-2FDACC4664F5}</ProjectGuid>
+    <ProjectGuid>{3104EC20-31E6-4363-BEA7-E2225E521A72}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTepPrjSourceGroup</RootNamespace>
-    <AssemblyName>PluginTepPrjSourceGroup</AssemblyName>
+    <RootNamespace>PluginTaskTepOutval</RootNamespace>
+    <AssemblyName>PluginTaskTepOutval</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,7 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PanelTepPrjSourceGroup.cs">
+    <Compile Include="PanelTaskTepOutval.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

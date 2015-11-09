@@ -10,11 +10,11 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepPrjRolesProfiles
+namespace PluginPrjRolesProfiles
 {
-    public class PanelTepPrjRolesProfiles : PanelTepPrjRolesAccess
+    public class PanelPrjRolesProfiles : PanelTepPrjRolesAccess
     {
-        public PanelTepPrjRolesProfiles(IPlugIn iFunc)
+        public PanelPrjRolesProfiles(IPlugIn iFunc)
             : base(iFunc, @"profiles", @"ID_EXT,ID_UNIT", @"profiles_unit", @"VALUE")
         {
             InitializeComponent();
@@ -59,7 +59,7 @@ namespace PluginTepPrjRolesProfiles
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PanelTepPrjRolesProfiles));
+            createObject(typeof(PanelPrjRolesProfiles));
 
             base.OnClickMenuItem(obj, ev);
         }
