@@ -10,11 +10,11 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepPrjInParameters
+namespace PluginPrjInParameters
 {
-    public class PluginTepPrjInParameters : PanelTepPrjParametersEditTree
+    public class PanelPrjInParameters : PanelTepPrjParametersEditTree
     {
-        public PluginTepPrjInParameters(IPlugIn iFunc)
+        public PanelPrjInParameters(IPlugIn iFunc)
             : base(iFunc, @"inalg, input")
         {
             //Вариант "1-1
@@ -67,7 +67,7 @@ namespace PluginTepPrjInParameters
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTepPrjInParameters));
+            createObject(typeof(PanelPrjInParameters));
 
             base.OnClickMenuItem(obj, ev);
         }

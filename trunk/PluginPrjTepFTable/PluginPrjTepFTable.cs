@@ -10,9 +10,9 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepPrjFTable
+namespace PluginPrjTepFTable
 {
-    public class PluginTepPrjFTable : HPanelTepCommon
+    public class PluginPrjTepFTable : HPanelTepCommon
     {
         string m_query;
         DataTable m_tblOrign,
@@ -80,7 +80,7 @@ namespace PluginTepPrjFTable
             DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, @"ftable", @"ID", m_tblOrign, m_tableEdit, out err);
         }
 
-        public PluginTepPrjFTable(IPlugIn iFunc)
+        public PluginPrjTepFTable(IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -169,7 +169,7 @@ namespace PluginTepPrjFTable
         }
     }
 
-    public class PlugIn : HFuncDictEdit
+    public class PlugIn : HFuncDbEdit
     {
         public PlugIn()
             : base()
@@ -182,7 +182,7 @@ namespace PluginTepPrjFTable
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTepPrjFTable));
+            createObject(typeof(PluginPrjTepFTable));
 
             base.OnClickMenuItem(obj, ev);
         }

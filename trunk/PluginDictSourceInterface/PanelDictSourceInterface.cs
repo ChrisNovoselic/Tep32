@@ -7,11 +7,11 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepDictSourceInterface
+namespace PluginDictSourceInterface
 {
-    public class PanelTepDictSourceInterface : HPanelEditList
+    public class PanelDictSourceInterface : HPanelEditList
     {
-        public PanelTepDictSourceInterface(IPlugIn iFunc)
+        public PanelDictSourceInterface(IPlugIn iFunc)
             : base(iFunc, @"source_interface", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
@@ -35,7 +35,7 @@ namespace PluginTepDictSourceInterface
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PanelTepDictSourceInterface));
+            createObject(typeof(PanelDictSourceInterface));
             //createObject(this.GetType());
 
             base.OnClickMenuItem(obj, ev);

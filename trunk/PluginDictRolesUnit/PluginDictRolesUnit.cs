@@ -7,11 +7,11 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepDictRolesUnit
+namespace PluginDictRolesUnit
 {
-    public class PanelTepDictRolesUnit : HPanelEditList
+    public class PanelDictRolesUnit : HPanelEditList
     {
-        public PanelTepDictRolesUnit(IPlugIn iFunc)
+        public PanelDictRolesUnit(IPlugIn iFunc)
             : base(iFunc, @"roles_unit", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
@@ -35,7 +35,7 @@ namespace PluginTepDictRolesUnit
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PanelTepDictRolesUnit));
+            createObject(typeof(PanelDictRolesUnit));
             //createObject(this.GetType());
 
             base.OnClickMenuItem(obj, ev);

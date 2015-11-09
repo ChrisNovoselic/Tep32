@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{ABC1626C-B382-4E5B-9F83-E7A5BC2C007E}</ProjectGuid>
+    <ProjectGuid>{90A1DC91-D980-4B53-B770-E6F04F9FC69E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTepDictRolesUnit</RootNamespace>
-    <AssemblyName>PluginTepDictRolesUnit</AssemblyName>
+    <RootNamespace>PluginDictSourceInterface</RootNamespace>
+    <AssemblyName>PluginDictSourceInterface</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PluginTepDictRolesUnit.cs">
+    <Compile Include="PanelDictSourceInterface.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

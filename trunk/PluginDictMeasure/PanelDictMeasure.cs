@@ -7,12 +7,12 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTepDictMessage
+namespace PluginDictMeasure
 {
-    public class PanelTepDictMessage : HPanelEditList
+    public class PanelDictMeasure : HPanelEditList
     {
-        public PanelTepDictMessage(IPlugIn iFunc)
-            : base(iFunc, @"messages", @"ID", @"DESCRIPTION")
+        public PanelDictMeasure(IPlugIn iFunc)
+            : base(iFunc, @"measure", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
         }
@@ -27,15 +27,15 @@ namespace PluginTepDictMessage
         public PlugIn()
             : base()
         {
-            _Id = 4;
+            _Id = 10;
 
             _nameOwnerMenuItem = @"Настройка";
-            _nameMenuItem = @"Типы сообщений журнала";
+            _nameMenuItem = @"Единицы измерения";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PanelTepDictMessage));
+            createObject(typeof(PanelDictMeasure));
             //createObject(this.GetType());
 
             base.OnClickMenuItem(obj, ev);

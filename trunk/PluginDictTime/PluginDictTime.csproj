@@ -5,14 +5,13 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{924FBA6E-A72A-430B-8E24-0B20B5262FE2}</ProjectGuid>
+    <ProjectGuid>{53A1C672-1688-4B07-A57A-FE5D8170D473}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTepDictProfilesUnit</RootNamespace>
-    <AssemblyName>PluginTepDictProfilesUnit</AssemblyName>
+    <RootNamespace>PluginDictTime</RootNamespace>
+    <AssemblyName>PluginDictTime</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,7 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PluginTepDictProfilesUnit.cs">
+    <Compile Include="PanelDictTime.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

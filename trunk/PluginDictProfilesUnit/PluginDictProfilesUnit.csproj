@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}</ProjectGuid>
+    <ProjectGuid>{924FBA6E-A72A-430B-8E24-0B20B5262FE2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTepPrjOutParameters</RootNamespace>
-    <AssemblyName>PluginTepPrjOutParameters</AssemblyName>
+    <RootNamespace>PluginDictProfilesUnit</RootNamespace>
+    <AssemblyName>PluginDictProfilesUnit</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PanelTepPrjOutParameters.cs">
+    <Compile Include="PluginDictProfilesUnit.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

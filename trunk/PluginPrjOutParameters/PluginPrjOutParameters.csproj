@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{4A6DD928-BC42-44E3-B319-5D89AA575F3F}</ProjectGuid>
+    <ProjectGuid>{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTepPrjFTable</RootNamespace>
-    <AssemblyName>PluginTepPrjFTable</AssemblyName>
+    <RootNamespace>PluginPrjOutParameters</RootNamespace>
+    <AssemblyName>PluginPrjOutParameters</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PluginTepPrjFTable.cs">
+    <Compile Include="PanelPrjOutParameters.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

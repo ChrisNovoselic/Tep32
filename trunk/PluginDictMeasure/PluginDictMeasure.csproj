@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{90A1DC91-D980-4B53-B770-E6F04F9FC69E}</ProjectGuid>
+    <ProjectGuid>{EA1EEA18-4A1B-41FF-AA88-2176700B8253}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTepDictSourceInterface</RootNamespace>
-    <AssemblyName>PluginTepDictSourceInterface</AssemblyName>
+    <RootNamespace>PluginDictMeasure</RootNamespace>
+    <AssemblyName>PluginDictMeasure</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PanelTepDictSourceInterface.cs">
+    <Compile Include="PanelDictMeasure.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
