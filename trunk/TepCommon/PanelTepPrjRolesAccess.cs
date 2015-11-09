@@ -39,16 +39,19 @@ namespace TepCommon
 
         private void InitializeComponent()
         {
+            Control ctrl = null;
+
             this.SuspendLayout();
 
             //Добавить кропки
             INDEX_CONTROL i = INDEX_CONTROL.BUTTON_SAVE;
             for (i = INDEX_CONTROL.BUTTON_SAVE; i < (INDEX_CONTROL.BUTTON_UPDATE + 1); i++)
-                addButton((int)i, m_arButtonText[(int)i]);
+                addButton(i.ToString(), (int)i, m_arButtonText[(int)i]);
 
             //Добавить "список" словарных величин
-            m_dictControls.Add((int)INDEX_CONTROL.DGV_PRJ_ITEM, new DataGridView());
-            DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ITEM] as DataGridView;
+            ctrl = new DataGridView();
+            ctrl.Name = INDEX_CONTROL.DGV_PRJ_ITEM.ToString();
+            DataGridView dgv = ctrl as DataGridView;
             dgv.Dock = DockStyle.Fill;
             //Разместить эл-т упр-я
             this.Controls.Add(dgv, 1, 0);
@@ -81,8 +84,9 @@ namespace TepCommon
             dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjItemSelectionChanged);
 
             //Добавить "список" свойств словарной величины
-            m_dictControls.Add((int)INDEX_CONTROL.DGV_PRJ_ACCESS, new DataGridView());
-            dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
+            ctrl = new DataGridView();
+            ctrl.Name = INDEX_CONTROL.DGV_PRJ_ACCESS.ToString ();
+            dgv = ctrl as DataGridView;
             dgv.Dock = DockStyle.Fill;
             //Разместить эл-т упр-я
             this.Controls.Add(dgv, 5, 0);
@@ -116,13 +120,13 @@ namespace TepCommon
             //dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellEndEdit);
             dgv.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellValueChanged);
 
-            addLabelDesc((int)INDEX_CONTROL.LABEL_ACCESS_DESC);
+            addLabelDesc(INDEX_CONTROL.LABEL_ACCESS_DESC.ToString ());
 
             this.ResumeLayout();
 
             //Обработчика нажатия кнопок
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_SAVE]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_UPDATE]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
+            ((Button)Controls.Find (INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
 
         protected override void initialize(ref DbConnection dbConn, out int err, out string strErr)
@@ -142,7 +146,7 @@ namespace TepCommon
             {
                 Logging.Logg().Debug(@"PanelTepPrjRolesAccess::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
+                DataGridView dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString (), true)[0] as DataGridView;
                 if (m_tblAccessUnit.Rows.Count > 0)
                     for (i = 0; i < m_tblAccessUnit.Rows.Count; i++)
                         dgv.Rows.Add(new object[] { m_tblAccessUnit.Rows[i][@"DESCRIPTION"], false });
@@ -150,7 +154,7 @@ namespace TepCommon
                     //Только "для чтения", если строк нет
                     dgv.ReadOnly = true;
 
-                dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ITEM] as DataGridView;
+                dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ITEM.ToString(), true)[0] as DataGridView;
                 if (m_tblItem.Rows.Count > 0)
                 {
                     for (i = 0; i < m_tblItem.Rows.Count; i++)
@@ -162,7 +166,7 @@ namespace TepCommon
                     //Только "для чтения", если строк нет
                     dgv.ReadOnly = true;
 
-                dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
+                dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0] as DataGridView;
                 if (m_tblAccessUnit.Rows.Count > 0)
                 {                    
                 }
@@ -174,14 +178,17 @@ namespace TepCommon
                 ;
         }
 
-        protected override void Activate(bool activate)
+        public override bool Activate(bool activate)
         {
+            bool bRes = base.Activate(activate);
+
+            return bRes;
         }
 
         protected override void clear()
         {
-            ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ITEM]).Rows.Clear();
-            ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS]).Rows.Clear();
+            ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_PRJ_ITEM.ToString(), true)[0]).Rows.Clear();
+            ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0]).Rows.Clear();
 
             base.clear();
         }
@@ -193,7 +200,7 @@ namespace TepCommon
 
         private void HPanelEditTree_dgvPrjItemSelectionChanged(object obj, EventArgs ev)
         {
-            DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
+            DataGridView dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0] as DataGridView;
             dgv.CellValueChanged -= HPanelEditTree_dgvPrjAccessCellValueChanged;
             
             if (((DataGridView)obj).SelectedRows.Count == 1)
@@ -212,11 +219,11 @@ namespace TepCommon
 
         private void HPanelEditTree_dgvPrjAccessCellValueChanged(object obj, DataGridViewCellEventArgs ev)
         {
-            DataGridView dgvItem = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ITEM] as DataGridView
-                , dgvAccess = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
+            DataGridView dgvItem = Controls.Find(INDEX_CONTROL.DGV_PRJ_ITEM.ToString(), true)[0] as DataGridView
+                , dgvAccess = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0] as DataGridView;
             DataRow [] rowsUnit = m_tblAccessUnit.Select (@"DESCRIPTION='" + dgvAccess.SelectedRows[0].Cells[0].Value + @"'")
                 , rowsAccess = m_tblEdit.Select(m_strKeyFields.Split(',')[0] + @"=" + m_tblItem.Rows[dgvItem.SelectedRows[0].Index][@"ID"]
-                                    + @" AND "
+                                    + @" AND IS_ROLE=1 AND "
                                     + m_strKeyFields.Split(',')[1] + @"="
                                         //+ m_tblAccessUnit.Rows [dgvAccess.SelectedRows[0].Index][@"ID"]);
                                         + rowsUnit[0][@"ID"]);
@@ -232,13 +239,16 @@ namespace TepCommon
 
         private void setPrjAccessValues(int indx)
         {
-            DataRow[] rowsAccessUnit = m_tblEdit.Select(m_strKeyFields.Split(',')[0] + @"=" + m_tblItem.Rows[indx][@"ID"]);
+            DataRow[] rowsAccessUnit = m_tblEdit.Select(m_strKeyFields.Split(',')[0] + @"=" + m_tblItem.Rows[indx][@"ID"]
+                + @" AND IS_ROLE=1");
 
-            DataGridView dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_ACCESS] as DataGridView;
-            for (int i = 0; i < dgv.Rows.Count; i++)
-            {
-                ((DataGridViewCheckBoxCell)dgv.Rows[i].Cells[1]).Value = Int16.Parse(rowsAccessUnit[i][m_strNameFieldValue].ToString()) == 1;
-            }
+            DataGridView dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0] as DataGridView;
+
+            if (rowsAccessUnit.Length == dgv.Rows.Count)
+                for (int i = 0; i < dgv.Rows.Count; i++)
+                    ((DataGridViewCheckBoxCell)dgv.Rows[i].Cells[1]).Value = Int16.Parse(rowsAccessUnit[i][m_strNameFieldValue].ToString()) == 1;
+            else
+                throw new Exception(@"PanelTepPrjRolesAccess::setPrjAccessValues () - кол-во строк в БД и элементе упр-я НЕ совпадает...");
         }
     }
 }

@@ -71,13 +71,12 @@ namespace TepCommon
             //Добавить кнопки
             INDEX_CONTROL i = INDEX_CONTROL.BUTTON_ADD;
             for (i = INDEX_CONTROL.BUTTON_ADD; i < (INDEX_CONTROL.BUTTON_UPDATE + 1); i++)
-                addButton((int)i, m_arButtonText[(int)i]);
+                addButton(i.ToString(), (int)i, m_arButtonText[(int)i]);
 
-            DataGridView dgv = null;
+            DataGridView dgv = new DataGridView();
             //Добавить "список" словарных величин
+            dgv.Name = INDEX_CONTROL.DGV_DICT_ITEM.ToString();
             i = INDEX_CONTROL.DGV_DICT_ITEM;
-            m_dictControls.Add((int)i, new DataGridView());
-            dgv = ((DataGridView)m_dictControls[(int)i]);
             dgv.Dock = DockStyle.Fill;
             //Разместить эл-т упр-я
             this.Controls.Add(dgv, 1, 0);
@@ -104,20 +103,19 @@ namespace TepCommon
             dgv.AllowUserToDeleteRows = false;            
 
             //Добавить "список" свойств словарной величины
-            i = INDEX_CONTROL.DGV_DICT_PROP;
-            m_dictControls.Add((int)i, new DataGridView());
-            dgv = ((DataGridView)m_dictControls[(int)i]);
+            dgv = new DataGridView();
+            dgv.Name = INDEX_CONTROL.DGV_DICT_PROP.ToString ();
             dgv.Dock = DockStyle.Fill;
             //Разместить эл-т упр-я
             this.Controls.Add(dgv, 5, 0);
-            this.SetColumnSpan(dgv, 8); this.SetRowSpan(m_dictControls[(int)i], 10);
+            this.SetColumnSpan(dgv, 8); this.SetRowSpan(dgv, 10);
             //Добавить столбцы
             dgv.Columns.AddRange(new DataGridViewColumn[] {
                     new DataGridViewTextBoxColumn ()
                     , new DataGridViewTextBoxColumn ()
                 });
             //1-ый столбец
-            dgv.Columns[0].HeaderText = @"Свойство"; ((DataGridView)m_dictControls[(int)i]).Columns[0].ReadOnly = true;
+            dgv.Columns[0].HeaderText = @"Свойство"; dgv.Columns[0].ReadOnly = true;
             //Ширина столбца по ширине род./элемента управления
             dgv.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             //2-ой столбец
@@ -137,15 +135,15 @@ namespace TepCommon
             //Запретить вставку строк
             dgv.AllowUserToAddRows = false;
 
-            addLabelDesc((int)INDEX_CONTROL.LABEL_PROP_DESC);
+            addLabelDesc(INDEX_CONTROL.LABEL_PROP_DESC.ToString ());
 
             this.ResumeLayout();
 
             //Обработчика нажатия кнопок
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_ADD]).Click += new System.EventHandler(HPanelEditList_btnAdd_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_DELETE]).Click += new System.EventHandler(HPanelEditList_btnDelete_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_SAVE]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
-            ((Button)m_dictControls[(int)INDEX_CONTROL.BUTTON_UPDATE]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
+            ((Button)Controls.Find (INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]).Click += new System.EventHandler(HPanelEditList_btnAdd_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]).Click += new System.EventHandler(HPanelEditList_btnDelete_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
 
         #endregion
@@ -169,14 +167,17 @@ namespace TepCommon
             container.Add(this);
         }        
 
-        protected override void Activate(bool activate)
+        public override bool Activate(bool activate)
         {
+            bool bRes = base.Activate(activate);
+
+            return bRes;
         }
 
         protected override void clear()
         {
-            ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).Rows.Clear();
-            ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).Rows.Clear();
+            ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).Rows.Clear();
+            ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]).Rows.Clear();
 
             base.clear();
         }
@@ -191,7 +192,7 @@ namespace TepCommon
 
             if (err == 0)
             {
-                DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
+                DataGridView dgv = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]);
                 //Заполнение содержимым...
                 for (int i = 0; i < m_tblEdit.Columns.Count; i++)
                     dgv.Rows.Add(new object[] { m_tblEdit.Columns[i].ColumnName, string.Empty });
@@ -213,7 +214,7 @@ namespace TepCommon
 
             if (err == 0)
             {
-                DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);
+                DataGridView dgv = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]);
                 //Заполнение содержимым...
                 for (i = 0; i < m_tblEdit.Rows.Count; i++)
                     dgv.Rows.Add(new object[] { m_tblEdit.Rows[i][m_nameDescField].ToString().Trim() });
@@ -226,7 +227,7 @@ namespace TepCommon
 
         private void setCellsReadOnly()
         {
-            DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
+            DataGridView dgv = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]);
             //Строка с полем в 'DictEdit' "для чтения"
             dgv.Rows[m_tblEdit.Columns.IndexOf(m_nameDescField)].ReadOnly =
             ////Крайняя строка "для чтения" - только, если в грид можно добавлть строки (AllowRowsAddedUser = true, NewRowIndex > -1)
@@ -257,7 +258,7 @@ namespace TepCommon
             {
                 indx = ((DataGridView)obj).SelectedRows[0].Index;
 
-                DataGridView dgvProp = m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP] as DataGridView;
+                DataGridView dgvProp = Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0] as DataGridView;
                 bool bReadOnly = !((!(indx < 0)) && (indx < m_tblEdit.Rows.Count));
 
                 if (bReadOnly == false)
@@ -281,7 +282,7 @@ namespace TepCommon
 
         protected virtual void setTableEditValue(DataGridView dgvProp, int indxRow, int indxCol)
         {
-            m_tblEdit.Rows[((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows[0].Index][m_tblEdit.Columns[indxRow].ColumnName] =
+            m_tblEdit.Rows[((DataGridView)(Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0])).SelectedRows[0].Index][m_tblEdit.Columns[indxRow].ColumnName] =
                 dgvProp.Rows[indxRow].Cells[indxCol].Value as string;
         }
 
@@ -291,7 +292,7 @@ namespace TepCommon
             if (!(((DataGridView)obj).Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value == null))
             {
                 string strItemProp = getTableEditValue(obj as DataGridView
-                                                    , ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows[0].Index
+                                                    , ((DataGridView)Controls.Find (INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]).SelectedRows[0].Index
                                                     , ev.RowIndex);
 
                 //Сравнить предыдущее и текущее свойство
@@ -311,7 +312,7 @@ namespace TepCommon
             DataGridView dgv;
             //dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);
             //string valEdit = dgv.Rows[dgv.RowCount].Cells[0].Value as string; //??? 0 == ev.ColumnIndex, dgv.RowCount == ev.RowIndex
-            dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]);
+            dgv = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]);
             
             object valProp;
             object[] arRes = new object[m_tblEdit.Columns.Count];
@@ -363,7 +364,7 @@ namespace TepCommon
                         //Заполнение содержимым...
                         addRecItem(getValues (valEdit));
 
-                        ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_PROP]).ReadOnly = false;
+                        ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).ReadOnly = false;
                         setCellsReadOnly();
                     }
                     else
@@ -376,7 +377,7 @@ namespace TepCommon
 
         private void HPanelEditList_btnAdd_Click(object obj, EventArgs ev)
         {
-            DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]);
+            DataGridView dgv = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]);
             dgv.Rows[dgv.NewRowIndex].Cells[0].Selected = true;
             dgv.BeginEdit(false);
         }
@@ -389,13 +390,13 @@ namespace TepCommon
 
         private void HPanelEditList_btnDelete_Click(object obj, EventArgs ev)
         {
-            int indx = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).SelectedRows[0].Index;
+            int indx = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]).SelectedRows[0].Index;
 
             if ((!(indx < 0)) && (indx < m_tblEdit.Rows.Count))
             {//Удаление существующей записи
                 delRecItem(indx);
 
-                ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_DICT_ITEM]).Rows.RemoveAt(indx);                
+                ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]).Rows.RemoveAt(indx);                
             }
             else
                 ;

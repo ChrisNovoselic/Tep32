@@ -27,138 +27,7 @@ namespace Tep64
         /// </summary>
         private static int m_iAutoActionTabs = 0;
 
-        private static HPlugIns s_plugIns;
-        class HPlugIns : IPlugInHost //, IEnumerable <int>
-        {
-            private Dictionary<int, IPlugIn> m_dictPlugins;
-
-            public DelegateObjectFunc delegateOnClickMenuPluginItem;
-
-            public HPlugIns(DelegateObjectFunc fClickMenuItem)
-            {
-                m_dictPlugins = new Dictionary<int, IPlugIn>();
-                delegateOnClickMenuPluginItem = fClickMenuItem;
-            }
-
-            public bool Register(IPlugIn plug)
-            {
-                return true;
-            }
-
-            public void Add(int id, IPlugIn plugIn)
-            {
-                m_dictPlugins.Add(id, plugIn);
-            }
-
-            public IPlugIn Load(string name, out int iRes)
-            {
-                IPlugIn plugInRes = null;
-                iRes = -1;
-
-                Type objType = null;
-                try
-                {
-                    Assembly ass = null;
-                    ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name + @".dll");
-                    if (!(ass == null))
-                    {
-                        objType = ass.GetType(name + ".PlugIn");
-                    }
-                    else
-                        ;
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name);
-                }
-
-                if (!(objType == null))
-                    try
-                    {
-                        plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
-                        plugInRes.Host = (IPlugInHost)this;
-
-                        iRes = 0;
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Name = " + name);
-                    }
-                else
-                    Logging.Logg().Error(@"FormMain::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-
-                return plugInRes;
-            }
-
-            public PlugInMenuItem Find(int id)
-            {
-                if (m_dictPlugins.ContainsKey (id) == true)
-                    return m_dictPlugins[id] as PlugInMenuItem;
-                else
-                    return null;
-            }
-
-            public void OnEvtDataAskedHost(object obj)
-            {
-                object rec = null;
-
-                if (((EventArgsDataHost)obj).par[0].GetType().IsPrimitive == true)
-                {
-                    if ((int)((EventArgsDataHost)obj).par[0] == (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB)
-                    {
-                        rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
-                    }
-                    else
-                    {
-                        switch ((int)((EventArgsDataHost)obj).id)
-                        {
-                            case 1: //FormAboutTepProgram
-                                switch ((int)((EventArgsDataHost)obj).par[0])
-                                {
-                                    case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
-                                        rec = TepCommon.Properties.Resources.MainForm;
-                                        break;
-                                    case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                                        rec = Application.ProductVersion;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                                break;
-                            case 2: //PanelTepDictPlugIns
-                                switch ((int)((EventArgsDataHost)obj).par[0])
-                                {
-                                    default:
-                                        break;
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-                    //Отправить ответ (исходный идентификатор + требуемый объект)
-                    ((PlugInBase)m_dictPlugins[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par[0], new object[] { rec }));
-                }
-                else
-                {
-                    if (((EventArgsDataHost)obj).par[0] is ToolStripMenuItem)
-                    {
-                        try
-                        {
-                            delegateOnClickMenuPluginItem(obj);
-                        }
-                        catch (Exception e)
-                        {
-                            Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain_EvtDataAskedHost () - BeginInvoke (addTabPage) [id] = " + (int)((EventArgsDataHost)obj).id);
-                        }
-                    }
-                    else
-                    {
-                    }
-                }
-            }
-        }
+        private static HPlugIns s_plugIns;        
 
         public FormMain() : base ()
         {
@@ -207,7 +76,7 @@ namespace Tep64
 
             foreach (string id in arIds)
             {
-                plugIn = s_plugIns.Find(Convert.ToInt32(id));
+                plugIn = s_plugIns[Convert.ToInt32(id)] as PlugInMenuItem;
                 if (plugIn == null)
                     continue;
                 else
@@ -261,24 +130,25 @@ namespace Tep64
             HTepUsers.SetAllowed(iListenerId, (int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED, Convert.ToString((sender as ToolStripMenuItem).Checked == true ? 1 : 0));
             DbSources.Sources().UnRegister(iListenerId);
         }
-
         /// <summary>
         /// Обработчик выбора пункта меню 'Файл - выход'
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект, инициировавший событие (пункт меню)</param>
+        /// <param name="e">Аргумент события</param>
         private void выходToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            //Установить признак автоматических действий с вкладками (закрытие)
             m_iAutoActionTabs = 1;
 
             Close ();
-
+            //Снять признак автоматических действий с вкладками (закрытие)
             m_iAutoActionTabs = 0;
         }        
 
         private void бДКонфигурацииToolStripMenuItem_Click(object sender, EventArgs e)
         {
             int iRes = connectionSettings(CONN_SETT_TYPE.MAIN_DB);
+            //??? не оработан рез-т выполнения функции
         }
 
         private void параметрыToolStripMenuItem_Click(object sender, EventArgs e)
@@ -336,14 +206,16 @@ namespace Tep64
         {
             Stop ();
         }
-
+        /// <summary>
+        /// Делегат обработки события - выбор п. меню
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (плюгИн вкладки)</param>
         private void FormMain_EvtDataAskedHost(object obj)
         {
             this.BeginInvoke(new DelegateObjectFunc(onClickMenuItem), obj);
         }
-
         /// <summary>
-        /// Допполнительные действия по инициализации плюг'ина
+        /// Дополнительные действия по инициализации плюг'ина
         /// </summary>
         /// <param name="plugIn">объект плюг'ина</param>
         private void initializePlugIn (IPlugIn plugIn) {
@@ -351,7 +223,9 @@ namespace Tep64
             } else {
             }
         }
-
+        /// <summary>
+        /// Инициализация логгирования
+        /// </summary>
         private void initializeLogging () {
             //Если ранее тип логирования не был назанчен...
             if (Logging.s_mode == Logging.LOG_MODE.UNKNOWN)
@@ -372,119 +246,92 @@ namespace Tep64
             }
             else { }
         }
-
+        /// <summary>
+        /// Инициализация п.п. главного меню
+        ///  в ~ от разрешенных к загрузке плюгИнов
+        /// </summary>
+        /// <param name="strErr">Сообщение об ошибке</param>
+        /// <returns>Результат инициализации меню</returns>
         private int initializeMenu (out string strErr) {
-            int iRes = -1;
+            int iRes = -1
+                , idListener = -1;
             strErr = string.Empty;
 
-            int idListener = -1;
-            DbConnection dbConn = null;
-            DataTable tableRes = null;
             string strUserDomainName = string.Empty;
 
             idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, @"MAIN_DB");
-            dbConn = DbSources.Sources().GetConnection (idListener, out iRes);
+
+            try {
+                using (HTepUsers users = new HTepUsers(idListener)) { ; }
+
+                iRes = 0;
+            }
+            catch (Exception e) { }
 
             if (iRes == 0) {
-                //HUsers.GetRoles(ref dbConn, @"ID_EXT=" + tableRes.Rows[0][@"ID_ROLE"], string.Empty, out tableRes, out iRes);
-                HUsers.GetRoles(ref dbConn, @"ID_EXT=" + HTepUsers.Role, string.Empty, out tableRes, out iRes);
+                initializeLogging ();
 
-                if ((iRes == 0)
-                    && (! (tableRes == null))
-                    && (tableRes.Rows.Count > 0)) {
-                    initializeLogging ();
+                s_plugIns.Load(HTepUsers.GetPlugins(idListener, out iRes));
 
-                    int i = -1;
-                    //Сформировать список идентификаторов плюгинов
-                    string strIdPlugins = string.Empty;
-
-                    //Циклл по строкам - идентификатрам/разрешениям использовать плюгин                    
-                    for (i = 0; i < tableRes.Rows.Count; i++)
-                    {
-                        //Проверить разрешение использовать плюгин
-                        if (Int16.Parse(tableRes.Rows[i][@"IsUse"].ToString()) == 1)
-                        {
-                            strIdPlugins += tableRes.Rows[i][@"ID_PLUGIN"].ToString() + @",";
-                        }
-                        else
-                        {
-                        }
-                    }
-                    //Удалить крайний символ
-                    strIdPlugins = strIdPlugins.Substring(0, strIdPlugins.Length - 1);
-
-                    //Прочитать наименования плюгинов
-                    tableRes = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM plugins WHERE ID IN (" + strIdPlugins + @")", null, null, out iRes);
-
+                if (iRes == 0) {
                     //Проверить рез-т чтения наименования плюгина
                     if (iRes == 0)
                     {
-                        IPlugIn plugIn = null;
                         ToolStripMenuItem miOwner = null
-                            , item = null;
-                        int idPlugIn = -1;
+                            , miItem = null;
+                        string[] arHierarchyOwnerMenuItems;
                         //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
-                        for (i = 0; (i < tableRes.Rows.Count) && (iRes == 0); i++)
-                        {
-                            //Загрузить плюгин
-                            plugIn = s_plugIns.Load(tableRes.Rows[i][@"NAME"].ToString().Trim(), out iRes);
-
-                            if (!(iRes < 0))
-                            {
-                                //Идентификатор плюг'ина
-                                idPlugIn = Int16.Parse(tableRes.Rows[i][@"ID"].ToString());
-                                //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
-                                if (((PlugInBase)plugIn)._Id == idPlugIn)
-                                {
-                                    s_plugIns.Add(idPlugIn, plugIn);
-
-                                    //Поиск пункта "родительского" пункта меню для плюг'ина
-                                    miOwner = FindMainMenuItemOfText((plugIn as PlugInMenuItem).NameOwnerMenuItem);
-
-                                    //Проверка найден ли "родительский" пункт меню для плюг'ина
-                                    if (miOwner == null)
-                                    {
-                                        int indx = -1;
-                                        string strNameItem = (plugIn as PlugInMenuItem).NameOwnerMenuItem;
-                                        if (strNameItem.Equals(@"Помощь") == false)
-                                            indx = this.MainMenuStrip.Items.Count - 1;
-                                        else
-                                            ;
-                                        //НЕ найден - создаем
-                                        if (indx < 0)
-                                            this.MainMenuStrip.Items.Add(new ToolStripMenuItem(strNameItem));
-                                        else
-                                            this.MainMenuStrip.Items.Insert(indx, new ToolStripMenuItem(strNameItem));
-                                        miOwner = FindMainMenuItemOfText((plugIn as PlugInMenuItem).NameOwnerMenuItem);
-                                    }
-                                    else
-                                    {
-                                    }
-
-                                    //Добавить пункт меню для плюг'ина
-                                    item = miOwner.DropDownItems.Add((plugIn as PlugInMenuItem).NameMenuItem) as ToolStripMenuItem;
-                                    //Обработку выбора пункта меню предоставить плюг'ину
-                                    item.Click += (plugIn as PlugInMenuItem).OnClickMenuItem;
-                                    //Добавить обработчик запросов для плюг'ина от главной формы
-                                    (plugIn as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
-
-                                    initializePlugIn(plugIn);
-                                }
+                        foreach (IPlugIn plugIn in s_plugIns.Values) {
+                            arHierarchyOwnerMenuItems =
+                                (plugIn as PlugInMenuItem).NameOwnerMenuItem.Split(new char [] {'\\'}, StringSplitOptions.None);;
+                            //Поиск пункта "родительского" пункта меню для плюг'ина
+                            miOwner = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[0]);
+                            //Проверка найден ли "родительский" пункт меню для плюг'ина
+                            if (miOwner == null)
+                            {//НЕ найден - создаем
+                                int indx = -1; // индекс для добавляемого пункта                                
+                                if (arHierarchyOwnerMenuItems[0].Equals(@"Помощь") == false)
+                                    // индекс для всех пунктов кроме "Помощь"
+                                    indx = this.MainMenuStrip.Items.Count - 1;
                                 else
-                                {
-                                    iRes = -2; //Несоответствие идентификатроов
-                                }
+                                    ;
+
+                                if (indx < 0)
+                                    // для пункта "Помощь" - он всегда крайний
+                                    //  , и не имеет сложной иерархии
+                                    this.MainMenuStrip.Items.Add(miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
+                                else
+                                    // для всех пунктов кроме "Помощь"
+                                    this.MainMenuStrip.Items.Insert(indx, miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
                             }
                             else
-                            {
+                                ;
+                            //Реализовать иерархию п.п. (признак наличия иерархии - длина массива)
+                            for (int i = 1; i < arHierarchyOwnerMenuItems.Length; i++) {
+                                //Найти п. меню очередного уровня
+                                miItem = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[i]);
+                                if (miItem == null)
+                                    // в случае отсутствия добавить к ранее найденному
+                                    miOwner.DropDownItems.Add(miItem = new ToolStripMenuItem(arHierarchyOwnerMenuItems[i]));
+                                else
+                                    ;
+
+                                miOwner = miItem;
                             }
+                            //Добавить пункт меню для плюг'ина
+                            miItem = miOwner.DropDownItems.Add((plugIn as PlugInMenuItem).NameMenuItem) as ToolStripMenuItem;
+                            //Обработку выбора пункта меню предоставить плюг'ину
+                            miItem.Click += (plugIn as PlugInMenuItem).OnClickMenuItem;
+                            //Добавить обработчик запросов для плюг'ина от главной формы
+                            (plugIn as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
+
+                            initializePlugIn(plugIn);                            
                         }
 
                         if (iRes == 0)
                         {
                             профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Checked = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED));
                             профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Enabled = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_ACCESS));
-
                             //Успешный запуск на выполнение приложения
                             Start();
                         }
@@ -521,22 +368,25 @@ namespace Tep64
 
             return iRes;
         }
-
+        /// <summary>
+        /// Обработчик события выбора (отобразить/закрыть вкладку) п. меню
+        /// </summary>
+        /// <param name="obj">Объект загруженной библиотеки вкладки</param>
         private void onClickMenuItem (object obj) {
-            PlugInMenuItem plugIn = s_plugIns.Find((int)((EventArgsDataHost)obj).id);
+            PlugInMenuItem plugIn = s_plugIns[(int)((EventArgsDataHost)obj).id];
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked = ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
 
             if (((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked == true) {
+                //Отобразить вкладку
                 m_TabCtrl.AddTabPage(plugIn.NameMenuItem, plugIn._Id, HTabCtrlEx.TYPE_TAB.FIXED);
                 m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.Object);
-                //m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(new HPanelEdit ());
             } else {
+                //Закрыть вкладку
                 m_TabCtrl.RemoveTabPage(plugIn.NameMenuItem);
             }
 
             if ((m_iAutoActionTabs == 0)
-                && (профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true)
-                //профайлСохранитьToolStripMenuItem.PerformClick();
+                && ((профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true))
                 saveProfile();
             else
                 ;
