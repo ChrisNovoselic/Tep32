@@ -47,15 +47,15 @@ namespace PluginPrjTepFTable
             m_tblOrign = DbTSQLInterface.Select(ref dbConn, m_query, null, null, out err);
             m_tableEdit = m_tblOrign.Copy();
 
-            //DataGridView dgv = ((DataGridView)m_dictControls[(int)INDEX_CONTROL.DGV_fTABLE]);
-            //dgv.DataSource = m_tableEdit;
+            DataGridView dgv = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_fTABLE.ToString(),true)[0]);
+            dgv.DataSource = m_tableEdit;
 
-            //dgv.Columns[0].Width = 30;
-            //dgv.Columns[1].Width = 70;
-            //dgv.Columns[2].Width = 45;
-            //dgv.Columns[3].Width = 45;
-            //dgv.Columns[4].Width = 45;
-            //dgv.Columns[5].Width = 50;
+            dgv.Columns[0].Width = 30;
+            dgv.Columns[1].Width = 70;
+            dgv.Columns[2].Width = 45;
+            dgv.Columns[3].Width = 45;
+            dgv.Columns[4].Width = 45;
+            dgv.Columns[5].Width = 50;
 
 
             /* for (int j = 0; j < m_tableEdit.Columns.Count; j++)
