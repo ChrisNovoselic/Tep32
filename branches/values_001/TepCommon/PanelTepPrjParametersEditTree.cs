@@ -315,6 +315,8 @@ namespace TepCommon
             m_dgvPrjProp.AllowUserToOrderColumns = false;
             //Не отображать заголовки строк
             m_dgvPrjProp.RowHeadersVisible = false;
+            //Отменить возможность изменения высоты строк
+            m_dgvPrjProp.AllowUserToResizeRows = false;
             //1-ый столбец
             m_dgvPrjProp.Columns[0].HeaderText = @"Свойство"; m_dgvPrjProp.Columns[0].ReadOnly = true;
             //Ширина столбца по ширине род./элемента управления
@@ -349,6 +351,8 @@ namespace TepCommon
             m_dgvPrjDetail.AllowUserToOrderColumns = false;
             //Не отображать заголовки строк
             m_dgvPrjDetail.RowHeadersVisible = false;
+            //Отменить возможность изменения высоты строк
+            m_dgvPrjDetail.AllowUserToResizeRows = false;
             //1-ый столбец (только "для чтения")
             m_dgvPrjDetail.Columns[0].HeaderText = @"Свойство"; m_dgvPrjDetail.Columns[0].ReadOnly = true;
             //Ширина столбца по ширине род./элемента управления
@@ -446,7 +450,8 @@ namespace TepCommon
             TreeNode node = null;
             TreeNodeCollection nodes;
             string strId = string.Empty
-                , strKey = string.Empty;
+                , strKey = string.Empty
+                , strItem = string.Empty;
             DataRow[] rows;
             int iAdd = 0;
 
@@ -474,7 +479,12 @@ namespace TepCommon
                         //Элемент дерева для очередной задачи
                         if (m_listLevelParameters[indxLevel].desc.Equals(string.Empty) == false)
                         {
-                            node = nodes.Add(strKey, r[m_listLevelParameters[indxLevel].desc].ToString().Trim());
+                            strItem = r[m_listLevelParameters[indxLevel].desc].ToString().Trim();
+                            if (m_listLevelParameters[indxLevel].desc_detail.Equals (string.Empty) == false)
+                                strItem += @" (" + r[m_listLevelParameters[indxLevel].desc_detail].ToString().Trim() + @")";
+                            else
+                                ;
+                            node = nodes.Add(strKey, strItem);
                             iRes++;
                         }
                         else
@@ -514,18 +524,28 @@ namespace TepCommon
         protected class LEVEL_PARAMETERS
         {
             public DataTable table;
+            /// <summary>
+            /// Строка - наименование поля в таблице с идентификатором
+            /// </summary>
             private string id;
-                //, id_sel
-            public string dep
-                , desc;
+            /// <summary>
+            /// Строка - условие для формирования зависимости от записи с более высоким уровнем в дереве
+            /// </summary>
+            public string dep;
+            /// <summary>
+            /// Строка - наименование поля для формирования содержания элемента дерева
+            /// </summary>
+            public string desc
+                , desc_detail;
 
-            public LEVEL_PARAMETERS(DataTable table, string id, /*string id_sel,*/ string dep, string desc)
+            public LEVEL_PARAMETERS(DataTable table, string id, /*string id_sel,*/ string dep, string desc, string desc_detail)
             {
                 this.table = table;
                 this.id = id;
                 //this.id_sel = id_sel;
                 this.dep = dep;
                 this.desc = desc;
+                this.desc_detail = desc_detail;
             }
 
             public DataRow[] Select(string id_parent)
@@ -1043,7 +1063,7 @@ namespace TepCommon
         private void HPanelEditTree_dgvPropCellEndEdit(object obj, DataGridViewCellEventArgs ev)
         {
             string strThrow = string.Empty;
-
+            //Только для уровня "Номер в алгоритме"
             if ((m_Level == ID_LEVEL.N_ALG)
                 && (ev.ColumnIndex == 1)            
                 )
@@ -1055,12 +1075,14 @@ namespace TepCommon
                 {
                     string strNameField = dgv.Rows[ev.RowIndex].Cells[0].Value.ToString().Trim()
                         , strVal = dgv.Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value.ToString().Trim();
+                    //Сохранить новое значение
                     rowsAlg[0][strNameField] = strVal;
 
-                    if (strNameField.Equals(@"N_ALG") == true)
-                    {//Изменить подпись в "дереве"
-                        (Controls.Find(INDEX_CONTROL.TREECTRL_PRJ_ALG.ToString(), true)[0] as TreeView).SelectedNode.Text = strVal;
-                    }
+                    if ((strNameField.Equals(@"N_ALG") == true)
+                        || (strNameField.Equals(@"NAME_SHR") == true))
+                        //Изменить подпись в "дереве"
+                        (Controls.Find(INDEX_CONTROL.TREECTRL_PRJ_ALG.ToString(), true)[0] as TreeView).SelectedNode.Text =
+                            rowsAlg[0][@"N_ALG"].ToString().Trim() + @" (" + rowsAlg[0][@"NAME_SHR"].ToString().Trim() + @")";
                     else
                         ;
                 }

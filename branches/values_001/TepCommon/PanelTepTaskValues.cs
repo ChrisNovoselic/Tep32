@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Data;
+using System.Text.RegularExpressions;
 
 using HClassLibrary;
 using InterfacePlugIn;
@@ -13,7 +14,7 @@ namespace TepCommon
 {
     public abstract partial class PanelTepTaskValues : HPanelTepCommon
     {
-        private enum INDEX_TABLE_DICTPRJ : uint { PERIOD, COMPONENT, PARAMETER
+        private enum INDEX_TABLE_DICTPRJ : int { UNKNOWN = -1, PERIOD, COMPONENT, PARAMETER
             , COUNT_TABLE_DICTPRJ }
         /// <summary>
         /// Наименования таблиц с парметрами для расчета
@@ -30,9 +31,7 @@ namespace TepCommon
                 string strRes = string.Empty;
 
                 for (int i = 0; i < m_arListIds[(int)INDEX_ID.PERIOD].Count; i++)
-                {
                     strRes += m_arListIds[(int)INDEX_ID.PERIOD][i] + @",";
-                }
                 strRes = strRes.Substring(0, strRes.Length - 1);
 
                 return strRes;
@@ -67,6 +66,11 @@ namespace TepCommon
         public PanelTepTaskValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut)
             : base(iFunc)
         {
+            int iRes = compareNAlg (@"4.1", @"10");
+            iRes = compareNAlg (@"10", @"4.1");
+            iRes = compareNAlg (@"10.1", @"7.1");
+            iRes = compareNAlg(@"4", @"10.1");
+            
             m_strNameTableAlg = strNameTableAlg;
             m_strNameTablePut = strNameTablePut;
 
@@ -158,7 +162,7 @@ namespace TepCommon
                     clbxCompCalculated.Items.Add(strItem, m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0);
                     bVisibled = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
                     clbxCompVisibled.Items.Add(strItem, bVisibled);
-                    m_dgvValues.AddColumn(strItem, bVisibled);
+                    m_dgvValues.AddColumn(id_comp, strItem, bVisibled);
                 }
 
                 clbxCompCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
@@ -210,6 +214,124 @@ namespace TepCommon
         {
         }
 
+        private int compareNAlg (string nAlg1, string nAlg2)
+        {
+            int iRes = 0
+                , iLength = -1
+                , indx = -1;
+            char []delimeter = new char [] { '.' };
+
+            string []arParts1 = nAlg1.Split (delimeter, StringSplitOptions.RemoveEmptyEntries)
+                , arParts2 = nAlg2.Split (delimeter, StringSplitOptions.RemoveEmptyEntries);
+
+            if ((!(arParts1.Length < 1)) && (!(arParts2.Length < 1)))
+            {
+                indx = 0;
+                iRes = int.Parse (arParts1[indx]) > int.Parse (arParts2[indx]) ? 1
+                    : int.Parse (arParts1[indx]) < int.Parse (arParts2[indx]) ? -1 : 0;
+
+                if (iRes == 0)
+                {
+                    iLength = arParts1.Length > arParts2.Length ? 1 :
+                        arParts1.Length < arParts2.Length ? -1 : 0;
+
+                    if (iLength == 0)
+                    {
+                        if ((!(arParts1.Length < 2)) && (!(arParts2.Length < 2)))
+                        {
+                            indx = 1;
+                            iRes = int.Parse(arParts1[indx]) > int.Parse(arParts2[indx]) ? 1
+                                : int.Parse(arParts1[indx]) < int.Parse(arParts2[indx]) ? -1 : 0;
+                        }
+                        else
+                            ;
+                    }
+                    else
+                        iRes = iLength;
+                }
+                else
+                    ;
+            }
+            else            
+                throw new Exception(@":PanelTepTaskValues:compareNAlg () - номер алгоритма некорректен (не найдены цифры)...");
+            return iRes;
+        }
+
+        //private int compareNAlg (string nAlg1, string nAlg2)
+        //{
+        //    int iRes = 0
+        //        , iLength = nAlg1.Length == nAlg2.Length ? 0 : nAlg1.Length < nAlg2.Length ? -1 : 1
+        //        , iDigit = 0;
+
+        //    //if (!(iLength < 0))
+        //        for (int i = 0; (i < nAlg1.Length) && (i < nAlg2.Length); i++)
+        //            if ((int)nAlg1[i] == (int)nAlg2[i])
+        //                //if (!(iLength == 0))
+        //                //{
+        //                //    iRes = iLength;
+        //                //    break;
+        //                //}
+        //                //else
+        //                //    ;
+        //                continue;
+        //            else
+        //            {
+        //                iDigit = (Char.IsDigit(nAlg1[i]) == true) && (Char.IsDigit(nAlg2[i]) == true) ? 0 :
+        //                    (Char.IsDigit(nAlg1[i]) == false) ? -1 : (Char.IsDigit(nAlg2[i]) == false) ? 1 : 0;
+
+        //                if (iDigit == 0)
+        //                    if ((int)nAlg1[i] < (int)nAlg2[i])
+        //                        if (iLength == 0)
+        //                            iRes = -1;
+        //                        else
+        //                            //iLength > 0
+        //                            iRes = iLength;
+        //                    else
+        //                        if ((int)nAlg1[i] > (int)nAlg2[i])
+        //                            if (iLength == 0)
+        //                                iRes = 1;
+        //                            else
+        //                                ;
+        //                        else
+        //                            ;
+        //                else
+        //                    // один из символов не цифра
+        //                    iRes = iDigit;
+
+        //                if (! (iRes == 0))
+        //                    break;
+        //                else
+        //                    ;
+        //            }
+        //    //else
+        //    //    iRes = iLength;
+
+        //    if ((iRes == 0) && (!(iLength == 0)))
+        //        iRes = iLength;
+        //    else
+        //        ;
+
+        //    return iRes;
+        //}
+
+        private int compareNAlg (DataRow r1, DataRow r2)
+        {
+             return compareNAlg (((string)r1[@"N_ALG"]).Trim(), ((string)r2[@"N_ALG"]).Trim());
+        }
+
+        private List <DataRow> ListParameter
+        {
+            get
+            {
+                List <DataRow> listRes;
+                ComboBox cbx = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0] as ComboBox;
+                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(@"ID_TIME=" + m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex]).ToList<DataRow>();
+                listRes.Sort(compareNAlg);
+
+                return listRes;
+            }
+        }
+
         private void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
         {
             ComboBox cbx = obj as ComboBox;
@@ -229,10 +351,9 @@ namespace TepCommon
             m_dgvValues.ClearRows();
             ////Запросить значения у главной формы
             //((PlugInBase)_iFuncPlugin).DataAskedHost(new object[] { (int)HFunc.ID_DATAASKED_HOST.SELECT, @"SELECT..." });
-            DataRow[] rowsParameter =
-                m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(@"ID_TIME=" + m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex], @"N_ALG");
+            List <DataRow> listParameter = ListParameter;
             //Заполнить элементы управления с компонентами станции 
-            foreach (DataRow r in rowsParameter)
+            foreach (DataRow r in listParameter)
             {
                 id_alg = (int)r[@"ID_ALG"];
 
@@ -244,7 +365,7 @@ namespace TepCommon
                     clbxParsCalculated.Items.Add(strItem, m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0);
                     bVisibled = m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0;
                     clbxParsVisibled.Items.Add(strItem, bVisibled);
-                    m_dgvValues.AddRow(((string)r[@"N_ALG"]).Trim (), bVisibled);
+                    m_dgvValues.AddRow(id_alg, ((string)r[@"N_ALG"]).Trim(), bVisibled);
                 }
                 else
                     ;
@@ -263,7 +384,11 @@ namespace TepCommon
         private void clbx_ItemCheck(object obj, ItemCheckEventArgs ev)
         {
             INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN;
-            string strId = (obj as Control).Name;
+            INDEX_TABLE_DICTPRJ indxTable = INDEX_TABLE_DICTPRJ.UNKNOWN;
+            INDEX_ID indxIdDeny = INDEX_ID.UNKNOWN;
+            int id_item = -1;
+            string strId = (obj as Control).Name
+                , strNameFieldId = @"ID";
             //Определить идентификатор
             if (strId.Equals(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString()) == true)
                 id = INDEX_CONTROL.CLBX_COMP_CALCULATED;
@@ -280,19 +405,49 @@ namespace TepCommon
                             throw new Exception(@"PanelTepTaskValues::clbx_ItemCheck () - не найден объект 'CheckedListBox'...");
             //Найти идентификатор компонента ТЭЦ/параметра алгоритма расчета
             // , соответствующий изменившему состояние элементу 'CheckedListBox'
-            ;
+            switch (id)
+            {
+                case INDEX_CONTROL.CLBX_COMP_CALCULATED:
+                    indxTable = INDEX_TABLE_DICTPRJ.COMPONENT;
+                    indxIdDeny = INDEX_ID.DENY_COMP_CALCULATED;
+                    break;
+                case INDEX_CONTROL.CLBX_COMP_VISIBLED:
+                    indxTable = INDEX_TABLE_DICTPRJ.COMPONENT;
+                    indxIdDeny = INDEX_ID.DENY_COMP_VISIBLED;
+                    break;
+                case INDEX_CONTROL.CLBX_PARAMETER_CALCULATED:
+                    indxTable = INDEX_TABLE_DICTPRJ.PARAMETER;
+                    indxIdDeny = INDEX_ID.DENY_PARAMETER_CALCULATED;
+                    strNameFieldId += @"_ALG";
+                    break;
+                case INDEX_CONTROL.CLBX_PARAMETER_VISIBLED:
+                    indxTable = INDEX_TABLE_DICTPRJ.PARAMETER;
+                    indxIdDeny = INDEX_ID.DENY_PARAMETER_VISIBLED;
+                    strNameFieldId += @"_ALG";
+                    break;
+                default:
+                    break;
+            }
+            id_item = Int16.Parse (ListParameter[ev.Index][strNameFieldId].ToString().Trim());
             //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
             if (ev.NewValue == CheckState.Unchecked)
-                ;
+                if (m_arListIds[(int)indxIdDeny].IndexOf(id_item) < 0)
+                    m_arListIds[(int)indxIdDeny].Add (id_item);
+                else
+                    ; //throw new Exception (@"");
             else
                 if (ev.NewValue == CheckState.Checked)
-                    ;
+                    if (! (m_arListIds[(int)indxIdDeny].IndexOf(id_item) < 0))
+                        m_arListIds[(int)indxIdDeny].Remove (id_item);
+                    else
+                        ; //throw new Exception (@"");
                 else
                     ;
             //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
+            // или измененить/сохраненить индивидуальные настройки
             ;
             //Изменить структуру 'DataGridView'
-            ;
+            m_dgvValues.UpdateStructure ();
         }
 
         //private void clbxCompCalculated_ItemCheck(object obj, ItemCheckEventArgs ev)
@@ -313,8 +468,17 @@ namespace TepCommon
 
         protected class DataGridViewTEPValues : DataGridView
         {
+            private class HDataGridViewColumn : DataGridViewTextBoxColumn
+            {
+                public int m_iIdComp;
+            }
+            
+            public List <int> m_listIdComponents;
+            
             public DataGridViewTEPValues ()
             {
+                m_listIdComponents = new List<int> ();
+                
                 InitializeComponents ();
             }
 
@@ -329,6 +493,8 @@ namespace TepCommon
                 AllowUserToOrderColumns = false;
                 AllowUserToResizeRows = false;
                 RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders | DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+
+                AddColumn (-1, string.Empty, false);
             }
 
             public void ClearRows()
@@ -343,20 +509,36 @@ namespace TepCommon
                 //    ;
             }
 
-            public void AddColumn (string text, bool bVisibled)
+            public void AddColumn (int id_comp, string text, bool bVisibled)
             {
-                DataGridViewColumn column = new DataGridViewTextBoxColumn();
+                DataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp };
                 column.HeaderText = text;
                 column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 Columns.Add(column);
                 column.Visible = bVisibled;
+
+                m_listIdComponents.Add (id_comp);
             }
 
-            public void AddRow(string text, bool bVisibled)
+            public void AddRow(int id_par, string text, bool bVisibled)
             {
+                int i = -1;
                 DataGridViewRow row = new DataGridViewRow ();
                 row.HeaderCell.Value = text;
-                Rows.Add(row);
+                i = Rows.Add(row);
+                Rows[i].Cells[0].Value = id_par;
+            }
+
+            public void UpdateStructure()
+            {
+                foreach (HDataGridViewColumn col in Columns)
+                    if (col.m_iIdComp < 0)
+                        continue;
+                    else
+                        col.Visible = (Parent as PanelTepTaskValues).m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(col.m_iIdComp) < 0;
+
+                foreach (DataGridViewRow row in Rows)
+                    row.Visible = (Parent as PanelTepTaskValues).m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf((int)row.Cells[0].Value) < 0;
             }
         }
 
@@ -548,6 +730,7 @@ namespace TepCommon
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 4, posRow);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                ctrl.Enabled = false;
                 //Кнопка - сохранить
                 ctrl = new Button();
                 ctrl.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
@@ -562,6 +745,7 @@ namespace TepCommon
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 4, posRow);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                ctrl.Enabled = false;
 
                 //Признаки включения/исключения для отображения
                 //Признак для включения/исключения для отображения компонента
