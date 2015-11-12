@@ -5,6 +5,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Data;
 using System.Text.RegularExpressions;
+using System.Drawing;
 
 using HClassLibrary;
 using InterfacePlugIn;
@@ -44,7 +45,7 @@ namespace TepCommon
         /// <summary>
         /// Индексы массива списков идентификаторов
         /// </summary>
-        private enum INDEX_ID { UNKNOWN = -1
+        protected enum INDEX_ID { UNKNOWN = -1
             , PERIOD // идентификаторы периодов расчетов, использующихся на форме
             , ALL_COMPONENT, ALL_PARAMETER // все идентификаторы компонентов ТЭЦ/параметров
             , DENY_COMP_CALCULATED, DENY_PARAMETER_CALCULATED //запрещенных для расчета
@@ -66,10 +67,10 @@ namespace TepCommon
         public PanelTepTaskValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut)
             : base(iFunc)
         {
-            int iRes = compareNAlg (@"4.1", @"10");
-            iRes = compareNAlg (@"10", @"4.1");
-            iRes = compareNAlg (@"10.1", @"7.1");
-            iRes = compareNAlg(@"4", @"10.1");
+            //int iRes = compareNAlg (@"4.1", @"10");
+            //iRes = compareNAlg (@"10", @"4.1");
+            //iRes = compareNAlg (@"10.1", @"7.1");
+            //iRes = compareNAlg(@"4", @"10.1");
             
             m_strNameTableAlg = strNameTableAlg;
             m_strNameTablePut = strNameTablePut;
@@ -351,7 +352,10 @@ namespace TepCommon
             m_dgvValues.ClearRows();
             ////Запросить значения у главной формы
             //((PlugInBase)_iFuncPlugin).DataAskedHost(new object[] { (int)HFunc.ID_DATAASKED_HOST.SELECT, @"SELECT..." });
-            List <DataRow> listParameter = ListParameter;
+            IEnumerable<DataRow> listParameter =
+                //ListParameter.Select(par => (string)par[@"ID_ALG"]).Distinct() as IEnumerable<DataRow>
+                ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First())
+                ;
             //Заполнить элементы управления с компонентами станции 
             foreach (DataRow r in listParameter)
             {
@@ -384,11 +388,12 @@ namespace TepCommon
         private void clbx_ItemCheck(object obj, ItemCheckEventArgs ev)
         {
             INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN;
-            INDEX_TABLE_DICTPRJ indxTable = INDEX_TABLE_DICTPRJ.UNKNOWN;
+            //INDEX_TABLE_DICTPRJ indxTable = INDEX_TABLE_DICTPRJ.UNKNOWN;
             INDEX_ID indxIdDeny = INDEX_ID.UNKNOWN;
-            int id_item = -1;
-            string strId = (obj as Control).Name
-                , strNameFieldId = @"ID";
+            int id_item = -1
+                , iCol = -2
+                , iRow = -1;
+            string strId = (obj as Control).Name;
             //Определить идентификатор
             if (strId.Equals(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString()) == true)
                 id = INDEX_CONTROL.CLBX_COMP_CALCULATED;
@@ -408,27 +413,22 @@ namespace TepCommon
             switch (id)
             {
                 case INDEX_CONTROL.CLBX_COMP_CALCULATED:
-                    indxTable = INDEX_TABLE_DICTPRJ.COMPONENT;
-                    indxIdDeny = INDEX_ID.DENY_COMP_CALCULATED;
-                    break;
                 case INDEX_CONTROL.CLBX_COMP_VISIBLED:
-                    indxTable = INDEX_TABLE_DICTPRJ.COMPONENT;
-                    indxIdDeny = INDEX_ID.DENY_COMP_VISIBLED;
+                    id_item = m_arListIds[(int)INDEX_ID.ALL_COMPONENT][ev.Index];
+                    indxIdDeny = id == INDEX_CONTROL.CLBX_COMP_CALCULATED ? INDEX_ID.DENY_COMP_CALCULATED :
+                        id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
+                    iCol = ev.Index;
                     break;
                 case INDEX_CONTROL.CLBX_PARAMETER_CALCULATED:
-                    indxTable = INDEX_TABLE_DICTPRJ.PARAMETER;
-                    indxIdDeny = INDEX_ID.DENY_PARAMETER_CALCULATED;
-                    strNameFieldId += @"_ALG";
-                    break;
                 case INDEX_CONTROL.CLBX_PARAMETER_VISIBLED:
-                    indxTable = INDEX_TABLE_DICTPRJ.PARAMETER;
-                    indxIdDeny = INDEX_ID.DENY_PARAMETER_VISIBLED;
-                    strNameFieldId += @"_ALG";
+                    id_item = m_arListIds[(int)INDEX_ID.ALL_PARAMETER][ev.Index];
+                    indxIdDeny = id == INDEX_CONTROL.CLBX_PARAMETER_CALCULATED ? INDEX_ID.DENY_PARAMETER_CALCULATED :
+                        id == INDEX_CONTROL.CLBX_PARAMETER_VISIBLED ? INDEX_ID.DENY_PARAMETER_VISIBLED : INDEX_ID.UNKNOWN;
+                    iRow = ev.Index;
                     break;
                 default:
                     break;
-            }
-            id_item = Int16.Parse (ListParameter[ev.Index][strNameFieldId].ToString().Trim());
+            }            
             //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
             if (ev.NewValue == CheckState.Unchecked)
                 if (m_arListIds[(int)indxIdDeny].IndexOf(id_item) < 0)
@@ -444,10 +444,13 @@ namespace TepCommon
                 else
                     ;
             //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
-            // или измененить/сохраненить индивидуальные настройки
+            // или в этом же плюгИне измененить/сохраннить индивидуальные настройки
             ;
             //Изменить структуру 'DataGridView'
-            m_dgvValues.UpdateStructure ();
+            //m_dgvValues.UpdateStructure ();            
+            m_dgvValues.UpdateStructure(indxIdDeny
+                , iCol + 1, iRow
+                , ev.NewValue == CheckState.Checked ? true : ev.NewValue == CheckState.Unchecked ? false : false);
         }
 
         //private void clbxCompCalculated_ItemCheck(object obj, ItemCheckEventArgs ev)
@@ -529,16 +532,52 @@ namespace TepCommon
                 Rows[i].Cells[0].Value = id_par;
             }
 
-            public void UpdateStructure()
-            {
-                foreach (HDataGridViewColumn col in Columns)
-                    if (col.m_iIdComp < 0)
-                        continue;
-                    else
-                        col.Visible = (Parent as PanelTepTaskValues).m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(col.m_iIdComp) < 0;
+            //public void UpdateStructure(INDEX_ID indxIdDeny)
+            //{
+            //    foreach (HDataGridViewColumn col in Columns)
+            //        if (col.m_iIdComp < 0)
+            //            continue;
+            //        else
+            //            col.Visible = (Parent as PanelTepTaskValues).m_arListIds[(int)indxIdDeny].IndexOf(col.m_iIdComp) < 0;
 
-                foreach (DataGridViewRow row in Rows)
-                    row.Visible = (Parent as PanelTepTaskValues).m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf((int)row.Cells[0].Value) < 0;
+            //    foreach (DataGridViewRow row in Rows)
+            //        row.Visible = (Parent as PanelTepTaskValues).m_arListIds[(int)indxIdDeny].IndexOf((int)row.Cells[0].Value) < 0;
+            //}
+
+            public void UpdateStructure(PanelTepTaskValues.INDEX_ID indxDeny, int col, int row, bool bVisibled)
+            {
+                Color clrCell = Color.Empty;
+
+                switch (indxDeny)
+                {
+                    case INDEX_ID.DENY_COMP_CALCULATED:
+                    case INDEX_ID.DENY_PARAMETER_CALCULATED:
+                        clrCell = bVisibled == true ? Color.White : Color.LightGray;                        
+                        if (!(col < 0))
+                            // для всех ячеек в столбце
+                            foreach (DataGridViewRow r in Rows)
+                                r.Cells[col].Style.BackColor = clrCell;
+                        else
+                            if (! (row < 0))
+                                // для всех ячеек в строке
+                                foreach (DataGridViewCell c in Rows[row].Cells)
+                                    c.Style.BackColor = clrCell;
+                            else
+                                ;
+                        break;
+                    case INDEX_ID.DENY_COMP_VISIBLED:
+                    case INDEX_ID.DENY_PARAMETER_VISIBLED:
+                        if (!(col < 0))
+                            Columns[col].Visible = bVisibled;
+                        else
+                            if (! (row < 0))
+                                Rows[row].Visible = bVisibled;
+                            else
+                                ;
+                        break;                    
+                    default:
+                        break;
+                }
             }
         }
 
