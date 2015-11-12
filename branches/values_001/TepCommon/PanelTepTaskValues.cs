@@ -387,12 +387,11 @@ namespace TepCommon
         /// <param name="ev">Арнумент события, описывающий состояние элемента</param>
         private void clbx_ItemCheck(object obj, ItemCheckEventArgs ev)
         {
-            INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN;
-            //INDEX_TABLE_DICTPRJ indxTable = INDEX_TABLE_DICTPRJ.UNKNOWN;
+            INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
             INDEX_ID indxIdDeny = INDEX_ID.UNKNOWN;
-            int id_item = -1
-                , iCol = -2
-                , iRow = -1;
+            int id_item = -1 //Идентификатор элемента списка (компонент ТЭЦ/параметр алгоритма)
+                , iCol = -2 // при передаче в функцию в качестве аргумента +1
+                , iRow = -1; // '-1' - признак применения/НЕприменения действий к типу элементов таблицы 
             string strId = (obj as Control).Name;
             //Определить идентификатор
             if (strId.Equals(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString()) == true)
@@ -453,35 +452,15 @@ namespace TepCommon
                 , ev.NewValue == CheckState.Checked ? true : ev.NewValue == CheckState.Unchecked ? false : false);
         }
 
-        //private void clbxCompCalculated_ItemCheck(object obj, ItemCheckEventArgs ev)
-        //{
-        //}
-
-        //private void clbxCompVisibled_ItemCheck(object obj, ItemCheckEventArgs ev)
-        //{
-        //}
-
-        //private void clbxParsCalculated_ItemCheck(object obj, ItemCheckEventArgs ev)
-        //{
-        //}
-
-        //private void clbxParsVisibled_ItemCheck(object obj, ItemCheckEventArgs ev)
-        //{
-        //}
-
         protected class DataGridViewTEPValues : DataGridView
         {
             private class HDataGridViewColumn : DataGridViewTextBoxColumn
             {
                 public int m_iIdComp;
             }
-            
-            public List <int> m_listIdComponents;
-            
+
             public DataGridViewTEPValues ()
-            {
-                m_listIdComponents = new List<int> ();
-                
+            {               
                 InitializeComponents ();
             }
 
@@ -499,19 +478,22 @@ namespace TepCommon
 
                 AddColumn (-1, string.Empty, false);
             }
-
+            /// <summary>
+            /// Удалить строки
+            /// </summary>
             public void ClearRows()
             {
                 if (Rows.Count > 0)
                     Rows.Clear();
                 else
                     ;
-                //if (Columns.Count > 0)
-                //    Columns.Clear();
-                //else
-                //    ;
             }
-
+            /// <summary>
+            /// Добавить столбец
+            /// </summary>
+            /// <param name="id_comp">Идентификатор компонента ТЭЦ</param>
+            /// <param name="text">Текст для заголовка столбца</param>
+            /// <param name="bVisibled">Признак участия в расчете/отображения</param>
             public void AddColumn (int id_comp, string text, bool bVisibled)
             {
                 DataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp };
@@ -519,10 +501,13 @@ namespace TepCommon
                 column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 Columns.Add(column);
                 column.Visible = bVisibled;
-
-                m_listIdComponents.Add (id_comp);
             }
-
+            /// <summary>
+            /// Добавить строку в таблицу
+            /// </summary>
+            /// <param name="id_par">Идентификатор параметра алгоритма</param>
+            /// <param name="text">Текст заголовка строки</param>
+            /// <param name="bVisibled">Признак отображения строки</param>
             public void AddRow(int id_par, string text, bool bVisibled)
             {
                 int i = -1;
@@ -531,28 +516,22 @@ namespace TepCommon
                 i = Rows.Add(row);
                 Rows[i].Cells[0].Value = id_par;
             }
-
-            //public void UpdateStructure(INDEX_ID indxIdDeny)
-            //{
-            //    foreach (HDataGridViewColumn col in Columns)
-            //        if (col.m_iIdComp < 0)
-            //            continue;
-            //        else
-            //            col.Visible = (Parent as PanelTepTaskValues).m_arListIds[(int)indxIdDeny].IndexOf(col.m_iIdComp) < 0;
-
-            //    foreach (DataGridViewRow row in Rows)
-            //        row.Visible = (Parent as PanelTepTaskValues).m_arListIds[(int)indxIdDeny].IndexOf((int)row.Cells[0].Value) < 0;
-            //}
-
-            public void UpdateStructure(PanelTepTaskValues.INDEX_ID indxDeny, int col, int row, bool bVisibled)
+            /// <summary>
+            /// Обновить структуру таблицы
+            /// </summary>
+            /// <param name="indxDeny">Индекс элемента в массиве списков с отмененными для расчета/отображения компонентами ТЭЦ/параметрами алгоритма расчета</param>
+            /// <param name="col">Номер столбца (-1: не применять действие к столбцам)</param>
+            /// <param name="row">Номер строки (-1: не применять действие к строкам)</param>
+            /// <param name="bCheckedItem">Признак участия в расчете/отображения</param>
+            public void UpdateStructure(PanelTepTaskValues.INDEX_ID indxDeny, int col, int row, bool bCheckedItem)
             {
-                Color clrCell = Color.Empty;
+                Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
 
                 switch (indxDeny)
                 {
                     case INDEX_ID.DENY_COMP_CALCULATED:
                     case INDEX_ID.DENY_PARAMETER_CALCULATED:
-                        clrCell = bVisibled == true ? Color.White : Color.LightGray;                        
+                        clrCell = bCheckedItem == true ? Color.White : Color.LightGray;                        
                         if (!(col < 0))
                             // для всех ячеек в столбце
                             foreach (DataGridViewRow r in Rows)
@@ -568,10 +547,12 @@ namespace TepCommon
                     case INDEX_ID.DENY_COMP_VISIBLED:
                     case INDEX_ID.DENY_PARAMETER_VISIBLED:
                         if (!(col < 0))
-                            Columns[col].Visible = bVisibled;
+                            // для всех ячеек в столбце
+                            Columns[col].Visible = bCheckedItem;
                         else
                             if (! (row < 0))
-                                Rows[row].Visible = bVisibled;
+                                // для всех ячеек в строке
+                                Rows[row].Visible = bCheckedItem;
                             else
                                 ;
                         break;                    
