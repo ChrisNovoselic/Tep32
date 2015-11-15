@@ -60,6 +60,8 @@ namespace TepCommon
         /// </summary>
         protected DataTable m_tblEdit
             , m_tblOrigin;
+
+        protected HandlerDbTepTaskValues m_handlerDb;
         /// <summary>
         /// Конструктор - основной (с параметром)
         /// </summary>
@@ -75,6 +77,8 @@ namespace TepCommon
             m_strNameTableAlg = strNameTableAlg;
             m_strNameTablePut = strNameTablePut;
 
+            m_handlerDb = new HandlerDbTepTaskValues();
+
             InitializeComponents();
         }
 
@@ -84,7 +88,7 @@ namespace TepCommon
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT_INDEX_ID];
             for (INDEX_ID i = INDEX_ID.PERIOD; i < INDEX_ID.COUNT_INDEX_ID; i++)
                 if (i == INDEX_ID.PERIOD)
-                    m_arListIds[(int)i] = new List<int> { 13, 18, 19, 24 };
+                    m_arListIds[(int)i] = new List<int> { (int)ID_TIME.HOUR, (int)ID_TIME.DAY, (int)ID_TIME.SHIFTS, (int)ID_TIME.MONTH };
                 else
                     //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
                     m_arListIds[(int)i] = new List<int>();
@@ -214,125 +218,86 @@ namespace TepCommon
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
         }
-
-        private int compareNAlg (string nAlg1, string nAlg2)
+        /// <summary>
+        /// Сравнить строки с параметрами алгоритма расчета по строковому номеру в алгоритме
+        /// </summary>
+        /// <param name="r1">1-я строка для сравнения</param>
+        /// <param name="r2">2-я строка для сравнения</param>
+        /// <returns>Результат сравнения (-1 - 1-я МЕНЬШЕ 2-ой, 1 - 1-я БОЛЬШЕ 2-ой)</returns>
+        private int compareNAlg (DataRow r1, DataRow r2)
         {
             int iRes = 0
                 , iLength = -1
                 , indx = -1;
-            char []delimeter = new char [] { '.' };
+            char[] delimeter = new char[] { '.' };
+            string nAlg1 = ((string)r1[@"N_ALG"]).Trim()
+                , nAlg2 = ((string)r2[@"N_ALG"]).Trim();
 
-            string []arParts1 = nAlg1.Split (delimeter, StringSplitOptions.RemoveEmptyEntries)
-                , arParts2 = nAlg2.Split (delimeter, StringSplitOptions.RemoveEmptyEntries);
+            string[] arParts1 = nAlg1.Split(delimeter, StringSplitOptions.RemoveEmptyEntries)
+                , arParts2 = nAlg2.Split(delimeter, StringSplitOptions.RemoveEmptyEntries);
 
-            if ((!(arParts1.Length < 1)) && (!(arParts2.Length < 1)))
-            {
-                indx = 0;
-                iRes = int.Parse (arParts1[indx]) > int.Parse (arParts2[indx]) ? 1
-                    : int.Parse (arParts1[indx]) < int.Parse (arParts2[indx]) ? -1 : 0;
+             if ((!(arParts1.Length < 1)) && (!(arParts2.Length < 1)))
+             {
+                 indx = 0;
+                 iRes = int.Parse(arParts1[indx]) > int.Parse(arParts2[indx]) ? 1
+                     : int.Parse(arParts1[indx]) < int.Parse(arParts2[indx]) ? -1 : 0;
 
-                if (iRes == 0)
-                {
-                    iLength = arParts1.Length > arParts2.Length ? 1 :
-                        arParts1.Length < arParts2.Length ? -1 : 0;
+                 if (iRes == 0)
+                 {
+                     iLength = arParts1.Length > arParts2.Length ? 1 :
+                         arParts1.Length < arParts2.Length ? -1 : 0;
 
-                    if (iLength == 0)
-                    {
-                        if ((!(arParts1.Length < 2)) && (!(arParts2.Length < 2)))
-                        {
-                            indx = 1;
-                            iRes = int.Parse(arParts1[indx]) > int.Parse(arParts2[indx]) ? 1
-                                : int.Parse(arParts1[indx]) < int.Parse(arParts2[indx]) ? -1 : 0;
-                        }
-                        else
-                            ;
-                    }
-                    else
-                        iRes = iLength;
-                }
-                else
-                    ;
-            }
-            else            
-                throw new Exception(@":PanelTepTaskValues:compareNAlg () - номер алгоритма некорректен (не найдены цифры)...");
-            return iRes;
+                     if (iLength == 0)
+                     {
+                         if ((!(arParts1.Length < 2)) && (!(arParts2.Length < 2)))
+                         {
+                             indx = 1;
+                             iRes = int.Parse(arParts1[indx]) > int.Parse(arParts2[indx]) ? 1
+                                 : int.Parse(arParts1[indx]) < int.Parse(arParts2[indx]) ? -1 : 0;
+                         }
+                         else
+                             ;
+                     }
+                     else
+                         iRes = iLength;
+                 }
+                 else
+                     ;
+             }
+             else
+                 throw new Exception(@":PanelTepTaskValues:compareNAlg () - номер алгоритма некорректен (не найдены цифры)...");
+             return iRes;
         }
-
-        //private int compareNAlg (string nAlg1, string nAlg2)
-        //{
-        //    int iRes = 0
-        //        , iLength = nAlg1.Length == nAlg2.Length ? 0 : nAlg1.Length < nAlg2.Length ? -1 : 1
-        //        , iDigit = 0;
-
-        //    //if (!(iLength < 0))
-        //        for (int i = 0; (i < nAlg1.Length) && (i < nAlg2.Length); i++)
-        //            if ((int)nAlg1[i] == (int)nAlg2[i])
-        //                //if (!(iLength == 0))
-        //                //{
-        //                //    iRes = iLength;
-        //                //    break;
-        //                //}
-        //                //else
-        //                //    ;
-        //                continue;
-        //            else
-        //            {
-        //                iDigit = (Char.IsDigit(nAlg1[i]) == true) && (Char.IsDigit(nAlg2[i]) == true) ? 0 :
-        //                    (Char.IsDigit(nAlg1[i]) == false) ? -1 : (Char.IsDigit(nAlg2[i]) == false) ? 1 : 0;
-
-        //                if (iDigit == 0)
-        //                    if ((int)nAlg1[i] < (int)nAlg2[i])
-        //                        if (iLength == 0)
-        //                            iRes = -1;
-        //                        else
-        //                            //iLength > 0
-        //                            iRes = iLength;
-        //                    else
-        //                        if ((int)nAlg1[i] > (int)nAlg2[i])
-        //                            if (iLength == 0)
-        //                                iRes = 1;
-        //                            else
-        //                                ;
-        //                        else
-        //                            ;
-        //                else
-        //                    // один из символов не цифра
-        //                    iRes = iDigit;
-
-        //                if (! (iRes == 0))
-        //                    break;
-        //                else
-        //                    ;
-        //            }
-        //    //else
-        //    //    iRes = iLength;
-
-        //    if ((iRes == 0) && (!(iLength == 0)))
-        //        iRes = iLength;
-        //    else
-        //        ;
-
-        //    return iRes;
-        //}
-
-        private int compareNAlg (DataRow r1, DataRow r2)
+        /// <summary>
+        /// Текущий выбранный идентификатор периода расчета
+        /// </summary>
+        private int CurrIdPeriod
         {
-             return compareNAlg (((string)r1[@"N_ALG"]).Trim(), ((string)r2[@"N_ALG"]).Trim());
+            get
+            {
+                return m_arListIds[(int)INDEX_ID.PERIOD][(Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0] as ComboBox).SelectedIndex];
+            }
         }
-
+        /// <summary>
+        /// Список строк с параметрами алгоритма расчета для текущего периода расчета
+        /// </summary>
         private List <DataRow> ListParameter
         {
             get
             {
                 List <DataRow> listRes;
-                ComboBox cbx = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0] as ComboBox;
-                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(@"ID_TIME=" + m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex]).ToList<DataRow>();
+                
+                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(@"ID_TIME=" + CurrIdPeriod).ToList<DataRow>();
                 listRes.Sort(compareNAlg);
 
                 return listRes;
             }
         }
-
+        /// <summary>
+        /// Обработчик события при изменении периода расчета
+        /// </summary>
+        /// <param name="obj">Объект, игициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
         {
             ComboBox cbx = obj as ComboBox;
@@ -376,9 +341,34 @@ namespace TepCommon
             }
             //Возобновить обработку событий
             clbxParsCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
-            clbxParsVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);            
+            clbxParsVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
+            //Установить новые режимы для "календарей"
+            HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
+                , hdtpEnd = Controls.Find(INDEX_CONTROL.HDTP_END.ToString(), true)[0] as HDateTimePicker;
             //Выполнить запрос на получение значений для заполнения 'DataGridView'
-            ;
+            switch ((ID_TIME)CurrIdPeriod)
+            {
+                case ID_TIME.HOUR:
+                    hdtpBegin.Mode =
+                    hdtpEnd.Mode = 
+                        HDateTimePicker.MODE.CUSTOMIZE;
+                    break;
+                case ID_TIME.SHIFTS:
+                    hdtpBegin.Mode = HDateTimePicker.MODE.CUSTOMIZE;
+                    hdtpEnd.Mode = HDateTimePicker.MODE.UNKNOWN;
+                    break;
+                case ID_TIME.DAY:
+                    hdtpBegin.Mode = HDateTimePicker.MODE.DAY;
+                    hdtpEnd.Mode = HDateTimePicker.MODE.UNKNOWN;
+                    break;
+                case ID_TIME.MONTH:
+                    hdtpBegin.Mode = HDateTimePicker.MODE.MONTH;
+                    hdtpEnd.Mode = HDateTimePicker.MODE.UNKNOWN;
+                    break;
+                default:
+                    break;
+            }
+            m_handlerDb.Load((ID_TIME)CurrIdPeriod);
         }
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
@@ -564,93 +554,6 @@ namespace TepCommon
 
         protected class PanelManagement : HPanelCommon
         {
-            private class HDateTimePicker : HPanelCommon
-            {
-                private int _iYear
-                    , _iMonth
-                    , _iDay
-                    , _iHour;
-
-                public HDateTimePicker(int year, int month, int day, int hour = 1)
-                    : base(12, 1)
-                {
-                    _iYear = year;
-                    _iMonth = month;
-                    _iDay = day;
-                    _iHour = hour;
-
-                    InitializeComponents();
-                }
-                
-                private string[] months = { @"январь", @"февраль", @"март"
-                    , @"апрель", @"май", @"июнь"
-                    , @"июль", @"август", @"сентябрь"
-                    , @"октябрь", @"ноябрь", @"декабрь" };
-                
-                //public HDateTimePicker () : base (12, 1)
-                //{
-                //    InitializeComponents ();
-                //}
-
-                private void InitializeComponents()
-                {
-                    Control ctrl;
-                    int i = -1;
-
-                    SuspendLayout();
-
-                    initializeLayoutStyle ();
-
-                    //Дата - номер дня
-                    ctrl = new ComboBox();
-                    ctrl.Dock = DockStyle.Fill;
-                    (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
-                    Controls.Add (ctrl, 0, 0);
-                    SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);                    
-                    for (i = 0; i < 31; i ++)
-                        (ctrl as ComboBox).Items.Add (i + 1);
-                    (ctrl as ComboBox).SelectedIndex = _iDay - 1;
-
-                    //Дата - наименование месяца
-                    ctrl = new ComboBox ();
-                    ctrl.Dock = DockStyle.Fill;
-                    (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
-                    Controls.Add(ctrl, 2, 0);
-                    SetColumnSpan(ctrl, 5); SetRowSpan(ctrl, 1);
-                    for (i = 0; i < 12; i++)
-                        (ctrl as ComboBox).Items.Add(months[i]);
-                    (ctrl as ComboBox).SelectedIndex = _iMonth - 1;
-
-                    //Дата - год
-                    ctrl = new ComboBox();
-                    ctrl.Dock = DockStyle.Fill;
-                    (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
-                    Controls.Add(ctrl, 7, 0);
-                    SetColumnSpan(ctrl, 3); SetRowSpan(ctrl, 1);
-                    for (i = 10; i < 21; i++)
-                        (ctrl as ComboBox).Items.Add(@"20" + i.ToString ());
-                    (ctrl as ComboBox).SelectedIndex = _iYear - (2000 + 10);
-
-                    //Время - час
-                    ctrl = new ComboBox();
-                    ctrl.Dock = DockStyle.Fill;
-                    (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
-                    Controls.Add(ctrl, 10, 0);
-                    SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
-                    for (i = 0; i < 24; i++)
-                        (ctrl as ComboBox).Items.Add(i + 1);
-                    (ctrl as ComboBox).SelectedIndex = _iHour - 1;
-
-                    ResumeLayout(false);
-                    PerformLayout();
-                }
-
-                protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
-                {
-                    initializeLayoutStyleEvenly();
-                }
-            }
-
             public PanelManagement() : base (8, 21)
             {
                 InitializeComponents ();
@@ -696,7 +599,7 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время начала периода расчета - значения
-                ctrl = new HDateTimePicker(2015, 1, 1);
+                ctrl = new HDateTimePicker(TepCommon.HDateTimePicker.MODE.UNKNOWN, 2015, 1, 1);
                 ctrl.Name = INDEX_CONTROL.HDTP_BEGIN.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
@@ -709,7 +612,7 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время  окончания периода расчета - значения
-                ctrl = new HDateTimePicker(2015, 1, 1, 24);
+                ctrl = new HDateTimePicker(TepCommon.HDateTimePicker.MODE.UNKNOWN, 2015, 1, 1, 24);
                 ctrl.Name = INDEX_CONTROL.HDTP_END.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);

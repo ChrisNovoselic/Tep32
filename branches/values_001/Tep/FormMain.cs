@@ -46,7 +46,7 @@ namespace Tep64
                 try {
                     using (HTepUsers users = new HTepUsers(idListener)) { ; }
                 } catch (Exception e) {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::FormMain() - new HTepUsers (iListenerId=" + idListener + @") ...");
+                    Logging.Logg().Exception(e, @"FormMain::FormMain() - new HTepUsers (iListenerId=" + idListener + @") ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
                 ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
