@@ -13,32 +13,42 @@ namespace TepCommon
 {
     public partial class HDateTimePicker : HPanelCommon
     {
+        /// <summary>
+        /// Перечисление для режимов группового элемента управления
+        /// </summary>
         public enum MODE
         {
-            UNKNOWN = -1, DAY, MONTH, YEAR,
-            CUSTOMIZE
+            UNKNOWN = -1, DAY, MONTH, YEAR, HOUR           
                 , COUNT
         }
-
+        /// <summary>
+        /// Перечисление для индесов дочерних элементов управления
+        /// </summary>
         private enum INDEX_CONTROL
         {
-            UNKNOWN = -1, DAY, MONTH, YEAR,
-            HOUR
+            UNKNOWN = -1, DAY, MONTH, YEAR, HOUR
                 , COUNT
         }
-
+        /// <summary>
+        /// Матрица доступности элементов управления при различных режимах
+        /// </summary>
         private static bool[,] _matrixEnabled = new bool[(int)MODE.COUNT, (int)INDEX_CONTROL.COUNT] {
-                    { true, true, true, false }
-                    , { false, true, true, false }
-                    , { false, false, true, false }
-                    , { true, true, true, true }};
-
+                    { true, true, true, false } //MODE.DAY
+                    , { false, true, true, false } //MODE>MONTH
+                    , { false, false, true, false } //MODE.YEAR
+                    , { true, true, true, true }}; //MODE.CUSTOMIZE
+        /// <summary>
+        /// Текущие значения (номер года/месяца/дня/часа) в элементах управления
+        /// </summary>
         private int _iYear
             , _iMonth
             , _iDay
             , _iHour;
 
         private MODE _mode;
+        /// <summary>
+        /// Текущим режим для групповго элемента управления
+        /// </summary>
         public MODE Mode
         {
             get
@@ -48,33 +58,139 @@ namespace TepCommon
 
             set
             {
+                //Проверить признак изменения режима
                 if (!(_mode == value))
-                {
+                {// при изменении  - изменить доступность дочерних элементов управления
                     _mode = value;
-
+                    
                     enable();
                 }
                 else
                     ;
             }
         }
-
+        /// <summary>
+        /// Объект от значений которого зависят значения текущего объекта
+        /// </summary>
+        HDateTimePicker m_objLeading;
+        /// <summary>
+        /// События изменения значения
+        /// </summary>
         public event EventHandler ValueChanged;
-
+        /// <summary>
+        /// Изменить доступность элементов управления
+        /// </summary>
         private void enable()
         {
             Control ctrl = null;
-            for (INDEX_CONTROL indx = INDEX_CONTROL.DAY; indx < INDEX_CONTROL.COUNT; indx++)
-            {
-                ctrl = Controls.Find(indx.ToString(), true)[0];
-                if (Mode == MODE.UNKNOWN)
-                    ctrl.Enabled = false;
-                else
-                    ctrl.Enabled = _matrixEnabled[(int)_mode, (int)indx];
-            }
-        }
+            bool bEnabled = false;
 
-        public HDateTimePicker(MODE mode, int year, int month, int day, int hour = 1)
+            //for (INDEX_CONTROL indx = INDEX_CONTROL.DAY; indx < INDEX_CONTROL.COUNT; indx++)
+            //{
+            //    ctrl = Controls.Find(indx.ToString(), true)[0];
+            //    if (Mode == MODE.UNKNOWN)
+            //        ctrl.Enabled = false;
+            //    else
+            //    {
+            //        bEnabled = _matrixEnabled[(int)_mode, (int)indx];
+            //        if ((!(m_objLeading == null))
+            //            && (bEnabled == true))
+            //            switch (Mode)
+            //            {
+            //                case MODE.DAY:
+            //                    switch (indx)
+            //                    {                                    
+            //                        case INDEX_CONTROL.DAY:
+            //                            //bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.MONTH:
+            //                            bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.YEAR:
+            //                            bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.HOUR:
+            //                            bEnabled = false;
+            //                            break;
+            //                        default:
+            //                            break;
+            //                    }
+            //                    break;
+            //                case MODE.MONTH:
+            //                    switch (indx)
+            //                    {
+            //                        case INDEX_CONTROL.DAY:
+            //                            bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.MONTH:
+            //                            //bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.YEAR:
+            //                            bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.HOUR:
+            //                            bEnabled = false;
+            //                            break;
+            //                        default:
+            //                            break;
+            //                    }
+            //                    break;
+            //                case MODE.YEAR:
+            //                    switch (indx)
+            //                    {
+            //                        case INDEX_CONTROL.DAY:
+            //                            bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.MONTH:
+            //                            bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.YEAR:
+            //                            //bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.HOUR:
+            //                            bEnabled = false;
+            //                            break;
+            //                        default:
+            //                            break;
+            //                    }
+            //                    break;
+            //                case MODE.HOUR:
+            //                    switch (indx)
+            //                    {
+            //                        case INDEX_CONTROL.DAY:
+            //                            bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.MONTH:
+            //                            bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.YEAR:
+            //                            bEnabled = false;
+            //                            break;
+            //                        case INDEX_CONTROL.HOUR:
+            //                            //bEnabled = false;
+            //                            break;
+            //                        default:
+            //                            break;
+            //                    }
+            //                    break;
+            //                default:
+            //                    break;
+            //            }
+            //        else
+            //            ;
+            //        ctrl.Enabled = bEnabled;
+            //    }
+            //}
+        }
+        /// <summary>
+        /// Конструктор - основной (с параметрами)
+        /// </summary>
+        /// <param name="year">Номер года</param>
+        /// <param name="month">Номер месяца</param>
+        /// <param name="day">Номер дня в месяце</param>
+        /// <param name="hour">Номер часа в сутках</param>
+        /// <param name="objLeading">Объект от значений которого зависит значения создаваемого объекта</param>
+        public HDateTimePicker(int year, int month, int day, int hour, HDateTimePicker objLeading)
             : base(12, 1)
         {
             _iYear = year;
@@ -84,37 +200,62 @@ namespace TepCommon
 
             InitializeComponents();
 
-            Mode = mode;
+            Mode = MODE.UNKNOWN;
+
+            m_objLeading = objLeading;
+            if (! (m_objLeading == null))
+                m_objLeading.ValueChanged += new EventHandler(leading_ValueChanged);
+            else
+                ;
         }
 
-        private string[] months = { @"январь", @"февраль", @"март"
-                    , @"апрель", @"май", @"июнь"
-                    , @"июль", @"август", @"сентябрь"
-                    , @"октябрь", @"ноябрь", @"декабрь" };
-
-        //public HDateTimePicker () : base (12, 1)
-        //{
-        //    InitializeComponents ();
-        //}        
+        private static string[] months = { @"январь", @"февраль", @"март"
+            , @"апрель", @"май", @"июнь"
+            , @"июль", @"август", @"сентябрь"
+            , @"октябрь", @"ноябрь", @"декабрь" };
 
         protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
         {
             initializeLayoutStyleEvenly();
         }
-
+        /// <summary>
+        /// Обработчик события - изменения номера дня
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void cbxDay_onSelectedIndexChanged(object obj, EventArgs ev)
         {
         }
-
+        /// <summary>
+        /// Обработчик события - изменения номера месяца
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void cbxMonth_onSelectedIndexChanged(object obj, EventArgs ev)
         {
         }
-
+        /// <summary>
+        /// Обработчик события - изменения номера года
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void cbxYear_onSelectedIndexChanged(object obj, EventArgs ev)
         {
         }
-
+        /// <summary>
+        /// Обработчик события - изменения номера часа
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void cbxHour_onSelectedIndexChanged(object obj, EventArgs ev)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - изменения значения в 
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
+        private void leading_ValueChanged (object obj, EventArgs ev)
         {
         }
     }

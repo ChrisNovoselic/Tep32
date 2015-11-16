@@ -88,7 +88,7 @@ namespace TepCommon
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT_INDEX_ID];
             for (INDEX_ID i = INDEX_ID.PERIOD; i < INDEX_ID.COUNT_INDEX_ID; i++)
                 if (i == INDEX_ID.PERIOD)
-                    m_arListIds[(int)i] = new List<int> { (int)ID_TIME.HOUR, (int)ID_TIME.DAY, (int)ID_TIME.SHIFTS, (int)ID_TIME.MONTH };
+                    m_arListIds[(int)i] = new List<int> { (int)ID_TIME.HOUR, (int)ID_TIME.SHIFTS, (int)ID_TIME.DAY, (int)ID_TIME.MONTH };
                 else
                     //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
                     m_arListIds[(int)i] = new List<int>();
@@ -349,21 +349,24 @@ namespace TepCommon
             switch ((ID_TIME)CurrIdPeriod)
             {
                 case ID_TIME.HOUR:
-                    hdtpBegin.Mode =
-                    hdtpEnd.Mode = 
-                        HDateTimePicker.MODE.CUSTOMIZE;
+                    hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
+                    hdtpEnd.Mode = HDateTimePicker.MODE.HOUR;
                     break;
                 case ID_TIME.SHIFTS:
-                    hdtpBegin.Mode = HDateTimePicker.MODE.CUSTOMIZE;
-                    hdtpEnd.Mode = HDateTimePicker.MODE.UNKNOWN;
+                    hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
+                    hdtpEnd.Mode = HDateTimePicker.MODE.HOUR;
                     break;
                 case ID_TIME.DAY:
                     hdtpBegin.Mode = HDateTimePicker.MODE.DAY;
-                    hdtpEnd.Mode = HDateTimePicker.MODE.UNKNOWN;
+                    hdtpEnd.Mode = HDateTimePicker.MODE.DAY;
                     break;
                 case ID_TIME.MONTH:
                     hdtpBegin.Mode = HDateTimePicker.MODE.MONTH;
-                    hdtpEnd.Mode = HDateTimePicker.MODE.UNKNOWN;
+                    hdtpEnd.Mode = HDateTimePicker.MODE.MONTH;
+                    break;
+                case ID_TIME.YEAR:
+                    hdtpBegin.Mode = HDateTimePicker.MODE.YEAR;
+                    hdtpEnd.Mode = HDateTimePicker.MODE.YEAR;
                     break;
                 default:
                     break;
@@ -599,7 +602,7 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время начала периода расчета - значения
-                ctrl = new HDateTimePicker(TepCommon.HDateTimePicker.MODE.UNKNOWN, 2015, 1, 1);
+                ctrl = new HDateTimePicker(2015, 1, 1, 1, null);
                 ctrl.Name = INDEX_CONTROL.HDTP_BEGIN.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
@@ -612,7 +615,7 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время  окончания периода расчета - значения
-                ctrl = new HDateTimePicker(TepCommon.HDateTimePicker.MODE.UNKNOWN, 2015, 1, 1, 24);
+                ctrl = new HDateTimePicker(2015, 1, 1, 24, Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                 ctrl.Name = INDEX_CONTROL.HDTP_END.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);

@@ -17,6 +17,7 @@ namespace TepCommon
         , SHIFTS = 18
         , DAY = 19
         , MONTH = 24
+        , YEAR = 100
         ,
     }
 }

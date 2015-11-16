@@ -124,7 +124,7 @@ namespace Tep64
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(982, 665);
+            this.ClientSize = new System.Drawing.Size(982, 765);
             this.Controls.Add(this.MainMenuStrip);
             //this.MainMenuStrip = this.menuStrip1;
             this.MinimizeBox = false;
