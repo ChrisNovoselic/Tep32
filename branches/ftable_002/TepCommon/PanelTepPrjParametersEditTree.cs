@@ -231,7 +231,11 @@ namespace TepCommon
                     }
                     catch (Exception e)
                     {
+<<<<<<< .mine
+                        Logging.Logg().Exception(e, @"HPanelEditTree::idAlgChanged () - ...",Logging.INDEX_MESSAGE.NOT_SET );
+=======
                         Logging.Logg().Exception(e,@"HPanelEditTree::idAlgChanged () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+>>>>>>> .r97
                     }
                 }
                 else

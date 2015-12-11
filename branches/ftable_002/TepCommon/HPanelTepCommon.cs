@@ -79,7 +79,11 @@ namespace TepCommon
             }
             catch (Exception e)
             {
+<<<<<<< .mine
+                Logging.Logg().Exception(e,  @"HPanelEdit::Initialize () - BeginInvoke (initialize) - ...",Logging.INDEX_MESSAGE.NOT_SET);
+=======
                 Logging.Logg().Exception(e, @"HPanelEdit::Initialize () - BeginInvoke (initialize) - ...", Logging.INDEX_MESSAGE.NOT_SET);
+>>>>>>> .r97
             }
         }
 
@@ -167,7 +171,8 @@ namespace TepCommon
             gbDesc.Text = @"Описание";
             gbDesc.Dock = DockStyle.Fill;
             this.Controls.Add(gbDesc, posCol, posRow);
-            this.SetColumnSpan(gbDesc, this.ColumnCount - posCol); this.SetRowSpan(gbDesc, this.RowCount - posRow);
+            this.SetColumnSpan(gbDesc, this.ColumnCount - posCol); 
+            this.SetRowSpan(gbDesc, this.RowCount - posRow);
 
             Label ctrl = new Label();
             ctrl.Name = id;

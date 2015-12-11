@@ -61,7 +61,11 @@ namespace Tep64
                 }
                 catch (Exception e)
                 {
+<<<<<<< .mine
+                    Logging.Logg().Exception(e,@"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
+=======
                     Logging.Logg().Exception(e,  @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name,Logging.INDEX_MESSAGE.NOT_SET);
+>>>>>>> .r97
                 }
 
                 if (!(objType == null))
@@ -74,7 +78,11 @@ namespace Tep64
                     }
                     catch (Exception e)
                     {
+<<<<<<< .mine
+                        Logging.Logg().Exception(e,@"FormMain::loadPlugin () ... CreateInstance ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
+=======
                         Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Name = " + name,Logging.INDEX_MESSAGE.NOT_SET);
+>>>>>>> .r97
                     }
                 else
                     Logging.Logg().Error(@"FormMain::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
