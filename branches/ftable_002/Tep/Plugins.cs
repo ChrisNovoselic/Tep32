@@ -61,7 +61,7 @@ namespace Tep64
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name);
+                    Logging.Logg().Exception(e,  @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name,Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
                 if (!(objType == null))
@@ -74,7 +74,7 @@ namespace Tep64
                     }
                     catch (Exception e)
                     {
-                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Name = " + name);
+                        Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Name = " + name,Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 else
                     Logging.Logg().Error(@"FormMain::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
@@ -145,7 +145,7 @@ namespace Tep64
                         }
                         catch (Exception e)
                         {
-                            Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FormMain_EvtDataAskedHost () - BeginInvoke (addTabPage) [id] = " + (int)((EventArgsDataHost)obj).id);
+                            Logging.Logg().Exception(e, @"FormMain_EvtDataAskedHost () - BeginInvoke (addTabPage) [id] = " + (int)((EventArgsDataHost)obj).id, Logging.INDEX_MESSAGE.NOT_SET);
                         }
                     }
                     else
