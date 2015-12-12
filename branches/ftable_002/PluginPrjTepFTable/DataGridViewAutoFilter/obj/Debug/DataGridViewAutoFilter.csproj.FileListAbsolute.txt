@@ -1,9 +1,0 @@
-C:\Users\PasternakAS\Desktop\DataGridViewAutoFilter\DataGridViewAutoFilter\bin\Debug\DataGridViewAutoFilter.dll
-C:\Users\PasternakAS\Desktop\DataGridViewAutoFilter\DataGridViewAutoFilter\bin\Debug\DataGridViewAutoFilter.pdb
-C:\Users\PasternakAS\Desktop\DataGridViewAutoFilter\DataGridViewAutoFilter\obj\Debug\DataGridViewAutoFilter.csprojResolveAssemblyReference.cache
-C:\Users\PasternakAS\Desktop\DataGridViewAutoFilter\DataGridViewAutoFilter\obj\Debug\DataGridViewAutoFilter.dll
-C:\Users\PasternakAS\Desktop\DataGridViewAutoFilter\DataGridViewAutoFilter\obj\Debug\DataGridViewAutoFilter.pdb
-C:\Users\PasternakAS\Desktop\Новая папка\C.Net\TEP32\PluginPrjTepFTable\DataGridViewAutoFilter\bin\Debug\DataGridViewAutoFilter.dll
-C:\Users\PasternakAS\Desktop\Новая папка\C.Net\TEP32\PluginPrjTepFTable\DataGridViewAutoFilter\bin\Debug\DataGridViewAutoFilter.pdb
-C:\Users\PasternakAS\Desktop\Новая папка\C.Net\TEP32\PluginPrjTepFTable\DataGridViewAutoFilter\obj\Debug\DataGridViewAutoFilter.dll
-C:\Users\PasternakAS\Desktop\Новая папка\C.Net\TEP32\PluginPrjTepFTable\DataGridViewAutoFilter\obj\Debug\DataGridViewAutoFilter.pdb
