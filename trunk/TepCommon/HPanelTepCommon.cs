@@ -167,7 +167,8 @@ namespace TepCommon
             gbDesc.Text = @"Описание";
             gbDesc.Dock = DockStyle.Fill;
             this.Controls.Add(gbDesc, posCol, posRow);
-            this.SetColumnSpan(gbDesc, this.ColumnCount - posCol); this.SetRowSpan(gbDesc, this.RowCount - posRow);
+            this.SetColumnSpan(gbDesc, this.ColumnCount - posCol); 
+            this.SetRowSpan(gbDesc, this.RowCount - posRow);
 
             Label ctrl = new Label();
             ctrl.Name = id;
