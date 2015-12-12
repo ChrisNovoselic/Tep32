@@ -12,7 +12,7 @@ using InterfacePlugIn;
 
 namespace PluginPrjInParameters
 {
-    public class PanelPrjInParameters : PanelTepPrjParametersEditTree
+    public class PanelPrjInParameters : PanelPrjParametersEditTree
     {
         public PanelPrjInParameters(IPlugIn iFunc)
             : base(iFunc, @"inalg, input")

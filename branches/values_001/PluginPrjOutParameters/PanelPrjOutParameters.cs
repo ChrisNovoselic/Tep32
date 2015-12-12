@@ -12,7 +12,7 @@ using InterfacePlugIn;
 
 namespace PluginPrjOutParameters
 {
-    public class PanelPrjOutParameters : PanelTepPrjParametersEditTree
+    public class PanelPrjOutParameters : PanelPrjParametersEditTree
     {
         public PanelPrjOutParameters(IPlugIn iFunc)
             : base(iFunc, @"outalg, output")

@@ -14,7 +14,7 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public partial class PanelTepPrjParametersEditTree : HPanelEditTree
+    public partial class PanelPrjParametersEditTree : HPanelEditTree
     {
         /// <summary>
         /// Перечисление для индексироания уровней "дерева" параметров алгоритма
@@ -255,7 +255,7 @@ namespace TepCommon
             get { return Controls.Find(INDEX_CONTROL.TREECTRL_PRJ_ALG.ToString(), true)[0] as TreeView; }
         }
 
-        public PanelTepPrjParametersEditTree(IPlugIn plugIn, string tableNames)
+        public PanelPrjParametersEditTree(IPlugIn plugIn, string tableNames)
             : base(plugIn)
         {
             _level = 0;
@@ -870,7 +870,7 @@ namespace TepCommon
         }
     }
 
-    partial class PanelTepPrjParametersEditTree
+    partial class PanelPrjParametersEditTree
     {
         protected enum INDEX_PARAMETER {ALGORITM, PUT, COUNT_INDEX_PARAMETER};
         protected enum INDEX_TABLE_KEY { TIME, COMP_LIST, TASK, COUNT_INDEX_TABLE_KEY };

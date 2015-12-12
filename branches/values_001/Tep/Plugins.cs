@@ -119,8 +119,8 @@ namespace Tep64
                                             break;
                                     }
                                     break;
-                                case 17: //PanelTepTaskValues, Расчет ТЭП - входные значения
-                                case 18: //PanelTepTaskValues, Расчет ТЭП - вЫходные значения
+                                case 17: //PanelTaskTepValues, Расчет ТЭП - входные значения
+                                case 18: //PanelTaskTepValues, Расчет ТЭП - вЫходные значения
                                     switch ((int)((EventArgsDataHost)obj).par[0])
                                     {
                                         default:

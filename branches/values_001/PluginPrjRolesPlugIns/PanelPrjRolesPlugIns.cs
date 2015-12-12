@@ -12,7 +12,7 @@ using InterfacePlugIn;
 
 namespace PluginPrjRolesPlugIns
 {
-    public class PanelPrjRolesPlugIns : PanelTepPrjRolesAccess
+    public class PanelPrjRolesPlugIns : PanelPrjRolesAccess
     {
         public PanelPrjRolesPlugIns(IPlugIn iFunc)
             : base(iFunc, @"roles", @"ID_EXT,ID_PLUGIN", @"plugins", @"IsUse")

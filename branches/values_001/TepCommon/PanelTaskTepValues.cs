@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Data;
+using System.Data.Common;
 using System.Text.RegularExpressions;
 using System.Drawing;
 
@@ -13,7 +14,7 @@ using TepCommon;
 
 namespace TepCommon
 {
-    public abstract partial class PanelTepTaskValues : HPanelTepCommon
+    public abstract partial class PanelTaskTepValues : HPanelTepCommon
     {
         private enum INDEX_TABLE_DICTPRJ : int { UNKNOWN = -1, PERIOD, COMPONENT, PARAMETER
             , COUNT_TABLE_DICTPRJ }
@@ -66,7 +67,7 @@ namespace TepCommon
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
-        public PanelTepTaskValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut)
+        public PanelTaskTepValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut)
             : base(iFunc)
         {
             //int iRes = compareNAlg (@"4.1", @"10");
@@ -80,6 +81,8 @@ namespace TepCommon
             m_handlerDb = new HandlerDbTepTaskValues();
 
             InitializeComponents();
+
+            m_panelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
         }
 
         private void InitializeComponents()
@@ -215,8 +218,62 @@ namespace TepCommon
             throw new NotImplementedException();
         }
 
+        private void updateDataValues()
+        {
+            int iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB")
+                , err = -1;
+            string errMsg = string.Empty
+                , query = string.Empty;
+            DbConnection dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
+
+            if ((!(dbConn == null)) && (err == 0))
+            {
+                query = @"SELECT a.N_ALG, a.ID_MEASURE"
+                    + @", p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
+                    + @", v.*"
+                    + @" FROM [dbo].[inval_201512] v"
+                    + @" LEFT JOIN [dbo].[input] p ON p.ID = v.ID_INPUT"
+                    + @" LEFT JOIN [dbo].[inalg] a ON a.ID = p.ID_ALG"
+                    + @" WHERE [DATE_TIME]='" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:00:00") + @"'";
+
+                m_tblOrigin = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
+
+                if (err == 0)
+                {
+                    m_tblEdit = m_tblOrigin.Copy();
+
+                    m_dgvValues.ShowValues(m_tblOrigin);
+                }
+                else
+                    errMsg = @"ошибка получения данных с " + m_panelManagement.m_dtRange.Begin.ToString() +
+                        m_panelManagement.m_dtRange.End.ToString();
+            }
+            else
+            {
+                errMsg = @"нет соединения с БД";
+                err = -1;
+            }
+
+            DbSources.Sources().UnRegister(iListenerId);
+
+            if (!(err == 0))
+            {
+                throw new Exception(@"HPanelEdit::HPanelTepCommon_btnUpdate_Click () - " + errMsg);
+            }
+            else
+                ;
+        }
+
+        protected override void clear()
+        {
+            //base.clear();
+        }
+
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
+            base.HPanelTepCommon_btnUpdate_Click(obj, ev);
+
+            updateDataValues ();
         }
         /// <summary>
         /// Сравнить строки с параметрами алгоритма расчета по строковому номеру в алгоритме
@@ -265,7 +322,7 @@ namespace TepCommon
                      ;
              }
              else
-                 throw new Exception(@":PanelTepTaskValues:compareNAlg () - номер алгоритма некорректен (не найдены цифры)...");
+                 throw new Exception(@":PanelTaskTepValues:compareNAlg () - номер алгоритма некорректен (не найдены цифры)...");
              return iRes;
         }
         /// <summary>
@@ -399,7 +456,7 @@ namespace TepCommon
                         if (strId.Equals(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString()) == true)
                             id = INDEX_CONTROL.CLBX_PARAMETER_VISIBLED;
                         else
-                            throw new Exception(@"PanelTepTaskValues::clbx_ItemCheck () - не найден объект 'CheckedListBox'...");
+                            throw new Exception(@"PanelTaskTepValues::clbx_ItemCheck () - не найден объект 'CheckedListBox'...");
             //Найти идентификатор компонента ТЭЦ/параметра алгоритма расчета
             // , соответствующий изменившему состояние элементу 'CheckedListBox'
             switch (id)
@@ -443,6 +500,15 @@ namespace TepCommon
             m_dgvValues.UpdateStructure(indxIdDeny
                 , iCol + 1, iRow
                 , ev.NewValue == CheckState.Checked ? true : ev.NewValue == CheckState.Unchecked ? false : false);
+        }
+
+        private void datetimeRangeValue_onChanged(object obj, EventArgs ev)
+        {
+            if ((! (m_tblOrigin == null))
+                && (m_tblOrigin.Rows.Count > 0))
+                updateDataValues();
+            else
+                ;
         }
 
         protected class DataGridViewTEPValues : DataGridView
@@ -489,10 +555,24 @@ namespace TepCommon
             /// <param name="bVisibled">Признак участия в расчете/отображения</param>
             public void AddColumn (int id_comp, string text, bool bVisibled)
             {
+                int indxColTEC = -1;
+                foreach (HDataGridViewColumn col in Columns)
+                    if ((col.m_iIdComp > 0)
+                        && (col.m_iIdComp < 1000))
+                        indxColTEC = Columns.IndexOf(col);
+                    else
+                        ;
+
                 DataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp };
                 column.HeaderText = text;
                 column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                Columns.Add(column);
+                column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
+                if (!(indxColTEC < 0))
+                    Columns.Insert(indxColTEC, column);
+                else
+                    Columns.Add(column);
+
                 column.Visible = bVisibled;
             }
             /// <summary>
@@ -516,7 +596,7 @@ namespace TepCommon
             /// <param name="col">Номер столбца (-1: не применять действие к столбцам)</param>
             /// <param name="row">Номер строки (-1: не применять действие к строкам)</param>
             /// <param name="bCheckedItem">Признак участия в расчете/отображения</param>
-            public void UpdateStructure(PanelTepTaskValues.INDEX_ID indxDeny, int col, int row, bool bCheckedItem)
+            public void UpdateStructure(PanelTaskTepValues.INDEX_ID indxDeny, int col, int row, bool bCheckedItem)
             {
                 Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
 
@@ -553,19 +633,62 @@ namespace TepCommon
                         break;
                 }
             }
+
+            public void ShowValues(DataTable values)
+            {
+                int iCol = 0
+                    , iRow = 0;
+                DataRow[] cellRows = null;
+
+                foreach (HDataGridViewColumn col in Columns)
+                {
+                    if (iCol > 0)
+                        foreach (DataGridViewRow row in Rows)
+                        {
+                            cellRows = values.Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + (int)row.Cells[0].Value);
+
+                            if (cellRows.Length == 1)
+                            {
+                                row.Cells[iCol].Value = ((double)cellRows[0][@"VALUE"]).ToString(@"F1", System.Globalization.CultureInfo.InvariantCulture);
+                            }
+                            else
+                                ; //continue
+
+                            iRow++;
+                        }
+                    else
+                        ;
+
+                    iCol++;
+                }
+
+                foreach (DataRow r in values.Rows)
+                {
+                }
+            }
         }
 
         protected class PanelManagement : HPanelCommon
         {
+            public EventHandler DateTimeRangeValue_Changed;
+            public DateTimeRange m_dtRange;
+
             public PanelManagement() : base (8, 21)
             {
                 InitializeComponents ();
+
+                HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
+                    , hdtpEnd = Controls.Find(INDEX_CONTROL.HDTP_END.ToString(), true)[0] as HDateTimePicker;
+                m_dtRange = new DateTimeRange(hdtpBegin.Value, hdtpEnd.Value);
+                hdtpBegin.ValueChanged += new EventHandler(hdtpBegin_onValueChanged);
+                hdtpEnd.ValueChanged += new EventHandler (hdtpEnd_onValueChanged);
             }
 
             private void InitializeComponents ()
             {
                 Control ctrl = null;
                 int posRow = -1;
+                DateTime today = DateTime.Today;
 
                 SuspendLayout();
 
@@ -602,7 +725,7 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время начала периода расчета - значения
-                ctrl = new HDateTimePicker(2015, 1, 1, 1, null);
+                ctrl = new HDateTimePicker(today.Year, today.Month, today.Day, 1, null);
                 ctrl.Name = INDEX_CONTROL.HDTP_BEGIN.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
@@ -615,7 +738,7 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время  окончания периода расчета - значения
-                ctrl = new HDateTimePicker(2015, 1, 1, 24, Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
+                ctrl = new HDateTimePicker(today.Year, today.Month, today.Day, 2, Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                 ctrl.Name = INDEX_CONTROL.HDTP_END.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
@@ -700,10 +823,24 @@ namespace TepCommon
             {
                 initializeLayoutStyleEvenly ();
             }
+
+            private void hdtpBegin_onValueChanged(object obj, EventArgs ev)
+            {
+                m_dtRange.Set((obj as HDateTimePicker).Value, m_dtRange.End);
+
+                DateTimeRangeValue_Changed(this, EventArgs.Empty);
+            }
+
+            private void hdtpEnd_onValueChanged(object obj, EventArgs ev)
+            {
+                m_dtRange.Set(m_dtRange.Begin, (obj as HDateTimePicker).Value);
+
+                DateTimeRangeValue_Changed(this, EventArgs.Empty);
+            }
         }
     }
 
-    public partial class PanelTepTaskValues
+    public partial class PanelTaskTepValues
     {
         protected enum INDEX_CONTROL { UNKNOWN = -1
             , BUTTON_RUN

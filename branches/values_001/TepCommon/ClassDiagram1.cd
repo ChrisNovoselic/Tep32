@@ -58,18 +58,18 @@
       <FileName>HPanelEditTree.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="TepCommon.PanelTepPrjRolesAccess">
+  <Class Name="TepCommon.PanelPrjRolesAccess">
     <Position X="11.75" Y="2" Width="2" />
     <NestedTypes>
-      <Enum Name="TepCommon.PanelTepPrjRolesAccess.INDEX_CONTROL" Collapsed="true">
+      <Enum Name="TepCommon.PanelPrjRolesAccess.INDEX_CONTROL" Collapsed="true">
         <TypeIdentifier>
-          <NewMemberFileName>PanelTepPrjRolesAccess.cs</NewMemberFileName>
+          <NewMemberFileName>PanelPrjRolesAccess.cs</NewMemberFileName>
         </TypeIdentifier>
       </Enum>
     </NestedTypes>
     <TypeIdentifier>
       <HashCode>AEACAAAAEAIAAABAggEABAACAIAAAAAAAAAAAAIAAiA=</HashCode>
-      <FileName>PanelTepPrjRolesAccess.cs</FileName>
+      <FileName>PanelPrjRolesAccess.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="TepCommon.Properties.Resources" Collapsed="true">

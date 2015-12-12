@@ -34,16 +34,16 @@ namespace TepCommon
         /// </summary>
         private static bool[,] _matrixEnabled = new bool[(int)MODE.COUNT, (int)INDEX_CONTROL.COUNT] {
                     { true, true, true, false } //MODE.DAY
-                    , { false, true, true, false } //MODE>MONTH
+                    , { false, true, true, false } //MODE.MONTH
                     , { false, false, true, false } //MODE.YEAR
                     , { true, true, true, true }}; //MODE.CUSTOMIZE
-        /// <summary>
-        /// Текущие значения (номер года/месяца/дня/часа) в элементах управления
-        /// </summary>
-        private int _iYear
-            , _iMonth
-            , _iDay
-            , _iHour;
+        ///// <summary>
+        ///// Текущие значения (номер года/месяца/дня/часа) в элементах управления
+        ///// </summary>
+        //private int _iYear
+        //    , _iMonth
+        //    , _iDay
+        //    , _iHour;
 
         private MODE _mode;
         /// <summary>
@@ -73,10 +73,15 @@ namespace TepCommon
         /// Объект от значений которого зависят значения текущего объекта
         /// </summary>
         HDateTimePicker m_objLeading;
+
+        TimeSpan m_tsLeading;
         /// <summary>
         /// События изменения значения
         /// </summary>
         public event EventHandler ValueChanged;
+
+        //private DateTime _value;
+        public DateTime Value; //{ get { return _value; } }
         /// <summary>
         /// Изменить доступность элементов управления
         /// </summary>
@@ -193,26 +198,22 @@ namespace TepCommon
         public HDateTimePicker(int year, int month, int day, int hour, HDateTimePicker objLeading)
             : base(12, 1)
         {
-            _iYear = year;
-            _iMonth = month;
-            _iDay = day;
-            _iHour = hour;
+            Value = new DateTime(year, month, day, hour, 0 , 0);
 
             InitializeComponents();
 
             Mode = MODE.UNKNOWN;
 
             m_objLeading = objLeading;
-            if (! (m_objLeading == null))
+            if (!(m_objLeading == null))
+            {
                 m_objLeading.ValueChanged += new EventHandler(leading_ValueChanged);
+
+                m_tsLeading = Value - m_objLeading.Value;
+            }
             else
                 ;
         }
-
-        private static string[] months = { @"январь", @"февраль", @"март"
-            , @"апрель", @"май", @"июнь"
-            , @"июль", @"август", @"сентябрь"
-            , @"октябрь", @"ноябрь", @"декабрь" };
 
         protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
         {
@@ -225,6 +226,16 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         private void cbxDay_onSelectedIndexChanged(object obj, EventArgs ev)
         {
+            Value = new DateTime(
+                Value.Year
+                , Value.Month
+                , (obj as ComboBox).SelectedIndex + 1
+                , Value.Hour
+                , 0
+                , 0
+            );
+
+            onSelectedIndexChanged();
         }
         /// <summary>
         /// Обработчик события - изменения номера месяца
@@ -233,6 +244,16 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         private void cbxMonth_onSelectedIndexChanged(object obj, EventArgs ev)
         {
+            Value = new DateTime(
+                Value.Year
+                , (obj as ComboBox).SelectedIndex + 1
+                , Value.Day
+                , Value.Hour
+                , 0
+                , 0
+            );
+
+            onSelectedIndexChanged();
         }
         /// <summary>
         /// Обработчик события - изменения номера года
@@ -241,6 +262,16 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         private void cbxYear_onSelectedIndexChanged(object obj, EventArgs ev)
         {
+            Value = new DateTime(
+                (obj as ComboBox).SelectedIndex + (DateTime.Today.Year - s_iBackwardYears)
+                , Value.Month
+                , Value.Day
+                , Value.Hour
+                , 0
+                , 0
+            );
+
+            onSelectedIndexChanged();
         }
         /// <summary>
         /// Обработчик события - изменения номера часа
@@ -249,19 +280,73 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         private void cbxHour_onSelectedIndexChanged(object obj, EventArgs ev)
         {
+            Value = new DateTime(
+                Value.Year
+                , Value.Month
+                , Value.Day
+                , (obj as ComboBox).SelectedIndex + 1
+                , 0
+                , 0
+            );
+
+            onSelectedIndexChanged();
+        }
+
+        private void onSelectedIndexChanged()
+        {
+            if (!(m_objLeading == null))
+                m_tsLeading = Value - m_objLeading.Value;
+            else
+                ;
+
+            ValueChanged(this, EventArgs.Empty);
         }
         /// <summary>
-        /// Обработчик события - изменения значения в 
+        /// Обработчик события - изменения значения в "ведущем" календаре
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
         private void leading_ValueChanged (object obj, EventArgs ev)
         {
+            HDateTimePicker objLeading = obj as HDateTimePicker;
+            ComboBox cbxYear = null
+                , cbxMonth = null
+                , cbxDay = null
+                , cbxHour = null;
+            int iDiffYear = -1;
+            
+            //??? учитывать значение в "ведущем" календаре
+            iDiffYear = objLeading.Value.Year - Value.Year;
+            Value = objLeading.Value + m_tsLeading;
+
+            cbxYear = Controls.Find (INDEX_CONTROL.YEAR.ToString (), true)[0] as ComboBox;
+            cbxMonth = Controls.Find(INDEX_CONTROL.MONTH.ToString(), true)[0] as ComboBox;
+            cbxDay = Controls.Find(INDEX_CONTROL.DAY.ToString(), true)[0] as ComboBox;
+            cbxHour = Controls.Find(INDEX_CONTROL.HOUR.ToString(), true)[0] as ComboBox;
+
+            cbxYear.SelectedIndexChanged -= cbxYear_onSelectedIndexChanged;
+            cbxMonth.SelectedIndexChanged -= cbxMonth_onSelectedIndexChanged;
+            cbxDay.SelectedIndexChanged -= cbxDay_onSelectedIndexChanged;
+            cbxHour.SelectedIndexChanged -= cbxHour_onSelectedIndexChanged;
+
+            cbxYear.SelectedIndex += iDiffYear;
+            cbxMonth.SelectedIndex = Value.Month - 1;
+            cbxDay.SelectedIndex = Value.Day - 1;
+            cbxHour.SelectedIndex = Value.Hour - 1;
+
+            cbxYear.SelectedIndexChanged += new EventHandler(cbxYear_onSelectedIndexChanged);
+            cbxMonth.SelectedIndexChanged += new EventHandler(cbxMonth_onSelectedIndexChanged);
+            cbxDay.SelectedIndexChanged += new EventHandler(cbxDay_onSelectedIndexChanged);
+            cbxHour.SelectedIndexChanged += new EventHandler(cbxHour_onSelectedIndexChanged);            
+
+            ValueChanged (this, EventArgs.Empty);
         }
     }
 
     partial class HDateTimePicker
     {
+        private int s_iBackwardYears = 5
+            , s_iForwardYears = 6;
         /// <summary> 
         /// Требуется переменная конструктора.
         /// </summary>
@@ -309,7 +394,7 @@ namespace TepCommon
             SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
             for (i = 0; i < 31; i++)
                 (ctrl as ComboBox).Items.Add(i + 1);
-            (ctrl as ComboBox).SelectedIndex = _iDay - 1;
+            (ctrl as ComboBox).SelectedIndex = Value.Day - 1;
             (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxDay_onSelectedIndexChanged);
 
             //Дата - наименование месяца
@@ -321,8 +406,8 @@ namespace TepCommon
             Controls.Add(ctrl, 2, 0);
             SetColumnSpan(ctrl, 5); SetRowSpan(ctrl, 1);
             for (i = 0; i < 12; i++)
-                (ctrl as ComboBox).Items.Add(months[i]);
-            (ctrl as ComboBox).SelectedIndex = _iMonth - 1;
+                (ctrl as ComboBox).Items.Add(HDateTime.NameMonths[i]);
+            (ctrl as ComboBox).SelectedIndex = Value.Month - 1;
             (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxMonth_onSelectedIndexChanged);
 
             //Дата - год
@@ -333,9 +418,9 @@ namespace TepCommon
             (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
             Controls.Add(ctrl, 7, 0);
             SetColumnSpan(ctrl, 3); SetRowSpan(ctrl, 1);
-            for (i = 10; i < 21; i++)
-                (ctrl as ComboBox).Items.Add(@"20" + i.ToString());
-            (ctrl as ComboBox).SelectedIndex = _iYear - (2000 + 10);
+            for (i = (Value.Year - s_iBackwardYears); i < (Value.Year + s_iForwardYears); i++)
+                (ctrl as ComboBox).Items.Add(i.ToString());
+            (ctrl as ComboBox).SelectedIndex = Value.Year - (Value.Year - s_iBackwardYears);
             (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxYear_onSelectedIndexChanged);
 
             //Время - час
@@ -348,7 +433,7 @@ namespace TepCommon
             SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
             for (i = 0; i < 24; i++)
                 (ctrl as ComboBox).Items.Add(i + 1);
-            (ctrl as ComboBox).SelectedIndex = _iHour - 1;
+            (ctrl as ComboBox).SelectedIndex = Value.Hour - 1;
             (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxHour_onSelectedIndexChanged);
 
             ResumeLayout(false);

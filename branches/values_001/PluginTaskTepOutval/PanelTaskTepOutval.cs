@@ -10,7 +10,7 @@ using InterfacePlugIn;
 
 namespace PluginTaskTepOutval
 {
-    public class PanelTaskTepOutval : PanelTepTaskValues
+    public class PanelTaskTepOutval : PanelTaskTepValues
     {
         public PanelTaskTepOutval(IPlugIn iFunc)
             : base(iFunc, @"outalg", @"output")
