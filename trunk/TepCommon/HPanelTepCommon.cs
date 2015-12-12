@@ -79,7 +79,7 @@ namespace TepCommon
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HPanelEdit::Initialize () - BeginInvoke (initialize) - ...");
+                Logging.Logg().Exception(e, @"HPanelEdit::Initialize () - BeginInvoke (initialize) - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
 

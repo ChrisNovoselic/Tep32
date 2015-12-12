@@ -43,16 +43,22 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Define.cs" />
+    <Compile Include="HandlerDbTepTaskValues.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="HPanelTepCommon.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="PanelTepPrjParametersEditTree.cs">
+    <Compile Include="PanelPrjParametersEditTree.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="PanelTepPrjRolesAccess.cs">
+    <Compile Include="PanelPrjRolesAccess.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="PanelTepTaskValues.cs">
+    <Compile Include="PanelTaskTepValues.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

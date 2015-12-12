@@ -11,7 +11,7 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public abstract class PanelTepPrjRolesAccess : HPanelEditListCommon
+    public abstract class PanelPrjRolesAccess : HPanelEditListCommon
     {
         string m_query;
         string m_nameTableAccessUnit;
@@ -28,7 +28,7 @@ namespace TepCommon
         };
         protected static string[] m_arButtonText = { @"Сохранить", @"Обновить" };
 
-        public PanelTepPrjRolesAccess(IPlugIn iFunc, string nameTableTarget, string idFields, string nameTableAccessUnit, string strNameFieldValue)
+        public PanelPrjRolesAccess(IPlugIn iFunc, string nameTableTarget, string idFields, string nameTableAccessUnit, string strNameFieldValue)
             : base(iFunc, nameTableTarget, idFields)
         {
             m_nameTableAccessUnit = nameTableAccessUnit;
@@ -144,7 +144,7 @@ namespace TepCommon
 
             if (err == 0)
             {
-                Logging.Logg().Debug(@"PanelTepPrjRolesAccess::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(@"PanelPrjRolesAccess::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 DataGridView dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString (), true)[0] as DataGridView;
                 if (m_tblAccessUnit.Rows.Count > 0)
@@ -248,7 +248,7 @@ namespace TepCommon
                 for (int i = 0; i < dgv.Rows.Count; i++)
                     ((DataGridViewCheckBoxCell)dgv.Rows[i].Cells[1]).Value = Int16.Parse(rowsAccessUnit[i][m_strNameFieldValue].ToString()) == 1;
             else
-                throw new Exception(@"PanelTepPrjRolesAccess::setPrjAccessValues () - кол-во строк в БД и элементе упр-я НЕ совпадает...");
+                throw new Exception(@"PanelPrjRolesAccess::setPrjAccessValues () - кол-во строк в БД и элементе упр-я НЕ совпадает...");
         }
     }
 }

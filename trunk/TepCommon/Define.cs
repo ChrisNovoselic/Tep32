@@ -10,4 +10,14 @@ namespace TepCommon
         MAIN_DB,
         COUNT_CONN_SETT_TYPE,
     };
+
+    public enum ID_TIME
+    {
+        HOUR = 13
+        , SHIFTS = 18
+        , DAY = 19
+        , MONTH = 24
+        , YEAR = 100
+        ,
+    }
 }

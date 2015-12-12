@@ -12,7 +12,7 @@ using InterfacePlugIn;
 
 namespace PluginPrjOutParameters
 {
-    public class PanelPrjOutParameters : PanelTepPrjParametersEditTree
+    public class PanelPrjOutParameters : PanelPrjParametersEditTree
     {
         public PanelPrjOutParameters(IPlugIn iFunc)
             : base(iFunc, @"outalg, output")
@@ -32,11 +32,11 @@ namespace PluginPrjOutParameters
         {
             //Вариант №1-1
             m_listLevelParameters = new List<LEVEL_PARAMETERS>();
-            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.TASK], @"ID", string.Empty, @"DESCRIPTION"));
-            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableOrigin[(int)INDEX_PARAMETER.ALGORITM], @"ID", @"ID_TASK={ID_PARENT_0}", @"N_ALG"));
-            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.TIME], @"ID", string.Empty, @"DESCRIPTION"));
-            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableOrigin[(int)INDEX_PARAMETER.PUT], @"ID_COMP,ID", @"ID_ALG={ID_PARENT_1} AND ID_TIME={ID_PARENT_0}", string.Empty));
-            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.COMP_LIST], string.Empty, @"ID={ID_PARENT_1}", @"DESCRIPTION"));
+            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.TASK], @"ID", string.Empty, @"DESCRIPTION", string.Empty));
+            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableOrigin[(int)INDEX_PARAMETER.ALGORITM], @"ID", @"ID_TASK={ID_PARENT_0}", @"N_ALG", @"NAME_SHR"));
+            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.TIME], @"ID", string.Empty, @"DESCRIPTION", string.Empty));
+            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableOrigin[(int)INDEX_PARAMETER.PUT], @"ID_COMP,ID", @"ID_ALG={ID_PARENT_1} AND ID_TIME={ID_PARENT_0}", string.Empty, string.Empty));
+            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.COMP_LIST], string.Empty, @"ID={ID_PARENT_1}", @"DESCRIPTION", string.Empty));
 
             ////Вариант №1-2
             //m_listLevelParameters = new List<LEVEL_PARAMETERS>();
