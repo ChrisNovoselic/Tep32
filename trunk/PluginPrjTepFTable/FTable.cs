@@ -12,21 +12,78 @@ namespace PluginPrjTepFTable
     public class FTable
     {
         /// <summary>
+        /// Перечисление для обозночения уровня точки, функции
+        /// </summary>
+        public enum FRUNK { F1, F2, F3 }
+        /// <summary>
         /// Структура для хранения значений для одной из точек функции
         /// </summary>
         protected struct POINT
         {
+            /// <summary>
+            /// Уровень для точки
+            /// </summary>
+            public FRUNK Runk;
+            /// <summary>
+            /// Идентификатор строки в таблице БД
+            /// </summary>
             public int m_idRec;
-            public double a1
+            /// <summary>
+            /// Значение для точки
+            /// </summary>
+            public float a1
                 , a2
                 , a3
                 , f;
+            /// <summary>
+            /// Конструктор основной (с параметрами)
+            /// </summary>
+            /// <param name="id">Идентификатор записи в таблице БД</param>
+            /// <param name="a1">1-ый аргумент</param>
+            /// <param name="a2">2-ой аргумент</param>
+            /// <param name="a3">3-ий аргумент</param>
+            /// <param name="f">Значение функции для аргументов</param>
+            public POINT (int id, float a1, float a2, float a3, float f)
+            {
+                m_idRec = id;
+                this.a1 = a1;
+                this.a2 = a2;
+                this.a3 = a3;
+                this.f = f;
+
+                Runk = ((!(a2 == 0F)) || (!(a3 == 0F))) ? (!(a3 == 0F)) ? FRUNK.F3 : (!(a2 == 0F)) ? FRUNK.F2 : FRUNK.F1 : FRUNK.F1;
+            }
         }
         /// <summary>
         /// Класс для хранения списка всех значений одной функции
         /// </summary>
         protected class ListPOINT : List<POINT>
         {
+            /// <summary>
+            /// Уровень функции
+            /// </summary>
+            public FRUNK Runk
+            {
+                get
+                {
+                    FRUNK runkRes = FRUNK.F1;
+
+                    foreach (POINT p in this)
+                        if (runkRes < p.Runk)
+                        {
+                            runkRes = p.Runk;
+
+                            if (runkRes == FRUNK.F3)
+                                break;
+                            else
+                                ;
+                        }
+                        else
+                            ;
+
+                    return runkRes;
+                }
+            }
         }
         /// <summary>
         /// Словарь со значениями для всех функций
@@ -78,6 +135,8 @@ namespace PluginPrjTepFTable
             Set(src);
         }
 
+        public FRUNK GetRunk(string nAlg) { return m_dictValues[nAlg].Runk; }
+
         public void Set(DataTable src)
         {
             string nAlg = string.Empty;
@@ -86,20 +145,18 @@ namespace PluginPrjTepFTable
 
             foreach (DataRow r in src.Rows)
             {
-                nAlg = (string)r[@"N_ALG"];
+                nAlg = ((string)r[@"N_ALG"]).Trim();
 
                 if (m_dictValues.Keys.Contains(nAlg) == false)
                     m_dictValues.Add(nAlg, new ListPOINT());
                 else
                     ;
 
-                m_dictValues[nAlg].Add(new POINT() { 
-                    m_idRec = (int)r[@"ID"]
-                    , a1 = (double)r[@"A1"]
-                    , a2 = (double)r[@"A2"]
-                    , a3 = (double)r[@"A3"]
-                    , f = (double)r[@"F"]
-                });
+                m_dictValues[nAlg].Add(new POINT((int)r[@"ID"]
+                    , (float)r[@"A1"]
+                    , (float)r[@"A2"]
+                    , (float)r[@"A3"]
+                    , (float)r[@"F"]));
             }
         }
         /// <summary>
@@ -357,7 +414,7 @@ namespace PluginPrjTepFTable
         /// <param name="nAlg">Наменование функции</param>
         /// <param name="args">Аргументы для вычисления функции</param>
         /// <returns></returns>
-        public double Calculate (string nAlg, params double []args)
+        public double Calculate (string nAlg, params float []args)
         {
             double dblRes = -1F;
 

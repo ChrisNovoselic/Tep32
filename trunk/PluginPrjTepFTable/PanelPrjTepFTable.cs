@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Data; //DataTable
@@ -85,7 +86,7 @@ namespace PluginPrjTepFTable
                     if (listNAlg.Contains(strItem) == false)
                     {
                         listNAlg.Add(strItem);
-                        dgv.Rows.Add(strItem, string.Empty);
+                        dgv.Rows.Add(strItem, string.Empty, r[@"ID"]);
                     }
                     else
                         ;
@@ -131,25 +132,57 @@ namespace PluginPrjTepFTable
         private void dgvnALG_onSelectionChanged(object obj, EventArgs ev)
         {
             DataGridView dgv = obj as DataGridView;
+            TextBox tbValue = null;
+            FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки/сеятия с отображения столбцов
             DataRow[] rowsNAlg = null;
             int iSelIndex = dgv.SelectedRows.Count > 0 ? dgv.SelectedRows[0].Index : -1;
+
+            for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
+                (Controls.Find(indx.ToString(), true)[0] as TextBox).TextChanged -= tbCalcValue_onTextChanged;
 
             dgv = Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView;
             dgv.Rows.Clear();
 
             if (!(iSelIndex < 0))
             {
+                runk = m_zGraph_fTABLE.GetRunk(NAlg);
+                
                 rowsNAlg = m_tblEdit.Select(@"N_ALG='" + NAlg + @"'");
 
                 foreach (DataRow r in rowsNAlg)
-                    dgv.Rows.Add(r[@"A1"]
-                        , r[@"A2"]
-                        , r[@"A3"]
-                        , r[@"F"]
+                    dgv.Rows.Add(((float)r[@"A1"]).ToString(CultureInfo.InvariantCulture)
+                        , ((float)r[@"A2"]).ToString(CultureInfo.InvariantCulture)
+                        , ((float)r[@"A3"]).ToString(CultureInfo.InvariantCulture)
+                        , ((float)r[@"F"]).ToString(CultureInfo.InvariantCulture)
+                        , r[@"ID"]
                 );
+
+                switch (runk)
+                {
+                    case FTable.FRUNK.F1:// блокировать/снять с отображения 2-ой, 3-ий столбец
+                        dgv.Columns[1].Visible =
+                        dgv.Columns[2].Visible =
+                            false;
+                        break;
+                    case FTable.FRUNK.F2:// блокировать/снять с отображения 3-ий столбец
+                        dgv.Columns[1].Visible = true;
+                        dgv.Columns[2].Visible = false;
+                        break;
+                    case FTable.FRUNK.F3:// ничего не блокируется
+                        dgv.Columns[0].Visible =
+                        dgv.Columns[1].Visible =
+                        dgv.Columns[2].Visible =
+                            true;
+                        break;
+                    default:
+                        break;
+                }
             }
             else
                 ;
+
+            for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
+                (Controls.Find(indx.ToString(), true)[0] as TextBox).TextChanged += new EventHandler (tbCalcValue_onTextChanged);
         }
         /// <summary>
         /// Обработчик события - изменение выбранной строки
@@ -160,26 +193,56 @@ namespace PluginPrjTepFTable
         private void dgvValues_onSelectionChanged(object obj, EventArgs ev)
         {
             DataGridView dgv = obj as DataGridView;
+            FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки полей ввода
             TextBox tbValue = null; // элемент управления - поле для ввода текста
             int iSelIndex = dgv.SelectedRows.Count > 0 ? dgv.SelectedRows[0].Index : -1;
-            // очистить поля ввода калькулятора
-            for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
-            {
-                tbValue = Controls.Find(indx.ToString(), true)[0] as TextBox;
-                tbValue.Text = string.Empty;
-            }
+            //// отменить обработку событий "изменение текста", очистить поля ввода калькулятора
+            //for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
+            //{
+            //    tbValue = Controls.Find(indx.ToString(), true)[0] as TextBox;
+            //    if (indx < INDEX_CONTROL.TEXTBOX_F)
+            //        tbValue.TextChanged -= tbCalcValue_onTextChanged;
+            //    else
+            //        ;
+            //    tbValue.Text = string.Empty;
+            //}
 
             if (!(iSelIndex < 0))
             {
+                runk = m_zGraph_fTABLE.GetRunk(NAlg);
                 // установить новые значения в поля ввода для калькулятора
                 for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
                 {
                     tbValue = Controls.Find(indx.ToString(), true)[0] as TextBox;
                     tbValue.Text = dgv.Rows[iSelIndex].Cells[(int)(indx - INDEX_CONTROL.TEXTBOX_A1)].Value.ToString();
                 }
+
+                switch (runk)
+                {
+                    case FTable.FRUNK.F1:// блокировать 2-ое, 3-е поле ввода
+                        (Controls.Find(INDEX_CONTROL.TEXTBOX_A2.ToString(), true)[0] as TextBox).Enabled =
+                        (Controls.Find(INDEX_CONTROL.TEXTBOX_A3.ToString(), true)[0] as TextBox).Enabled =
+                            false;
+                        break;
+                    case FTable.FRUNK.F2:// блокировать 3-е поле ввода
+                        (Controls.Find(INDEX_CONTROL.TEXTBOX_A2.ToString(), true)[0] as TextBox).Enabled = true;
+                        (Controls.Find(INDEX_CONTROL.TEXTBOX_A3.ToString(), true)[0] as TextBox).Enabled = false;
+                        break;
+                    case FTable.FRUNK.F3:// ничего не блокируется
+                        (Controls.Find(INDEX_CONTROL.TEXTBOX_A1.ToString(), true)[0] as TextBox).Enabled =
+                        (Controls.Find(INDEX_CONTROL.TEXTBOX_A2.ToString(), true)[0] as TextBox).Enabled =
+                        (Controls.Find(INDEX_CONTROL.TEXTBOX_A3.ToString(), true)[0] as TextBox).Enabled =
+                            true;
+                        break;
+                    default:
+                        break;
+                }
             }
             else
                 ;
+            //// восстановить обработчики событий
+            //for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F); indx++)
+            //    (Controls.Find(indx.ToString(), true)[0] as TextBox).TextChanged += new EventHandler(tbCalcValue_onTextChanged);
         }
         /// <summary>
         /// Обработка события при успешной синхронизации целевойй таблицы в БД
@@ -315,9 +378,13 @@ namespace PluginPrjTepFTable
             dgv.AllowUserToResizeRows = false;
             dgv.ColumnCount = 5;
             dgv.Columns[0].Name = "A1";
+            dgv.Columns[0].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight; 
             dgv.Columns[1].Name = "A2";
+            dgv.Columns[1].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgv.Columns[2].Name = "A3";
+            dgv.Columns[2].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgv.Columns[3].Name = "F";
+            dgv.Columns[3].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgv.Columns[4].Name = "ID_REC";
             dgv.Columns[4].Visible = false;
 
@@ -360,7 +427,7 @@ namespace PluginPrjTepFTable
             //
             lblValue = new System.Windows.Forms.Label();
             lblValue.Dock = DockStyle.Bottom;
-            lblValue.Text = @"Результат";
+            lblValue.Text = @"Результат";            
             tabl.Controls.Add(lblValue, 0, 2);
             //
             lblValue = new System.Windows.Forms.Label();
@@ -371,21 +438,29 @@ namespace PluginPrjTepFTable
             //Текстовые поля для данных калькулятора
             TextBox tbValue = new TextBox();
             tbValue.Name = INDEX_CONTROL.TEXTBOX_A1.ToString();
+            tbValue.TextChanged += tbCalcValue_onTextChanged;
+            tbValue.TextAlign = HorizontalAlignment.Right;
             tbValue.Dock = DockStyle.Fill;
             tabl.Controls.Add(tbValue, 0, 1);
 
             tbValue = new TextBox();
-            tbValue.Name = INDEX_CONTROL.TEXTBOX_A2.ToString();
+            tbValue.Name = INDEX_CONTROL.TEXTBOX_A2.ToString();            
+            tbValue.TextChanged += tbCalcValue_onTextChanged;
+            tbValue.TextAlign = HorizontalAlignment.Right;
             tbValue.Dock = DockStyle.Fill;
             tabl.Controls.Add(tbValue, 1, 1);
 
             tbValue = new TextBox();
-            tbValue.Name = INDEX_CONTROL.TEXTBOX_A3.ToString();
+            tbValue.Name = INDEX_CONTROL.TEXTBOX_A3.ToString();            
+            tbValue.TextChanged += tbCalcValue_onTextChanged;
+            tbValue.TextAlign = HorizontalAlignment.Right;
             tbValue.Dock = DockStyle.Fill;
             tabl.Controls.Add(tbValue, 2, 1);            
 
             tbValue = new TextBox();
             tbValue.Name = INDEX_CONTROL.TEXTBOX_F.ToString();
+            tbValue.TextChanged += tbCalcValue_onTextChanged;
+            tbValue.TextAlign = HorizontalAlignment.Right;
             tbValue.Dock = DockStyle.Fill;
             tbValue.ReadOnly = true;
             tabl.Controls.Add(tbValue, 3, 1);
@@ -490,6 +565,9 @@ namespace PluginPrjTepFTable
                     break;
             }
         }
+        /// <summary>
+        /// СТрока - наименование текущей (выбранной) функции
+        /// </summary>
         private string NAlg
         {
             get
@@ -580,6 +658,18 @@ namespace PluginPrjTepFTable
         {
             m_tblEdit.Rows[indx].Delete();
             m_tblEdit.AcceptChanges();
+        }
+
+        private void tbCalcValue_onTextChanged(object obj, EventArgs ev)
+        {
+            FTable.FRUNK runk = m_zGraph_fTABLE.GetRunk(NAlg);
+            float[] pars = new float[(int)runk + 1];
+            for (int indx = 0; indx < pars.Length; indx++)
+                pars[indx] =
+                    float.Parse((Controls.Find(((INDEX_CONTROL)(indx + (int)INDEX_CONTROL.TEXTBOX_A1)).ToString (), true)[0] as TextBox).Text, CultureInfo.InvariantCulture);
+
+            (Controls.Find(INDEX_CONTROL.TEXTBOX_F.ToString(), true)[0] as TextBox).Text =
+               m_zGraph_fTABLE.Calculate(NAlg, pars).ToString (@"F2");
         }
     }
 
