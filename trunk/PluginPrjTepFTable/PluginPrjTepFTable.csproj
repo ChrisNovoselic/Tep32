@@ -53,10 +53,12 @@
   <ItemGroup>
     <Compile Include="DataGridViewAutoFilterColumnHeaderCell.cs" />
     <Compile Include="DataGridViewAutoFilterTextBoxColumn.cs" />
-    <Compile Include="PluginPrjTepFTable.cs">
+    <Compile Include="FTable.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PanelPrjTepFTable.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ZedGraphFTable.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
