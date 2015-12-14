@@ -15,6 +15,7 @@ namespace PluginPrjTepFTable
         /// Перечисление для обозночения уровня точки, функции
         /// </summary>
         public enum FRUNK { F1, F2, F3 }
+
         /// <summary>
         /// Структура для хранения значений для одной из точек функции
         /// </summary>
@@ -54,6 +55,7 @@ namespace PluginPrjTepFTable
                 Runk = ((!(a2 == 0F)) || (!(a3 == 0F))) ? (!(a3 == 0F)) ? FRUNK.F3 : (!(a2 == 0F)) ? FRUNK.F2 : FRUNK.F1 : FRUNK.F1;
             }
         }
+
         /// <summary>
         /// Класс для хранения списка всех значений одной функции
         /// </summary>
@@ -85,6 +87,7 @@ namespace PluginPrjTepFTable
                 }
             }
         }
+
         /// <summary>
         /// Словарь со значениями для всех функций
         ///  (ключ - наименование функции)
@@ -122,6 +125,7 @@ namespace PluginPrjTepFTable
         /// Значение-строка
         /// </summary>
         protected string referencePoint;
+
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
@@ -130,13 +134,26 @@ namespace PluginPrjTepFTable
             m_dictValues = new Dictionary<string, ListPOINT>();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="src"></param>
         public FTable(DataTable src) : this ()
         {
             Set(src);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="nAlg"></param>
+        /// <returns></returns>
         public FRUNK GetRunk(string nAlg) { return m_dictValues[nAlg].Runk; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="src"></param>
         public void Set(DataTable src)
         {
             string nAlg = string.Empty;
@@ -159,6 +176,7 @@ namespace PluginPrjTepFTable
                     , (float)r[@"F"]));
             }
         }
+
         /// <summary>
         /// Создание массива с данными всех значений одной функции
         /// Заполняет значениями функции для работы с ними.
@@ -168,6 +186,7 @@ namespace PluginPrjTepFTable
         {
             //ValuesFunc = ...;
         }
+
         /// <summary>
         /// Проверка на вложеность
         /// числа в диапазон первых минимумов
@@ -177,16 +196,34 @@ namespace PluginPrjTepFTable
         {
             if (((Convert.ToDouble(referencePoint)) < min2) && ((Convert.ToDouble(referencePoint)) > min1))
                 for (int i = 0; i < ValuesFunc.Length; i++)
-                    if (condition == true)
+                {
+                    if (calcCondition(i, columnName,) == true)
                         interpolation(columnName);
                     else
                         ;
+        }
             else
-                if (condition == true)
+                for (int i = 0; i < ValuesFunc.Length; i++)
+			{
+			 if (calcCondition(i,columnName,) == true)
                     extrapolation(columnName);
                 else
                     ;
+			}     
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="i">строка</param>
+        /// <param name="colName">имя колонки</param>
+        /// <param name="minX">минимум</param>
+        /// <returns></returns>
+        private bool calcCondition(int i,string colName, double minX)
+        {
+            return Convert.ToDouble(ValuesFunc[i][colName].ToString()) == minX;
+        }
+
         /// <summary>
         /// Интерполяция значений функции
         /// </summary>
@@ -195,7 +232,7 @@ namespace PluginPrjTepFTable
         {
             for (int i = 0; i < ValuesFunc.Length; i++)
             {
-                if (testConditionMIN1(i, columnName) == true)
+                if (testConditionMIN1(i, columnName,) == true)
                 {
                     min1 = Convert.ToDouble(ValuesFunc[i][columnName].ToString());
                     metka1 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
@@ -203,7 +240,7 @@ namespace PluginPrjTepFTable
                 else
                     ;
 
-                if (testConditionMIN2(i, columnName) == true)
+                if (testConditionMIN2(i, columnName,) == true)
                 {
                     min2 = Convert.ToDouble(ValuesFunc[i][columnName].ToString());
                     metka2 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
@@ -212,6 +249,7 @@ namespace PluginPrjTepFTable
                     ;
             }
         }
+
         /// <summary>
         /// Проверка условия интерполяции 
         /// для нахождения MIN1
@@ -219,11 +257,11 @@ namespace PluginPrjTepFTable
         /// <param name="i">номер строки</param>
         /// <param name="column">имя столбца</param>
         /// <returns>Признак выполнения условия</returns>
-        private bool testConditionMIN1(int i, string column)
+        private bool testConditionMIN1(int i, string column, int param)
         {
             bool bRes = false;
 
-            double m_selectedCell = Convert.ToDouble(referencePoint);
+            double m_selectedCell = Convert.ToDouble(param);
             double m_onePeremen = m_selectedCell - Convert.ToDouble(ValuesFunc[i][column]);
             double m_twoPeremen = m_selectedCell - min1;
 
@@ -241,11 +279,11 @@ namespace PluginPrjTepFTable
         /// <param name="i">номер строки</param>
         /// <param name="column">имя столбца массива</param>
         /// <returns>Признак выполнения условия</returns>
-        private bool testConditionMIN2(int i, string column)
+        private bool testConditionMIN2(int i, string column, int param)
         {
             bool bRes = false;
 
-            double m_selectedCell = Convert.ToDouble(referencePoint);
+            double m_selectedCell = Convert.ToDouble(param);
             double m_onePeremen = Convert.ToDouble(ValuesFunc[i][column]) - m_selectedCell;
             double m_twoPeremen = min2 - m_selectedCell;
 
@@ -273,6 +311,7 @@ namespace PluginPrjTepFTable
                     metka1 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
                     bflag1 = false;
                 }
+                else ;
 
                 if (bflag2 == true && min1 == Convert.ToDouble(ValuesFunc[i][column]))
                 {
@@ -280,11 +319,13 @@ namespace PluginPrjTepFTable
                     metka2 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
                     bflag2 = false;
                 }
+                else ;
 
                 if (bflag1 == false && bflag2 == false)
                 {
                     ABSfunc(i, column);
                 }
+                else ;
             }
         }
         /// <summary>
@@ -293,7 +334,7 @@ namespace PluginPrjTepFTable
         /// </summary>
         /// <param name="i"></param>
         /// <param name="n_column"></param>
-        private void ABSfunc(int i, string n_column)
+        private void ABSfunc(int i, string n_column, string )
         {
             double oneParam = Convert.ToDouble(referencePoint);
             double peremen1 = Math.Abs(oneParam - Convert.ToDouble(ValuesFunc[i][n_column].ToString()));
@@ -307,6 +348,7 @@ namespace PluginPrjTepFTable
                     min2 = min1;
                     metka2 = metka1;
                 }
+
                 min1 = Convert.ToDouble(ValuesFunc[i][n_column].ToString());
                 metka1 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
             }
@@ -319,6 +361,7 @@ namespace PluginPrjTepFTable
                 }
             }
         }
+
         /// <summary>
         /// Определение границ диапазона
         /// аргумента от наименьшего до наибольшего
@@ -326,20 +369,25 @@ namespace PluginPrjTepFTable
         /// <param name="nameColumn">имя колонки</param>
         private void searchMainMIN(string nameColumn)
         {
+            double minX1 = Math.Exp(15)
+          , minX2 = -1 * Math.Exp(15);
+
             for (int i = 0; i < ValuesFunc.Length; i++)
                 if (condition == true)
                 {
-                    if (Convert.ToDouble(ValuesFunc[i][nameColumn]) < min1)
+                    if (Convert.ToDouble(ValuesFunc[i][nameColumn]) < minX1)
                     {
                         min1 = Convert.ToDouble(ValuesFunc[i][nameColumn]);
+                        minX1 = Convert.ToDouble(ValuesFunc[i][nameColumn]);
                         metka1 = Convert.ToDouble(ValuesFunc[i]["F"].ToString());
                     }
                     else
                         ;
 
-                    if (Convert.ToDouble(ValuesFunc[i][nameColumn]) > min2)
+                    if (Convert.ToDouble(ValuesFunc[i][nameColumn]) > minX2)
                     {
                         min2 = Convert.ToDouble(ValuesFunc[i][nameColumn]);
+                        minX2 = Convert.ToDouble(ValuesFunc[i][nameColumn]);
                         metka2 = Convert.ToDouble(ValuesFunc[i]["F"].ToString());
                     }
                     else
@@ -347,7 +395,8 @@ namespace PluginPrjTepFTable
                 }
                 else
                     ;
-        }        
+        } 
+       
         /// <summary>
         /// Функция нахождения реперных точек
         /// с одним параметром
@@ -356,7 +405,8 @@ namespace PluginPrjTepFTable
         protected virtual void funcWithOneArgs(string nameCol, string filter)
         {
             searchMainMIN(nameCol);
-        }        
+        }   
+     
         /// <summary>
         /// Фильтрация массива-функции
         /// сравнение значений массива с найденными минимумами
@@ -398,6 +448,7 @@ namespace PluginPrjTepFTable
             }
             //???
         }
+
         /// <summary>
         /// вычисление конечного (return)
         /// результата
@@ -406,7 +457,8 @@ namespace PluginPrjTepFTable
         private double obtaingPointMain(double metka1, double metka2, double min1, double min2, double refPoint)
         {
             return ((Convert.ToDouble(refPoint) - min1) * (metka2 - metka1)) / (min2 - min1) + metka1;
-        }        
+        }  
+      
         /// <summary>
         /// Вычислить значения для функции
         ///  по заданным аргументам
@@ -417,6 +469,8 @@ namespace PluginPrjTepFTable
         public double Calculate (string nAlg, params float []args)
         {
             double dblRes = -1F;
+
+
 
             return dblRes;
         }

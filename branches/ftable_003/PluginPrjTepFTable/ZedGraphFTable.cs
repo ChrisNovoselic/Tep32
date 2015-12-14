@@ -23,6 +23,7 @@ namespace PluginPrjTepFTable
                                                  Color.BlueViolet, Color.Plum, Color.YellowGreen,
                                                  Color.Moccasin, Color.DarkTurquoise,Color.Maroon};
         public ZedGraphControl m_This;
+
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
@@ -35,6 +36,7 @@ namespace PluginPrjTepFTable
         }
 
         PointPairList []pointList;
+
         /// <summary>
         /// Инициализация собственных компонентов элемента управления
         /// </summary>
@@ -74,6 +76,7 @@ namespace PluginPrjTepFTable
             m_This.IsEnableVZoom = false;
             m_This.IsShowPointValues = true;
         }
+
         /// <summary>
         /// Отображение графика функции
         /// по аргументу
@@ -114,6 +117,7 @@ namespace PluginPrjTepFTable
             m_This.Invalidate();
             m_This.Refresh();
         }
+
         /// <summary>
         /// Формированре масива 
         /// значений для графика функции
@@ -204,6 +208,7 @@ namespace PluginPrjTepFTable
 
             createGraphs();
         }
+
         /// <summary>
         /// Функция нахождения реперных точек
         /// с одним параметром
@@ -211,21 +216,21 @@ namespace PluginPrjTepFTable
         /// <param name="colCount">кол-во аргументов</param>
         protected override void funcWithOneArgs(string nameCol, string filter)
         {
-            base.funcWithOneArgs(nameCol, filter);
-
             formingArrayValues(filter);
         }
+
         /// <summary>
         /// Функция нахождения реперных точек
         /// с двумя параметрами
         /// </summary>
         /// <param name="nameCol"></param>
         /// <param name="filter"></param>
-        protected void funcWithTwoArgs(string nameCol, string filter)
+        protected void funcWithTwoArgs(string filter)
         {
             //searchMainMIN(nameCol);
             formingArrayValues(filter);
         }
+
         /// <summary>
         /// Функция нахождения реперных точек
         /// с тремя парметрами

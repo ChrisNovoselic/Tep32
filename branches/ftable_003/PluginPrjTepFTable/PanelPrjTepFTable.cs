@@ -25,6 +25,7 @@ namespace PluginPrjTepFTable
         DataTable m_tblOrigin
             , m_tblEdit;
         ZedGraphFTable m_zGraph_fTABLE; // график фукнции
+
         /// <summary>
         /// Набор элементов
         /// </summary>
@@ -42,10 +43,12 @@ namespace PluginPrjTepFTable
             TEXTBOX_F, TEXTBOX_REZULT, GRPBOX_CALC,
             COMBOBOX_PARAM
         };
+
         /// <summary>
         /// Набор текстов для подписей для кнопок
         /// </summary>
         protected static string[] m_arButtonText = { @"Сохранить", @"Обновить", @"Добавить", @"Удалить" };
+
         /// <summary>
         /// Установить признак активности текущему объекту
         /// </summary>
@@ -55,6 +58,7 @@ namespace PluginPrjTepFTable
         {
             return base.Activate(activate);
         }
+
         /// <summary>
         /// Инициализация
         /// </summary>
@@ -96,6 +100,7 @@ namespace PluginPrjTepFTable
             Logging.Logg().Debug(@"PluginTepPrjFTable::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
 
         }
+
         /// <summary>
         /// Функция динамического поиска
         /// </summary>
@@ -132,8 +137,8 @@ namespace PluginPrjTepFTable
         private void dgvnALG_onSelectionChanged(object obj, EventArgs ev)
         {
             DataGridView dgv = obj as DataGridView;
-            TextBox tbValue = null;
-            FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки/сеятия с отображения столбцов
+            //TextBox tbValue = null;
+            FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки/снятия с отображения столбцов
             DataRow[] rowsNAlg = null;
             int iSelIndex = dgv.SelectedRows.Count > 0 ? dgv.SelectedRows[0].Index : -1;
 
@@ -196,6 +201,7 @@ namespace PluginPrjTepFTable
             FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки полей ввода
             TextBox tbValue = null; // элемент управления - поле для ввода текста
             int iSelIndex = dgv.SelectedRows.Count > 0 ? dgv.SelectedRows[0].Index : -1;
+
             //// отменить обработку событий "изменение текста", очистить поля ввода калькулятора
             //for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
             //{
@@ -211,7 +217,7 @@ namespace PluginPrjTepFTable
             {
                 runk = m_zGraph_fTABLE.GetRunk(NAlg);
                 // установить новые значения в поля ввода для калькулятора
-                for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
+                for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F +1); indx++)
                 {
                     tbValue = Controls.Find(indx.ToString(), true)[0] as TextBox;
                     tbValue.Text = dgv.Rows[iSelIndex].Cells[(int)(indx - INDEX_CONTROL.TEXTBOX_A1)].Value.ToString();
@@ -534,30 +540,32 @@ namespace PluginPrjTepFTable
 
             //ArgApproxi = new string[countArg + 1];
 
-            ////ArgApproxi.SetValue(((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_A1.ToString(), true)[0]).Text, 0);
-            ////ArgApproxi.SetValue(((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_A2.ToString(), true)[0]).Text, 1);
-            ////ArgApproxi.SetValue(((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_A3.ToString(), true)[0]).Text, 2);
-            ////ArgApproxi.SetValue(((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_F.ToString(), true)[0]).Text, 3);
+            for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
+            {
+                TextBox tbValue = Controls.Find(indx.ToString(), true)[0] as TextBox;
+            }
 
-            selectFuncArg(countArg);
+            selectFuncArg();
         }
         /// <summary>
         /// Проверка кол-ва парметров (для калькулятора)
         /// </summary>
         /// <param name="countArg">кол-во парамтеров</param>
-        private void selectFuncArg(int countArg)
+        private void selectFuncArg()
         {
-            string colArg = "A" + countArg;
+            FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки полей ввода
+            //string colArg = "A" + countArg;
+            runk = m_zGraph_fTABLE.GetRunk(NAlg);
 
-            switch (colArg)
+            switch (runk)
             {
-                case "A1":
+                case FTable.FRUNK.F1:
 
                     break;
-                case "A2":
+                case FTable.FRUNK.F2:
 
                     break;
-                case "A3":
+                case FTable.FRUNK.F3:
 
                     break;
                 default:
@@ -566,7 +574,7 @@ namespace PluginPrjTepFTable
             }
         }
         /// <summary>
-        /// СТрока - наименование текущей (выбранной) функции
+        /// Строка - наименование текущей (выбранной) функции
         /// </summary>
         private string NAlg
         {
@@ -580,6 +588,7 @@ namespace PluginPrjTepFTable
                 return strRes;
             }
         }
+
         /// <summary>
         /// Событие изменения текстового поля
         /// (функция поиска)
@@ -660,6 +669,11 @@ namespace PluginPrjTepFTable
             m_tblEdit.AcceptChanges();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="ev"></param>
         private void tbCalcValue_onTextChanged(object obj, EventArgs ev)
         {
             FTable.FRUNK runk = m_zGraph_fTABLE.GetRunk(NAlg);
