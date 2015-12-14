@@ -76,27 +76,32 @@ namespace Tep64
 
             foreach (string id in arIds)
             {
-                plugIn = s_plugIns[Convert.ToInt32(id)] as PlugInMenuItem;
-                if (plugIn == null)
-                    continue;
-                else
-                    ;
-                strNameOwnerMenuItem = plugIn.NameOwnerMenuItem;
-                strNameMenuItem = plugIn.NameMenuItem;
-
-                ////Вариант №1
-                //menuItems = this.MainMenuStrip.Items.Find(strNameMenuItem, true);
-                //menuItem = menuItems[0];
-                //Вариант №2
-                menuItem = FindMainMenuItemOfText(strNameMenuItem);
-
-                if ((menuItem as ToolStripMenuItem).Checked == false)
+                if (s_plugIns.ContainsKey(Convert.ToInt32(id)) == true)
                 {
-                    m_iAutoActionTabs++;
-                    menuItem.PerformClick();
+                    plugIn = s_plugIns[Convert.ToInt32(id)] as PlugInMenuItem;
+                    if (plugIn == null)
+                        continue;
+                    else
+                        ;
+                    strNameOwnerMenuItem = plugIn.NameOwnerMenuItem;
+                    strNameMenuItem = plugIn.NameMenuItem;
+
+                    ////Вариант №1
+                    //menuItems = this.MainMenuStrip.Items.Find(strNameMenuItem, true);
+                    //menuItem = menuItems[0];
+                    //Вариант №2
+                    menuItem = FindMainMenuItemOfText(strNameMenuItem);
+
+                    if ((menuItem as ToolStripMenuItem).Checked == false)
+                    {
+                        m_iAutoActionTabs++;
+                        menuItem.PerformClick();
+                    }
+                    else
+                        ;
                 }
                 else
-                    ;
+                    Logging.Logg().Warning(@"FormMain::loadProfile () - не удалось загрузить plugIn.Id=" + id + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
 

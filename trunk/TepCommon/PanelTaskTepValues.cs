@@ -224,7 +224,10 @@ namespace TepCommon
                 , err = -1;
             string errMsg = string.Empty
                 , query = string.Empty;
-            DbConnection dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
+            DbConnection dbConn = null;
+
+            m_dgvValues.ClearValues();
+            dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
 
             if ((!(dbConn == null)) && (err == 0))
             {
@@ -242,7 +245,7 @@ namespace TepCommon
                 {
                     m_tblEdit = m_tblOrigin.Copy();
 
-                    m_dgvValues.ShowValues(m_tblOrigin);
+                    m_dgvValues.ShowValues(m_tblEdit);
                 }
                 else
                     errMsg = @"ошибка получения данных с " + m_panelManagement.m_dtRange.Begin.ToString() +
@@ -440,8 +443,9 @@ namespace TepCommon
             INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
             INDEX_ID indxIdDeny = INDEX_ID.UNKNOWN;
             int id_item = -1 //Идентификатор элемента списка (компонент ТЭЦ/параметр алгоритма)
-                , iCol = -2 // при передаче в функцию в качестве аргумента +1
-                , iRow = -1; // '-1' - признак применения/НЕприменения действий к типу элементов таблицы 
+                //, iCol = -2 // при передаче в функцию в качестве аргумента +1 (из-за ТЭЦ в 0-м столбце)
+                //, iRow = -1 // '-1' - признак применения/НЕприменения действий к типу элементов таблицы 
+                ;
             string strId = (obj as Control).Name;
             //Определить идентификатор
             if (strId.Equals(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString()) == true)
@@ -466,14 +470,14 @@ namespace TepCommon
                     id_item = m_arListIds[(int)INDEX_ID.ALL_COMPONENT][ev.Index];
                     indxIdDeny = id == INDEX_CONTROL.CLBX_COMP_CALCULATED ? INDEX_ID.DENY_COMP_CALCULATED :
                         id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
-                    iCol = ev.Index;
+                    //iCol = ev.Index;
                     break;
                 case INDEX_CONTROL.CLBX_PARAMETER_CALCULATED:
                 case INDEX_CONTROL.CLBX_PARAMETER_VISIBLED:
                     id_item = m_arListIds[(int)INDEX_ID.ALL_PARAMETER][ev.Index];
                     indxIdDeny = id == INDEX_CONTROL.CLBX_PARAMETER_CALCULATED ? INDEX_ID.DENY_PARAMETER_CALCULATED :
                         id == INDEX_CONTROL.CLBX_PARAMETER_VISIBLED ? INDEX_ID.DENY_PARAMETER_VISIBLED : INDEX_ID.UNKNOWN;
-                    iRow = ev.Index;
+                    //iRow = ev.Index;
                     break;
                 default:
                     break;
@@ -498,28 +502,32 @@ namespace TepCommon
             //Изменить структуру 'DataGridView'
             //m_dgvValues.UpdateStructure ();            
             m_dgvValues.UpdateStructure(indxIdDeny
-                , iCol + 1, iRow
+                //, iCol + 1, iRow
+                , id_item
                 , ev.NewValue == CheckState.Checked ? true : ev.NewValue == CheckState.Unchecked ? false : false);
         }
 
         private void datetimeRangeValue_onChanged(object obj, EventArgs ev)
         {
-            if ((! (m_tblOrigin == null))
-                && (m_tblOrigin.Rows.Count > 0))
+            //if ((! (m_tblOrigin == null))
+            //    && (m_tblOrigin.Rows.Count > 0))
                 updateDataValues();
-            else
-                ;
+            //else ;
         }
 
         protected class DataGridViewTEPValues : DataGridView
         {
+            private List<bool> m_listCalcDenyRows;
             private class HDataGridViewColumn : DataGridViewTextBoxColumn
             {
                 public int m_iIdComp;
+                public bool m_bCalcDeny;
             }
 
             public DataGridViewTEPValues ()
-            {               
+            {
+                m_listCalcDenyRows = new List<bool>();
+
                 InitializeComponents ();
             }
 
@@ -543,7 +551,11 @@ namespace TepCommon
             public void ClearRows()
             {
                 if (Rows.Count > 0)
+                {
                     Rows.Clear();
+
+                    m_listCalcDenyRows.Clear();
+                }
                 else
                     ;
             }
@@ -563,7 +575,7 @@ namespace TepCommon
                     else
                         ;
 
-                DataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp };
+                DataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp, m_bCalcDeny = false };
                 column.HeaderText = text;
                 column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
@@ -588,52 +600,90 @@ namespace TepCommon
                 row.HeaderCell.Value = text;
                 i = Rows.Add(row);
                 Rows[i].Cells[0].Value = id_par;
+                m_listCalcDenyRows.Add(false);
             }
             /// <summary>
             /// Обновить структуру таблицы
             /// </summary>
             /// <param name="indxDeny">Индекс элемента в массиве списков с отмененными для расчета/отображения компонентами ТЭЦ/параметрами алгоритма расчета</param>
-            /// <param name="col">Номер столбца (-1: не применять действие к столбцам)</param>
-            /// <param name="row">Номер строки (-1: не применять действие к строкам)</param>
+            /// <param name="id">Идентификатор элемента (компонента/параметра)</param>
             /// <param name="bCheckedItem">Признак участия в расчете/отображения</param>
-            public void UpdateStructure(PanelTaskTepValues.INDEX_ID indxDeny, int col, int row, bool bCheckedItem)
+            public void UpdateStructure(PanelTaskTepValues.INDEX_ID indxDeny, int id, bool bCheckedItem)
             {
                 Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
-
+                int indx = -1;
+                //Поиск индекса элемента отображения
                 switch (indxDeny)
                 {
                     case INDEX_ID.DENY_COMP_CALCULATED:
-                    case INDEX_ID.DENY_PARAMETER_CALCULATED:
-                        clrCell = bCheckedItem == true ? Color.White : Color.LightGray;                        
-                        if (!(col < 0))
-                            // для всех ячеек в столбце
-                            foreach (DataGridViewRow r in Rows)
-                                r.Cells[col].Style.BackColor = clrCell;
-                        else
-                            if (! (row < 0))
-                                // для всех ячеек в строке
-                                foreach (DataGridViewCell c in Rows[row].Cells)
-                                    c.Style.BackColor = clrCell;
+                    case INDEX_ID.DENY_COMP_VISIBLED:
+                        // найти индекс столбца (компонента) - по идентификатору
+                        foreach (HDataGridViewColumn c in Columns)
+                            if (c.m_iIdComp == id)
+                            {
+                                indx = Columns.IndexOf(c);
+                                break;
+                            }
                             else
                                 ;
                         break;
-                    case INDEX_ID.DENY_COMP_VISIBLED:
+                    case INDEX_ID.DENY_PARAMETER_CALCULATED:
                     case INDEX_ID.DENY_PARAMETER_VISIBLED:
-                        if (!(col < 0))
-                            // для всех ячеек в столбце
-                            Columns[col].Visible = bCheckedItem;
-                        else
-                            if (! (row < 0))
-                                // для всех ячеек в строке
-                                Rows[row].Visible = bCheckedItem;
+                        // найти индекс строки (параметра) - по идентификатору
+                        foreach (DataGridViewRow r in Rows)
+                            if ((int)r.Cells[0].Value == id)
+                            {
+                                indx = Rows.IndexOf(r);
+                                break;
+                            }
                             else
                                 ;
-                        break;                    
+                        break;
                     default:
                         break;
                 }
-            }
 
+                if (!(indx < 0))
+                {
+                    switch (indxDeny)
+                    {
+                        case INDEX_ID.DENY_COMP_CALCULATED:
+                            // для всех ячеек в столбце
+                            foreach (DataGridViewRow r in Rows)
+                            {
+                                clrCell = ((bCheckedItem == true) && (m_listCalcDenyRows[Rows.IndexOf(r)] == false)) ? Color.White : Color.LightGray;
+                                r.Cells[indx].Style.BackColor = clrCell;
+                            }
+                            (Columns[indx] as HDataGridViewColumn).m_bCalcDeny = ! bCheckedItem;
+                            break;
+                        case INDEX_ID.DENY_PARAMETER_CALCULATED:
+                            // для всех ячеек в строке
+                            foreach (DataGridViewCell c in Rows[indx].Cells)
+                            {
+                                clrCell = ((bCheckedItem == true) && ((Columns[Rows[indx].Cells.IndexOf(c)] as HDataGridViewColumn).m_bCalcDeny == false)) ? Color.White : Color.LightGray;
+                                c.Style.BackColor = clrCell;
+                            }
+                            m_listCalcDenyRows[indx] = !bCheckedItem;
+                            break;
+                        case INDEX_ID.DENY_COMP_VISIBLED:
+                            // для всех ячеек в столбце
+                            Columns[indx].Visible = bCheckedItem;
+                            break;
+                        case INDEX_ID.DENY_PARAMETER_VISIBLED:
+                            // для всех ячеек в строке
+                            Rows[indx].Visible = bCheckedItem;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else
+                    ; // нет элемента для изменения стиля
+            }
+            /// <summary>
+            /// Отобразить значения
+            /// </summary>
+            /// <param name="values">Значения для отображения</param>
             public void ShowValues(DataTable values)
             {
                 int iCol = 0
@@ -661,10 +711,16 @@ namespace TepCommon
 
                     iCol++;
                 }
+            }
 
-                foreach (DataRow r in values.Rows)
-                {
-                }
+            public void ClearValues()
+            {
+                foreach (DataGridViewRow r in Rows)
+                    foreach (DataGridViewCell c in r.Cells)
+                        if (r.Cells.IndexOf(c) > 0) // нельзя удалять идентификатор параметра
+                            c.Value = string.Empty;
+                        else
+                            ;
             }
         }
 
@@ -725,7 +781,7 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время начала периода расчета - значения
-                ctrl = new HDateTimePicker(today.Year, today.Month, today.Day, 1, null);
+                ctrl = new HDateTimePicker(today.Year, today.Month, today.Day, 0, null);
                 ctrl.Name = INDEX_CONTROL.HDTP_BEGIN.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
@@ -738,7 +794,7 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время  окончания периода расчета - значения
-                ctrl = new HDateTimePicker(today.Year, today.Month, today.Day, 2, Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
+                ctrl = new HDateTimePicker(today.Year, today.Month, today.Day, 1, Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                 ctrl.Name = INDEX_CONTROL.HDTP_END.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);

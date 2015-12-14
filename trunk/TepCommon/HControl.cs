@@ -284,7 +284,7 @@ namespace TepCommon
                 Value.Year
                 , Value.Month
                 , Value.Day
-                , (obj as ComboBox).SelectedIndex + 1
+                , (obj as ComboBox).SelectedIndex + 0
                 , 0
                 , 0
             );
@@ -332,7 +332,7 @@ namespace TepCommon
             cbxYear.SelectedIndex += iDiffYear;
             cbxMonth.SelectedIndex = Value.Month - 1;
             cbxDay.SelectedIndex = Value.Day - 1;
-            cbxHour.SelectedIndex = Value.Hour - 1;
+            cbxHour.SelectedIndex = Value.Hour; // == 0 ? Value.Hour : Value.Hour - 1;
 
             cbxYear.SelectedIndexChanged += new EventHandler(cbxYear_onSelectedIndexChanged);
             cbxMonth.SelectedIndexChanged += new EventHandler(cbxMonth_onSelectedIndexChanged);
@@ -432,8 +432,8 @@ namespace TepCommon
             Controls.Add(ctrl, 10, 0);
             SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
             for (i = 0; i < 24; i++)
-                (ctrl as ComboBox).Items.Add(i + 1);
-            (ctrl as ComboBox).SelectedIndex = Value.Hour - 1;
+                (ctrl as ComboBox).Items.Add(i + 0);
+            (ctrl as ComboBox).SelectedIndex = Value.Hour - 0;
             (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxHour_onSelectedIndexChanged);
 
             ResumeLayout(false);
