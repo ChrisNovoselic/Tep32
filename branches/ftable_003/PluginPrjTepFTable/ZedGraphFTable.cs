@@ -184,6 +184,7 @@ namespace PluginPrjTepFTable
                 //                  }).Distinct();
 
                 //countList = enValues.Count() * enValuesA2.Count();
+
                 pointList = new PointPairList[countList];
                 int num = 0;
                 string m_ftValue = DataGridViewAutoFilterColumnHeaderCell.FilterValue();
@@ -214,10 +215,10 @@ namespace PluginPrjTepFTable
         /// с одним параметром
         /// </summary>
         /// <param name="colCount">кол-во аргументов</param>
-        protected override void funcWithOneArgs(string nameCol, string filter)
-        {
-            formingArrayValues(filter);
-        }
+        //protected override void funcWithOneArgs(string nameCol)
+        //{
+            //formingArrayValues(filter);
+        //}
 
         /// <summary>
         /// Функция нахождения реперных точек
@@ -227,7 +228,6 @@ namespace PluginPrjTepFTable
         /// <param name="filter"></param>
         protected void funcWithTwoArgs(string filter)
         {
-            //searchMainMIN(nameCol);
             formingArrayValues(filter);
         }
 
@@ -238,7 +238,6 @@ namespace PluginPrjTepFTable
         /// <param name="filter"></param>
         protected void funcWithThreeArgs(string filter)
         {
-            //searchMainMIN(nameCol);
             formingArrayValues(filter);
         }
         /// <summary>
@@ -273,18 +272,17 @@ namespace PluginPrjTepFTable
             {
                 case "A1":
                     condition = true;
-                    funcWithOneArgs(nameColumn, filter);
+                    //funcWithOneArgs(nameColumn);
                     break;
                 case "A2":
                     condition = true;
-                    funcWithTwoArgs(nameColumn, getQueryToGraphic(iRow));
+                    funcWithTwoArgs(getQueryToGraphic(iRow));
                     break;
                 case "A3":
                     condition = true;
                     funcWithThreeArgs(getQueryToGraphic(iRow));
                     break;
                 default:
-                    //MessageBox.Show("MZF");
                     break;
             }
         }

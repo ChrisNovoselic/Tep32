@@ -25,10 +25,12 @@ namespace PluginPrjTepFTable
             /// Уровень для точки
             /// </summary>
             public FRUNK Runk;
+
             /// <summary>
             /// Идентификатор строки в таблице БД
             /// </summary>
             public int m_idRec;
+
             /// <summary>
             /// Значение для точки
             /// </summary>
@@ -36,6 +38,7 @@ namespace PluginPrjTepFTable
                 , a2
                 , a3
                 , f;
+
             /// <summary>
             /// Конструктор основной (с параметрами)
             /// </summary>
@@ -44,7 +47,7 @@ namespace PluginPrjTepFTable
             /// <param name="a2">2-ой аргумент</param>
             /// <param name="a3">3-ий аргумент</param>
             /// <param name="f">Значение функции для аргументов</param>
-            public POINT (int id, float a1, float a2, float a3, float f)
+            public POINT(int id, float a1, float a2, float a3, float f)
             {
                 m_idRec = id;
                 this.a1 = a1;
@@ -106,16 +109,16 @@ namespace PluginPrjTepFTable
         /// <summary>
         /// Массив значений калькулятора
         /// </summary>
-        string[] ArgApproxi;
+        string[][] ArgMin;
         /// <summary>
         /// Массив аргументов функции
         /// </summary>
-        DataRow[] ValuesFunc;
+        float[][] ValuesFunc;
         /// <summary>
         /// Признак выполнения условия
         ///  , которое задается для вычисления минимумов и для перестройки массивов
         /// </summary>
-        protected bool condition;
+        protected bool condition = true;
         /// <summary>
         /// Составное наименование функции
         ///  имя_функции + наименование столбца
@@ -138,7 +141,8 @@ namespace PluginPrjTepFTable
         /// 
         /// </summary>
         /// <param name="src"></param>
-        public FTable(DataTable src) : this ()
+        public FTable(DataTable src)
+            : this()
         {
             Set(src);
         }
@@ -191,25 +195,28 @@ namespace PluginPrjTepFTable
         /// Проверка на вложеность
         /// числа в диапазон первых минимумов
         /// </summary>
-        /// <param name="columnname">имя столбца("А1,А2,А3")</param>
-        private void rangeOfValues(string columnName)
+        private void rangeOfValues(int numArray)
         {
             if (((Convert.ToDouble(referencePoint)) < min2) && ((Convert.ToDouble(referencePoint)) > min1))
-                for (int i = 0; i < ValuesFunc.Length; i++)
+            {
+                for (int i = 0; i < ValuesFunc[numArray].Length; i++)
                 {
-                    if (calcCondition(i, columnName,) == true)
-                        interpolation(columnName);
+                    if (condition == true)
+                        interpolation(numArray);
                     else
                         ;
-        }
+                }
+            }
             else
-                for (int i = 0; i < ValuesFunc.Length; i++)
-			{
-			 if (calcCondition(i,columnName,) == true)
-                    extrapolation(columnName);
-                else
-                    ;
-			}     
+            {
+                for (int i = 0; i < ValuesFunc[numArray].Length; i++)
+                {
+                    if (condition == true)
+                        extrapolation(numArray);
+                    else
+                        ;
+                }
+            }
         }
 
         /// <summary>
@@ -219,31 +226,54 @@ namespace PluginPrjTepFTable
         /// <param name="colName">имя колонки</param>
         /// <param name="minX">минимум</param>
         /// <returns></returns>
-        private bool calcCondition(int i,string colName, double minX)
+        private void calcCondition(int i, int number, int nextarg)
         {
-            return Convert.ToDouble(ValuesFunc[i][colName].ToString()) == minX;
+            switch (nextarg)
+            {
+                case 1:
+                    condition = true;
+                    break;
+                case 2:
+                    if (Convert.ToDouble(ValuesFunc[number].ElementAt(i)) == Convert.ToDouble(ArgMin[number].ElementAt(i)))
+                    {
+                        condition = true;
+                    }
+                    else condition = false;
+                    break;
+                case 3:
+                    if (Convert.ToDouble(ValuesFunc[number].ElementAt(i)) == Convert.ToDouble(ArgMin[number].ElementAt(i)) && 
+                        Convert.ToDouble(ValuesFunc[number - 1].ElementAt(i)) == Convert.ToDouble(ArgMin[number - 1].ElementAt(i)))
+                    {
+                        condition = true;
+                    }
+                    else condition = false;
+                    break;
+                default:
+                    break;
+            }
+
+
         }
 
         /// <summary>
         /// Интерполяция значений функции
         /// </summary>
-        /// <param name="columnName">имя столбца</param>
-        private void interpolation(string columnName)
+        private void interpolation(int numArray)
         {
-            for (int i = 0; i < ValuesFunc.Length; i++)
+            for (int i = 0; i < ValuesFunc[numArray].Length; i++)
             {
-                if (testConditionMIN1(i, columnName,) == true)
+                if (testConditionMIN1(i, numArray) == true)
                 {
-                    min1 = Convert.ToDouble(ValuesFunc[i][columnName].ToString());
-                    metka1 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
+                    min1 = Convert.ToDouble(ValuesFunc[numArray].ElementAt(i));
+                    metka1 = Convert.ToInt32(m_dictValues[m_nameAlg][i].f);
                 }
                 else
                     ;
 
-                if (testConditionMIN2(i, columnName,) == true)
+                if (testConditionMIN2(i, numArray) == true)
                 {
-                    min2 = Convert.ToDouble(ValuesFunc[i][columnName].ToString());
-                    metka2 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
+                    min2 = Convert.ToDouble(ValuesFunc[numArray].ElementAt(i));
+                    metka2 = Convert.ToInt32(m_dictValues[m_nameAlg][i].f);
                 }
                 else
                     ;
@@ -252,78 +282,80 @@ namespace PluginPrjTepFTable
 
         /// <summary>
         /// Проверка условия интерполяции 
-        /// для нахождения MIN1
+        /// для нахождения более ближайщего значения MIN1
         /// </summary>
         /// <param name="i">номер строки</param>
         /// <param name="column">имя столбца</param>
         /// <returns>Признак выполнения условия</returns>
-        private bool testConditionMIN1(int i, string column, int param)
+        private bool testConditionMIN1(int i, int nArray )
         {
             bool bRes = false;
 
-            double m_selectedCell = Convert.ToDouble(param);
-            double m_onePeremen = m_selectedCell - Convert.ToDouble(ValuesFunc[i][column]);
+            double m_selectedCell = Convert.ToDouble(referencePoint);
+            double m_onePeremen = m_selectedCell - Convert.ToDouble(ValuesFunc[nArray].ElementAt(i));
             double m_twoPeremen = m_selectedCell - min1;
 
-            if ((m_onePeremen < m_twoPeremen) && (m_onePeremen >= 0) && (!(Convert.ToDouble(ValuesFunc[i][column]) == min2)))
+            if ((m_onePeremen < m_twoPeremen) && (m_onePeremen >= 0) && (!(Convert.ToDouble(ValuesFunc[nArray].ElementAt(i)) == min2)))
                 bRes = true;
             else
                 ;
 
             return bRes;
         }
+
         /// <summary>
         /// Проверка условия интерполяции 
-        /// для нахождения MIN2
+        /// для нахождения более ближайщего значения MIN2
         /// </summary>
         /// <param name="i">номер строки</param>
         /// <param name="column">имя столбца массива</param>
         /// <returns>Признак выполнения условия</returns>
-        private bool testConditionMIN2(int i, string column, int param)
+        private bool testConditionMIN2(int i,int nArray)
         {
             bool bRes = false;
 
-            double m_selectedCell = Convert.ToDouble(param);
-            double m_onePeremen = Convert.ToDouble(ValuesFunc[i][column]) - m_selectedCell;
+            double m_selectedCell = Convert.ToDouble(referencePoint);
+            double m_onePeremen = Convert.ToDouble(ValuesFunc[nArray].ElementAt(i)) - m_selectedCell;
             double m_twoPeremen = min2 - m_selectedCell;
 
-            if ((m_onePeremen < m_twoPeremen) && (m_onePeremen >= 0) && (!(Convert.ToDouble(ValuesFunc[i][column]) == min1)))
+            if ((m_onePeremen < m_twoPeremen) && (m_onePeremen >= 0) && (!(Convert.ToDouble(ValuesFunc[nArray].ElementAt(i)) == min1)))
                 bRes = true;
             else
                 ;
 
             return bRes;
         }
+
         /// <summary>
         /// Экстраполяция значений функций
         /// </summary>
         /// <param name="column"></param>
-        private void extrapolation(string column)
+        private void extrapolation(int numArray)
         {
             bool bflag1 = true;
             bool bflag2 = true;
 
-            for (int i = 0; i < ValuesFunc.Length; i++)
+            for (int i = 0; i < ValuesFunc[numArray].Length; i++)
             {
                 if (bflag1 == true)
                 {
-                    min1 = Convert.ToDouble(ValuesFunc[i][column].ToString());
-                    metka1 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
+                    min1 = Convert.ToDouble(ValuesFunc[numArray].ElementAt(i));
+                    metka1 = Convert.ToInt32(m_dictValues[m_nameAlg][i].f);
                     bflag1 = false;
                 }
                 else ;
 
-                if (bflag2 == true && min1 == Convert.ToDouble(ValuesFunc[i][column]))
+                if (bflag2 == true && min1 == Convert.ToDouble(ValuesFunc[numArray].ElementAt(i)))
                 {
-                    min2 = Convert.ToDouble(ValuesFunc[i][column].ToString());
-                    metka2 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
+                    min2 = Convert.ToDouble(ValuesFunc[numArray].ElementAt(i));
+                    metka2 = Convert.ToInt32(m_dictValues[m_nameAlg][i].f);
                     bflag2 = false;
                 }
                 else ;
 
                 if (bflag1 == false && bflag2 == false)
                 {
-                    ABSfunc(i, column);
+                    //ABSfunc(i,);
                 }
                 else ;
             }
@@ -334,14 +366,14 @@ namespace PluginPrjTepFTable
         /// </summary>
         /// <param name="i"></param>
         /// <param name="n_column"></param>
-        private void ABSfunc(int i, string n_column, string )
+        private void ABSfunc(int i,int nArray)
         {
             double oneParam = Convert.ToDouble(referencePoint);
-            double peremen1 = Math.Abs(oneParam - Convert.ToDouble(ValuesFunc[i][n_column].ToString()));
+            double peremen1 = Math.Abs(oneParam - Convert.ToDouble(ValuesFunc[nArray].ElementAt(i)));
             double ABSmin1 = Math.Abs(oneParam - min1);
             double ABSmin2 = Math.Abs(oneParam - min2);
 
-            if (peremen1 < ABSmin1 && !(Convert.ToDouble(ValuesFunc[i][n_column].ToString()) == min2))
+            if (peremen1 < ABSmin1 && !(Convert.ToDouble(ValuesFunc[nArray].ElementAt(i)) == min2))
             {
                 if (ABSmin1 < ABSmin2)
                 {
@@ -349,15 +381,15 @@ namespace PluginPrjTepFTable
                     metka2 = metka1;
                 }
 
-                min1 = Convert.ToDouble(ValuesFunc[i][n_column].ToString());
-                metka1 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
+                min1 = Convert.ToDouble(ValuesFunc[nArray].ElementAt(i));
+                metka1 = Convert.ToInt32(m_dictValues[m_nameAlg][i].f);
             }
             else
             {
-                if (peremen1 < ABSmin2 && !(Convert.ToDouble(ValuesFunc[i][n_column].ToString()) == min1))
+                if (peremen1 < ABSmin2 && !(Convert.ToDouble(ValuesFunc[nArray].ElementAt(i)) == min1))
                 {
-                    min2 = Convert.ToDouble(ValuesFunc[i][n_column].ToString());
-                    metka2 = Convert.ToInt32(ValuesFunc[i]["F"].ToString());
+                    min2 = Convert.ToDouble(ValuesFunc[nArray].ElementAt(i));
+                    metka2 = Convert.ToInt32(m_dictValues[m_nameAlg][i].f);
                 }
             }
         }
@@ -367,46 +399,44 @@ namespace PluginPrjTepFTable
         /// аргумента от наименьшего до наибольшего
         /// </summary>
         /// <param name="nameColumn">имя колонки</param>
-        private void searchMainMIN(string nameColumn)
+        private void searchMainMIN(bool bflag, int numMin, int numArray)
         {
-            double minX1 = Math.Exp(15)
-          , minX2 = -1 * Math.Exp(15);
+            for (int i = 0; i < m_dictValues[m_nameAlg].Count(); i++)
 
-            for (int i = 0; i < ValuesFunc.Length; i++)
-                if (condition == true)
+                if (bflag == true)
                 {
-                    if (Convert.ToDouble(ValuesFunc[i][nameColumn]) < minX1)
+                    if (Convert.ToDouble(ValuesFunc[i]) < min1)
                     {
-                        min1 = Convert.ToDouble(ValuesFunc[i][nameColumn]);
-                        minX1 = Convert.ToDouble(ValuesFunc[i][nameColumn]);
-                        metka1 = Convert.ToDouble(ValuesFunc[i]["F"].ToString());
+                        ArgMin[numMin].SetValue(Convert.ToDouble(ValuesFunc[numArray].ElementAt(i)), 0);
+                        min1 = Convert.ToDouble(ValuesFunc[numArray].ElementAt(i));
+                        metka1 = Convert.ToDouble(m_dictValues[m_nameAlg][i].f);
                     }
                     else
                         ;
 
-                    if (Convert.ToDouble(ValuesFunc[i][nameColumn]) > minX2)
+                    if (Convert.ToDouble(ValuesFunc[i]) > min2)
                     {
-                        min2 = Convert.ToDouble(ValuesFunc[i][nameColumn]);
-                        minX2 = Convert.ToDouble(ValuesFunc[i][nameColumn]);
-                        metka2 = Convert.ToDouble(ValuesFunc[i]["F"].ToString());
+                        ArgMin[numMin].SetValue(Convert.ToDouble(ValuesFunc[numArray].ElementAt(i)), 1);
+                        min2 = Convert.ToDouble(ValuesFunc[numArray].ElementAt(i));
+                        metka2 = Convert.ToDouble(m_dictValues[m_nameAlg][i].f);
                     }
                     else
                         ;
                 }
                 else
                     ;
-        } 
-       
+        }
+
         /// <summary>
         /// Функция нахождения реперных точек
         /// с одним параметром
         /// </summary>
         /// <param name="colCount">кол-во аргументов</param>
-        protected virtual void funcWithOneArgs(string nameCol, string filter)
+        protected virtual void funcWithOneArgs(string filter)
         {
-            searchMainMIN(nameCol);
-        }   
-     
+            //searchMainMIN();
+        }
+
         /// <summary>
         /// Фильтрация массива-функции
         /// сравнение значений массива с найденными минимумами
@@ -414,7 +444,7 @@ namespace PluginPrjTepFTable
         /// <param name="colCount">кол-во столбцов</param>
         /// <param name="nameCol">имя столбца</param>
         /// <param name="arg">набор минимумов</param>
-        private void filterArray(int colCount, string nameCol, string[] arg)
+        private void filterArray(int colCount, string[] arg)
         {
             int m_row = 0;
             int m_colParam = 2;
@@ -428,7 +458,7 @@ namespace PluginPrjTepFTable
             for (int i = 0; i < ValuesFunc.Length; i++)
             {
                 for (int t = 0; t < m_colParam; t++)
-                    if (Convert.ToDouble(ValuesFunc[i][nameCol]) == Convert.ToDouble(arg.ElementAt(t).ToString()))
+                    if (Convert.ToDouble(ValuesFunc.ElementAt(i)) == Convert.ToDouble(arg.ElementAt(t).ToString()))
                         m_bFlag = true;
                     else
                         ;
@@ -440,7 +470,7 @@ namespace PluginPrjTepFTable
                     for (int j = 1; j < colCount; j++)
                     {
                         string column = "A" + j;
-                        ValuesFunc[m_row][column] = ValuesFunc[i][column];
+                        //ValuesFunc[m_row] = ValuesFunc[i];
                     }
                 }
                 else
@@ -457,8 +487,8 @@ namespace PluginPrjTepFTable
         private double obtaingPointMain(double metka1, double metka2, double min1, double min2, double refPoint)
         {
             return ((Convert.ToDouble(refPoint) - min1) * (metka2 - metka1)) / (min2 - min1) + metka1;
-        }  
-      
+        }
+
         /// <summary>
         /// Вычислить значения для функции
         ///  по заданным аргументам
@@ -466,13 +496,102 @@ namespace PluginPrjTepFTable
         /// <param name="nAlg">Наменование функции</param>
         /// <param name="args">Аргументы для вычисления функции</param>
         /// <returns></returns>
-        public double Calculate (string nAlg, params float []args)
+        public double Calculate(params float[] args)
         {
             double dblRes = -1F;
+            int boolExpress = 1;
+            int Param = 3;
+            bool bflag = true;
 
+            for (int i = 0; i < args.Count(); i++)
+            {
+                referencePoint = args.ElementAt(Param - 1).ToString();
+                selectArgs(Param);
 
+                for (int j = 0; j < boolExpress; j++)
+                {
+                    ArgMin = new string[args.Count()][];
+                    ArgMin[i] = new string[Convert.ToInt32(Math.Pow(2, i + 1).ToString())];
+                    searchMainMIN(bflag, j, Param - 1);
+                }
+
+                boolExpress = ArgMin[i].Length;
+                Param--;
+            }
 
             return dblRes;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        private float[][] getValuesA1(int num)
+        {
+            ValuesFunc[num - 1] = new float[m_dictValues[m_nameAlg].Count()];
+
+            for (int i = 0; i < m_dictValues[m_nameAlg].Count(); i++)
+            {
+                ValuesFunc.SetValue(m_dictValues[m_nameAlg][i].a1, i);
+            }
+
+            return ValuesFunc;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        private float[][] getValuesA2(int num)
+        {
+            ValuesFunc[num - 1] = new float[m_dictValues[m_nameAlg].Count()];
+
+            for (int i = 0; i < m_dictValues[m_nameAlg].Count(); i++)
+            {
+                ValuesFunc.SetValue(m_dictValues[m_nameAlg][i].a2, i);
+            }
+
+            return ValuesFunc;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        private float[][] getValuesA3(int num)
+        {
+            ValuesFunc[num - 1] = new float[m_dictValues[m_nameAlg].Count()];
+
+            for (int i = 0; i < m_dictValues[m_nameAlg].Count(); i++)
+            {
+                ValuesFunc.SetValue(m_dictValues[m_nameAlg][i].a3, i);
+            }
+
+            return ValuesFunc;
+        }
+
+        /// <summary>
+        /// Проверка кол-ва парметров (для калькулятора)
+        /// </summary>
+        /// <param name="countArg">кол-во парамтеров</param>
+        private void selectArgs(int runk)
+        {
+            ValuesFunc = new float[runk][];
+
+            switch (runk)
+            {
+                case 1:
+                    getValuesA1(runk);
+                    break;
+
+                case 2:
+                    getValuesA2(runk);
+                    break;
+
+                case 3:
+                    getValuesA3(runk);
+                    break;
+            }
         }
     }
 }

@@ -189,6 +189,7 @@ namespace PluginPrjTepFTable
             for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
                 (Controls.Find(indx.ToString(), true)[0] as TextBox).TextChanged += new EventHandler (tbCalcValue_onTextChanged);
         }
+
         /// <summary>
         /// Обработчик события - изменение выбранной строки
         ///  в отображении для таблицы со значениями
@@ -250,6 +251,7 @@ namespace PluginPrjTepFTable
             //for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F); indx++)
             //    (Controls.Find(indx.ToString(), true)[0] as TextBox).TextChanged += new EventHandler(tbCalcValue_onTextChanged);
         }
+
         /// <summary>
         /// Обработка события при успешной синхронизации целевойй таблицы в БД
         /// </summary>
@@ -257,6 +259,7 @@ namespace PluginPrjTepFTable
         {
             m_tblOrigin = m_tblEdit.Copy();
         }
+
         /// <summary>
         /// Метод синхронизации целевой таблицы в БД
         ///  (обновление, вставка, удаление записей)
@@ -268,6 +271,7 @@ namespace PluginPrjTepFTable
         {
             DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, @"ftable", @"ID", m_tblOrigin, m_tblEdit, out err);
         }
+
         /// <summary>
         /// Конструктор с параметром
         /// </summary>
@@ -277,6 +281,7 @@ namespace PluginPrjTepFTable
         {
             InitializeComponent();
         }
+
         /// <summary>
         /// Инициализация компонентов
         /// </summary>
@@ -544,35 +549,10 @@ namespace PluginPrjTepFTable
             {
                 TextBox tbValue = Controls.Find(indx.ToString(), true)[0] as TextBox;
             }
-
-            selectFuncArg();
         }
-        /// <summary>
-        /// Проверка кол-ва парметров (для калькулятора)
-        /// </summary>
-        /// <param name="countArg">кол-во парамтеров</param>
-        private void selectFuncArg()
-        {
-            FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки полей ввода
-            //string colArg = "A" + countArg;
-            runk = m_zGraph_fTABLE.GetRunk(NAlg);
 
-            switch (runk)
-            {
-                case FTable.FRUNK.F1:
+       
 
-                    break;
-                case FTable.FRUNK.F2:
-
-                    break;
-                case FTable.FRUNK.F3:
-
-                    break;
-                default:
-                    MessageBox.Show("MZF");
-                    break;
-            }
-        }
         /// <summary>
         /// Строка - наименование текущей (выбранной) функции
         /// </summary>
@@ -599,6 +579,7 @@ namespace PluginPrjTepFTable
         {
             nALGVisibled((sender as TextBox).Text);
         }
+
         /// <summary>
         /// Обработка клика по таблице со значениями.
         /// Изменение чекбокса, построение графика.
@@ -642,6 +623,7 @@ namespace PluginPrjTepFTable
                 }
             }
         }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Добавить"
         ///  (в зависимости от текущего отображения для таблицы: функция, значения)
@@ -651,6 +633,7 @@ namespace PluginPrjTepFTable
         private void HPanelfTable_btnAdd_Click(object obj, EventArgs ev)
         {
         }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Удалить"
         /// </summary>
@@ -659,6 +642,7 @@ namespace PluginPrjTepFTable
         private void HPanelfTAble_btnDelete_Click(object obj, EventArgs ev)
         {
         }
+
         /// <summary>
         /// Удалить запись (значение) для функции
         /// </summary>
@@ -682,8 +666,8 @@ namespace PluginPrjTepFTable
                 pars[indx] =
                     float.Parse((Controls.Find(((INDEX_CONTROL)(indx + (int)INDEX_CONTROL.TEXTBOX_A1)).ToString (), true)[0] as TextBox).Text, CultureInfo.InvariantCulture);
 
-            (Controls.Find(INDEX_CONTROL.TEXTBOX_F.ToString(), true)[0] as TextBox).Text =
-               m_zGraph_fTABLE.Calculate(NAlg, pars).ToString (@"F2");
+            (Controls.Find(INDEX_CONTROL.TEXTBOX_REZULT.ToString(), true)[0] as TextBox).Text =
+               m_zGraph_fTABLE.Calculate(pars).ToString (@"F2");
         }
     }
 
