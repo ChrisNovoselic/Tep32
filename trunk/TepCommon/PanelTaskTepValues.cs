@@ -22,7 +22,8 @@ namespace TepCommon
         /// Наименования таблиц с парметрами для расчета
         /// </summary>
         private string m_strNameTableAlg
-            , m_strNameTablePut;
+            , m_strNameTablePut
+            , m_strNameTableValues;
         /// <summary>
         /// Строка для запроса информации по периодам расчетов
         /// </summary>        
@@ -61,13 +62,15 @@ namespace TepCommon
         /// </summary>
         protected DataTable m_tblEdit
             , m_tblOrigin;
-
+        /// <summary>
+        /// Объект для обмена данными с БД
+        /// </summary>
         protected HandlerDbTepTaskValues m_handlerDb;
         /// <summary>
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
-        public PanelTaskTepValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut)
+        public PanelTaskTepValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut, string strNameTableValues)
             : base(iFunc)
         {
             //int iRes = compareNAlg (@"4.1", @"10");
@@ -77,6 +80,7 @@ namespace TepCommon
             
             m_strNameTableAlg = strNameTableAlg;
             m_strNameTablePut = strNameTablePut;
+            m_strNameTableValues = strNameTableValues;
 
             m_handlerDb = new HandlerDbTepTaskValues();
 
@@ -143,7 +147,8 @@ namespace TepCommon
                     + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
                         + @" OR ([ID_COMP] = 1000)"
                 , @"SELECT put.*, alg.* FROM [dbo].[" + m_strNameTablePut + @"] as put"
-                    + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as alg ON alg.ID_TASK = 1 AND alg.ID = put.ID_ALG AND put.ID_TIME in (" + m_strIdPeriods + @")"
+                    + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as alg ON alg.ID_TASK = 1 AND alg.ID = put.ID_ALG"
+                        //+ @" AND put.ID_TIME in (" + m_strIdPeriods + @")"
             };
 
             for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
@@ -217,7 +222,9 @@ namespace TepCommon
         {
             throw new NotImplementedException();
         }
-
+        /// <summary>
+        /// Выполнить запрос к БД, отобразить рез-т запроса
+        /// </summary>
         private void updateDataValues()
         {
             int iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB")
@@ -225,18 +232,19 @@ namespace TepCommon
             string errMsg = string.Empty
                 , query = string.Empty;
             DbConnection dbConn = null;
-
+            // очисить содержание представления
             m_dgvValues.ClearValues();
+            // получить объект для соединения с БД
             dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
-
+            // проверить успешность получения 
             if ((!(dbConn == null)) && (err == 0))
             {
                 query = @"SELECT a.N_ALG, a.ID_MEASURE"
                     + @", p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
                     + @", v.*"
-                    + @" FROM [dbo].[inval_201512] v"
-                    + @" LEFT JOIN [dbo].[input] p ON p.ID = v.ID_INPUT"
-                    + @" LEFT JOIN [dbo].[inalg] a ON a.ID = p.ID_ALG"
+                    + @" FROM [dbo].[" + m_strNameTableValues + @"_201512] v"
+                    + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
+                    + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON a.ID = p.ID_ALG"
                     + @" WHERE [DATE_TIME]='" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:00:00") + @"'";
 
                 m_tblOrigin = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
@@ -347,7 +355,7 @@ namespace TepCommon
             {
                 List <DataRow> listRes;
                 
-                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(@"ID_TIME=" + CurrIdPeriod).ToList<DataRow>();
+                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(/*@"ID_TIME=" + CurrIdPeriod*/).ToList<DataRow>();
                 listRes.Sort(compareNAlg);
 
                 return listRes;
@@ -712,7 +720,9 @@ namespace TepCommon
                     iCol++;
                 }
             }
-
+            /// <summary>
+            /// Очистить содержание представления (например, перед )
+            /// </summary>
             public void ClearValues()
             {
                 foreach (DataGridViewRow r in Rows)

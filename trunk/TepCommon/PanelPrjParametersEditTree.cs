@@ -21,7 +21,7 @@ namespace TepCommon
         /// </summary>
         protected enum ID_LEVEL
         {
-            TASK /*Задача*/, N_ALG /*Параметр алгоритма*/, TIME /*Интервал времени*/, COMP /*Компонент станции*/
+            TASK /*Задача*/, N_ALG /*Параметр алгоритма*/, /*TIME Интервал времени,*/ COMP /*Компонент станции*/
             , PUT
         };
         /// <summary>
@@ -197,45 +197,52 @@ namespace TepCommon
 
             set { if (!(_idAlg == value)) idAlgChanged(value); else ; }
         }
-
+        /// <summary>
+        /// Обработчик события - изменение текущего параметра алгоритма расчета 
+        /// </summary>
+        /// <param name="newIdAlg"></param>
         private void idAlgChanged(int newIdAlg)
         {
             if (_idAlg > 0)
             {
-                DataRow []rowsAlg = m_arTableEdit [(int)INDEX_PARAMETER.ALGORITM].Select (@"ID=" + _idAlg);                
+                //DataRow []rowsAlg = m_arTableEdit [(int)INDEX_PARAMETER.ALGORITM].Select (@"ID=" + _idAlg);                
 
-                if (rowsAlg.Length == 1)
-                {
-                    List<string> toDeleteKeys = new List<string> ();
-                    try
-                    {
-                        TreeNode prevNode = m_ctrlTreeView.Nodes.Find(rowsAlg[0][@"ID_TASK"].ToString().Trim() + @"::" + _idAlg, true)[0]
-                            , node = prevNode.FirstNode;
-                        while (!(node == null))
-                        {
-                            if (node.GetNodeCount(false) == 0)
-                            {
-                                toDeleteKeys.Add (node.Name);
-                            }
-                            else
-                                ;
+                //if (rowsAlg.Length == 1)
+                //{
+                //    //Список ключей для удаления (при отсутствии дочерних элементов)
+                //    List<string> toDeleteKeys = new List<string> ();
+                //    try
+                //    {
+                //        //Получить элемент, который теряет фокус выбора
+                //        TreeNode prevNode = m_ctrlTreeView.Nodes.Find(rowsAlg[0][@"ID_TASK"].ToString().Trim() + @"::" + _idAlg, true)[0]
+                //            // получить 1-ый дочерний
+                //            , node = prevNode.FirstNode;
+                //        // заполнить список ключей элементов для удаления
+                //        while (!(node == null))
+                //        {
+                //            if (node.GetNodeCount(false) == 0)
+                //            {
+                //                toDeleteKeys.Add (node.Name);
+                //            }
+                //            else
+                //                ;
 
-                            node = node.NextNode;
-                        }
-
-                        while (toDeleteKeys.Count > 0)
-                        {
-                            prevNode.Nodes.RemoveByKey(toDeleteKeys[0]);
-                            toDeleteKeys.RemoveAt(0);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.Logg().Exception(e, @"HPanelEditTree::idAlgChanged () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                    }
-                }
-                else
-                    throw new Exception(@"HPanelEditTree::idAlgChanged () - отсутствие(дублирование) параметра... [ID=" + _idAlg + @"]");
+                //            node = node.NextNode;
+                //        }
+                //        // удвлить элементы
+                //        while (toDeleteKeys.Count > 0)
+                //        {
+                //            prevNode.Nodes.RemoveByKey(toDeleteKeys[0]);
+                //            toDeleteKeys.RemoveAt(0);
+                //        }
+                //    }
+                //    catch (Exception e)
+                //    {
+                //        Logging.Logg().Exception(e, @"HPanelEditTree::idAlgChanged () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                //    }
+                //}
+                //else
+                //    throw new Exception(@"HPanelEditTree::idAlgChanged () - отсутствие(дублирование) параметра... [ID=" + _idAlg + @"]");
             }
             else
                 ; //Предыдущий параметр НЕ "действительный"
@@ -384,9 +391,9 @@ namespace TepCommon
             err = 0;
             strErr = string.Empty;
 
-            string[] arNameTableKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { @"time", @"comp_list", @"task" }
-                    , arErrKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { @"словарь 'интервалы времени'"
-                                                                                        , @"словарь 'компоненты станции'"
+            string[] arNameTableKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { /*@"time",*/ @"comp_list", @"task" }
+                    , arErrKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { /*@"словарь 'интервалы времени'"
+                                                                                        ,*/ @"словарь 'компоненты станции'"
                                                                                         , @"проект 'список задач ИРС'" };
             for (int i = 0; i < (int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY; i++)
             {
@@ -873,7 +880,7 @@ namespace TepCommon
     partial class PanelPrjParametersEditTree
     {
         protected enum INDEX_PARAMETER {ALGORITM, PUT, COUNT_INDEX_PARAMETER};
-        protected enum INDEX_TABLE_KEY { TIME, COMP_LIST, TASK, COUNT_INDEX_TABLE_KEY };
+        protected enum INDEX_TABLE_KEY { /*TIME,*/ COMP_LIST, TASK, COUNT_INDEX_TABLE_KEY };
         string[] m_arNameTables;
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
@@ -933,7 +940,9 @@ namespace TepCommon
                 case ID_LEVEL.N_ALG: //Параметр алгоритма
                     iRes = nodeAfterSelect(ev.Node, m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], m_Level, false);
                     if (iRes == 0)
-                        nodeAfterSelectDetail(INDEX_TABLE_KEY.TIME, strIdAlg, @"ID_TIME=");
+                        //nodeAfterSelectDetail(INDEX_TABLE_KEY.TIME, strIdAlg, @"ID_TIME=")
+                        nodeAfterSelectDetail(INDEX_TABLE_KEY.COMP_LIST, strIdAlg, @"ID_COMP=")
+                        ;
                     else
                         switch (iRes)
                         {
@@ -946,13 +955,13 @@ namespace TepCommon
                                 break;
                         }
                     break;
-                case ID_LEVEL.TIME:
-                    iRes = nodeAfterSelect(ev.Node, m_arTableKey[(int)INDEX_TABLE_KEY.TIME], m_Level, false);
-                    if (iRes == 0)
-                        nodeAfterSelectDetail(INDEX_TABLE_KEY.COMP_LIST, strIdAlg, @"ID_TIME=" + getIdNodePart (ev.Node.Name, m_Level) + @" AND ID_COMP=");
-                    else
-                        ;
-                    break;
+                //case ID_LEVEL.TIME:
+                //    iRes = nodeAfterSelect(ev.Node, m_arTableKey[(int)INDEX_TABLE_KEY.TIME], m_Level, false);
+                //    if (iRes == 0)
+                //        nodeAfterSelectDetail(INDEX_TABLE_KEY.COMP_LIST, strIdAlg, @"ID_TIME=" + getIdNodePart (ev.Node.Name, m_Level) + @" AND ID_COMP=");
+                //    else
+                //        ;
+                //    break;
                 case ID_LEVEL.COMP:
                     iRes = nodeAfterSelect(ev.Node, m_arTableEdit[(int)INDEX_PARAMETER.PUT], ID_LEVEL.PUT, false);
                     break;
@@ -1048,7 +1057,7 @@ namespace TepCommon
             switch (m_listIDLevels[ev.Node.Level])
             {
                 case ID_LEVEL.TASK: //Задача - не редактируется
-                case ID_LEVEL.TIME: //Интервал времени - не редактируется
+                //case ID_LEVEL.TIME: //Интервал времени - не редактируется
                 case ID_LEVEL.COMP: //Компонент станции - не редактируется
                     ev.CancelEdit = true;
                     break;
@@ -1121,14 +1130,15 @@ namespace TepCommon
                 switch (m_Level)
                 {
                     case ID_LEVEL.N_ALG:
-                        iKey = (int)INDEX_TABLE_KEY.TIME;
-                        strErr = @"интервала времени";
-                        break;
-                    case ID_LEVEL.TIME:
                         iKey = (int)INDEX_TABLE_KEY.COMP_LIST;
                         strErr = @"компонента станции";
                         idPut = 0;
                         break;
+                    //case ID_LEVEL.TIME:
+                    //    iKey = (int)INDEX_TABLE_KEY.COMP_LIST;
+                    //    strErr = @"компонента станции";
+                    //    idPut = 0;
+                    //    break;
                     default:
                         break;
                 }
@@ -1163,9 +1173,10 @@ namespace TepCommon
                                 m_arTableEdit[(int)INDEX_PARAMETER.PUT].Rows.Add(new object[] {
                                      idPut
                                     , Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.N_ALG)) //ALG
-                                    , Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.TIME)) //TIME
+                                    //, Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.TIME)) //TIME
                                     , id //COMP
-                                    , 0
+                                    , -65384
+                                    , 65385
                                 });
                             }
                             else

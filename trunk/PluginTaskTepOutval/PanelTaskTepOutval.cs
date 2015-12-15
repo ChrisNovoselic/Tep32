@@ -13,7 +13,7 @@ namespace PluginTaskTepOutval
     public class PanelTaskTepOutval : PanelTaskTepValues
     {
         public PanelTaskTepOutval(IPlugIn iFunc)
-            : base(iFunc, @"outalg", @"output")
+            : base(iFunc, @"outalg", @"output", @"outval")
         {
             InitializeComponent();
         }

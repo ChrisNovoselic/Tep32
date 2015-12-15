@@ -13,7 +13,7 @@ namespace PluginTaskTepInval
     public class PanelTaskTepInval : PanelTaskTepValues
     {
         public PanelTaskTepInval(IPlugIn iFunc)
-            : base(iFunc, @"inalg", @"input")
+            : base(iFunc, @"inalg", @"input", @"inval")
         {
             InitializeComponent();
         }

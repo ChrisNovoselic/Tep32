@@ -18,8 +18,8 @@ namespace PluginPrjInParameters
             : base(iFunc, @"inalg, input")
         {
             //Вариант "1-1
-            m_listIDLevels = new List<ID_LEVEL> { ID_LEVEL.TASK, ID_LEVEL.N_ALG, ID_LEVEL.TIME, ID_LEVEL.COMP, ID_LEVEL.PUT };
-            m_arIsShowDetailLevels = new bool[] { false, true, true, false };
+            m_listIDLevels = new List<ID_LEVEL> { ID_LEVEL.TASK, ID_LEVEL.N_ALG, /*ID_LEVEL.TIME,*/ ID_LEVEL.COMP, ID_LEVEL.PUT };
+            m_arIsShowDetailLevels = new bool[] { false, true, false, false };
 
             ////Вариант №1-2
             //m_listIDLevels = new List<ID_LEVEL> { ID_LEVEL.TASK, ID_LEVEL.TIME, ID_LEVEL.N_ALG, ID_LEVEL.COMP, ID_LEVEL.PUT };
@@ -34,12 +34,15 @@ namespace PluginPrjInParameters
 
         protected override void initTreeNodes()
         {
-            //Вариант №1-1
+            LEVEL_PARAMETERS lvlPars = null;
+            //Вариант №1-1            
             m_listLevelParameters = new List<LEVEL_PARAMETERS>();
-            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.TASK], @"ID", string.Empty, @"DESCRIPTION", string.Empty));
+            lvlPars = new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.TASK], @"ID", string.Empty, @"DESCRIPTION", string.Empty);
+            m_listLevelParameters.Add(lvlPars);
             m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableOrigin[(int)INDEX_PARAMETER.ALGORITM], @"ID", @"ID_TASK={ID_PARENT_0}", @"N_ALG", @"NAME_SHR"));
-            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.TIME], @"ID", string.Empty, @"DESCRIPTION", string.Empty));
-            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableOrigin[(int)INDEX_PARAMETER.PUT], @"ID_COMP,ID", @"ID_ALG={ID_PARENT_1} AND ID_TIME={ID_PARENT_0}", string.Empty, string.Empty));
+            //m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.TIME], @"ID", string.Empty, @"DESCRIPTION", string.Empty));
+            //m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableOrigin[(int)INDEX_PARAMETER.PUT], @"ID_COMP,ID", @"ID_ALG={ID_PARENT_1} AND ID_TIME={ID_PARENT_0}", string.Empty, string.Empty));
+            m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableOrigin[(int)INDEX_PARAMETER.PUT], @"ID_COMP,ID", @"ID_ALG={ID_PARENT_0}", string.Empty, string.Empty));
             m_listLevelParameters.Add(new LEVEL_PARAMETERS(m_arTableKey[(int)INDEX_TABLE_KEY.COMP_LIST], string.Empty, @"ID={ID_PARENT_1}", @"DESCRIPTION", string.Empty));
 
             ////Вариант №1-2
