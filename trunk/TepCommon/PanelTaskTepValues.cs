@@ -245,7 +245,9 @@ namespace TepCommon
                     + @" FROM [dbo].[" + m_strNameTableValues + @"_201512] v"
                     + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
                     + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON a.ID = p.ID_ALG"
-                    + @" WHERE [DATE_TIME]='" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:00:00") + @"'";
+                    + @" WHERE [DATE_TIME]='" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:00:00") + @"'"
+                        //+ @" AND [ID_TIME]=" + CurrIdPeriod
+                        ;
 
                 m_tblOrigin = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
 
@@ -402,7 +404,7 @@ namespace TepCommon
                     clbxParsCalculated.Items.Add(strItem, m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0);
                     bVisibled = m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0;
                     clbxParsVisibled.Items.Add(strItem, bVisibled);
-                    m_dgvValues.AddRow(id_alg, ((string)r[@"N_ALG"]).Trim(), bVisibled);
+                    m_dgvValues.AddRow(id_alg, ((string)r[@"N_ALG"]).Trim(), ((string)r[@"NAME_SHR"]).Trim(), bVisibled);
                 }
                 else
                     ;
@@ -599,13 +601,15 @@ namespace TepCommon
             /// Добавить строку в таблицу
             /// </summary>
             /// <param name="id_par">Идентификатор параметра алгоритма</param>
-            /// <param name="text">Текст заголовка строки</param>
+            /// <param name="headerText">Текст заголовка строки</param>
+            /// <param name="toolTipText">Текст подсказки для заголовка строки</param>
             /// <param name="bVisibled">Признак отображения строки</param>
-            public void AddRow(int id_par, string text, bool bVisibled)
+            public void AddRow(int id_par, string headerText, string toolTipText, bool bVisibled)
             {
                 int i = -1;
                 DataGridViewRow row = new DataGridViewRow ();
-                row.HeaderCell.Value = text;
+                row.HeaderCell.Value = headerText;
+                row.HeaderCell.ToolTipText = toolTipText;
                 i = Rows.Add(row);
                 Rows[i].Cells[0].Value = id_par;
                 m_listCalcDenyRows.Add(false);
@@ -746,7 +750,11 @@ namespace TepCommon
                 HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
                     , hdtpEnd = Controls.Find(INDEX_CONTROL.HDTP_END.ToString(), true)[0] as HDateTimePicker;
                 m_dtRange = new DateTimeRange(hdtpBegin.Value, hdtpEnd.Value);
-                hdtpBegin.ValueChanged += new EventHandler(hdtpBegin_onValueChanged);
+                ////Назначить обработчик события - изменение дата/время начала периода
+                //hdtpBegin.ValueChanged += new EventHandler(hdtpBegin_onValueChanged);
+                //Назначить обработчик события - изменение дата/время окончания периода
+                // при этом отменить обработку события - изменение дата/время начала периода
+                // т.к. при изменении дата/время начала периода изменяется и дата/время окончания периода
                 hdtpEnd.ValueChanged += new EventHandler (hdtpEnd_onValueChanged);
             }
 
@@ -884,22 +892,31 @@ namespace TepCommon
                 ResumeLayout(false);
                 PerformLayout();
             }
-
+            
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
             {
                 initializeLayoutStyleEvenly ();
             }
+            ///// <summary>
+            ///// Обработчик события - изменение дата/время начала периода
+            ///// </summary>
+            ///// <param name="obj">Составной объект - календарь</param>
+            ///// <param name="ev">Аргумент события</param>
+            //private void hdtpBegin_onValueChanged(object obj, EventArgs ev)
+            //{
+            //    m_dtRange.Set((obj as HDateTimePicker).Value, m_dtRange.End);
 
-            private void hdtpBegin_onValueChanged(object obj, EventArgs ev)
-            {
-                m_dtRange.Set((obj as HDateTimePicker).Value, m_dtRange.End);
-
-                DateTimeRangeValue_Changed(this, EventArgs.Empty);
-            }
-
+            //    DateTimeRangeValue_Changed(this, EventArgs.Empty);
+            //}
+            /// <summary>
+            /// Обработчик события - изменение дата/время окончания периода
+            /// </summary>
+            /// <param name="obj">Составной объект - календарь</param>
+            /// <param name="ev">Аргумент события</param>
             private void hdtpEnd_onValueChanged(object obj, EventArgs ev)
             {
-                m_dtRange.Set(m_dtRange.Begin, (obj as HDateTimePicker).Value);
+                HDateTimePicker hdtpEnd = obj as HDateTimePicker;
+                m_dtRange.Set(hdtpEnd.LeadingValue, hdtpEnd.Value);
 
                 DateTimeRangeValue_Changed(this, EventArgs.Empty);
             }

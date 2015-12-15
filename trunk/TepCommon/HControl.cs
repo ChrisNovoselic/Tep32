@@ -79,9 +79,12 @@ namespace TepCommon
         /// События изменения значения
         /// </summary>
         public event EventHandler ValueChanged;
+        /// <summary>
+        /// Значение дата/время объекта
+        /// </summary>
+        public DateTime Value;
 
-        //private DateTime _value;
-        public DateTime Value; //{ get { return _value; } }
+        public DateTime LeadingValue { get { return Value - m_tsLeading; } }
         /// <summary>
         /// Изменить доступность элементов управления
         /// </summary>
@@ -291,15 +294,21 @@ namespace TepCommon
 
             onSelectedIndexChanged();
         }
-
+        /// <summary>
+        /// Обработчик события - изменение знасния любого из компонентов даты/времени
+        /// </summary>
         private void onSelectedIndexChanged()
         {
+            //Проверить наличие ведущего объекта
             if (!(m_objLeading == null))
+                // изменить разность между собственным значением и значения ведущего объекта
                 m_tsLeading = Value - m_objLeading.Value;
             else
                 ;
-
-            ValueChanged(this, EventArgs.Empty);
+            // вызвать обработчик события - изменение значения объекта
+            // , но только один и 1-ый из них
+            // два обработчика когда объект ведущий (2-ой обработчик ведомого объекта)
+            ValueChanged.GetInvocationList()[0].DynamicInvoke(this, EventArgs.Empty);
         }
         /// <summary>
         /// Обработчик события - изменения значения в "ведущем" календаре
