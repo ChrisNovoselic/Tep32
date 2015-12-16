@@ -16,6 +16,7 @@ namespace TepCommon
 {
     public abstract partial class PanelTaskTepValues : HPanelTepCommon
     {
+        private enum INDEX_TABLE_VALUES : int { VARIABLE, DEFAULT, COUNT }
         private enum INDEX_TABLE_DICTPRJ : int { UNKNOWN = -1, PERIOD, COMPONENT, PARAMETER
             , COUNT_TABLE_DICTPRJ }
         /// <summary>
@@ -60,8 +61,8 @@ namespace TepCommon
         /// <summary>
         /// Таблицы со значениями для редактирования
         /// </summary>
-        protected DataTable m_tblEdit
-            , m_tblOrigin;
+        protected DataTable[] m_arTableOrigin
+            , m_arTableEdit;
         /// <summary>
         /// Объект для обмена данными с БД
         /// </summary>
@@ -77,7 +78,10 @@ namespace TepCommon
             //iRes = compareNAlg (@"10", @"4.1");
             //iRes = compareNAlg (@"10.1", @"7.1");
             //iRes = compareNAlg(@"4", @"10.1");
-            
+
+            m_arTableOrigin = new DataTable [(int)INDEX_TABLE_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
+
             m_strNameTableAlg = strNameTableAlg;
             m_strNameTablePut = strNameTablePut;
             m_strNameTableValues = strNameTableValues;
@@ -231,14 +235,14 @@ namespace TepCommon
                 , err = -1;
             string errMsg = string.Empty
                 , query = string.Empty;
-            DbConnection dbConn = null;
-            // очисить содержание представления
-            m_dgvValues.ClearValues();
+            // представление очичается в 'clear ()' - при автоматическом вызове, при нажатии на кнопку "Загрузить" (аналог "Обновить")
+            DbConnection dbConn = null;            
             // получить объект для соединения с БД
             dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
             // проверить успешность получения 
             if ((!(dbConn == null)) && (err == 0))
             {
+                //Запрос для получения автоматически собираемых данных
                 query = @"SELECT a.N_ALG, a.ID_MEASURE"
                     + @", p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
                     + @", v.*"
@@ -248,18 +252,32 @@ namespace TepCommon
                     + @" WHERE [DATE_TIME]='" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:00:00") + @"'"
                         //+ @" AND [ID_TIME]=" + CurrIdPeriod
                         ;
-
-                m_tblOrigin = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
-
+                //Заполнить таблицу автоматически собираемыми данными
+                m_arTableOrigin [(int)INDEX_TABLE_VALUES.VARIABLE] = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
+                //Проверить признак выполнения запроса
                 if (err == 0)
                 {
-                    m_tblEdit = m_tblOrigin.Copy();
+                    //Запрос для получения данных вводимых вручную
+                    query = string.Empty;
+                    //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
+                    m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
 
-                    m_dgvValues.ShowValues(m_tblEdit);
+                    //Проверить признак выполнения запроса
+                    if (err == 0)
+                    {
+                        // создать копии для возможности сохранения изменений
+                        m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Copy();
+                        m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Copy();
+
+                        m_dgvValues.ShowValues(m_arTableEdit);
+                    }
+                    else
+                        errMsg = @"ошибка получения данных по умолчанию с " + m_panelManagement.m_dtRange.Begin.ToString()
+                            + @" по " + m_panelManagement.m_dtRange.End.ToString();
                 }
                 else
-                    errMsg = @"ошибка получения данных с " + m_panelManagement.m_dtRange.Begin.ToString() +
-                        m_panelManagement.m_dtRange.End.ToString();
+                    errMsg = @"ошибка получения автоматически собираемых данных с " + m_panelManagement.m_dtRange.Begin.ToString()
+                        + @" по " + m_panelManagement.m_dtRange.End.ToString();
             }
             else
             {
@@ -280,6 +298,9 @@ namespace TepCommon
         protected override void clear()
         {
             //base.clear();
+
+            // очистить содержание представления
+            m_dgvValues.ClearValues();
         }
 
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
@@ -696,22 +717,24 @@ namespace TepCommon
             /// Отобразить значения
             /// </summary>
             /// <param name="values">Значения для отображения</param>
-            public void ShowValues(DataTable values)
+            public void ShowValues(DataTable [] values)
             {
                 int iCol = 0
                     , iRow = 0;
-                DataRow[] cellRows = null;
+                DataRow[] cellVarRows = null
+                    , cellDefRows = null;
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
                     if (iCol > 0)
                         foreach (DataGridViewRow row in Rows)
                         {
-                            cellRows = values.Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + (int)row.Cells[0].Value);
+                            cellVarRows = values[(int)INDEX_TABLE_VALUES.VARIABLE].Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + (int)row.Cells[0].Value);
+                            cellDefRows = values[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + (int)row.Cells[0].Value);
 
-                            if (cellRows.Length == 1)
+                            if (cellVarRows.Length == 1)
                             {
-                                row.Cells[iCol].Value = ((double)cellRows[0][@"VALUE"]).ToString(@"F1", System.Globalization.CultureInfo.InvariantCulture);
+                                row.Cells[iCol].Value = ((double)cellVarRows[0][@"VALUE"]).ToString(@"F1", System.Globalization.CultureInfo.InvariantCulture);
                             }
                             else
                                 ; //continue
