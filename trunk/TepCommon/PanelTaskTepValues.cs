@@ -144,17 +144,7 @@ namespace TepCommon
                 , id_comp = -1;
             bool bVisibled = false;
             //Заполнить таблицы со словарными, проектными величинами
-            string[] arQueryDictPrj = new string[]
-            {
-                @"SELECT * FROM [time] WHERE [ID] IN (" + m_strIdPeriods + @")"
-                , @"SELECT * FROM [comp_list] "
-                    + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
-                        + @" OR ([ID_COMP] = 1000)"
-                , @"SELECT put.*, alg.* FROM [dbo].[" + m_strNameTablePut + @"] as put"
-                    + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as alg ON alg.ID_TASK = 1 AND alg.ID = put.ID_ALG"
-                        //+ @" AND put.ID_TIME in (" + m_strIdPeriods + @")"
-            };
-
+            string[] arQueryDictPrj = queryDictPrj;
             for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
             {
                 m_arTableDictPrjs[i] = DbTSQLInterface.Select(ref dbConn, arQueryDictPrj[i], null, null, out err);
@@ -227,6 +217,26 @@ namespace TepCommon
             throw new NotImplementedException();
         }
 
+        private string[] queryDictPrj
+        {
+            get
+            {
+                return new string[]
+                {
+                    //PERIOD
+                    @"SELECT * FROM [time] WHERE [ID] IN (" + m_strIdPeriods + @")"
+                    // список компонентов
+                    , @"SELECT * FROM [comp_list] "
+                        + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
+                            + @" OR ([ID_COMP] = 1000)"
+                    // параметры расчета
+                    , @"SELECT put.*, alg.* FROM [dbo].[" + m_strNameTablePut + @"] as put"
+                        + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as alg ON alg.ID_TASK = 1 AND alg.ID = put.ID_ALG"
+                            //+ @" AND put.ID_TIME in (" + m_strIdPeriods + @")"
+                };
+            }
+        }
+
         private string queryValuesVar
         {
             get
@@ -296,6 +306,9 @@ namespace TepCommon
                 , err = -1;
             string errMsg = string.Empty
                 , query = string.Empty;
+            // строки для удаления из таблицы значений "по умолчанию"
+            // при наличии дубликатов строк в таблице с загруженными из источников с данными
+            DataRow[] rowsToRemove = null;
             // представление очичается в 'clear ()' - при автоматическом вызове, при нажатии на кнопку "Загрузить" (аналог "Обновить")
             DbConnection dbConn = null;            
             // получить объект для соединения с БД
@@ -314,15 +327,21 @@ namespace TepCommon
                     query = queryValuesDef;
                     //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
                     m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
-
                     //Проверить признак выполнения запроса
                     if (err == 0)
                     {
+                        // удалить строки из таблицы со значениями "по умолчанию"
+                        foreach (DataRow rValVar in m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Rows)
+                        {
+                            rowsToRemove = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID=" + rValVar[@"ID"]);
+                            foreach (DataRow rToRemove in rowsToRemove)
+                                m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Rows.Remove(rToRemove);
+                        }
                         // создать копии для возможности сохранения изменений
                         m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Copy();
                         m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Copy();
 
-                        m_dgvValues.ShowValues(m_arTableEdit);
+                        m_dgvValues.ShowValues(m_arTableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
                     }
                     else
                         errMsg = @"ошибка получения данных по умолчанию с " + m_panelManagement.m_dtRange.Begin.ToString()
@@ -784,27 +803,42 @@ namespace TepCommon
             /// Отобразить значения
             /// </summary>
             /// <param name="values">Значения для отображения</param>
-            public void ShowValues(DataTable [] values)
+            public void ShowValues(DataTable [] values, DataTable parameter)
             {
                 int iCol = 0
                     , iRow = 0;
+                double dblVal = -1F;
                 DataRow[] cellVarRows = null
-                    , cellDefRows = null;
+                    , cellDefRows = null
+                    , parameterRows = null;
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
                     if (iCol > 0)
                         foreach (DataGridViewRow row in Rows)
                         {
-                            cellVarRows = values[(int)INDEX_TABLE_VALUES.VARIABLE].Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + (int)row.Cells[0].Value);
-                            cellDefRows = values[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + (int)row.Cells[0].Value);
-
-                            if (cellVarRows.Length == 1)
+                            dblVal = double.NaN;
+                            parameterRows = parameter.Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + (int)row.Cells[0].Value);
+                            if (parameterRows.Length == 1)
                             {
-                                row.Cells[iCol].Value = ((double)cellVarRows[0][@"VALUE"]).ToString(@"F1", System.Globalization.CultureInfo.InvariantCulture);
+                                cellVarRows = values[(int)INDEX_TABLE_VALUES.VARIABLE].Select(@"ID=" + parameterRows[0][@"ID"]);
+                                cellDefRows = values[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID=" + parameterRows[0][@"ID"]);
+
+                                if (cellVarRows.Length == 1)
+                                    dblVal = ((double)cellVarRows[0][@"VALUE"]);
+                                else
+                                    if (cellDefRows.Length == 1)
+                                        dblVal = ((double)cellDefRows[0][@"VALUE"]);
+                                    else
+                                        ; // continue
                             }
                             else
-                                ; //continue
+                                ; // параметр расчета для компонента станции не найден
+
+                            if (! (dblVal == double.NaN))
+                                row.Cells[iCol].Value = dblVal.ToString(@"F1", System.Globalization.CultureInfo.InvariantCulture);
+                            else
+                                row.Cells[iCol].Style.BackColor = Color.Gray;
 
                             iRow++;
                         }
