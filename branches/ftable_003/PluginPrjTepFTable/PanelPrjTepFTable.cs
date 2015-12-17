@@ -128,6 +128,7 @@ namespace PluginPrjTepFTable
                 rView.Visible = bVisible;
             }
         }
+
         /// <summary>
         /// Обработчик события - изменение выбранной строки
         ///  в отображении для таблицы с наименованями функций
@@ -528,6 +529,7 @@ namespace PluginPrjTepFTable
             // для поля ввода при поиске функции
             ((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_FIND.ToString(), true)[0]).TextChanged += new EventHandler(PluginPrjTepFTable_TextChanged);
         }
+
         /// <summary>
         /// Обрабоотка клика по кнопке результат
         /// </summary>
@@ -550,8 +552,6 @@ namespace PluginPrjTepFTable
                 TextBox tbValue = Controls.Find(indx.ToString(), true)[0] as TextBox;
             }
         }
-
-       
 
         /// <summary>
         /// Строка - наименование текущей (выбранной) функции
@@ -667,7 +667,7 @@ namespace PluginPrjTepFTable
                     float.Parse((Controls.Find(((INDEX_CONTROL)(indx + (int)INDEX_CONTROL.TEXTBOX_A1)).ToString (), true)[0] as TextBox).Text, CultureInfo.InvariantCulture);
 
             (Controls.Find(INDEX_CONTROL.TEXTBOX_REZULT.ToString(), true)[0] as TextBox).Text =
-               m_zGraph_fTABLE.Calculate(pars).ToString (@"F2");
+               m_zGraph_fTABLE.Calculate(NAlg,pars).ToString (@"F2");
         }
     }
 

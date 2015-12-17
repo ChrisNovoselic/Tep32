@@ -138,6 +138,7 @@ namespace PluginPrjTepFTable
 
             //drawGraph(points);
         }
+
         /// <summary>
         /// Формированре масива 
         /// значений для графика функции
@@ -215,10 +216,10 @@ namespace PluginPrjTepFTable
         /// с одним параметром
         /// </summary>
         /// <param name="colCount">кол-во аргументов</param>
-        //protected override void funcWithOneArgs(string nameCol)
-        //{
+        protected override void funcWithOneArgs(string nameCol)
+        {
             //formingArrayValues(filter);
-        //}
+        }
 
         /// <summary>
         /// Функция нахождения реперных точек
@@ -240,6 +241,7 @@ namespace PluginPrjTepFTable
         {
             formingArrayValues(filter);
         }
+
         /// <summary>
         /// Создание наборов точек
         /// </summary>
@@ -258,6 +260,7 @@ namespace PluginPrjTepFTable
                 pointList[i].Add(array[i].a1, array[i].f);
             }
         }
+
         /// <summary>
         /// Проверка на кол-во аргументов функции(отображение графиков)
         /// </summary>
@@ -286,6 +289,7 @@ namespace PluginPrjTepFTable
                     break;
             }
         }
+
         /// <summary>
         /// Формирование строки запроса данных
         /// для построения графика
@@ -321,6 +325,7 @@ namespace PluginPrjTepFTable
 
             return filter;
         }
+
         /// <summary>
         /// Создание графика на основе всех точек
         /// </summary>
@@ -366,6 +371,7 @@ namespace PluginPrjTepFTable
             m_This.Invalidate();
             m_This.Refresh();
         }
+
         /// <summary>
         /// Формирование списка точек
         /// </summary>
