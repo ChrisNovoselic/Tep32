@@ -113,6 +113,11 @@ namespace PluginPrjTepFTable
         /// </summary>
         double[][] FinalRezult;
         /// <summary>
+        /// флаг для экстраполяции
+        /// </summary>
+        bool bflag1;
+        bool bflag2;
+        /// <summary>
         /// Признак выполнения условия
         ///  , которое задается для вычисления минимумов и для перестройки массивов
         /// </summary>
@@ -197,6 +202,9 @@ namespace PluginPrjTepFTable
         /// </summary>
         private void rangeOfValues(int numArray, int numMin, int elemArray)
         {
+            bflag1 = true;
+            bflag2 = true;
+
             if ((referencePoint < ArgMin[numMin].ElementAt(elemArray + 1)) && (referencePoint > ArgMin[numMin].ElementAt(elemArray)))
             {
                 for (int i = 0; i < ValuesFunc[numArray].Length; i++)
@@ -338,9 +346,6 @@ namespace PluginPrjTepFTable
         /// <param name="numArray"></param>
         private void extrapolation(int numArray, int numMin, int elemArray, int i)
         {
-            bool bflag1 = true;
-            bool bflag2 = true;
-
             if (bflag1 == true)
             {
                 ArgMin[numMin].SetValue(ValuesFunc[numArray].ElementAt(i), elemArray);
@@ -456,9 +461,9 @@ namespace PluginPrjTepFTable
         /// Фильтрация массива-функции
         /// сравнение значений массива с найденными минимумами
         /// </summary>
-        /// <param name="numArray"></param>
-        /// <param name="argMin"></param>
-        /// <param name="numMin"></param>
+        /// <param name="numArray">номер массива</param>
+        /// <param name="argMin">номер минимума</param>
+        /// <param name="elemArray">элемент массива</param>
         private void filterArray(int numArray, int numMin, int elemArray)
         {
             int count = 0;
@@ -476,20 +481,19 @@ namespace PluginPrjTepFTable
 
                     for (int j = 0; j < numArray; j++)
                     {
-                        //ValuesFunc[].SetValue(ValuesFunc[j].ElementAt(i),);
+                        //ValuesFunc[].SetValue(ValuesFunc[j].ElementAt(i),count); //???
                     }
                 }
             }
-            //???
+            //??? либо замена массива, либо создание нового.
         }
 
         /// <summary>
         /// вычисление конечного (return)
         /// результата
         /// </summary>
-        /// <param name="numArray"></param>
-        /// <param name="elemArray"></param>
-        /// <param name="array"></param>
+        /// <param name="numArray">номер массива</param>
+        /// <param name="elemArray">элеент массива</param>
         /// <returns></returns>
         private double obtaingPointMain(int numArray, int elemArray, int t)
         {
