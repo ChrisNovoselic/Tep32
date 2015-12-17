@@ -226,6 +226,67 @@ namespace TepCommon
         {
             throw new NotImplementedException();
         }
+
+        private string queryValuesVar
+        {
+            get
+            {
+                return @"SELECT"
+	                + @" p.ID"
+	                + @", 0" //ID_USER
+	                + @", v.ID_SOURCE"
+	                + @", 0" //ID_SESSION
+                    + @", CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                    + @", CAST ('" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+	                + @", v.ID_TIME"
+	                + @", v.ID_TIMEZONE"
+	                + @", v.QUALITY"
+	                + @", CASE WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
+		                + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
+		                + @" ELSE MIN (v.[VALUE]) END as VALUE"
+	                + @", GETDATE ()"
+                    + @" FROM [dbo].[" + m_strNameTableValues + @"_201512] v"
+	                    + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
+                        + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
+	                    + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
+                    + @" WHERE [DATE_TIME] > CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                        + @" AND [DATE_TIME] <= CAST ('" + m_panelManagement.m_dtRange.End.ToString (@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                    + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
+	                    + @", a.ID_MEASURE, a.N_ALG"
+	                    + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
+	                    + @", m.[AVG]"
+                        ;
+            }
+        }
+
+        private string queryValuesDef
+        {
+            get
+            {
+                return @"SELECT"
+                    + @" p.ID"
+                    + @", -1" //ID_USER
+                    + @", -1"
+                    + @", 0" //ID_SESSION
+                    + @", CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                    + @", CAST ('" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                    + @", -1"
+                    + @", -1"
+                    + @", -1"
+                    + @", CASE WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
+                        + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
+                        + @" ELSE MIN (v.[VALUE]) END as VALUE"
+                    + @", GETDATE ()"
+                    + @" FROM [dbo].[" + m_strNameTableValues + @"_def] v"
+                        + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
+                        + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
+                        + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
+                    + @" GROUP BY a.ID_MEASURE, a.N_ALG"
+                        + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
+                        + @", m.[AVG]"
+                        ;
+            }
+        }
         /// <summary>
         /// Выполнить запрос к БД, отобразить рез-т запроса
         /// </summary>
@@ -243,22 +304,14 @@ namespace TepCommon
             if ((!(dbConn == null)) && (err == 0))
             {
                 //Запрос для получения автоматически собираемых данных
-                query = @"SELECT a.N_ALG, a.ID_MEASURE"
-                    + @", p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
-                    + @", v.*"
-                    + @" FROM [dbo].[" + m_strNameTableValues + @"_201512] v"
-                    + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
-                    + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON a.ID = p.ID_ALG"
-                    + @" WHERE [DATE_TIME]='" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:00:00") + @"'"
-                        //+ @" AND [ID_TIME]=" + CurrIdPeriod
-                        ;
+                query = queryValuesVar;
                 //Заполнить таблицу автоматически собираемыми данными
                 m_arTableOrigin [(int)INDEX_TABLE_VALUES.VARIABLE] = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 //Проверить признак выполнения запроса
                 if (err == 0)
                 {
                     //Запрос для получения данных вводимых вручную
-                    query = string.Empty;
+                    query = queryValuesDef;
                     //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
                     m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
 
@@ -294,7 +347,11 @@ namespace TepCommon
             else
                 ;
         }
-
+        /// <summary>
+        /// Очистить обновляемые значения
+        ///  после нажатия кнопки "Обновить"
+        ///  и  перед отображением новых значений
+        /// </summary>
         protected override void clear()
         {
             //base.clear();
@@ -302,7 +359,11 @@ namespace TepCommon
             // очистить содержание представления
             m_dgvValues.ClearValues();
         }
-
+        /// <summary>
+        /// Обработчик события - нажатие на кнопку "Загрузить" (кнопка - аналог "Обновить")
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="ev"></param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
             base.HPanelTepCommon_btnUpdate_Click(obj, ev);
@@ -387,7 +448,7 @@ namespace TepCommon
         /// <summary>
         /// Обработчик события при изменении периода расчета
         /// </summary>
-        /// <param name="obj">Объект, игициировавший событие</param>
+        /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
         private void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
         {
@@ -537,7 +598,11 @@ namespace TepCommon
                 , id_item
                 , ev.NewValue == CheckState.Checked ? true : ev.NewValue == CheckState.Unchecked ? false : false);
         }
-
+        /// <summary>
+        /// Обработчик события - изменение интервала (диапазона между нач. и оконч. датой/временем) расчета
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void datetimeRangeValue_onChanged(object obj, EventArgs ev)
         {
             //if ((! (m_tblOrigin == null))
@@ -545,7 +610,9 @@ namespace TepCommon
                 updateDataValues();
             //else ;
         }
-
+        /// <summary>
+        /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
+        /// </summary>
         protected class DataGridViewTEPValues : DataGridView
         {
             private List<bool> m_listCalcDenyRows;
@@ -760,7 +827,9 @@ namespace TepCommon
                             ;
             }
         }
-
+        /// <summary>
+        /// Класс для размещения управляющих элементов управления
+        /// </summary>
         protected class PanelManagement : HPanelCommon
         {
             public EventHandler DateTimeRangeValue_Changed;
