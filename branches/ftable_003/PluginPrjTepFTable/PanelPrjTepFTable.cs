@@ -654,7 +654,7 @@ namespace PluginPrjTepFTable
         }
 
         /// <summary>
-        /// 
+        /// при пустой строке исключение. при любом другом знаке кроме цифр исключение.!!!
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="ev"></param>
@@ -663,7 +663,7 @@ namespace PluginPrjTepFTable
             FTable.FRUNK runk = m_zGraph_fTABLE.GetRunk(NAlg);
             float[] pars = new float[(int)runk + 1];
             for (int indx = 0; indx < pars.Length; indx++)
-                pars[indx] =
+                 pars[indx] =
                     float.Parse((Controls.Find(((INDEX_CONTROL)(indx + (int)INDEX_CONTROL.TEXTBOX_A1)).ToString (), true)[0] as TextBox).Text, CultureInfo.InvariantCulture);
 
             (Controls.Find(INDEX_CONTROL.TEXTBOX_REZULT.ToString(), true)[0] as TextBox).Text =

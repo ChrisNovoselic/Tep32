@@ -253,7 +253,7 @@ namespace PluginPrjTepFTable
                     condition = true;
                     break;
                 case 2:
-                    if (ValuesFunc[array + 1].ElementAt(i) == ArgMin[0].ElementAt(elemArray))
+                    if (ValuesFunc[array + 1].ElementAt(i) == ArgMin[0].ElementAt(elemArray)) // другой счетчик элемента массива минимума
                     {
                         condition = true;
                     }
@@ -538,7 +538,7 @@ namespace PluginPrjTepFTable
                 {
                     searchMainMIN(i, Param - 1, elemArray);
                     rangeOfValues(Param - 1, i, elemArray);
-                    elemArray++;
+                   elemArray = elemArray+2;
                 }
 
                 //filterArray(Param-1,i);
