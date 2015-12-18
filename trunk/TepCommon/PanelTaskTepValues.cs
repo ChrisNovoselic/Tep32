@@ -91,6 +91,7 @@ namespace TepCommon
             InitializeComponents();
 
             m_panelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
+            m_dgvValues.EventCellValueChanged += new DelegateObjectFunc(onEventCellValueChanged);
         }
 
         private void InitializeComponents()
@@ -259,7 +260,8 @@ namespace TepCommon
 	                    + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
                         + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
 	                    + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                    + @" WHERE [DATE_TIME] > CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                    + @" WHERE [ID_TIME] = " + CurrIdPeriod
+                        + @" AND [DATE_TIME] > CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
                         + @" AND [DATE_TIME] <= CAST ('" + m_panelManagement.m_dtRange.End.ToString (@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
                     + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
 	                    + @", a.ID_MEASURE, a.N_ALG"
@@ -268,11 +270,15 @@ namespace TepCommon
                         ;
             }
         }
-
+        /// <summary>
+        /// Запрос для получения значений "по умолчанию"
+        /// </summary>
         private string queryValuesDef
         {
             get
             {
+                int cnt = (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0;
+
                 return @"SELECT"
                     + @" p.ID"
                     + @", -1" //ID_USER
@@ -283,17 +289,15 @@ namespace TepCommon
                     + @", -1"
                     + @", -1"
                     + @", -1"
-                    + @", CASE WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
-                        + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
-                        + @" ELSE MIN (v.[VALUE]) END as VALUE"
+                    + @", CASE WHEN m.[AVG] = 0 THEN " + cnt + @" * v.[VALUE]"
+                        + @" WHEN m.[AVG] = 1 THEN v.[VALUE]"
+                        + @" ELSE v.[VALUE] END as VALUE"
                     + @", GETDATE ()"
                     + @" FROM [dbo].[" + m_strNameTableValues + @"_def] v"
                         + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
                         + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
                         + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                    + @" GROUP BY a.ID_MEASURE, a.N_ALG"
-                        + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
-                        + @", m.[AVG]"
+                    + @" WHERE [ID_TIME] = " + CurrIdPeriod
                         ;
             }
         }
@@ -624,17 +628,56 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         private void datetimeRangeValue_onChanged(object obj, EventArgs ev)
         {
+            // очистить содержание представления
+            clear();
             //if ((! (m_tblOrigin == null))
             //    && (m_tblOrigin.Rows.Count > 0))
                 updateDataValues();
             //else ;
         }
         /// <summary>
+        /// Обработчик события - изменение значения в отображении для сохранения
+        /// </summary>
+        /// <param name="pars"></param>
+        private void onEventCellValueChanged(object pars)
+        {
+            int id_par = (int)(pars as object [])[0]
+                , id_comp = (int)(pars as object[])[1];
+            double val = (double)(pars as object[])[2];
+        }
+        /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
         /// </summary>
         protected class DataGridViewTEPValues : DataGridView
         {
-            private List<bool> m_listCalcDenyRows;
+            public DelegateObjectFunc EventCellValueChanged;
+            /// <summary>
+            /// Структура с дополнительными свойствами ячейки отображения
+            /// </summary>
+            private struct HDataGridViewCell //: DataGridViewCell
+            {
+                public enum INDEX_CELL_PROPERTY : uint { CALC_DENY, IS_NAN }
+                /// <summary>
+                /// Признак запрета расчета
+                /// </summary>
+                public bool m_bCalcDeny;
+                /// <summary>
+                /// Признак отсутствия значения
+                /// </summary>
+                public bool m_bIsNaN;
+
+                public HDataGridViewCell(bool bCalcDeny, bool bIsNaN)
+                {
+                    m_bCalcDeny = bCalcDeny;
+                    m_bIsNaN = bIsNaN;
+                }
+
+                //public bool IsCanColorChange { get { return ((m_bCalcDeny == false) && (m_bIsNaN == false)); } }
+            }
+
+            private List<HDataGridViewCell []> m_listPropertiesRows;
+
+            //private List<bool> m_listCalcDenyRows;
             private class HDataGridViewColumn : DataGridViewTextBoxColumn
             {
                 public int m_iIdComp;
@@ -643,9 +686,11 @@ namespace TepCommon
 
             public DataGridViewTEPValues ()
             {
-                m_listCalcDenyRows = new List<bool>();
+                m_listPropertiesRows = new List<HDataGridViewCell []>();
 
                 InitializeComponents ();
+
+                CellValueChanged += new DataGridViewCellEventHandler (onCellValueChanged);
             }
 
             private void InitializeComponents()
@@ -671,7 +716,7 @@ namespace TepCommon
                 {
                     Rows.Clear();
 
-                    m_listCalcDenyRows.Clear();
+                    m_listPropertiesRows.Clear();
                 }
                 else
                     ;
@@ -713,13 +758,17 @@ namespace TepCommon
             /// <param name="bVisibled">Признак отображения строки</param>
             public void AddRow(int id_par, string headerText, string toolTipText, bool bVisibled)
             {
-                int i = -1;
+                int i = -1
+                    , c = -1;
                 DataGridViewRow row = new DataGridViewRow ();
                 row.HeaderCell.Value = headerText;
                 row.HeaderCell.ToolTipText = toolTipText;
                 i = Rows.Add(row);
                 Rows[i].Cells[0].Value = id_par;
-                m_listCalcDenyRows.Add(false);
+                m_listPropertiesRows.Add(new HDataGridViewCell[Columns.Count]);
+                i = m_listPropertiesRows.Count - 1;
+                for (c = 0; c < Columns.Count; c++)
+                    m_listPropertiesRows[i][c] = new HDataGridViewCell(false, true);
             }
             /// <summary>
             /// Обновить структуру таблицы
@@ -730,7 +779,9 @@ namespace TepCommon
             public void UpdateStructure(PanelTaskTepValues.INDEX_ID indxDeny, int id, bool bCheckedItem)
             {
                 Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
-                int indx = -1;
+                bool bIsCanColorChange = false;
+                int indx = -1
+                    , cIndx = -1;
                 //Поиск индекса элемента отображения
                 switch (indxDeny)
                 {
@@ -770,8 +821,15 @@ namespace TepCommon
                             // для всех ячеек в столбце
                             foreach (DataGridViewRow r in Rows)
                             {
-                                clrCell = ((bCheckedItem == true) && (m_listCalcDenyRows[Rows.IndexOf(r)] == false)) ? Color.White : Color.LightGray;
-                                r.Cells[indx].Style.BackColor = clrCell;
+                                bIsCanColorChange = ((m_listPropertiesRows[Rows.IndexOf(r)][indx].m_bCalcDeny == false)
+                                    && (m_listPropertiesRows[Rows.IndexOf(r)][indx].m_bIsNaN == false));
+                                if (bIsCanColorChange == true)
+                                {
+                                    clrCell = ((bCheckedItem == true) && (m_listPropertiesRows[Rows.IndexOf(r)][indx].m_bCalcDeny == false)) ? Color.White : Color.LightGray;
+                                    r.Cells[indx].Style.BackColor = clrCell;
+                                }
+                                else
+                                    ;
                             }
                             (Columns[indx] as HDataGridViewColumn).m_bCalcDeny = ! bCheckedItem;
                             break;
@@ -779,10 +837,18 @@ namespace TepCommon
                             // для всех ячеек в строке
                             foreach (DataGridViewCell c in Rows[indx].Cells)
                             {
-                                clrCell = ((bCheckedItem == true) && ((Columns[Rows[indx].Cells.IndexOf(c)] as HDataGridViewColumn).m_bCalcDeny == false)) ? Color.White : Color.LightGray;
-                                c.Style.BackColor = clrCell;
+                                cIndx = Rows[indx].Cells.IndexOf(c);
+                                bIsCanColorChange = m_listPropertiesRows[indx][cIndx].m_bIsNaN == false;
+                                if (bIsCanColorChange == true)
+                                {
+                                    clrCell = ((bCheckedItem == true) && ((Columns[cIndx] as HDataGridViewColumn).m_bCalcDeny == false)) ? Color.White : Color.LightGray;
+                                    c.Style.BackColor = clrCell;
+                                }
+                                else
+                                    ;
+
+                                m_listPropertiesRows[indx][cIndx].m_bCalcDeny = !bCheckedItem;
                             }
-                            m_listCalcDenyRows[indx] = !bCheckedItem;
                             break;
                         case INDEX_ID.DENY_COMP_VISIBLED:
                             // для всех ячеек в столбце
@@ -805,12 +871,14 @@ namespace TepCommon
             /// <param name="values">Значения для отображения</param>
             public void ShowValues(DataTable [] values, DataTable parameter)
             {
-                int iCol = 0
+                int idAlg = -1
+                    , iCol = 0
                     , iRow = 0;
                 double dblVal = -1F;
                 DataRow[] cellVarRows = null
                     , cellDefRows = null
                     , parameterRows = null;
+                Color clrCell = Color.Empty;
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
@@ -818,7 +886,8 @@ namespace TepCommon
                         foreach (DataGridViewRow row in Rows)
                         {
                             dblVal = double.NaN;
-                            parameterRows = parameter.Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + (int)row.Cells[0].Value);
+                            idAlg = (int)row.Cells[0].Value;
+                            parameterRows = parameter.Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + idAlg);
                             if (parameterRows.Length == 1)
                             {
                                 cellVarRows = values[(int)INDEX_TABLE_VALUES.VARIABLE].Select(@"ID=" + parameterRows[0][@"ID"]);
@@ -835,10 +904,17 @@ namespace TepCommon
                             else
                                 ; // параметр расчета для компонента станции не найден
 
-                            if (! (dblVal == double.NaN))
+                            m_listPropertiesRows[Rows.IndexOf(row)][iCol].m_bIsNaN =
+                            row.Cells[iCol].ReadOnly =
+                                double.IsNaN(dblVal);
+                            clrCell = Color.White;
+
+                            if (double.IsNaN(dblVal) == false)
                                 row.Cells[iCol].Value = dblVal.ToString(@"F1", System.Globalization.CultureInfo.InvariantCulture);
                             else
-                                row.Cells[iCol].Style.BackColor = Color.Gray;
+                                clrCell = Color.Gray;
+
+                            row.Cells[iCol].Style.BackColor = clrCell;
 
                             iRow++;
                         }
@@ -853,12 +929,36 @@ namespace TepCommon
             /// </summary>
             public void ClearValues()
             {
+                CellValueChanged -= onCellValueChanged;
+
                 foreach (DataGridViewRow r in Rows)
                     foreach (DataGridViewCell c in r.Cells)
                         if (r.Cells.IndexOf(c) > 0) // нельзя удалять идентификатор параметра
                             c.Value = string.Empty;
                         else
                             ;
+
+                CellValueChanged += new DataGridViewCellEventHandler (onCellValueChanged);
+            }
+
+            private void onCellValueChanged(object obj, DataGridViewCellEventArgs ev)
+            {
+                string strValue = string.Empty;
+                double dblValue = double.NaN;
+
+                if (ev.ColumnIndex > 0)
+                {
+                    strValue = (string)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value;
+
+                    if (double.TryParse(strValue, out dblValue) == true)
+                        EventCellValueChanged(new object[] { Rows[ev.RowIndex].Cells[0].Value //Идентификатор параметра
+                            , (Columns[ev.ColumnIndex] as HDataGridViewColumn).m_iIdComp //Идентификатор компонента
+                            , dblValue });
+                    else
+                        ; //??? невозможно преобразовать значение - отобразить сообщение для пользователя
+                }
+                else
+                    ; // в 0-ом столбце идентификатор параметра расчета
             }
         }
         /// <summary>
