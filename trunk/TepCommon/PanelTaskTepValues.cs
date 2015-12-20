@@ -16,8 +16,13 @@ namespace TepCommon
 {
     public abstract partial class PanelTaskTepValues : HPanelTepCommon
     {
+        /// <summary>
+        /// Перечисление - индексы таблиц для значений
+        ///  , собранных в автоматическом режиме
+        ///  , "по умолчанию"
+        /// </summary>
         private enum INDEX_TABLE_VALUES : int { VARIABLE, DEFAULT, COUNT }
-        private enum INDEX_TABLE_DICTPRJ : int { UNKNOWN = -1, PERIOD, COMPONENT, PARAMETER
+        private enum INDEX_TABLE_DICTPRJ : int { UNKNOWN = -1, PERIOD, COMPONENT, PARAMETER, MODE_DEV
             , COUNT_TABLE_DICTPRJ }
         /// <summary>
         /// Наименования таблиц с парметрами для расчета
@@ -143,7 +148,7 @@ namespace TepCommon
             string strItem = string.Empty;
             int i = -1
                 , id_comp = -1;
-            bool bVisibled = false;
+            bool bChecked = false;
             //Заполнить таблицы со словарными, проектными величинами
             string[] arQueryDictPrj = queryDictPrj;
             for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
@@ -167,12 +172,16 @@ namespace TepCommon
                     id_comp = (Int16)r[@"ID"];
                     m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
                     strItem = (string)r[@"DESCRIPTION"];
-                    clbxCompCalculated.Items.Add(strItem, m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0);
-                    bVisibled = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
-                    clbxCompVisibled.Items.Add(strItem, bVisibled);
-                    m_dgvValues.AddColumn(id_comp, strItem, bVisibled);
+                    // установить признак участия в расчете компонента станции
+                    bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
+                    clbxCompCalculated.Items.Add(strItem, bChecked);
+                    // установить признак отображения компонента станции
+                    bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
+                    clbxCompVisibled.Items.Add(strItem, bChecked);
+                    m_dgvValues.AddColumn(id_comp, strItem, bChecked);
                 }
-
+                // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
+                // компонента станции для элементов управления
                 clbxCompCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
                 clbxCompVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
 
@@ -182,7 +191,9 @@ namespace TepCommon
                     (ctrl as ComboBox).Items.Add (r[@"DESCRIPTION"]);
 
                 (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                (ctrl as ComboBox).SelectedIndex = 0;                
+                (ctrl as ComboBox).SelectedIndex = 0;
+                // отобразить значения
+                updateDataValues();
             }
             else
                 switch ((INDEX_TABLE_DICTPRJ)i)
@@ -195,6 +206,9 @@ namespace TepCommon
                         break;
                     case INDEX_TABLE_DICTPRJ.PARAMETER:
                         errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
+                        break;
+                    case INDEX_TABLE_DICTPRJ.MODE_DEV:
+                        errMsg = @"Получение идентификаторов режимов работы оборудования";
                         break;
                     default:
                         break;
@@ -231,9 +245,14 @@ namespace TepCommon
                         + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
                             + @" OR ([ID_COMP] = 1000)"
                     // параметры расчета
-                    , @"SELECT put.*, alg.* FROM [dbo].[" + m_strNameTablePut + @"] as put"
-                        + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as alg ON alg.ID_TASK = 1 AND alg.ID = put.ID_ALG"
-                            //+ @" AND put.ID_TIME in (" + m_strIdPeriods + @")"
+                    , @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.MINVALUE, p.MAXVALUE"
+                        + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
+                        + @", m.NAME_RU, m.[AVG]"
+                    + @" FROM [dbo].[" + m_strNameTablePut + @"] as p"
+                        + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG"
+                        + @" JOIN [dbo].[measure] as m ON a.ID_MEASURE = m.ID"
+                    // режимы работы
+                    , @"SELECT * FROM [dbo].[mode_dev]"
                 };
             }
         }
@@ -244,13 +263,13 @@ namespace TepCommon
             {
                 return @"SELECT"
 	                + @" p.ID"
-	                + @", 0" //ID_USER
+	                + @", " + HUsers.Id //ID_USER
 	                + @", v.ID_SOURCE"
 	                + @", 0" //ID_SESSION
-                    + @", CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                    + @", CAST ('" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-	                + @", v.ID_TIME"
-	                + @", v.ID_TIMEZONE"
+                    //+ @", CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                    //+ @", CAST ('" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                    //+ @", v.ID_TIME"
+                    //+ @", v.ID_TIMEZONE"
 	                + @", v.QUALITY"
 	                + @", CASE WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
 		                + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
@@ -265,7 +284,7 @@ namespace TepCommon
                         + @" AND [DATE_TIME] <= CAST ('" + m_panelManagement.m_dtRange.End.ToString (@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
                     + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
 	                    + @", a.ID_MEASURE, a.N_ALG"
-	                    + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
+                        + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
 	                    + @", m.[AVG]"
                         ;
             }
@@ -277,26 +296,9 @@ namespace TepCommon
         {
             get
             {
-                int cnt = (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0;
-
                 return @"SELECT"
-                    + @" p.ID"
-                    + @", -1" //ID_USER
-                    + @", -1"
-                    + @", 0" //ID_SESSION
-                    + @", CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                    + @", CAST ('" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                    + @", -1"
-                    + @", -1"
-                    + @", -1"
-                    + @", CASE WHEN m.[AVG] = 0 THEN " + cnt + @" * v.[VALUE]"
-                        + @" WHEN m.[AVG] = 1 THEN v.[VALUE]"
-                        + @" ELSE v.[VALUE] END as VALUE"
-                    + @", GETDATE ()"
+                    + @" *"
                     + @" FROM [dbo].[" + m_strNameTableValues + @"_def] v"
-                        + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
-                        + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
-                        + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                     + @" WHERE [ID_TIME] = " + CurrIdPeriod
                         ;
             }
@@ -307,12 +309,14 @@ namespace TepCommon
         private void updateDataValues()
         {
             int iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB")
-                , err = -1;
+                , err = -1
+                , cnt = (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
+                , iAVG = -1;
             string errMsg = string.Empty
                 , query = string.Empty;
             // строки для удаления из таблицы значений "по умолчанию"
             // при наличии дубликатов строк в таблице с загруженными из источников с данными
-            DataRow[] rowsToRemove = null;
+            DataRow[] rowsSel = null;
             // представление очичается в 'clear ()' - при автоматическом вызове, при нажатии на кнопку "Загрузить" (аналог "Обновить")
             DbConnection dbConn = null;            
             // получить объект для соединения с БД
@@ -337,15 +341,38 @@ namespace TepCommon
                         // удалить строки из таблицы со значениями "по умолчанию"
                         foreach (DataRow rValVar in m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Rows)
                         {
-                            rowsToRemove = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID=" + rValVar[@"ID"]);
-                            foreach (DataRow rToRemove in rowsToRemove)
+                            rowsSel = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_INPUT=" + rValVar[@"ID"]);
+                            foreach (DataRow rToRemove in rowsSel)
                                 m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Rows.Remove(rToRemove);
+                        }
+                        // вставить строки из таблицы со значениями "по умолчанию"
+                        foreach (DataRow rValDef in m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Rows)
+                        {
+                            rowsSel = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(@"ID=" + rValDef[@"ID_INPUT"]);
+                            if (rowsSel.Length == 1)
+                            {
+                                iAVG = (Int16)rowsSel[0][@"AVG"];
+
+                                m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Rows.Add(new object[]
+                                    {
+                                        rValDef[@"ID_INPUT"]
+                                        , HUsers.Id //ID_USER
+                                        , -1 //ID_SOURCE
+                                        , 0 //ID_SESSION
+                                        , -1 //QUALITY
+                                        , (iAVG == 0) ? cnt * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
+                                        , HDateTime.ToMoscowTimeZone() //??? GETADTE()
+                                    }
+                                );
+                            }
+                            else
+                                ; // по иднгтификатору найден не единственный парпметр расчета
                         }
                         // создать копии для возможности сохранения изменений
                         m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Copy();
                         m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Copy();
 
-                        m_dgvValues.ShowValues(m_arTableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
+                        m_dgvValues.ShowValues(m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE], m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
                     }
                     else
                         errMsg = @"ошибка получения данных по умолчанию с " + m_panelManagement.m_dtRange.Begin.ToString()
@@ -642,8 +669,9 @@ namespace TepCommon
         private void onEventCellValueChanged(object pars)
         {
             int id_par = (int)(pars as object [])[0]
-                , id_comp = (int)(pars as object[])[1];
-            double val = (double)(pars as object[])[2];
+                , id_comp = (int)(pars as object[])[1]
+                , idParameter = (int)(pars as object[])[2];
+            double val = (double)(pars as object[])[3];
         }
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
@@ -664,15 +692,20 @@ namespace TepCommon
                 /// <summary>
                 /// Признак отсутствия значения
                 /// </summary>
-                public bool m_bIsNaN;
+                public int m_IdParameter;
+                /// <summary>
+                /// Признак качества значения в ячейке
+                /// </summary>
+                public int m_iQuality;
 
-                public HDataGridViewCell(bool bCalcDeny, bool bIsNaN)
+                public HDataGridViewCell(int idParameter, int iQuality, bool bCalcDeny)
                 {
-                    m_bCalcDeny = bCalcDeny;
-                    m_bIsNaN = bIsNaN;
+                    m_IdParameter = idParameter;
+                    m_iQuality = iQuality;
+                    m_bCalcDeny = bCalcDeny;                    
                 }
 
-                //public bool IsCanColorChange { get { return ((m_bCalcDeny == false) && (m_bIsNaN == false)); } }
+                public bool IsNaN { get { return m_IdParameter < 0; } }
             }
 
             private List<HDataGridViewCell []> m_listPropertiesRows;
@@ -768,7 +801,78 @@ namespace TepCommon
                 m_listPropertiesRows.Add(new HDataGridViewCell[Columns.Count]);
                 i = m_listPropertiesRows.Count - 1;
                 for (c = 0; c < Columns.Count; c++)
-                    m_listPropertiesRows[i][c] = new HDataGridViewCell(false, true);
+                    m_listPropertiesRows[i][c] = new HDataGridViewCell(-1, -1, false);
+            }
+            /// <summary>
+            /// Возвратить цвет ячейки по номеру столбца, строки
+            /// </summary>
+            /// <param name="iCol">Индекс столбца ячейки</param>
+            /// <param name="iRow">Индекс строки ячейки</param>
+            /// <param name="bNewCalcDeny">Новое (устанавливаемое) значение признака участия в расчете для параметра</param>
+            /// <param name="clrRes">Результат - цвет ячейки</param>
+            /// <returns>Признак возможности изменения цвета ячейки</returns>
+            private bool getClrCellToComp(int iCol, int iRow, bool bNewCalcDeny, out Color clrRes)
+            {
+                bool bRes = false;
+                clrRes = Color.Empty;
+
+                bRes = ((m_listPropertiesRows[iRow][iCol].m_bCalcDeny == false)
+                    && (m_listPropertiesRows[iRow][iCol].IsNaN == false));
+                if (bRes == true)
+                    clrRes = ((bNewCalcDeny == true) && (m_listPropertiesRows[iRow][iCol].m_bCalcDeny == false)) ?
+                        !(m_listPropertiesRows[iRow][iCol].m_iQuality < 0) ? Color.White : Color.Yellow :
+                        Color.LightGray;
+                else
+                    ;
+
+                return bRes;
+            }
+            /// <summary>
+            /// Возвратить цвет ячейки по номеру столбца, строки
+            /// </summary>
+            /// <param name="iCol">Индекс столбца ячейки</param>
+            /// <param name="iRow">Индекс строки ячейки</param>
+            /// <param name="bNewCalcDeny">Новое (устанавливаемое) значение признака участия в расчете для параметра</param>
+            /// <param name="clrRes">Результат - цвет ячейки</param>
+            /// <returns>Признак возможности изменения цвета ячейки</returns>
+            private bool getClrCellToParameter(int iCol, int iRow, bool bNewCalcDeny, out Color clrRes)
+            {
+                bool bRes = false;
+                clrRes = Color.Empty;
+
+                bRes = m_listPropertiesRows[iRow][iCol].IsNaN == false;
+                if (bRes == true)
+                {
+                    clrRes = ((bNewCalcDeny == true) && ((Columns[iCol] as HDataGridViewColumn).m_bCalcDeny == false)) ?
+                        !(m_listPropertiesRows[iRow][iCol].m_iQuality < 0) ? Color.White : Color.Yellow :
+                        Color.LightGray;
+                }
+                else
+                    ;
+
+                return bRes;
+            }
+            /// <summary>
+            /// Возвратить цвет ячейки по номеру столбца, строки
+            /// </summary>
+            /// <param name="iCol">Индекс столбца ячейки</param>
+            /// <param name="iRow">Индекс строки ячейки</param>
+            /// <param name="clrRes">Результат - цвет ячейки</param>
+            /// <returns>Признак возможности размещения значения в ячейке</returns>
+            private bool getClrCellToValue(int iCol, int iRow, out Color clrRes)
+            {
+                bool bRes = ! m_listPropertiesRows[iRow][iCol].IsNaN;
+                clrRes = Color.White;
+
+                if (bRes == true)
+                    if (m_listPropertiesRows[iRow][iCol].m_iQuality < 0)
+                        clrRes = Color.Yellow;
+                    else
+                        ;
+                else
+                    clrRes = Color.Gray;
+
+                return bRes;
             }
             /// <summary>
             /// Обновить структуру таблицы
@@ -776,12 +880,12 @@ namespace TepCommon
             /// <param name="indxDeny">Индекс элемента в массиве списков с отмененными для расчета/отображения компонентами ТЭЦ/параметрами алгоритма расчета</param>
             /// <param name="id">Идентификатор элемента (компонента/параметра)</param>
             /// <param name="bCheckedItem">Признак участия в расчете/отображения</param>
-            public void UpdateStructure(PanelTaskTepValues.INDEX_ID indxDeny, int id, bool bCheckedItem)
+            public void UpdateStructure(PanelTaskTepValues.INDEX_ID indxDeny, int id, bool bItemChecked)
             {
                 Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
-                bool bIsCanColorChange = false;
                 int indx = -1
-                    , cIndx = -1;
+                    , cIndx = -1
+                    , rIndx = -1;
                 //Поиск индекса элемента отображения
                 switch (indxDeny)
                 {
@@ -818,45 +922,41 @@ namespace TepCommon
                     switch (indxDeny)
                     {
                         case INDEX_ID.DENY_COMP_CALCULATED:
+                            cIndx = indx;
                             // для всех ячеек в столбце
                             foreach (DataGridViewRow r in Rows)
                             {
-                                bIsCanColorChange = ((m_listPropertiesRows[Rows.IndexOf(r)][indx].m_bCalcDeny == false)
-                                    && (m_listPropertiesRows[Rows.IndexOf(r)][indx].m_bIsNaN == false));
-                                if (bIsCanColorChange == true)
-                                {
-                                    clrCell = ((bCheckedItem == true) && (m_listPropertiesRows[Rows.IndexOf(r)][indx].m_bCalcDeny == false)) ? Color.White : Color.LightGray;
-                                    r.Cells[indx].Style.BackColor = clrCell;
-                                }
+                                rIndx = Rows.IndexOf(r);
+                                if (getClrCellToComp(cIndx, rIndx, bItemChecked, out clrCell) == true)
+                                    r.Cells[cIndx].Style.BackColor = clrCell;
                                 else
                                     ;
                             }
-                            (Columns[indx] as HDataGridViewColumn).m_bCalcDeny = ! bCheckedItem;
+                            (Columns[cIndx] as HDataGridViewColumn).m_bCalcDeny = !bItemChecked;
                             break;
                         case INDEX_ID.DENY_PARAMETER_CALCULATED:
+                            rIndx = indx;
                             // для всех ячеек в строке
-                            foreach (DataGridViewCell c in Rows[indx].Cells)
+                            foreach (DataGridViewCell c in Rows[rIndx].Cells)
                             {
-                                cIndx = Rows[indx].Cells.IndexOf(c);
-                                bIsCanColorChange = m_listPropertiesRows[indx][cIndx].m_bIsNaN == false;
-                                if (bIsCanColorChange == true)
-                                {
-                                    clrCell = ((bCheckedItem == true) && ((Columns[cIndx] as HDataGridViewColumn).m_bCalcDeny == false)) ? Color.White : Color.LightGray;
+                                cIndx = Rows[rIndx].Cells.IndexOf(c);
+                                if (getClrCellToParameter(cIndx, rIndx, bItemChecked, out clrCell) == true)
                                     c.Style.BackColor = clrCell;
-                                }
                                 else
                                     ;
 
-                                m_listPropertiesRows[indx][cIndx].m_bCalcDeny = !bCheckedItem;
+                                m_listPropertiesRows[rIndx][cIndx].m_bCalcDeny = !bItemChecked;
                             }
                             break;
                         case INDEX_ID.DENY_COMP_VISIBLED:
+                            cIndx = indx;
                             // для всех ячеек в столбце
-                            Columns[indx].Visible = bCheckedItem;
+                            Columns[cIndx].Visible = bItemChecked;
                             break;
                         case INDEX_ID.DENY_PARAMETER_VISIBLED:
+                            rIndx = indx;
                             // для всех ячеек в строке
-                            Rows[indx].Visible = bCheckedItem;
+                            Rows[rIndx].Visible = bItemChecked;
                             break;
                         default:
                             break;
@@ -869,16 +969,19 @@ namespace TepCommon
             /// Отобразить значения
             /// </summary>
             /// <param name="values">Значения для отображения</param>
-            public void ShowValues(DataTable [] values, DataTable parameter)
+            public void ShowValues(DataTable values, DataTable parameter)
             {
                 int idAlg = -1
+                    , idParameter = -1
+                    , iQuality = -1
                     , iCol = 0
                     , iRow = 0;
                 double dblVal = -1F;
-                DataRow[] cellVarRows = null
-                    , cellDefRows = null
+                DataRow[] cellRows = null
                     , parameterRows = null;
                 Color clrCell = Color.Empty;
+
+                CellValueChanged -= onCellValueChanged;
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
@@ -886,43 +989,45 @@ namespace TepCommon
                         foreach (DataGridViewRow row in Rows)
                         {
                             dblVal = double.NaN;
+                            idParameter = -1;
+                            iQuality = -1;
                             idAlg = (int)row.Cells[0].Value;
                             parameterRows = parameter.Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + idAlg);
                             if (parameterRows.Length == 1)
                             {
-                                cellVarRows = values[(int)INDEX_TABLE_VALUES.VARIABLE].Select(@"ID=" + parameterRows[0][@"ID"]);
-                                cellDefRows = values[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID=" + parameterRows[0][@"ID"]);
+                                cellRows = values.Select(@"ID=" + parameterRows[0][@"ID"]);
 
-                                if (cellVarRows.Length == 1)
-                                    dblVal = ((double)cellVarRows[0][@"VALUE"]);
+                                if (cellRows.Length == 1)
+                                {
+                                    idParameter = (int)cellRows[0][@"ID"];
+                                    dblVal = ((double)cellRows[0][@"VALUE"]);
+                                    iQuality = (int)cellRows[0][@"QUALITY"];
+                                }
                                 else
-                                    if (cellDefRows.Length == 1)
-                                        dblVal = ((double)cellDefRows[0][@"VALUE"]);
-                                    else
-                                        ; // continue
+                                    ; // continue
                             }
                             else
                                 ; // параметр расчета для компонента станции не найден
 
-                            m_listPropertiesRows[Rows.IndexOf(row)][iCol].m_bIsNaN =
-                            row.Cells[iCol].ReadOnly =
-                                double.IsNaN(dblVal);
-                            clrCell = Color.White;
+                            iRow = Rows.IndexOf(row);
+                            m_listPropertiesRows[iRow][iCol].m_IdParameter = idParameter;
+                            m_listPropertiesRows[iRow][iCol].m_iQuality = iQuality;
+                            row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);                            
 
-                            if (double.IsNaN(dblVal) == false)
+                            if (getClrCellToValue (iCol, iRow, out clrCell) == true)
                                 row.Cells[iCol].Value = dblVal.ToString(@"F1", System.Globalization.CultureInfo.InvariantCulture);
                             else
-                                clrCell = Color.Gray;
+                                ;
 
                             row.Cells[iCol].Style.BackColor = clrCell;
-
-                            iRow++;
                         }
                     else
                         ;
 
                     iCol++;
                 }
+
+                CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
             }
             /// <summary>
             /// Очистить содержание представления (например, перед )
@@ -950,9 +1055,10 @@ namespace TepCommon
                 {
                     strValue = (string)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value;
 
-                    if (double.TryParse(strValue, out dblValue) == true)
+                    if (double.TryParse(strValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out dblValue) == true)
                         EventCellValueChanged(new object[] { Rows[ev.RowIndex].Cells[0].Value //Идентификатор параметра
                             , (Columns[ev.ColumnIndex] as HDataGridViewColumn).m_iIdComp //Идентификатор компонента
+                            , m_listPropertiesRows[ev.RowIndex][ev.ColumnIndex].m_IdParameter //Идентификатор компонента
                             , dblValue });
                     else
                         ; //??? невозможно преобразовать значение - отобразить сообщение для пользователя
