@@ -11,7 +11,7 @@ namespace TepCommon
         COUNT_CONN_SETT_TYPE,
     };
 
-    public enum ID_TIME
+    public enum ID_PERIOD
     {
         HOUR = 13
         , SHIFTS = 18
@@ -19,5 +19,10 @@ namespace TepCommon
         , MONTH = 24
         , YEAR = 100
         ,
+    }
+
+    public enum ID_TIMEZONE
+    {
+        UTC = 0
     }
 }

@@ -29,7 +29,7 @@ namespace TepCommon
                 throw new NotImplementedException();
             }
 
-            public void Load(ID_TIME idTime)
+            public void Load(ID_PERIOD idTime)
             {
             }
 
