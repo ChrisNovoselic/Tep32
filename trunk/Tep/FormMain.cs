@@ -192,7 +192,10 @@ namespace Tep64
 
             //System.ComponentModel.ComponentResourceManager resources = System.ComponentModel.ComponentResourceManager(typeof (...;
             //Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TepCommon.MainForm.ico");
-            this.Icon = (Icon)TepCommon.Properties.Resources.MainForm;            
+            this.Icon =
+                //(Icon)TepCommon.Properties.Resources.TepApp
+                (Icon)Tep64.Properties.Resources.TepApp
+                ;
 
             this.Focus();
 

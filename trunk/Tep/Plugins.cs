@@ -97,7 +97,10 @@ namespace Tep64
                             rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
                             break;
                         case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
-                            rec = TepCommon.Properties.Resources.MainForm;
+                            rec =
+                                //TepCommon.Properties.Resources.TepApp
+                                Tep64.Properties.Resources.TepApp
+                                ;
                             break;
                         case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
                             rec = Application.ProductVersion;

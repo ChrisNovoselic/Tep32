@@ -82,10 +82,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram1.cd" />
-    <None Include="Resources\MainForm.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\IconTep.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
@@ -96,6 +92,9 @@
       <Project>{25637BE7-4002-46BE-A0D4-4C7EAAAA5148}</Project>
       <Name>InterfacePlugIn</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\TepApp.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

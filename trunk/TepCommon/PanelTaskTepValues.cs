@@ -96,7 +96,7 @@ namespace TepCommon
             InitializeComponents();
 
             m_panelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
-            m_dgvValues.EventCellValueChanged += new DelegateObjectFunc(onEventCellValueChanged);
+            m_dgvValues.EventCellValueChanged += new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventHandler(onEventCellValueChanged);
         }
 
         private void InitializeComponents()
@@ -229,7 +229,14 @@ namespace TepCommon
 
         protected override void recUpdateInsertDelete(ref System.Data.Common.DbConnection dbConn, out int err)
         {
-            throw new NotImplementedException();
+            err = -1;
+
+            DbTSQLInterface.RecUpdateInsertDelete(ref dbConn
+                , @"inval"
+                , @"ID_INPUT, ID_TIME"
+                , m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT]
+                , m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT]
+                , out err);
         }
 
         private string[] queryDictPrj
@@ -279,7 +286,7 @@ namespace TepCommon
 	                    + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
                         + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
 	                    + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                    + @" WHERE [ID_TIME] = " + CurrIdPeriod
+                    + @" WHERE [ID_TIME] = " + (int)_currIdPeriod
                         + @" AND [DATE_TIME] > CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
                         + @" AND [DATE_TIME] <= CAST ('" + m_panelManagement.m_dtRange.End.ToString (@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
                     + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
@@ -299,7 +306,7 @@ namespace TepCommon
                 return @"SELECT"
                     + @" *"
                     + @" FROM [dbo].[" + m_strNameTableValues + @"_def] v"
-                    + @" WHERE [ID_TIME] = " + CurrIdPeriod
+                    + @" WHERE [ID_TIME] = " + (int)_currIdPeriod
                         ;
             }
         }
@@ -473,11 +480,32 @@ namespace TepCommon
         /// <summary>
         /// Текущий выбранный идентификатор периода расчета
         /// </summary>
-        private int CurrIdPeriod
+        private ID_TIME _currIdPeriod;
+        ///// <summary>
+        ///// Текущий выбранный идентификатор периода расчета
+        ///// </summary>
+        //private ID_TIME CurrIdPeriod
+        //{
+        //    get
+        //    {
+        //        return
+        //            //m_arListIds[(int)INDEX_ID.PERIOD][(Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0] as ComboBox).SelectedIndex]
+        //            _currIdPeriod
+        //            ;
+        //    }
+        //}
+        /// <summary>
+        /// Количество базовых периодов
+        /// </summary>
+        private int CountBasePeriod
         {
             get
             {
-                return m_arListIds[(int)INDEX_ID.PERIOD][(Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0] as ComboBox).SelectedIndex];
+                return _currIdPeriod == ID_TIME.HOUR ?
+                    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0 :
+                    _currIdPeriod == ID_TIME.DAY ?
+                        (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0 :
+                        24;
             }
         }
         /// <summary>
@@ -508,6 +536,8 @@ namespace TepCommon
             bool bVisibled = false;
             CheckedListBox clbxParsCalculated = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as CheckedListBox
                 , clbxParsVisibled = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
+            //Установить новое значение для текущего периода
+            _currIdPeriod = (ID_TIME)m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex];
             //Отменить обработку событий
             clbxParsCalculated.ItemCheck -= clbx_ItemCheck;
             clbxParsVisibled.ItemCheck -= clbx_ItemCheck;
@@ -548,7 +578,7 @@ namespace TepCommon
             HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
                 , hdtpEnd = Controls.Find(INDEX_CONTROL.HDTP_END.ToString(), true)[0] as HDateTimePicker;
             //Выполнить запрос на получение значений для заполнения 'DataGridView'
-            switch ((ID_TIME)CurrIdPeriod)
+            switch (_currIdPeriod)
             {
                 case ID_TIME.HOUR:
                     hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
@@ -573,7 +603,8 @@ namespace TepCommon
                 default:
                     break;
             }
-            m_handlerDb.Load((ID_TIME)CurrIdPeriod);
+            ////Загрузить значения для отображения
+            //m_handlerDb.Load(_currIdPeriod);
         }
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
@@ -666,19 +697,57 @@ namespace TepCommon
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>
         /// <param name="pars"></param>
-        private void onEventCellValueChanged(object pars)
+        private void onEventCellValueChanged(object dgv, DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
         {
-            int id_par = (int)(pars as object [])[0]
-                , id_comp = (int)(pars as object[])[1]
-                , idParameter = (int)(pars as object[])[2];
-            double val = (double)(pars as object[])[3];
+            //int id_par = (int)(pars as object [])[0]
+            //    , id_comp = (int)(pars as object[])[1]
+            //    , idParameter = (int)(pars as object[])[2];
+            //double val = (double)(pars as object[])[3];
+
+            DataRow[] rowsParameter = m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_INPUT=" + ev.m_IdParameter);
+
+            if (rowsParameter.Length == 1)
+            {
+                rowsParameter[0][@"VALUE"] = ev.m_Value;
+            }
+            else
+                ;
         }
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
         /// </summary>
         protected class DataGridViewTEPValues : DataGridView
         {
-            public DelegateObjectFunc EventCellValueChanged;
+            public class DataGridViewTEPValuesCellValueChangedEventArgs : EventArgs
+            {
+                public int m_IdComp
+                    , m_IdAlg
+                    , m_IdParameter;
+                public double m_Value;
+
+                public DataGridViewTEPValuesCellValueChangedEventArgs()
+                    : base()
+                {
+                    m_IdAlg =
+                    m_IdComp =
+                    m_IdParameter =
+                        -1;
+                    m_Value = -1F;
+                }
+
+                public DataGridViewTEPValuesCellValueChangedEventArgs(int id_alg, int id_comp, int id_par, double val)
+                    : this()
+                {
+                    m_IdAlg = id_alg;
+                    m_IdComp = id_comp;
+                    m_IdParameter = id_par;
+                    m_Value = val;
+                }
+            }
+
+            public delegate void DataGridViewTEPValuesCellValueChangedEventHandler (object obj, DataGridViewTEPValuesCellValueChangedEventArgs ev);
+
+            public DataGridViewTEPValuesCellValueChangedEventHandler EventCellValueChanged;
             /// <summary>
             /// Структура с дополнительными свойствами ячейки отображения
             /// </summary>
@@ -1056,10 +1125,10 @@ namespace TepCommon
                     strValue = (string)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value;
 
                     if (double.TryParse(strValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out dblValue) == true)
-                        EventCellValueChanged(new object[] { Rows[ev.RowIndex].Cells[0].Value //Идентификатор параметра
+                        EventCellValueChanged(this, new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ( (int)Rows[ev.RowIndex].Cells[0].Value //Идентификатор параметра [alg]
                             , (Columns[ev.ColumnIndex] as HDataGridViewColumn).m_iIdComp //Идентификатор компонента
-                            , m_listPropertiesRows[ev.RowIndex][ev.ColumnIndex].m_IdParameter //Идентификатор компонента
-                            , dblValue });
+                            , m_listPropertiesRows[ev.RowIndex][ev.ColumnIndex].m_IdParameter //Идентификатор параметра с учетом периода расчета [put]
+                            , dblValue ));
                     else
                         ; //??? невозможно преобразовать значение - отобразить сообщение для пользователя
                 }
@@ -1172,8 +1241,11 @@ namespace TepCommon
 
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
-                ctrl = new Button();
+                ctrl = new DropDownButton();
                 ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
+                ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
+                ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem (@"Входные значения"));
+                ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Учтенные значения"));
                 ctrl.Text = @"Загрузить";
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 3);
