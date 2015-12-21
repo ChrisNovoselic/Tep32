@@ -23,6 +23,7 @@ namespace PluginPrjTepFTable
                                                  Color.BlueViolet, Color.Plum, Color.YellowGreen,
                                                  Color.Moccasin, Color.DarkTurquoise,Color.Maroon};
         public ZedGraphControl m_This;
+
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
@@ -35,6 +36,7 @@ namespace PluginPrjTepFTable
         }
 
         PointPairList []pointList;
+
         /// <summary>
         /// Инициализация собственных компонентов элемента управления
         /// </summary>
@@ -74,6 +76,7 @@ namespace PluginPrjTepFTable
             m_This.IsEnableVZoom = false;
             m_This.IsShowPointValues = true;
         }
+
         /// <summary>
         /// Отображение графика функции
         /// по аргументу
@@ -114,6 +117,7 @@ namespace PluginPrjTepFTable
             m_This.Invalidate();
             m_This.Refresh();
         }
+
         /// <summary>
         /// Формированре масива 
         /// значений для графика функции
@@ -134,6 +138,7 @@ namespace PluginPrjTepFTable
 
             //drawGraph(points);
         }
+
         /// <summary>
         /// Формированре масива 
         /// значений для графика функции
@@ -180,6 +185,7 @@ namespace PluginPrjTepFTable
                 //                  }).Distinct();
 
                 //countList = enValues.Count() * enValuesA2.Count();
+
                 pointList = new PointPairList[countList];
                 int num = 0;
                 string m_ftValue = DataGridViewAutoFilterColumnHeaderCell.FilterValue();
@@ -204,28 +210,28 @@ namespace PluginPrjTepFTable
 
             createGraphs();
         }
+
         /// <summary>
         /// Функция нахождения реперных точек
         /// с одним параметром
         /// </summary>
         /// <param name="colCount">кол-во аргументов</param>
-        protected override void funcWithOneArgs(string nameCol, string filter)
+        protected override void funcWithOneArgs(string nameCol)
         {
-            base.funcWithOneArgs(nameCol, filter);
-
-            formingArrayValues(filter);
+            //formingArrayValues(filter);
         }
+
         /// <summary>
         /// Функция нахождения реперных точек
         /// с двумя параметрами
         /// </summary>
         /// <param name="nameCol"></param>
         /// <param name="filter"></param>
-        protected void funcWithTwoArgs(string nameCol, string filter)
+        protected void funcWithTwoArgs(string filter)
         {
-            //searchMainMIN(nameCol);
             formingArrayValues(filter);
         }
+
         /// <summary>
         /// Функция нахождения реперных точек
         /// с тремя парметрами
@@ -233,9 +239,9 @@ namespace PluginPrjTepFTable
         /// <param name="filter"></param>
         protected void funcWithThreeArgs(string filter)
         {
-            //searchMainMIN(nameCol);
             formingArrayValues(filter);
         }
+
         /// <summary>
         /// Создание наборов точек
         /// </summary>
@@ -254,6 +260,7 @@ namespace PluginPrjTepFTable
                 pointList[i].Add(array[i].a1, array[i].f);
             }
         }
+
         /// <summary>
         /// Проверка на кол-во аргументов функции(отображение графиков)
         /// </summary>
@@ -268,21 +275,21 @@ namespace PluginPrjTepFTable
             {
                 case "A1":
                     condition = true;
-                    funcWithOneArgs(nameColumn, filter);
+                    //funcWithOneArgs(nameColumn);
                     break;
                 case "A2":
                     condition = true;
-                    funcWithTwoArgs(nameColumn, getQueryToGraphic(iRow));
+                    funcWithTwoArgs(getQueryToGraphic(iRow));
                     break;
                 case "A3":
                     condition = true;
                     funcWithThreeArgs(getQueryToGraphic(iRow));
                     break;
                 default:
-                    //MessageBox.Show("MZF");
                     break;
             }
         }
+
         /// <summary>
         /// Формирование строки запроса данных
         /// для построения графика
@@ -318,6 +325,7 @@ namespace PluginPrjTepFTable
 
             return filter;
         }
+
         /// <summary>
         /// Создание графика на основе всех точек
         /// </summary>
@@ -363,6 +371,7 @@ namespace PluginPrjTepFTable
             m_This.Invalidate();
             m_This.Refresh();
         }
+
         /// <summary>
         /// Формирование списка точек
         /// </summary>

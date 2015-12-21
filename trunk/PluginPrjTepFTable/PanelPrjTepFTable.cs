@@ -25,6 +25,7 @@ namespace PluginPrjTepFTable
         DataTable m_tblOrigin
             , m_tblEdit;
         ZedGraphFTable m_zGraph_fTABLE; // график фукнции
+
         /// <summary>
         /// Набор элементов
         /// </summary>
@@ -42,10 +43,12 @@ namespace PluginPrjTepFTable
             TEXTBOX_F, TEXTBOX_REZULT, GRPBOX_CALC,
             COMBOBOX_PARAM
         };
+
         /// <summary>
         /// Набор текстов для подписей для кнопок
         /// </summary>
         protected static string[] m_arButtonText = { @"Сохранить", @"Обновить", @"Добавить", @"Удалить" };
+
         /// <summary>
         /// Установить признак активности текущему объекту
         /// </summary>
@@ -55,6 +58,7 @@ namespace PluginPrjTepFTable
         {
             return base.Activate(activate);
         }
+
         /// <summary>
         /// Инициализация
         /// </summary>
@@ -96,6 +100,7 @@ namespace PluginPrjTepFTable
             Logging.Logg().Debug(@"PluginTepPrjFTable::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
 
         }
+
         /// <summary>
         /// Функция динамического поиска
         /// </summary>
@@ -123,6 +128,7 @@ namespace PluginPrjTepFTable
                 rView.Visible = bVisible;
             }
         }
+
         /// <summary>
         /// Обработчик события - изменение выбранной строки
         ///  в отображении для таблицы с наименованями функций
@@ -132,8 +138,8 @@ namespace PluginPrjTepFTable
         private void dgvnALG_onSelectionChanged(object obj, EventArgs ev)
         {
             DataGridView dgv = obj as DataGridView;
-            TextBox tbValue = null;
-            FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки/сеятия с отображения столбцов
+            //TextBox tbValue = null;
+            FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки/снятия с отображения столбцов
             DataRow[] rowsNAlg = null;
             int iSelIndex = dgv.SelectedRows.Count > 0 ? dgv.SelectedRows[0].Index : -1;
 
@@ -184,6 +190,7 @@ namespace PluginPrjTepFTable
             for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
                 (Controls.Find(indx.ToString(), true)[0] as TextBox).TextChanged += new EventHandler (tbCalcValue_onTextChanged);
         }
+
         /// <summary>
         /// Обработчик события - изменение выбранной строки
         ///  в отображении для таблицы со значениями
@@ -196,6 +203,7 @@ namespace PluginPrjTepFTable
             FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки полей ввода
             TextBox tbValue = null; // элемент управления - поле для ввода текста
             int iSelIndex = dgv.SelectedRows.Count > 0 ? dgv.SelectedRows[0].Index : -1;
+
             //// отменить обработку событий "изменение текста", очистить поля ввода калькулятора
             //for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
             //{
@@ -211,7 +219,7 @@ namespace PluginPrjTepFTable
             {
                 runk = m_zGraph_fTABLE.GetRunk(NAlg);
                 // установить новые значения в поля ввода для калькулятора
-                for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
+                for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F +1); indx++)
                 {
                     tbValue = Controls.Find(indx.ToString(), true)[0] as TextBox;
                     tbValue.Text = dgv.Rows[iSelIndex].Cells[(int)(indx - INDEX_CONTROL.TEXTBOX_A1)].Value.ToString();
@@ -244,6 +252,7 @@ namespace PluginPrjTepFTable
             //for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F); indx++)
             //    (Controls.Find(indx.ToString(), true)[0] as TextBox).TextChanged += new EventHandler(tbCalcValue_onTextChanged);
         }
+
         /// <summary>
         /// Обработка события при успешной синхронизации целевойй таблицы в БД
         /// </summary>
@@ -251,6 +260,7 @@ namespace PluginPrjTepFTable
         {
             m_tblOrigin = m_tblEdit.Copy();
         }
+
         /// <summary>
         /// Метод синхронизации целевой таблицы в БД
         ///  (обновление, вставка, удаление записей)
@@ -262,6 +272,7 @@ namespace PluginPrjTepFTable
         {
             DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, @"ftable", @"ID", m_tblOrigin, m_tblEdit, out err);
         }
+
         /// <summary>
         /// Конструктор с параметром
         /// </summary>
@@ -271,6 +282,7 @@ namespace PluginPrjTepFTable
         {
             InitializeComponent();
         }
+
         /// <summary>
         /// Инициализация компонентов
         /// </summary>
@@ -517,6 +529,7 @@ namespace PluginPrjTepFTable
             // для поля ввода при поиске функции
             ((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_FIND.ToString(), true)[0]).TextChanged += new EventHandler(PluginPrjTepFTable_TextChanged);
         }
+
         /// <summary>
         /// Обрабоотка клика по кнопке результат
         /// </summary>
@@ -534,39 +547,14 @@ namespace PluginPrjTepFTable
 
             //ArgApproxi = new string[countArg + 1];
 
-            ////ArgApproxi.SetValue(((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_A1.ToString(), true)[0]).Text, 0);
-            ////ArgApproxi.SetValue(((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_A2.ToString(), true)[0]).Text, 1);
-            ////ArgApproxi.SetValue(((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_A3.ToString(), true)[0]).Text, 2);
-            ////ArgApproxi.SetValue(((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_F.ToString(), true)[0]).Text, 3);
-
-            selectFuncArg(countArg);
-        }
-        /// <summary>
-        /// Проверка кол-ва парметров (для калькулятора)
-        /// </summary>
-        /// <param name="countArg">кол-во парамтеров</param>
-        private void selectFuncArg(int countArg)
-        {
-            string colArg = "A" + countArg;
-
-            switch (colArg)
+            for (INDEX_CONTROL indx = INDEX_CONTROL.TEXTBOX_A1; indx < (INDEX_CONTROL.TEXTBOX_F + 1); indx++)
             {
-                case "A1":
-
-                    break;
-                case "A2":
-
-                    break;
-                case "A3":
-
-                    break;
-                default:
-                    MessageBox.Show("MZF");
-                    break;
+                TextBox tbValue = Controls.Find(indx.ToString(), true)[0] as TextBox;
             }
         }
+
         /// <summary>
-        /// СТрока - наименование текущей (выбранной) функции
+        /// Строка - наименование текущей (выбранной) функции
         /// </summary>
         private string NAlg
         {
@@ -580,6 +568,7 @@ namespace PluginPrjTepFTable
                 return strRes;
             }
         }
+
         /// <summary>
         /// Событие изменения текстового поля
         /// (функция поиска)
@@ -590,6 +579,7 @@ namespace PluginPrjTepFTable
         {
             nALGVisibled((sender as TextBox).Text);
         }
+
         /// <summary>
         /// Обработка клика по таблице со значениями.
         /// Изменение чекбокса, построение графика.
@@ -633,6 +623,7 @@ namespace PluginPrjTepFTable
                 }
             }
         }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Добавить"
         ///  (в зависимости от текущего отображения для таблицы: функция, значения)
@@ -642,6 +633,7 @@ namespace PluginPrjTepFTable
         private void HPanelfTable_btnAdd_Click(object obj, EventArgs ev)
         {
         }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Удалить"
         /// </summary>
@@ -650,6 +642,7 @@ namespace PluginPrjTepFTable
         private void HPanelfTAble_btnDelete_Click(object obj, EventArgs ev)
         {
         }
+
         /// <summary>
         /// Удалить запись (значение) для функции
         /// </summary>
@@ -660,16 +653,21 @@ namespace PluginPrjTepFTable
             m_tblEdit.AcceptChanges();
         }
 
+        /// <summary>
+        /// при пустой строке исключение. при любом другом знаке кроме цифр исключение.!!!
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="ev"></param>
         private void tbCalcValue_onTextChanged(object obj, EventArgs ev)
         {
             FTable.FRUNK runk = m_zGraph_fTABLE.GetRunk(NAlg);
             float[] pars = new float[(int)runk + 1];
             for (int indx = 0; indx < pars.Length; indx++)
-                pars[indx] =
+                 pars[indx] =
                     float.Parse((Controls.Find(((INDEX_CONTROL)(indx + (int)INDEX_CONTROL.TEXTBOX_A1)).ToString (), true)[0] as TextBox).Text, CultureInfo.InvariantCulture);
 
-            (Controls.Find(INDEX_CONTROL.TEXTBOX_F.ToString(), true)[0] as TextBox).Text =
-               m_zGraph_fTABLE.Calculate(NAlg, pars).ToString (@"F2");
+            (Controls.Find(INDEX_CONTROL.TEXTBOX_REZULT.ToString(), true)[0] as TextBox).Text =
+               m_zGraph_fTABLE.Calculate(NAlg,pars).ToString (@"F2");
         }
     }
 
