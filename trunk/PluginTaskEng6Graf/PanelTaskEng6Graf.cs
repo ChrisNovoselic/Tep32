@@ -10,9 +10,9 @@ using InterfacePlugIn;
 
 namespace PluginTaskEng6Graf
 {
-    public class PluginTaskEng6Graf : HPanelTepCommon
+    public class PanelTaskEng6Graf : HPanelTepCommon
     {
-        public PluginTaskEng6Graf(IPlugIn iFunc)
+        public PanelTaskEng6Graf(IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -52,7 +52,7 @@ namespace PluginTaskEng6Graf
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTaskEng6Graf));
+            createObject(typeof(PanelTaskEng6Graf));
 
             base.OnClickMenuItem(obj, ev);
         }

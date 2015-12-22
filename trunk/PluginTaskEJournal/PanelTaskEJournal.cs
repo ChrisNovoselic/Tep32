@@ -10,9 +10,9 @@ using InterfacePlugIn;
 
 namespace PluginTaskEJournal
 {
-    public class PluginTaskEJournal : HPanelTepCommon
+    public class PanelTaskEJournal : HPanelTepCommon
     {
-        public PluginTaskEJournal(IPlugIn iFunc)
+        public PanelTaskEJournal(IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -52,7 +52,7 @@ namespace PluginTaskEJournal
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTaskEJournal));
+            createObject(typeof(PanelTaskEJournal));
 
             base.OnClickMenuItem(obj, ev);
         }

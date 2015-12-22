@@ -21,9 +21,9 @@ namespace Tep64
         public enum ID_ALLOWED
         {
             UNKNOWN = -1
-            , AUTO_LOADSAVE_USERPROFILE_ACCESS = 1 //Автоматическая загрузка/сохранение профиля
-            , AUTO_LOADSAVE_USERPROFILE_CHECKED //
-            , USERPROFILE_PLUGINS
+            , AUTO_LOADSAVE_USERPROFILE_ACCESS = 1 //Разрешение изменять свойство "Автоматическая загрузка/сохранение ..."
+            , AUTO_LOADSAVE_USERPROFILE_CHECKED //Автоматическая загрузка/сохранение списка идентификаторов вкладок, загружаемых автоматически
+            , USERPROFILE_PLUGINS //Список вкладок, загружаемых автоматически
             ,
         };
 

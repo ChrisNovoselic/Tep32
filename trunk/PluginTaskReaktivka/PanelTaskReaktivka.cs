@@ -10,9 +10,9 @@ using InterfacePlugIn;
 
 namespace PluginTaskReaktivka
 {
-    public class PluginTaskReaktivka : HPanelTepCommon
+    public class PanelTaskReaktivka : HPanelTepCommon
     {
-        public PluginTaskReaktivka(IPlugIn iFunc)
+        public PanelTaskReaktivka(IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -52,7 +52,7 @@ namespace PluginTaskReaktivka
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTaskReaktivka));
+            createObject(typeof(PanelTaskReaktivka));
 
             base.OnClickMenuItem(obj, ev);
         }

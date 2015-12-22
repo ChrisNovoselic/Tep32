@@ -10,9 +10,9 @@ using InterfacePlugIn;
 
 namespace PluginTaskVedomostBl
 {
-    public class PluginTaskVedomostBl : HPanelTepCommon
+    public class PanelTaskVedomostBl : HPanelTepCommon
     {
-        public PluginTaskVedomostBl(IPlugIn iFunc)
+        public PanelTaskVedomostBl(IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -52,7 +52,7 @@ namespace PluginTaskVedomostBl
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTaskVedomostBl));
+            createObject(typeof(PanelTaskVedomostBl));
 
             base.OnClickMenuItem(obj, ev);
         }

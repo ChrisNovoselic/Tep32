@@ -10,9 +10,9 @@ using InterfacePlugIn;
 
 namespace PluginTaskBalTeplo
 {
-    public class PluginTaskBalTeplo : HPanelTepCommon
+    public class PanelTaskBalTeplo : HPanelTepCommon
     {
-        public PluginTaskBalTeplo(IPlugIn iFunc)
+        public PanelTaskBalTeplo(IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -52,7 +52,7 @@ namespace PluginTaskBalTeplo
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTaskBalTeplo));
+            createObject(typeof(PanelTaskBalTeplo));
 
             base.OnClickMenuItem(obj, ev);
         }

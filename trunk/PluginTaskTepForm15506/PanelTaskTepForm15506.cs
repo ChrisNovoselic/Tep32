@@ -10,9 +10,9 @@ using InterfacePlugIn;
 
 namespace PluginTaskTepForm15506
 {
-    public class PluginTaskTepForm15506 : HPanelTepCommon
+    public class PanelTaskTepForm15506 : HPanelTepCommon
     {
-        public PluginTaskTepForm15506(IPlugIn iFunc)
+        public PanelTaskTepForm15506(IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -52,7 +52,7 @@ namespace PluginTaskTepForm15506
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTaskTepForm15506));
+            createObject(typeof(PanelTaskTepForm15506));
 
             base.OnClickMenuItem(obj, ev);
         }

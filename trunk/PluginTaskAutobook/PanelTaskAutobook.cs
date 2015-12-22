@@ -10,9 +10,9 @@ using InterfacePlugIn;
 
 namespace PluginTaskAutobook
 {
-    public class PluginTaskAutobook : HPanelTepCommon
+    public class PanelTaskAutobook : HPanelTepCommon
     {
-        public PluginTaskAutobook(IPlugIn iFunc)
+        public PanelTaskAutobook(IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -52,7 +52,7 @@ namespace PluginTaskAutobook
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTaskAutobook));
+            createObject(typeof(PanelTaskAutobook));
 
             base.OnClickMenuItem(obj, ev);
         }

@@ -10,9 +10,9 @@ using InterfacePlugIn;
 
 namespace PluginTaskTepRealTime
 {
-    public class PluginTaskTepRealTime : HPanelTepCommon
+    public class PanelTaskTepRealTime : HPanelTepCommon
     {
-        public PluginTaskTepRealTime(IPlugIn iFunc)
+        public PanelTaskTepRealTime(IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -52,7 +52,7 @@ namespace PluginTaskTepRealTime
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginTaskTepRealTime));
+            createObject(typeof(PanelTaskTepRealTime));
 
             base.OnClickMenuItem(obj, ev);
         }

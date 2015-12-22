@@ -9,9 +9,9 @@ using InterfacePlugIn;
 
 namespace PluginDictProfilesUnit
 {
-    public class PluginDictProfilesUnit : HPanelEditList
+    public class PanelDictProfilesUnit : HPanelEditList
     {
-        public PluginDictProfilesUnit(IPlugIn iFunc)
+        public PanelDictProfilesUnit(IPlugIn iFunc)
             : base(iFunc, @"profiles_unit", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
@@ -35,7 +35,7 @@ namespace PluginDictProfilesUnit
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PluginDictProfilesUnit));
+            createObject(typeof(PanelDictProfilesUnit));
             //createObject(this.GetType());
 
             base.OnClickMenuItem(obj, ev);
