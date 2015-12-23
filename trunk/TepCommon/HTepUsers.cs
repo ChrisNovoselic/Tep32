@@ -7,36 +7,58 @@ using System.Data.Common; //DbConnection
 
 using HClassLibrary;
 
-namespace Tep64
+namespace TepCommon
 {
-    class HTepUsers : HUsers
+    public class HTepUsers : HUsers
     {
+        /// <summary>
+        /// Перечисление - идентификаторы ролей (групп) пользователей из БД [roles_unit]
+        /// </summary>
         public enum ID_ROLES
         {
             UNKNOWN, ADMIN = 1, DEV, USER, USER_PTO, SOURCE_DATA = 501,
             COUNT_ID_ROLES = 5
         };
-
-        //Идентификаторы из БД
+        /// <summary>
+        /// Перечисление - идентификаторы настраиваемых параметров из БД [profiles_unit]
+        /// </summary>
         public enum ID_ALLOWED
         {
             UNKNOWN = -1
             , AUTO_LOADSAVE_USERPROFILE_ACCESS = 1 //Разрешение изменять свойство "Автоматическая загрузка/сохранение ..."
             , AUTO_LOADSAVE_USERPROFILE_CHECKED //Автоматическая загрузка/сохранение списка идентификаторов вкладок, загружаемых автоматически
             , USERPROFILE_PLUGINS //Список вкладок, загружаемых автоматически
+            , VISUAL_SETTING_VALUE_ROUND //Отображение значений, количество знаков после запятой
+            , VISUAL_SETTING_VALUE_RATIO //Отображение значений, множитель относительно базовой единицы измерения
+            , QUERY_TIMEZONE //Идентификатор часового пояса при запросе значений
             ,
         };
-
+        /// <summary>
+        /// Перечисление - индексы в массиве - аргументе функции 'GetParameterVisualSettings'
+        /// </summary>
+        public enum INDEX_VISUALSETTINGS_PARAMS { EXT, IS_ROLE, TASK, PLUGIN, MODULE, TAB, ITEM, CONTEXT
+            , COUNT }
+        /// <summary>
+        /// Конструктор основной - с  параметром
+        /// </summary>
+        /// <param name="iListenerId">Идентификатор установленного соединения с БД</param>
         public HTepUsers(int iListenerId)
             : base(iListenerId)
         {
         }
-
+        /// <summary>
+        /// Роль пользователя (из БД конфигурации)
+        /// </summary>
         public static int Role
         {
             get { return (int)(m_DataRegistration[(int)INDEX_REGISTRATION.ROLE] == null ? -1 : m_DataRegistration[(int)INDEX_REGISTRATION.ROLE]); }
         }
-
+        /// <summary>
+        /// Получить строку с идентификаторами плюгинов, разрешенных к использованию для пользователя
+        /// </summary>
+        /// <param name="dbConn">Объект соединения с БД</param>
+        /// <param name="iRes">Результат выполнения функции</param>
+        /// <returns>Строка с идентификаторами (разделитель - запятая)</returns>
         public static string GetIdIsUsePlugins(ref DbConnection dbConn, out int iRes)
         {
             string strRes = string.Empty;
@@ -108,7 +130,12 @@ namespace Tep64
 
             return strRes;
         }
-
+        /// <summary>
+        /// Получить строку с идентификаторами плюгинов, разрешенных к использованию для пользователя
+        /// </summary>
+        /// <param name="idListener">Идентификатор установленного соединения с БД</param>
+        /// <param name="iRes">Результат выполнения функции</param>
+        /// <returns>Строка с идентификаторами (разделитель - запятая)</returns>
         public static string GetIdIsUsePlugins(int idListener, out int iRes)
         {
             string strRes = string.Empty;
@@ -121,7 +148,12 @@ namespace Tep64
 
             return strRes;
         }
-
+        /// <summary>
+        /// Получить таблицу с описанием библиотек, разрешенных к использованию
+        /// </summary>
+        /// <param name="idListener">Идентификатор установленного соединения с БД</param>
+        /// <param name="iRes">Результат выполнения функции</param>
+        /// <returns>Таблица с описанием плюгинов</returns>
         public static DataTable GetPlugins(int idListener, out int iRes)
         {
             DataTable tableRes = null;
@@ -145,6 +177,17 @@ namespace Tep64
                 ;
 
             return tableRes;
+        }
+        /// <summary>
+        /// Получить таблицу с установками для отображения значений
+        /// </summary>
+        /// <param name="fields"></param>
+        /// <returns></returns>
+        public static DataTable GetParameterVisualSettings (params int []fields)
+        {
+            DataTable tblRes = new DataTable ();
+
+            return tblRes;
         }
     }
 }

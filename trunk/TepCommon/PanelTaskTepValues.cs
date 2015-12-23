@@ -115,7 +115,9 @@ namespace TepCommon
             m_panelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
             m_dgvValues.EventCellValueChanged += new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventHandler(onEventCellValueChanged);
         }
-
+        /// <summary>
+        /// Инициализация элементов управления объекта
+        /// </summary>
         private void InitializeComponents()
         {
             #region Код, не относящийся к инициализации элементов управления
@@ -161,11 +163,18 @@ namespace TepCommon
             (Controls.Find(INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnUpdate_Click);
             (Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
         }
-
+        /// <summary>
+        /// Инициализация данных объекта
+        /// </summary>
+        /// <param name="dbConn">Объект соединения с БД</param>
+        /// <param name="err">Признак результата выполнения инициализации</param>
+        /// <param name="errMsg">Строка - пояснение к ошибке при выполнении</param>
         protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
+
+            HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
 
             Control ctrl = null;
             CheckedListBox clbxCompCalculated

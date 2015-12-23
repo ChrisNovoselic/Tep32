@@ -52,6 +52,7 @@
     <Compile Include="HPanelTepCommon.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="HTepUsers.cs" />
     <Compile Include="PanelPrjParametersEditTree.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -113,7 +113,6 @@
     <Compile Include="HTepTabCtrlEx.Designer.cs">
       <DependentUpon>HTepTabCtrlEx.cs</DependentUpon>
     </Compile>
-    <Compile Include="HTepUsers.cs" />
     <Compile Include="Plugins.cs">
       <SubType>Form</SubType>
     </Compile>
