@@ -101,12 +101,12 @@ namespace PluginPrjSources
             base.delRecItem(indx);
         }
 
-        protected override void clear()
+        protected override void reinit()
         {
             m_tblEditPswd.Clear();
             m_tblOriginPswd.Clear();
 
-            base.clear();
+            base.reinit();
         }
 
         private DataRow getPassword(int indx)

@@ -16,22 +16,22 @@ namespace TepCommon
 {
     public abstract class HPanelTepCommon : HPanelCommon, IObjectDbEdit
     {
-        //Дополнительные действия при сохранении значений
+        /// <summary>
+        /// Дополнительные действия при сохранении значений
+        /// </summary>
         protected DelegateIntFunc delegateSaveAdding;
-
+        /// <summary>
+        /// Объект с параметрами соединения БД
+        /// </summary>
         protected ConnectionSettings m_connSett;
+        /// <summary>
+        /// Объект для реализации взаимодействия с главной программой
+        /// </summary>
         protected IPlugIn _iFuncPlugin;
-        ///// <summary>
-        ///// Словарь с элементами управления на панели
-        /////  , в т.ч. и "вложенных"
-        ///// </summary>
-        //protected Dictionary<int, Control> m_dictControls;
-
         /// <summary>
         /// Требуется переменная конструктора.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
-
         /// <summary> 
         /// Освободить все используемые ресурсы.
         /// </summary>
@@ -82,7 +82,10 @@ namespace TepCommon
                 Logging.Logg().Exception(e, @"HPanelEdit::Initialize () - BeginInvoke (initialize) - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
-
+        /// <summary>
+        /// Инициализация с заданными параметрами соединения с БД 
+        /// </summary>
+        /// <param name="obj">Аргумент (параметры соединения с БД)</param>
         private void initialize(object obj)
         {
             int err = -1;
@@ -112,7 +115,11 @@ namespace TepCommon
             {
             }
         }
-
+        /// <summary>
+        /// Инициализация с предустановленными параметрами соединения с БД
+        /// </summary>
+        /// <param name="err">Признак результатат выполнения функции</param>
+        /// <param name="errMsg">Пояснение в случае возникновения ошибки</param>
         private void initialize(out int err, out string errMsg)
         {
             int iListenerId = -1;
@@ -135,8 +142,10 @@ namespace TepCommon
 
             DbSources.Sources().UnRegister(iListenerId);
         }
-
-        protected virtual void clear()
+        /// <summary>
+        /// Повторная инициализация
+        /// </summary>
+        protected virtual void reinit()
         {
             int err = -1;
             string errMsg = string.Empty;
@@ -240,7 +249,7 @@ namespace TepCommon
 
         protected virtual void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            clear();
+            reinit();
         }
     }    
 }

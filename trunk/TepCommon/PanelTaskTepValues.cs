@@ -188,46 +188,55 @@ namespace TepCommon
 
             if (err == 0)
             {
-                m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
-                //Заполнить элементы управления с компонентами станции
-                clbxCompCalculated = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
-                clbxCompVisibled = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
-                foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
+                try
                 {
-                    id_comp = (Int16)r[@"ID"];
-                    m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
-                    strItem = (string)r[@"DESCRIPTION"];
-                    // установить признак участия в расчете компонента станции
-                    bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
-                    clbxCompCalculated.Items.Add(strItem, bChecked);
-                    // установить признак отображения компонента станции
-                    bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
-                    clbxCompVisibled.Items.Add(strItem, bChecked);
-                    m_dgvValues.AddColumn(id_comp, strItem, bChecked);
+                    base.Start();
+
+                    m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
+                    //Заполнить элементы управления с компонентами станции
+                    clbxCompCalculated = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
+                    clbxCompVisibled = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
+                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
+                    {
+                        id_comp = (Int16)r[@"ID"];
+                        m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
+                        strItem = ((string)r[@"DESCRIPTION"]).Trim();
+                        // установить признак участия в расчете компонента станции
+                        bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
+                        clbxCompCalculated.Items.Add(strItem, bChecked);
+                        // установить признак отображения компонента станции
+                        bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
+                        clbxCompVisibled.Items.Add(strItem, bChecked);
+                        m_dgvValues.AddColumn(id_comp, strItem, bChecked);
+                    }
+                    // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
+                    // компонента станции для элементов управления
+                    clbxCompCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
+                    clbxCompVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
+
+                    //Заполнить элемент управления с периодами расчета
+                    ctrl = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0];
+                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
+                        (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
+
+                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
+                    (ctrl as ComboBox).SelectedIndex = 0;
+
+                    //Заполнить элемент управления с часовыми поясами
+                    ctrl = Controls.Find(INDEX_CONTROL.CBX_TIMEZONE.ToString(), true)[0];
+                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
+                        (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
+
+                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
+                    (ctrl as ComboBox).SelectedIndex = 0;
+
+                    // отобразить значения
+                    updateDataValues();
                 }
-                // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
-                // компонента станции для элементов управления
-                clbxCompCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
-                clbxCompVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
-
-                //Заполнить элемент управления с периодами расчета
-                ctrl = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0];
-                foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
-                    (ctrl as ComboBox).Items.Add (r[@"DESCRIPTION"]);
-
-                (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                (ctrl as ComboBox).SelectedIndex = 0;
-
-                //Заполнить элемент управления с часовыми поясами
-                ctrl = Controls.Find(INDEX_CONTROL.CBX_TIMEZONE.ToString(), true)[0];
-                foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
-                    (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
-
-                (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
-                (ctrl as ComboBox).SelectedIndex = 0;
-
-                // отобразить значения
-                updateDataValues();
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"PanelTaskTepValues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
             else
                 switch ((INDEX_TABLE_DICTPRJ)i)
@@ -254,6 +263,64 @@ namespace TepCommon
                         errMsg = @"Неизвестная ошибка";
                         break;
                 }
+        }
+        /// <summary>
+        /// Очистить объекты, элементы управления от текущих данных
+        /// </summary>
+        /// <param name="bClose">Признак полной/частичной очистки</param>
+        private void clear(bool bClose = false)
+        {
+            int i = -1;
+            CheckedListBox clbx = null;
+            ComboBox cbx = null;
+            HDateTimePicker hdtp = null;
+
+            if (bClose == true)
+            {
+                for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
+                {
+                    m_arTableDictPrjs[i].Clear();
+                    m_arTableDictPrjs[i] = null;
+                }
+
+                clbx = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
+                clbx.ItemCheck -= clbx_ItemCheck;
+                clbx.Items.Clear();
+                clbx = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
+                clbx.ItemCheck -= clbx_ItemCheck;
+                clbx.Items.Clear();
+                clbx = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as CheckedListBox;
+                clbx.Items.Clear();
+                clbx = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
+                clbx.Items.Clear();
+
+                cbx = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0] as ComboBox;
+                cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
+                cbx.Items.Clear();
+
+                cbx = Controls.Find(INDEX_CONTROL.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
+                cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
+                cbx.Items.Clear();
+
+                //hdtp = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker;
+                //hdtp.set
+
+                m_dgvValues.Columns.Clear();
+            }
+            else
+                ;
+
+            // очистить содержание представления
+            m_dgvValues.ClearValues();
+        }
+        /// <summary>
+        /// Остановить сопутствующие объекты
+        /// </summary>
+        public override void Stop()
+        {
+            clear(true);
+            
+            base.Stop();
         }
         /// <summary>
         /// Установить признак активности панель при выборе ее пользователем
@@ -462,19 +529,7 @@ namespace TepCommon
             }
             else
                 ;
-        }
-        /// <summary>
-        /// Очистить обновляемые значения
-        ///  после нажатия кнопки "Обновить"
-        ///  и  перед отображением новых значений
-        /// </summary>
-        protected override void clear()
-        {
-            //base.clear();
-
-            // очистить содержание представления
-            m_dgvValues.ClearValues();
-        }
+        }        
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Загрузить" (кнопка - аналог "Обновить")
         /// </summary>
@@ -966,40 +1021,52 @@ namespace TepCommon
                 int indxColTEC = -1; // индекс столбца при вставке
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.MiddleRight;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                // найти индекс нового столбца
-                // столбец для станции - всегда крайний
-                foreach (HDataGridViewColumn col in Columns)
-                    if ((col.m_iIdComp > 0)
-                        && (col.m_iIdComp < 1000))
-                        indxColTEC = Columns.IndexOf(col);
-                    else
-                        ;
 
-                DataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp, m_bCalcDeny = false };
-                autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
+                try
+                {
+                    // найти индекс нового столбца
+                    // столбец для станции - всегда крайний
+                    foreach (HDataGridViewColumn col in Columns)
+                        if ((col.m_iIdComp > 0)
+                            && (col.m_iIdComp < 1000))
+                        {
+                            indxColTEC = Columns.IndexOf(col);
 
-                if (!(indxColTEC < 0))// для компонентов ТЭЦ
-                    Columns.Insert(indxColTEC, column);
-                else
-                {// для служебных столбцов
-                    Columns.Add(column);
-                    if (bVisibled == true)
-                        if (id_comp < 0)
-                        {// только для столбца с [SYMBOL]
-                            alignText = DataGridViewContentAlignment.MiddleLeft;
-                            autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
-                            column.Frozen = true;
+                            break;
                         }
                         else
                             ;
-                    else
-                        ;
-                }
 
-                column.HeaderText = text;
-                column.AutoSizeMode = autoSzColMode;
-                column.DefaultCellStyle.Alignment = alignText;
-                column.Visible = bVisibled;
+                    DataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp, m_bCalcDeny = false };
+                    autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
+
+                    if (!(indxColTEC < 0))// для компонентов ТЭЦ
+                        Columns.Insert(indxColTEC, column);
+                    else
+                    {// для служебных столбцов
+                        Columns.Add(column);
+                        if (bVisibled == true)
+                            if (id_comp < 0)
+                            {// только для столбца с [SYMBOL]
+                                alignText = DataGridViewContentAlignment.MiddleLeft;
+                                autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
+                                column.Frozen = true;
+                            }
+                            else
+                                ;
+                        else
+                            ;
+                    }
+
+                    column.HeaderText = text;
+                    column.AutoSizeMode = autoSzColMode;
+                    column.DefaultCellStyle.Alignment = alignText;
+                    column.Visible = bVisibled;
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"DataGridViewTEPValues::AddColumn (id_comp=" + id_comp + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
             /// <summary>
             /// Добавить строку в таблицу
@@ -1284,7 +1351,8 @@ namespace TepCommon
                 {
                     //0 - идентификатор компонета (служебный)
                     //1 - размерность (служебный)
-                    if (ev.ColumnIndex > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
+                    if ((ev.ColumnIndex > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
+                        && (! (ev.RowIndex < 0)))
                     {
                         strValue = (string)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value;
 

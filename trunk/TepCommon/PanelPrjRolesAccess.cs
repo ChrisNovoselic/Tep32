@@ -185,12 +185,12 @@ namespace TepCommon
             return bRes;
         }
 
-        protected override void clear()
+        protected override void reinit()
         {
             ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_PRJ_ITEM.ToString(), true)[0]).Rows.Clear();
             ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0]).Rows.Clear();
 
-            base.clear();
+            base.reinit();
         }
 
         protected virtual void selectAccessUnit(ref DbConnection dbConn, out int err)

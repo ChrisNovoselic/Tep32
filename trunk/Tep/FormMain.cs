@@ -19,16 +19,22 @@ namespace Tep64
 {
     public partial class FormMain : FormMainBaseWithStatusStrip
     {        
+        /// <summary>
+        /// Форма для редактирования параметров приложения
+        /// </summary>
         private static FormParameters s_formParameters;
-        //private static HTepUsers m_User;
         /// <summary>
         /// Признак процесса авто/загрузки вкладок
-        /// для предотвращения сохранения их в режиме "реальное время"
+        ///  для предотвращения сохранения их в режиме "реальное время"
         /// </summary>
         private static int m_iAutoActionTabs = 0;
-
+        /// <summary>
+        /// Объект со списком загруженных библиотек
+        /// </summary>
         private static HPlugIns s_plugIns;        
-
+        /// <summary>
+        /// Конструктор - основной (без параметров)
+        /// </summary>
         public FormMain() : base ()
         {
             InitializeComponent();
@@ -59,10 +65,18 @@ namespace Tep64
 
             m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
         }
-
+        /// <summary>
+        /// ??? Обязательное переопределение от 'FormMainBaseWithStatusStrip'
+        /// </summary>
         protected override void HideGraphicsSettings() { }
+        /// <summary>
+        /// ??? Обязательное переопределение от 'FormMainBaseWithStatusStrip'
+        /// </summary>
+        /// <param name="type"></param>
         protected override void UpdateActiveGui(int type) { }
-
+        /// <summary>
+        /// Загрузить вкладки, сохраненные в профиле пользователя
+        /// </summary>
         private void loadProfile()
         {
             PlugInMenuItem plugIn;
@@ -104,12 +118,18 @@ namespace Tep64
                     Logging.Logg().Warning(@"FormMain::loadProfile () - не удалось загрузить plugIn.Id=" + id + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
-
+        /// <summary>
+        /// Обработчик события - выбор п. меню 'Файл - Профиль - Загрузить'
+        /// </summary>
+        /// <param name="sender">Объект, инициировавший событие (п. меню)</param>
+        /// <param name="e">Аргумент </param>
         private void профайлЗагрузитьToolStripMenuItem_Click(object sender, EventArgs e)
         {
             loadProfile();
         }
-
+        /// <summary>
+        /// Сохранить профиль пользователя (открытые вкладки)
+        /// </summary>
         private void saveProfile()
         {
             int iListenerId = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString());
@@ -119,12 +139,20 @@ namespace Tep64
 
             DbSources.Sources().UnRegister(iListenerId);
         }
-
+        /// <summary>
+        /// Обработчик выбора пункта меню 'Файл - Профиль - Сохранить'
+        /// </summary>
+        /// <param name="sender">Объект, инициировавший событие (п. меню)</param>
+        /// <param name="e">Аргумент события</param>
         private void профайлСохранитьToolStripMenuItem_Click(object sender, EventArgs e)
         {
             saveProfile();
         }
-
+        /// <summary>
+        /// Обработчик выбора пункта меню 'Файл - Профиль - Автоматические загрузка/сохранение'
+        /// </summary>
+        /// <param name="sender">Объект, инициировавший событие (п. меню)</param>
+        /// <param name="e">Аргумент события</param>
         private void профайлАвтоЗагрузитьСохранитьToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
         {
             профайлЗагрузитьToolStripMenuItem.Enabled =
@@ -149,13 +177,21 @@ namespace Tep64
             //Снять признак автоматических действий с вкладками (закрытие)
             m_iAutoActionTabs = 0;
         }        
-
+        /// <summary>
+        /// Обработчик события - выбор п. меню 'Настройка - БД_конфигурации'
+        /// </summary>
+        /// <param name="sender">Объект, инициировавший событие (п. меню)</param>
+        /// <param name="e">Аргумент события</param>
         private void бДКонфигурацииToolStripMenuItem_Click(object sender, EventArgs e)
         {
             int iRes = connectionSettings(CONN_SETT_TYPE.MAIN_DB);
             //??? не оработан рез-т выполнения функции
         }
-
+        /// <summary>
+        /// Обработчик события - выбор п. меню 'Настройка - Параметры'
+        /// </summary>
+        /// <param name="sender">Объект, инициировавший событие (п. меню)</param>
+        /// <param name="e">Аргумент события</param>
         private void параметрыToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (s_formParameters == null) {
@@ -167,7 +203,11 @@ namespace Tep64
                 }
             }
         }
-
+        /// <summary>
+        /// Обработчик события - окончание загрузки объекта формы
+        /// </summary>
+        /// <param name="sender">Объект, инициировавший событие (форма)</param>
+        /// <param name="e">Аргумент события</param>
         private void MainForm_Load(object sender, EventArgs e)
         {
             int iRes = -1;
@@ -201,15 +241,23 @@ namespace Tep64
 
             m_report.ClearStates(false);
         }
-
+        /// <summary>
+        /// Метод аврийного завершения
+        /// </summary>
+        /// <param name="msg">Текст сообщения перед завершением</param>
+        /// <param name="bThrow">Признак генерации исключения</param>
+        /// <param name="bSupport">Признак включения в сообщение информации о контактах техн./поддержки</param>
         protected override void Abort(string msg, bool bThrow = false, bool bSupport = true)
         {
             //???Удалить все пункты меню...
 
-
             base.Abort(msg, bThrow, bSupport);
         }
-
+        /// <summary>
+        /// Обработчик события - закрытие формы
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             Stop ();
@@ -392,7 +440,11 @@ namespace Tep64
             else
                 ;
         }
-
+        /// <summary>
+        /// Обработчик события - закрытие вкладки
+        /// </summary>
+        /// <param name="sender">Объект, инициировавший событие (???)</param>
+        /// <param name="e">Аргумент события</param>
         private void onCloseTabPage(object sender, HTabCtrlExEventArgs e)
         {
             ////Вариант №1
@@ -402,7 +454,11 @@ namespace Tep64
             //Вариант №2
             FindMainMenuItemOfText (e.TabHeaderText).PerformClick ();
         }
-
+        /// <summary>
+        /// Дополнительная инициализация компонентов формы
+        /// </summary>
+        /// <param name="strErr">Текст сообщения об ошибке при выполнении инициализации</param>
+        /// <returns>Результат дополнительной инициализации</returns>
         private int Initialize (out string strErr) {
             int iRes = 0;
             strErr = string.Empty;
@@ -438,10 +494,15 @@ namespace Tep64
 
             return iRes;
         }
-
+        /// <summary>
+        /// Настроить/применить праметры соединения с БД_конфигурации
+        /// </summary>
+        /// <param name="type">Индекс параметров соединения с БД</param>
+        /// <returns>Результат выполнения функции</returns>
         private int connectionSettings (CONN_SETT_TYPE type) {
             int iRes = -1;
             DialogResult result;
+            //Отобразить окно с параметрами соединения
             result = s_listFormConnectionSettings[(int)type].ShowDialog(this);
             if (result == DialogResult.Yes)
             {
@@ -474,10 +535,17 @@ namespace Tep64
 
             return iRes;
         }
-
+        /// <summary>
+        /// Обработчик события - изменение активной вкладки
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (???)</param>
+        /// <param name="ev">Аргумент события</param>
         private void TabCtrl_OnSelectedIndexChanged (object obj, EventArgs ev) {
         }
-
+        /// <summary>
+        /// Изменить подписи в строке состояния
+        /// </summary>
+        /// <returns>Признак результата выполнения функции</returns>
         protected override int UpdateStatusString () {
             int haveError = 0;
             m_lblDescMessage.Text = m_lblDateMessage.Text = string.Empty;
@@ -501,7 +569,9 @@ namespace Tep64
 
             return haveError;
         }
-
+        /// <summary>
+        /// Выполнить доп./действия при старте таймера
+        /// </summary>
         protected override void timer_Start()
         {//m_timer.Interval == ProgramBase.TIMER_START_INTERVAL
         }

@@ -28,12 +28,13 @@ namespace TepCommon
             m_strKeyFields = keyFields;
         }
 
-        protected override void clear()
+        protected override void reinit()
         {
+            // перед повтрной инициализацией - очистить
             m_tblEdit.Clear();
             m_tblOrigin.Clear();
 
-            base.clear();
+            base.reinit();
         }
 
         protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
@@ -174,12 +175,12 @@ namespace TepCommon
             return bRes;
         }
 
-        protected override void clear()
+        protected override void reinit()
         {
             ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).Rows.Clear();
             ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]).Rows.Clear();
 
-            base.clear();
+            base.reinit();
         }
 
         protected virtual void initProp(ref DbConnection dbConn, out int err, out string errMsg)

@@ -720,11 +720,11 @@ namespace TepCommon
             return bRes;
         }
 
-        protected override void clear()
+        protected override void reinit()
         {
             m_ctrlTreeView.Nodes.Clear();
             
-            base.clear();
+            base.reinit();
         }
 
         private static string concatIdNode (TreeNode nodeParent, string id)
