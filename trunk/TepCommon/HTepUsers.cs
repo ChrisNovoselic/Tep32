@@ -36,7 +36,7 @@ namespace TepCommon
         /// <summary>
         /// Перечисление - индексы в массиве - аргументе функции 'GetParameterVisualSettings'
         /// </summary>
-        public enum INDEX_VISUALSETTINGS_PARAMS { EXT, IS_ROLE, TASK, PLUGIN, MODULE, TAB, ITEM, CONTEXT
+        public enum INDEX_VISUALSETTINGS_PARAMS { TASK, PLUGIN, TAB, ITEM
             , COUNT }
         /// <summary>
         /// Конструктор основной - с  параметром
@@ -178,16 +178,158 @@ namespace TepCommon
 
             return tableRes;
         }
+
+        public struct VISUAL_SETTING
+        {
+            public int m_ratio;
+            public int m_round;
+        }
+
+        public static int s_iRatioDefault = 0
+            , s_iRoundDefault = 2;
         /// <summary>
         /// Получить таблицу с установками для отображения значений
         /// </summary>
-        /// <param name="fields"></param>
-        /// <returns></returns>
-        public static DataTable GetParameterVisualSettings (params int []fields)
+        /// <param name="connSett">Параметры соединения с БД</param>
+        /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
+        /// <param name="err">Результат выполнения функции</param>
+        /// <returns>Таблица с установками для отображения значений</returns>
+        public static Dictionary<int, VISUAL_SETTING> GetParameterVisualSettings(ConnectionSettings connSett, int[] fields, out int err)
         {
-            DataTable tblRes = new DataTable ();
+            err = -1; //Обшая ошибка
+            int idListener = -1;
+            Dictionary<int, VISUAL_SETTING> dictRes;
 
-            return tblRes;
+            idListener = DbSources.Sources().Register(connSett, false, @"MAIN_DB");
+
+            dictRes = GetParameterVisualSettings(idListener, fields, out err);
+
+            DbSources.Sources().UnRegister(idListener);
+
+            return dictRes;
+        }
+        /// <summary>
+        /// Получить таблицу с установками для отображения значений
+        /// </summary>
+        /// <param name="idListener">Идентификатор установленного соединения с БД</param>>
+        /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
+        /// <param name="err">Результат выполнения функции</param>
+        /// <returns>Таблица с установками для отображения значений</returns>
+        public static Dictionary<int, VISUAL_SETTING> GetParameterVisualSettings(int idListener, int[] fields, out int err)
+        {
+            err = -1; //Обшая ошибка
+            DbConnection dbConn = null;
+            Dictionary<int, VISUAL_SETTING> dictRes = new Dictionary<int,VISUAL_SETTING> ();
+
+            dbConn = DbSources.Sources().GetConnection(idListener, out err);
+
+            if (err == 0)
+                dictRes = GetParameterVisualSettings(ref dbConn, fields, out err);
+            else
+                ; // не удалось получить объект соединения с БД по идентификатору
+
+            return dictRes;
+        }
+        /// <summary>
+        /// Получить таблицу с установками для отображения значений
+        /// </summary>
+        /// <param name="dbConn">Объект соединения с БД</param>
+        /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
+        /// <param name="err">Результат выполнения функции</param>
+        /// <returns>Таблица с установками для отображения значений</returns>
+        public static Dictionary<int, VISUAL_SETTING> GetParameterVisualSettings(ref DbConnection dbConn, int[] fields, out int err)
+        {
+            err = -1; //Обшая ошибка
+            string strQuery = string.Empty;
+            int id_alg = -1 // идентификатор параметра в алгоритме расчета
+                , id_unit = -1 // идентификатор параметра настроек при отображении значения [profiles_unit]
+                , ratio = -1 // коэффициент
+                , round = -1 // кол-во знаков при округлении
+                , checkSum = (int)ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND
+                    + (int)ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO
+                , curSum = -1;
+            Dictionary<int, VISUAL_SETTING> dictRes = new Dictionary<int, VISUAL_SETTING>();
+            DataTable tblRes = new DataTable()
+                //, tblRatio
+                ;
+            DataRow[] rowsAlg = null;
+
+            if (fields.Length == (int)INDEX_VISUALSETTINGS_PARAMS.COUNT)
+            {
+                strQuery = @"SELECT ID_CONTEXT as [ID], [ID_UNIT], [IS_ROLE], [VALUE]"
+                            + @" FROM [dbo].[profiles]"
+                            + @" WHERE"
+                                + @" ID_UNIT IN ("
+                                    + (int)ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND + @","
+                                    + (int)ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO
+                                    + @")"
+                                + @" AND ((ID_EXT=" + Id + @" AND " + @"IS_ROLE=0)"
+                                    + @" OR (ID_EXT=" + Role + @" AND " + @"IS_ROLE=1))"
+                                + @" AND ID_TASK=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TASK]
+                                + @" AND ID_PLUGIN=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.PLUGIN]
+                                + @" AND ID_TAB=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]
+                                + @" AND ID_ITEM=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM]
+                                //+ @" AND ID_CONTEXT=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.CONTEXT]
+                            + @" ORDER BY [ID_UNIT], [ID]"
+                                ;
+
+                tblRes = DbTSQLInterface.Select(ref dbConn, strQuery, null, null, out err);
+                //tblRatio = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM [ratio]", null, null, out err);
+
+                try
+                {
+                    foreach (DataRow r in tblRes.Rows)
+                    {
+                        id_alg = (Int16)r[@"ID"];
+
+                        ratio = s_iRatioDefault;
+                        round = s_iRoundDefault;
+
+                        if (dictRes.ContainsKey(id_alg) == false)
+                        {
+                            rowsAlg = tblRes.Select(@"ID=" + id_alg, @"ID_UNIT, IS_ROLE"); // приоритет значений для [IS_ROLE] = 0                            
+
+                            curSum = 0;
+                            foreach (DataRow rAlg in rowsAlg)
+                            {
+                                id_unit = (Int16)rAlg[@"ID_UNIT"];
+
+                                switch ((ID_ALLOWED)id_unit)
+                                {
+                                    case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
+                                        ratio = int.Parse(((string)rAlg[@"VALUE"]).Trim());
+                                        //ratio = Math.Pow(10F, (int)tblRatio.Select(@"ID=" + (int)rAlg[@"VALUE"])[0][@"VALUE"]);
+                                        break;
+                                    case ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND:
+                                        round = int.Parse(((string)rAlg[@"VALUE"]).Trim());
+                                        break;
+                                    default:
+                                        break;
+                                }
+
+                                curSum += id_unit;
+
+                                if (curSum == checkSum)
+                                    break;
+                                else
+                                    ;
+                            }
+
+                            dictRes.Add(id_alg, new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
+                        }
+                        else
+                            ; // continue, этот параметр уже обработан
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"HTepUsers::GetParameterVisualSettings () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+            }
+            else
+                ; // невозможно сформировать запрос - недостаточно параметров
+
+            return dictRes;
         }
     }
 }

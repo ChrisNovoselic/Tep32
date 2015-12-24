@@ -38,10 +38,13 @@ namespace InterfacePlugIn
     {
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            if (m_markDataHost.IsMarked((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB) == false)
+            if (m_dictDataHostCounter.ContainsKey((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB) == false)
                 DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
             else
-                ;
+                if (m_dictDataHostCounter[(int)ID_DATAASKED_HOST.CONNSET_MAIN_DB] % 2 == 0)
+                    DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
+                else
+                    ;
 
             //Передать главной форме параметр
             DataAskedHost(obj);

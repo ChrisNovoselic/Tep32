@@ -74,12 +74,12 @@ namespace PluginAboutTepProgram
             //if (createObject<FormAboutTepProgram>() == true)
             createObject(typeof (FormAboutTepProgram));
             
-            if (m_markDataHost.IsMarked ((int)ID_DATAASKED_HOST.ICON_MAINFORM) == false)
+            if (m_dictDataHostCounter.ContainsKey ((int)ID_DATAASKED_HOST.ICON_MAINFORM) == false)
                 DataAskedHost ((int)ID_DATAASKED_HOST.ICON_MAINFORM);
             else
                 ;
 
-            if (m_markDataHost.IsMarked ((int)ID_DATAASKED_HOST.STR_VERSION) == false)                
+            if (m_dictDataHostCounter.ContainsKey((int)ID_DATAASKED_HOST.STR_VERSION) == false)                
                 DataAskedHost((int)ID_DATAASKED_HOST.STR_VERSION);
             else
                 ;
