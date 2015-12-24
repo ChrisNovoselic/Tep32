@@ -36,15 +36,22 @@ namespace InterfacePlugIn
 
     public abstract class HFuncDbEdit : HFunc
     {
+        /// <summary>
+        /// Обработчик события - выбор п. меню
+        /// </summary>
+        /// <param name="obj">Объект, имнициировавщий событие (п. меню)</param>
+        /// <param name="ev">Аргумент события</param>
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
+            //Проверить признак выполнения запроса к вызвавшему объекту на получение параметров соединения с БД 
             if (m_dictDataHostCounter.ContainsKey((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB) == false)
+                // отправить запрос на получение параметров соединения с БД
                 DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
             else
                 if (m_dictDataHostCounter[(int)ID_DATAASKED_HOST.CONNSET_MAIN_DB] % 2 == 0)
                     DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
                 else
-                    ;
+                    m_dictDataHostCounter[(int)ID_DATAASKED_HOST.CONNSET_MAIN_DB]++;
 
             //Передать главной форме параметр
             DataAskedHost(obj);

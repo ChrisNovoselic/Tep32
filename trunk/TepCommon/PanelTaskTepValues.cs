@@ -318,7 +318,8 @@ namespace TepCommon
                 //hdtp = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker;
                 //hdtp.set
 
-                m_dgvValues.Columns.Clear();
+                m_dgvValues.ClearRows();
+                m_dgvValues.ClearColumns();
             }
             else
                 ;
@@ -1054,6 +1055,7 @@ namespace TepCommon
                 //Назначить (внутренний) обработчик события - изменение значения ячейки
                 // для дальнейшей ретрансляции родительскому объекту
                 CellValueChanged += new DataGridViewCellEventHandler (onCellValueChanged);
+                //RowsRemoved += new DataGridViewRowsRemovedEventHandler (onRowsRemoved);
             }
 
             private void InitializeComponents()
@@ -1070,6 +1072,30 @@ namespace TepCommon
 
                 AddColumn (-2, string.Empty, false);
                 AddColumn(-1, @"Размерность", true);
+            }
+
+            public void ClearColumns()
+            {
+                List<HDataGridViewColumn> listIndxToRemove;
+
+                if (Columns.Count > 0)
+                {
+                    listIndxToRemove = new List<HDataGridViewColumn>();
+
+                    foreach (HDataGridViewColumn col in Columns)
+                        if (!(col.m_iIdComp < 0))
+                            listIndxToRemove.Add(col);
+                        else
+                            ;
+
+                    while (listIndxToRemove.Count > 0)
+                    {
+                        Columns.Remove(listIndxToRemove[0]);
+                        listIndxToRemove.RemoveAt(0);
+                    }
+                }
+                else
+                    ;
             }
             /// <summary>
             /// Удалить строки
@@ -1401,7 +1427,14 @@ namespace TepCommon
                             {
                                 vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
                                 ratioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value;
-                                dblVal /= Math.Pow(10F, vsRatioValue);
+                                if (!(ratioValue == vsRatioValue))
+                                {
+                                    row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol
+                                        + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
+                                    dblVal *= Math.Pow(10F, ratioValue > vsRatioValue ? vsRatioValue : -1 * vsRatioValue);
+                                }
+                                else
+                                    ;
                                 row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);
                             }
                             else
@@ -1433,7 +1466,11 @@ namespace TepCommon
 
                 CellValueChanged += new DataGridViewCellEventHandler (onCellValueChanged);
             }
-
+            /// <summary>
+            /// обработчик события - изменение значения в ячейке
+            /// </summary>
+            /// <param name="obj">Обхект, иницировавший событие</param>
+            /// <param name="ev">Аргумент события</param>
             private void onCellValueChanged(object obj, DataGridViewCellEventArgs ev)
             {
                 string strValue = string.Empty;
@@ -1490,6 +1527,10 @@ namespace TepCommon
                         , m_nameEN = (string)r[@"NAME_RU"]
                         , m_strDesc = (string)r[@"DESCRIPTION"]
                     });
+            }
+
+            private void onRowsRemoved(object obj, DataGridViewRowsRemovedEventArgs ev)
+            {
             }
         }
         /// <summary>
