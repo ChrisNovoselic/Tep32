@@ -17,19 +17,16 @@ namespace TepCommon
     public abstract partial class PanelTaskTepValues : HPanelTepCommon
     {
         /// <summary>
-        /// Перечисление - индексы таблиц для значений
-        ///  , собранных в автоматическом режиме
-        ///  , "по умолчанию"
+        /// Перечисление - индексы таблиц со словарными величинами и проектными данными
         /// </summary>
-        private enum INDEX_TABLE_VALUES : int { VARIABLE, DEFAULT, COUNT }
-        private enum INDEX_TABLE_DICTPRJ : int
+        protected enum INDEX_TABLE_DICTPRJ : int
         {
             UNKNOWN = -1, PERIOD, TIMEZONE, COMPONENT, PARAMETER/*, VISUAL_SETTINGS*/, MODE_DEV/*, MEASURE*/, RATIO
             , COUNT_TABLE_DICTPRJ }
         /// <summary>
         /// Наименования таблиц с парметрами для расчета
         /// </summary>
-        private string m_strNameTableAlg
+        protected string m_strNameTableAlg
             , m_strNameTablePut
             , m_strNameTableValues;
         /// <summary>
@@ -67,7 +64,7 @@ namespace TepCommon
         /// <summary>
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
-        private DataTable []m_arTableDictPrjs;
+        protected DataTable []m_arTableDictPrjs;
         /// <summary>
         /// Индексы массива списков идентификаторов
         /// </summary>
@@ -87,6 +84,10 @@ namespace TepCommon
         /// </summary>
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
+
+        protected abstract DataTable m_TableOrigin { get; }
+
+        protected abstract DataTable m_TableEdit { get; }
         /// <summary>
         /// Объект для обмена данными с БД
         /// </summary>
@@ -98,14 +99,6 @@ namespace TepCommon
         public PanelTaskTepValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut, string strNameTableValues)
             : base(iFunc)
         {
-            //int iRes = compareNAlg (@"4.1", @"10");
-            //iRes = compareNAlg (@"10", @"4.1");
-            //iRes = compareNAlg (@"10.1", @"7.1");
-            //iRes = compareNAlg(@"4", @"10.1");
-
-            m_arTableOrigin = new DataTable [(int)INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
-
             m_strNameTableAlg = strNameTableAlg;
             m_strNameTablePut = strNameTablePut;
             m_strNameTableValues = strNameTableValues;
@@ -350,29 +343,6 @@ namespace TepCommon
             return bRes;
         }
         /// <summary>
-        /// Сохранить изменения в редактируемых таблицах
-        /// </summary>
-        /// <param name="dbConn">Объект соединения с БД</param>
-        /// <param name="err">Признак ошибки при выполнении сохранения в БД</param>
-        protected override void recUpdateInsertDelete(ref System.Data.Common.DbConnection dbConn, out int err)
-        {
-            err = -1;
-
-            DbTSQLInterface.RecUpdateInsertDelete(ref dbConn
-                , @"inval_def"
-                , @"ID_INPUT, ID_TIME"
-                , m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT]
-                , m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT]
-                , out err);
-        }
-        /// <summary>
-        /// Обработчик события при успешном сохранении изменений в редактируемых на вкладке таблицах
-        /// </summary>
-        protected override void successRecUpdateInsertDelete()
-        {
-            m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT].Copy();
-        }
-        /// <summary>
         /// Массив запросов к БД по получению словарных и проектных значений
         /// </summary>
         private string[] getQueryDictPrj ()
@@ -420,7 +390,7 @@ namespace TepCommon
         /// <summary>
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
         /// </summary>
-        private string getQueryValuesVar ()
+        protected string getQueryValuesVar ()
         {
             string strRes = string.Empty;
 
@@ -502,20 +472,12 @@ namespace TepCommon
             return strRes;
         }
         /// <summary>
-        /// Запрос для получения значений "по умолчанию"
+        /// Установить значения таблиц для редактирования
         /// </summary>
-        private string getQueryValuesDef ()
-        {
-            string strRes = string.Empty;
-
-            strRes = @"SELECT"
-                + @" *"
-                + @" FROM [dbo].[" + m_strNameTableValues + @"_def] v"
-                + @" WHERE [ID_TIME] = " + (int)_currIdPeriod
-                    ;
-
-            return strRes;
-        }
+        /// <param name="dbConn">Ссылка на объектт соединения с БД</param>
+        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        /// <param name="strErr">Строка текста сообщения при галичии ошибки</param>
+        protected abstract void setValues(ref DbConnection dbConn, out int err, out string strErr);
         /// <summary>
         /// Выполнить запрос к БД, отобразить рез-т запроса
         /// </summary>
@@ -525,11 +487,7 @@ namespace TepCommon
                 , err = -1
                 , cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
                 , iAVG = -1;
-            string errMsg = string.Empty
-                , query = string.Empty;
-            // строки для удаления из таблицы значений "по умолчанию"
-            // при наличии дубликатов строк в таблице с загруженными из источников с данными
-            DataRow[] rowsSel = null;
+            string errMsg = string.Empty;
             // представление очичается в 'clear ()' - при автоматическом вызове, при нажатии на кнопку "Загрузить" (аналог "Обновить")
             DbConnection dbConn = null;
             // получить объект для соединения с БД
@@ -537,63 +495,12 @@ namespace TepCommon
             // проверить успешность получения 
             if ((!(dbConn == null)) && (err == 0))
             {
-                //Запрос для получения автоматически собираемых данных
-                query = getQueryValuesVar ();
-                //Заполнить таблицу автоматически собираемыми данными
-                m_arTableOrigin [(int)INDEX_TABLE_VALUES.VARIABLE] = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
-                //Проверить признак выполнения запроса
+                setValues(ref dbConn, out err, out errMsg);
+
                 if (err == 0)
-                {
-                    //Запрос для получения данных вводимых вручную
-                    query = getQueryValuesDef ();
-                    //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
-                    m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
-                    //Проверить признак выполнения запроса
-                    if (err == 0)
-                    {
-                        // удалить строки из таблицы со значениями "по умолчанию"
-                        foreach (DataRow rValVar in m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Rows)
-                        {
-                            rowsSel = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_INPUT=" + rValVar[@"ID"]);
-                            foreach (DataRow rToRemove in rowsSel)
-                                m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Rows.Remove(rToRemove);
-                        }
-                        // вставить строки из таблицы со значениями "по умолчанию"
-                        foreach (DataRow rValDef in m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Rows)
-                        {
-                            rowsSel = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(@"ID=" + rValDef[@"ID_INPUT"]);
-                            if (rowsSel.Length == 1)
-                            {
-                                iAVG = (Int16)rowsSel[0][@"AVG"];
-
-                                m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Rows.Add(new object[]
-                                    {
-                                        rValDef[@"ID_INPUT"]
-                                        , HUsers.Id //ID_USER
-                                        , -1 //ID_SOURCE
-                                        , 0 //ID_SESSION
-                                        , -1 //QUALITY
-                                        , (iAVG == 0) ? cnt * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
-                                        , HDateTime.ToMoscowTimeZone() //??? GETADTE()
-                                    }
-                                );
-                            }
-                            else
-                                ; // по иднгтификатору найден не единственный парпметр расчета
-                        }
-                        // создать копии для возможности сохранения изменений
-                        m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Copy();
-                        m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Copy();
-
-                        m_dgvValues.ShowValues(m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE], m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
-                    }
-                    else
-                        errMsg = @"ошибка получения данных по умолчанию с " + m_panelManagement.m_dtRange.Begin.ToString()
-                            + @" по " + m_panelManagement.m_dtRange.End.ToString();
-                }
+                    m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
                 else
-                    errMsg = @"ошибка получения автоматически собираемых данных с " + m_panelManagement.m_dtRange.Begin.ToString()
-                        + @" по " + m_panelManagement.m_dtRange.End.ToString();
+                    ;
             }
             else
             {
@@ -605,7 +512,7 @@ namespace TepCommon
 
             if (!(err == 0))
             {
-                throw new Exception(@"HPanelEdit::HPanelTepCommon_btnUpdate_Click () - " + errMsg);
+                throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
             }
             else
                 ;
@@ -675,7 +582,7 @@ namespace TepCommon
         /// <summary>
         /// Текущий выбранный идентификатор периода расчета
         /// </summary>
-        private ID_PERIOD _currIdPeriod;
+        protected ID_PERIOD _currIdPeriod;
         ///// <summary>
         ///// Текущий выбранный идентификатор периода расчета
         ///// </summary>
@@ -696,7 +603,7 @@ namespace TepCommon
         /// <summary>
         /// Количество базовых периодов
         /// </summary>
-        private int CountBasePeriod
+        protected int CountBasePeriod
         {
             get
             {
@@ -924,22 +831,7 @@ namespace TepCommon
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>
         /// <param name="pars"></param>
-        private void onEventCellValueChanged(object dgv, DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
-        {
-            //int id_par = (int)(pars as object [])[0]
-            //    , id_comp = (int)(pars as object[])[1]
-            //    , idParameter = (int)(pars as object[])[2];
-            //double val = (double)(pars as object[])[3];
-
-            DataRow[] rowsParameter = m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_INPUT=" + ev.m_IdParameter);
-
-            if (rowsParameter.Length == 1)
-            {
-                rowsParameter[0][@"VALUE"] = ev.m_Value;
-            }
-            else
-                ;
-        }
+        protected abstract void onEventCellValueChanged(object dgv, DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev);
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
         /// </summary>
