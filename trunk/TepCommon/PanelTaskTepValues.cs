@@ -128,10 +128,10 @@ namespace TepCommon
                 switch (i)
                 {
                     case INDEX_ID.PERIOD:
-                        m_arListIds[(int)i] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.SHIFTS, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
+                        m_arListIds[(int)i] = new List<int> { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
                         break;
                     case INDEX_ID.TIMEZONE:
-                        m_arListIds[(int)i] = new List<int> { (int)ID_TIMEZONE.UTC };
+                        m_arListIds[(int)i] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
                         break;
                     default:
                         //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
@@ -186,7 +186,7 @@ namespace TepCommon
                 , id_comp = -1;
             bool bChecked = false;
             //Заполнить таблицы со словарными, проектными величинами
-            string[] arQueryDictPrj = queryDictPrj;
+            string[] arQueryDictPrj = getQueryDictPrj ();
             for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
             {
                 m_arTableDictPrjs[i] = DbTSQLInterface.Select(ref dbConn, arQueryDictPrj[i], null, null, out err);
@@ -227,24 +227,26 @@ namespace TepCommon
 
                     m_dgvValues.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
-                    //Заполнить элемент управления с периодами расчета
-                    ctrl = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
-                        (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
-
-                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = 0;
-
                     //Заполнить элемент управления с часовыми поясами
                     ctrl = Controls.Find(INDEX_CONTROL.CBX_TIMEZONE.ToString(), true)[0];
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
-
+                    // порядок именно такой (установить 0, назначить обработчик)
+                    //, чтобы исключить повторное обновление отображения
+                    (ctrl as ComboBox).SelectedIndex = 2;
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
+                    setCurrentTimeZone(ctrl as ComboBox);
+
+                    //Заполнить элемент управления с периодами расчета
+                    ctrl = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0];
+                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
+                        (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
+                    
+                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
                     (ctrl as ComboBox).SelectedIndex = 0;
 
-                    // отобразить значения
-                    updateDataValues();
+                    //// отобразить значения
+                    //updateDataValues();
                 }
                 catch (Exception e)
                 {
@@ -373,86 +375,146 @@ namespace TepCommon
         /// <summary>
         /// Массив запросов к БД по получению словарных и проектных значений
         /// </summary>
-        private string[] queryDictPrj
+        private string[] getQueryDictPrj ()
         {
-            get
+            string [] arRes = null;
+
+            arRes = new string[]
             {
-                return new string[]
-                {
-                    //PERIOD
-                    @"SELECT * FROM [time] WHERE [ID] IN (" + m_strIdPeriods + @")"
-                    //TIMEZONE
-                    , @"SELECT * FROM [timezones] WHERE [ID] IN (" + m_strIdTimezones + @")"
-                    // список компонентов
-                    , @"SELECT * FROM [comp_list] "
-                        + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
-                            + @" OR ([ID_COMP] = 1000)"
-                    // параметры расчета
-                    , @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
-                        + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
-                        + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
-                    + @" FROM [dbo].[" + m_strNameTablePut + @"] as p"
-                        + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG"
-                        + @" JOIN [dbo].[measure] as m ON a.ID_MEASURE = m.ID"
-                    //// настройки визуального отображения значений
-                    //, @""
-                    // режимы работы
-                    , @"SELECT * FROM [dbo].[mode_dev]"
-                    //// единицы измерения
-                    //, @"SELECT * FROM [dbo].[measure]"
-                    // коэффициенты для единиц измерения
-                    , @"SELECT * FROM [dbo].[ratio]"
-                };
-            }
+                //PERIOD
+                @"SELECT * FROM [time] WHERE [ID] IN (" + m_strIdPeriods + @")"
+                //TIMEZONE
+                , @"SELECT * FROM [timezones] WHERE [ID] IN (" + m_strIdTimezones + @")"
+                // список компонентов
+                , @"SELECT * FROM [comp_list] "
+                    + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
+                        + @" OR ([ID_COMP] = 1000)"
+                // параметры расчета
+                , @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
+                    + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
+                    + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
+                + @" FROM [dbo].[" + m_strNameTablePut + @"] as p"
+                    + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG"
+                    + @" JOIN [dbo].[measure] as m ON a.ID_MEASURE = m.ID"
+                //// настройки визуального отображения значений
+                //, @""
+                // режимы работы
+                , @"SELECT * FROM [dbo].[mode_dev]"
+                //// единицы измерения
+                //, @"SELECT * FROM [dbo].[measure]"
+                // коэффициенты для единиц измерения
+                , @"SELECT * FROM [dbo].[ratio]"
+            };
+
+            return arRes;
+        }
+
+        private string getNameTableValuesPostfixDatetime(DateTime dtBegin, DateTime dtEnd)
+        {
+            string strRes = string.Empty;
+
+            strRes = dtEnd.Year.ToString() + dtEnd.Month.ToString(@"00");
+
+            return strRes;
         }
         /// <summary>
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
         /// </summary>
-        private string queryValuesVar
+        private string getQueryValuesVar ()
         {
-            get
-            {
-                return @"SELECT"
-	                + @" p.ID"
-	                + @", " + HUsers.Id //ID_USER
-	                + @", v.ID_SOURCE"
-	                + @", 0" //ID_SESSION
-                    //+ @", CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                    //+ @", CAST ('" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                    //+ @", v.ID_TIME"
-                    //+ @", v.ID_TIMEZONE"
-	                + @", v.QUALITY"
-	                + @", CASE WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
-		                + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
-		                + @" ELSE MIN (v.[VALUE]) END as VALUE"
-	                + @", GETDATE ()"
-                    + @" FROM [dbo].[" + m_strNameTableValues + @"_201512] v"
-	                    + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
-                        + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
-	                    + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                    + @" WHERE [ID_TIME] = " + (int)_currIdPeriod
-                        + @" AND [DATE_TIME] > CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                        + @" AND [DATE_TIME] <= CAST ('" + m_panelManagement.m_dtRange.End.ToString (@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                    + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
-	                    + @", a.ID_MEASURE, a.N_ALG"
-                        + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
-	                    + @", m.[AVG]"
-                        ;
-            }
+            string strRes = string.Empty;
+
+            int diffMonth = -1;
+            bool bBeginMonthBoudary = false
+                , bEndMonthBoudary = false;
+            DateTimeRange[] arQueryRanges = null;
+            // привести дату/время к UTC
+            DateTime dtBegin = m_panelManagement.m_dtRange.Begin.AddMinutes (-1 * _curOffsetUTC)
+                , dtEnd = m_panelManagement.m_dtRange.End.AddMinutes (-1 * _curOffsetUTC);
+            diffMonth = (dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year);
+            arQueryRanges = new DateTimeRange [diffMonth + 1];
+            bBeginMonthBoudary = HDateTime.IsMonthBoundary(dtBegin);
+            bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
+            if ((bBeginMonthBoudary == false)
+                && (bEndMonthBoudary == false))
+                if (diffMonth == 0)
+                    // самый простой вариант - один элемент в массиве - одна таблица
+                    ;
+                else
+                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
+                    ;
+            else
+                if ((bBeginMonthBoudary == true)
+                    && (bEndMonthBoudary == true))
+                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                    // + использование следующей за 'dtEnd' таблицы
+                    ;
+                else
+                    if (bBeginMonthBoudary == true)
+                        if (diffMonth == 0)
+                            // ТОЖЕ простой вариант - один элемент в массиве - одна таблица
+                            ; 
+                        else
+                            ; // ТОЖЕ два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
+                    else
+                        if (bEndMonthBoudary == true)
+                            if (diffMonth == 0)
+                                // два элемента в массиве - одна таблица
+                                // + использование следующей за 'dtEnd' таблицы
+                                ;
+                            else
+                                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                                // + использование следующей за 'dtEnd' таблицы
+                                ;
+                        else
+                            ; // ветвь не выполняется
+
+            foreach (DateTimeRange range in arQueryRanges)
+                ;
+
+            strRes = @"SELECT"
+	            + @" p.ID"
+	            + @", " + HUsers.Id //ID_USER
+	            + @", v.ID_SOURCE"
+	            + @", 0" //ID_SESSION
+                //+ @", CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                //+ @", CAST ('" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                //+ @", v.ID_TIME"
+                //+ @", v.ID_TIMEZONE"
+	            + @", v.QUALITY"
+	            + @", CASE WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
+		            + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
+		            + @" ELSE MIN (v.[VALUE]) END as VALUE"
+	            + @", GETDATE ()"
+                + @" FROM [dbo].[" + m_strNameTableValues + @"_" + getNameTableValuesPostfixDatetime(dtBegin, dtEnd) + @"] v"
+	                + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
+                    + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
+	                + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
+                + @" WHERE [ID_TIME] = " + (int)ID_PERIOD.HOUR //(int)_currIdPeriod
+                    + @" AND [DATE_TIME] > CAST ('" + dtBegin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                    + @" AND [DATE_TIME] <= CAST ('" + dtEnd.ToString (@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+                + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
+	                + @", a.ID_MEASURE, a.N_ALG"
+                    + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
+	                + @", m.[AVG]"
+                    ;
+
+            return strRes;
         }
         /// <summary>
         /// Запрос для получения значений "по умолчанию"
         /// </summary>
-        private string queryValuesDef
+        private string getQueryValuesDef ()
         {
-            get
-            {
-                return @"SELECT"
-                    + @" *"
-                    + @" FROM [dbo].[" + m_strNameTableValues + @"_def] v"
-                    + @" WHERE [ID_TIME] = " + (int)_currIdPeriod
-                        ;
-            }
+            string strRes = string.Empty;
+
+            strRes = @"SELECT"
+                + @" *"
+                + @" FROM [dbo].[" + m_strNameTableValues + @"_def] v"
+                + @" WHERE [ID_TIME] = " + (int)_currIdPeriod
+                    ;
+
+            return strRes;
         }
         /// <summary>
         /// Выполнить запрос к БД, отобразить рез-т запроса
@@ -461,7 +523,7 @@ namespace TepCommon
         {
             int iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB")
                 , err = -1
-                , cnt = (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
+                , cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
                 , iAVG = -1;
             string errMsg = string.Empty
                 , query = string.Empty;
@@ -469,21 +531,21 @@ namespace TepCommon
             // при наличии дубликатов строк в таблице с загруженными из источников с данными
             DataRow[] rowsSel = null;
             // представление очичается в 'clear ()' - при автоматическом вызове, при нажатии на кнопку "Загрузить" (аналог "Обновить")
-            DbConnection dbConn = null;            
+            DbConnection dbConn = null;
             // получить объект для соединения с БД
             dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
             // проверить успешность получения 
             if ((!(dbConn == null)) && (err == 0))
             {
                 //Запрос для получения автоматически собираемых данных
-                query = queryValuesVar;
+                query = getQueryValuesVar ();
                 //Заполнить таблицу автоматически собираемыми данными
                 m_arTableOrigin [(int)INDEX_TABLE_VALUES.VARIABLE] = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 //Проверить признак выполнения запроса
                 if (err == 0)
                 {
                     //Запрос для получения данных вводимых вручную
-                    query = queryValuesDef;
+                    query = getQueryValuesDef ();
                     //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
                     m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                     //Проверить признак выполнения запроса
@@ -629,6 +691,8 @@ namespace TepCommon
         //}
 
         private ID_TIMEZONE _currIdTimezone;
+
+        private int _curOffsetUTC;
         /// <summary>
         /// Количество базовых периодов
         /// </summary>
@@ -677,7 +741,7 @@ namespace TepCommon
             Dictionary<int, HTepUsers.VISUAL_SETTING> dictVisualsettings = new Dictionary<int, HTepUsers.VISUAL_SETTING>();
             //Установить новое значение для текущего периода
             _currIdPeriod = (ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex];
-            //Отменить обработку событий
+            //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
             clbxParsCalculated.ItemCheck -= clbx_ItemCheck;
             clbxParsVisibled.ItemCheck -= clbx_ItemCheck;
             //Очистиить списки
@@ -740,47 +804,34 @@ namespace TepCommon
                 else
                     ;
             }
-            //Возобновить обработку событий
+            //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
             clbxParsCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
             clbxParsVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
+            //Отменить обработку события - изменение начала/окончания даты/времени
+            m_panelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
             //Установить новые режимы для "календарей"
-            HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                , hdtpEnd = Controls.Find(INDEX_CONTROL.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-            //Выполнить запрос на получение значений для заполнения 'DataGridView'
-            switch (_currIdPeriod)
-            {
-                case ID_PERIOD.HOUR:
-                    hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
-                    hdtpEnd.Mode = HDateTimePicker.MODE.HOUR;
-                    break;
-                case ID_PERIOD.SHIFTS:
-                    hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
-                    hdtpEnd.Mode = HDateTimePicker.MODE.HOUR;
-                    break;
-                case ID_PERIOD.DAY:
-                    hdtpBegin.Mode = HDateTimePicker.MODE.DAY;
-                    hdtpEnd.Mode = HDateTimePicker.MODE.DAY;
-                    break;
-                case ID_PERIOD.MONTH:
-                    hdtpBegin.Mode = HDateTimePicker.MODE.MONTH;
-                    hdtpEnd.Mode = HDateTimePicker.MODE.MONTH;
-                    break;
-                case ID_PERIOD.YEAR:
-                    hdtpBegin.Mode = HDateTimePicker.MODE.YEAR;
-                    hdtpEnd.Mode = HDateTimePicker.MODE.YEAR;
-                    break;
-                default:
-                    break;
-            }
-            ////Загрузить значения для отображения
-            //m_handlerDb.Load(_currIdPeriod);
+            m_panelManagement.SetPeriod(_currIdPeriod);
+            //Возобновить обработку события - изменение начала/окончания даты/времени
+            m_panelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
+            //Загрузить значения для отображения
+            updateDataValues();
+        }
+        /// <summary>
+        /// Установить новое значение для текущего периода
+        /// </summary>
+        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны двты/времени</param>
+        private void setCurrentTimeZone(ComboBox cbxTimezone)
+        {
+            _currIdTimezone = (ID_TIMEZONE)m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
+            _curOffsetUTC = (int)m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + (int)_currIdTimezone)[0][@"OFFSET_UTC"];
         }
 
         private void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
         {
-            ComboBox cbx = obj as ComboBox;
             //Установить новое значение для текущего периода
-            _currIdTimezone = (ID_TIMEZONE)m_arListIds[(int)INDEX_ID.TIMEZONE][cbx.SelectedIndex];
+            setCurrentTimeZone(obj as ComboBox);
+
+            updateDataValues();
         }
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
@@ -1742,7 +1793,74 @@ namespace TepCommon
                 HDateTimePicker hdtpEnd = obj as HDateTimePicker;
                 m_dtRange.Set(hdtpEnd.LeadingValue, hdtpEnd.Value);
 
-                DateTimeRangeValue_Changed(this, EventArgs.Empty);
+                if (! (DateTimeRangeValue_Changed == null))
+                    DateTimeRangeValue_Changed(this, EventArgs.Empty);
+                else
+                    ;
+            }
+
+            public void SetPeriod(ID_PERIOD idPeriod)
+            {
+                HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
+                , hdtpEnd = Controls.Find(INDEX_CONTROL.HDTP_END.ToString(), true)[0] as HDateTimePicker;
+                //Выполнить запрос на получение значений для заполнения 'DataGridView'
+                switch (idPeriod)
+                {
+                    case ID_PERIOD.HOUR:
+                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
+                            , DateTime.Now.Month
+                            , DateTime.Now.Day
+                            , DateTime.Now.Hour 
+                            , 0
+                            , 0).AddHours (-1);
+                        hdtpEnd.Value = hdtpBegin.Value.AddHours(1);
+                        hdtpBegin.Mode =
+                        hdtpEnd.Mode =
+                            HDateTimePicker.MODE.HOUR;
+                        break;
+                    //case ID_PERIOD.SHIFTS:
+                    //    hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
+                    //    hdtpEnd.Mode = HDateTimePicker.MODE.HOUR;
+                    //    break;
+                    case ID_PERIOD.DAY:
+                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
+                            , DateTime.Now.Month
+                            , DateTime.Now.Day
+                            , 0
+                            , 0
+                            , 0).AddDays(-1);
+                        hdtpEnd.Value = hdtpBegin.Value.AddDays(1);
+                        hdtpBegin.Mode =
+                        hdtpEnd.Mode =
+                            HDateTimePicker.MODE.DAY;
+                        break;
+                    case ID_PERIOD.MONTH:
+                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
+                            , DateTime.Now.Month
+                            , 1
+                            , 0
+                            , 0
+                            , 0).AddMonths(-1);
+                        hdtpEnd.Value = hdtpBegin.Value.AddMonths(1);
+                        hdtpBegin.Mode =
+                        hdtpEnd.Mode =
+                            HDateTimePicker.MODE.MONTH;
+                        break;
+                    case ID_PERIOD.YEAR:
+                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
+                            , 1
+                            , 1
+                            , 0
+                            , 0
+                            , 0).AddYears(-1);
+                        hdtpEnd.Value = hdtpBegin.Value.AddYears(1);
+                        hdtpBegin.Mode =
+                        hdtpEnd.Mode =
+                            HDateTimePicker.MODE.YEAR;
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }

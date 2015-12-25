@@ -14,7 +14,7 @@ namespace TepCommon
     public enum ID_PERIOD
     {
         HOUR = 13
-        , SHIFTS = 18
+        /*, SHIFTS = 18*/
         , DAY = 19
         , MONTH = 24
         , YEAR = 100
@@ -24,5 +24,7 @@ namespace TepCommon
     public enum ID_TIMEZONE
     {
         UTC = 0
+        , MSK = 1
+        , NSK = 2
     }
 }
