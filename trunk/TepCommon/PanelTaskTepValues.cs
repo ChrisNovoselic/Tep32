@@ -88,6 +88,8 @@ namespace TepCommon
         protected abstract DataTable m_TableOrigin { get; }
 
         protected abstract DataTable m_TableEdit { get; }
+
+        private static bool s_bAutoUpdateValues = false;
         /// <summary>
         /// Объект для обмена данными с БД
         /// </summary>
@@ -378,15 +380,20 @@ namespace TepCommon
 
             return arRes;
         }
+        ///// <summary>
+        ///// Возвратить окончание (постфикс - год+номер_месяц) для наименовния таблицы
+        ///// </summary>
+        ///// <param name="dtBegin">Дата/время начала в запросе</param>
+        ///// <param name="dtEnd">Дата/время окончания в запросе</param>
+        ///// <returns>Постфикс в наименовании таблицы</returns>
+        //private string getNameTableValuesPostfixDatetime(DateTime dtBegin, DateTime dtEnd)
+        //{
+        //    string strRes = string.Empty;
 
-        private string getNameTableValuesPostfixDatetime(DateTime dtBegin, DateTime dtEnd)
-        {
-            string strRes = string.Empty;
+        //    strRes = dtEnd.Year.ToString() + dtEnd.Month.ToString(@"00");
 
-            strRes = dtEnd.Year.ToString() + dtEnd.Month.ToString(@"00");
-
-            return strRes;
-        }
+        //    return strRes;
+        //}
         /// <summary>
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
         /// </summary>
@@ -394,80 +401,124 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            int diffMonth = -1;
-            bool bBeginMonthBoudary = false
-                , bEndMonthBoudary = false;
+            int i = -1;
+            bool bEndMonthBoudary = false
+                , bLastItem = false
+                , bEquDatetime = false;
             DateTimeRange[] arQueryRanges = null;
             // привести дату/время к UTC
             DateTime dtBegin = m_panelManagement.m_dtRange.Begin.AddMinutes (-1 * _curOffsetUTC)
                 , dtEnd = m_panelManagement.m_dtRange.End.AddMinutes (-1 * _curOffsetUTC);
-            diffMonth = (dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year);
-            arQueryRanges = new DateTimeRange [diffMonth + 1];
-            bBeginMonthBoudary = HDateTime.IsMonthBoundary(dtBegin);
+            arQueryRanges = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
-            if ((bBeginMonthBoudary == false)
-                && (bEndMonthBoudary == false))
-                if (diffMonth == 0)
+            if (bEndMonthBoudary == false)
+                if (arQueryRanges.Length == 1)
                     // самый простой вариант - один элемент в массиве - одна таблица
-                    ;
+                    arQueryRanges[0] = new DateTimeRange(dtBegin, dtEnd);
                 else
                     // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
-                    ;
+                    for (i = 0; i < arQueryRanges.Length; i++)
+                        if (i == 0)
+                            // предыдущих значений нет
+                            arQueryRanges[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary (dtBegin));
+                        else
+                            if (i == arQueryRanges.Length - 1)
+                                // крайний элемент массива
+                                arQueryRanges[i] = new DateTimeRange(arQueryRanges[i - 1].End, dtEnd);
+                            else
+                                // для элементов в "середине" массива
+                                arQueryRanges[i] = new DateTimeRange(arQueryRanges[i - 1].End, HDateTime.ToNextMonthBoundary (arQueryRanges[i - 1].End));
             else
-                if ((bBeginMonthBoudary == true)
-                    && (bEndMonthBoudary == true))
+                if (bEndMonthBoudary == true)
                     // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
                     // + использование следующей за 'dtEnd' таблицы
-                    ;
-                else
-                    if (bBeginMonthBoudary == true)
-                        if (diffMonth == 0)
-                            // ТОЖЕ простой вариант - один элемент в массиве - одна таблица
-                            ; 
+                    for (i = 0; i < arQueryRanges.Length; i++)
+                        if (i == 0)
+                            // предыдущих значений нет
+                            arQueryRanges[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
                         else
-                            ; // ТОЖЕ два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
-                    else
-                        if (bEndMonthBoudary == true)
-                            if (diffMonth == 0)
-                                // два элемента в массиве - одна таблица
-                                // + использование следующей за 'dtEnd' таблицы
-                                ;
+                            if (i == arQueryRanges.Length - 1)
+                                // крайний элемент массива
+                                arQueryRanges[i] = new DateTimeRange(arQueryRanges[i - 1].End, dtEnd);
                             else
-                                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
-                                // + использование следующей за 'dtEnd' таблицы
-                                ;
-                        else
-                            ; // ветвь не выполняется
+                                // для элементов в "середине" массива
+                                arQueryRanges[i] = new DateTimeRange(arQueryRanges[i - 1].End, HDateTime.ToNextMonthBoundary(arQueryRanges[i - 1].End));
+                else
+                    ;
 
-            foreach (DateTimeRange range in arQueryRanges)
+            for (i = 0; i < arQueryRanges.Length; i ++)
+            {
+                bLastItem = ! (i < (arQueryRanges.Length - 1));
+
+                strRes += @"SELECT v.ID_INPUT, v.ID_TIME, v.ID_TIMEZONE"
+                        + @", v.ID_SOURCE, 0 as [ID_SESSION], v.QUALITY"
+                        + @", [VALUE]"
+                        + @", GETDATE () as [WR_DATETIME]"
+                    + @" FROM [dbo].[" + m_strNameTableValues + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+                    + @" WHERE v.[ID_TIME] = 13";
+                // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
+                // 'Begin' == 'End'
+                if (bLastItem == true)
+                    bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
+                else
+                    ;
+
+                if (bEquDatetime == false)
+                    strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                        + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+                else
+                    strRes += @" AND [DATE_TIME] = '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+
+                if (bLastItem == false)
+                    strRes += @" UNION ";
+                else
+                    ;
+            }
+
+            strRes = @"SELECT p.ID, " + HTepUsers.Id + @" as [ID_USER]"
+                    + @", v.ID_SOURCE, 0 as [ID_SESSION], v.QUALITY"
+                    + @", CASE"
+                        + @" WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
+                        + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
+                            + @" ELSE MIN (v.[VALUE])"
+                        + @" END as [VALUE]"
+                    + @", GETDATE () as [WR_DATETIME]"
+                + @" FROM (" + strRes + @") as v"
+                    + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
+                    + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
+                    + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
+                + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
+                    + @", a.ID_MEASURE, a.N_ALG"
+                    + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
+                    + @", m.[AVG]"
                 ;
 
-            strRes = @"SELECT"
-	            + @" p.ID"
-	            + @", " + HUsers.Id //ID_USER
-	            + @", v.ID_SOURCE"
-	            + @", 0" //ID_SESSION
-                //+ @", CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                //+ @", CAST ('" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                //+ @", v.ID_TIME"
-                //+ @", v.ID_TIMEZONE"
-	            + @", v.QUALITY"
-	            + @", CASE WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
-		            + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
-		            + @" ELSE MIN (v.[VALUE]) END as VALUE"
-	            + @", GETDATE ()"
-                + @" FROM [dbo].[" + m_strNameTableValues + @"_" + getNameTableValuesPostfixDatetime(dtBegin, dtEnd) + @"] v"
-	                + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
-                    + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
-	                + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                + @" WHERE [ID_TIME] = " + (int)ID_PERIOD.HOUR //(int)_currIdPeriod
-                    + @" AND [DATE_TIME] > CAST ('" + dtBegin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                    + @" AND [DATE_TIME] <= CAST ('" + dtEnd.ToString (@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-                + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
-	                + @", a.ID_MEASURE, a.N_ALG"
-                    + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
-	                + @", m.[AVG]"
-                    ;
+            //strRes = @"SELECT"
+            //    + @" p.ID"
+            //    + @", " + HUsers.Id //ID_USER
+            //    + @", v.ID_SOURCE"
+            //    + @", 0" //ID_SESSION
+            //    //+ @", CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+            //    //+ @", CAST ('" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+            //    //+ @", v.ID_TIME"
+            //    //+ @", v.ID_TIMEZONE"
+            //    + @", v.QUALITY"
+            //    + @", CASE WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
+            //        + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
+            //        + @" ELSE MIN (v.[VALUE]) END as VALUE"
+            //    + @", GETDATE ()"
+            //    + @" FROM [dbo].[" + m_strNameTableValues + @"_" + getNameTableValuesPostfixDatetime(dtBegin, dtEnd) + @"] v"
+            //        + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
+            //        + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
+            //        + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
+            //    + @" WHERE [ID_TIME] = " + (int)ID_PERIOD.HOUR //(int)_currIdPeriod
+            //        + @" AND [DATE_TIME] > CAST ('" + dtBegin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+            //        + @" AND [DATE_TIME] <= CAST ('" + dtEnd.ToString (@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
+            //    + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
+            //        + @", a.ID_MEASURE, a.N_ALG"
+            //        + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
+            //        + @", m.[AVG]"
+            //        ;
 
             return strRes;
         }
@@ -524,9 +575,13 @@ namespace TepCommon
         /// <param name="ev"></param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            base.HPanelTepCommon_btnUpdate_Click(obj, ev);
-
-            updateDataValues ();
+            // вызов 'reinit()'
+            //base.HPanelTepCommon_btnUpdate_Click(obj, ev);
+            // для этой вкладки - требуется просто 'clear'
+            // очистить содержание представления
+            clear();
+            // ... - загрузить/отобразить значения из БД
+            updateDataValues();
         }
         /// <summary>
         /// Сравнить строки с параметрами алгоритма расчета по строковому номеру в алгоритме
@@ -720,8 +775,13 @@ namespace TepCommon
             m_panelManagement.SetPeriod(_currIdPeriod);
             //Возобновить обработку события - изменение начала/окончания даты/времени
             m_panelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
-            //Загрузить значения для отображения
-            updateDataValues();
+
+            // очистить содержание представления
+            clear();
+            // при наличии признака - загрузить/отобразить значения из БД
+            if (s_bAutoUpdateValues == true)
+                updateDataValues();
+            else ;
         }
         /// <summary>
         /// Установить новое значение для текущего периода
@@ -737,8 +797,12 @@ namespace TepCommon
         {
             //Установить новое значение для текущего периода
             setCurrentTimeZone(obj as ComboBox);
-
-            updateDataValues();
+            // очистить содержание представления
+            clear();
+            // при наличии признака - загрузить/отобразить значения из БД
+            if (s_bAutoUpdateValues == true)
+                updateDataValues();
+            else ;
         }
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
@@ -822,10 +886,10 @@ namespace TepCommon
         {
             // очистить содержание представления
             clear();
-            //if ((! (m_tblOrigin == null))
-            //    && (m_tblOrigin.Rows.Count > 0))
+            // при наличии признака - загрузить/отобразить значения из БД
+            if (s_bAutoUpdateValues == true)
                 updateDataValues();
-            //else ;
+            else ;
         }
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
