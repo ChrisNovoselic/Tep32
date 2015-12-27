@@ -76,6 +76,19 @@ namespace TepCommon
             , DENY_COMP_VISIBLED, DENY_PARAMETER_VISIBLED // запрещенных для отображения
             , COUNT_INDEX_ID }
         /// <summary>
+        /// Перечисление - признак типа загруженных из БД значений
+        ///  "сырые" - от источников информации, "учтенные" - сохраненные в БД
+        /// </summary>
+        protected enum INDEX_VIEW_VALUES : uint { SOURCE, HISTORY }
+        /// <summary>
+        /// Признак отображаемых на текущий момент значений
+        /// </summary>
+        protected INDEX_VIEW_VALUES m_ViewValues;
+        /// <summary>
+        /// Перечисление - идентификаторы состояния полученных из БД значений
+        /// </summary>
+        protected enum ID_QUALITY_VALUE { NOT_REC = -3, PARTIAL, DEFAULT, SOURCE, USER }
+        /// <summary>
         /// Массив списков идентификаторов компонентов ТЭЦ/параметров
         /// </summary>
         private List<int> [] m_arListIds;
@@ -84,12 +97,19 @@ namespace TepCommon
         /// </summary>
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
-
+        /// <summary>
+        /// Оригигальная таблица со значениями для отображения
+        /// </summary>
         protected abstract DataTable m_TableOrigin { get; }
-
+        /// <summary>
+        /// Редактируемая (с внесенными изменениями)
+        ///  таблица со значениями для отображения
+        /// </summary>
         protected abstract DataTable m_TableEdit { get; }
-
-        private static bool s_bAutoUpdateValues = false;
+        ///// <summary>
+        ///// Признак автоматических операций: очистка/загрузка содержимого отображения
+        ///// </summary>
+        //private static bool s_bAutoUpdateValues = false;
         /// <summary>
         /// Объект для обмена данными с БД
         /// </summary>
@@ -157,7 +177,14 @@ namespace TepCommon
             ResumeLayout (false);
             PerformLayout ();
 
-            (Controls.Find(INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnUpdate_Click);
+            //(Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnUpdate_Click);
+            Button btn = (Controls.Find(INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button);
+            btn.Click += // действие по умолчанию
+                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+            (btn.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
+                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+            (btn.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
+                new EventHandler(HPanelTepCommon_btnHistory_Click);
             (Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
         }
         /// <summary>
@@ -277,13 +304,17 @@ namespace TepCommon
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
         /// </summary>
+        /// <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
+        ///  для возвращения предыдущего значения, при отказе пользователя от очистки</param>
         /// <param name="bClose">Признак полной/частичной очистки</param>
-        private void clear(bool bClose = false)
+        private void clear(INDEX_CONTROL indxCtrl = INDEX_CONTROL.UNKNOWN, bool bClose = false)
         {
             int i = -1;
             CheckedListBox clbx = null;
             ComboBox cbx = null;
             HDateTimePicker hdtp = null;
+
+            _IdSession = -1;
 
             if (bClose == true)
             {
@@ -329,7 +360,7 @@ namespace TepCommon
         /// </summary>
         public override void Stop()
         {
-            clear(true);
+            clear(INDEX_CONTROL.UNKNOWN, true);
             
             base.Stop();
         }
@@ -402,6 +433,7 @@ namespace TepCommon
             string strRes = string.Empty;
 
             int i = -1;
+            ID_PERIOD idPeriod = m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : _currIdPeriod;
             bool bEndMonthBoudary = false
                 , bLastItem = false
                 , bEquDatetime = false;
@@ -451,11 +483,13 @@ namespace TepCommon
                 bLastItem = ! (i < (arQueryRanges.Length - 1));
 
                 strRes += @"SELECT v.ID_INPUT, v.ID_TIME, v.ID_TIMEZONE"
-                        + @", v.ID_SOURCE, 0 as [ID_SESSION], v.QUALITY"
+                        + @", v.ID_SOURCE"
+                        + @", " + _IdSession + @" as [ID_SESSION], v.QUALITY"
                         + @", [VALUE]"
-                        + @", GETDATE () as [WR_DATETIME]"
+                        //+ @", GETDATE () as [WR_DATETIME]"
                     + @" FROM [dbo].[" + m_strNameTableValues + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
-                    + @" WHERE v.[ID_TIME] = 13";
+                    + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
+                    ;
                 // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                 // 'Begin' == 'End'
                 if (bLastItem == true)
@@ -476,7 +510,13 @@ namespace TepCommon
             }
 
             strRes = @"SELECT p.ID, " + HTepUsers.Id + @" as [ID_USER]"
-                    + @", v.ID_SOURCE, 0 as [ID_SESSION], v.QUALITY"
+                    + @", v.ID_SOURCE"
+                    + @", " + _IdSession + @" as [ID_SESSION]"
+                    + @", CASE"
+                        + @" WHEN COUNT (*) = " + CountBasePeriod + @" THEN MIN(v.[QUALITY])"
+                        + @" WHEN COUNT (*) = 0 THEN " + (int)ID_QUALITY_VALUE.NOT_REC
+			                + @" ELSE " + (int)ID_QUALITY_VALUE.PARTIAL
+		                + @" END as [QUALITY]"
                     + @", CASE"
                         + @" WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
                         + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
@@ -531,6 +571,9 @@ namespace TepCommon
         protected abstract void setValues(ref DbConnection dbConn, out int err, out string strErr);
         /// <summary>
         /// Выполнить запрос к БД, отобразить рез-т запроса
+        /// <param "idPeriod">Идентификатор периода расчета
+        ///  в случае загрузки "сырых" значений = ID_PERIOD.HOUR
+        ///  в случае загрузки "учтенных" значений -  в зависимости от установленного пользователем</param>
         /// </summary>
         private void updateDataValues()
         {
@@ -546,12 +589,17 @@ namespace TepCommon
             // проверить успешность получения 
             if ((!(dbConn == null)) && (err == 0))
             {
+                _IdSession = HMath.GetRandomNumber();
+
                 setValues(ref dbConn, out err, out errMsg);
 
                 if (err == 0)
+                {
                     m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
+                }
                 else
-                    ;
+                    // в случае ошибки "обнулить" идентификатор сессии
+                    _IdSession = -1;
             }
             else
             {
@@ -571,9 +619,23 @@ namespace TepCommon
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Загрузить" (кнопка - аналог "Обновить")
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Объект, инициировавший событие (??? кнопка или п. меню)</param>
+        /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
+        {
+            m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
+
+            onButtonLoadClick();
+        }
+
+        private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
+        {
+            m_ViewValues = INDEX_VIEW_VALUES.HISTORY;
+
+            onButtonLoadClick();
+        }
+
+        private void onButtonLoadClick()
         {
             // вызов 'reinit()'
             //base.HPanelTepCommon_btnUpdate_Click(obj, ev);
@@ -634,6 +696,11 @@ namespace TepCommon
                  throw new Exception(@":PanelTaskTepValues:compareNAlg () - номер алгоритма некорректен (не найдены цифры)...");
              return iRes;
         }
+        /// <summary>
+        /// Идентификатор сессии - уникальный идентификатор
+        ///  для наблов входных, расчетных (нормативных, макетных) значений
+        /// </summary>
+        protected int _IdSession;
         /// <summary>
         /// Текущий выбранный идентификатор периода расчета
         /// </summary>
@@ -778,10 +845,10 @@ namespace TepCommon
 
             // очистить содержание представления
             clear();
-            // при наличии признака - загрузить/отобразить значения из БД
-            if (s_bAutoUpdateValues == true)
-                updateDataValues();
-            else ;
+            //// при наличии признака - загрузить/отобразить значения из БД
+            //if (s_bAutoUpdateValues == true)
+            //    updateDataValues();
+            //else ;
         }
         /// <summary>
         /// Установить новое значение для текущего периода
@@ -799,10 +866,10 @@ namespace TepCommon
             setCurrentTimeZone(obj as ComboBox);
             // очистить содержание представления
             clear();
-            // при наличии признака - загрузить/отобразить значения из БД
-            if (s_bAutoUpdateValues == true)
-                updateDataValues();
-            else ;
+            //// при наличии признака - загрузить/отобразить значения из БД
+            //if (s_bAutoUpdateValues == true)
+            //    updateDataValues();
+            //else ;
         }
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
@@ -886,10 +953,10 @@ namespace TepCommon
         {
             // очистить содержание представления
             clear();
-            // при наличии признака - загрузить/отобразить значения из БД
-            if (s_bAutoUpdateValues == true)
-                updateDataValues();
-            else ;
+            //// при наличии признака - загрузить/отобразить значения из БД
+            //if (s_bAutoUpdateValues == true)
+            //    updateDataValues();
+            //else ;
         }
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
@@ -927,9 +994,9 @@ namespace TepCommon
                     /// <summary>
                     /// Признак качества значения в ячейке
                     /// </summary>
-                    public int m_iQuality;
+                    public ID_QUALITY_VALUE m_iQuality;
 
-                    public HDataGridViewCell(int idParameter, int iQuality, bool bCalcDeny)
+                    public HDataGridViewCell(int idParameter, ID_QUALITY_VALUE iQuality, bool bCalcDeny)
                     {
                         m_IdParameter = idParameter;
                         m_iQuality = iQuality;
@@ -966,17 +1033,27 @@ namespace TepCommon
                 {
                     m_arPropertiesCells = new HDataGridViewCell[cntCols];
                     for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, -1, false);                    
+                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, ID_QUALITY_VALUE.DEFAULT, false);                    
                 }
             }
             /// <summary>
             /// Перечисления для индексирования массива со значениями цветов для фона ячеек
             /// </summary>
-            private enum INDEX_COLOR : uint { EMPTY, VARIABLE, DEFAULT, CALC_DENY, NAN, COUNT }
+            private enum INDEX_COLOR : uint { EMPTY, VARIABLE, DEFAULT, CALC_DENY, NAN, PARTIAL, NOT_REC, LIMIT, USER
+                , COUNT }
             /// <summary>
             /// Массив со значениями цветов для фона ячеек
             /// </summary>
-            private Color[] m_arCellColors = new Color[(int)INDEX_COLOR.COUNT] { Color.Gray, Color.White, Color.Yellow, Color.LightGray, Color.White };
+            private static Color[] s_arCellColors = new Color[(int)INDEX_COLOR.COUNT] { Color.Gray //EMPTY
+                , Color.White //VARIABLE
+                , Color.Yellow //DEFAULT
+                , Color.LightGray //CALC_DENY
+                , Color.White //NAN
+                , Color.BlueViolet //PARTIAL
+                , Color.Sienna //NOT_REC
+                , Color.Red //LIMIT
+                , Color.White //USER
+            };
             /// <summary>
             /// Класс для описания аргумента события - изменения значения ячейки
             /// </summary>
@@ -1149,14 +1226,14 @@ namespace TepCommon
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
 
-                    if (!(indxCol < 0))// для компонентов ТЭЦ
+                    if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
                         ; // оставить значения по умолчанию
                     else
-                    {// для служебных столбцов                        
+                    {// для добавлямых столбцов
                         if (id_comp < 0)
-                        {// только для столбца с [SYMBOL]
+                        {// для служебных столбцов
                             if (bVisibled == true)
-                            {
+                            {// только для столбца с [SYMBOL]
                                 alignText = DataGridViewContentAlignment.MiddleLeft;
                                 autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;                                
                             }
@@ -1164,6 +1241,7 @@ namespace TepCommon
                                 ;
 
                             column.Frozen = true;
+                            column.ReadOnly = true;
                         }
                         else
                             ;
@@ -1228,15 +1306,37 @@ namespace TepCommon
             private bool getClrCellToComp(int iCol, int iRow, bool bNewCalcDeny, out Color clrRes)
             {
                 bool bRes = false;
-                clrRes = m_arCellColors[(int)INDEX_COLOR.EMPTY];
+                clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
                 int id_alg = (int)Rows[iRow].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
 
                 bRes = ((m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_bCalcDeny == false)
                     && ((m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].IsNaN == false)));
                 if (bRes == true)
-                    clrRes = ((bNewCalcDeny == true) && (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_bCalcDeny == false)) ?
-                        !(m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality < 0) ? m_arCellColors[(int)INDEX_COLOR.VARIABLE] : m_arCellColors[(int)INDEX_COLOR.DEFAULT] :
-                        m_arCellColors[(int)INDEX_COLOR.CALC_DENY];
+                    if ((bNewCalcDeny == true)
+                        && (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_bCalcDeny == false))
+                        switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
+                        {//??? LIMIT
+                            case ID_QUALITY_VALUE.USER:
+                                clrRes = s_arCellColors[(int)INDEX_COLOR.USER];
+                                break;
+                            case ID_QUALITY_VALUE.SOURCE:
+                                clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                                break;
+                            case ID_QUALITY_VALUE.PARTIAL:
+                                clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
+                                break;
+                            case ID_QUALITY_VALUE.NOT_REC:
+                                clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
+                                break;
+                            case ID_QUALITY_VALUE.DEFAULT:
+                                clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
+                                break;
+                            default:
+                                ; //??? throw
+                                break;
+                        }
+                    else
+                        clrRes = s_arCellColors[(int)INDEX_COLOR.CALC_DENY];
                 else
                     ;
 
@@ -1253,16 +1353,36 @@ namespace TepCommon
             private bool getClrCellToParameter(int iCol, int iRow, bool bNewCalcDeny, out Color clrRes)
             {
                 bool bRes = false;
-                clrRes = m_arCellColors[(int)INDEX_COLOR.EMPTY];
+                clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
                 int id_alg = (int)Rows[iRow].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
 
                 bRes = m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].IsNaN == false;
                 if (bRes == true)
-                {
-                    clrRes = ((bNewCalcDeny == true) && ((Columns[iCol] as HDataGridViewColumn).m_bCalcDeny == false)) ?
-                        !(m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality < 0) ? m_arCellColors[(int)INDEX_COLOR.VARIABLE] : m_arCellColors[(int)INDEX_COLOR.DEFAULT] :
-                        m_arCellColors[(int)INDEX_COLOR.CALC_DENY];
-                }
+                    if ((bNewCalcDeny == true)
+                        && ((Columns[iCol] as HDataGridViewColumn).m_bCalcDeny == false))
+                        switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
+                        {//??? LIMIT
+                            case ID_QUALITY_VALUE.USER:
+                                clrRes = s_arCellColors[(int)INDEX_COLOR.USER];
+                                break;
+                            case ID_QUALITY_VALUE.SOURCE:
+                                clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                                break;
+                            case ID_QUALITY_VALUE.PARTIAL:
+                                clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
+                                break;
+                            case ID_QUALITY_VALUE.NOT_REC:
+                                clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
+                                break;
+                            case ID_QUALITY_VALUE.DEFAULT:
+                                clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
+                                break;
+                            default:
+                                ; //??? throw
+                                break;
+                        }
+                    else
+                        clrRes = s_arCellColors[(int)INDEX_COLOR.CALC_DENY];
                 else
                     ;
 
@@ -1279,15 +1399,26 @@ namespace TepCommon
             {
                 int id_alg = (int)Rows[iRow].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
                 bool bRes = !m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].IsNaN;
-                clrRes = m_arCellColors[(int)INDEX_COLOR.EMPTY];
+                clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
 
                 if (bRes == true)
-                    if (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality < 0)
-                        clrRes = m_arCellColors[(int)INDEX_COLOR.DEFAULT];
-                    else
-                        clrRes = m_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                    switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
+                    {//??? USER, LIMIT
+                        case ID_QUALITY_VALUE.DEFAULT: // только для входной таблицы - значение по умолчанию [inval_def]
+                            clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
+                            break;
+                        case ID_QUALITY_VALUE.PARTIAL: // см. 'getQueryValuesVar' - неполные данные
+                            clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
+                            break;
+                        case ID_QUALITY_VALUE.NOT_REC: // см. 'getQueryValuesVar' - нет ни одной записи
+                            clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
+                            break;
+                        default:
+                            clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                            break;
+                    }
                 else
-                    clrRes = m_arCellColors[(int)INDEX_COLOR.NAN];
+                    clrRes = s_arCellColors[(int)INDEX_COLOR.NAN];
 
                 return bRes;
             }
@@ -1427,7 +1558,7 @@ namespace TepCommon
 
                             iRow = Rows.IndexOf(row);
                             m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_IdParameter = idParameter;
-                            m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_iQuality = iQuality;
+                            m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_iQuality = (ID_QUALITY_VALUE)iQuality;
                             row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
 
                             if (getClrCellToValue(iCol, iRow, out clrCell) == true)
@@ -1467,9 +1598,14 @@ namespace TepCommon
                 foreach (DataGridViewRow r in Rows)
                     foreach (DataGridViewCell c in r.Cells)
                         if (r.Cells.IndexOf(c) > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) // нельзя удалять идентификатор параметра
+                        {
                             c.Value = string.Empty;
+                            c.Style.BackColor = s_arCellColors[(int)INDEX_COLOR.EMPTY];
+                        }
                         else
                             ;
+
+                ReadOnly = true;
 
                 CellValueChanged += new DataGridViewCellEventHandler (onCellValueChanged);
             }
@@ -1566,7 +1702,8 @@ namespace TepCommon
             private void InitializeComponents ()
             {
                 Control ctrl = null;
-                int posRow = -1;
+                int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
+                    , indx = -1; // индекс п. меню лдя кнопки "Обновить-Загрузить"
                 DateTime today = DateTime.Today;
 
                 SuspendLayout();
@@ -1671,8 +1808,10 @@ namespace TepCommon
                 ctrl = new DropDownButton();
                 ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
                 ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
-                ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem (@"Входные значения"));
-                ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Учтенные значения"));
+                indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem (@"Входные значения"));
+                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_UPDATE.ToString();
+                indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Учтенные значения"));
+                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 3);
@@ -1827,7 +1966,7 @@ namespace TepCommon
             , BUTTON_RUN
             , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END
             , CLBX_COMP_CALCULATED, CLBX_PARAMETER_CALCULATED
-            , BUTTON_LOAD, BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
+            , BUTTON_LOAD, MENUITEM_UPDATE, MENUITEM_HISTORY, BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
             , CLBX_COMP_VISIBLED, CLBX_PARAMETER_VISIBLED
             , DGV_DATA
             , LABEL_DESC }

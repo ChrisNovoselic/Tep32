@@ -135,15 +135,15 @@ namespace PluginTaskTepInval
                                         rValDef[@"ID_INPUT"]
                                         , HUsers.Id //ID_USER
                                         , -1 //ID_SOURCE
-                                        , 0 //ID_SESSION
-                                        , -1 //QUALITY
+                                        , _IdSession //ID_SESSION
+                                        , (int)ID_QUALITY_VALUE.DEFAULT //QUALITY
                                         , (iAVG == 0) ? cnt * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
                                         , HDateTime.ToMoscowTimeZone() //??? GETADTE()
                                     }
                             );
                         }
                         else
-                            ; // по иднгтификатору найден не единственный парпметр расчета
+                            ; // по идентификатору найден не единственный парпметр расчета
                     }
                     // создать копии для возможности сохранения изменений
                     m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Copy();
