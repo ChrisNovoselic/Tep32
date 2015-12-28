@@ -21,7 +21,8 @@ namespace TepCommon
         /// </summary>
         protected enum ID_LEVEL
         {
-            TASK /*Задача*/, N_ALG /*Параметр алгоритма*/, /*TIME Интервал времени,*/ COMP /*Компонент станции*/
+            UNKNOWN = -1
+            , TASK /*Задача*/, N_ALG /*Параметр алгоритма*/, /*TIME Интервал времени,*/ COMP /*Компонент станции*/
             , PUT
         };
         /// <summary>
@@ -72,120 +73,123 @@ namespace TepCommon
         {
             get { return _level; }
 
-            set { if (!(_level == value)) levelChanged (value); else ; }
+            set { if (!(_level == value)) onLevelChanged (value); else ; }
         }
         /// <summary>
         /// "Обработка" события - изменение значения уровня "дерева"
         /// </summary>
-        /// <param name="newLevel"></param>
-        private void levelChanged(ID_LEVEL newLevel)
+        /// <param name="newLevel">Новое значение для переменной (выбранный пользователем уровень древовидной структуры)</param>
+        private void onLevelChanged(ID_LEVEL newLevel)
         {
             //Очистить список "детализации"
             clearPrjDetail();
 
-            bool bIsShowDetail = m_arIsShowDetailLevels[(int)_level]
-                , bNewIsShowDetail = m_arIsShowDetailLevels[(int)newLevel];
+            bool bPrevIsShowProp = false, bNewIsShowProp = false
+                , bPrevIsShowDetail = false, bNewIsShowDetail = false;
 
-            int iShowDetail = 0;
+            int iShowAction = 0;
 
-            if (!(bIsShowDetail == bNewIsShowDetail))
-                if (bNewIsShowDetail == true)
-                    iShowDetail = 1;
-                else
-                    iShowDetail = -1;
-            else
-                ;
-
-            //switch (_level)
-            //{
-            //    case INDEX_LEVEL.TASK:
-            //        switch (newLevel)
-            //        {
-            //            //case INDEX_LEVEL.TASK:
-            //            //    break;
-            //            case INDEX_LEVEL.N_ALG: //Параметр алгоритма
-            //            case INDEX_LEVEL.TIME:
-            //                iShowDetail = 1;
-            //                break;                        
-            //            case INDEX_LEVEL.COMP:
-            //                break;
-            //            default:
-            //                break;
-            //        }
-            //        break;
-            //    case INDEX_LEVEL.N_ALG:
-            //        switch (newLevel)
-            //        {
-            //            case INDEX_LEVEL.TASK:
-            //            case INDEX_LEVEL.COMP:
-            //                iShowDetail = -1;
-            //                break;
-            //            //case INDEX_LEVEL.N_ALG:
-            //            //    break;
-            //            case INDEX_LEVEL.TIME:
-            //                break;
-            //            default:
-            //                break;
-            //        }
-            //        break;
-            //    case INDEX_LEVEL.TIME:
-            //        switch (newLevel)
-            //        {
-            //            case INDEX_LEVEL.TASK:
-            //            case INDEX_LEVEL.COMP:
-            //                iShowDetail = -1;
-            //                break;
-            //            case INDEX_LEVEL.N_ALG:
-            //                break;
-            //            //case INDEX_LEVEL.TIME:
-            //            //    break;
-            //            default:
-            //                break;
-            //        }
-            //        break;
-            //    case INDEX_LEVEL.COMP:
-            //        switch (newLevel)
-            //        {
-            //            case INDEX_LEVEL.TASK:
-            //                break;
-            //            case INDEX_LEVEL.N_ALG:
-            //            case INDEX_LEVEL.TIME:
-            //                iShowDetail = 1;
-            //                break;
-            //            //case INDEX_LEVEL.COMP:
-            //            //    break;
-            //            default:
-            //                break;
-            //        }
-            //        break;
-            //    default:
-            //        break;
-            //}
-
-            if (iShowDetail == 1)
+            if (newLevel > ID_LEVEL.UNKNOWN)
             {
-                //Уменьшить кол-во строк для 'DataGridView' c ID = DGV_PRJ_PPOP
-                this.SetColumnSpan(m_dgvPrjProp, 8); this.SetRowSpan(m_dgvPrjProp, 5);
-                //Размесить 'DataGridView' c ID = DGV_PRJ_DETAIL
-                this.Controls.Add(m_dgvPrjDetail, 5, 5);
-                this.SetColumnSpan(m_dgvPrjDetail, 8); this.SetRowSpan(m_dgvPrjDetail, 5);
+                if (_level > ID_LEVEL.UNKNOWN)
+                {
+                    bPrevIsShowProp = true;
+                    bPrevIsShowDetail = m_arIsShowDetailLevels[(int)_level];
+                }
+                else
+                    ; // ранее m_dgvPrjProp, m_dgvPrjDetail доп./свойств не отображались
+                // определить новые признаки отображения
+                bNewIsShowProp = true;
+                bNewIsShowDetail = m_arIsShowDetailLevels[(int)newLevel];
+                // проверить на выполнение взаимоисключающих условий
+                // m_dgvPrjDetail не м.б. отображен без m_dgvPrjProp
+                if (((bPrevIsShowProp == false) && (bPrevIsShowDetail == true))
+                    || ((bNewIsShowProp == false) && (bNewIsShowDetail == true)))
+                    throw new Exception(@"PanelPrjParameterEditTree::onLevelChanged (_level=" + _level.ToString()
+                        + @", newLevel=" + newLevel + @") - ...");
+                else
+                    ;
+
+                if (bPrevIsShowProp == false)
+                // предыдущее состояние - ни один из объектов не отображался
+                    if ((bNewIsShowProp == true) && (bNewIsShowDetail == true))
+                    // отобразить оба объекта безусловно
+                        iShowAction = 3;
+                    else
+                        if (bNewIsShowProp == true)
+                            // отобразить только m_dgvPrjProp
+                            iShowAction = 2;
+                        else
+                            ; // по прежнему ничего не отобраажать
+                else
+                    if (bPrevIsShowDetail == false)
+                    // предыдущее состояние - отображался только m_dgvPrjProp
+                        if (bNewIsShowProp == true)
+                            if (bNewIsShowDetail == true)
+                                // добавить m_dgvPrjDetail                                
+                                iShowAction = 1;
+                            else
+                                ; // ничего не делать - отображение актуальное
+                        else
+                            //Удалить с панели 'DataGridView' c ID = DGV_PRJ_PROP
+                            iShowAction = -1;
+                    else
+                    // предыдущее состояние - оба объекта отображались
+                        if (bNewIsShowProp == false)
+                            iShowAction = -3;
+                        else
+                            if (bNewIsShowDetail == false)
+                                iShowAction = -2;
+                            else
+                                ; // текущее состояние актуальное - отображаются оба объекта
+
+                m_dgvPrjProp.ReadOnly = !(newLevel == ID_LEVEL.N_ALG);
+                if (m_dgvPrjProp.ReadOnly == false)
+                    m_dgvPrjProp.Columns[0].ReadOnly = true;
+                else
+                    ;
             }
             else
-                if (iShowDetail == -1)
-                {
+                iShowAction = -3;
+
+            switch (iShowAction)
+            {
+                case 3:
+                    this.Controls.Add(m_dgvPrjProp, 5, 0);
+                    this.SetColumnSpan(m_dgvPrjProp, 8); this.SetRowSpan(m_dgvPrjProp, 5);
+                    this.Controls.Add(m_dgvPrjDetail, 5, 5);
+                    this.SetColumnSpan(m_dgvPrjDetail, 8); this.SetRowSpan(m_dgvPrjDetail, 5);
+                    break;
+                case 2:
+                    this.Controls.Add(m_dgvPrjProp, 5, 0);
+                    this.SetColumnSpan(m_dgvPrjProp, 8); this.SetRowSpan(m_dgvPrjProp, 10);
+                    break;
+                case 1:
+                    //Уменьшить кол-во строк для 'DataGridView' c ID = DGV_PRJ_PPOP
+                    this.SetColumnSpan(m_dgvPrjProp, 8); this.SetRowSpan(m_dgvPrjProp, 5);
+                    //Размесить 'DataGridView' c ID = DGV_PRJ_DETAIL
+                    this.Controls.Add(m_dgvPrjDetail, 5, 5);
+                    this.SetColumnSpan(m_dgvPrjDetail, 8); this.SetRowSpan(m_dgvPrjDetail, 5);
+                    break;
+                case -1:
+                    //Удалить с панели 'DataGridView' c ID = DGV_PRJ_PROP
+                    this.Controls.Remove(m_dgvPrjProp);
+                    break;
+                case -2:
                     //Удалить с панели 'DataGridView' c ID = DGV_PRJ_DETAIL
                     this.Controls.Remove(m_dgvPrjDetail);
                     //Увеличить кол-во строк для 'DataGridView' c ID = DGV_PRJ_PPOP
                     this.SetColumnSpan(m_dgvPrjProp, 8); this.SetRowSpan(m_dgvPrjProp, 10);
-                }
-                else
-                    ;
-
-            m_dgvPrjProp.ReadOnly = !(newLevel == ID_LEVEL.N_ALG);
-            if (m_dgvPrjProp.ReadOnly == false)
-                m_dgvPrjProp.Columns[0].ReadOnly = true;
-            else
-                ;                
+                    break;
+                case -3:
+                    //Удалить с панели 'DataGridView' c ID = DGV_PRJ_PROP
+                    this.Controls.Remove(m_dgvPrjProp);
+                    //Удалить с панели 'DataGridView' c ID = DGV_PRJ_DETAIL
+                    this.Controls.Remove(m_dgvPrjDetail);
+                    break;
+                default:
+                    break;
+            }
 
             _level = newLevel;
         }
@@ -270,9 +274,9 @@ namespace TepCommon
 
             m_arNameTables = tableNames.Split (',');
 
-            m_arTableOrigin = new DataTable[(int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER];
-            m_arTableEdit = new DataTable[(int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER];
-            m_arTableKey = new DataTable[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY];
+            m_arTableOrigin = new DataTable[(int)INDEX_PARAMETER.COUNT];
+            m_arTableEdit = new DataTable[(int)INDEX_PARAMETER.COUNT];
+            m_arTableDictPrj = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
 
             InitializeComponent();
         }
@@ -386,20 +390,22 @@ namespace TepCommon
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
 
-        private void fillTableKeys(ref DbConnection dbConn, out int err, out string strErr)
+        private void fillTableDictPrj(ref DbConnection dbConn, out int err, out string strErr)
         {
             err = 0;
             strErr = string.Empty;
 
-            string[] arNameTableKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { /*@"time",*/ @"comp_list", @"task" }
-                    , arErrKey = new string[(int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY] { /*@"словарь 'интервалы времени'"
+            string[] arNameTableKey = new string[(int)INDEX_TABLE_DICTPRJ.COUNT] { /*@"time"
+                                                                                        ,*/ @"comp_list"
+                                                                                        , @"task" }
+                    , arErrKey = new string[(int)INDEX_TABLE_DICTPRJ.COUNT] { /*@"словарь 'интервалы времени'"
                                                                                         ,*/ @"словарь 'компоненты станции'"
                                                                                         , @"проект 'список задач ИРС'" };
-            for (int i = 0; i < (int)INDEX_TABLE_KEY.COUNT_INDEX_TABLE_KEY; i++)
+            for (int i = 0; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
             {
-                m_arTableKey[(int)i] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + arNameTableKey[(int)i], null, null, out err);
+                m_arTableDictPrj[(int)i] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + arNameTableKey[(int)i], null, null, out err);
 
-                if (!(m_arTableKey[(int)i].Rows.Count > 0))
+                if (!(m_arTableDictPrj[(int)i].Rows.Count > 0))
                     err = -1;
                 else
                     ;
@@ -422,7 +428,7 @@ namespace TepCommon
 
             string query = string.Empty;
 
-            for (int i = 0; i < (int)INDEX_PARAMETER.COUNT_INDEX_PARAMETER; i ++)
+            for (int i = 0; i < (int)INDEX_PARAMETER.COUNT; i ++)
             {
                 query = @"SELECT * FROM " + m_arNameTables[i];
                 if (i == (int)INDEX_PARAMETER.ALGORITM)
@@ -624,7 +630,7 @@ namespace TepCommon
             fillTableEdits(ref dbConn, out err, out strErr);
 
             if (err == 0)
-                fillTableKeys(ref dbConn, out err, out strErr);
+                fillTableDictPrj(ref dbConn, out err, out strErr);
             else
                 ; //Строка с описанием ошибки заполнена
 
@@ -813,18 +819,18 @@ namespace TepCommon
 
     partial class PanelPrjParametersEditTree
     {
-        protected enum INDEX_PARAMETER {ALGORITM, PUT, COUNT_INDEX_PARAMETER};
-        protected enum INDEX_TABLE_KEY { /*TIME,*/ COMP_LIST, TASK, COUNT_INDEX_TABLE_KEY };
+        protected enum INDEX_PARAMETER {ALGORITM, PUT, COUNT};
+        protected enum INDEX_TABLE_DICTPRJ { /*TIME,*/ COMP_LIST, TASK, COUNT };
         string[] m_arNameTables;
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
-        protected DataTable [] m_arTableKey;
+        protected DataTable [] m_arTableDictPrj;
 
         protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
         {
             err = 0;
 
-            for (INDEX_PARAMETER i = INDEX_PARAMETER.ALGORITM; i < INDEX_PARAMETER.COUNT_INDEX_PARAMETER; i++)
+            for (INDEX_PARAMETER i = INDEX_PARAMETER.ALGORITM; i < INDEX_PARAMETER.COUNT; i++)
             {
                 DbTSQLInterface.RecUpdateInsertDelete(ref dbConn
                                             , m_arNameTables[(int)i]
@@ -842,44 +848,57 @@ namespace TepCommon
 
         protected override void successRecUpdateInsertDelete()
         {
-            for (INDEX_PARAMETER i = INDEX_PARAMETER.ALGORITM; i < INDEX_PARAMETER.COUNT_INDEX_PARAMETER; i++)
+            for (INDEX_PARAMETER i = INDEX_PARAMETER.ALGORITM; i < INDEX_PARAMETER.COUNT; i++)
             {
                 if (!(m_arTableOrigin[(int)i] == null)) m_arTableOrigin[(int)i].Rows.Clear(); else ;
                 m_arTableOrigin[(int)i] = m_arTableEdit[(int)i].Copy();
             }
         }
 
+        private ID_LEVEL getNewIdLevel(string strId)
+        {
+            int cntNotId = 0
+                , iId = -1;
+            string[] strIds = strId.Split(new string[] { @"::" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string partId in strIds)
+                if (Int32.TryParse(partId, out iId) == false)
+                    cntNotId++;
+                else
+                    ;
+
+            return m_listIDLevels[strIds.Length - 1 - cntNotId];
+        }
+
         private void TreeView_AfterSelect(object obj, TreeViewEventArgs ev)
         {
             int iRes = -1
                 , idAlg = -1;
-            TreeViewAction act = ev.Action;
-            TreeNode nodeSel = ev.Node;
-
-            //Индекс текущего уровня в "дереве"
-            m_Level = m_listIDLevels[ev.Node.Level];
 
             //Строка с идентификатором параметра алгоритма расчета ТЭП
-            string strIdAlg = getIdNodePart(nodeSel.Name, ID_LEVEL.N_ALG);
-            //Идентификатор текущего параметра алгоритма
-            if ((strIdAlg == null) || (strIdAlg.Equals(string.Empty) == true))
-                m_idAlg = -1; //Если выбран "верхний" уровень, или выбран "пустой" параметр
-            else
-                if (Int32.TryParse(getIdNodePart(nodeSel.Name, ID_LEVEL.N_ALG), out idAlg) == true)
-                    m_idAlg = idAlg;
+            string strIdAlg = getIdNodePart(ev.Node.Name, ID_LEVEL.N_ALG);
+            //Проверить условие возможности определения идентификатора текущего параметра алгоритма
+            if (strIdAlg.Equals(string.Empty) == false)
+                if (Int32.TryParse(strIdAlg, out idAlg) == true)
+                    //Индекс текущего уровня в "дереве"
+                    m_Level = getNewIdLevel(ev.Node.Name);
                 else
-                    m_idAlg = -1;
+                    m_Level = ID_LEVEL.UNKNOWN;
+            else
+                m_Level = m_listIDLevels[ev.Node.Level];
+            //Идентификатор текущего параметра алгоритма
+            m_idAlg = idAlg;
 
             switch (m_Level)
             {
                 case ID_LEVEL.TASK: //Задача
-                    iRes = nodeAfterSelect(ev.Node, m_arTableKey[(int)INDEX_TABLE_KEY.TASK], m_Level, false);
+                    iRes = nodeAfterSelect(ev.Node, m_arTableDictPrj[(int)INDEX_TABLE_DICTPRJ.TASK], m_Level, false);
                     break;
                 case ID_LEVEL.N_ALG: //Параметр алгоритма
                     iRes = nodeAfterSelect(ev.Node, m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], m_Level, false);
-                    if (iRes == 0)
+                    if ((iRes == 0)
+                        && (m_idAlg > 0))
                         //nodeAfterSelectDetail(INDEX_TABLE_KEY.TIME, strIdAlg, @"ID_TIME=")
-                        nodeAfterSelectDetail(INDEX_TABLE_KEY.COMP_LIST, strIdAlg, @"ID_COMP=")
+                        nodeAfterSelectDetail(INDEX_TABLE_DICTPRJ.COMP_LIST, strIdAlg, @"ID_COMP=")
                         ;
                     else
                         switch (iRes)
@@ -894,7 +913,7 @@ namespace TepCommon
                         }
                     break;
                 //case ID_LEVEL.TIME:
-                //    iRes = nodeAfterSelect(ev.Node, m_arTableKey[(int)INDEX_TABLE_KEY.TIME], m_Level, false);
+                //    iRes = nodeAfterSelect(ev.Node, m_arTableDictPrj[(int)INDEX_TABLE_KEY.TIME], m_Level, false);
                 //    if (iRes == 0)
                 //        nodeAfterSelectDetail(INDEX_TABLE_KEY.COMP_LIST, strIdAlg, @"ID_TIME=" + getIdNodePart (ev.Node.Name, m_Level) + @" AND ID_COMP=");
                 //    else
@@ -920,10 +939,10 @@ namespace TepCommon
         {
             int iErr = 0;
             m_dgvPrjProp.Rows.Clear();
-            string strIdNode = getIdNodePart(node.Name, level);
-            if (strIdNode.Equals(string.Empty) == false)
+            int idNode = -1;
+            if (Int32.TryParse (getIdNodePart(node.Name, level), out idNode) == true)
             {
-                DataRow[] rowsProp = tblProp.Select(@"ID=" + strIdNode);
+                DataRow[] rowsProp = tblProp.Select(@"ID=" + idNode);
                 if (rowsProp.Length == 1)
                 {
                     //Заполнение содержимым...
@@ -934,15 +953,16 @@ namespace TepCommon
                     iErr = -1;
             }
             else
-                iErr = -2;
+                //iErr = -2
+                ;
 
             if (bThrow == true)
                 switch (iErr)
                 {
                     case -1:
-                        throw new Exception(@"HPanelEditTree::nodeAfterSelect () - отсутствие (дублирование) записи...");
-                    case -2:
-                        throw new Exception(@"HPanelEditTree::nodeAfterSelect () - отсутствкет идентификатор...");
+                        throw new Exception(@"HPanelEditTree::nodeAfterSelect () - отсутствие (или дублирование) записи...");
+                    //case -2:
+                    //    throw new Exception(@"HPanelEditTree::nodeAfterSelect () - отсутствует идентификатор...");
                     default:
                         break;
                 }
@@ -957,9 +977,10 @@ namespace TepCommon
         /// <param name="key">Индекс таблицы</param>
         /// <param name="strIdAlg">Значение идентификатора - прямое условие отбора записей в таблице</param>
         /// <param name="where">Дополнительное условие отбора записей в таблице</param>        
-        private void nodeAfterSelectDetail(INDEX_TABLE_KEY key, string strIdAlg, string where) {
+        private void nodeAfterSelectDetail(INDEX_TABLE_DICTPRJ key, string strIdAlg, string where)
+        {
             DataRow[] rowsPut;
-            bool bUpdate = m_dgvPrjDetail.Rows.Count == m_arTableKey[(int)key].Rows.Count;
+            bool bUpdate = m_dgvPrjDetail.Rows.Count == m_arTableDictPrj[(int)key].Rows.Count;
             int indxRow = -1;
 
             //Отменить обработку события
@@ -967,7 +988,7 @@ namespace TepCommon
             m_dgvPrjDetail.CellValueChanged -= HPanelEditTree_dgvPrjDetailCellValueChanged;
             //else ;
 
-            foreach (DataRow rDetail in m_arTableKey[(int)key].Rows)
+            foreach (DataRow rDetail in m_arTableDictPrj[(int)key].Rows)
             {
                 //rowsPut = getDetailRows(Int32.Parse(strIdAlg), where, Convert.ToInt32(rDetail[@"ID"]));
                 rowsPut = m_arTableEdit[(int)INDEX_PARAMETER.PUT].Select(@"ID_ALG=" + Int32.Parse(strIdAlg)
@@ -1068,7 +1089,7 @@ namespace TepCommon
                 switch (m_Level)
                 {
                     case ID_LEVEL.N_ALG:
-                        iKey = (int)INDEX_TABLE_KEY.COMP_LIST;
+                        iKey = (int)INDEX_TABLE_DICTPRJ.COMP_LIST;
                         strErr = @"компонента станции";
                         idPut = 0;
                         break;
@@ -1083,7 +1104,7 @@ namespace TepCommon
 
                 strDetail = dgv.Rows[ev.RowIndex].Cells[0].Value.ToString().Trim();
                 //???используется поиск по описанию
-                rowsDetail = m_arTableKey[iKey].Select(@"DESCRIPTION='" + strDetail + @"'");
+                rowsDetail = m_arTableDictPrj[iKey].Select(@"DESCRIPTION='" + strDetail + @"'");
                 //Проверить кол-во строк (д.б. ОДНа и ТОЬКО ОДНа)
                 if (rowsDetail.Length == 1)
                 {
