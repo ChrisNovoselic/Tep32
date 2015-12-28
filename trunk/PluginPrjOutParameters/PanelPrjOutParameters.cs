@@ -49,6 +49,116 @@ namespace PluginPrjOutParameters
 
             base.initTreeNodes();
         }
+
+        protected override int reAddNodes(int indxLevel, TreeNode node_parent, string id_parent)
+        {
+            int iRes = 0;
+
+            TreeNode node = null
+                , node_norm = null
+                , node_mkt = null;
+            TreeNodeCollection nodes = null;
+            string strId = string.Empty
+                , strKey = string.Empty
+                , strItem = string.Empty;
+            DataRow[] rows;
+            int iAdd = 0
+                , iId = -1;
+
+            if (indxLevel < m_listLevelParameters.Count)
+            {
+                if (node_parent == null)
+                    nodes = m_ctrlTreeView.Nodes;
+                else
+                {
+                    #region код для учета особенности структуры для задачи с ИД = 1 (Расчет ТЭП)
+                    if ((indxLevel == 1)
+                        && (getIdNodePart(node_parent.Name, ID_LEVEL.TASK).Equals(@"1") == true))
+                    {
+                        node_norm = node_parent.Nodes.Add(@"1::norm", @"Норматив");
+                        node_mkt = node_parent.Nodes.Add(@"1::mkt", @"Макет");
+                    }
+                    else
+                    #endregion
+                        nodes = node_parent.Nodes;
+                }
+
+                rows = m_listLevelParameters[indxLevel].Select(id_parent);
+
+                foreach (DataRow r in rows)
+                {
+                    //Строка с идентификатором задачи
+                    //strId = r[m_listLevelParameters[indxLevel].id].ToString().Trim();
+                    strId = m_listLevelParameters[indxLevel].GetId(r);
+                    if (strId.Equals(string.Empty) == false)
+                        strKey = concatIdNode(node_parent, strId);
+                    else
+                        strKey = id_parent;
+
+                    #region код для учета особенности структуры для задачи с ИД = 1 (Расчет ТЭП)
+                    if ((indxLevel == 1)
+                        && (getIdNodePart(node_parent.Name, ID_LEVEL.TASK).Equals(@"1") == true))
+                    {
+                        iId = int.Parse(strId);
+                        if ((iId > 10000)
+                            && (iId < 15000))
+                            nodes = node_norm.Nodes;
+                        else
+                            if (iId > 25000)
+                                nodes = node_mkt.Nodes;
+                            else
+                                throw new Exception(@"PanelPrjOutParameters::reAddNodes (ID_NODE=" + iId + @") - неизвестный диапазон");
+                    }
+                    else
+                        ;
+                    #endregion
+
+                    if (nodes.Find(strKey, false).Length == 0)
+                    {
+                        //Элемент дерева для очередной задачи
+                        if (m_listLevelParameters[indxLevel].desc.Equals(string.Empty) == false)
+                        {
+                            strItem = r[m_listLevelParameters[indxLevel].desc].ToString().Trim();
+                            if (m_listLevelParameters[indxLevel].desc_detail.Equals(string.Empty) == false)
+                                strItem += @" (" + r[m_listLevelParameters[indxLevel].desc_detail].ToString().Trim() + @")";
+                            else
+                                ;
+                            node = nodes.Add(strKey, strItem);
+                            iRes++;
+                        }
+                        else
+                        {
+                            node = node_parent;
+                        }
+
+                        if ((indxLevel + 1) < m_listLevelParameters.Count)
+                        {
+                            iAdd = reAddNodes(indxLevel + 1, node, strKey);
+                            if (iAdd == 0)
+                            {
+                                if (indxLevel > 0)
+                                {
+                                    nodes.Remove(node);
+                                    iRes--;
+                                }
+                                else
+                                    addNodeNull(node);
+                            }
+                            else
+                                iRes += iAdd;
+                        }
+                        else
+                            ;
+                    }
+                    else
+                        ; // нельзя добавить элемент с имеющимся ключом
+                }
+            }
+            else
+                ;
+
+            return iRes;
+        }
     }
 
     public class PlugIn : HFuncDbEdit

@@ -450,7 +450,7 @@ namespace TepCommon
             }
         }
 
-        private int reAddNodes(int indxLevel, TreeNode node_parent, string id_parent)
+        protected virtual int reAddNodes(int indxLevel, TreeNode node_parent, string id_parent)
         {
             int iRes = 0;
 
@@ -519,7 +519,7 @@ namespace TepCommon
                             ;
                     }
                     else
-                        ;
+                        ; // нельзя добавить элемент с имеющимся ключом
                 }
             }
             else
@@ -632,74 +632,8 @@ namespace TepCommon
             {//Только если обе выборки  рез-м = 0 (УСПЕХ)
                 //Копии оригинальных таблиц для редактирования и последующего сравнения с оригигальными...
                 successRecUpdateInsertDelete();
-
-                //Вариант №1
+                // установить правила для формирования элементов дерева 'm_listLevelParameters'
                 initTreeNodes();
-
-                ////Вариант №2
-                //List<TreeNode> listNodes;
-                //DataRow[] rowAlgs
-                //    , rowPuts;
-                //List<string> strIds;
-
-                //listNodes = new List<TreeNode>();
-                //strIds = new List<string>();
-                //for (i = 0; i < m_listIDLevels.Count; i++)
-                //{
-                //    listNodes.Add(null);
-                //    strIds.Add(string.Empty);
-                //}
-                ////Заполнить "дерево" элементами 1-го уровня (ALGORITM-задача)
-                //foreach (DataRow r0 in m_arTableKey[(int)INDEX_TABLE_KEY.TASK].Rows)
-                //{
-                //    //Строка с идентификатором задачи
-                //    strIds[0] = r0[@"ID"].ToString().Trim();
-                //    //Элемент дерева для очередной задачи
-                //    listNodes[0] = m_ctrlTreeView.Nodes.Add(strIds[0], r0[@"DESCRIPTION"].ToString().Trim());
-
-                //    //Массив строк таблицы параметров алгоритма для задачи с очередным ID
-                //    rowAlgs = m_arTableOrigin[(int)INDEX_PARAMETER.ALGORITM].Select(@"ID_TASK=" + r0[@"ID"]);
-
-                //    //Проверить наличие строк для "задачи"
-                //    if (rowAlgs.Length > 0)
-                //    {
-                //        //Заполнить "дерево" элементами 2-го уровня (ALGORITM-номалг)
-                //        foreach (DataRow r1 in rowAlgs)
-                //        {
-                //            //Вариант №1
-                //            //Строка с идентификатором параметра алгоритма
-                //            strIds[1] = r1[@"ID"].ToString().Trim();
-                //            //Элемент дерева для очередного параметра алгоритма
-                //            listNodes[1] = listNodes[0].Nodes.Add(concatIdNode(listNodes[0], strIds[1]), r1[@"N_ALG"].ToString().Trim());
-                //            //Заполнить "дерево" элементами 3-го уровня (Интервал)
-                //            foreach (DataRow r2 in m_arTableKey[(int)INDEX_TABLE_KEY.TIME].Rows)
-                //            {
-                //                rowPuts = m_arTableOrigin[(int)INDEX_PARAMETER.PUT].Select(@"ID_ALG=" + strIds[1] + @" AND ID_TIME=" + r2[@"ID"]);
-                //                if (rowPuts.Length > 0)
-                //                {
-                //                    strIds[2] = r2[@"ID"].ToString().Trim();
-                //                    listNodes[2] = listNodes[1].Nodes.Add(concatIdNode(listNodes[1], strIds[2]), r2[@"DESCRIPTION"].ToString().Trim());
-                //                    //Заполнить "дерево" элементами 4-го уровня (Компонент)
-                //                    foreach (DataRow r3 in rowPuts)
-                //                    {
-                //                        strIds[3] = r3[@"ID_COMP"].ToString().Trim();
-                //                        strIds[4] = r3[@"ID"].ToString().Trim();
-                //                        listNodes[3] = listNodes[2].Nodes.Add(
-                //                            //concatIdNode(concatIdNode(listNodes[2], strIds[2]), strIds[4])
-                //                            concatIdNode(listNodes[2], strIds[4])
-                //                            , m_arTableKey[(int)INDEX_TABLE_KEY.COMP_LIST].Select(@"ID=" + r3[@"ID_COMP"])[0][@"DESCRIPTION"].ToString().Trim());
-                //                    }
-                //                }
-                //                else
-                //                    continue;
-                //            }
-                //        }
-                //    }
-                //    else
-                //    {
-                //        addNodeNull(listNodes[0]);
-                //    }
-                //}
 
                 //Только для чтения
                 m_dgvPrjProp.ReadOnly = true;
@@ -727,7 +661,7 @@ namespace TepCommon
             base.reinit();
         }
 
-        private static string concatIdNode (TreeNode nodeParent, string id)
+        protected static string concatIdNode (TreeNode nodeParent, string id)
         {
             if (nodeParent == null)
                 return id;
@@ -735,7 +669,7 @@ namespace TepCommon
                 return concatIdNode (nodeParent.Name, id);
         }
 
-        private static string concatIdNode(string strIdParent, string id)
+        protected static string concatIdNode(string strIdParent, string id)
         {
             return strIdParent + @"::" + id;
         }
@@ -745,7 +679,7 @@ namespace TepCommon
         /// <param name="id">Строка - полный идентификатор элемента "дерева"</param>
         /// <param name="level">Уровень "дерева" - идентификатор уровня</param>
         /// <returns>Строка - часть полного идентификатора</returns>
-        private string getIdNodePart(string id, ID_LEVEL level)
+        protected string getIdNodePart(string id, ID_LEVEL level)
         {
             return getIdNodePart(id, m_listIDLevels.IndexOf (level));
         }
@@ -755,7 +689,7 @@ namespace TepCommon
         /// <param name="id">Строка - полный идентификатор элемента "дерева"</param>
         /// <param name="indxLev">Уровень элемента "дерева"</param>
         /// <returns>Строка - часть полного идентификатора</returns>
-        private static string getIdNodePart(string id, int indxLev)
+        protected static string getIdNodePart(string id, int indxLev)
         {
             if (id.Equals(string.Empty) == false)
             {
@@ -772,7 +706,7 @@ namespace TepCommon
         /// Добавить пустой элемент "дерева"
         /// </summary>
         /// <param name="nodeParent">Элемент "дерева" - родительский для пустого элемента</param>
-        private void addNodeNull(TreeNode nodeParent)
+        protected void addNodeNull(TreeNode nodeParent)
         {
             addNodeNull(nodeParent.Nodes);
         }
@@ -780,7 +714,7 @@ namespace TepCommon
         /// Добавить пустой элемент "дерева"
         /// </summary>
         /// <param name="nodes">Коллекция элементов</param>
-        private void addNodeNull(TreeNodeCollection nodes)
+        protected void addNodeNull(TreeNodeCollection nodes)
         {
             nodes.Add(null, @"Параметры отсутствуют...");
         }
@@ -917,7 +851,8 @@ namespace TepCommon
 
         private void TreeView_AfterSelect(object obj, TreeViewEventArgs ev)
         {
-            int iRes = -1;
+            int iRes = -1
+                , idAlg = -1;
             TreeViewAction act = ev.Action;
             TreeNode nodeSel = ev.Node;
 
@@ -927,10 +862,13 @@ namespace TepCommon
             //Строка с идентификатором параметра алгоритма расчета ТЭП
             string strIdAlg = getIdNodePart(nodeSel.Name, ID_LEVEL.N_ALG);
             //Идентификатор текущего параметра алгоритма
-            if ((strIdAlg == null) || (strIdAlg.Equals (string.Empty) == true))
+            if ((strIdAlg == null) || (strIdAlg.Equals(string.Empty) == true))
                 m_idAlg = -1; //Если выбран "верхний" уровень, или выбран "пустой" параметр
             else
-                m_idAlg = Convert.ToInt32(getIdNodePart(nodeSel.Name, ID_LEVEL.N_ALG));
+                if (Int32.TryParse(getIdNodePart(nodeSel.Name, ID_LEVEL.N_ALG), out idAlg) == true)
+                    m_idAlg = idAlg;
+                else
+                    m_idAlg = -1;
 
             switch (m_Level)
             {

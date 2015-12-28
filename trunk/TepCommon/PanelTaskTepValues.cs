@@ -255,7 +255,7 @@ namespace TepCommon
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = 2;
+                    (ctrl as ComboBox).SelectedIndex = 2; //??? требуется прочитать из [profile]
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
 
@@ -265,7 +265,7 @@ namespace TepCommon
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
                     
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = 0;
+                    (ctrl as ComboBox).SelectedIndex = 0; //??? требуется прочитать из [profile]
 
                     //// отобразить значения
                     //updateDataValues();
