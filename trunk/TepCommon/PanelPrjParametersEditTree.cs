@@ -591,7 +591,9 @@ namespace TepCommon
 
             return iRes;
         }
-
+        /// <summary>
+        /// Класс для описания уровня древовидной структуры
+        /// </summary>
         protected class LEVEL_PARAMETERS
         {
             public DataTable table;
@@ -618,7 +620,14 @@ namespace TepCommon
                 this.desc = desc;
                 this.desc_detail = desc_detail;
             }
-
+            /// <summary>
+            /// Получить масив строк для формирования подчиненной древовидной структуры
+            ///  на основании строкового идентификатора верхнего уровня
+            ///  и установленных правил для подчиненных уровней структуры
+            /// </summary>
+            /// <param name="id_parent">Строковый идентификатор элемента
+            ///  с более высоким уровнем в древовидной структуре</param>
+            /// <returns></returns>
             public DataRow[] Select(string id_parent)
             {
                 string sel = string.Empty;
@@ -644,7 +653,11 @@ namespace TepCommon
 
                 return table.Select(sel);
             }
-
+            /// <summary>
+            /// Возвратить строковый идентификатор
+            /// </summary>
+            /// <param name="r"></param>
+            /// <returns>Строковый идентификатор</returns>
             public string GetId(DataRow r)
             {
                 string strRes = string.Empty;
@@ -668,7 +681,9 @@ namespace TepCommon
         }
 
         protected List<LEVEL_PARAMETERS> m_listLevelParameters;
-
+        /// <summary>
+        /// Инициализация объекта элементамии жревовидной структуры
+        /// </summary>
         protected virtual void initTreeNodes()
         {
             if (!(m_listLevelParameters == null))
@@ -726,7 +741,12 @@ namespace TepCommon
             
             base.reinit();
         }
-
+        /// <summary>
+        /// Получить строковый идентификатор элемента
+        /// </summary>
+        /// <param name="nodeParent">Элемент (родительский) структуры</param>
+        /// <param name="id">Часть (собственная) строкового идентификатора элемента</param>
+        /// <returns>Строковый идентификатор элемента древовидной структуры</returns>
         protected static string concatIdNode (TreeNode nodeParent, string id)
         {
             if (nodeParent == null)
@@ -734,7 +754,12 @@ namespace TepCommon
             else
                 return concatIdNode (nodeParent.Name, id);
         }
-
+        /// <summary>
+        /// Получить строковый идентификатор элемента
+        /// </summary>
+        /// <param name="strIdParent">Строковый идентификатор</param>
+        /// <param name="id">Часть (собственная) строкового идентификатора элемента</param>
+        /// <returns>Строковый идентификатор элемента древовидной структуры</returns>
         protected static string concatIdNode(string strIdParent, string id)
         {
             return strIdParent + @"::" + id;
@@ -785,31 +810,47 @@ namespace TepCommon
             nodes.Add(null, @"Параметры отсутствуют...");
         }
         /// <summary>
-        /// Возвратить массив объектов - значений для полей новой (добавляемой строки)
+        /// Возвратить следующий целочисленный идентификатор для добавляемой строки
+        ///  в таблице с параметрами в алгоритме расчета
         /// </summary>
-        /// <param name="nodeSelName">Строковый идентификатор</param>
-        /// <returns>Массив объектов - значения для вставляемой строки</returns>
-        protected virtual object[] getRowAdd(INDEX_PARAMETER indxPar, string nodeSelName)
+        /// <returns>Целочисленный идентификатор</returns>
+        protected virtual int getIdNextAlgoritm()
         {
-            object[] arObjRes = null;
-            int err = -1
-                , id = -1;
+            int iRes = -1
+                , err = -1;
 
-            id = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)indxPar], out err);
-            if (id == 0) id += (int)ID_START_RECORD.ALG; else ;
+            iRes = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], out err);
+            if (iRes == 0) iRes += (int)ID_START_RECORD.ALG; else ;
 
-            arObjRes = new object[] {
-                            id
-                        , @"НаимКраткое"
-                        //, @"НаимПолное"
-                        , "НомАлгоритм"
-                        , @"Описание_параметра..."
-                        , 0
-                        , Int32.Parse(nodeSelName)
-                    };
-
-            return arObjRes;
+            return iRes;
         }
+        /// <summary>
+        /// Вставить строку в таблицу с параметрами алгоритма расчета
+        /// </summary>
+        /// <param name="nodeSelName">Строковый идентификатор параметра</param>
+        /// <returns>Идентификатор добавленной строки</returns>
+        protected int addRowToTableAlgoritm()
+        {
+            int iRes = getIdNextAlgoritm();
+
+            if (iRes > 0)
+            {
+                m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Add(new object[] {
+                            iRes //ID
+                            , @"НаимКраткое" //NAME_SHR
+                            //, @"НаимПолное"
+                            , "НомАлгоритм" //N_ALG
+                            , @"Описание_параметра..." //DESCRIPTION
+                            , 0 //ID_MEASURE
+                            , Int32.Parse(getIdNodePart(m_ctrlTreeView.SelectedNode.Name, ID_LEVEL.TASK)) //ID_TASK
+                            //??? SYMBOL
+                        });
+            }
+            else
+                ;
+
+            return iRes;
+        }        
         /// <summary>
         /// Обработчик события нажатия кнопки "Добавить"
         /// </summary>
@@ -817,24 +858,25 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         private void HPanelEditTree_btnAdd_Click(object obj, EventArgs ev)
         {
-            TreeNode nodeSel = m_ctrlTreeView.SelectedNode;
+            TreeNode node_parent = m_ctrlTreeView.SelectedNode;
+            int idAlg = -1;
 
-            if (!(nodeSel == null))
+            if (!(node_parent == null))
             {
                 switch (m_Level)
                 {
                     case (int)ID_LEVEL.TASK:
-                        DataRow rowAdd = m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Add(getRowAdd(INDEX_PARAMETER.ALGORITM, nodeSel.Name));
+                        idAlg = addRowToTableAlgoritm();
                         //Удалить элемент 'Параметры отсутствуют...'
-                        if ((nodeSel.Nodes.Count == 1)
-                            && ((nodeSel.Nodes[0].Name == null) || (nodeSel.Nodes[0].Name.Equals (string.Empty) == true)))
-                            nodeSel.Nodes.RemoveAt(0);
+                        if ((node_parent.Nodes.Count == 1)
+                            && ((node_parent.Nodes[0].Name == null) || (node_parent.Nodes[0].Name.Equals (string.Empty) == true)))
+                            node_parent.Nodes.RemoveAt(0);
                         else
                             ;
 
-                        TreeNode nodeAdd = nodeSel.Nodes.Add(concatIdNode(nodeSel
-                            , rowAdd[@"ID"].ToString())
-                            , rowAdd[@"N_ALG"].ToString().Trim());
+                        TreeNode nodeAdd = node_parent.Nodes.Add(
+                            concatIdNode(node_parent, idAlg.ToString())
+                            , node_parent.Name);
                         //nodeAdd.La
                         break;
                     default:
@@ -845,7 +887,11 @@ namespace TepCommon
             else
                 ;
         }
-
+        /// <summary>
+        /// Обработчик события - нажатие кнопки "Удалить"
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (кнопка)</param>
+        /// <param name="ev">Аргумент события</param>
         private void HPanelEditTree_btnDelete_Click(object obj, EventArgs ev)
         {
             TreeNode nodeSel = m_ctrlTreeView.SelectedNode
@@ -998,7 +1044,6 @@ namespace TepCommon
                     break;
             }            
         }
-
         /// <summary>
         /// Заполнение 'DataGridView' со свойствами выбранного в "дереве" элемента
         /// </summary>

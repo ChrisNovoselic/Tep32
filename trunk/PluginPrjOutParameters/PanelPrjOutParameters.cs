@@ -193,6 +193,37 @@ namespace PluginPrjOutParameters
             else
                 ;
         }
+        /// <summary>
+        /// Возвратить следующий целочисленный идентификатор для добавляемой строки
+        ///  в таблице с параметрами в алгоритме расчета
+        /// </summary>
+        /// <returns>Целочисленный идентификатор</returns>
+        protected override int getIdNextAlgoritm()
+        {
+            int iRes = -1
+                , err = -1
+                , min = -1, max = -1;
+            string strNodeParentName = getIdNodePart (m_ctrlTreeView.SelectedNode.Name, ID_LEVEL.N_ALG);
+
+            if (strNodeParentName.Equals (@"norm") == true)
+            {
+                min = (int)ID_START_RECORD.ALG;
+                max = 
+            }
+            else
+                if (strNodeParentName.Equals (@"mkt") == true)
+                {
+                    min = (int)ID_START_RECORD.ALG;
+                    max = 
+                }
+                else
+                    throw new Exception (@"PanelPrjOutParameters::getIdNextAlgoritm () - ");
+
+            iRes = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], out err, @"ID", min, max);
+            if (iRes == 0) iRes += (int)ID_START_RECORD.ALG; else ;
+
+            return iRes;
+        }
     }
 
     public class PlugIn : HFuncDbEdit
