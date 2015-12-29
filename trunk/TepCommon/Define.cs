@@ -5,6 +5,8 @@ using System.Text;
 
 namespace TepCommon
 {
+    public enum ID_START_RECORD : uint { ALG = 10001, PUT = 20001 }
+
     public enum CONN_SETT_TYPE
     {
         MAIN_DB,

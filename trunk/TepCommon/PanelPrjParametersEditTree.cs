@@ -21,7 +21,8 @@ namespace TepCommon
         /// </summary>
         protected enum ID_LEVEL
         {
-            UNKNOWN = -1
+            UNKNOWN = -2
+            , TEP_OUT = -1
             , TASK /*Задача*/, N_ALG /*Параметр алгоритма*/, /*TIME Интервал времени,*/ COMP /*Компонент станции*/
             , PUT
         };
@@ -42,7 +43,7 @@ namespace TepCommon
         /// <summary>
         /// Перечисление для индексирования элементов управления на панели
         /// </summary>
-        private enum INDEX_CONTROL
+        protected enum INDEX_CONTROL
         {
             BUTTON_ADD, BUTTON_DELETE, BUTTON_SAVE, BUTTON_UPDATE //Кнопки
             , TREECTRL_PRJ_ALG //"дерево"
@@ -69,7 +70,7 @@ namespace TepCommon
         /// Текущий(выбранный) уровень "дерева"
         /// </summary>
         private ID_LEVEL  _level;
-        private ID_LEVEL m_Level
+        protected ID_LEVEL m_Level
         {
             get { return _level; }
 
@@ -84,14 +85,24 @@ namespace TepCommon
             //Очистить список "детализации"
             clearPrjDetail();
 
+            dgvVisible(newLevel);
+
+            _level = newLevel;
+        }
+        /// <summary>
+        /// Отобразить/снять с отображения
+        /// </summary>
+        /// <param name="newLevel">Новое значение для переменной (выбранный пользователем уровень древовидной структуры)</param>
+        private void dgvVisible(ID_LEVEL newLevel)
+        {
             bool bPrevIsShowProp = false, bNewIsShowProp = false
                 , bPrevIsShowDetail = false, bNewIsShowDetail = false;
 
             int iShowAction = 0;
 
-            if (newLevel > ID_LEVEL.UNKNOWN)
+            if (newLevel > ID_LEVEL.TEP_OUT)
             {
-                if (_level > ID_LEVEL.UNKNOWN)
+                if (_level > ID_LEVEL.TEP_OUT)
                 {
                     bPrevIsShowProp = true;
                     bPrevIsShowDetail = m_arIsShowDetailLevels[(int)_level];
@@ -111,9 +122,9 @@ namespace TepCommon
                     ;
 
                 if (bPrevIsShowProp == false)
-                // предыдущее состояние - ни один из объектов не отображался
+                    // предыдущее состояние - ни один из объектов не отображался
                     if ((bNewIsShowProp == true) && (bNewIsShowDetail == true))
-                    // отобразить оба объекта безусловно
+                        // отобразить оба объекта безусловно
                         iShowAction = 3;
                     else
                         if (bNewIsShowProp == true)
@@ -123,7 +134,7 @@ namespace TepCommon
                             ; // по прежнему ничего не отобраажать
                 else
                     if (bPrevIsShowDetail == false)
-                    // предыдущее состояние - отображался только m_dgvPrjProp
+                        // предыдущее состояние - отображался только m_dgvPrjProp
                         if (bNewIsShowProp == true)
                             if (bNewIsShowDetail == true)
                                 // добавить m_dgvPrjDetail                                
@@ -134,7 +145,7 @@ namespace TepCommon
                             //Удалить с панели 'DataGridView' c ID = DGV_PRJ_PROP
                             iShowAction = -1;
                     else
-                    // предыдущее состояние - оба объекта отображались
+                        // предыдущее состояние - оба объекта отображались
                         if (bNewIsShowProp == false)
                             iShowAction = -3;
                         else
@@ -190,13 +201,48 @@ namespace TepCommon
                 default:
                     break;
             }
-
-            _level = newLevel;
         }
 
-        //Идентификатор текущего(выбранного) параметра алгоритма
+        protected virtual void btnEnable (string strIdTask)
+        {
+            bool bNewIsButtonAddEnabled = false, bNewIsButtonDeleteEnabled = false;
+
+            switch (m_Level)
+            {
+                case ID_LEVEL.TASK:
+                    //??? требуется знать идентификатор задачи
+                    bNewIsButtonAddEnabled = true;
+                    bNewIsButtonDeleteEnabled = false;
+                    break;
+                case ID_LEVEL.N_ALG:
+                    bNewIsButtonAddEnabled = false;
+                    bNewIsButtonDeleteEnabled = m_idAlg < 0 ? false : true;
+                    break;
+                //case ID_LEVEL.COMP:
+                //    bPrevIsButtonAddEnabled = false;
+                //    bPrevIsButtonDeleteEnabled = true;
+                //    break;
+                case ID_LEVEL.PUT:
+                    bNewIsButtonAddEnabled = false;
+                    bNewIsButtonDeleteEnabled = true;
+                    break;
+                case ID_LEVEL.TEP_OUT:
+                    bNewIsButtonAddEnabled = true;
+                    bNewIsButtonDeleteEnabled = false;
+                    break;
+                default:
+                    break;
+            }
+
+            Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0].Enabled = bNewIsButtonAddEnabled;
+            Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0].Enabled = bNewIsButtonDeleteEnabled;
+        }
+
         private int _idAlg;
-        private int m_idAlg {
+        /// <summary>
+        /// Идентификатор текущего(выбранного) параметра алгоритма
+        /// </summary>
+        protected int m_idAlg {
             get { return _idAlg; }
 
             set { if (!(_idAlg == value)) idAlgChanged(value); else ; }
@@ -269,7 +315,7 @@ namespace TepCommon
         public PanelPrjParametersEditTree(IPlugIn plugIn, string tableNames)
             : base(plugIn)
         {
-            _level = 0;
+            _level = ID_LEVEL.UNKNOWN;
             _idAlg = -1;
 
             m_arNameTables = tableNames.Split (',');
@@ -455,18 +501,27 @@ namespace TepCommon
                     ;
             }
         }
-
-        protected virtual int reAddNodes(int indxLevel, TreeNode node_parent, string id_parent)
+        /// <summary>
+        /// Добавить элементы к древовидной структуре (рекурсивная функция)
+        /// </summary>
+        /// <param name="indxLevel">??? Индекс текущего уровня в структуре</param>
+        /// <param name="node_parent">Объект - элемент структуры, родительский по отношению к добавляемым</param>
+        /// <param name="id_parent">??? Строковый идентификатор родительского элемента структуры</param>
+        /// <returns>Количество добавленных элементов</returns>
+        protected virtual int reAddNodes(int indxLevel, TreeNode node_parent, string strId_parent)
+        //protected virtual int reAddNodes(TreeNode node_parent)
         {
             int iRes = 0;
 
             TreeNode node = null;
             TreeNodeCollection nodes;
-            string strId = string.Empty
+            string //strId_parent = node_parent == null ? string.Empty : node_parent.Name,
+                strId = string.Empty
                 , strKey = string.Empty
                 , strItem = string.Empty;
             DataRow[] rows;
-            int iAdd = 0;
+            int //indxLevel = node_parent == null ? 0 : node_parent.Level + 1,
+                iAdd = 0;
 
             if (indxLevel < m_listLevelParameters.Count)
             {
@@ -474,8 +529,8 @@ namespace TepCommon
                     nodes = m_ctrlTreeView.Nodes;
                 else
                     nodes = node_parent.Nodes;
-                
-                rows = m_listLevelParameters[indxLevel].Select(id_parent);
+
+                rows = m_listLevelParameters[indxLevel].Select(strId_parent);
 
                 foreach (DataRow r in rows)
                 {
@@ -485,7 +540,7 @@ namespace TepCommon
                     if (strId.Equals(string.Empty) == false)
                         strKey = concatIdNode(node_parent, strId);
                     else
-                        strKey = id_parent;
+                        strKey = strId_parent;
 
                     if (nodes.Find(strKey, false).Length == 0)
                     {
@@ -507,7 +562,10 @@ namespace TepCommon
 
                         if ((indxLevel + 1) < m_listLevelParameters.Count)
                         {
-                            iAdd = reAddNodes(indxLevel + 1, node, strKey);
+                            iAdd = 
+                                reAddNodes(indxLevel + 1, node, strKey)
+                                //reAddNodes (node)
+                                    ;
                             if (iAdd == 0)
                             {
                                 if (indxLevel > 0)
@@ -614,7 +672,9 @@ namespace TepCommon
         protected virtual void initTreeNodes()
         {
             if (!(m_listLevelParameters == null))
-                reAddNodes(0, null, string.Empty);
+                reAddNodes(0, null, string.Empty)
+                //reAddNodes(null)
+                    ;
             else
                 Logging.Logg().Error(@"HPanelEditTree::initTreeNodes () - не инициализирован список 'm_listLevelParameters' ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
@@ -727,14 +787,16 @@ namespace TepCommon
         /// <summary>
         /// Возвратить массив объектов - значений для полей новой (добавляемой строки)
         /// </summary>
-        /// <param name="nodeSelName"></param>
-        /// <returns></returns>
+        /// <param name="nodeSelName">Строковый идентификатор</param>
+        /// <returns>Массив объектов - значения для вставляемой строки</returns>
         protected virtual object[] getRowAdd(INDEX_PARAMETER indxPar, string nodeSelName)
         {
             object[] arObjRes = null;
+            int err = -1
+                , id = -1;
 
-            int id = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)indxPar]);
-            if (id == 0) id += 10001; else ;
+            id = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)indxPar], out err);
+            if (id == 0) id += (int)ID_START_RECORD.ALG; else ;
 
             arObjRes = new object[] {
                             id
@@ -759,9 +821,7 @@ namespace TepCommon
 
             if (!(nodeSel == null))
             {
-                int level = nodeSel.Level;
-
-                switch (level)
+                switch (m_Level)
                 {
                     case (int)ID_LEVEL.TASK:
                         DataRow rowAdd = m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Add(getRowAdd(INDEX_PARAMETER.ALGORITM, nodeSel.Name));
@@ -854,18 +914,26 @@ namespace TepCommon
                 m_arTableOrigin[(int)i] = m_arTableEdit[(int)i].Copy();
             }
         }
-
-        private ID_LEVEL getNewIdLevel(string strId)
+        /// <summary>
+        /// Получить новый идентификатор уровня в структуре элемента
+        ///  по его идентификатору
+        /// </summary>
+        /// <param name="strId">Строковый идентификатор элемента</param>
+        /// <returns>Уровень элемента</returns>
+        private ID_LEVEL getLevelOfId(string strId)
         {
-            int cntNotId = 0
+            int cntNotId = 0 // кол-во частей идентификатора, не являющихся числами
                 , iId = -1;
+            // получить все части идентификатора
             string[] strIds = strId.Split(new string[] { @"::" }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string partId in strIds)
+                // проверить является ли часть числом
                 if (Int32.TryParse(partId, out iId) == false)
                     cntNotId++;
                 else
                     ;
-
+            // вернуть идентификатор уровня, при этом учесть, что
+            //  часть ИД не являющаяся числом, представляет собой виртуальный уровень
             return m_listIDLevels[strIds.Length - 1 - cntNotId];
         }
 
@@ -880,13 +948,15 @@ namespace TepCommon
             if (strIdAlg.Equals(string.Empty) == false)
                 if (Int32.TryParse(strIdAlg, out idAlg) == true)
                     //Индекс текущего уровня в "дереве"
-                    m_Level = getNewIdLevel(ev.Node.Name);
+                    m_Level = getLevelOfId(ev.Node.Name);
                 else
-                    m_Level = ID_LEVEL.UNKNOWN;
+                    m_Level = ID_LEVEL.TEP_OUT;
             else
                 m_Level = m_listIDLevels[ev.Node.Level];
             //Идентификатор текущего параметра алгоритма
             m_idAlg = idAlg;
+            //Установить доступность для кнопок "Добавить", "Удалить"
+            btnEnable(getIdNodePart(ev.Node.Name, ID_LEVEL.TASK));
 
             switch (m_Level)
             {
@@ -919,7 +989,9 @@ namespace TepCommon
                 //    else
                 //        ;
                 //    break;
-                case ID_LEVEL.COMP:
+                //case ID_LEVEL.COMP: //???
+                //    break;
+                case ID_LEVEL.PUT:
                     iRes = nodeAfterSelect(ev.Node, m_arTableEdit[(int)INDEX_PARAMETER.PUT], ID_LEVEL.PUT, false);
                     break;
                 default:
@@ -1013,11 +1085,12 @@ namespace TepCommon
 
         private void TreeView_AfterLabelEdit(object obj, NodeLabelEditEventArgs ev)
         {
-            switch (m_listIDLevels[ev.Node.Level])
+            switch (m_Level)
             {
                 case ID_LEVEL.TASK: //Задача - не редактируется
                 //case ID_LEVEL.TIME: //Интервал времени - не редактируется
-                case ID_LEVEL.COMP: //Компонент станции - не редактируется
+                //case ID_LEVEL.COMP: //???Компонент станции - не редактируется
+                case ID_LEVEL.PUT: //???Компонент станции - не редактируется
                     ev.CancelEdit = true;
                     break;
                 case ID_LEVEL.N_ALG: //Параметр алгоритма
@@ -1080,8 +1153,9 @@ namespace TepCommon
                     , strIdDetail = string.Empty
                     , strErr = @"НЕТ ДАННЫХ";
                 int iKey = -1
-                    , id = -1;
-                int idPut = -1;
+                    , id = -1
+                    , idPut = -1
+                    , err = -1;
 
                 //dgv = m_dictControls[(int)INDEX_CONTROL.DGV_PRJ_DETAIL] as DataGridView;
                 dgv = obj as DataGridView;
@@ -1115,8 +1189,8 @@ namespace TepCommon
                         //Оппределить строку с идентификаторами
                         if (idPut == 0)
                         {//Только для реального параметра (для компонента станции)
-                            idPut = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)INDEX_PARAMETER.PUT]);
-                            if (idPut == 0) idPut += 20001; else ;
+                            idPut = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)INDEX_PARAMETER.PUT], out err);
+                            if (idPut == 0) idPut += (int)ID_START_RECORD.PUT; else ;
 
                             strIdDetail = concatIdNode(m_ctrlTreeView.SelectedNode, id.ToString());
                             strIdDetail = concatIdNode(strIdDetail, idPut.ToString());

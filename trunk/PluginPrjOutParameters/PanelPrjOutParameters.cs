@@ -50,7 +50,8 @@ namespace PluginPrjOutParameters
             base.initTreeNodes();
         }
 
-        protected override int reAddNodes(int indxLevel, TreeNode node_parent, string id_parent)
+        protected override int reAddNodes(int indxLevel, TreeNode node_parent, string strId_parent)
+        //protected override int reAddNodes(TreeNode node_parent)
         {
             int iRes = 0;
 
@@ -58,11 +59,13 @@ namespace PluginPrjOutParameters
                 , node_norm = null
                 , node_mkt = null;
             TreeNodeCollection nodes = null;
-            string strId = string.Empty
+            string //strId_parent = node_parent == null ? string.Empty : node_parent.Name,
+                strId = string.Empty
                 , strKey = string.Empty
                 , strItem = string.Empty;
             DataRow[] rows;
-            int iAdd = 0
+            int //indxLevel = node_parent == null ? 0 : node_parent.Level + 1,
+                iAdd = 0
                 , iId = -1;
 
             if (indxLevel < m_listLevelParameters.Count)
@@ -83,7 +86,7 @@ namespace PluginPrjOutParameters
                         nodes = node_parent.Nodes;
                 }
 
-                rows = m_listLevelParameters[indxLevel].Select(id_parent);
+                rows = m_listLevelParameters[indxLevel].Select(strId_parent);
 
                 foreach (DataRow r in rows)
                 {
@@ -93,7 +96,7 @@ namespace PluginPrjOutParameters
                     if (strId.Equals(string.Empty) == false)
                         strKey = concatIdNode(node_parent, strId);
                     else
-                        strKey = id_parent;
+                        strKey = strId_parent;
 
                     #region код для учета особенности структуры для задачи с ИД = 1 (Расчет ТЭП)
                     if ((indxLevel == 1)
@@ -133,7 +136,10 @@ namespace PluginPrjOutParameters
 
                         if ((indxLevel + 1) < m_listLevelParameters.Count)
                         {
-                            iAdd = reAddNodes(indxLevel + 1, node, strKey);
+                            iAdd =
+                                reAddNodes(indxLevel + 1, node, strKey)
+                                //reAddNodes(node)
+                                    ;
                             if (iAdd == 0)
                             {
                                 if (indxLevel > 0)
@@ -158,6 +164,34 @@ namespace PluginPrjOutParameters
                 ;
 
             return iRes;
+        }
+
+        protected override void btnEnable(string strIdTask)
+        {
+            bool bNewIsButtonAddEnabled = false;
+            int idTask = -1;
+
+            base.btnEnable(strIdTask);
+
+            if (Int32.TryParse(strIdTask, out idTask) == true)
+                if ((m_Level == ID_LEVEL.TASK) && (idTask == 1))
+                {
+                    switch (m_Level)
+                    {
+                        case ID_LEVEL.TASK:
+                            //??? требуется знать идентификатор задачи
+                            bNewIsButtonAddEnabled = false;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0].Enabled = bNewIsButtonAddEnabled;
+                }
+                else
+                    ;
+            else
+                ;
         }
     }
 
