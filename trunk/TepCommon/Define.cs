@@ -5,7 +5,11 @@ using System.Text;
 
 namespace TepCommon
 {
-    public enum ID_START_RECORD : uint { ALG = 10001, PUT = 20001 }
+    public enum ID_START_RECORD : uint { ALG = 10001, ALG_NORMATIVE = 15001, PUT = 20001 }
+    /// <summary>
+    /// Перечисление - идентификаторы задач в составе системы - табл. [task]
+    /// </summary>
+    public enum ID_TASK : int { UNKNOWN = 0, TEP = 1, BAL_TEPLO, ENG6_GRAF, EL_JUR, VEDOM_BL, AUTOBOOK, REAKTIVKA }
 
     public enum CONN_SETT_TYPE
     {

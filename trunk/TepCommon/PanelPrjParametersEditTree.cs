@@ -17,6 +17,23 @@ namespace TepCommon
     public partial class PanelPrjParametersEditTree : HPanelEditTree
     {
         /// <summary>
+        /// Перечисление - индексы для столбцов в таблице с параметрами алгоритма расчета
+        /// </summary>
+        private enum INDEX_COLUMN_TABLEALGORITM : uint { ID, NAME_SHR, N_ALG, DESCRIPTION, ID_MEASURE, ID_TASK, SYMBOL
+            , COUNT}
+        /// <summary>
+        /// Массив значений по умолчанию для добавлямой строки в таблицу с параметрами алгоритма расчета
+        /// </summary>
+        private static object[] s_arTableAlgoritmDefaultValues = new object[(int)INDEX_COLUMN_TABLEALGORITM.COUNT] {
+            -1
+            , @"НаимКраткое"
+            , @"НомАлгоритм"
+            , @"Описание_параметра..."
+            , 0
+            , -1
+            , @""
+        };
+        /// <summary>
         /// Перечисление для индексироания уровней "дерева" параметров алгоритма
         /// </summary>
         protected enum ID_LEVEL
@@ -245,13 +262,13 @@ namespace TepCommon
         protected int m_idAlg {
             get { return _idAlg; }
 
-            set { if (!(_idAlg == value)) idAlgChanged(value); else ; }
+            set { if (!(_idAlg == value)) onIdAlgChanged(value); else ; }
         }
         /// <summary>
         /// Обработчик события - изменение текущего параметра алгоритма расчета 
         /// </summary>
         /// <param name="newIdAlg"></param>
-        private void idAlgChanged(int newIdAlg)
+        private void onIdAlgChanged(int newIdAlg)
         {
             if (_idAlg > 0)
             {
@@ -387,7 +404,7 @@ namespace TepCommon
             //Обработчик события "Выбор строки"
             m_dgvPrjProp.SelectionChanged += new EventHandler(HPanelEdit_dgvPropSelectionChanged);
             //Обработчик события "Редактирование значения" (только для алгоритма)
-            m_dgvPrjProp.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditTree_dgvPropCellEndEdit);
+            m_dgvPrjProp.CellEndEdit += new DataGridViewCellEventHandler(dgvProp_onCellEndEdit);
 
             //Создать "список" дополн./парамеиров (TIME, COMP)
             m_dgvPrjDetail = new DataGridView();
@@ -421,17 +438,17 @@ namespace TepCommon
             //Ширина столбца по ширине род./элемента управления
             m_dgvPrjDetail.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             //Обработчик события "Выбор строки"
-            m_dgvPrjDetail.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjDetailSelectionChanged);
+            m_dgvPrjDetail.SelectionChanged += new EventHandler(dgvPrjDetail_onSelectionChanged);
             //m_dgvPrjDetail.CellEndEdit += new DataGridViewCellEventHandler (HPanelEditTree_dgvPrjDetailCellEndEdit);
-            m_dgvPrjDetail.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjDetailCellValueChanged);
+            m_dgvPrjDetail.CellValueChanged += new DataGridViewCellEventHandler(dgvPrjDetail_onCellValueChanged);
 
             addLabelDesc(INDEX_CONTROL.LABEL_PARAM_DESC.ToString ());
 
             this.ResumeLayout(false);
 
             //Обработчики нажатия кнопок
-            ((Button)Controls.Find (INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]).Click += new System.EventHandler(HPanelEditTree_btnAdd_Click);
-            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]).Click += new System.EventHandler(HPanelEditTree_btnDelete_Click);
+            ((Button)Controls.Find (INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]).Click += new System.EventHandler(btnAdd_onClick);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]).Click += new System.EventHandler(btnDelete_onClick);
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
@@ -785,6 +802,7 @@ namespace TepCommon
             if (id.Equals(string.Empty) == false)
             {
                 string []ids = id.Split(new string[] { @"::" }, StringSplitOptions.None);
+
                 if (indxLev < ids.Length)
                     return ids[indxLev];
                 else
@@ -837,11 +855,11 @@ namespace TepCommon
             {
                 m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Rows.Add(new object[] {
                             iRes //ID
-                            , @"НаимКраткое" //NAME_SHR
-                            //, @"НаимПолное"
-                            , "НомАлгоритм" //N_ALG
-                            , @"Описание_параметра..." //DESCRIPTION
-                            , 0 //ID_MEASURE
+                            , s_arTableAlgoritmDefaultValues[(int)INDEX_COLUMN_TABLEALGORITM.NAME_SHR]
+                            //, s_arTableAlgoritmDefaultValues[(int)INDEX_COLUMN_TABLEALGORITM.]
+                            , s_arTableAlgoritmDefaultValues[(int)INDEX_COLUMN_TABLEALGORITM.N_ALG]
+                            , s_arTableAlgoritmDefaultValues[(int)INDEX_COLUMN_TABLEALGORITM.DESCRIPTION]
+                            , s_arTableAlgoritmDefaultValues[(int)INDEX_COLUMN_TABLEALGORITM.ID_MEASURE]
                             , Int32.Parse(getIdNodePart(m_ctrlTreeView.SelectedNode.Name, ID_LEVEL.TASK)) //ID_TASK
                             //??? SYMBOL
                         });
@@ -856,16 +874,16 @@ namespace TepCommon
         /// </summary>
         /// <param name="obj">Объект инициировавший событие - "кнопка"</param>
         /// <param name="ev">Аргумент события</param>
-        private void HPanelEditTree_btnAdd_Click(object obj, EventArgs ev)
+        private void btnAdd_onClick(object obj, EventArgs ev)
         {
             TreeNode node_parent = m_ctrlTreeView.SelectedNode;
             int idAlg = -1;
 
             if (!(node_parent == null))
-            {
                 switch (m_Level)
                 {
-                    case (int)ID_LEVEL.TASK:
+                    case ID_LEVEL.TASK:
+                    case ID_LEVEL.TEP_OUT:
                         idAlg = addRowToTableAlgoritm();
                         //Удалить элемент 'Параметры отсутствуют...'
                         if ((node_parent.Nodes.Count == 1)
@@ -874,16 +892,16 @@ namespace TepCommon
                         else
                             ;
 
-                        TreeNode nodeAdd = node_parent.Nodes.Add(
+                        TreeNode nodeAdd =
+                        m_ctrlTreeView.SelectedNode =
+                        node_parent.Nodes.Add(
                             concatIdNode(node_parent, idAlg.ToString())
-                            , node_parent.Name);
-                        //nodeAdd.La
+                            , (string)s_arTableAlgoritmDefaultValues[(int)INDEX_COLUMN_TABLEALGORITM.N_ALG]);
                         break;
                     default:
                         // в других случаях кн. "Добавить" - вЫкл.
                         break;
                 }
-            }
             else
                 ;
         }
@@ -892,7 +910,7 @@ namespace TepCommon
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие (кнопка)</param>
         /// <param name="ev">Аргумент события</param>
-        private void HPanelEditTree_btnDelete_Click(object obj, EventArgs ev)
+        private void btnDelete_onClick(object obj, EventArgs ev)
         {
             TreeNode nodeSel = m_ctrlTreeView.SelectedNode
                 , nodeParent = nodeSel.Parent;
@@ -960,6 +978,26 @@ namespace TepCommon
                 m_arTableOrigin[(int)i] = m_arTableEdit[(int)i].Copy();
             }
         }
+
+        private int getLevelOffset(string strId, out int counter)
+        {
+            int iRes = 0
+                , iId = -1;
+            counter = 0;
+            string[] strIds = null;
+
+            // получить все части идентификатора
+            strIds = strId.Split(new string[] { @"::" }, StringSplitOptions.RemoveEmptyEntries);
+            counter = strIds.Length;
+            foreach (string partId in strIds)
+                // проверить является ли часть числом
+                if (Int32.TryParse(partId, out iId) == false)
+                    iRes++;
+                else
+                    ;
+
+            return iRes;
+        }
         /// <summary>
         /// Получить новый идентификатор уровня в структуре элемента
         ///  по его идентификатору
@@ -968,39 +1006,48 @@ namespace TepCommon
         /// <returns>Уровень элемента</returns>
         private ID_LEVEL getLevelOfId(string strId)
         {
-            int cntNotId = 0 // кол-во частей идентификатора, не являющихся числами
-                , iId = -1;
-            // получить все части идентификатора
-            string[] strIds = strId.Split(new string[] { @"::" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string partId in strIds)
-                // проверить является ли часть числом
-                if (Int32.TryParse(partId, out iId) == false)
-                    cntNotId++;
-                else
-                    ;
+            int cnt = -1
+                , levelOffset = -1;
+
+            levelOffset = getLevelOffset(strId, out cnt);
             // вернуть идентификатор уровня, при этом учесть, что
             //  часть ИД не являющаяся числом, представляет собой виртуальный уровень
-            return m_listIDLevels[strIds.Length - 1 - cntNotId];
+            return m_listIDLevels[cnt - 1 - levelOffset];
         }
 
         private void TreeView_AfterSelect(object obj, TreeViewEventArgs ev)
         {
             int iRes = -1
-                , idAlg = -1;
+                , idAlg = -1
+                , cntLevel = -1, offsetLevel = -1;
 
             //Строка с идентификатором параметра алгоритма расчета ТЭП
             string strIdAlg = getIdNodePart(ev.Node.Name, ID_LEVEL.N_ALG);
             //Проверить условие возможности определения идентификатора текущего параметра алгоритма
-            if (strIdAlg.Equals(string.Empty) == false)
+            if (strIdAlg.Equals(string.Empty) == true)
+                m_Level = ID_LEVEL.TASK //m_listIDLevels[ev.Node.Level]
+                    ;
+            else
+            {
                 if (Int32.TryParse(strIdAlg, out idAlg) == true)
                     //Индекс текущего уровня в "дереве"
                     m_Level = getLevelOfId(ev.Node.Name);
                 else
-                    m_Level = ID_LEVEL.TEP_OUT;
-            else
-                m_Level = m_listIDLevels[ev.Node.Level];
+                {
+                    offsetLevel = getLevelOffset(ev.Node.Name, out cntLevel);
+
+                    if ((cntLevel - offsetLevel) > (int)ID_LEVEL.N_ALG)
+                    {
+                        strIdAlg = getIdNodePart(ev.Node.Name, (int)ID_LEVEL.N_ALG + offsetLevel);
+                        idAlg = Int32.Parse(strIdAlg);
+                        m_Level = (ID_LEVEL)(cntLevel - 1 - offsetLevel);
+                    }
+                    else
+                        m_Level = ID_LEVEL.TEP_OUT;
+                }
+            }
             //Идентификатор текущего параметра алгоритма
-            m_idAlg = idAlg;
+            m_idAlg = ! (idAlg < (int)ID_START_RECORD.ALG) ? idAlg : -1;
             //Установить доступность для кнопок "Добавить", "Удалить"
             btnEnable(getIdNodePart(ev.Node.Name, ID_LEVEL.TASK));
 
@@ -1056,10 +1103,11 @@ namespace TepCommon
         {
             int iErr = 0;
             m_dgvPrjProp.Rows.Clear();
-            int idNode = -1;
-            if (Int32.TryParse (getIdNodePart(node.Name, level), out idNode) == true)
+            //int idNode = -1;
+            //if (Int32.TryParse (getIdNodePart(node.Name, level), out idNode) == true)
+            if (m_idAlg > 0)
             {
-                DataRow[] rowsProp = tblProp.Select(@"ID=" + idNode);
+                DataRow[] rowsProp = tblProp.Select(@"ID=" + m_idAlg);
                 if (rowsProp.Length == 1)
                 {
                     //Заполнение содержимым...
@@ -1102,7 +1150,7 @@ namespace TepCommon
 
             //Отменить обработку события
             //if (bUpdate == true)
-            m_dgvPrjDetail.CellValueChanged -= HPanelEditTree_dgvPrjDetailCellValueChanged;
+            m_dgvPrjDetail.CellValueChanged -= dgvPrjDetail_onCellValueChanged;
             //else ;
 
             foreach (DataRow rDetail in m_arTableDictPrj[(int)key].Rows)
@@ -1124,10 +1172,14 @@ namespace TepCommon
 
             //Добавить обработку события
             //if (bUpdate == true)
-                m_dgvPrjDetail.CellValueChanged += HPanelEditTree_dgvPrjDetailCellValueChanged;
+                m_dgvPrjDetail.CellValueChanged += dgvPrjDetail_onCellValueChanged;
             //else ;
         }
-
+        /// <summary>
+        /// Обработчик события - завершение редактирования подписи элемента древовидной структуры
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (дерево)</param>
+        /// <param name="ev">Аргумент события</param>
         private void TreeView_AfterLabelEdit(object obj, NodeLabelEditEventArgs ev)
         {
             switch (m_Level)
@@ -1145,8 +1197,12 @@ namespace TepCommon
                     break;
             }
         }
-
-        private void HPanelEditTree_dgvPropCellEndEdit(object obj, DataGridViewCellEventArgs ev)
+        /// <summary>
+        /// Обработчик события - завершение редактирования значения ячейки объекта 'm_dgvPrjProp'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (отображение 'm_dgvPrjProp')</param>
+        /// <param name="ev">Аргумент события</param>
+        private void dgvProp_onCellEndEdit(object obj, DataGridViewCellEventArgs ev)
         {
             string strThrow = string.Empty;
             //Только для уровня "Номер в алгоритме"
@@ -1183,12 +1239,20 @@ namespace TepCommon
             else
                 ;
         }
-
-        private void HPanelEditTree_dgvPrjDetailSelectionChanged(object obj, EventArgs ev)
+        /// <summary>
+        /// Обработчик события - изменение текущей строки в 'm_dgvPrjProp'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (отображение 'm_dgvPrjProp')</param>
+        /// <param name="ev">Аргумент события</param>
+        private void dgvPrjDetail_onSelectionChanged(object obj, EventArgs ev)
         {
         }
-
-        private void HPanelEditTree_dgvPrjDetailCellValueChanged(object obj, DataGridViewCellEventArgs ev)
+        /// <summary>
+        /// Обработчик события - изменение значения ячейки объекта 'm_dgvPrjDetail'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (отображение 'm_dgvPrjDetail')</param>
+        /// <param name="ev">Аргумент события</param>
+        private void dgvPrjDetail_onCellValueChanged(object obj, DataGridViewCellEventArgs ev)
         {
             if (ev.ColumnIndex == 1)
             {
@@ -1250,7 +1314,7 @@ namespace TepCommon
                             {//Только для реального параметра (для компонента станции)
                                 m_arTableEdit[(int)INDEX_PARAMETER.PUT].Rows.Add(new object[] {
                                      idPut
-                                    , Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.N_ALG)) //ALG
+                                    , m_idAlg //ALG
                                     //, Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.TIME)) //TIME
                                     , id //COMP
                                     , -65384

@@ -103,12 +103,12 @@ namespace PluginPrjOutParameters
                         && (getIdNodePart(node_parent.Name, ID_LEVEL.TASK).Equals(@"1") == true))
                     {
                         iId = int.Parse(strId);
-                        if ((iId > 10000)
-                            && (iId < 15000))
-                            nodes = node_norm.Nodes;
+                        if ((!(iId < (int)ID_START_RECORD.ALG))
+                            && (iId < (int)ID_START_RECORD.ALG_NORMATIVE))
+                            nodes = node_mkt.Nodes;
                         else
-                            if (iId > 25000)
-                                nodes = node_mkt.Nodes;
+                            if (iId < (int)ID_START_RECORD.PUT)
+                                nodes = node_norm.Nodes;
                             else
                                 throw new Exception(@"PanelPrjOutParameters::reAddNodes (ID_NODE=" + iId + @") - неизвестный диапазон");
                     }
@@ -174,7 +174,7 @@ namespace PluginPrjOutParameters
             base.btnEnable(strIdTask);
 
             if (Int32.TryParse(strIdTask, out idTask) == true)
-                if ((m_Level == ID_LEVEL.TASK) && (idTask == 1))
+                if ((m_Level == ID_LEVEL.TASK) && (idTask == (int)ID_TASK.TEP))
                 {
                     switch (m_Level)
                     {
@@ -203,24 +203,30 @@ namespace PluginPrjOutParameters
             int iRes = -1
                 , err = -1
                 , min = -1, max = -1;
-            string strNodeParentName = getIdNodePart (m_ctrlTreeView.SelectedNode.Name, ID_LEVEL.N_ALG);
+            string strNodeParentName = string.Empty;
 
-            if (strNodeParentName.Equals (@"norm") == true)
+            if ((ID_TASK)Int32.Parse(getIdNodePart(m_ctrlTreeView.SelectedNode.Name, ID_LEVEL.TASK)) == ID_TASK.TEP)
             {
-                min = (int)ID_START_RECORD.ALG;
-                max = 
-            }
-            else
-                if (strNodeParentName.Equals (@"mkt") == true)
+                strNodeParentName = getIdNodePart(m_ctrlTreeView.SelectedNode.Name, ID_LEVEL.N_ALG);
+                if (strNodeParentName.Equals(@"norm") == true)
                 {
-                    min = (int)ID_START_RECORD.ALG;
-                    max = 
+                    min = (int)ID_START_RECORD.ALG_NORMATIVE;
+                    max = (int)ID_START_RECORD.PUT;
                 }
                 else
-                    throw new Exception (@"PanelPrjOutParameters::getIdNextAlgoritm () - ");
+                    if (strNodeParentName.Equals(@"mkt") == true)
+                    {
+                        min = (int)ID_START_RECORD.ALG;
+                        max = (int)ID_START_RECORD.ALG_NORMATIVE;
+                    }
+                    else
+                        throw new Exception(@"PanelPrjOutParameters::getIdNextAlgoritm () - неизвестный тип ");
 
-            iRes = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], out err, @"ID", min, max);
-            if (iRes == 0) iRes += (int)ID_START_RECORD.ALG; else ;
+                iRes = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], out err, @"ID", min - 1, max - 1);
+                if (iRes == 0) iRes += (int)ID_START_RECORD.ALG; else ;
+            }
+            else
+                iRes = base.getIdNextAlgoritm ();
 
             return iRes;
         }
