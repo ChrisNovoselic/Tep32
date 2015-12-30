@@ -55,6 +55,19 @@ namespace PluginPrjInParameters
 
             base.initTreeNodes();
         }
+
+        protected override void addRowToTablePut(int idPut, int idComp)
+        {
+            m_arTableEdit[(int)INDEX_PARAMETER.PUT].Rows.Add(new object[] {
+                idPut
+                , m_idAlg //ALG
+                //, Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.TIME)) //TIME
+                , idComp //COMP
+                , 0 //ID_RATIO
+                , -65384 //MIN
+                , 65385 //MAX
+            });
+        }
     }
 
     public class PlugIn : HFuncDbEdit

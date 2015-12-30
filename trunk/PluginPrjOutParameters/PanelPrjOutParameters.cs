@@ -50,15 +50,17 @@ namespace PluginPrjOutParameters
             base.initTreeNodes();
         }
 
-        protected override int reAddNodes(int indxLevel, TreeNode node_parent, string strId_parent)
+        protected override int reAddNodes(int indxLevel, TreeNode nodeParent, string strId_parent)
         //protected override int reAddNodes(TreeNode node_parent)
         {
             int iRes = 0;
 
             TreeNode node = null
+                , node_par = null
                 , node_norm = null
                 , node_mkt = null;
             TreeNodeCollection nodes = null;
+            bool bTaskTep = false;
             string //strId_parent = node_parent == null ? string.Empty : node_parent.Name,
                 strId = string.Empty
                 , strKey = string.Empty
@@ -70,20 +72,27 @@ namespace PluginPrjOutParameters
 
             if (indxLevel < m_listLevelParameters.Count)
             {
-                if (node_parent == null)
+                #region код для учета особенности структуры для задачи с ИД = 1 (Расчет ТЭП)
+                bTaskTep = ((indxLevel == ((int)ID_LEVEL.TASK + 1))
+                    && (getIdNodePart(nodeParent.Name, ID_LEVEL.TASK).Equals(((int)ID_TASK.TEP).ToString()) == true));
+                #endregion
+                
+                if (nodeParent == null)
                     nodes = m_ctrlTreeView.Nodes;
                 else
                 {
                     #region код для учета особенности структуры для задачи с ИД = 1 (Расчет ТЭП)
-                    if ((indxLevel == 1)
-                        && (getIdNodePart(node_parent.Name, ID_LEVEL.TASK).Equals(@"1") == true))
+                    if (bTaskTep == true)
                     {
-                        node_norm = node_parent.Nodes.Add(@"1::norm", @"Норматив");
-                        node_mkt = node_parent.Nodes.Add(@"1::mkt", @"Макет");
+                        node_norm = nodeParent.Nodes.Add(concatIdNode(nodeParent.Name, @"norm"), @"Норматив");
+                        node_mkt = nodeParent.Nodes.Add(concatIdNode(nodeParent.Name, @"mkt"), @"Макет");
                     }
                     else
                     #endregion
-                        nodes = node_parent.Nodes;
+                    {
+                        node_par = nodeParent;
+                        nodes = node_par.Nodes;
+                    }
                 }
 
                 rows = m_listLevelParameters[indxLevel].Select(strId_parent);
@@ -91,30 +100,33 @@ namespace PluginPrjOutParameters
                 foreach (DataRow r in rows)
                 {
                     //Строка с идентификатором задачи
-                    //strId = r[m_listLevelParameters[indxLevel].id].ToString().Trim();
-                    strId = m_listLevelParameters[indxLevel].GetId(r);
-                    if (strId.Equals(string.Empty) == false)
-                        strKey = concatIdNode(node_parent, strId);
-                    else
-                        strKey = strId_parent;
+                    strId = m_listLevelParameters[indxLevel].GetId(r).Trim();
 
                     #region код для учета особенности структуры для задачи с ИД = 1 (Расчет ТЭП)
-                    if ((indxLevel == 1)
-                        && (getIdNodePart(node_parent.Name, ID_LEVEL.TASK).Equals(@"1") == true))
+                    if (bTaskTep == true)
                     {
                         iId = int.Parse(strId);
                         if ((!(iId < (int)ID_START_RECORD.ALG))
                             && (iId < (int)ID_START_RECORD.ALG_NORMATIVE))
-                            nodes = node_mkt.Nodes;
+                            node_par = node_mkt;
                         else
-                            if (iId < (int)ID_START_RECORD.PUT)
-                                nodes = node_norm.Nodes;
+                            if ((!(iId < (int)ID_START_RECORD.ALG_NORMATIVE))
+                                && (iId < (int)ID_START_RECORD.PUT))
+                                node_par = node_norm;
                             else
                                 throw new Exception(@"PanelPrjOutParameters::reAddNodes (ID_NODE=" + iId + @") - неизвестный диапазон");
+
+                        nodes = node_par.Nodes;
                     }
                     else
                         ;
                     #endregion
+
+                    //
+                    if (strId.Equals(string.Empty) == false)
+                        strKey = concatIdNode(node_par, strId);
+                    else
+                        strKey = strId_parent;
 
                     if (nodes.Find(strKey, false).Length == 0)
                     {
@@ -131,7 +143,7 @@ namespace PluginPrjOutParameters
                         }
                         else
                         {
-                            node = node_parent;
+                            node = node_par;
                         }
 
                         if ((indxLevel + 1) < m_listLevelParameters.Count)
@@ -207,7 +219,7 @@ namespace PluginPrjOutParameters
 
             if ((ID_TASK)Int32.Parse(getIdNodePart(m_ctrlTreeView.SelectedNode.Name, ID_LEVEL.TASK)) == ID_TASK.TEP)
             {
-                strNodeParentName = getIdNodePart(m_ctrlTreeView.SelectedNode.Name, ID_LEVEL.N_ALG);
+                strNodeParentName = getIdNodePart(m_ctrlTreeView.SelectedNode.Name, (int)ID_LEVEL.N_ALG);
                 if (strNodeParentName.Equals(@"norm") == true)
                 {
                     min = (int)ID_START_RECORD.ALG_NORMATIVE;
@@ -229,6 +241,20 @@ namespace PluginPrjOutParameters
                 iRes = base.getIdNextAlgoritm ();
 
             return iRes;
+        }
+
+        protected override void addRowToTablePut(int idPut, int idComp)
+        {
+            m_arTableEdit[(int)INDEX_PARAMETER.PUT].Rows.Add(new object[] {
+                idPut
+                , m_idAlg //ALG
+                //, Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.TIME)) //TIME
+                , idComp //COMP
+                , @"" //FORMULA
+                , 0 //ID_RATIO
+                , -65384 //MIN
+                , 65385 //MAX
+            });
         }
     }
 

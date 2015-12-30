@@ -14,7 +14,7 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public partial class PanelPrjParametersEditTree : HPanelEditTree
+    public abstract partial class PanelPrjParametersEditTree : HPanelEditTree
     {
         /// <summary>
         /// Перечисление - индексы для столбцов в таблице с параметрами алгоритма расчета
@@ -789,7 +789,15 @@ namespace TepCommon
         /// <returns>Строка - часть полного идентификатора</returns>
         protected string getIdNodePart(string id, ID_LEVEL level)
         {
-            return getIdNodePart(id, m_listIDLevels.IndexOf (level));
+            int cntLevel = -1
+                , offsetLevel = -1;
+
+            if (level < ID_LEVEL.N_ALG)
+                offsetLevel = 0;
+            else
+                offsetLevel = getLevelOffset(id, out cntLevel);
+
+            return getIdNodePart(id, m_listIDLevels.IndexOf (level) + offsetLevel);
         }
         /// <summary>
         /// Возвратить часть полного идентификатора элемента "дерева"
@@ -868,7 +876,9 @@ namespace TepCommon
                 ;
 
             return iRes;
-        }        
+        }
+
+        protected abstract void addRowToTablePut(int idPut, int idComp);
         /// <summary>
         /// Обработчик события нажатия кнопки "Добавить"
         /// </summary>
@@ -1014,37 +1024,33 @@ namespace TepCommon
             //  часть ИД не являющаяся числом, представляет собой виртуальный уровень
             return m_listIDLevels[cnt - 1 - levelOffset];
         }
-
+        /// <summary>
+        /// обработчик события - изменение выбранного элемента в древовидной структуре
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (TreeView)</param>
+        /// <param name="ev">Аргумент события</param>
         private void TreeView_AfterSelect(object obj, TreeViewEventArgs ev)
         {
             int iRes = -1
                 , idAlg = -1
                 , cntLevel = -1, offsetLevel = -1;
 
+            offsetLevel = getLevelOffset(ev.Node.Name, out cntLevel);
             //Строка с идентификатором параметра алгоритма расчета ТЭП
             string strIdAlg = getIdNodePart(ev.Node.Name, ID_LEVEL.N_ALG);
             //Проверить условие возможности определения идентификатора текущего параметра алгоритма
             if (strIdAlg.Equals(string.Empty) == true)
-                m_Level = ID_LEVEL.TASK //m_listIDLevels[ev.Node.Level]
-                    ;
+                if ((cntLevel - 1) > (int)ID_LEVEL.TASK)
+                    m_Level = ID_LEVEL.TEP_OUT;
+                else
+                    m_Level = ID_LEVEL.TASK;
             else
             {
                 if (Int32.TryParse(strIdAlg, out idAlg) == true)
                     //Индекс текущего уровня в "дереве"
                     m_Level = getLevelOfId(ev.Node.Name);
                 else
-                {
-                    offsetLevel = getLevelOffset(ev.Node.Name, out cntLevel);
-
-                    if ((cntLevel - offsetLevel) > (int)ID_LEVEL.N_ALG)
-                    {
-                        strIdAlg = getIdNodePart(ev.Node.Name, (int)ID_LEVEL.N_ALG + offsetLevel);
-                        idAlg = Int32.Parse(strIdAlg);
-                        m_Level = (ID_LEVEL)(cntLevel - 1 - offsetLevel);
-                    }
-                    else
-                        m_Level = ID_LEVEL.TEP_OUT;
-                }
+                    ; //??? throw new Exception ();
             }
             //Идентификатор текущего параметра алгоритма
             m_idAlg = ! (idAlg < (int)ID_START_RECORD.ALG) ? idAlg : -1;
@@ -1103,11 +1109,14 @@ namespace TepCommon
         {
             int iErr = 0;
             m_dgvPrjProp.Rows.Clear();
-            //int idNode = -1;
-            //if (Int32.TryParse (getIdNodePart(node.Name, level), out idNode) == true)
-            if (m_idAlg > 0)
+            int idNode = -1;
+            if (Int32.TryParse (getIdNodePart(node.Name, level), out idNode) == true)
+            //if (m_idAlg > 0)
             {
-                DataRow[] rowsProp = tblProp.Select(@"ID=" + m_idAlg);
+                DataRow[] rowsProp = tblProp.Select(@"ID=" +                    
+                    idNode
+                    //m_idAlg
+                );
                 if (rowsProp.Length == 1)
                 {
                     //Заполнение содержимым...
@@ -1312,14 +1321,7 @@ namespace TepCommon
                         {//...если элемент отсутствует
                             if (idPut > 0)
                             {//Только для реального параметра (для компонента станции)
-                                m_arTableEdit[(int)INDEX_PARAMETER.PUT].Rows.Add(new object[] {
-                                     idPut
-                                    , m_idAlg //ALG
-                                    //, Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.TIME)) //TIME
-                                    , id //COMP
-                                    , -65384
-                                    , 65385
-                                });
+                                addRowToTablePut(idPut, id);
                             }
                             else
                                 ; //Для интервала времени
