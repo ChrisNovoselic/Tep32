@@ -250,8 +250,8 @@ namespace PluginPrjOutParameters
                 , m_idAlg //ALG
                 //, Convert.ToInt32(getIdNodePart (strIdDetail, ID_LEVEL.TIME)) //TIME
                 , idComp //COMP
-                , @"" //FORMULA
                 , 0 //ID_RATIO
+                , @"" //FORMULA                
                 , -65384 //MIN
                 , 65385 //MAX
             });
