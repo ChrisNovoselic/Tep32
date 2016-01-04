@@ -9,13 +9,19 @@ using HClassLibrary;
 
 namespace PluginPrjTepFTable
 {
+    // http://pmpu.ru/vf4/interpolation
+    // https://ru.wikibooks.org/wiki/Реализации_алгоритмов/Интерполяция/Многочлен_Лагранжа
     public class FTable
-    {
+    {        
+        private enum INDEX_NEAR { UNKNOWN = -1
+            , LEFT, RIGHT
+            , COUNT }
         /// <summary>
         /// Перечисление для обозночения уровня точки, функции
         /// </summary>
-        public enum FRUNK { F1, F2, F3 }
-
+        public enum FRUNK { UNKNOWN = -1
+            , F1, F2, F3
+            , COUNT }
         /// <summary>
         /// Структура для хранения значений для одной из точек функции
         /// </summary>
@@ -25,12 +31,10 @@ namespace PluginPrjTepFTable
             /// Уровень для точки
             /// </summary>
             public FRUNK Runk;
-
             /// <summary>
             /// Идентификатор строки в таблице БД
             /// </summary>
             public int m_idRec;
-
             /// <summary>
             /// Значение для точки
             /// </summary>
@@ -38,7 +42,6 @@ namespace PluginPrjTepFTable
                 , a2
                 , a3
                 , f;
-
             /// <summary>
             /// Конструктор основной (с параметрами)
             /// </summary>
@@ -57,8 +60,38 @@ namespace PluginPrjTepFTable
 
                 Runk = ((!(a2 == 0F)) || (!(a3 == 0F))) ? (!(a3 == 0F)) ? FRUNK.F3 : (!(a2 == 0F)) ? FRUNK.F2 : FRUNK.F1 : FRUNK.F1;
             }
-        }
 
+            public float X(FRUNK fRunk)
+            {
+                float fRes = float.NaN;
+
+                switch (fRunk)
+                {
+                    case FRUNK.F1:
+                        fRes = a1;
+                        break;
+                    case FRUNK.F2:
+                        fRes = a2;
+                        break;
+                    case FRUNK.F3:
+                        fRes = a3;
+                        break;
+                    default:
+                        break;
+                }
+
+                return fRes;
+            }
+        }
+        /// <summary>
+        /// Структура для хранения параметров при проверке условия
+        ///  использования точки функции при поиске границ диапазона в 'getNearby'
+        /// </summary>
+        private struct LIMIT
+        {
+            public FRUNK fRunk;
+            public float x;
+        }
         /// <summary>
         /// Класс для хранения списка всех значений одной функции
         /// </summary>
@@ -90,48 +123,81 @@ namespace PluginPrjTepFTable
                 }
             }
         }
+        /// <summary>
+        /// Класс для хранения значений диапазона ближайших точек
+        /// </summary>
+        protected class RangePOINT
+        {
+            /// <summary>
+            /// Массив точек диапазона
+            /// </summary>
+            private POINT[] _array;
+            /// <summary>
+            /// Конструктор - дополнительный (без параметров)
+            /// </summary>
+            public RangePOINT()
+            {
+                _array = new POINT[(int)INDEX_NEAR.COUNT];
+            }
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="array">Массив точек для инициализации диапазона</param>
+            public RangePOINT(POINT[] array) : this ()
+            {
+                array.CopyTo(_array, 0);
+            }
+            /// <summary>
+            /// Точка "слева"
+            /// </summary>
+            public POINT Left
+            {
+                get { return _array[(int)INDEX_NEAR.LEFT]; }
 
+                set { _array[(int)INDEX_NEAR.LEFT] = value; }
+            }
+            /// <summary>
+            /// Точка "справа"
+            /// </summary>
+            public POINT Right
+            {
+                get { return _array[(int)INDEX_NEAR.RIGHT]; }
+
+                set { _array[(int)INDEX_NEAR.RIGHT] = value; }
+            }
+        }
+        /// <summary>
+        /// Класс для хранения списка объектов с параметрами при проверке условиия
+        ///  использования точки функции при поиске границ диапазона в 'getNearby'
+        /// </summary>
+        private class ListLIMIT : List<LIMIT>
+        {
+            public bool ContansPoint(POINT pt)
+            {
+                bool bRes = false;
+
+                foreach (LIMIT lim in this)
+                    if (pt.X(lim.fRunk) == lim.x)
+                    {
+                        bRes = true;
+                        break;
+                    }
+                    else
+                        ;
+
+                return bRes;
+            }
+        }
         /// <summary>
         /// Словарь со значениями для всех функций
         ///  (ключ - наименование функции)
         /// </summary>
         protected Dictionary<string, ListPOINT> m_dictValues;
         /// <summary>
-        /// 
-        /// </summary>
-        float[][] metka;
-        /// <summary>
-        /// Массив значений минимумов калькулятора
-        /// </summary>
-        float[][] ArgMin;
-        /// <summary>
-        /// Массив аргументов функции
-        /// </summary>
-        float[][] ValuesFunc;
-        /// <summary>
-        /// 
-        /// </summary>
-        double[][] FinalRezult;
-        /// <summary>
-        /// флаг для экстраполяции
-        /// </summary>
-        bool bflag1;
-        bool bflag2;
-        /// <summary>
-        /// Признак выполнения условия
-        ///  , которое задается для вычисления минимумов и для перестройки массивов
-        /// </summary>
-        protected bool condition;
-        /// <summary>
         /// Составное наименование функции
         ///  имя_функции + наименование столбца
         /// </summary>
         protected string m_nameAlg;
-        /// <summary>
-        /// Значение-строка
-        /// </summary>
-        protected double referencePoint;
-
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
@@ -139,28 +205,31 @@ namespace PluginPrjTepFTable
         {
             m_dictValues = new Dictionary<string, ListPOINT>();
         }
-
         /// <summary>
-        /// 
+        /// Конструктор - основной (с параметром)
         /// </summary>
-        /// <param name="src"></param>
+        /// <param name="src">Таблица в БД - источник данных</param>
         public FTable(DataTable src)
             : this()
         {
             Set(src);
         }
-
         /// <summary>
-        /// 
+        /// Ранг функции
         /// </summary>
-        /// <param name="nAlg"></param>
-        /// <returns></returns>
+        /// <param name="nAlg">Наименование функции</param>
+        /// <returns>Ранг функции (кол-во аргументов)</returns>
+        private FRUNK _fRunk { get { return m_dictValues.ContainsKey(m_nameAlg) == true ? m_dictValues[m_nameAlg].Runk : FRUNK.UNKNOWN; } }
+        /// <summary>
+        /// Возвратить ранг функции по имени
+        /// </summary>
+        /// <param name="nAlg">Наименование функции</param>
+        /// <returns>Ранг функции (кол-во аргументов)</returns>
         public FRUNK GetRunk(string nAlg) { return m_dictValues[nAlg].Runk; }
-
         /// <summary>
-        /// 
+        /// Установить значения всех функций
         /// </summary>
-        /// <param name="src"></param>
+        /// <param name="src">Таблица в БД - источник данных</param>
         public void Set(DataTable src)
         {
             string nAlg = string.Empty;
@@ -183,329 +252,236 @@ namespace PluginPrjTepFTable
                     , (float)r[@"F"]));
             }
         }
-
         /// <summary>
-        /// Создание массива с данными всех значений одной функции
-        /// Заполняет значениями функции для работы с ними.
+        /// Найти ближайшие реперные (узловые) точки
         /// </summary>
-        /// <param name="nameALG"></param>
-        /// <param name="nColumn"></param>
-        /// <param name="row"></param>
-        public void CreateParamMassive(string nameALG, string nColumn, int row)
+        /// <param name="nameAlg">Наименование функции</param>
+        /// <param name="x">Аргумент функции, относительно которой производится поиск</param>
+        /// <param name="fRunk">Ранг аргумента</param>
+        /// <returns>Массив точек</returns>
+        private RangePOINT getNearby(string nameAlg, float x, FRUNK fRunk, ListLIMIT listLimit)
         {
-            //ValuesFunc = ...;
-        }
-
-        /// <summary>
-        /// Проверка на вложеность
-        /// числа в диапазон первых минимумов
-        /// </summary>
-        private void rangeOfValues(int numArray, int numMin, int elemArray)
-        {
-            bflag1 = true;
-            bflag2 = true;
-
-            if ((referencePoint < ArgMin[numMin].ElementAt(elemArray + 1)) && (referencePoint > ArgMin[numMin].ElementAt(elemArray)))
-            {
-                for (int i = 0; i < ValuesFunc[numArray].Length; i++)
-                {
-                    calcCondition(i, numArray, numMin, numMin + 1, elemArray);
-
-                    if (condition == true)
-                        interpolation(numArray, numMin, elemArray, i);
+            RangePOINT rangeRes = null;
+            INDEX_NEAR indxNearby = INDEX_NEAR.UNKNOWN;
+            //Получить диапазон аргументов, значений
+            rangeRes = getRange(nameAlg, fRunk, listLimit);
+            //Определитть порядок назначения ближайших соседних реперных точек
+            if ((!(x < rangeRes.Left.X(fRunk)))
+                && (!(x > rangeRes.Right.X(fRunk))))
+            // точка внутри диапазона - использовать интерполяцию
+                indxNearby = INDEX_NEAR.COUNT;
+            else
+            // точка вне диапазона
+                if (x < rangeRes.Left.X(fRunk))
+                // точка "слева" от диапазона - требуется уточнение правой границы
+                    indxNearby = INDEX_NEAR.LEFT; // левая - не изменяется
+                else
+                    if (x > rangeRes.Right.X(fRunk))
+                    // точка "справа" от диапазона - требуется уточнение левой границы
+                        indxNearby = INDEX_NEAR.RIGHT; // правая - не изменяется
                     else
                         ;
-                }
-            }
+            //Назначить ближайшие соседние реперные точки
+            if (indxNearby == INDEX_NEAR.COUNT)
+            // внутри диапазона
+                interpolation(nameAlg, x, fRunk, ref rangeRes, listLimit);
             else
-            {
-                for (int i = 0; i < ValuesFunc[numArray].Length; i++)
-                {
-                    calcCondition(i, numArray, numMin, numMin + 1, elemArray);
+            // вне диапазона
+                extrapolation(nameAlg, x, fRunk, ref rangeRes, indxNearby, listLimit);
 
-                    if (condition == true)
-                        extrapolation(numArray, numMin, elemArray, i);
-                    else
-                        ;
-                }
-            }
+            return rangeRes;
         }
-
         /// <summary>
-        /// 
+        /// Возвратить диапазон точек по указанному рангу аргумента (кол-во точек должно быть - не меньше 1-ой)
         /// </summary>
-        /// <param name="i">номер элемента</param>
-        /// <param name="array"></param>
-        /// <param name="min"></param>
-        /// <param name="nextarg"></param>
-        /// <param name="elemMin"></param>
-        private void calcCondition(int i, int array, int min, int nextarg, int elemArray)
+        /// <param name="nameAlg">Наименование функции</param>
+        /// <param name="fRunk">Ранг аргумента</param>
+        /// <returns>Массив точек</returns>
+        private RangePOINT getRange(string nameAlg, FRUNK fRunk, ListLIMIT listLimit)
         {
-            int countArray = 0;
-            if (elemArray > 1)
-                countArray = 0;
-            else if (elemArray > 0)
-                countArray = 1;
+            RangePOINT rangeRes = new RangePOINT(); //Результат
+            float x = -1F //Аргумент функции
+                , min = float.MaxValue, max = float.MinValue;
 
-            switch (nextarg)
-            {
-                case 1:
-                    condition = true;
-                    break;
-                case 2:
-                    if (ValuesFunc[array + 1].ElementAt(i) == ArgMin[0].ElementAt(elemArray)) // другой счетчик элемента массива минимума
+            foreach (POINT pt in m_dictValues[nameAlg])
+                if ((listLimit.Count == 0)
+                    || ((listLimit.Count > 0)
+                        && (listLimit.ContansPoint(pt) == true)))
+                {
+                    x = pt.X(fRunk);
+
+                    if (x < min)
                     {
-                        condition = true;
-                    }
-                    else condition = false;
-                    break;
-                case 3:
-                    if (ValuesFunc[2].ElementAt(i) == ArgMin[0].ElementAt(countArray) &&
-                        ValuesFunc[1].ElementAt(i) == ArgMin[1].ElementAt(elemArray))
-                    {
-                        condition = true;
-                    }
-                    else condition = false;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Интерполяция значений функции
-        /// </summary>
-        private void interpolation(int numArray, int numMin, int elemArray, int i)
-        {
-            if (testConditionMIN1(i, numArray, numMin, elemArray) == true)
-            {
-                ArgMin[numMin].SetValue(ValuesFunc[numArray].ElementAt(i), elemArray);
-                metka[numMin].SetValue(m_dictValues[m_nameAlg][i].f, elemArray);
-            }
-            else
-                ;
-
-            if (testConditionMIN2(i, numArray, numMin, elemArray) == true)
-            {
-                ArgMin[numMin].SetValue(ValuesFunc[numArray].ElementAt(i), elemArray + 1);
-                metka[numMin].SetValue(m_dictValues[m_nameAlg][i].f, elemArray + 1);
-            }
-            else
-                ;
-        }
-
-        /// <summary>
-        /// Проверка условия интерполяции 
-        /// для нахождения более ближайщего значения MIN1
-        /// </summary>
-        /// <param name="i">номер строки</param>
-        /// <returns>Признак выполнения условия</returns>
-        private bool testConditionMIN1(int i, int nArray, int NumMin, int elemArray)
-        {
-            bool bRes = false;
-
-            double m_selectedCell = referencePoint;
-            double m_onePeremen = m_selectedCell - ValuesFunc[nArray].ElementAt(i);
-            double m_twoPeremen = m_selectedCell - ArgMin[NumMin].ElementAt(elemArray);//min1
-
-            if ((m_onePeremen < m_twoPeremen) && (m_onePeremen >= 0) &&
-                (ValuesFunc[nArray].ElementAt(i) != ArgMin[NumMin].ElementAt(elemArray + 1))) //min2
-                bRes = true;
-            else
-                ;
-
-            return bRes;
-        }
-
-        /// <summary>
-        /// Проверка условия интерполяции 
-        /// для нахождения более ближайщего значения MIN2
-        /// </summary>
-        /// <param name="i">номер строки</param>
-        /// <returns>Признак выполнения условия</returns>
-        private bool testConditionMIN2(int i, int nArray, int NumMin, int elemArray)
-        {
-            bool bRes = false;
-
-            double m_selectedCell = referencePoint;
-            double m_onePeremen = ValuesFunc[nArray].ElementAt(i) - m_selectedCell;
-            double m_twoPeremen = ArgMin[NumMin].ElementAt(elemArray + 1) - m_selectedCell; //min2
-
-            if ((m_onePeremen < m_twoPeremen) && (m_onePeremen >= 0) &&
-                (ValuesFunc[nArray].ElementAt(i) != ArgMin[NumMin].ElementAt(elemArray)))
-                bRes = true;
-            else
-                ;
-
-            return bRes;
-        }
-
-        /// <summary>
-        /// Экстраполяция значений функций
-        /// </summary>
-        /// <param name="numArray"></param>
-        private void extrapolation(int numArray, int numMin, int elemArray, int i)
-        {
-            if (bflag1 == true)
-            {
-                ArgMin[numMin].SetValue(ValuesFunc[numArray].ElementAt(i), elemArray);
-                metka[numMin].SetValue(m_dictValues[m_nameAlg][i].f, elemArray);
-                bflag1 = false;
-            }
-            else ;
-
-            if (bflag2 == true && ArgMin[numMin].ElementAt(elemArray) != ValuesFunc[numArray].ElementAt(i)) //min1
-            {
-                ArgMin[numMin].SetValue(ValuesFunc[numArray].ElementAt(i), elemArray + 1);
-                metka[numMin].SetValue(m_dictValues[m_nameAlg][i].f, elemArray + 1);
-                bflag2 = false;
-            }
-            else ;
-
-            if (bflag1 == false && bflag2 == false)
-            {
-                ABSfunc(i, numArray, numMin, elemArray);
-            }
-            else ;
-
-        }
-
-        /// <summary>
-        /// Проверка аргумента на близость к заданому числу, 
-        /// если он еще ближе чем минимумы, то запоминается
-        /// </summary>
-        /// <param name="i"></param>
-        /// <param name="nArray"></param>
-        private void ABSfunc(int i, int nArray, int numMin, int elemArray)
-        {
-            double peremen1 = Math.Abs(referencePoint - ValuesFunc[nArray].ElementAt(i));
-            double ABSmin1 = Math.Abs(referencePoint - ArgMin[numMin].ElementAt(elemArray)); //min1
-            double ABSmin2 = Math.Abs(referencePoint - ArgMin[numMin].ElementAt(elemArray + 1)); //min2
-
-            if (peremen1 < ABSmin1 && ValuesFunc[nArray].ElementAt(i) != ArgMin[numMin].ElementAt(elemArray + 1)) //min2
-            {
-                if (ABSmin1 < ABSmin2)
-                {
-                    ArgMin[numMin].SetValue(ArgMin[numMin].ElementAt(0), elemArray + 1);
-                    metka[numMin].SetValue(m_dictValues[m_nameAlg][i].f, elemArray + 1);
-                }
-
-                ArgMin[numMin].SetValue(ValuesFunc[nArray].ElementAt(i), elemArray);
-                metka[numMin].SetValue(m_dictValues[m_nameAlg][i].f, elemArray);
-            }
-            else
-            {
-                if (peremen1 < ABSmin2 && ValuesFunc[nArray].ElementAt(i) != ArgMin[numMin].ElementAt(elemArray)) //min1
-                {
-                    ArgMin[numMin].SetValue(ValuesFunc[nArray].ElementAt(i), elemArray + 1);
-                    metka[numMin].SetValue(ValuesFunc[nArray].ElementAt(i), elemArray + 1);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Определение границ диапазона
-        /// аргумента от наименьшего до наибольшего
-        /// </summary>
-        /// <param name="bflag"></param>
-        /// <param name="numMin"></param>
-        /// <param name="numArray"></param>
-        private void searchMainMIN(int numMin, int numArray, int elemArray)
-        {
-            /// <summary>
-            /// Граница диапазона (1-я, 2-я)
-            /// </summary>
-            double min1 = Math.Exp(15)
-                , min2 = -1 * Math.Exp(15);
-
-            for (int i = 0; i < m_dictValues[m_nameAlg].Count(); i++)
-            {
-                calcCondition(i, numArray, numMin, numMin + 1, elemArray);
-
-                if (condition == true)
-                {
-                    if (ValuesFunc[numArray].ElementAt(i) < min1)
-                    {
-                        ArgMin[numMin].SetValue(ValuesFunc[numArray].ElementAt(i), elemArray);
-                        metka[numMin].SetValue(m_dictValues[m_nameAlg][i].f, elemArray);
-                        min1 = ValuesFunc[numArray].ElementAt(i);
+                        min = x;
+                        rangeRes.Left = pt;
                     }
                     else
                         ;
 
-                    if (ValuesFunc[numArray].ElementAt(i) > min2)
+                    if (x > max)
                     {
-                        ArgMin[numMin].SetValue(ValuesFunc[numArray].ElementAt(i), elemArray + 1);
-                        metka[numMin].SetValue(m_dictValues[m_nameAlg][i].f, elemArray + 1);
-                        min2 = ValuesFunc[numArray].ElementAt(i);//убрать в будущем, как вариант
+                        max = x;
+                        rangeRes.Right = pt;
                     }
                     else
-                        ;
+                        ;                    
                 }
                 else
                     ;
-            }
+
+            return rangeRes;
         }
-
         /// <summary>
-        /// Функция нахождения реперных точек
-        /// с одним параметром
+        /// Уточнить диапазон соседних реперных (узловых) точек к указанному значению аргумента
         /// </summary>
-        /// <param name="colCount">кол-во аргументов</param>
-        protected virtual void funcWithOneArgs(string filter)
+        /// <param name="nameAlg">Наименование функции</param>
+        /// <param name="xValue">Значение аргумента</param>
+        /// <param name="fRunk">Ранг аргумента</param>
+        /// <param name="arNearby">Массив с реперными точками, требующий уточнения (приближение к значению)</param>
+        private void interpolation(string nameAlg, float xValue, FRUNK fRunk, ref RangePOINT rangeNearby, ListLIMIT listLimit)
         {
-            //searchMainMIN();
-        }
+            float x = -1F
+                , min = rangeNearby.Left.X(fRunk), max = rangeNearby.Right.X(fRunk);
 
-        /// <summary>
-        /// Фильтрация массива-функции
-        /// сравнение значений массива с найденными минимумами
-        /// </summary>
-        /// <param name="numArray">номер массива</param>
-        /// <param name="argMin">номер минимума</param>
-        /// <param name="elemArray">элемент массива</param>
-        private void filterArray(int numArray, int numMin, int elemArray)
-        {
-            int count = 0;
-
-            if (ArgMin[numMin].Count() > 3)
-            {
-
-            }
-
-            for (int i = 0; i < ValuesFunc[numArray].Length; i++)
-            {
-                if (ValuesFunc[numArray].ElementAt(i) == ArgMin[numArray].ElementAt(elemArray))
+            foreach (POINT pt in m_dictValues[nameAlg])
+                if ((listLimit.Count == 0)
+                    || ((listLimit.Count > 0)
+                        && (listLimit.ContansPoint(pt) == true)))
                 {
-                    count++;
+                    x = pt.X(fRunk);
 
-                    for (int j = 0; j < numArray; j++)
+                    if (((xValue - x) < (xValue - min))
+                        && (!((xValue - x) < 0))
+                        && (!(x == max)))
                     {
-                        //ValuesFunc[].SetValue(ValuesFunc[j].ElementAt(i),count); //???
+                        min = x;
+                        rangeNearby.Left = pt;
+
+                        continue;
                     }
+                    else
+                        ;
+
+                    if (((x - xValue) < (max - xValue))
+                        && (!((x - xValue) < 0))
+                        && (!(x == min)))
+                    {
+                        max = x;
+                        rangeNearby.Right = pt;
+                    }
+                    else
+                        ;                    
                 }
-            }
-            //??? либо замена массива, либо создание нового.
+                else
+                    ;
         }
-
         /// <summary>
-        /// вычисление конечного (return)
-        /// результата
+        /// Уточнить диапазон соседних реперных (узловых) точек к указанному значению аргумента
         /// </summary>
-        /// <param name="numArray">номер массива</param>
-        /// <param name="elemArray">элеент массива</param>
-        /// <returns></returns>
-        private double obtaingPointMain(int numArray, int elemArray, int t)
+        /// <param name="nameAlg">Наименование функции</param>
+        /// <param name="xValue">Значение аргумента</param>
+        /// <param name="fRunk">Ранг аргумента</param>
+        /// <param name="arNearby">Массив с реперными точками, требующий уточнения (приближение к значению)</param>
+        /// <param name="indxConstNearby">Граница диапазона, остающейся постоянной</param>
+        private void extrapolation(string nameAlg, float xValue, FRUNK fRunk, ref RangePOINT rangeNearby, INDEX_NEAR indxConstNearby, ListLIMIT listLimit)
         {
-            if (t < 1)
-                return (referencePoint - ArgMin[numArray].ElementAt(elemArray)) * (metka[numArray].ElementAt(elemArray + 1) - metka[numArray].ElementAt(elemArray)) /
-               (ArgMin[numArray].ElementAt(elemArray + 1) - ArgMin[numArray].ElementAt(elemArray)) + metka[numArray].ElementAt(elemArray);
-            else
-                return (referencePoint - ArgMin[numArray].ElementAt(elemArray)) * (FinalRezult[numArray].ElementAt(elemArray + 1) - FinalRezult[numArray].ElementAt(elemArray)) /
-                    ((ArgMin[numArray].ElementAt(elemArray + 1) - ArgMin[numArray].ElementAt(elemArray)) + FinalRezult[numArray].ElementAt(elemArray));
-            //(referencePoint - min1) * (metka2 - metka1) / (min2 - min1) + metka1;
-        }
+            float min = -1F, max = -1F
+                , x = -1F;
 
+            min = float.MaxValue; //rangeNearby.Left.X(fRunk);
+            max = float.MinValue; //rangeNearby.Right.X(fRunk);
+
+            foreach (POINT pt in m_dictValues[nameAlg])
+                if ((listLimit.Count == 0)
+                    || ((listLimit.Count > 0)
+                        && (listLimit.ContansPoint(pt) == true)))
+                {
+                    x = pt.X(fRunk);
+
+                    if (min == float.MaxValue)
+                    {
+                        min = x;
+                        rangeNearby.Left = pt;
+
+                        continue;
+                    }
+                    else
+                        ;
+
+                    if ((max == float.MinValue)
+                        && (!(min == x)))
+                    {
+                        max = x;
+                        rangeNearby.Right = pt;
+
+                        continue;
+                    }
+                    else
+                        ;
+
+                    if ((!(min == float.MaxValue))
+                        && (!(max == float.MinValue)))
+                        if ((Math.Abs(xValue - x) < Math.Abs(xValue - min))
+                            && (!(x == max)))
+                        {
+                            if ((xValue - min) < (xValue - max))
+                            {
+                                max = min;
+                                rangeNearby.Right = rangeNearby.Left;
+                            }
+                            else
+                                ;
+
+                            min = x;
+                            rangeNearby.Left = pt;
+                        }
+                        else
+                            ;
+                    else
+                        if ((Math.Abs(xValue - x) < Math.Abs(xValue - max))
+                            && (!(x == min)))
+                        {
+                            max = x;
+                            rangeNearby.Right = pt;
+                        }
+                        else
+                            ;
+                }
+                else
+                    ;
+        }
+        /// <summary>
+        /// Вычислить результирующее значение функции между 2-мя заданными точками
+        /// </summary>
+        /// <param name="x">Значение аргумента функции</param>
+        /// <param name="fRunk">Ранг (порядок) аргумента</param>
+        /// <param name="rangePt">Диапазон известных ближайших точек</param>
+        /// <returns>Значение функции в точке</returns>
+        private float calc(float x, FRUNK fRunk, RangePOINT rangePt)
+        {
+            float fRes = -1F;
+
+            fRes = calc(x, rangePt.Left.X(fRunk), rangePt.Left.f, rangePt.Right.X(fRunk), rangePt.Right.f);
+
+            return fRes;
+        }
+        /// <summary>
+        /// Вычислить результирующее значение функции между 2-мя заданными точками
+        /// </summary>
+        /// <param name="x">Значение аргумента функции</param>
+        /// <param name="xLeft">Значение аргумента известной ближайшей точки "слева"</param>
+        /// <param name="fLeft">Значение функции в известной ближайшей точке "слева"</param>
+        /// <param name="xRight">Значение аргумента известной ближайшей точки "справа"</param>
+        /// <param name="fRight">Значение функции в известной ближайшей точке "справа"</param>
+        /// <returns>Значение функции в точке</returns>
+        private float calc(float x, float xLeft, float fLeft, float xRight, float fRight)
+        {
+            float fRes = -1F;
+
+            fRes = (x - xLeft) * (fRight - fLeft) / (xRight - xLeft) + fLeft;
+
+            return fRes;
+        }
         /// <summary>
         /// Вычислить значения для функции
         ///  по заданным аргументам
@@ -514,133 +490,197 @@ namespace PluginPrjTepFTable
         ///  для трех - алгоритм недописан
         /// </summary>
         /// <param name="args">Аргументы для вычисления функции</param>
-        /// <returns></returns>
-        public double Calculate(string nameALG, params float[] args)
+        /// <returns>Значение функции по заданным аргументам</returns>
+        public float Calculate(string nameALG, FRUNK fRunkVar, params float[] args)
         {
-            double dblRes = -1F;
-            int boolExpress = 1; //
-            int Param = args.Count(); //переменная номера массива
-            m_nameAlg = nameALG; //имя фукнции
-            int elemArray = 0; //номер элеента в массиве
-            ArgMin = new float[args.Count()][]; //массив минимумов для всех трех столбцов
-            metka = new float[args.Count()][]; //
-            FinalRezult = new double[args.Count()][];
-            ValuesFunc = new float[Param][]; // массивы значений трех столбцов
+            m_nameAlg = nameALG;
+            FRUNK fRunk = _fRunk;
+            ////??? для универсализации расчета
+            //int iRunk = -1
+            //    , iPow = -1
+            //    , iRow =-1, iCol = -1;
+            List<RangePOINT[,]> listPointNearby = new List<RangePOINT[,]>((int)(fRunk + 1));
+            List<float [,]>listRes = new List<float[,]> ();
 
-            for (int i = 0; i < args.Count(); i++)
+            if ((fRunkVar > FRUNK.UNKNOWN) // ранг введенной переменной д.б. известен
+                && (! ((int)fRunkVar > args.Length)) // ранг введенной переменной д.б. не больше кол-ва аргументов
+                && (m_dictValues[nameALG].Count > 1)) // для вычислений требуется как минимум 2 точки
             {
-                referencePoint = args.ElementAt(Param - 1);
-                selectArgs(Param);
-                metka[i] = new float[Convert.ToInt32(Math.Pow(2, i + 1))];
-                ArgMin[i] = new float[Convert.ToInt32(Math.Pow(2, i + 1))];
+                ////??? попытка универсализации расчета
+                //for (iRunk = (int)FRUNK.F1; iRunk < ((int)fRunk + 1); iRunk++)
+                //{
+                //    iPow = (int)(fRunk - iRunk);
+                //    iRow = (int)(Math.Pow((fRunk == FRUNK.F1 ? 1F : (float)fRunk), iPow) / (iPow == 0 ? 1 : iPow));
+                //    iCol = iPow == 0 ? 1 : iPow;
+                //    listPointNearby.Insert(iRunk, new RangePOINT[iRow, iCol]);
+                //    listRes.Insert(iRunk, new float[iRow, iCol]);
+                //}                
+                //for (iRunk = (int)FRUNK.F1; iRunk < ((int)fRunk + 1); iRunk++)
+                //    for (int i = 0; i < listPointNearby[(int)iRunk].GetLength(0); i++)
+                //        for (int j = 0; j < listPointNearby[(int)iRunk].GetLength(1); j++)
+                //            ;
 
-                for (int j = 0; j < boolExpress; j++)
+                switch (fRunk)
                 {
-                    searchMainMIN(i, Param - 1, elemArray);
-                    rangeOfValues(Param - 1, i, elemArray);
-                   elemArray = elemArray+2;
+                    case FRUNK.F1:
+                        //??? не универсальное добавление элементов
+                        listPointNearby.Insert((int)FRUNK.F1, new RangePOINT[1, 1]);
+                        listRes.Insert((int)FRUNK.F1, new float[1, 1]);
+                        // получить ближайшие реперные (узловые) точки
+                        listPointNearby[(int)FRUNK.F1][0, 0] = getNearby(nameALG, args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , new ListLIMIT());
+                        // вычисление промежуточных значений ... - нет
+                        // вычисление рез-та
+                        listRes[(int)fRunk][0, 0] = calc(args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , listPointNearby[(int)FRUNK.F1][(int)FRUNK.F1, (int)FRUNK.F1])
+                            //-1F по умолчанию
+                            ;
+                        break;
+                    case FRUNK.F2:
+                        //??? не универсальное добавление элементов
+                        listPointNearby.Insert((int)FRUNK.F1, new RangePOINT[2, 1]);
+                        listRes.Insert((int)FRUNK.F1, new float[2, 1]);
+                        listPointNearby.Insert((int)FRUNK.F2, new RangePOINT[1, 1]);
+                        listRes.Insert((int)FRUNK.F2, new float[1, 1]);
+                        // получить ближайшие реперные (узловые) точки
+                        listPointNearby[(int)FRUNK.F2][0, 0] = getNearby(nameALG, args[(int)FRUNK.F2]
+                            , FRUNK.F2
+                            , new ListLIMIT());
+                        listPointNearby[(int)FRUNK.F1][0, 0] = getNearby(nameALG, args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , new ListLIMIT()
+                                {
+                                    new LIMIT () { fRunk = FRUNK.F2, x = listPointNearby[(int)FRUNK.F2][0, 0].Left.a2 }
+                                }
+                            );
+                        listPointNearby[(int)FRUNK.F1][1, 0] = getNearby(nameALG, args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , new ListLIMIT()
+                                {
+                                    new LIMIT() { fRunk = FRUNK.F2, x = listPointNearby[(int)FRUNK.F2][0, 0].Right.a2 }
+                                }
+                            );
+                        // вычисление промежуточных значений
+                        // 1-ый ранг
+                        listRes[(int)FRUNK.F1][0, 0] = calc (args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , listPointNearby[(int)FRUNK.F1][0, 0]);
+                        listRes[(int)FRUNK.F1][1, 0] = calc(args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , listPointNearby[(int)FRUNK.F1][1, 0]);
+                        // вычисление рез-та
+                        listRes[(int)fRunk][0, 0] = calc(args[(int)FRUNK.F2]
+                            , listPointNearby[(int)FRUNK.F2][0, 0].Left.X(FRUNK.F2)
+                            , listRes[(int)FRUNK.F1][0, 0]
+                            , listPointNearby[(int)FRUNK.F2][0, 0].Right.X(FRUNK.F2)
+                            , listRes[(int)FRUNK.F1][1, 0])
+                            //-1F по умолчанию
+                            ;
+                        break;
+                    case FRUNK.F3:
+                        //??? не универсальное добавление элементов
+                        listPointNearby.Insert((int)FRUNK.F1, new RangePOINT[2, 2]);
+                        listRes.Insert((int)FRUNK.F1, new float[2, 2]);
+                        listPointNearby.Insert((int)FRUNK.F2, new RangePOINT[2, 1]);
+                        listRes.Insert((int)FRUNK.F2, new float[2, 1]);
+                        listPointNearby.Insert((int)FRUNK.F3, new RangePOINT[2, 1]);
+                        listRes.Insert((int)FRUNK.F3, new float[1, 1]);
+                        // получить ближайшие реперные (узловые) точки
+                        listPointNearby[(int)FRUNK.F3][0, 0] = getNearby(nameALG, args[(int)FRUNK.F3]
+                            , FRUNK.F3
+                            , new ListLIMIT());
+                        listPointNearby[(int)FRUNK.F2][0, 0] = getNearby(nameALG, args[(int)FRUNK.F2]
+                            , FRUNK.F2
+                            , new ListLIMIT()
+                                {
+                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Left.a3 }
+                                }
+                            );
+                        listPointNearby[(int)FRUNK.F2][1, 0] = getNearby(nameALG, args[(int)FRUNK.F2]
+                            , FRUNK.F2
+                            , new ListLIMIT()
+                                {
+                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Right.a3 }
+                                }
+                            );
+                        listPointNearby[(int)FRUNK.F1][0, 0] = getNearby(nameALG, args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , new ListLIMIT()
+                                {
+                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Right.a3 }
+                                    , new LIMIT() { fRunk = FRUNK.F2, x = listPointNearby[(int)FRUNK.F2][0, 0].Left.a2 }
+                                }
+                            );
+                        listPointNearby[(int)FRUNK.F1][1, 0] = getNearby(nameALG, args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , new ListLIMIT()
+                                {
+                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Right.a3 }
+                                    , new LIMIT() { fRunk = FRUNK.F2, x = listPointNearby[(int)FRUNK.F2][0, 0].Right.a2 }
+                                }
+                            );
+                        listPointNearby[(int)FRUNK.F1][0, 1] = getNearby(nameALG, args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , new ListLIMIT()
+                                {
+                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Left.a3 }
+                                    , new LIMIT() { fRunk = FRUNK.F2, x = listPointNearby[(int)FRUNK.F2][1, 0].Left.a2 }
+                                }
+                            );
+                        listPointNearby[(int)FRUNK.F1][1, 1] = getNearby(nameALG, args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , new ListLIMIT()
+                                {
+                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Left.a3 }
+                                    , new LIMIT() { fRunk = FRUNK.F2, x = listPointNearby[(int)FRUNK.F2][1, 0].Right.a2 }
+                                }
+                            );
+                        // вычисление промежуточных значений
+                        // 1-ый ранг
+                        listRes[(int)FRUNK.F1][0, 0] = calc(args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , listPointNearby[(int)FRUNK.F1][0, 0]);
+                        listRes[(int)FRUNK.F1][1, 0] = calc(args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , listPointNearby[(int)FRUNK.F1][1, 0]);
+                        listRes[(int)FRUNK.F1][0, 1] = calc(args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , listPointNearby[(int)FRUNK.F1][0, 1]);
+                        listRes[(int)FRUNK.F1][1, 1] = calc(args[(int)FRUNK.F1]
+                            , FRUNK.F1
+                            , listPointNearby[(int)FRUNK.F1][1, 1]);
+                        // 2-ой ранг
+                        listRes[(int)FRUNK.F2][0, 0] = calc(args[(int)FRUNK.F2]
+                            , listPointNearby[(int)FRUNK.F2][0, 0].Left.X(FRUNK.F2)
+                            , listRes[(int)FRUNK.F1][0, 0]
+                            , listPointNearby[(int)FRUNK.F2][0, 0].Right.X(FRUNK.F2)
+                            , listRes[(int)FRUNK.F1][1, 0]);
+                        listRes[(int)FRUNK.F2][1, 0] = calc(args[(int)FRUNK.F2]
+                            , listPointNearby[(int)FRUNK.F2][1, 0].Left.X(FRUNK.F2)
+                            , listRes[(int)FRUNK.F1][0, 1]
+                            , listPointNearby[(int)FRUNK.F2][1, 0].Right.X(FRUNK.F2)
+                            , listRes[(int)FRUNK.F1][1, 1]);
+                        // вычисление рез-та
+                        listRes[(int)fRunk][0, 0] = calc(args[(int)FRUNK.F3]
+                            , listPointNearby[(int)FRUNK.F3][0, 0].Left.X(FRUNK.F3)
+                            , listRes[(int)FRUNK.F2][0, 0]
+                            , listPointNearby[(int)FRUNK.F3][0, 0].Right.X(FRUNK.F3)
+                            , listRes[(int)FRUNK.F2][1, 0])
+                            //-1F по умолчанию
+                            ;
+                        break;
+                    default:
+                        break;
                 }
-
-                //filterArray(Param-1,i);
-                boolExpress = Convert.ToInt32(Math.Pow(2, i + 1));
-                Param--;
-                elemArray = 0;
             }
+            else
+                ;
 
-            elemArray = 0;
-            Param = args.Count();
+            m_nameAlg = string.Empty;
 
-            for (int t = 0; t < args.Count(); t++)
-            {
-                boolExpress = Convert.ToInt32(Math.Pow(2, Param - 1));
-                referencePoint = args.ElementAt(t);
-                FinalRezult[t] = new double[boolExpress];
-
-                for (int i = 0; i < boolExpress; i++)
-                {
-                    FinalRezult[t].SetValue(obtaingPointMain(Param - 1, elemArray, t), i);
-                    elemArray = elemArray + 2;
-                }
-
-                elemArray = 0;
-                Param--;
-                dblRes = FinalRezult[t].ElementAt(0);
-            }
-
-            return dblRes;
-        }
-
-        /// <summary>
-        /// Заполнение массива данными столбца
-        /// </summary>
-        /// <param name="num">номер массива</param>
-        /// <returns></returns>
-        private float[][] getValuesA1(int num)
-        {
-            ValuesFunc[num - 1] = new float[m_dictValues[m_nameAlg].Count()];
-
-            for (int i = 0; i < m_dictValues[m_nameAlg].Count(); i++)
-            {
-                ValuesFunc[num - 1].SetValue(m_dictValues[m_nameAlg][i].a1, i);
-            }
-
-            return ValuesFunc;
-        }
-
-        /// <summary>
-        /// Заполнение массива данными столбца
-        /// </summary>
-        /// <param name="num">номер массива</param>
-        /// <returns></returns>
-        private float[][] getValuesA2(int num)
-        {
-            ValuesFunc[num - 1] = new float[m_dictValues[m_nameAlg].Count()];
-
-            for (int i = 0; i < m_dictValues[m_nameAlg].Count(); i++)
-            {
-                ValuesFunc[num - 1].SetValue(m_dictValues[m_nameAlg][i].a2, i);
-            }
-
-            return ValuesFunc;
-        }
-
-        /// <summary>
-        /// Заполнение массива данными столбца
-        /// </summary>
-        /// <param name="num">номер массива</param>
-        /// <returns></returns>
-        private float[][] getValuesA3(int num)
-        {
-            ValuesFunc[num - 1] = new float[m_dictValues[m_nameAlg].Count()];
-
-            for (int i = 0; i < m_dictValues[m_nameAlg].Count(); i++)
-            {
-                ValuesFunc[num - 1].SetValue(Convert.ToInt32(m_dictValues[m_nameAlg][i].a3), i);
-            }
-
-            return ValuesFunc;
-        }
-
-        /// <summary>
-        /// Проверка кол-ва парметров (для калькулятора)
-        /// </summary>
-        /// <param name="runk">кол-во парамтеров</param>
-        private void selectArgs(int runk)
-        {
-            switch (runk)
-            {
-                case 1:
-                    getValuesA1(runk);
-                    break;
-
-                case 2:
-                    getValuesA2(runk);
-                    break;
-
-                case 3:
-                    getValuesA3(runk);
-                    break;
-            }
-        }
+            return listRes[(int)fRunk][0, 0];
+        }        
     }
 }

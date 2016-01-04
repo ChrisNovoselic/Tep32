@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.ComponentModel;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,13 +18,12 @@ namespace PluginPrjTepFTable
         /// <summary>
         /// Набор цветов для гарфиков
         /// </summary>
-        protected static Color[] m_colorLine = { Color.Red, Color.Green, Color.Blue, Color.Navy, Color.Teal,
+        protected static Color[] s_colorLineItem = { Color.Red, Color.Green, Color.Blue, Color.Navy, Color.Teal,
                                                  Color.Black,  Color.PeachPuff, Color.MediumVioletRed,
                                                  Color.SandyBrown, Color.ForestGreen, Color.DarkGreen,
                                                  Color.BlueViolet, Color.Plum, Color.YellowGreen,
                                                  Color.Moccasin, Color.DarkTurquoise,Color.Maroon};
         public ZedGraphControl m_This;
-
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
@@ -36,7 +36,6 @@ namespace PluginPrjTepFTable
         }
 
         PointPairList []pointList;
-
         /// <summary>
         /// Инициализация собственных компонентов элемента управления
         /// </summary>
@@ -75,318 +74,224 @@ namespace PluginPrjTepFTable
             m_This.IsEnableVPan = false;
             m_This.IsEnableVZoom = false;
             m_This.IsShowPointValues = true;
-        }
 
-        /// <summary>
-        /// Отображение графика функции
-        /// по аргументу
-        /// </summary>
-        /// <param name="listP">набор координат</param>
-        public void Draw(PointPairList listP, string nameAlg, double referencePoint)
-        {
-            GraphPane pane = new GraphPane();
-            // Очистим список кривых на тот случай, если до этого сигналы уже были нарисованы
-            pane.CurveList.Clear();
-
-            LineItem m_LineItemCure = pane.AddCurve("NAME FUNC" + referencePoint + "", listP, Color.Black, SymbolType.VDash);
-            m_LineItemCure.Label.Text = "" + nameAlg + "";
-
-            // Устанавливаем интересующий нас интервал по оси X
+            GraphPane pane = m_This.GraphPane;
+            //По оси X установим автоматический подбор масштаба
             pane.XAxis.Scale.MinAuto = true;
             pane.XAxis.Scale.MaxAuto = true;
-
-            // По оси Y установим автоматический подбор масштаба
+            //По оси Y установим автоматический подбор масштаба
             pane.YAxis.Scale.MinAuto = true;
             pane.YAxis.Scale.MaxAuto = true;
             // !!!
-            // Устанавливаем интересующий нас интервал по оси Y
-            //pane.YAxis.Scale.Min = metka1;
-            // pane.YAxis.Scale.Max = metka2;
-            pane.YAxis.MajorGrid.IsZeroLine = false;
-            // Вызываем метод AxisChange (), чтобы обновить данные об осях. 
-            // В противном случае на рисунке будет показана только часть графика, 
-            // которая умещается в интервалы по осям, установленные по умолчанию
+            pane.YAxis.MajorGrid.IsZeroLine = true;
+
+            // Включаем отображение сетки напротив крупных рисок по оси X
+            pane.XAxis.MajorGrid.IsVisible = true;
+            // Задаем вид пунктирной линии для крупных рисок по оси X:
+            // Длина штрихов равна 10 пикселям, ... 
+            pane.XAxis.MajorGrid.DashOn = 10;
+            // затем 5 пикселей - пропуск
+            pane.XAxis.MajorGrid.DashOff = 5;
+            // толщина линий
+            pane.XAxis.MajorGrid.PenWidth = 0.1F;
+            pane.XAxis.MajorGrid.Color = Color.LightGray;
+            // Включаем отображение сетки напротив мелких рисок по оси X
+            pane.XAxis.MinorGrid.IsVisible = true;
+            // Длина штрихов равна одному пикселю, ... 
+            pane.XAxis.MinorGrid.DashOn = 1;
+            pane.XAxis.MinorGrid.DashOff = 2;
+            // толщина линий
+            pane.XAxis.MinorGrid.PenWidth = 0.1F;
+            pane.XAxis.MinorGrid.Color = Color.LightGray;
+
+            // Включаем отображение сетки напротив крупных рисок по оси Y
+            pane.YAxis.MajorGrid.IsVisible = true;
+            // Аналогично задаем вид пунктирной линии для крупных рисок по оси Y
+            pane.YAxis.MajorGrid.DashOn = 10;
+            pane.YAxis.MajorGrid.DashOff = 5;
+            // толщина линий
+            pane.YAxis.MajorGrid.PenWidth = 0.1F;
+            pane.YAxis.MajorGrid.Color = Color.LightGray;
+            // Включаем отображение сетки напротив мелких рисок по оси Y
+            pane.YAxis.MinorGrid.IsVisible = true;
+            // Длина штрихов равна одному пикселю, ... 
+            pane.YAxis.MinorGrid.DashOn = 1;
+            pane.YAxis.MinorGrid.DashOff = 2;
+            // толщина линий
+            pane.YAxis.MinorGrid.PenWidth = 0.1F;
+            pane.YAxis.MinorGrid.Color = Color.LightGray;
+        }
+        /// <summary>
+        /// Класс для отображения одной линии
+        /// </summary>
+        private class PointPairList : ZedGraph.PointPairList
+        {
+            /// <summary>
+            /// Ключ для линии
+            /// </summary>
+            private POINT key;
+            /// <summary>
+            /// Ранг (порядок) линии
+            /// </summary>
+            private FRUNK fRunk;
+            /// <summary>
+            /// Конструктор - основной
+            /// </summary>
+            /// <param name="key">Ключ для линии</param>
+            /// <param name="fRunk">Ранг (порядок) линии</param>
+            public PointPairList(POINT key, FRUNK fRunk)
+            {
+                this.key = key;
+                this.fRunk = fRunk;
+            }
+            /// <summary>
+            /// Возвратить признак принадлежности точки к линии по ключу
+            /// </summary>
+            /// <param name="pt">Точка для проверки принадлежности к линии</param>
+            /// <returns>Признак принадлежности</returns>
+            public bool ContainsKey(POINT pt)
+            {
+                bool bRes = false;
+                //Сравнить ключ и значения аргументов точки
+                switch (fRunk)
+                {
+                    case FRUNK.F1:
+                        bRes = true;
+                        break;
+                    case FRUNK.F2:
+                        bRes = pt.a2 == key.a2;
+                        break;
+                    case FRUNK.F3:
+                        bRes = (pt.a2 == key.a2) && (pt.a3 == key.a3);
+                        break;
+                    default:
+                        break;
+                }
+
+                return bRes;
+            }
+            /// <summary>
+            /// Возвратить подпись к линии
+            /// </summary>
+            /// <returns>Подпись для линии</returns>
+            public string GetLabel()
+            {
+                string strRes = string.Empty;
+
+                switch (fRunk)
+                {
+                    case FRUNK.F1:
+                        break;
+                    case FRUNK.F2:
+                        strRes = @"(" + key.a2.ToString (@"F1") + @")";
+                        break;
+                    case FRUNK.F3:
+                        strRes = @"(" + key.a2.ToString(@"F1", CultureInfo.InvariantCulture) + @";"
+                            + key.a3.ToString(@"F1", CultureInfo.InvariantCulture) + @")";
+                        break;
+                    default:
+                        break;
+                }
+
+                return strRes;
+            }
+        }
+        /// <summary>
+        /// Возвратить все аргументы функции для указанного ранга
+        /// </summary>
+        /// <param name="nameAlg">Наименование функции</param>
+        /// <returns>Массив аргументов функции</returns>
+        private List<PointPairList> getPointPairListValues(string nameAlg)
+        {
+            FRUNK fRunk = m_dictValues[nameAlg].Runk;
+            List<PointPairList> listRes = new List<PointPairList> ();
+            PointPairList item = null;
+            bool bNewItem = false;
+
+            foreach (POINT pt in m_dictValues[nameAlg])
+            {
+                bNewItem = true;
+
+                if (listRes.Count == 0)
+                    ;
+                else
+                    foreach (PointPairList ppl in listRes)
+                        if (ppl.ContainsKey(pt) == true)
+                        {
+                            item = ppl;
+                            bNewItem = false;
+                        }
+                        else
+                            ;
+
+                if (bNewItem == true)
+                {
+                    item = new PointPairList(pt, fRunk);
+                    listRes.Add(item);
+                }
+                else
+                    ;
+
+                if (!(item == null))
+                    item.Add(new PointPair(pt.X(FRUNK.F1), pt.f));
+                else
+                    ;
+            }
+
+            return listRes;
+        }
+        /// <summary>
+        /// Добавить все линии
+        /// </summary>
+        /// <param name="pane">Панль для отображения</param>
+        /// <param name="nameAlg">Наименование функции</param>
+        private void addCurves(GraphPane pane, string nameAlg)
+        {
+            List<PointPairList> listPointPairList = getPointPairListValues (nameAlg);
+            LineItem lineItemCurve;
+            Color clrLineItemCurve;
+            string labelItemCurve = string.Empty;
+
+            foreach (PointPairList item in listPointPairList)
+            {
+                labelItemCurve = item.GetLabel ();
+                if (labelItemCurve.Equals(string.Empty) == true)
+                    labelItemCurve = nameAlg;
+                else
+                    ;
+
+                clrLineItemCurve = s_colorLineItem[listPointPairList.IndexOf(item) % (s_colorLineItem.Length)];
+                lineItemCurve = pane.AddCurve(labelItemCurve, item, clrLineItemCurve, SymbolType.VDash);
+            }
+        }
+        /// <summary>
+        /// Отображение графика функции
+        ///  по аргументу
+        /// </summary>
+        /// <param name="listP">набор координат</param>
+        public void Draw(string nameAlg)
+        {
+            GraphPane pane = m_This.GraphPane;
+            //Очистим список кривых на тот случай, если до этого сигналы уже были нарисованы
+            pane.CurveList.Clear();
+
+            addCurves(pane, nameAlg);
+
+            pane.Title.Text = nameAlg;
+
+            //Вызываем метод AxisChange (), чтобы обновить данные об осях. 
+            // в противном случае на рисунке будет показана только часть графика
+            // , которая умещается в интервалы по осям, установленные по умолчанию
             pane.AxisChange();
             m_This.AxisChange();
 
-            // !!! Установим значение параметра IsBoundedRanges как true.
-            // !!! Это означает, что при автоматическом подборе масштаба 
-            // !!! нужно учитывать только видимый интервал графика
+            //!!! Установим значение параметра IsBoundedRanges как true.
+            //!!!  это означает, что при автоматическом подборе масштаба 
+            //!!!  нужно учитывать только видимый интервал графика
             pane.IsBoundedRanges = true;
-            // Обновляем график
+            //Обновляем график
             m_This.Invalidate();
             m_This.Refresh();
-        }
-
-        /// <summary>
-        /// Формированре масива 
-        /// значений для графика функции
-        /// по статичной переменной
-        /// </summary>
-        /// <param name="nameCol">кол-во переменных</param>
-        /// <param name="row">номер строки</param>
-        private void formingArrayValues(string strQuery)
-        {
-            //DataRow[] ftTableF = m_tblEdit.Select(strQuery.Replace(",", "."));
-
-            //PointPairList points = new PointPairList();
-
-            //for (int i = 0; i < ftTableF.Length; i++)
-            //{
-            //    points.Add(Convert.ToDouble(ftTableF[i]["A1"]), Convert.ToDouble(ftTableF[i]["F"]));
-            //}
-
-            //drawGraph(points);
-        }
-
-        /// <summary>
-        /// Формированре масива 
-        /// значений для графика функции
-        /// для всех значений
-        /// </summary>
-        /// <param name="nameCol">имя столбца</param>
-        private void sampleValues(string nameCol)
-        {
-            string strQuery = string.Empty;
-            int countList = -1;
-            string elem;
-            ////??? без таблицы, использовать m_dictValues
-            //var enValues = (from r in m_tblEdit.AsEnumerable()
-            //                where r.Field<string>("N_ALG") == m_nameAlg
-            //                select new
-            //                {
-            //                    nameCol = r.Field<float>(nameCol),
-            //                }).Distinct();
-
-            if (!(nameCol == "A3"))
-            {                
-                //countList = enValues.Count();
-                //pointList = new PointPairList[countList];                
-
-                //for (int i = 0; i < enValues.Count(); i++)
-                //{
-
-                //    elem = enValues.ElementAt(i).nameCol.ToString().Replace(",", ".");
-                //    strQuery = " N_ALG = " + "'" + m_nameAlg + "'and " + nameCol + " = " + elem + "";
-
-                //    ftTableF = m_tblEdit.Select(strQuery);
-
-                //    createPointLists(i, ftTableF);
-                //}
-            }
-            else
-            {
-                //var enValuesA2 = (from r in m_tblEdit.AsEnumerable()
-                //                  where r.Field<string>("N_ALG") == m_nameAlg
-                //                  select new
-                //                  {
-                //                      nameCol = r.Field<float>("A2"),
-
-                //                  }).Distinct();
-
-                //countList = enValues.Count() * enValuesA2.Count();
-
-                pointList = new PointPairList[countList];
-                int num = 0;
-                string m_ftValue = DataGridViewAutoFilterColumnHeaderCell.FilterValue();
-
-                elem = m_ftValue.ToString().Replace(",", ".");
-
-                //for (int i = 0; i < enValuesA2.Count(); i++)
-                //{
-                //    strQuery = " N_ALG = " + "'" + m_nameAlg + "' and " + nameCol + " = " + elem + " and A2= " + enValuesA2.ElementAt(i).nameCol.ToString().Replace(",", ".") + "";
-                //    //??? без таблицы, использовать m_dictValues
-                //    //ftTableF = m_tblEdit.Select(strQuery);
-
-                //    //if (!(ftTableF.Count() == 0))
-                //    //{
-                //    //    createPointLists(num, ftTableF);
-                //    //    num++;
-                //    //}
-                //    //else
-                //    //    ;
-                //}
-            }
-
-            createGraphs();
-        }
-
-        /// <summary>
-        /// Функция нахождения реперных точек
-        /// с одним параметром
-        /// </summary>
-        /// <param name="colCount">кол-во аргументов</param>
-        protected override void funcWithOneArgs(string nameCol)
-        {
-            //formingArrayValues(filter);
-        }
-
-        /// <summary>
-        /// Функция нахождения реперных точек
-        /// с двумя параметрами
-        /// </summary>
-        /// <param name="nameCol"></param>
-        /// <param name="filter"></param>
-        protected void funcWithTwoArgs(string filter)
-        {
-            formingArrayValues(filter);
-        }
-
-        /// <summary>
-        /// Функция нахождения реперных точек
-        /// с тремя парметрами
-        /// </summary>
-        /// <param name="filter"></param>
-        protected void funcWithThreeArgs(string filter)
-        {
-            formingArrayValues(filter);
-        }
-
-        /// <summary>
-        /// Создание наборов точек
-        /// </summary>
-        /// <param name="i">номер листа</param>
-        /// <param name="array">массив с точками</param>
-        private void createPointLists(int i, ListPOINT array)
-        {
-            if (pointList[i] == null)
-                pointList[i] = new PointPairList();
-            else
-                ;
-
-            for (int j = 0; j < array.Count(); j++)
-            {
-                //Заполняем список точками          
-                pointList[i].Add(array[i].a1, array[i].f);
-            }
-        }
-
-        /// <summary>
-        /// Проверка на кол-во аргументов функции(отображение графиков)
-        /// </summary>
-        /// <param name="iRow">номер строки - имя функции</param>
-        public void CheckAmountArg(int iRow)
-        {
-            int indx = m_nameAlg.IndexOf(":");
-            string nameColumn = "A" + m_nameAlg[indx + 1].ToString();
-            string filter = "N_ALG = '" + m_nameAlg + "'";
-
-            switch (nameColumn)
-            {
-                case "A1":
-                    condition = true;
-                    //funcWithOneArgs(nameColumn);
-                    break;
-                case "A2":
-                    condition = true;
-                    funcWithTwoArgs(getQueryToGraphic(iRow));
-                    break;
-                case "A3":
-                    condition = true;
-                    funcWithThreeArgs(getQueryToGraphic(iRow));
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Формирование строки запроса данных
-        /// для построения графика
-        /// </summary>
-        /// <param name="row">номер строки</param>
-        /// <returns>строка запроса к таблице</returns>
-        private string getQueryToGraphic(int row)
-        {
-            int indx = m_nameAlg.IndexOf(":");
-            string nameColumn = "A" + m_nameAlg[indx + 1].ToString();
-            string filter = "N_ALG = '" + m_nameAlg + "'";
-            string searchValn = 
-                //((DataGridView)Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true)[0]).Rows[row].Cells[nameColumn].Value.ToString()
-                string.Empty;
-            string searchVal2 = string.Empty;
-
-            if (nameColumn == "A3")
-                searchVal2 =
-                    //((DataGridView)Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true)[0]).Rows[row].Cells["A2"].Value.ToString()
-                    string.Empty
-                    ;
-            else
-                ;
-
-            if (nameColumn == "A2")
-            {
-                filter += " and " + nameColumn + " = " + searchValn.Replace(",", ".") + "";
-            }
-            else
-            {
-                filter += " and " + nameColumn + " = " + searchValn.Replace(",", ".") + " and A2 =" + searchVal2.Replace(",", ".") + "";
-            }
-
-            return filter;
-        }
-
-        /// <summary>
-        /// Создание графика на основе всех точек
-        /// </summary>
-        /// <param name="countListPoint">кол-во графиков</param>
-        private void createGraphs()
-        {
-            LineItem[] myCurves = new LineItem[pointList.Count()];
-
-            for (int i = 0; i < pointList.Count(); i++)
-            {
-                if (!(pointList[i] == null))
-                {
-                    myCurves[i] = new LineItem("" + i + "");
-                    myCurves[i] = m_This.GraphPane.AddCurve("NAME FUNC", pointList[i], m_colorLine.ElementAt(i), SymbolType.VDash);
-                    myCurves[i].Label.Text = "" + m_nameAlg + "";
-                }
-            }
-
-            m_This.GraphPane.XAxis.Scale.MinAuto = true;
-            m_This.GraphPane.XAxis.Scale.MaxAuto = true;
-
-            // По оси Y установим автоматический подбор масштаба
-            m_This.GraphPane.YAxis.Scale.MinAuto = true;
-            m_This.GraphPane.YAxis.Scale.MaxAuto = true;
-
-            m_This.GraphPane.YAxis.MajorGrid.IsZeroLine = false;
-            // !!!
-            // Устанавливаем интересующий нас интервал по оси Y
-            //pane.YAxis.Scale.Min = metka1;
-            // pane.YAxis.Scale.Max = metka2;
-
-            // Вызываем метод AxisChange (), чтобы обновить данные об осях. 
-            // В противном случае на рисунке будет показана только часть графика, 
-            // которая умещается в интервалы по осям, установленные по умолчанию
-            m_This.GraphPane.AxisChange();
-            m_This.AxisChange();
-
-            // !!! Установим значение параметра IsBoundedRanges как true.
-            // !!! Это означает, что при автоматическом подборе масштаба 
-            // !!! нужно учитывать только видимый интервал графика
-            m_This.GraphPane.IsBoundedRanges = true;
-            // Обновляем график
-            m_This.Invalidate();
-            m_This.Refresh();
-        }
-
-        /// <summary>
-        /// Формирование списка точек
-        /// </summary>
-        /// <param name="querry">запрос на выборку данных</param>
-        /// <returns></returns>
-        private PointPairList FillPointList(string where)
-        {
-            //DataRow[] ftTableF = m_tblEdit.Select(where);
-
-            PointPairList pointlist = new PointPairList();
-
-            //for (int i = 0; i < ftTableF.Length; i++)
-            //    pointlist.Add(Convert.ToDouble(ftTableF[i]["A1"]), Convert.ToDouble(ftTableF[i]["F"]));
-
-            return pointlist;
         }
     }
 }
