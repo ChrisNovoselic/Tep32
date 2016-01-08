@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Define.cs" />
+    <Compile Include="FTable.cs" />
     <Compile Include="HandlerDbTepTaskValues.cs">
       <SubType>Component</SubType>
     </Compile>

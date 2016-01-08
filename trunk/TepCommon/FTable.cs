@@ -91,6 +91,11 @@ namespace PluginPrjTepFTable
         {
             public FRUNK fRunk;
             public float x;
+            ///// <summary>
+            ///// Признак возмлжности использования точки
+            /////  при выполнении условия равенства значения аргумента в указанном ранге
+            ///// </summary>
+            //public bool allowed;
         }
         /// <summary>
         /// Класс для хранения списка всех значений одной функции
@@ -172,18 +177,28 @@ namespace PluginPrjTepFTable
         /// </summary>
         private class ListLIMIT : List<LIMIT>
         {
-            public bool ContansPoint(POINT pt)
+            public bool IsAllowedPoint(POINT pt)
             {
                 bool bRes = false;
+                int iCnt = -1;
 
-                foreach (LIMIT lim in this)
-                    if (pt.X(lim.fRunk) == lim.x)
-                    {
-                        bRes = true;
-                        break;
-                    }
-                    else
-                        ;
+                if (Count > 0)
+                {
+                    iCnt = 0;
+                    //??? только если точка удовлетворяет всем заданным условиям
+                    foreach (LIMIT lim in this)
+                        if (pt.X(lim.fRunk) == lim.x)
+                        {
+                            bRes = true;
+                            iCnt++;
+                        }
+                        else
+                            ;
+                    //??? не реализована возможность набора условий с предложением ИЛИ
+                    bRes = iCnt == Count;
+                }
+                else
+                    bRes = true;
 
                 return bRes;
             }
@@ -304,9 +319,7 @@ namespace PluginPrjTepFTable
                 , min = float.MaxValue, max = float.MinValue;
 
             foreach (POINT pt in m_dictValues[nameAlg])
-                if ((listLimit.Count == 0)
-                    || ((listLimit.Count > 0)
-                        && (listLimit.ContansPoint(pt) == true)))
+                if (listLimit.IsAllowedPoint(pt) == true)
                 {
                     x = pt.X(fRunk);
 
@@ -344,9 +357,7 @@ namespace PluginPrjTepFTable
                 , min = rangeNearby.Left.X(fRunk), max = rangeNearby.Right.X(fRunk);
 
             foreach (POINT pt in m_dictValues[nameAlg])
-                if ((listLimit.Count == 0)
-                    || ((listLimit.Count > 0)
-                        && (listLimit.ContansPoint(pt) == true)))
+                if (listLimit.IsAllowedPoint(pt) == true)
                 {
                     x = pt.X(fRunk);
 
@@ -392,9 +403,7 @@ namespace PluginPrjTepFTable
             max = float.MinValue; //rangeNearby.Right.X(fRunk);
 
             foreach (POINT pt in m_dictValues[nameAlg])
-                if ((listLimit.Count == 0)
-                    || ((listLimit.Count > 0)
-                        && (listLimit.ContansPoint(pt) == true)))
+                if (listLimit.IsAllowedPoint(pt) == true)
                 {
                     x = pt.X(fRunk);
 
@@ -585,7 +594,7 @@ namespace PluginPrjTepFTable
                         listRes.Insert((int)FRUNK.F1, new float[2, 2]);
                         listPointNearby.Insert((int)FRUNK.F2, new RangePOINT[2, 1]);
                         listRes.Insert((int)FRUNK.F2, new float[2, 1]);
-                        listPointNearby.Insert((int)FRUNK.F3, new RangePOINT[2, 1]);
+                        listPointNearby.Insert((int)FRUNK.F3, new RangePOINT[1, 1]);
                         listRes.Insert((int)FRUNK.F3, new float[1, 1]);
                         // получить ближайшие реперные (узловые) точки
                         listPointNearby[(int)FRUNK.F3][0, 0] = getNearby(nameALG, args[(int)FRUNK.F3]
@@ -609,7 +618,7 @@ namespace PluginPrjTepFTable
                             , FRUNK.F1
                             , new ListLIMIT()
                                 {
-                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Right.a3 }
+                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Left.a3 }
                                     , new LIMIT() { fRunk = FRUNK.F2, x = listPointNearby[(int)FRUNK.F2][0, 0].Left.a2 }
                                 }
                             );
@@ -617,7 +626,7 @@ namespace PluginPrjTepFTable
                             , FRUNK.F1
                             , new ListLIMIT()
                                 {
-                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Right.a3 }
+                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Left.a3 }
                                     , new LIMIT() { fRunk = FRUNK.F2, x = listPointNearby[(int)FRUNK.F2][0, 0].Right.a2 }
                                 }
                             );
@@ -625,7 +634,7 @@ namespace PluginPrjTepFTable
                             , FRUNK.F1
                             , new ListLIMIT()
                                 {
-                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Left.a3 }
+                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Right.a3 }
                                     , new LIMIT() { fRunk = FRUNK.F2, x = listPointNearby[(int)FRUNK.F2][1, 0].Left.a2 }
                                 }
                             );
@@ -633,7 +642,7 @@ namespace PluginPrjTepFTable
                             , FRUNK.F1
                             , new ListLIMIT()
                                 {
-                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Left.a3 }
+                                    new LIMIT() { fRunk = FRUNK.F3, x = listPointNearby[(int)FRUNK.F3][0, 0].Right.a3 }
                                     , new LIMIT() { fRunk = FRUNK.F2, x = listPointNearby[(int)FRUNK.F2][1, 0].Right.a2 }
                                 }
                             );

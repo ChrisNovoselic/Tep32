@@ -30,12 +30,14 @@ namespace PluginPrjTepFTable
         /// </summary>
         protected enum INDEX_CONTROL
         {
-            BUTTON_ADD, BUTTON_DELETE,
-            BUTTON_SAVE, BUTTON_UPDATE,
-            DGV_NALG, DGV_VALUES,
-            LABEL_DESC, INDEX_CONTROL_COUNT,
+            UNKNOWN = -1
+            , BUTTON_ADD, BUTTON_DELETE
+            , BUTTON_SAVE, BUTTON_UPDATE
+            , MENUITEM_ADD_POINT, MENUITEM_ADD_FUNCTION, MENUITEM_DELETE_POINT, MENUITEM_DELETE_FUNCTION
+            , DGV_NALG, DGV_VALUES
+            , LABEL_DESC, INDEX_CONTROL_COUNT
 
-            ZGRAPH_fTABLE, CHRTGRAPH_fTABLE
+            , ZGRAPH_fTABLE, CHRTGRAPH_fTABLE
             , TEXTBOX_FIND, LABEL_FIND, PANEL_FIND
             , TABLELAYOUTPANEL_CALC /*BUTTON_CALC,*/
             // обязательно должны следовать один за другим, т.к. используются в цикле
@@ -126,18 +128,22 @@ namespace PluginPrjTepFTable
                 rView.Visible = bVisible;
             }
         }
-
-        private void btnAddDeleteEnabled(bool bEnabled)
-        {
-            Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0].Enabled =
-            Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0].Enabled =
-                bEnabled;
-        }
+        ///// <summary>
+        ///// Включить/блокировать кнопки
+        /////  , если 'View' имеют/не_имеют фокус ввода
+        ///// </summary>
+        ///// <param name="bEnabled">Признак доступности</param>
+        //private void btnAddDeleteEnabled(bool bEnabled)
+        //{
+        //    Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0].Enabled =
+        //    Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0].Enabled =
+        //        bEnabled;
+        //}
         /// <summary>
         /// Обработчик события - изменение выбранной строки
         ///  в отображении для таблицы с наименованями функций
         /// </summary>
-        /// <param name="obj">Объект, инициировавший событий (отображение таблицы значений)</param>
+        /// <param name="obj">Объект, инициировавший событий (отображение таблицы функций)</param>
         /// <param name="ev">Аргумент события</param>
         private void dgvnALG_onSelectionChanged(object obj, EventArgs ev)
         {
@@ -199,16 +205,26 @@ namespace PluginPrjTepFTable
             else
                 ;
         }
-
-        private void dgvnALG_OnRowEnter(object obj, DataGridViewCellEventArgs ev)
-        {
-            btnAddDeleteEnabled(true);
-        }
-
-        private void dgvnALG_OnLeave(object obj, EventArgs ev)
-        {
-            btnAddDeleteEnabled(false);
-        }
+        ///// <summary>
+        ///// Обработчик события - 
+        ///// </summary>
+        ///// <param name="obj">Объект, инициировавший событий (отображение таблицы функций)</param>
+        ///// <param name="ev">Аргумент события</param>
+        //private void dgvnALG_OnRowEnter(object obj, DataGridViewCellEventArgs ev)
+        //{
+        //    //btnAddDeleteEnabled(true);
+        //    (obj as DataGridView).BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+        //    (Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView).BorderStyle = System.Windows.Forms.BorderStyle.None;
+        //}
+        ///// <summary>
+        ///// Обработчик события - 
+        ///// </summary>
+        ///// <param name="obj">Объект, инициировавший событий (отображение таблицы функций)</param>
+        ///// <param name="ev">Аргумент события</param>
+        //private void dgvnALG_OnLeave(object obj, EventArgs ev)
+        //{
+        //    btnAddDeleteEnabled(false);
+        //}
         /// <summary>
         /// Обработчик события - изменение выбранной строки
         ///  в отображении для таблицы со значениями
@@ -271,16 +287,26 @@ namespace PluginPrjTepFTable
             else
                 ; // нет ни одной выбранной строки
         }
-
-        private void dgvValues_OnRowEnter(object obj, DataGridViewCellEventArgs ev)
-        {
-            btnAddDeleteEnabled(true);
-        }
-
-        private void dgvValues_OnLeave(object obj, EventArgs ev)
-        {
-            btnAddDeleteEnabled(false);
-        }
+        ///// <summary>
+        ///// Обработчик события - 
+        ///// </summary>
+        ///// <param name="obj">Объект, инициировавший событий (отображение таблицы значений)</param>
+        ///// <param name="ev">Аргумент события</param>
+        //private void dgvValues_OnRowEnter(object obj, DataGridViewCellEventArgs ev)
+        //{
+        //    //btnAddDeleteEnabled(true);
+        //    (obj as DataGridView).BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+        //    (Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView).BorderStyle = System.Windows.Forms.BorderStyle.None;
+        //}
+        ///// <summary>
+        ///// Обработчик события - 
+        ///// </summary>
+        ///// <param name="obj">Объект, инициировавший событий (отображение таблицы значений)</param>
+        ///// <param name="ev">Аргумент события</param>
+        //private void dgvValues_OnLeave(object obj, EventArgs ev)
+        //{
+        //    btnAddDeleteEnabled(false);
+        //}
         /// <summary>
         /// Обработка события при успешной синхронизации целевойй таблицы в БД
         /// </summary>
@@ -314,7 +340,13 @@ namespace PluginPrjTepFTable
         private void InitializeComponent()
         {
             DataGridView dgv = null;
-            //Control ctrl = null;
+            // переменные для инициализации кнопок "Добавить", "Удалить"
+            DropDownButton btnDropDown = null;
+            int iButtonDropDownMenuItem = -1;
+            string strPartLabelButtonDropDownMenuItem = string.Empty;
+            string[] arLabelButtonDropDownMenuItem = new string[] { @"точку", @"функцию" };
+            INDEX_CONTROL indxControlButtonDropDownMenuItem = INDEX_CONTROL.UNKNOWN;
+            ToolStripItem menuItem;
 
             this.SuspendLayout();
 
@@ -322,7 +354,41 @@ namespace PluginPrjTepFTable
             INDEX_CONTROL i = INDEX_CONTROL.BUTTON_SAVE;
 
             for (i = INDEX_CONTROL.BUTTON_ADD; i < (INDEX_CONTROL.BUTTON_UPDATE + 1); i++)
-                addButton(i.ToString(), (int)i, m_arButtonText[(int)i]);
+                switch (i)
+                {
+                    case INDEX_CONTROL.BUTTON_ADD:
+                    case INDEX_CONTROL.BUTTON_DELETE:
+                        btnDropDown = new DropDownButton();
+                        addButton(btnDropDown, i.ToString(), (int)i, m_arButtonText[(int)i]);
+
+                        btnDropDown.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
+                        if (i == INDEX_CONTROL.BUTTON_ADD)
+                            strPartLabelButtonDropDownMenuItem = @"Добавить";
+                        else
+                            if (i == INDEX_CONTROL.BUTTON_DELETE)
+                                strPartLabelButtonDropDownMenuItem = @"Удалить";
+                            else
+                                ;
+
+                        // п.меню для операции с точкой
+                        indxControlButtonDropDownMenuItem = i == INDEX_CONTROL.BUTTON_ADD ? INDEX_CONTROL.MENUITEM_ADD_POINT :
+                            i == INDEX_CONTROL.BUTTON_DELETE ? INDEX_CONTROL.MENUITEM_DELETE_POINT : INDEX_CONTROL.UNKNOWN;
+                        iButtonDropDownMenuItem = btnDropDown.ContextMenuStrip.Items.Add(new ToolStripMenuItem());
+                        menuItem = btnDropDown.ContextMenuStrip.Items[iButtonDropDownMenuItem];
+                        menuItem.Text = strPartLabelButtonDropDownMenuItem + @" " + arLabelButtonDropDownMenuItem[iButtonDropDownMenuItem];
+                        menuItem.Name = indxControlButtonDropDownMenuItem.ToString();
+                        // п.меню для операции с функцией
+                        indxControlButtonDropDownMenuItem = i == INDEX_CONTROL.BUTTON_ADD ? INDEX_CONTROL.MENUITEM_ADD_FUNCTION :
+                            i == INDEX_CONTROL.BUTTON_DELETE ? INDEX_CONTROL.MENUITEM_DELETE_FUNCTION : INDEX_CONTROL.UNKNOWN;
+                        iButtonDropDownMenuItem = btnDropDown.ContextMenuStrip.Items.Add(new ToolStripMenuItem());
+                        menuItem = btnDropDown.ContextMenuStrip.Items[iButtonDropDownMenuItem];
+                        menuItem.Text = strPartLabelButtonDropDownMenuItem + @" " + arLabelButtonDropDownMenuItem[iButtonDropDownMenuItem];
+                        menuItem.Name = indxControlButtonDropDownMenuItem.ToString();
+                        break;
+                    default:
+                        addButton(i.ToString(), (int)i, m_arButtonText[(int)i]);
+                        break;
+                }
 
             //Поиск функции
             TextBox txtbx_find = new TextBox();
@@ -367,7 +433,7 @@ namespace PluginPrjTepFTable
             //Установить режим "невидимые" заголовки столбцов
             dgv.ColumnHeadersVisible = true;
             //Отменить возможность добавления строк
-            dgv.AllowUserToAddRows = false;            
+            dgv.AllowUserToAddRows = false;
             //Отменить возможность удаления строк
             dgv.AllowUserToDeleteRows = false;
             //Отменить возможность изменения порядка следования столбцов строк
@@ -541,8 +607,18 @@ namespace PluginPrjTepFTable
             PerformLayout();
 
             //Обработчика нажатия кнопок
-            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]).Click += new System.EventHandler(btnAdd_OnClick);
-            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]).Click += new System.EventHandler(btnDelete_OnClick);
+            btnDropDown = ((Button)Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]) as DropDownButton;
+            btnDropDown.Click += new System.EventHandler(btnAddToPoint_OnClick);
+            menuItem = (btnDropDown.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_ADD_POINT.ToString(), true)[0]);
+            menuItem.Click += new System.EventHandler(btnAddToPoint_OnClick);
+            menuItem = (btnDropDown.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_ADD_FUNCTION.ToString(), true)[0]);
+            menuItem.Click += new System.EventHandler(btnAddToFunction_OnClick);
+            btnDropDown = ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]) as DropDownButton;
+            btnDropDown.Click += new System.EventHandler(btnDeleteToPoint_OnClick);
+            menuItem = (btnDropDown.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_DELETE_POINT.ToString(), true)[0]);
+            menuItem.Click += new System.EventHandler(btnDeleteToPoint_OnClick);
+            menuItem = (btnDropDown.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_DELETE_FUNCTION.ToString(), true)[0]);
+            menuItem.Click += new System.EventHandler(btnDeleteToFunction_OnClick);
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
             //((Button)Controls.Find(INDEX_CONTROL.BUTTON_CALC.ToString(), true)[0]).Click += new EventHandler(PluginPrjTepFTable_ClickRez);
@@ -551,12 +627,14 @@ namespace PluginPrjTepFTable
             // для отображения таблиц
             dgv = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView;
             dgv.SelectionChanged += new EventHandler (dgvnALG_onSelectionChanged);
-            dgv.RowEnter += new DataGridViewCellEventHandler(dgvnALG_OnRowEnter);
-            dgv.Leave += new EventHandler (dgvnALG_OnLeave);            
+            //// для определения признака удаления (ФУНКЦИЮ или точку)
+            //dgv.RowEnter += new DataGridViewCellEventHandler(dgvnALG_OnRowEnter);
+            //dgv.Leave += new EventHandler (dgvnALG_OnLeave);            
             dgv = Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView;
             dgv.SelectionChanged += new EventHandler(dgvValues_onSelectionChanged);
-            dgv.RowEnter += new DataGridViewCellEventHandler(dgvValues_OnRowEnter);
-            dgv.Leave += new EventHandler(dgvValues_OnLeave);
+            //// для определения признака удаления (функцию или ТОЧКУ)
+            //dgv.RowEnter += new DataGridViewCellEventHandler(dgvValues_OnRowEnter);
+            //dgv.Leave += new EventHandler(dgvValues_OnLeave);
             // для поля ввода при поиске функции
             ((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_FIND.ToString(), true)[0]).TextChanged += new EventHandler(PluginPrjTepFTable_TextChanged);
         }
@@ -587,10 +665,10 @@ namespace PluginPrjTepFTable
         }
         /// <summary>
         /// Обработка клика по таблице со значениями.
-        /// Изменение чекбокса, построение графика.
+        ///  изменение чекбокса, построение графика.
         /// </summary>
-        /// <param name="sender">объект</param>
-        /// <param name="e">событие</param>
+        /// <param name="sender">Объект, иницировавший событие</param>
+        /// <param name="e">Аргумент события</param>
         private void PluginPrjTepFTable_CellContentClick(object sender, DataGridViewCellMouseEventArgs e)
         {
             DataGridView dgv =
@@ -604,31 +682,127 @@ namespace PluginPrjTepFTable
             else
                 ;
         }
+        ///// <summary>
+        ///// Возвратить отображение с фокусом ввода
+        ///// </summary>
+        ///// <returns>Отображение с фокусом ввода</returns>
+        //private DataGridView getViewValusFocused()
+        //{
+        //    DataGridView dgv = null;
+        //    Control []arControls = null;
+
+        //    arControls = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true);
+
+        //    if (arControls.Length == 1)
+        //        dgv = arControls[0] as DataGridView;
+        //    else
+        //    {
+        //        arControls = Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true);
+
+        //        if (arControls.Length == 1)
+        //            dgv = arControls[0] as DataGridView;
+        //        else
+        //            ;
+        //    }
+
+        //    return dgv;
+        //}
         /// <summary>
-        /// Обработчик события - нажатие на кнопку "Добавить"
-        ///  (в зависимости от текущего отображения для таблицы: функция, значения)
+        /// Обработчик события - нажатие на кнопку "Добавить" (точку)
         /// </summary>
         /// <param name="obj">Объект - инициатор события (кнопка)</param>
         /// <param name="ev">Аргумент события</param>
-        private void btnAdd_OnClick(object obj, EventArgs ev)
+        private void btnAddToPoint_OnClick(object obj, EventArgs ev)
         {
         }
         /// <summary>
-        /// Обработчик события - нажатие на кнопку "Удалить"
+        /// Обработчик события - нажатие на кнопку "Удалить" (точку)
         /// </summary>
         /// <param name="obj">Объект - инициатор события (кнопка)</param>
         /// <param name="ev">Аргумент события</param>
-        private void btnDelete_OnClick(object obj, EventArgs ev)
+        private void btnDeleteToPoint_OnClick(object obj, EventArgs ev)
         {
+            DataGridView dgvValues = Controls.Find (INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView;
+            // в крайнем столбце (снятым с отображения) - идентификатор записи
+            if (delRecNAlg((int)dgvValues.Rows[dgvValues.SelectedRows[0].Index].Cells[dgvValues.ColumnCount - 1].Value) == 1)
+                m_tblEdit.AcceptChanges();
+            else
+                ;
+        }
+        /// <summary>
+        /// Обработчик события - нажатие на кнопку "Добавить" (функцию)
+        /// </summary>
+        /// <param name="obj">Объект - инициатор события (кнопка)</param>
+        /// <param name="ev">Аргумент события</param>
+        private void btnAddToFunction_OnClick(object obj, EventArgs ev)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - нажатие на кнопку "Удалить" (функцию)
+        /// </summary>
+        /// <param name="obj">Объект - инициатор события (кнопка)</param>
+        /// <param name="ev">Аргумент события</param>
+        private void btnDeleteToFunction_OnClick(object obj, EventArgs ev)
+        {
+            DataGridView dgvValues = Controls.Find (INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView;
+            // в 1-ом столбце - наименование функции
+            if (delRecNAlg((int)dgvValues.Rows[dgvValues.SelectedRows[0].Index].Cells[0].Value) > 0)
+                m_tblEdit.AcceptChanges();
+            else
+                ;
+        }
+        /// <summary>
+        /// Удалить все записи (точки) для функции
+        /// </summary>
+        /// <param name="nameAlg">Наименование функции</param>
+        /// <result>Количество удаленных строк или признак ошибки</result>
+        protected int delRecNAlg(string nameAlg)
+        {
+            int iRes = -1;
+            
+            DataRow[] rowsToDel = m_tblEdit.Select(@"NALG=" + nameAlg);
+            if (rowsToDel.Length > 0)
+            {
+                iRes = 0;
+
+                foreach (DataRow r in rowsToDel)
+                {
+                    m_tblEdit.Rows.Remove(r);
+
+                    iRes++;
+                }
+            }
+            else
+            {
+                iRes = -2;
+                Logging.Logg().Error(@"PanelPrjTepFTable::delRecItem () - неоднозначность при удалении точек функции с NALG=" + nameAlg + @"..."
+                    , Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
+            return iRes;
         }
         /// <summary>
         /// Удалить запись (значение) для функции
         /// </summary>
-        /// <param name="indx">??? Номер записи</param>
-        protected void delRecItem(int indx)
+        /// <param name="indx">Иднтификатор записи</param>
+        /// <result>Количество удаленных строк или признак ошибки</result>
+        protected int delRecNAlg(int id_rec)
         {
-            m_tblEdit.Rows[indx].Delete();
-            m_tblEdit.AcceptChanges();
+            int iRes = -1;
+            
+            DataRow[] rowsToDel = m_tblEdit.Select(@"ID=" + id_rec);
+            if (rowsToDel.Length == 1)
+            {// удалять только, если строка есть И она единственная
+                m_tblEdit.Rows.Remove(rowsToDel[0]);
+            }
+            else
+            {
+                iRes = -2;
+                Logging.Logg().Error(@"PanelPrjTepFTable::delRecItem () - неоднозначность при удалении точки с ID=" + id_rec + @"..."
+                    , Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
+            return iRes;
         }
         /// <summary>
         /// Возвратить ранг изменившегося значения

@@ -184,23 +184,37 @@ namespace TepCommon
             ctrl.Dock = DockStyle.Top;
             gbDesc.Controls.Add(ctrl);
         }
-
-        //Для отображения актуальной "подсказки" для свойства
+        /// <summary>
+        /// Для отображения актуальной "подсказки" для свойства
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         protected void HPanelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
         {
         }
 
-        protected void addButton(string id, int posCol, string text)
+        protected void addButton(Button ctrl, string id, int posCol, string text)
         {
-            Button ctrl = new Button();
             ctrl.Name = id;
-
+            
             ctrl.Location = new System.Drawing.Point(1, 1);
             ctrl.Dock = DockStyle.Fill;
             ctrl.Text = text;
             //??? Идентификатор является позицией-столбцом
             this.Controls.Add(ctrl, 0, posCol);
             this.SetColumnSpan(ctrl, 1);
+        }
+        /// <summary>
+        /// Добавить кнопку
+        /// </summary>
+        /// <param name="id">Идентификатор кнопки (свойство 'Name')</param>
+        /// <param name="posCol">Позиция по вертикали</param>
+        /// <param name="text">Подпись на кнопке</param>
+        protected void addButton(string id, int posCol, string text)
+        {
+            Button ctrl = new Button();
+            
+            addButton(ctrl, id, posCol, text);
         }
 
         protected virtual void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
