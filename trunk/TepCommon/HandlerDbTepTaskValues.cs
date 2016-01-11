@@ -10,7 +10,7 @@ using TepCommon;
 
 namespace TepCommon
 {
-    public abstract partial class PanelTaskTepValues : HPanelTepCommon
+    public abstract partial class PanelTaskTepCalculate : HPanelTepCommon
     {
         protected class HandlerDbTepTaskValues : HHandlerDb
         {

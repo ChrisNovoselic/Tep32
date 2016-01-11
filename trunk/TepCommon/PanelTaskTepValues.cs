@@ -14,67 +14,8 @@ using TepCommon;
 
 namespace TepCommon
 {
-    public abstract partial class PanelTaskTepValues : HPanelTepCommon
+    public abstract partial class PanelTaskTepValues : PanelTaskTepCalculate
     {
-        /// <summary>
-        /// Перечисление - индексы таблиц со словарными величинами и проектными данными
-        /// </summary>
-        protected enum INDEX_TABLE_DICTPRJ : int
-        {
-            UNKNOWN = -1, PERIOD, TIMEZONE, COMPONENT, PARAMETER/*, VISUAL_SETTINGS*/, MODE_DEV/*, MEASURE*/, RATIO
-            , COUNT_TABLE_DICTPRJ }
-        /// <summary>
-        /// Наименования таблиц с парметрами для расчета
-        /// </summary>
-        protected string m_strNameTableAlg
-            , m_strNameTablePut
-            , m_strNameTableValues;
-        /// <summary>
-        /// Строка для запроса информации по периодам расчетов
-        /// </summary>        
-        protected string m_strIdPeriods
-        {
-            get
-            {
-                string strRes = string.Empty;
-
-                for (int i = 0; i < m_arListIds[(int)INDEX_ID.PERIOD].Count; i++)
-                    strRes += m_arListIds[(int)INDEX_ID.PERIOD][i] + @",";
-                strRes = strRes.Substring(0, strRes.Length - 1);
-
-                return strRes;
-            }
-        }
-        /// <summary>
-        /// Строка для запроса информации по часовым поясам
-        /// </summary>        
-        protected string m_strIdTimezones
-        {
-            get
-            {
-                string strRes = string.Empty;
-
-                for (int i = 0; i < m_arListIds[(int)INDEX_ID.TIMEZONE].Count; i++)
-                    strRes += m_arListIds[(int)INDEX_ID.TIMEZONE][i] + @",";
-                strRes = strRes.Substring(0, strRes.Length - 1);
-
-                return strRes;
-            }
-        }
-        /// <summary>
-        /// Таблицы со значениями словарных, проектных данных
-        /// </summary>
-        protected DataTable []m_arTableDictPrjs;
-        /// <summary>
-        /// Индексы массива списков идентификаторов
-        /// </summary>
-        protected enum INDEX_ID { UNKNOWN = -1
-            , PERIOD // идентификаторы периодов расчетов, использующихся на форме
-            , TIMEZONE //Идентификаторы (целочисленные, из БД системы) часовых поясов
-            , ALL_COMPONENT, ALL_PARAMETER // все идентификаторы компонентов ТЭЦ/параметров
-            , DENY_COMP_CALCULATED, DENY_PARAMETER_CALCULATED //запрещенных для расчета
-            , DENY_COMP_VISIBLED, DENY_PARAMETER_VISIBLED // запрещенных для отображения
-            , COUNT_INDEX_ID }
         /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
         ///  "сырые" - от источников информации, "учтенные" - сохраненные в БД
@@ -83,15 +24,7 @@ namespace TepCommon
         /// <summary>
         /// Признак отображаемых на текущий момент значений
         /// </summary>
-        protected INDEX_VIEW_VALUES m_ViewValues;
-        /// <summary>
-        /// Перечисление - идентификаторы состояния полученных из БД значений
-        /// </summary>
-        protected enum ID_QUALITY_VALUE { NOT_REC = -3, PARTIAL, DEFAULT, SOURCE, USER }
-        /// <summary>
-        /// Массив списков идентификаторов компонентов ТЭЦ/параметров
-        /// </summary>
-        private List<int> [] m_arListIds;
+        protected INDEX_VIEW_VALUES m_ViewValues;        
         /// <summary>
         /// Таблицы со значениями для редактирования
         /// </summary>
@@ -106,73 +39,39 @@ namespace TepCommon
         ///  таблица со значениями для отображения
         /// </summary>
         protected abstract DataTable m_TableEdit { get; }
-        ///// <summary>
-        ///// Признак автоматических операций: очистка/загрузка содержимого отображения
-        ///// </summary>
-        //private static bool s_bAutoUpdateValues = false;
-        /// <summary>
-        /// Объект для обмена данными с БД
-        /// </summary>
-        protected HandlerDbTepTaskValues m_handlerDb;
         /// <summary>
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
         public PanelTaskTepValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut, string strNameTableValues)
-            : base(iFunc)
+            : base(iFunc, strNameTableAlg, strNameTablePut, strNameTableValues)
         {
-            m_strNameTableAlg = strNameTableAlg;
-            m_strNameTablePut = strNameTablePut;
-            m_strNameTableValues = strNameTableValues;
-
-            m_handlerDb = new HandlerDbTepTaskValues();
-
             InitializeComponents();
-
-            m_panelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
-            m_dgvValues.EventCellValueChanged += new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventHandler(onEventCellValueChanged);
+            //Обязательно наличие объекта - панели управления
+            activateDateTimeRangeValue_OnChanged(true);
+            (m_dgvValues as DataGridViewTEPValues).EventCellValueChanged += new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventHandler(onEventCellValueChanged);
         }
         /// <summary>
         /// Инициализация элементов управления объекта
         /// </summary>
         private void InitializeComponents()
         {
-            #region Код, не относящийся к инициализации элементов управления
-            m_arListIds = new List<int>[(int)INDEX_ID.COUNT_INDEX_ID];
-            for (INDEX_ID i = INDEX_ID.PERIOD; i < INDEX_ID.COUNT_INDEX_ID; i++)
-                switch (i)
-                {
-                    case INDEX_ID.PERIOD:
-                        m_arListIds[(int)i] = new List<int> { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
-                        break;
-                    case INDEX_ID.TIMEZONE:
-                        m_arListIds[(int)i] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-                        break;
-                    default:
-                        //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
-                        m_arListIds[(int)i] = new List<int>();
-                        break;
-                }
-            #endregion
-
-            m_arTableDictPrjs = new DataTable [(int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ];
-
             m_panelManagement = new PanelManagement ();
             m_dgvValues = new DataGridViewTEPValues ();
             int posColdgvTEPValues = 4
-                , hightRowdgvTEPValues = 10;
+                , heightRowdgvTEPValues = 10;
 
             SuspendLayout ();
 
-            initializeLayoutStyle ();
+            //initializeLayoutStyle ();
 
             Controls.Add (m_panelManagement, 0, 0);
             SetColumnSpan(m_panelManagement, posColdgvTEPValues); SetRowSpan(m_panelManagement, this.RowCount);
 
             Controls.Add(m_dgvValues, posColdgvTEPValues, 0);
-            SetColumnSpan(m_dgvValues, this.ColumnCount - posColdgvTEPValues); SetRowSpan(m_dgvValues, hightRowdgvTEPValues);
+            SetColumnSpan(m_dgvValues, this.ColumnCount - posColdgvTEPValues); SetRowSpan(m_dgvValues, heightRowdgvTEPValues);
 
-            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), posColdgvTEPValues, hightRowdgvTEPValues);
+            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), posColdgvTEPValues, heightRowdgvTEPValues);
 
             ResumeLayout (false);
             PerformLayout ();
@@ -187,119 +86,38 @@ namespace TepCommon
                 new EventHandler(HPanelTepCommon_btnHistory_Click);
             (Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
         }
-        /// <summary>
-        /// Инициализация данных объекта
-        /// </summary>
-        /// <param name="dbConn">Объект соединения с БД</param>
-        /// <param name="err">Признак результата выполнения инициализации</param>
-        /// <param name="errMsg">Строка - пояснение к ошибке при выполнении</param>
-        protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
+
+        protected override void initialize()
         {
-            err = 0;
-            errMsg = string.Empty;
-
-            HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;            
-
-            Control ctrl = null;
             CheckedListBox clbxCompCalculated
                 , clbxCompVisibled;
             string strItem = string.Empty;
             int i = -1
                 , id_comp = -1;
             bool bChecked = false;
-            //Заполнить таблицы со словарными, проектными величинами
-            string[] arQueryDictPrj = getQueryDictPrj ();
-            for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
+
+            //Заполнить элементы управления с компонентами станции
+            clbxCompCalculated = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
+            clbxCompVisibled = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
+            foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
             {
-                m_arTableDictPrjs[i] = DbTSQLInterface.Select(ref dbConn, arQueryDictPrj[i], null, null, out err);
-
-                if (!(err == 0))
-                    break;
-                else
-                    ;
+                id_comp = (Int16)r[@"ID"];
+                m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
+                strItem = ((string)r[@"DESCRIPTION"]).Trim();
+                // установить признак участия в расчете компонента станции
+                bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
+                clbxCompCalculated.Items.Add(strItem, bChecked);
+                // установить признак отображения компонента станции
+                bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
+                clbxCompVisibled.Items.Add(strItem, bChecked);
+                m_dgvValues.AddColumn(id_comp, strItem, bChecked);
             }
+            // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
+            // компонента станции для элементов управления
+            clbxCompCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
+            clbxCompVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
 
-            if (err == 0)
-            {
-                try
-                {
-                    base.Start();
-
-                    m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
-                    //Заполнить элементы управления с компонентами станции
-                    clbxCompCalculated = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
-                    clbxCompVisibled = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
-                    {
-                        id_comp = (Int16)r[@"ID"];
-                        m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
-                        strItem = ((string)r[@"DESCRIPTION"]).Trim();
-                        // установить признак участия в расчете компонента станции
-                        bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
-                        clbxCompCalculated.Items.Add(strItem, bChecked);
-                        // установить признак отображения компонента станции
-                        bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
-                        clbxCompVisibled.Items.Add(strItem, bChecked);
-                        m_dgvValues.AddColumn(id_comp, strItem, bChecked);
-                    }
-                    // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
-                    // компонента станции для элементов управления
-                    clbxCompCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
-                    clbxCompVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
-
-                    m_dgvValues.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
-
-                    //Заполнить элемент управления с часовыми поясами
-                    ctrl = Controls.Find(INDEX_CONTROL.CBX_TIMEZONE.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
-                        (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
-                    // порядок именно такой (установить 0, назначить обработчик)
-                    //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = 2; //??? требуется прочитать из [profile]
-                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
-                    setCurrentTimeZone(ctrl as ComboBox);
-
-                    //Заполнить элемент управления с периодами расчета
-                    ctrl = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
-                        (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
-                    
-                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = 0; //??? требуется прочитать из [profile]
-
-                    //// отобразить значения
-                    //updateDataValues();
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"PanelTaskTepValues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-            else
-                switch ((INDEX_TABLE_DICTPRJ)i)
-                {
-                    case INDEX_TABLE_DICTPRJ.PERIOD:
-                        errMsg = @"Получение интервалов времени для периода расчета";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.TIMEZONE:
-                        errMsg = @"Получение списка часовых поясов";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.COMPONENT:
-                        errMsg = @"Получение списка компонентов станции";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.PARAMETER:
-                        errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.MODE_DEV:
-                        errMsg = @"Получение идентификаторов режимов работы оборудования";
-                        break;
-                    //case INDEX_TABLE_DICTPRJ.MEASURE:
-                    //    errMsg = @"Получение информации по единицам измерения";
-                    //    break;
-                    default:
-                        errMsg = @"Неизвестная ошибка";
-                        break;
-                }
+            m_dgvValues.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
         }
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
@@ -307,12 +125,11 @@ namespace TepCommon
         /// <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
         ///  для возвращения предыдущего значения, при отказе пользователя от очистки</param>
         /// <param name="bClose">Признак полной/частичной очистки</param>
-        private void clear(INDEX_CONTROL indxCtrl = INDEX_CONTROL.UNKNOWN, bool bClose = false)
+        protected override void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
         {
             int i = -1;
             CheckedListBox clbx = null;
-            ComboBox cbx = null;
-            HDateTimePicker hdtp = null;
+            INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
 
             _IdSession = -1;
 
@@ -335,13 +152,7 @@ namespace TepCommon
                 clbx = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
                 clbx.Items.Clear();
 
-                cbx = Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0] as ComboBox;
-                cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
-                cbx.Items.Clear();
-
-                cbx = Controls.Find(INDEX_CONTROL.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
-                cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
-                cbx.Items.Clear();
+                base.clear();
 
                 //hdtp = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker;
                 //hdtp.set
@@ -350,81 +161,18 @@ namespace TepCommon
                 m_dgvValues.ClearColumns();
             }
             else
-                ;
-
             // очистить содержание представления
-            m_dgvValues.ClearValues();
+                m_dgvValues.ClearValues();
         }
         /// <summary>
         /// Остановить сопутствующие объекты
         /// </summary>
         public override void Stop()
         {
-            clear(INDEX_CONTROL.UNKNOWN, true);
+            clear((int)INDEX_CONTROL.UNKNOWN, true);
             
             base.Stop();
         }
-        /// <summary>
-        /// Установить признак активности панель при выборе ее пользователем
-        /// </summary>
-        /// <param name="activate">Признак активности</param>
-        /// <returns>Результат выполнения - был ли установлен признак</returns>
-        public override bool Activate(bool activate)
-        {
-            bool bRes = base.Activate(activate);
-
-            return bRes;
-        }
-        /// <summary>
-        /// Массив запросов к БД по получению словарных и проектных значений
-        /// </summary>
-        private string[] getQueryDictPrj ()
-        {
-            string [] arRes = null;
-
-            arRes = new string[]
-            {
-                //PERIOD
-                @"SELECT * FROM [time] WHERE [ID] IN (" + m_strIdPeriods + @")"
-                //TIMEZONE
-                , @"SELECT * FROM [timezones] WHERE [ID] IN (" + m_strIdTimezones + @")"
-                // список компонентов
-                , @"SELECT * FROM [comp_list] "
-                    + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
-                        + @" OR ([ID_COMP] = 1000)"
-                // параметры расчета
-                , @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
-                    + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
-                    + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
-                + @" FROM [dbo].[" + m_strNameTablePut + @"] as p"
-                    + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG"
-                    + @" JOIN [dbo].[measure] as m ON a.ID_MEASURE = m.ID"
-                //// настройки визуального отображения значений
-                //, @""
-                // режимы работы
-                , @"SELECT * FROM [dbo].[mode_dev]"
-                //// единицы измерения
-                //, @"SELECT * FROM [dbo].[measure]"
-                // коэффициенты для единиц измерения
-                , @"SELECT * FROM [dbo].[ratio]"
-            };
-
-            return arRes;
-        }
-        ///// <summary>
-        ///// Возвратить окончание (постфикс - год+номер_месяц) для наименовния таблицы
-        ///// </summary>
-        ///// <param name="dtBegin">Дата/время начала в запросе</param>
-        ///// <param name="dtEnd">Дата/время окончания в запросе</param>
-        ///// <returns>Постфикс в наименовании таблицы</returns>
-        //private string getNameTableValuesPostfixDatetime(DateTime dtBegin, DateTime dtEnd)
-        //{
-        //    string strRes = string.Empty;
-
-        //    strRes = dtEnd.Year.ToString() + dtEnd.Month.ToString(@"00");
-
-        //    return strRes;
-        //}
         /// <summary>
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
         /// </summary>
@@ -697,46 +445,6 @@ namespace TepCommon
              return iRes;
         }
         /// <summary>
-        /// Идентификатор сессии - уникальный идентификатор
-        ///  для наблов входных, расчетных (нормативных, макетных) значений
-        /// </summary>
-        protected int _IdSession;
-        /// <summary>
-        /// Текущий выбранный идентификатор периода расчета
-        /// </summary>
-        protected ID_PERIOD _currIdPeriod;
-        ///// <summary>
-        ///// Текущий выбранный идентификатор периода расчета
-        ///// </summary>
-        //private ID_TIME CurrIdPeriod
-        //{
-        //    get
-        //    {
-        //        return
-        //            //m_arListIds[(int)INDEX_ID.PERIOD][(Controls.Find(INDEX_CONTROL.CBX_PERIOD.ToString(), true)[0] as ComboBox).SelectedIndex]
-        //            _currIdPeriod
-        //            ;
-        //    }
-        //}
-
-        private ID_TIMEZONE _currIdTimezone;
-
-        private int _curOffsetUTC;
-        /// <summary>
-        /// Количество базовых периодов
-        /// </summary>
-        protected int CountBasePeriod
-        {
-            get
-            {
-                return _currIdPeriod == ID_PERIOD.HOUR ?
-                    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0 :
-                    _currIdPeriod == ID_PERIOD.DAY ?
-                        (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalDays - 0 :
-                        24;
-            }
-        }
-        /// <summary>
         /// Список строк с параметрами алгоритма расчета для текущего периода расчета
         /// </summary>
         private List <DataRow> ListParameter
@@ -756,7 +464,7 @@ namespace TepCommon
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        private void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
+        protected override void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
         {
             ComboBox cbx = obj as ComboBox;
             int err = -1
@@ -836,40 +544,8 @@ namespace TepCommon
             //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
             clbxParsCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
             clbxParsVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
-            //Отменить обработку события - изменение начала/окончания даты/времени
-            m_panelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-            //Установить новые режимы для "календарей"
-            m_panelManagement.SetPeriod(_currIdPeriod);
-            //Возобновить обработку события - изменение начала/окончания даты/времени
-            m_panelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
 
-            // очистить содержание представления
-            clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
-        }
-        /// <summary>
-        /// Установить новое значение для текущего периода
-        /// </summary>
-        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны двты/времени</param>
-        private void setCurrentTimeZone(ComboBox cbxTimezone)
-        {
-            _currIdTimezone = (ID_TIMEZONE)m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
-            _curOffsetUTC = (int)m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + (int)_currIdTimezone)[0][@"OFFSET_UTC"];
-        }
-
-        private void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
-        {
-            //Установить новое значение для текущего периода
-            setCurrentTimeZone(obj as ComboBox);
-            // очистить содержание представления
-            clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
+            base.cbxPeriod_SelectedIndexChanged(obj, ev);
         }
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
@@ -943,21 +619,7 @@ namespace TepCommon
                 //, iCol + 1, iRow
                 , id_item
                 , ev.NewValue == CheckState.Checked ? true : ev.NewValue == CheckState.Unchecked ? false : false);
-        }
-        /// <summary>
-        /// Обработчик события - изменение интервала (диапазона между нач. и оконч. датой/временем) расчета
-        /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        private void datetimeRangeValue_onChanged(object obj, EventArgs ev)
-        {
-            // очистить содержание представления
-            clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
-        }
+        }        
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>
@@ -966,94 +628,8 @@ namespace TepCommon
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
         /// </summary>
-        protected class DataGridViewTEPValues : DataGridView
+        protected class DataGridViewTEPValues : DataGridViewTEPCalculate
         {
-            /// <summary>
-            /// Перечисление для индексации столбцов со служебной информацией
-            /// </summary>
-            private enum INDEX_SERVICE_COLUMN : uint { ID_ALG, SYMBOL, COUNT }
-            /// <summary>
-            /// Структура для описания добавляемых строк
-            /// </summary>
-            public class ROW_PROPERTY
-            {
-                /// <summary>
-                /// Структура с дополнительными свойствами ячейки отображения
-                /// </summary>
-                public struct HDataGridViewCell //: DataGridViewCell
-                {
-                    public enum INDEX_CELL_PROPERTY : uint { CALC_DENY, IS_NAN }
-                    /// <summary>
-                    /// Признак запрета расчета
-                    /// </summary>
-                    public bool m_bCalcDeny;
-                    /// <summary>
-                    /// Признак отсутствия значения
-                    /// </summary>
-                    public int m_IdParameter;
-                    /// <summary>
-                    /// Признак качества значения в ячейке
-                    /// </summary>
-                    public ID_QUALITY_VALUE m_iQuality;
-
-                    public HDataGridViewCell(int idParameter, ID_QUALITY_VALUE iQuality, bool bCalcDeny)
-                    {
-                        m_IdParameter = idParameter;
-                        m_iQuality = iQuality;
-                        m_bCalcDeny = bCalcDeny;
-                    }
-
-                    public bool IsNaN { get { return m_IdParameter < 0; } }
-                }
-                /// <summary>
-                /// Идентификатор параметра в алгоритме расчета
-                /// </summary>
-                public int m_idAlg;
-                /// <summary>
-                /// Пояснения к параметру в алгоритме расчета
-                /// </summary>
-                public string m_strHeaderText
-                    , m_strToolTipText
-                    , m_strMeasure
-                    , m_strSymbol;
-                ///// <summary>
-                ///// Признак отображения строки
-                ///// </summary>
-                //public bool m_bVisibled;
-
-                public int m_vsRatio;
-
-                public int m_ratio;
-
-                public int m_vsRound;
-
-                public HDataGridViewCell[] m_arPropertiesCells;
-
-                public void InitCells(int cntCols)
-                {
-                    m_arPropertiesCells = new HDataGridViewCell[cntCols];
-                    for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, ID_QUALITY_VALUE.DEFAULT, false);                    
-                }
-            }
-            /// <summary>
-            /// Перечисления для индексирования массива со значениями цветов для фона ячеек
-            /// </summary>
-            private enum INDEX_COLOR : uint { EMPTY, VARIABLE, DEFAULT, CALC_DENY, NAN, PARTIAL, NOT_REC, LIMIT, USER
-                , COUNT }
-            /// <summary>
-            /// Массив со значениями цветов для фона ячеек
-            /// </summary>
-            private static Color[] s_arCellColors = new Color[(int)INDEX_COLOR.COUNT] { Color.Gray //EMPTY
-                , Color.White //VARIABLE
-                , Color.Yellow //DEFAULT
-                , Color.LightGray //CALC_DENY
-                , Color.White //NAN
-                , Color.BlueViolet //PARTIAL
-                , Color.Sienna //NOT_REC
-                , Color.Red //LIMIT
-                , Color.White //USER
-            };
             /// <summary>
             /// Класс для описания аргумента события - изменения значения ячейки
             /// </summary>
@@ -1132,7 +708,7 @@ namespace TepCommon
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public DataGridViewTEPValues ()
+            public DataGridViewTEPValues () : base ()
             {
                 //Разместить ячейки, установить свойства объекта
                 InitializeComponents ();
@@ -1144,21 +720,11 @@ namespace TepCommon
 
             private void InitializeComponents()
             {
-                this.Dock = DockStyle.Fill;
-
-                MultiSelect = false;
-                SelectionMode = DataGridViewSelectionMode.CellSelect;
-                AllowUserToAddRows = false;
-                AllowUserToDeleteRows = false;
-                AllowUserToOrderColumns = false;
-                AllowUserToResizeRows = false;
-                RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders | DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-
                 AddColumn (-2, string.Empty, false);
                 AddColumn(-1, @"Размерность", true);
             }
 
-            public void ClearColumns()
+            public override void ClearColumns()
             {
                 List<HDataGridViewColumn> listIndxToRemove;
 
@@ -1184,7 +750,7 @@ namespace TepCommon
             /// <summary>
             /// Удалить строки
             /// </summary>
-            public void ClearRows()
+            public override void ClearRows()
             {
                 if (Rows.Count > 0)
                 {
@@ -1201,7 +767,7 @@ namespace TepCommon
             /// <param name="id_comp">Идентификатор компонента ТЭЦ</param>
             /// <param name="text">Текст для заголовка столбца</param>
             /// <param name="bVisibled">Признак участия в расчете/отображения</param>
-            public void AddColumn (int id_comp, string text, bool bVisibled)
+            public override void AddColumn (int id_comp, string text, bool bVisibled)
             {
                 int indxCol = -1; // индекс столбца при вставке
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
@@ -1269,7 +835,7 @@ namespace TepCommon
             /// <param name="headerText">Текст заголовка строки</param>
             /// <param name="toolTipText">Текст подсказки для заголовка строки</param>
             /// <param name="bVisibled">Признак отображения строки</param>
-            public void AddRow(ROW_PROPERTY rowProp)
+            public override void AddRow(ROW_PROPERTY rowProp)
             {
                 int i = -1;
                 // создать строку
@@ -1428,7 +994,7 @@ namespace TepCommon
             /// <param name="indxDeny">Индекс элемента в массиве списков с отмененными для расчета/отображения компонентами ТЭЦ/параметрами алгоритма расчета</param>
             /// <param name="id">Идентификатор элемента (компонента/параметра)</param>
             /// <param name="bCheckedItem">Признак участия в расчете/отображения</param>
-            public void UpdateStructure(PanelTaskTepValues.INDEX_ID indxDeny, int id, bool bItemChecked)
+            public override void UpdateStructure(PanelTaskTepValues.INDEX_ID indxDeny, int id, bool bItemChecked)
             {
                 Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
                 int indx = -1
@@ -1516,7 +1082,7 @@ namespace TepCommon
             /// Отобразить значения
             /// </summary>
             /// <param name="values">Значения для отображения</param>
-            public void ShowValues(DataTable values, DataTable parameter)
+            public override void ShowValues(DataTable values, DataTable parameter)
             {
                 int idAlg = -1
                     , idParameter = -1
@@ -1591,7 +1157,7 @@ namespace TepCommon
             /// <summary>
             /// Очистить содержание представления (например, перед )
             /// </summary>
-            public void ClearValues()
+            public override void ClearValues()
             {
                 CellValueChanged -= onCellValueChanged;
 
@@ -1646,32 +1212,6 @@ namespace TepCommon
                 }
             }
 
-            private struct RATIO
-            {
-                public int m_id;
-
-                public int m_value;
-
-                public string m_nameRU
-                    , m_nameEN
-                    , m_strDesc;
-            }
-
-            private Dictionary<int, RATIO> m_dictRatio;
-
-            public void SetRatio(DataTable tblRatio)
-            {
-                m_dictRatio = new Dictionary<int, RATIO>();
-
-                foreach (DataRow r in tblRatio.Rows)
-                    m_dictRatio.Add((int)r[@"ID"], new RATIO() { m_id = (int)r[@"ID"]
-                        , m_value = (int)r[@"VALUE"]
-                        , m_nameRU = (string)r[@"NAME_RU"]
-                        , m_nameEN = (string)r[@"NAME_RU"]
-                        , m_strDesc = (string)r[@"DESCRIPTION"]
-                    });
-            }
-
             private void onRowsRemoved(object obj, DataGridViewRowsRemovedEventArgs ev)
             {
             }
@@ -1679,36 +1219,22 @@ namespace TepCommon
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected class PanelManagement : HPanelCommon
+        protected class PanelManagement : PanelManagementCalculate
         {
-            public EventHandler DateTimeRangeValue_Changed;
-            public DateTimeRange m_dtRange;
-
-            public PanelManagement() : base (8, 21)
+            public PanelManagement() : base ()
             {
                 InitializeComponents ();
-
-                HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                    , hdtpEnd = Controls.Find(INDEX_CONTROL.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-                m_dtRange = new DateTimeRange(hdtpBegin.Value, hdtpEnd.Value);
-                ////Назначить обработчик события - изменение дата/время начала периода
-                //hdtpBegin.ValueChanged += new EventHandler(hdtpBegin_onValueChanged);
-                //Назначить обработчик события - изменение дата/время окончания периода
-                // при этом отменить обработку события - изменение дата/время начала периода
-                // т.к. при изменении дата/время начала периода изменяется и дата/время окончания периода
-                hdtpEnd.ValueChanged += new EventHandler (hdtpEnd_onValueChanged);
             }
 
             private void InitializeComponents ()
             {
                 Control ctrl = null;
                 int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
-                    , indx = -1; // индекс п. меню лдя кнопки "Обновить-Загрузить"
-                DateTime today = DateTime.Today;
+                    , indx = -1; // индекс п. меню лдя кнопки "Обновить-Загрузить"                
 
                 SuspendLayout();
 
-                initializeLayoutStyle();
+                //initializeLayoutStyle();
 
                 posRow = 0;
                 //Период расчета
@@ -1719,10 +1245,8 @@ namespace TepCommon
                 //this.Controls.Add(ctrl, 0, posRow);
                 //SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
                 //Период расчета - значение
-                ctrl = new ComboBox ();
-                ctrl.Name = INDEX_CONTROL.CBX_PERIOD.ToString ();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
+                ctrl = Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
+                this.Controls.Remove(ctrl);
                 this.Controls.Add(ctrl, 0, posRow);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);                
 
@@ -1734,10 +1258,8 @@ namespace TepCommon
                 //this.Controls.Add(ctrl, 0, posRow);
                 //SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
                 //Период расчета - значение
-                ctrl = new ComboBox();
-                ctrl.Name = INDEX_CONTROL.CBX_TIMEZONE.ToString();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
+                ctrl = Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
+                this.Controls.Remove(ctrl);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
 
@@ -1764,9 +1286,8 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время начала периода расчета - значения
-                ctrl = new HDateTimePicker(today.Year, today.Month, today.Day, 0, null);
-                ctrl.Name = INDEX_CONTROL.HDTP_BEGIN.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
+                ctrl = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker;
+                this.Controls.Remove(ctrl);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время  окончания периода расчета
@@ -1777,9 +1298,8 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
                 //Дата/время  окончания периода расчета - значения
-                ctrl = new HDateTimePicker(today.Year, today.Month, today.Day, 1, Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
-                ctrl.Name = INDEX_CONTROL.HDTP_END.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
+                ctrl = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
+                this.Controls.Remove(ctrl);
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
 
@@ -1893,93 +1413,21 @@ namespace TepCommon
                 else
                     ;
             }
-
-            public void SetPeriod(ID_PERIOD idPeriod)
-            {
-                HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                , hdtpEnd = Controls.Find(INDEX_CONTROL.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-                //Выполнить запрос на получение значений для заполнения 'DataGridView'
-                switch (idPeriod)
-                {
-                    case ID_PERIOD.HOUR:
-                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , DateTime.Now.Day
-                            , DateTime.Now.Hour 
-                            , 0
-                            , 0).AddHours (-1);
-                        hdtpEnd.Value = hdtpBegin.Value.AddHours(1);
-                        hdtpBegin.Mode =
-                        hdtpEnd.Mode =
-                            HDateTimePicker.MODE.HOUR;
-                        break;
-                    //case ID_PERIOD.SHIFTS:
-                    //    hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
-                    //    hdtpEnd.Mode = HDateTimePicker.MODE.HOUR;
-                    //    break;
-                    case ID_PERIOD.DAY:
-                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , DateTime.Now.Day
-                            , 0
-                            , 0
-                            , 0).AddDays(-1);
-                        hdtpEnd.Value = hdtpBegin.Value.AddDays(1);
-                        hdtpBegin.Mode =
-                        hdtpEnd.Mode =
-                            HDateTimePicker.MODE.DAY;
-                        break;
-                    case ID_PERIOD.MONTH:
-                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , 1
-                            , 0
-                            , 0
-                            , 0).AddMonths(-1);
-                        hdtpEnd.Value = hdtpBegin.Value.AddMonths(1);
-                        hdtpBegin.Mode =
-                        hdtpEnd.Mode =
-                            HDateTimePicker.MODE.MONTH;
-                        break;
-                    case ID_PERIOD.YEAR:
-                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
-                            , 1
-                            , 1
-                            , 0
-                            , 0
-                            , 0).AddYears(-1);
-                        hdtpEnd.Value = hdtpBegin.Value.AddYears(1);
-                        hdtpBegin.Mode =
-                        hdtpEnd.Mode =
-                            HDateTimePicker.MODE.YEAR;
-                        break;
-                    default:
-                        break;
-                }
-            }
         }
     }
 
     public partial class PanelTaskTepValues
     {
-        protected enum INDEX_CONTROL { UNKNOWN = -1
+        protected enum INDEX_CONTROL
+        {
+            UNKNOWN = -1
             , BUTTON_RUN
-            , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END
             , CLBX_COMP_CALCULATED, CLBX_PARAMETER_CALCULATED
             , BUTTON_LOAD, MENUITEM_UPDATE, MENUITEM_HISTORY, BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
             , CLBX_COMP_VISIBLED, CLBX_PARAMETER_VISIBLED
             , DGV_DATA
-            , LABEL_DESC }
-
-        protected PanelManagement m_panelManagement;
-        protected DataGridViewTEPValues m_dgvValues;
-    }
-
-    public class PlugInTepTaskValues : HFuncDbEdit
-    {
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            base.OnEvtDataRecievedHost(obj);
+            , LABEL_DESC
+                ,
         }
     }
 }

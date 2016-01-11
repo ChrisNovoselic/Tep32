@@ -75,6 +75,9 @@
     <Compile Include="HPanelEditTree.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="PanelTaskTepCalculate.cs">
+      <SubType>Component</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

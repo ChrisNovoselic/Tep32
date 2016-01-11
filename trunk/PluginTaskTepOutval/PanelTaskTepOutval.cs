@@ -64,7 +64,7 @@ namespace PluginTaskTepOutval
         }
     }
 
-    public class PlugIn : PlugInTepTaskValues
+    public class PlugIn : PlugInTepTaskCalculate
     {
         public PlugIn()
             : base()
