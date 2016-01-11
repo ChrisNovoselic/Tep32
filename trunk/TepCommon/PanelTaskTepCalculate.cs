@@ -375,9 +375,17 @@ namespace TepCommon
         {
             ComboBox cbx = null;
             PanelManagementCalculate.INDEX_CONTROL_BASE indxCtrl = (PanelManagementCalculate.INDEX_CONTROL_BASE)iCtrl;
+
+            _IdSession = -1;
             //??? повторная проверка
             if (bClose == true)
             {
+                for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
+                {
+                    m_arTableDictPrjs[i].Clear();
+                    m_arTableDictPrjs[i] = null;
+                }
+
                 cbx = Controls.Find(PanelManagementCalculate.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
                 cbx.Items.Clear();
@@ -385,9 +393,13 @@ namespace TepCommon
                 cbx = Controls.Find(PanelManagementCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
                 cbx.Items.Clear();
+
+                m_dgvValues.ClearRows();
+                m_dgvValues.ClearColumns();
             }
             else
-                ;
+            // очистить содержание представления
+                m_dgvValues.ClearValues();
         }
         /// <summary>
         /// Установить новое значение для текущего периода

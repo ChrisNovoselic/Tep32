@@ -127,20 +127,13 @@ namespace TepCommon
         /// <param name="bClose">Признак полной/частичной очистки</param>
         protected override void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
         {
-            int i = -1;
             CheckedListBox clbx = null;
             INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
-
-            _IdSession = -1;
+            // в базовом классе 'indxCtrl' все равно не известен
+            base.clear(iCtrl, bClose);
 
             if (bClose == true)
             {
-                for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
-                {
-                    m_arTableDictPrjs[i].Clear();
-                    m_arTableDictPrjs[i] = null;
-                }
-
                 clbx = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
                 clbx.ItemCheck -= clbx_ItemCheck;
                 clbx.Items.Clear();
@@ -151,18 +144,9 @@ namespace TepCommon
                 clbx.Items.Clear();
                 clbx = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
                 clbx.Items.Clear();
-
-                base.clear();
-
-                //hdtp = Controls.Find(INDEX_CONTROL.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker;
-                //hdtp.set
-
-                m_dgvValues.ClearRows();
-                m_dgvValues.ClearColumns();
             }
             else
-            // очистить содержание представления
-                m_dgvValues.ClearValues();
+                ;
         }
         /// <summary>
         /// Остановить сопутствующие объекты
