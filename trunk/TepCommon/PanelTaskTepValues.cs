@@ -156,7 +156,6 @@ namespace TepCommon
             string strRes = string.Empty;
 
             int i = -1;
-            ID_PERIOD idPeriod = m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : _currIdPeriod;
             bool bEndMonthBoudary = false
                 , bLastItem = false
                 , bEquDatetime = false;
@@ -211,7 +210,7 @@ namespace TepCommon
                         + @", [VALUE]"
                         //+ @", GETDATE () as [WR_DATETIME]"
                     + @" FROM [dbo].[" + m_strNameTableValues + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
-                    + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
+                    + @" WHERE v.[ID_TIME] = " + (int)ActualIdPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
                     ;
                 // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                 // 'Begin' == 'End'
@@ -455,7 +454,7 @@ namespace TepCommon
             bool bVisibled = false;
             CheckedListBox clbxParsCalculated = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as CheckedListBox
                 , clbxParsVisibled = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
-            Dictionary<int, HTepUsers.VISUAL_SETTING> dictVisualsettings = new Dictionary<int, HTepUsers.VISUAL_SETTING>();
+            Dictionary<int, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<int, HTepUsers.VISUAL_SETTING>();
             //Установить новое значение для текущего периода
             _currIdPeriod = (ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex];
             //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
@@ -473,7 +472,7 @@ namespace TepCommon
                 ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First())
                 ;
             //Установки для отображения значений
-            dictVisualsettings = HTepUsers.GetParameterVisualSettings(m_connSett
+            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_connSett
                 , new int[] {
                     1
                     , (_iFuncPlugin as PlugInBase)._Id
@@ -494,10 +493,10 @@ namespace TepCommon
                     bVisibled = m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0;
                     clbxParsVisibled.Items.Add(strItem, bVisibled);
 
-                    if (dictVisualsettings.ContainsKey(id_alg) == true)
+                    if (dictVisualSettings.ContainsKey(id_alg) == true)
                     {
-                        ratio = dictVisualsettings[id_alg].m_ratio;
-                        round = dictVisualsettings[id_alg].m_round;
+                        ratio = dictVisualSettings[id_alg].m_ratio;
+                        round = dictVisualSettings[id_alg].m_round;
                     }
                     else
                     {

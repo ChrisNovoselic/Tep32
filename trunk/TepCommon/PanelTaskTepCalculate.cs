@@ -61,13 +61,25 @@ namespace TepCommon
         /// Текущий выбранный идентификатор периода расчета
         /// </summary>
         protected ID_PERIOD _currIdPeriod;
-
+        /// <summary>
+        /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
+        /// </summary>
+        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : _currIdPeriod; } }
+        /// <summary>
+        /// Идентификатор текущий выбранного часового пояса
+        /// </summary>
         protected ID_TIMEZONE _currIdTimezone;
-
+        /// <summary>
+        /// Смещение (минуты) текущее от UTC в ~ от выбранного часового пояса
+        /// </summary>
         protected int _curOffsetUTC;
-
+        /// <summary>
+        /// Панель на которой размещаются активные элементы управления
+        /// </summary>
         protected PanelManagementCalculate m_panelManagement;
-
+        /// <summary>
+        /// Отображение значений в табличном представлении
+        /// </summary>
         protected DataGridViewTEPCalculate m_dgvValues;
         /// <summary>
         /// Количество базовых периодов
@@ -77,7 +89,7 @@ namespace TepCommon
             get
             {
                 int iRes = -1;
-                ID_PERIOD idPeriod = m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : _currIdPeriod;
+                ID_PERIOD idPeriod = ActualIdPeriod;
 
                 iRes =
                     //_currIdPeriod == ID_PERIOD.HOUR ?
@@ -87,10 +99,10 @@ namespace TepCommon
                     //    24
                     idPeriod == ID_PERIOD.HOUR ?
                         (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0 :
-                    idPeriod == ID_PERIOD.DAY ?
-                        (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalDays - 0 :
-                        24
-                        ;
+                        idPeriod == ID_PERIOD.DAY ?
+                            (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalDays - 0 :
+                            24
+                            ;
 
                 return iRes;                    
             }

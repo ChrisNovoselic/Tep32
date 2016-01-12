@@ -56,7 +56,7 @@ namespace PluginTaskTepInval
             strRes = @"SELECT"
                 + @" *"
                 + @" FROM [dbo].[" + m_strNameTableValues + @"_def] v"
-                + @" WHERE [ID_TIME] = " + (int)_currIdPeriod
+                + @" WHERE [ID_TIME] = " + (int)ActualIdPeriod //(int)_currIdPeriod
                     ;
 
             return strRes;
