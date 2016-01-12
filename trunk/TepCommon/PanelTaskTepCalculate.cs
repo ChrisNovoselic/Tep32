@@ -17,6 +17,15 @@ namespace TepCommon
     public abstract partial class PanelTaskTepCalculate : HPanelTepCommon
     {
         /// <summary>
+        /// Перечисление - признак типа загруженных из БД значений
+        ///  "сырые" - от источников информации, "учтенные" - сохраненные в БД
+        /// </summary>
+        protected enum INDEX_VIEW_VALUES : uint { SOURCE, HISTORY }
+        /// <summary>
+        /// Признак отображаемых на текущий момент значений
+        /// </summary>
+        protected INDEX_VIEW_VALUES m_ViewValues;
+        /// <summary>
         /// Объект для обмена данными с БД
         /// </summary>
         protected HandlerDbTepTaskValues m_handlerDb;
@@ -67,11 +76,23 @@ namespace TepCommon
         {
             get
             {
-                return _currIdPeriod == ID_PERIOD.HOUR ?
-                    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0 :
-                    _currIdPeriod == ID_PERIOD.DAY ?
+                int iRes = -1;
+                ID_PERIOD idPeriod = m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : _currIdPeriod;
+
+                iRes =
+                    //_currIdPeriod == ID_PERIOD.HOUR ?
+                    //    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0 :
+                    //_currIdPeriod == ID_PERIOD.DAY ?
+                    //    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalDays - 0 :
+                    //    24
+                    idPeriod == ID_PERIOD.HOUR ?
+                        (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0 :
+                    idPeriod == ID_PERIOD.DAY ?
                         (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalDays - 0 :
-                        24;
+                        24
+                        ;
+
+                return iRes;                    
             }
         }
         /// <summary>

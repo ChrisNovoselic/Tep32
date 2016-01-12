@@ -15,16 +15,7 @@ using TepCommon;
 namespace TepCommon
 {
     public abstract partial class PanelTaskTepValues : PanelTaskTepCalculate
-    {
-        /// <summary>
-        /// Перечисление - признак типа загруженных из БД значений
-        ///  "сырые" - от источников информации, "учтенные" - сохраненные в БД
-        /// </summary>
-        protected enum INDEX_VIEW_VALUES : uint { SOURCE, HISTORY }
-        /// <summary>
-        /// Признак отображаемых на текущий момент значений
-        /// </summary>
-        protected INDEX_VIEW_VALUES m_ViewValues;        
+    {                
         /// <summary>
         /// Таблицы со значениями для редактирования
         /// </summary>
@@ -387,6 +378,7 @@ namespace TepCommon
         private int compareNAlg (DataRow r1, DataRow r2)
         {
             int iRes = 0
+                , i1 = -1, i2 = -1
                 , iLength = -1
                 , indx = -1;
             char[] delimeter = new char[] { '.' };
@@ -399,8 +391,12 @@ namespace TepCommon
              if ((!(arParts1.Length < 1)) && (!(arParts2.Length < 1)))
              {
                  indx = 0;
-                 iRes = int.Parse(arParts1[indx]) > int.Parse(arParts2[indx]) ? 1
-                     : int.Parse(arParts1[indx]) < int.Parse(arParts2[indx]) ? -1 : 0;
+                 if ((int.TryParse(arParts1[indx], out i1) == true)
+                     && (int.TryParse(arParts2[indx], out i2) == true))
+                     iRes = i1 > i2 ? 1
+                          : i1 < i2 ? -1 : 0;
+                 else
+                     iRes = arParts1[indx].CompareTo(arParts2[indx]);
 
                  if (iRes == 0)
                  {
