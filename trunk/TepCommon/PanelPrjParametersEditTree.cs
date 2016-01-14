@@ -106,6 +106,21 @@ namespace TepCommon
 
             _level = newLevel;
         }
+
+        private bool isDataGridViewPropReadOnly (ID_LEVEL level = ID_LEVEL.UNKNOWN)
+        {
+            bool bRes = false;
+            ID_LEVEL curLevel = level;
+
+            if (curLevel == ID_LEVEL.UNKNOWN)
+                curLevel = m_Level;
+            else
+                ;
+
+            bRes = (!(curLevel == ID_LEVEL.N_ALG)) && (!(curLevel == ID_LEVEL.PUT));
+            
+            return bRes;
+        }
         /// <summary>
         /// Отобразить/снять с отображения
         /// </summary>
@@ -171,7 +186,7 @@ namespace TepCommon
                             else
                                 ; // текущее состояние актуальное - отображаются оба объекта
 
-                m_dgvPrjProp.ReadOnly = !(newLevel == ID_LEVEL.N_ALG);
+                m_dgvPrjProp.ReadOnly = isDataGridViewPropReadOnly (newLevel);
                 if (m_dgvPrjProp.ReadOnly == false)
                     m_dgvPrjProp.Columns[0].ReadOnly = true;
                 else
@@ -953,7 +968,7 @@ namespace TepCommon
 
     partial class PanelPrjParametersEditTree
     {
-        protected enum INDEX_PARAMETER {ALGORITM, PUT, COUNT};
+        protected enum INDEX_PARAMETER {UNKNOWN = -1, ALGORITM, PUT, COUNT};
         protected enum INDEX_TABLE_DICTPRJ { /*TIME,*/ COMP_LIST, TASK, COUNT };
         string[] m_arNameTables;
         protected DataTable[] m_arTableOrigin
@@ -1213,35 +1228,52 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         private void dgvProp_onCellEndEdit(object obj, DataGridViewCellEventArgs ev)
         {
-            string strThrow = string.Empty;
+            string strThrow = string.Empty
+                , strId = string.Empty;
             //Только для уровня "Номер в алгоритме"
-            if ((m_Level == ID_LEVEL.N_ALG)
+            if ((isDataGridViewPropReadOnly () == false)
                 && (ev.ColumnIndex == 1)            
                 )
             {
+                TreeNode nodeSel = m_ctrlTreeView.SelectedNode
+                    , nodeParent = nodeSel.Parent;
                 DataGridView dgv = obj as DataGridView;
-                DataRow[] rowsAlg = m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM].Select(@"ID=" + m_idAlg);
+                INDEX_PARAMETER indxParameter = m_Level == ID_LEVEL.N_ALG ? INDEX_PARAMETER.ALGORITM :
+                    m_Level == ID_LEVEL.PUT ? INDEX_PARAMETER.PUT : INDEX_PARAMETER.UNKNOWN;
+                DataRow[] rowsAlg = null;
 
-                if (rowsAlg.Length == 1)
+                if (!(indxParameter == INDEX_PARAMETER.UNKNOWN))
                 {
-                    string strNameField = dgv.Rows[ev.RowIndex].Cells[0].Value.ToString().Trim()
-                        , strVal = dgv.Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value.ToString().Trim();
-                    //Сохранить новое значение
-                    rowsAlg[0][strNameField] = strVal;
+                    strId = getIdNodePart(nodeSel.Name, m_Level);
+                    rowsAlg = m_arTableEdit[(int)indxParameter].Select(@"ID=" +
+                        //m_idAlg
+                        strId
+                        );
 
-                    if ((strNameField.Equals(@"N_ALG") == true)
-                        || (strNameField.Equals(@"NAME_SHR") == true))
-                        //Изменить подпись в "дереве"
-                        (Controls.Find(INDEX_CONTROL.TREECTRL_PRJ_ALG.ToString(), true)[0] as TreeView).SelectedNode.Text =
-                            rowsAlg[0][@"N_ALG"].ToString().Trim() + @" (" + rowsAlg[0][@"NAME_SHR"].ToString().Trim() + @")";
+                    if (rowsAlg.Length == 1)
+                    {
+                        string strNameField = dgv.Rows[ev.RowIndex].Cells[0].Value.ToString().Trim()
+                            , strVal = dgv.Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value.ToString().Trim();
+                        //Сохранить новое значение
+                        rowsAlg[0][strNameField] = strVal;
+
+                        if ((m_Level == ID_LEVEL.N_ALG) &&
+                            ((strNameField.Equals(@"N_ALG") == true)
+                                || (strNameField.Equals(@"NAME_SHR") == true)))
+                            //Изменить подпись в "дереве"
+                            (Controls.Find(INDEX_CONTROL.TREECTRL_PRJ_ALG.ToString(), true)[0] as TreeView).SelectedNode.Text =
+                                rowsAlg[0][@"N_ALG"].ToString().Trim() + @" (" + rowsAlg[0][@"NAME_SHR"].ToString().Trim() + @")";
+                        else
+                            ;
+                    }
                     else
-                        ;
+                        strThrow = @"для ID=" + strId + @" найдено " + rowsAlg.Length + @" записей";
                 }
                 else
-                    strThrow = @"найдено " + rowsAlg.Length + @" записей";
+                    strThrow = @"неизвестный тип таблицы (LEVEL=" + m_Level.ToString () + @")...";
             }
             else
-                strThrow = @"редактирование запрещено";
+                strThrow = @"для LEVEL=" + m_Level.ToString () + @" редактирование запрещено";
 
             if (strThrow.Equals(string.Empty) == false)
                 throw new Exception(@"HPanelEditTree_dgvPropCellEndEdit () - " + strThrow + @"...");
