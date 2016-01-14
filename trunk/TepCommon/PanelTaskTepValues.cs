@@ -1149,8 +1149,8 @@ namespace TepCommon
                         }
                         else
                             ;
-
-                ReadOnly = true;
+                //??? если установить 'true' - редактирование невозможно
+                ReadOnly = false;
 
                 CellValueChanged += new DataGridViewCellEventHandler (onCellValueChanged);
             }
