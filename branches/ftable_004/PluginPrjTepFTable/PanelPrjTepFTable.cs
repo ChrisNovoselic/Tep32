@@ -58,6 +58,7 @@ namespace PluginPrjTepFTable
         {
             return base.Activate(activate);
         }
+
         /// <summary>
         /// Инициализация
         /// </summary>
@@ -99,6 +100,7 @@ namespace PluginPrjTepFTable
             Logging.Logg().Debug(@"PluginTepPrjFTable::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
 
         }
+
         /// <summary>
         /// Установить признак отображения для строк
         ///  в соответствии с введенным в поле "Поиск"
@@ -128,6 +130,7 @@ namespace PluginPrjTepFTable
                 rView.Visible = bVisible;
             }
         }
+
         ///// <summary>
         ///// Включить/блокировать кнопки
         /////  , если 'View' имеют/не_имеют фокус ввода
@@ -139,6 +142,7 @@ namespace PluginPrjTepFTable
         //    Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0].Enabled =
         //        bEnabled;
         //}
+
         /// <summary>
         /// Обработчик события - изменение выбранной строки
         ///  в отображении для таблицы с наименованями функций
@@ -205,6 +209,7 @@ namespace PluginPrjTepFTable
             else
                 ;
         }
+
         ///// <summary>
         ///// Обработчик события - 
         ///// </summary>
@@ -225,6 +230,7 @@ namespace PluginPrjTepFTable
         //{
         //    btnAddDeleteEnabled(false);
         //}
+
         /// <summary>
         /// Обработчик события - изменение выбранной строки
         ///  в отображении для таблицы со значениями
@@ -287,6 +293,7 @@ namespace PluginPrjTepFTable
             else
                 ; // нет ни одной выбранной строки
         }
+
         ///// <summary>
         ///// Обработчик события - 
         ///// </summary>
@@ -307,6 +314,7 @@ namespace PluginPrjTepFTable
         //{
         //    btnAddDeleteEnabled(false);
         //}
+
         /// <summary>
         /// Обработка события при успешной синхронизации целевойй таблицы в БД
         /// </summary>
@@ -314,6 +322,7 @@ namespace PluginPrjTepFTable
         {
             m_tblOrigin = m_tblEdit.Copy();
         }
+
         /// <summary>
         /// Метод синхронизации целевой таблицы в БД
         ///  (обновление, вставка, удаление записей)
@@ -325,6 +334,7 @@ namespace PluginPrjTepFTable
         {
             DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, @"ftable", @"ID", m_tblOrigin, m_tblEdit, out err);
         }
+
         /// <summary>
         /// Конструктор с параметром
         /// </summary>
@@ -334,6 +344,7 @@ namespace PluginPrjTepFTable
         {
             InitializeComponent();
         }
+
         /// <summary>
         /// Инициализация компонентов
         /// </summary>
@@ -491,6 +502,8 @@ namespace PluginPrjTepFTable
             dgv.Columns[4].Name = "ID_REC";
             dgv.Columns[4].Visible = false;
 
+            dgv.CellMouseDoubleClick += dgv_CellMouseDoubleClick;
+
             //Панель отображения графика
             this.m_zGraph_fTABLE = new ZedGraphFTable();
             this.m_zGraph_fTABLE.m_This.Name = INDEX_CONTROL.ZGRAPH_fTABLE.ToString();
@@ -638,6 +651,20 @@ namespace PluginPrjTepFTable
             // для поля ввода при поиске функции
             ((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_FIND.ToString(), true)[0]).TextChanged += new EventHandler(PluginPrjTepFTable_TextChanged);
         }
+
+        /// <summary>
+        /// Обработчик события - двойной щечок по ячейки с реперными точками
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void dgv_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            DataGridView dgv =
+                 sender as DataGridView;
+
+            dgv.ReadOnly = false;
+        }
+
         /// <summary>
         /// Строка - наименование текущей (выбранной) функции
         /// </summary>
@@ -653,6 +680,7 @@ namespace PluginPrjTepFTable
                 return strRes;
             }
         }
+
         /// <summary>
         /// Событие изменения текстового поля
         /// (функция поиска)
@@ -663,6 +691,7 @@ namespace PluginPrjTepFTable
         {
             nALGVisibled((sender as TextBox).Text);
         }
+
         /// <summary>
         /// Обработка клика по таблице со значениями.
         ///  изменение чекбокса, построение графика.
@@ -682,6 +711,7 @@ namespace PluginPrjTepFTable
             else
                 ;
         }
+
         ///// <summary>
         ///// Возвратить отображение с фокусом ввода
         ///// </summary>
@@ -707,6 +737,7 @@ namespace PluginPrjTepFTable
 
         //    return dgv;
         //}
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Добавить" (точку)
         /// </summary>
@@ -715,6 +746,7 @@ namespace PluginPrjTepFTable
         private void btnAddToPoint_OnClick(object obj, EventArgs ev)
         {
         }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Удалить" (точку)
         /// </summary>
@@ -729,6 +761,7 @@ namespace PluginPrjTepFTable
             else
                 ;
         }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Добавить" (функцию)
         /// </summary>
@@ -737,6 +770,24 @@ namespace PluginPrjTepFTable
         private void btnAddToFunction_OnClick(object obj, EventArgs ev)
         {
         }
+
+        /// <summary>
+        /// Добавить точку для функции
+        /// </summary>
+        /// <param name="nameAlg">имя функции</param>
+        private void addRecNAlg(string nameAlg)
+        {
+ 
+        }
+
+        /// <summary>
+        /// Добавить функцию
+        /// </summary>
+        private void addRecNAlg()
+        {
+ 
+        }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Удалить" (функцию)
         /// </summary>
@@ -781,6 +832,7 @@ namespace PluginPrjTepFTable
 
             return iRes;
         }
+
         /// <summary>
         /// Удалить запись (значение) для функции
         /// </summary>
@@ -804,6 +856,7 @@ namespace PluginPrjTepFTable
 
             return iRes;
         }
+
         /// <summary>
         /// Возвратить ранг изменившегося значения
         /// </summary>
@@ -824,6 +877,7 @@ namespace PluginPrjTepFTable
 
             return fRunkRes;
         }
+
         /// <summary>
         /// Обработчик события - изменение значения в поле ввода
         /// </summary>
@@ -853,6 +907,7 @@ namespace PluginPrjTepFTable
             (Controls.Find(INDEX_CONTROL.TEXTBOX_F.ToString(), true)[0] as TextBox).Text = strVal;
         }
     }
+
     /// <summary>
     /// Класс для взаимодействия с сервером (вызывающем приложением)
     /// </summary>

@@ -121,6 +121,7 @@ namespace PluginPrjTepFTable
             pane.YAxis.MinorGrid.PenWidth = 0.1F;
             pane.YAxis.MinorGrid.Color = Color.LightGray;
         }
+
         /// <summary>
         /// Класс для отображения одной линии
         /// </summary>
@@ -144,6 +145,7 @@ namespace PluginPrjTepFTable
                 this.key = key;
                 this.fRunk = fRunk;
             }
+
             /// <summary>
             /// Возвратить признак принадлежности точки к линии по ключу
             /// </summary>
@@ -170,6 +172,7 @@ namespace PluginPrjTepFTable
 
                 return bRes;
             }
+
             /// <summary>
             /// Возвратить подпись к линии
             /// </summary>
@@ -196,6 +199,7 @@ namespace PluginPrjTepFTable
                 return strRes;
             }
         }
+
         /// <summary>
         /// Возвратить все аргументы функции для указанного ранга
         /// </summary>
@@ -240,6 +244,7 @@ namespace PluginPrjTepFTable
 
             return listRes;
         }
+
         /// <summary>
         /// Добавить все линии
         /// </summary>
@@ -264,6 +269,7 @@ namespace PluginPrjTepFTable
                 lineItemCurve = pane.AddCurve(labelItemCurve, item, clrLineItemCurve, SymbolType.VDash);
             }
         }
+
         /// <summary>
         /// Отображение графика функции
         ///  по аргументу
