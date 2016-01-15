@@ -91,6 +91,9 @@ namespace PluginPrjTepFTable
                 dgv = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView;
                 listNAlg = new List<string>();
 
+                if (dgv.RowCount > 0)
+                    dgv.Rows.Clear();
+                else ;
                 //var distinctRows = (from DataRow r in m_tblOrigin.Rows select new { nalg = r["N_ALG"] }).Distinct();
 
                 foreach (DataRow r in m_tblEdit.Rows)
