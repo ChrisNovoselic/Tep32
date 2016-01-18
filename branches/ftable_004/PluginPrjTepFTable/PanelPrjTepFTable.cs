@@ -521,9 +521,9 @@ namespace PluginPrjTepFTable
             dgv.Columns[3].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgv.Columns[4].Name = "ID_REC";
             dgv.Columns[4].Visible = false;
-            //
+            //обработчик нажатия мышки
             dgv.CellMouseDoubleClick += dgv_CellMouseDoubleClickValue;
-            //
+            //обработчик редактирования ячейки
             dgv.CellEndEdit += dgv_CellEndEditValue;
 
             //Панель отображения графика
@@ -662,7 +662,8 @@ namespace PluginPrjTepFTable
         }
 
         /// <summary>
-        ///  Обработчик события - окончание редактирования ячейки
+        ///  Обработчик события - окончание редактирования ячейки 
+        ///  таблицы реперных точек
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -682,6 +683,7 @@ namespace PluginPrjTepFTable
 
         /// <summary>
         ///  Обработчик события - окончание редактирования ячейки
+        ///  таблицы функций
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -691,7 +693,7 @@ namespace PluginPrjTepFTable
             string nameCol = dgv.Columns[e.ColumnIndex].Name;
             string editValue = dgv.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
 
-            if (editRecNAlg((int)dgv.Rows[dgv.SelectedRows[0].Index].Cells[dgv.ColumnCount - 1].Value, nameCol, editValue) == 1)
+            if (editRecNAlg((int)dgv.Rows[e.RowIndex].Cells[dgv.ColumnCount - 1].Value, nameCol, editValue) == 1)
                 m_tblEdit.AcceptChanges();
             else ;
 
@@ -754,7 +756,7 @@ namespace PluginPrjTepFTable
             else
             {
                 iRes = -2;
-                Logging.Logg().Error(@"PanelPrjTepFTable::delRecItem () - неоднозначность при редактировании точки с ID=" + id_rec + @"..."
+                Logging.Logg().Error(@"PanelPrjTepFTable::delRecItem () - неоднозначность при редактировании функции с ID=" + id_rec + @"..."
                     , Logging.INDEX_MESSAGE.NOT_SET);
             }
 
@@ -879,9 +881,13 @@ namespace PluginPrjTepFTable
             DataGridView dgvValues = Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView;
             // в крайнем столбце (снятым с отображения) - идентификатор записи
             if (delRecNAlg((int)dgvValues.Rows[dgvValues.SelectedRows[0].Index].Cells[dgvValues.ColumnCount - 1].Value) == 1)
+            {
                 m_tblEdit.AcceptChanges();
+                updateDGVNalg(m_tblEdit);
+            }
             else
                 ;
+            dgvValues.Refresh();
         }
 
         /// <summary>
@@ -942,7 +948,7 @@ namespace PluginPrjTepFTable
         }
 
         /// <summary>
-        /// Обновление DataGridView с функциями
+        /// Обновление записей DataGridView
         /// </summary>
         /// <param name="tbl"></param>
         private void updateDGVNalg(DataTable tbl)
@@ -955,8 +961,6 @@ namespace PluginPrjTepFTable
 
             dgv = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView;
             listNAlg = new List<string>();
-
-            //var distinctRows = (from DataRow r in m_tblOrigin.Rows select new { nalg = r["N_ALG"] }).Distinct();
 
             foreach (DataRow r in tbl.Rows)
             {
@@ -983,13 +987,17 @@ namespace PluginPrjTepFTable
         /// <param name="ev">Аргумент события</param>
         private void btnDeleteToFunction_OnClick(object obj, EventArgs ev)
         {
-            DataGridView dgvValues = Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView;
+            DataGridView dgvNALG = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView;
             // в 1-ом столбце - наименование функции
-            if (delRecNAlg((int)dgvValues.Rows[dgvValues.SelectedRows[0].Index].Cells[0].Value) > 0)
+            if (delRecNAlg(dgvNALG.Rows[dgvNALG.SelectedRows[0].Index].Cells[0].Value.ToString()) > 0)
+            {
                 m_tblEdit.AcceptChanges();
+                updateDGVNalg(m_tblEdit);
+            }
             else
                 ;
         }
+
         /// <summary>
         /// Удалить все записи (точки) для функции
         /// </summary>
@@ -999,7 +1007,7 @@ namespace PluginPrjTepFTable
         {
             int iRes = -1;
 
-            DataRow[] rowsToDel = m_tblEdit.Select(@"NALG=" + nameAlg);
+            DataRow[] rowsToDel = m_tblEdit.Select(@"N_ALG='" + nameAlg + @"'");
             if (rowsToDel.Length > 0)
             {
                 iRes = 0;
@@ -1034,6 +1042,7 @@ namespace PluginPrjTepFTable
             if (rowsToDel.Length == 1)
             {// удалять только, если строка есть И она единственная
                 m_tblEdit.Rows.Remove(rowsToDel[0]);
+                iRes = 1;
             }
             else
             {
