@@ -468,8 +468,8 @@ namespace TepCommon
             m_dgvValues.ClearRows();
             //Список параметров для отображения            
             IEnumerable<DataRow> listParameter =
-                //ListParameter.Select(par => (string)par[@"ID_ALG"]).Distinct() as IEnumerable<DataRow>
-                ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First())
+                // в каждой строке значения полей, относящихся к параметру алгоритма расчета одинаковые, т.к. 'ListParameter' объединение 2-х таблиц
+                ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]                
                 ;
             //Установки для отображения значений
             dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_connSett
@@ -483,27 +483,28 @@ namespace TepCommon
             foreach (DataRow r in listParameter)
             {
                 id_alg = (int)r[@"ID_ALG"];
-
+                // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
                 if (m_arListIds[(int)INDEX_ID.ALL_PARAMETER].IndexOf(id_alg) < 0)
                 {
+                    // добавить в список идентификатор параметра алгоритма расчета
                     m_arListIds[(int)INDEX_ID.ALL_PARAMETER].Add(id_alg);
 
                     strItem = ((string)r[@"N_ALG"]).Trim () + @" (" + ((string)r[@"NAME_SHR"]).Trim() + @")";
                     clbxParsCalculated.Items.Add(strItem, m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0);
                     bVisibled = m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0;
                     clbxParsVisibled.Items.Add(strItem, bVisibled);
-
+                    // получить значения для настройки визуального отображения
                     if (dictVisualSettings.ContainsKey(id_alg) == true)
-                    {
+                    {// установленные в проекте
                         ratio = dictVisualSettings[id_alg].m_ratio;
                         round = dictVisualSettings[id_alg].m_round;
                     }
                     else
-                    {
+                    {// по умолчанию
                         ratio = HTepUsers.s_iRatioDefault;
                         round = HTepUsers.s_iRoundDefault;
                     }
-
+                    // добавить свойства для строки таблицы со значениями
                     m_dgvValues.AddRow(new DataGridViewTEPValues.ROW_PROPERTY()
                     {
                         m_idAlg = id_alg
@@ -514,7 +515,7 @@ namespace TepCommon
                         //, m_bVisibled = bVisibled
                         , m_vsRatio = ratio
                         , m_vsRound = round
-                        , m_ratio = (int)r[@"ID_RATIO"]
+                        //, m_ratio = (int)r[@"ID_RATIO"]
                     });
                 }
                 else
@@ -1109,7 +1110,10 @@ namespace TepCommon
                             if (getClrCellToValue(iCol, iRow, out clrCell) == true)
                             {
                                 vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                ratioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value;
+                                ratioValue =
+                                    //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
+                                    m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
+                                    ;
                                 if (!(ratioValue == vsRatioValue))
                                 {
                                     row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol

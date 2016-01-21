@@ -517,11 +517,13 @@ namespace TepCommon
                 ///// Признак отображения строки
                 ///// </summary>
                 //public bool m_bVisibled;
-
+                /// <summary>
+                /// Идентификатор множителя при отображении (визуальные установки) значений в строке
+                /// </summary>
                 public int m_vsRatio;
-
-                public int m_ratio;
-
+                /// <summary>
+                /// Количество знаков после запятой при отображении (визуальные установки) значений в строке
+                /// </summary>
                 public int m_vsRound;
 
                 public HDataGridViewCell[] m_arPropertiesCells;
