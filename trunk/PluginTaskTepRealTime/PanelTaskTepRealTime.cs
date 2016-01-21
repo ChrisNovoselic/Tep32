@@ -64,6 +64,11 @@ namespace PluginTaskTepRealTime
         {            
         }
 
+        protected override string whereRangeRecord
+        {
+            get { return string.Empty; }
+        }
+
         protected override void recUpdateInsertDelete(ref System.Data.Common.DbConnection dbConn, out int err)
         {
             throw new NotImplementedException();

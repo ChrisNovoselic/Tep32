@@ -42,10 +42,13 @@ namespace TepCommon
         /// </summary>
         protected enum INDEX_TABLE_DICTPRJ : int
         {
-            UNKNOWN = -1, PERIOD, TIMEZONE, COMPONENT, PARAMETER/*, VISUAL_SETTINGS*/, MODE_DEV/*, MEASURE*/,
-            RATIO
-                , COUNT_TABLE_DICTPRJ
+            UNKNOWN = -1, PERIOD, TIMEZONE, COMPONENT, PARAMETER/*, VISUAL_SETTINGS*/, MODE_DEV/*, MEASURE*/
+            , RATIO
+                , COUNT
         }
+
+        protected enum INDEX_TABLE_VALUES { UNKNOWN = -1, IN, OUT_NORM, OUT_MKT
+            , ALL }
         /// <summary>
         /// Наименования таблиц с парметрами для расчета
         /// </summary>
@@ -168,7 +171,7 @@ namespace TepCommon
         /// <param name="strNameTableAlg">Строка - наименование таблицы с параметрами алгоритма расчета</param>
         /// <param name="strNameTablePut">Строка - наименование таблицы с параметрами, детализированных до принадлежности к компоненту станции (оборудования)</param>
         /// <param name="strNameTableValues">Строка - наименование таблицы со значениями</param>
-        public PanelTaskTepCalculate(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut, string strNameTableValues)
+        protected PanelTaskTepCalculate(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut, string strNameTableValues)
             : base(iFunc)
         {
             m_strNameTableAlg = strNameTableAlg;
@@ -315,12 +318,20 @@ namespace TepCommon
             else
                 throw new Exception(@"PanelTaskTepCalculate::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
+
+        protected abstract string whereRangeRecord { get; }
         /// <summary>
         /// Массив запросов к БД по получению словарных и проектных значений
         /// </summary>
         private string[] getQueryDictPrj()
         {
             string[] arRes = null;
+
+            string whereCalcParameters = whereRangeRecord;
+            if (whereCalcParameters.Equals(string.Empty) == false)
+                whereCalcParameters = @" AND a." + whereCalcParameters;
+            else
+                ;
 
             arRes = new string[]
             {
@@ -337,7 +348,7 @@ namespace TepCommon
                     + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
                     + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
                 + @" FROM [dbo].[" + m_strNameTablePut + @"] as p"
-                    + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG"
+                    + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG" + whereCalcParameters
                     + @" JOIN [dbo].[measure] as m ON a.ID_MEASURE = m.ID"
                 //// настройки визуального отображения значений
                 //, @""

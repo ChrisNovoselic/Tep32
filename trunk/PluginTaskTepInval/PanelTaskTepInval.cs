@@ -46,6 +46,11 @@ namespace PluginTaskTepInval
         {
             get { return m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE]; }
         }
+
+        protected override string whereRangeRecord
+        {
+            get { return string.Empty; }
+        }
         /// <summary>
         /// Запрос для получения значений "по умолчанию"
         /// </summary>

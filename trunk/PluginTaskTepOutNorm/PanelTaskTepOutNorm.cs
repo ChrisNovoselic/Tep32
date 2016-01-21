@@ -10,9 +10,9 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTaskTepOutval
+namespace PluginTaskTepOutNorm
 {
-    public class PanelTaskTepOutval : PanelTaskTepValues
+    public class PanelTaskTepOutNorm : PanelTaskTepOutVal
     {
         /// <summary>
         /// Перечисление - индексы таблиц для значений
@@ -20,8 +20,8 @@ namespace PluginTaskTepOutval
         ///  , "по умолчанию"
         /// </summary>
         private enum INDEX_TABLE_VALUES : int { REGISTRED, COUNT }
-        public PanelTaskTepOutval(IPlugIn iFunc)
-            : base(iFunc, @"outalg", @"output", @"outval")
+        public PanelTaskTepOutNorm(IPlugIn iFunc)
+            : base(iFunc, ID_START_RECORD.ALG_NORMATIVE)
         {
             m_arTableOrigin = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
@@ -57,11 +57,6 @@ namespace PluginTaskTepOutval
         {
             throw new NotImplementedException();
         }
-
-        protected override void onEventCellValueChanged(object dgv, PanelTaskTepValues.DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public class PlugIn : PlugInTepTaskCalculate
@@ -72,12 +67,12 @@ namespace PluginTaskTepOutval
             _Id = 18;
 
             _nameOwnerMenuItem = @"Задача\Расчет ТЭП";
-            _nameMenuItem = @"Выходные данные";
+            _nameMenuItem = @"Выход-норматив";
         }
 
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
-            createObject(typeof(PanelTaskTepOutval));
+            createObject(typeof(PanelTaskTepOutNorm));
 
             base.OnClickMenuItem(obj, ev);
         }

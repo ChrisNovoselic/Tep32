@@ -15,7 +15,7 @@ using TepCommon;
 namespace TepCommon
 {
     public abstract partial class PanelTaskTepValues : PanelTaskTepCalculate
-    {                
+    {
         /// <summary>
         /// Таблицы со значениями для редактирования
         /// </summary>
@@ -34,7 +34,7 @@ namespace TepCommon
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
-        public PanelTaskTepValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut, string strNameTableValues)
+        protected PanelTaskTepValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut, string strNameTableValues)
             : base(iFunc, strNameTableAlg, strNameTablePut, strNameTableValues)
         {
             InitializeComponents();
@@ -1248,14 +1248,14 @@ namespace TepCommon
 
                 //Расчет - выполнить - норматив
                 ctrl = new Button();
-                ctrl.Name = INDEX_CONTROL.BUTTON_RUN.ToString();
+                ctrl.Name = INDEX_CONTROL.BUTTON_RUN_NORM.ToString();
                 ctrl.Text = @"К нормативу";
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 4, posRow = 0);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
                 //Расчет - выполнить - макет
                 ctrl = new Button();
-                ctrl.Name = INDEX_CONTROL.BUTTON_RUN.ToString();
+                ctrl.Name = INDEX_CONTROL.BUTTON_RUN_MKT.ToString();
                 ctrl.Text = @"К макету";
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 4, posRow = posRow + 1);
@@ -1404,7 +1404,7 @@ namespace TepCommon
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1
-            , BUTTON_RUN
+            , BUTTON_RUN_NORM, BUTTON_RUN_MKT, BUTTON_INVAL
             , CLBX_COMP_CALCULATED, CLBX_PARAMETER_CALCULATED
             , BUTTON_LOAD, MENUITEM_UPDATE, MENUITEM_HISTORY, BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
             , CLBX_COMP_VISIBLED, CLBX_PARAMETER_VISIBLED
