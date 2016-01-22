@@ -395,9 +395,9 @@ namespace TepCommon
         {
             string[] arRes = null;
 
-            string whereCalcParameters = whereRangeRecord;
-            if (whereCalcParameters.Equals(string.Empty) == false)
-                whereCalcParameters = @" AND a." + whereCalcParameters;
+            string whereParameters = whereRangeRecord;
+            if (whereParameters.Equals(string.Empty) == false)
+                whereParameters = @" AND a." + whereParameters;
             else
                 ;
 
@@ -416,7 +416,7 @@ namespace TepCommon
                     + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
                     + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
                 + @" FROM [dbo].[" + NameDbTablePut + @"] as p"
-                    + @" JOIN [dbo].[" + NameDbTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG" + whereCalcParameters
+                    + @" JOIN [dbo].[" + NameDbTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG" + whereParameters
                     + @" JOIN [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID"
                 //// настройки визуального отображения значений
                 //, @""
