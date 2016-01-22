@@ -5,6 +5,23 @@ using System.Text;
 
 namespace TepCommon
 {
+    public enum INDEX_DBTABLE_NAME : short { UNKNOWN = -1
+        , TIME
+        , TIMEZONE
+        , COMP_LIST
+        , MODE_DEV
+        , RATIO
+        , MEASURE
+        , INALG
+        , INPUT
+        , INVALUES
+        , INVAL_DEF
+        , OUTALG
+        , OUTPUT
+        , OUTVALUES
+            , COUNT
+    };    
+
     public enum ID_START_RECORD : uint { ALG = 10001, ALG_NORMATIVE = 15001, PUT = 20001 }
     /// <summary>
     /// Перечисление - идентификаторы задач в составе системы - табл. [task]

@@ -17,10 +17,20 @@ namespace TepCommon
     public abstract partial class PanelTaskTepCalculate : HPanelTepCommon
     {
         /// <summary>
+        /// Перечисление - индексы типов вкладок (объектов наследуемых классов)
+        /// </summary>
+        protected enum TYPE { UNKNOWN = -1, IN_VALUES, OUT_NORM_VALUES, OUT_MKT_VALUES, OUT_REALTIME, COUNT }
+        /// <summary>
+        /// Индекс типа вкладки для текущего объекта
+        /// </summary>
+        protected TYPE m_type;
+        /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
         ///  "сырые" - от источников информации, "учтенные" - сохраненные в БД
         /// </summary>
-        protected enum INDEX_VIEW_VALUES : uint { SOURCE, HISTORY }
+        protected enum INDEX_VIEW_VALUES : uint { SOURCE, HISTORY, COUNT }
+
+        protected enum TABLE_CALCULATE_REQUIRED : short { UNKNOWN = -1, ALG, PUT, VALUE, COUNT }
         /// <summary>
         /// Признак отображаемых на текущий момент значений
         /// </summary>
@@ -28,7 +38,7 @@ namespace TepCommon
         /// <summary>
         /// Объект для обмена данными с БД
         /// </summary>
-        protected HandlerDbTepTaskValues m_handlerDb;
+        protected HandlerDbTaskCalculate m_handlerDb;
         /// <summary>
         /// Перечисление - идентификаторы состояния полученных из БД значений
         /// </summary>
@@ -42,19 +52,20 @@ namespace TepCommon
         /// </summary>
         protected enum INDEX_TABLE_DICTPRJ : int
         {
-            UNKNOWN = -1, PERIOD, TIMEZONE, COMPONENT, PARAMETER/*, VISUAL_SETTINGS*/, MODE_DEV/*, MEASURE*/
-            , RATIO
+            UNKNOWN = -1
+            , PERIOD, TIMEZONE, COMPONENT, PARAMETER //_IN, PARAMETER_OUT
+            , MODE_DEV/*, MEASURE*/, RATIO
                 , COUNT
         }
-
-        protected enum INDEX_TABLE_VALUES { UNKNOWN = -1, IN, OUT_NORM, OUT_MKT
-            , ALL }
-        /// <summary>
-        /// Наименования таблиц с парметрами для расчета
-        /// </summary>
-        protected string m_strNameTableAlg
-            , m_strNameTablePut
-            , m_strNameTableValues;
+        ///// <summary>
+        ///// Индекс используесмых на панели значений
+        ///// </summary>
+        //protected enum INDEX_USE_VALUES { UNKNOWN = -1, IN, OUT_NORM, OUT_MKT
+        //    , COUNT }
+        ///// <summary>
+        ///// Составной признак, указывающий на индексы, используемых на панели значений
+        ///// </summary>
+        //HMark m_markUseValues;
         /// <summary>
         /// Идентификатор сессии - уникальный идентификатор
         ///  для наблов входных, расчетных (нормативных, макетных) значений
@@ -152,17 +163,12 @@ namespace TepCommon
         protected enum INDEX_ID
         {
             UNKNOWN = -1
-                ,
-            PERIOD // идентификаторы периодов расчетов, использующихся на форме
-                ,
-            TIMEZONE //Идентификаторы (целочисленные, из БД системы) часовых поясов
-                , ALL_COMPONENT,
-            ALL_PARAMETER // все идентификаторы компонентов ТЭЦ/параметров
-                , DENY_COMP_CALCULATED,
-            DENY_PARAMETER_CALCULATED //запрещенных для расчета
-                , DENY_COMP_VISIBLED,
-            DENY_PARAMETER_VISIBLED // запрещенных для отображения
-                , COUNT_INDEX_ID
+            , PERIOD // идентификаторы периодов расчетов, использующихся на форме
+            , TIMEZONE // идентификаторы (целочисленные, из БД системы) часовых поясов
+            , ALL_COMPONENT, ALL_PARAMETER // все идентификаторы компонентов ТЭЦ/параметров
+            , DENY_COMP_CALCULATED, DENY_PARAMETER_CALCULATED // запрещенных для расчета
+            , DENY_COMP_VISIBLED, DENY_PARAMETER_VISIBLED // запрещенных для отображения
+                , COUNT
         }
         /// <summary>
         /// Конструктор - основной (с параметрами)
@@ -171,14 +177,12 @@ namespace TepCommon
         /// <param name="strNameTableAlg">Строка - наименование таблицы с параметрами алгоритма расчета</param>
         /// <param name="strNameTablePut">Строка - наименование таблицы с параметрами, детализированных до принадлежности к компоненту станции (оборудования)</param>
         /// <param name="strNameTableValues">Строка - наименование таблицы со значениями</param>
-        protected PanelTaskTepCalculate(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut, string strNameTableValues)
+        protected PanelTaskTepCalculate(IPlugIn iFunc, TYPE type)
             : base(iFunc)
         {
-            m_strNameTableAlg = strNameTableAlg;
-            m_strNameTablePut = strNameTablePut;
-            m_strNameTableValues = strNameTableValues;
+            m_type = type;
 
-            m_handlerDb = new HandlerDbTepTaskValues();
+            m_handlerDb = new HandlerDbTaskCalculate();
 
             InitializeComponents();
         }
@@ -186,8 +190,8 @@ namespace TepCommon
         private void InitializeComponents ()
         {
             #region Код, не относящийся к инициализации элементов управления
-            m_arListIds = new List<int>[(int)INDEX_ID.COUNT_INDEX_ID];
-            for (INDEX_ID i = INDEX_ID.PERIOD; i < INDEX_ID.COUNT_INDEX_ID; i++)
+            m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
+            for (INDEX_ID i = INDEX_ID.PERIOD; i < INDEX_ID.COUNT; i++)
                 switch (i)
                 {
                     case INDEX_ID.PERIOD:
@@ -202,7 +206,7 @@ namespace TepCommon
                         break;
                 }
 
-            m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ];
+            m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
 
             #endregion
         }
@@ -219,7 +223,7 @@ namespace TepCommon
             int i = -1;
             //Заполнить таблицы со словарными, проектными величинами
             string[] arQueryDictPrj = getQueryDictPrj();
-            for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
+            for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
             {
                 m_arTableDictPrjs[i] = DbTSQLInterface.Select(ref dbConn, arQueryDictPrj[i], null, null, out err);
 
@@ -318,8 +322,72 @@ namespace TepCommon
             else
                 throw new Exception(@"PanelTaskTepCalculate::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
-
+        /// <summary>
+        /// Строка - условие для TSQL-запроса для указания диапазона идентификаторов
+        ///  выходных параметров алгоритма расчета
+        /// </summary>
         protected abstract string whereRangeRecord { get; }
+
+        private static string getNameDbTable(TYPE type, TABLE_CALCULATE_REQUIRED req)
+        {
+            INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
+
+            switch (type)
+            {
+                case TYPE.IN_VALUES:
+                    switch (req)
+                    {
+                        case TABLE_CALCULATE_REQUIRED.ALG:
+                            indx = INDEX_DBTABLE_NAME.INALG;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.PUT:
+                            indx = INDEX_DBTABLE_NAME.INPUT;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.VALUE:
+                            indx = INDEX_DBTABLE_NAME.INVALUES;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case TYPE.OUT_NORM_VALUES:
+                case TYPE.OUT_MKT_VALUES:
+                    switch (req)
+                    {
+                        case TABLE_CALCULATE_REQUIRED.ALG:
+                            indx = INDEX_DBTABLE_NAME.OUTALG;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.PUT:
+                            indx = INDEX_DBTABLE_NAME.OUTPUT;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.VALUE:
+                            indx = INDEX_DBTABLE_NAME.OUTVALUES;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            return HandlerDbTaskCalculate.s_NameDbTables[(int)indx];
+        }
+
+        protected string NameDbTableAlg
+        {
+            get { return getNameDbTable(m_type, TABLE_CALCULATE_REQUIRED.ALG); }
+        }
+
+        protected string NameDbTablePut
+        {
+            get { return getNameDbTable(m_type, TABLE_CALCULATE_REQUIRED.PUT); }
+        }
+
+        protected string NameDbTableValues
+        {
+            get { return getNameDbTable(m_type, TABLE_CALCULATE_REQUIRED.VALUE); }
+        }
         /// <summary>
         /// Массив запросов к БД по получению словарных и проектных значений
         /// </summary>
@@ -336,28 +404,28 @@ namespace TepCommon
             arRes = new string[]
             {
                 //PERIOD
-                @"SELECT * FROM [time] WHERE [ID] IN (" + m_strIdPeriods + @")"
+                @"SELECT * FROM [" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.TIME] + @"] WHERE [ID] IN (" + m_strIdPeriods + @")"
                 //TIMEZONE
-                , @"SELECT * FROM [timezones] WHERE [ID] IN (" + m_strIdTimezones + @")"
+                , @"SELECT * FROM [" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.TIMEZONE] + @"] WHERE [ID] IN (" + m_strIdTimezones + @")"
                 // список компонентов
-                , @"SELECT * FROM [comp_list] "
+                , @"SELECT * FROM [" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] "
                     + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
                         + @" OR ([ID_COMP] = 1000)"
                 // параметры расчета
                 , @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
                     + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
                     + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
-                + @" FROM [dbo].[" + m_strNameTablePut + @"] as p"
-                    + @" JOIN [dbo].[" + m_strNameTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG" + whereCalcParameters
-                    + @" JOIN [dbo].[measure] as m ON a.ID_MEASURE = m.ID"
+                + @" FROM [dbo].[" + NameDbTablePut + @"] as p"
+                    + @" JOIN [dbo].[" + NameDbTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG" + whereCalcParameters
+                    + @" JOIN [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID"
                 //// настройки визуального отображения значений
                 //, @""
                 // режимы работы
-                , @"SELECT * FROM [dbo].[mode_dev]"
+                , @"SELECT * FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.MODE_DEV] + @"]"
                 //// единицы измерения
                 //, @"SELECT * FROM [dbo].[measure]"
                 // коэффициенты для единиц измерения
-                , @"SELECT * FROM [dbo].[ratio]"
+                , @"SELECT * FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.RATIO] + @"]"
             };
 
             return arRes;
@@ -424,7 +492,7 @@ namespace TepCommon
             //??? повторная проверка
             if (bClose == true)
             {
-                for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT_TABLE_DICTPRJ; i++)
+                for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
                 {
                     m_arTableDictPrjs[i].Clear();
                     m_arTableDictPrjs[i] = null;

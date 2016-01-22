@@ -21,7 +21,7 @@ namespace PluginTaskTepOutMkt
         /// </summary>
         private enum INDEX_TABLE_VALUES : int { REGISTRED, COUNT }
         public PanelTaskTepOutMkt(IPlugIn iFunc)
-            : base(iFunc, ID_START_RECORD.ALG)
+            : base(iFunc, TYPE.OUT_MKT_VALUES)
         {
             m_arTableOrigin = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];

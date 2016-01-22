@@ -21,7 +21,7 @@ namespace PluginTaskTepOutNorm
         /// </summary>
         private enum INDEX_TABLE_VALUES : int { REGISTRED, COUNT }
         public PanelTaskTepOutNorm(IPlugIn iFunc)
-            : base(iFunc, ID_START_RECORD.ALG_NORMATIVE)
+            : base(iFunc, TYPE.OUT_NORM_VALUES)
         {
             m_arTableOrigin = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];

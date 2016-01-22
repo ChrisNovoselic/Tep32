@@ -34,8 +34,8 @@ namespace TepCommon
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
-        protected PanelTaskTepValues(IPlugIn iFunc, string strNameTableAlg, string strNameTablePut, string strNameTableValues)
-            : base(iFunc, strNameTableAlg, strNameTablePut, strNameTableValues)
+        protected PanelTaskTepValues(IPlugIn iFunc, TYPE type)
+            : base(iFunc, type)
         {
             InitializeComponents();
             //Обязательно наличие объекта - панели управления
@@ -209,7 +209,7 @@ namespace TepCommon
                         + @", " + _IdSession + @" as [ID_SESSION], v.QUALITY"
                         + @", [VALUE]"
                         //+ @", GETDATE () as [WR_DATETIME]"
-                    + @" FROM [dbo].[" + m_strNameTableValues + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+                    + @" FROM [dbo].[" + NameDbTableValues + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
                     + @" WHERE v.[ID_TIME] = " + (int)ActualIdPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
                     ;
                 // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
@@ -246,8 +246,8 @@ namespace TepCommon
                         + @" END as [VALUE]"
                     + @", GETDATE () as [WR_DATETIME]"
                 + @" FROM (" + strRes + @") as v"
-                    + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
-                    + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
+                    + @" LEFT JOIN [dbo].[" + NameDbTablePut + @"] p ON p.ID = v.ID_INPUT"
+                    + @" LEFT JOIN [dbo].[" + NameDbTableAlg + @"] a ON p.ID_ALG = a.ID"
                     + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                 + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
                     + @", a.ID_MEASURE, a.N_ALG"

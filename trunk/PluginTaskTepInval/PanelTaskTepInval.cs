@@ -25,7 +25,7 @@ namespace PluginTaskTepInval
         /// </summary>
         /// <param name="iFunc">Объект для связи с вызывающим приложением</param>
         public PanelTaskTepInval(IPlugIn iFunc)
-            : base(iFunc, @"inalg", @"input", @"inval")
+            : base(iFunc, TYPE.IN_VALUES)
         {
             m_arTableOrigin = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
@@ -60,7 +60,7 @@ namespace PluginTaskTepInval
 
             strRes = @"SELECT"
                 + @" *"
-                + @" FROM [dbo].[" + m_strNameTableValues + @"_def] v"
+                + @" FROM [dbo].[" + NameDbTableValues + @"_def] v"
                 + @" WHERE [ID_TIME] = " + (int)ActualIdPeriod //(int)_currIdPeriod
                     ;
 
@@ -76,7 +76,7 @@ namespace PluginTaskTepInval
             err = -1;
 
             DbTSQLInterface.RecUpdateInsertDelete(ref dbConn
-                , @"inval_def"
+                , HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVAL_DEF]
                 , @"ID_INPUT, ID_TIME"
                 , m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT]
                 , m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT]
