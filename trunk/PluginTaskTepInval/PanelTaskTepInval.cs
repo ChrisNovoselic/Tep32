@@ -60,7 +60,7 @@ namespace PluginTaskTepInval
 
             strRes = @"SELECT"
                 + @" *"
-                + @" FROM [dbo].[" + NameDbTableValues + @"_def] v"
+                + @" FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVAL_DEF] + @"] v"
                 + @" WHERE [ID_TIME] = " + (int)ActualIdPeriod //(int)_currIdPeriod
                     ;
 
