@@ -47,7 +47,7 @@ namespace TepCommon
         /// </summary>
         private void InitializeComponents()
         {
-            m_panelManagement = new PanelManagement ();
+            m_panelManagement = new PanelManagementTaskTepValues ();
             m_dgvValues = new DataGridViewTEPValues ();
             int posColdgvTEPValues = 4
                 , heightRowdgvTEPValues = 10;
@@ -1202,9 +1202,10 @@ namespace TepCommon
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected class PanelManagement : PanelManagementCalculate
+        protected class PanelManagementTaskTepValues : PanelManagementTaskTepCalculate
         {
-            public PanelManagement() : base ()
+            public PanelManagementTaskTepValues()
+                : base()
             {
                 InitializeComponents ();
             }
@@ -1246,20 +1247,9 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
 
-                //Расчет - выполнить - норматив
-                ctrl = new Button();
-                ctrl.Name = INDEX_CONTROL.BUTTON_RUN_NORM.ToString();
-                ctrl.Text = @"К нормативу";
-                ctrl.Dock = DockStyle.Fill;
-                this.Controls.Add(ctrl, 4, posRow = 0);
-                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
                 //Расчет - выполнить - макет
-                ctrl = new Button();
-                ctrl.Name = INDEX_CONTROL.BUTTON_RUN_MKT.ToString();
-                ctrl.Text = @"К макету";
-                ctrl.Dock = DockStyle.Fill;
-                this.Controls.Add(ctrl, 4, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                //Расчет - выполнить - норматив
+                posRow = addButtonRun(posRow);
 
                 //Дата/время начала периода расчета
                 //Дата/время начала периода расчета - подпись
@@ -1396,6 +1386,13 @@ namespace TepCommon
                 else
                     ;
             }
+
+            protected virtual int addButtonRun(int posRow)
+            {
+                int iRes = posRow;
+
+                return iRes;
+            }
         }
     }
 
@@ -1404,7 +1401,7 @@ namespace TepCommon
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1
-            , BUTTON_RUN_NORM, BUTTON_RUN_MKT, BUTTON_INVAL
+            , BUTTON_RUN_PREV, BUTTON_RUN_RES
             , CLBX_COMP_CALCULATED, CLBX_PARAMETER_CALCULATED
             , BUTTON_LOAD, MENUITEM_UPDATE, MENUITEM_HISTORY, BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
             , CLBX_COMP_VISIBLED, CLBX_PARAMETER_VISIBLED

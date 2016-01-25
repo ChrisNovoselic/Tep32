@@ -165,14 +165,10 @@ namespace PluginTaskTepInval
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>
-        /// <param name="pars"></param>
+        /// <param name="dgv">Объект, инициирововший событие</param>
+        /// <param name="ev">Аргумент события</param>
         protected override void onEventCellValueChanged(object dgv, DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
         {
-            //int id_par = (int)(pars as object [])[0]
-            //    , id_comp = (int)(pars as object[])[1]
-            //    , idParameter = (int)(pars as object[])[2];
-            //double val = (double)(pars as object[])[3];
-
             DataRow[] rowsParameter = m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_INPUT=" + ev.m_IdParameter);
 
             if (rowsParameter.Length == 1)
@@ -181,6 +177,34 @@ namespace PluginTaskTepInval
             }
             else
                 ;
+        }
+
+        /// <summary>
+        /// Класс для размещения управляющих элементов управления
+        /// </summary>
+        protected class PanelManagementTaskTepInval : PanelManagementTaskTepValues
+        {
+            protected override int addButtonRun(int posRow)
+            {
+                Button ctrl = null;
+                int iRes = posRow;
+                //Расчет - выполнить - норматив
+                ctrl = new Button();
+                ctrl.Name = INDEX_CONTROL.BUTTON_RUN_PREV.ToString();
+                ctrl.Text = @"К нормативу";
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 4, iRes = 0);
+                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                //Расчет - выполнить - макет
+                ctrl = new Button();
+                ctrl.Name = INDEX_CONTROL.BUTTON_RUN_RES.ToString();
+                ctrl.Text = @"К макету";
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 4, iRes = iRes + 1);
+                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+
+                return iRes;
+            }
         }
     }
 

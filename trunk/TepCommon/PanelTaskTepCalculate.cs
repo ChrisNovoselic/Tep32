@@ -90,7 +90,7 @@ namespace TepCommon
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
-        protected PanelManagementCalculate m_panelManagement;
+        protected PanelManagementTaskTepCalculate m_panelManagement;
         /// <summary>
         /// Отображение значений в табличном представлении
         /// </summary>
@@ -244,7 +244,7 @@ namespace TepCommon
                     initialize();
 
                     //Заполнить элемент управления с часовыми поясами
-                    ctrl = Controls.Find(TepCommon.PanelTaskTepCalculate.PanelManagementCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
+                    ctrl = Controls.Find(TepCommon.PanelTaskTepCalculate.PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
@@ -254,7 +254,7 @@ namespace TepCommon
                     setCurrentTimeZone(ctrl as ComboBox);
 
                     //Заполнить элемент управления с периодами расчета
-                    ctrl = Controls.Find(TepCommon.PanelTaskTepCalculate.PanelManagementCalculate.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
+                    ctrl = Controls.Find(PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
@@ -451,7 +451,11 @@ namespace TepCommon
             //    updateDataValues();
             //else ;
         }
-
+        /// <summary>
+        /// Обработчик события - изменение часового пояса
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший события (список с перечислением часовых поясов)</param>
+        /// <param name="ev">Аргумент события</param>
         protected void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
         {
             //Установить новое значение для текущего периода
@@ -483,10 +487,10 @@ namespace TepCommon
         /// <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
         ///  для возвращения предыдущего значения, при отказе пользователя от очистки</param>
         /// <param name="bClose">Признак полной/частичной очистки</param>
-        protected virtual void clear(int iCtrl = (int)TepCommon.PanelTaskTepCalculate.PanelManagementCalculate.INDEX_CONTROL_BASE.UNKNOWN, bool bClose = false)
+        protected virtual void clear(int iCtrl = (int)PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.UNKNOWN, bool bClose = false)
         {
             ComboBox cbx = null;
-            PanelManagementCalculate.INDEX_CONTROL_BASE indxCtrl = (PanelManagementCalculate.INDEX_CONTROL_BASE)iCtrl;
+            PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE indxCtrl = (PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE)iCtrl;
 
             _IdSession = -1;
             //??? повторная проверка
@@ -498,11 +502,11 @@ namespace TepCommon
                     m_arTableDictPrjs[i] = null;
                 }
 
-                cbx = Controls.Find(PanelManagementCalculate.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
+                cbx = Controls.Find(PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
                 cbx.Items.Clear();
 
-                cbx = Controls.Find(PanelManagementCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
+                cbx = Controls.Find(PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
                 cbx.Items.Clear();
 
@@ -686,7 +690,7 @@ namespace TepCommon
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected class PanelManagementCalculate : HPanelCommon
+        protected class PanelManagementTaskTepCalculate : HPanelCommon
         {
             public enum INDEX_CONTROL_BASE
             {
@@ -698,7 +702,7 @@ namespace TepCommon
             public EventHandler DateTimeRangeValue_Changed;
             public DateTimeRange m_dtRange;
 
-            public PanelManagementCalculate()
+            public PanelManagementTaskTepCalculate()
                 : base(8, 21)
             {
                 InitializeComponents();

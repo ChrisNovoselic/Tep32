@@ -26,7 +26,7 @@ namespace PluginTaskTepRealTime
         /// </summary>
         private void InitializeComponent()
         {
-            m_panelManagement = new PanelManagement();
+            m_panelManagement = new PanelManagementTaskTepRealTime();
             m_dgvValues = new DataGridViewTEPRealTime();
             int posColdgvTEPValues = 4
                 , heightRowdgvTEPValues = 10;
@@ -121,9 +121,10 @@ namespace PluginTaskTepRealTime
             }
         }
 
-        private class PanelManagement : PanelManagementCalculate
+        private class PanelManagementTaskTepRealTime : PanelManagementTaskTepCalculate
         {
-            public PanelManagement() : base ()
+            public PanelManagementTaskTepRealTime()
+                : base()
             {
                 InitializeComponents();
             }
