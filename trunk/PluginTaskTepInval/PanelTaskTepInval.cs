@@ -155,12 +155,12 @@ namespace PluginTaskTepInval
                     m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Copy();
                 }
                 else
-                    strErr = @"ошибка получения данных по умолчанию с " + m_panelManagement.m_dtRange.Begin.ToString()
-                        + @" по " + m_panelManagement.m_dtRange.End.ToString();
+                    strErr = @"ошибка получения данных по умолчанию с " + PanelManagement.m_dtRange.Begin.ToString()
+                        + @" по " + PanelManagement.m_dtRange.End.ToString();
             }
             else
-                strErr = @"ошибка получения автоматически собираемых данных с " + m_panelManagement.m_dtRange.Begin.ToString()
-                    + @" по " + m_panelManagement.m_dtRange.End.ToString();
+                strErr = @"ошибка получения автоматически собираемых данных с " + PanelManagement.m_dtRange.Begin.ToString()
+                    + @" по " + PanelManagement.m_dtRange.End.ToString();
         }
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
@@ -179,6 +179,10 @@ namespace PluginTaskTepInval
                 ;
         }
 
+        protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()
+        {
+            return new PanelManagementTaskTepInval();
+        }
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>

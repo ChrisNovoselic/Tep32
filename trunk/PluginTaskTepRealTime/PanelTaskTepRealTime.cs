@@ -26,15 +26,14 @@ namespace PluginTaskTepRealTime
         /// </summary>
         private void InitializeComponent()
         {
-            m_panelManagement = new PanelManagementTaskTepRealTime();
             m_dgvValues = new DataGridViewTEPRealTime();
             int posColdgvTEPValues = 4
                 , heightRowdgvTEPValues = 10;
 
             SuspendLayout();
 
-            Controls.Add(m_panelManagement, 0, 0);
-            SetColumnSpan(m_panelManagement, posColdgvTEPValues); SetRowSpan(m_panelManagement, this.RowCount);
+            Controls.Add(PanelManagement, 0, 0);
+            SetColumnSpan(PanelManagement, posColdgvTEPValues); SetRowSpan(PanelManagement, this.RowCount);
 
             Controls.Add(m_dgvValues, posColdgvTEPValues, 0);
             SetColumnSpan(m_dgvValues, this.ColumnCount - posColdgvTEPValues); SetRowSpan(m_dgvValues, heightRowdgvTEPValues);
@@ -119,6 +118,11 @@ namespace PluginTaskTepRealTime
             public override void UpdateStructure(PanelTaskTepValues.INDEX_ID indxDeny, int id, bool bItemChecked)
             {
             }
+        }
+
+        protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()
+        {
+            return new PanelManagementTaskTepRealTime ();
         }
 
         private class PanelManagementTaskTepRealTime : PanelManagementTaskTepCalculate

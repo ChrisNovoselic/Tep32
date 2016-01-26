@@ -88,9 +88,16 @@ namespace TepCommon
         /// </summary>
         protected int _curOffsetUTC;
         /// <summary>
+        /// Метод для создания панели с активными объектами управления
+        /// </summary>
+        /// <returns>Панель управления</returns>
+        protected abstract PanelManagementTaskTepCalculate createPanelManagement ();
+        
+        private PanelManagementTaskTepCalculate _panelManagement;
+        /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
-        protected PanelManagementTaskTepCalculate m_panelManagement;
+        protected PanelManagementTaskTepCalculate PanelManagement { get { if (_panelManagement == null) _panelManagement = createPanelManagement (); else ; return _panelManagement; } }
         /// <summary>
         /// Отображение значений в табличном представлении
         /// </summary>
@@ -112,9 +119,9 @@ namespace TepCommon
                     //    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalDays - 0 :
                     //    24
                     idPeriod == ID_PERIOD.HOUR ?
-                        (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0 :
+                        (int)(PanelManagement.m_dtRange.End - PanelManagement.m_dtRange.Begin).TotalHours - 0 :
                         idPeriod == ID_PERIOD.DAY ?
-                            (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalDays - 0 :
+                            (int)(PanelManagement.m_dtRange.End - PanelManagement.m_dtRange.Begin).TotalDays - 0 :
                             24
                             ;
 
@@ -189,32 +196,30 @@ namespace TepCommon
 
         private void InitializeComponents ()
         {
-            #region Код, не относящийся к инициализации элементов управления
-            m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
-            for (INDEX_ID i = INDEX_ID.PERIOD; i < INDEX_ID.COUNT; i++)
-                switch (i)
-                {
-                    case INDEX_ID.PERIOD:
-                        m_arListIds[(int)i] = new List<int> { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
-                        break;
-                    case INDEX_ID.TIMEZONE:
-                        m_arListIds[(int)i] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-                        break;
-                    default:
-                        //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
-                        m_arListIds[(int)i] = new List<int>();
-                        break;
-                }
-
-            m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
-
-            #endregion
         }
 
         protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
+
+            m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
+            for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
+                switch (id)
+                {
+                    case INDEX_ID.PERIOD:
+                        m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
+                        break;
+                    case INDEX_ID.TIMEZONE:
+                        m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
+                        break;
+                    default:
+                        //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
+                        m_arListIds[(int)id] = new List<int>();
+                        break;
+                }
+
+            m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
 
             HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
 
@@ -311,12 +316,12 @@ namespace TepCommon
 
         protected void activateDateTimeRangeValue_OnChanged (bool active)
         {
-            if (! (m_panelManagement == null))
+            if (! (PanelManagement == null))
                 if (active == true)
-                    m_panelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
+                    PanelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
                 else
                     if (active == false)
-                        m_panelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+                        PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
                     else
                         ;
             else
@@ -440,7 +445,7 @@ namespace TepCommon
             //Отменить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(false);
             //Установить новые режимы для "календарей"
-            m_panelManagement.SetPeriod(_currIdPeriod);
+            PanelManagement.SetPeriod(_currIdPeriod);
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
 

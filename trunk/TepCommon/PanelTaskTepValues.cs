@@ -47,7 +47,6 @@ namespace TepCommon
         /// </summary>
         private void InitializeComponents()
         {
-            m_panelManagement = new PanelManagementTaskTepValues ();
             m_dgvValues = new DataGridViewTEPValues ();
             int posColdgvTEPValues = 4
                 , heightRowdgvTEPValues = 10;
@@ -56,8 +55,8 @@ namespace TepCommon
 
             //initializeLayoutStyle ();
 
-            Controls.Add (m_panelManagement, 0, 0);
-            SetColumnSpan(m_panelManagement, posColdgvTEPValues); SetRowSpan(m_panelManagement, this.RowCount);
+            Controls.Add (PanelManagement, 0, 0);
+            SetColumnSpan(PanelManagement, posColdgvTEPValues); SetRowSpan(PanelManagement, this.RowCount);
 
             Controls.Add(m_dgvValues, posColdgvTEPValues, 0);
             SetColumnSpan(m_dgvValues, this.ColumnCount - posColdgvTEPValues); SetRowSpan(m_dgvValues, heightRowdgvTEPValues);
@@ -80,33 +79,24 @@ namespace TepCommon
 
         protected override void initialize()
         {
-            CheckedListBox clbxCompCalculated
-                , clbxCompVisibled;
+            int id_comp = -1;
             string strItem = string.Empty;
-            int i = -1
-                , id_comp = -1;
             bool bChecked = false;
 
-            //Заполнить элементы управления с компонентами станции
-            clbxCompCalculated = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
-            clbxCompVisibled = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
             foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
             {
                 id_comp = (Int16)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
                 strItem = ((string)r[@"DESCRIPTION"]).Trim();
-                // установить признак участия в расчете компонента станции
-                bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
-                clbxCompCalculated.Items.Add(strItem, bChecked);
-                // установить признак отображения компонента станции
-                bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
-                clbxCompVisibled.Items.Add(strItem, bChecked);
                 m_dgvValues.AddColumn(id_comp, strItem, bChecked);
             }
-            // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
-            // компонента станции для элементов управления
-            clbxCompCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
-            clbxCompVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
+
+            (PanelManagement as PanelManagementTaskTepValues).FillComponent(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].AsEnumerable (),
+                new PanelManagementTaskTepValues.ControlDenyListId [] {
+                    new PanelManagementTaskTepValues.ControlDenyListId () { indxControl = INDEX_CONTROL.CLBX_COMP_CALCULATED, listIds = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED] }
+                    , new PanelManagementTaskTepValues.ControlDenyListId () { indxControl = INDEX_CONTROL.CLBX_COMP_CALCULATED, listIds = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED] }
+                }
+            );
 
             m_dgvValues.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
         }
@@ -118,23 +108,13 @@ namespace TepCommon
         /// <param name="bClose">Признак полной/частичной очистки</param>
         protected override void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
         {
-            CheckedListBox clbx = null;
             INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
             // в базовом классе 'indxCtrl' все равно не известен
             base.clear(iCtrl, bClose);
 
             if (bClose == true)
             {
-                clbx = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
-                clbx.ItemCheck -= clbx_ItemCheck;
-                clbx.Items.Clear();
-                clbx = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
-                clbx.ItemCheck -= clbx_ItemCheck;
-                clbx.Items.Clear();
-                clbx = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as CheckedListBox;
-                clbx.Items.Clear();
-                clbx = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
-                clbx.Items.Clear();
+                (PanelManagement as PanelManagementTaskTepValues).ClearParameter();
             }
             else
                 ;
@@ -161,8 +141,8 @@ namespace TepCommon
                 , bEquDatetime = false;
             DateTimeRange[] arQueryRanges = null;
             // привести дату/время к UTC
-            DateTime dtBegin = m_panelManagement.m_dtRange.Begin.AddMinutes (-1 * _curOffsetUTC)
-                , dtEnd = m_panelManagement.m_dtRange.End.AddMinutes (-1 * _curOffsetUTC);
+            DateTime dtBegin = PanelManagement.m_dtRange.Begin.AddMinutes (-1 * _curOffsetUTC)
+                , dtEnd = PanelManagement.m_dtRange.End.AddMinutes (-1 * _curOffsetUTC);
             arQueryRanges = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
             if (bEndMonthBoudary == false)
@@ -452,17 +432,14 @@ namespace TepCommon
                 , round = -1;
             string strItem = string.Empty;
             bool bVisibled = false;
-            CheckedListBox clbxParsCalculated = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as CheckedListBox
-                , clbxParsVisibled = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
+            PanelManagementTaskTepValues.TreeViewParameters treeViewParsCalculated = Controls.Find(INDEX_CONTROL.TREECBX_PARAMETER_CALCULATED.ToString(), true)[0] as PanelManagementTaskTepValues.TreeViewParameters;
+            CheckedListBox clbxParsVisibled = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
             Dictionary<int, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<int, HTepUsers.VISUAL_SETTING>();
             //Установить новое значение для текущего периода
             _currIdPeriod = (ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex];
-            //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-            clbxParsCalculated.ItemCheck -= clbx_ItemCheck;
-            clbxParsVisibled.ItemCheck -= clbx_ItemCheck;
-            //Очистиить списки
-            clbxParsCalculated.Items.Clear();
-            clbxParsVisibled.Items.Clear();
+
+            (PanelManagement as PanelManagementTaskTepValues).ClearParameter();
+
             m_arListIds[(int)INDEX_ID.ALL_PARAMETER].Clear();
             //??? проверить сохранены ли значения
             m_dgvValues.ClearRows();
@@ -474,10 +451,10 @@ namespace TepCommon
             //Установки для отображения значений
             dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_connSett
                 , new int[] {
-                    1
-                    , (_iFuncPlugin as PlugInBase)._Id
-                    , (_iFuncPlugin as PlugInBase)._Id
-                    , (int)_currIdPeriod }
+                    1 // идентификатор задачи
+                    , (_iFuncPlugin as PlugInBase)._Id // идентификатор  плюгина
+                    , (_iFuncPlugin as PlugInBase)._Id // идентификатор формы
+                    , (int)_currIdPeriod } // Item - идентификатор периода расчета
                 , out err);
             //Заполнить элементы управления с компонентами станции 
             foreach (DataRow r in listParameter)
@@ -490,7 +467,7 @@ namespace TepCommon
                     m_arListIds[(int)INDEX_ID.ALL_PARAMETER].Add(id_alg);
 
                     strItem = ((string)r[@"N_ALG"]).Trim () + @" (" + ((string)r[@"NAME_SHR"]).Trim() + @")";
-                    clbxParsCalculated.Items.Add(strItem, m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0);
+                    treeViewParsCalculated.ItemAdd(strItem, m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0);
                     bVisibled = m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0;
                     clbxParsVisibled.Items.Add(strItem, bVisibled);
                     // получить значения для настройки визуального отображения
@@ -521,71 +498,27 @@ namespace TepCommon
                 else
                     ;
             }
-            //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-            clbxParsCalculated.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
-            clbxParsVisibled.ItemCheck += new ItemCheckEventHandler(clbx_ItemCheck);
+
+            (PanelManagement as PanelManagementTaskTepValues).FillParameter(listParameter);
 
             base.cbxPeriod_SelectedIndexChanged(obj, ev);
         }
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
         /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Арнумент события, описывающий состояние элемента</param>
-        private void clbx_ItemCheck(object obj, ItemCheckEventArgs ev)
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
+        private void panelManagement_ItemCheck(PanelManagementTaskTepValues.ItemCheckedParametaersEventArgs ev)
         {
-            INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
-            INDEX_ID indxIdDeny = INDEX_ID.UNKNOWN;
-            int id_item = -1 //Идентификатор элемента списка (компонент ТЭЦ/параметр алгоритма)
-                //, iCol = -2 // при передаче в функцию в качестве аргумента +1 (из-за ТЭЦ в 0-м столбце)
-                //, iRow = -1 // '-1' - признак применения/НЕприменения действий к типу элементов таблицы 
-                ;
-            string strId = (obj as Control).Name;
-            //Определить идентификатор
-            if (strId.Equals(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString()) == true)
-                id = INDEX_CONTROL.CLBX_COMP_CALCULATED;
-            else
-                if (strId.Equals(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString()) == true)
-                    id = INDEX_CONTROL.CLBX_PARAMETER_CALCULATED;
-                else
-                    if (strId.Equals(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString()) == true)
-                        id = INDEX_CONTROL.CLBX_COMP_VISIBLED;
-                    else
-                        if (strId.Equals(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString()) == true)
-                            id = INDEX_CONTROL.CLBX_PARAMETER_VISIBLED;
-                        else
-                            throw new Exception(@"PanelTaskTepValues::clbx_ItemCheck () - не найден объект 'CheckedListBox'...");
-            //Найти идентификатор компонента ТЭЦ/параметра алгоритма расчета
-            // , соответствующий изменившему состояние элементу 'CheckedListBox'
-            switch (id)
-            {
-                case INDEX_CONTROL.CLBX_COMP_CALCULATED:
-                case INDEX_CONTROL.CLBX_COMP_VISIBLED:
-                    id_item = m_arListIds[(int)INDEX_ID.ALL_COMPONENT][ev.Index];
-                    indxIdDeny = id == INDEX_CONTROL.CLBX_COMP_CALCULATED ? INDEX_ID.DENY_COMP_CALCULATED :
-                        id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
-                    //iCol = ev.Index;
-                    break;
-                case INDEX_CONTROL.CLBX_PARAMETER_CALCULATED:
-                case INDEX_CONTROL.CLBX_PARAMETER_VISIBLED:
-                    id_item = m_arListIds[(int)INDEX_ID.ALL_PARAMETER][ev.Index];
-                    indxIdDeny = id == INDEX_CONTROL.CLBX_PARAMETER_CALCULATED ? INDEX_ID.DENY_PARAMETER_CALCULATED :
-                        id == INDEX_CONTROL.CLBX_PARAMETER_VISIBLED ? INDEX_ID.DENY_PARAMETER_VISIBLED : INDEX_ID.UNKNOWN;
-                    //iRow = ev.Index;
-                    break;
-                default:
-                    break;
-            }            
             //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
-            if (ev.NewValue == CheckState.Unchecked)
-                if (m_arListIds[(int)indxIdDeny].IndexOf(id_item) < 0)
-                    m_arListIds[(int)indxIdDeny].Add (id_item);
+            if (ev.m_newCheckState == CheckState.Unchecked)
+                if (m_arListIds[(int)ev.m_indxIdDeny].IndexOf(ev.m_idItem) < 0)
+                    m_arListIds[(int)ev.m_indxIdDeny].Add(ev.m_idItem);
                 else
                     ; //throw new Exception (@"");
             else
-                if (ev.NewValue == CheckState.Checked)
-                    if (! (m_arListIds[(int)indxIdDeny].IndexOf(id_item) < 0))
-                        m_arListIds[(int)indxIdDeny].Remove (id_item);
+                if (ev.m_newCheckState == CheckState.Checked)
+                    if (!(m_arListIds[(int)ev.m_indxIdDeny].IndexOf(ev.m_idItem) < 0))
+                        m_arListIds[(int)ev.m_indxIdDeny].Remove(ev.m_idItem);
                     else
                         ; //throw new Exception (@"");
                 else
@@ -595,10 +528,10 @@ namespace TepCommon
             ;
             //Изменить структуру 'DataGridView'
             //m_dgvValues.UpdateStructure ();            
-            m_dgvValues.UpdateStructure(indxIdDeny
+            m_dgvValues.UpdateStructure(ev.m_indxIdDeny
                 //, iCol + 1, iRow
-                , id_item
-                , ev.NewValue == CheckState.Checked ? true : ev.NewValue == CheckState.Unchecked ? false : false);
+                , ev.m_idItem
+                , ev.m_newCheckState == CheckState.Checked ? true : ev.m_newCheckState == CheckState.Unchecked ? false : false);
         }        
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
@@ -1204,6 +1137,47 @@ namespace TepCommon
         /// </summary>
         protected class PanelManagementTaskTepValues : PanelManagementTaskTepCalculate
         {
+            /// <summary>
+            /// Класс аргумента для события - изменение выбора запрет/разрешение
+            ///  для компонента/параметра при участии_в_расчете/отображении
+            /// </summary>
+            public class ItemCheckedParametaersEventArgs : EventArgs
+            {
+                /// <summary>
+                /// Индекс в списке идентификаторов
+                ///  для получения ключа в словаре со значениями
+                /// </summary>
+                public INDEX_ID m_indxIdDeny;
+                /// <summary>
+                /// Идентификатор компонента/параметра_расчета
+                /// </summary>
+                public int m_idItem;
+                /// <summary>
+                /// Состояние элемента, связанного с компонентом/параметром_расчета
+                /// </summary>
+                public CheckState m_newCheckState;
+
+                public ItemCheckedParametaersEventArgs(int idItem, INDEX_ID indxIdDeny, CheckState newCheckState) : base ()
+                {
+                    m_idItem = idItem;
+                    m_indxIdDeny = indxIdDeny;                    
+                    m_newCheckState = newCheckState;
+                }
+            }
+            /// <summary>
+            /// Тип обработчика события - изменение выбора запрет/разрешение
+            ///  для компонента/параметра при участии_в_расчете/отображении
+            /// </summary>
+            /// <param name="ev">Аргумент события</param>
+            public delegate void ItemCheckedParametaersEventHandler(ItemCheckedParametaersEventArgs ev);
+            /// <summary>
+            /// Событие - изменение выбора запрет/разрешение
+            ///  для компонента/параметра при участии_в_расчете/отображении
+            /// </summary>
+            public event ItemCheckedParametaersEventHandler ItemCheck;
+            /// <summary>
+            /// Конструктор - основной (без параметров)
+            /// </summary>
             public PanelManagementTaskTepValues()
                 : base()
             {
@@ -1290,8 +1264,8 @@ namespace TepCommon
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 3);
                 //Признак для включения/исключения из расчета параметра
-                ctrl = new CheckedListBox();
-                ctrl.Name = INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString();
+                ctrl = new TreeViewParameters();
+                ctrl.Name = INDEX_CONTROL.TREECBX_PARAMETER_CALCULATED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 3);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 3);
@@ -1393,6 +1367,178 @@ namespace TepCommon
 
                 return iRes;
             }
+
+            public struct ControlDenyListId
+            {
+                public INDEX_CONTROL indxControl;
+                public List <int> listIds;
+            }
+
+            public void Clear()
+            {
+                CheckedListBox clbx = null;
+                
+                clbx = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox;
+                clbx.ItemCheck -= onItemCheck;
+                clbx.Items.Clear();
+                clbx = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox;
+                clbx.ItemCheck -= onItemCheck;
+                clbx.Items.Clear();
+
+                (Controls.Find(INDEX_CONTROL.TREECBX_PARAMETER_CALCULATED.ToString(), true)[0] as TreeView).Nodes.Clear();
+
+                clbx = Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox;
+                clbx.Items.Clear();
+            }
+
+            public void ClearParameter()
+            {
+                //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
+                (Controls.Find(INDEX_CONTROL.TREECBX_PARAMETER_CALCULATED.ToString(), true)[0] as TreeViewParameters).ItemCheck -= onItemCheck;
+                (Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox).ItemCheck -= onItemCheck;
+                //Очистиить списки
+                (Controls.Find(INDEX_CONTROL.TREECBX_PARAMETER_CALCULATED.ToString(), true)[0] as TreeViewParameters).ClearNodes();
+                (Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox).Items.Clear();
+            }
+
+            public void FillComponent(IEnumerable<DataRow> rowsComp, params ControlDenyListId[] arControlDenyListIds)
+            {
+                //Заполнить элементы управления с компонентами станции
+                for (int i = 0; i < arControlDenyListIds.Length; i++)
+                    fillComponent(rowsComp, arControlDenyListIds[i].indxControl, arControlDenyListIds[i].listIds);
+            }
+
+            private void fillComponent(IEnumerable <DataRow> rowsComp, INDEX_CONTROL indxControl, List<int> listDenyIds)
+            {
+                CheckedListBox clbx;
+                string strItem = string.Empty;
+                int id_comp = -1;
+                bool bChecked = false;
+
+                clbx = Controls.Find(indxControl.ToString(), true)[0] as CheckedListBox;
+
+                foreach (DataRow r in rowsComp)
+                {
+                    id_comp = (Int16)r[@"ID"];
+                    strItem = ((string)r[@"DESCRIPTION"]).Trim();
+                    // установить признак участия в расчете компонента станции
+                    bChecked = listDenyIds.IndexOf(id_comp) < 0;
+                    clbx.Items.Add(strItem, bChecked);
+                    // установить признак отображения компонента станции
+                    bChecked = listDenyIds.IndexOf(id_comp) < 0;
+                    clbx.Items.Add(strItem, bChecked);
+                }
+                // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
+                // компонента станции для элементов управления
+                clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
+            }
+
+            public void FillParameter(IEnumerable <DataRow> rowsPar)
+            {
+                //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
+                (Controls.Find(INDEX_CONTROL.TREECBX_PARAMETER_CALCULATED.ToString(), true)[0] as TreeViewParameters).ItemCheck += new ItemCheckEventHandler(onItemCheck);
+                (Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox).ItemCheck += new ItemCheckEventHandler(onItemCheck);
+            }
+
+            public void UpdateParameters()
+            {
+                (Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBox).Items.Clear();
+                //??? Параметры расчета
+                (Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBox).Items.Clear();
+                (Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBox).Items.Clear();
+            }
+
+            private void onItemCheck(object obj, ItemCheckEventArgs ev)
+            {
+                INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
+                INDEX_ID indxIdDeny = INDEX_ID.UNKNOWN;
+                int id_item = -1 //Идентификатор элемента списка (компонент ТЭЦ/параметр алгоритма)
+                    //, iCol = -2 // при передаче в функцию в качестве аргумента +1 (из-за ТЭЦ в 0-м столбце)
+                    //, iRow = -1 // '-1' - признак применения/НЕприменения действий к типу элементов таблицы 
+                    ;
+                string strId = (obj as Control).Name;
+
+                try
+                {
+                    //Определить идентификатор
+                    if (strId.Equals(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString()) == true)
+                        id = INDEX_CONTROL.CLBX_COMP_CALCULATED;
+                    else
+                        if (strId.Equals(INDEX_CONTROL.TREECBX_PARAMETER_CALCULATED.ToString()) == true)
+                            id = INDEX_CONTROL.TREECBX_PARAMETER_CALCULATED;
+                        else
+                            if (strId.Equals(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString()) == true)
+                                id = INDEX_CONTROL.CLBX_COMP_VISIBLED;
+                            else
+                                if (strId.Equals(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString()) == true)
+                                    id = INDEX_CONTROL.CLBX_PARAMETER_VISIBLED;
+                                else
+                                    throw new Exception(@"PanelTaskTepValues::clbx_ItemCheck () - не найден объект 'CheckedListBox'...");
+                    //Найти идентификатор компонента ТЭЦ/параметра алгоритма расчета
+                    // , соответствующий изменившему состояние элементу 'CheckedListBox'
+                    switch (id)
+                    {
+                        case INDEX_CONTROL.CLBX_COMP_CALCULATED:
+                        case INDEX_CONTROL.CLBX_COMP_VISIBLED:
+                            id_item = Int32.Parse((obj as Control).Name); //m_arListIds[(int)INDEX_ID.ALL_COMPONENT][ev.Index];
+                            indxIdDeny = id == INDEX_CONTROL.CLBX_COMP_CALCULATED ? INDEX_ID.DENY_COMP_CALCULATED :
+                                id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
+                            //iCol = ev.Index;
+                            break;
+                        case INDEX_CONTROL.TREECBX_PARAMETER_CALCULATED:
+                        case INDEX_CONTROL.CLBX_PARAMETER_VISIBLED:
+                            id_item = Int32.Parse((obj as Control).Name); //m_arListIds[(int)INDEX_ID.ALL_PARAMETER][ev.Index];
+                            indxIdDeny = id == INDEX_CONTROL.TREECBX_PARAMETER_CALCULATED ? INDEX_ID.DENY_PARAMETER_CALCULATED :
+                                id == INDEX_CONTROL.CLBX_PARAMETER_VISIBLED ? INDEX_ID.DENY_PARAMETER_VISIBLED : INDEX_ID.UNKNOWN;
+                            //iRow = ev.Index;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+
+                ItemCheck(new ItemCheckedParametaersEventArgs(id_item, indxIdDeny, ev.NewValue));
+            }
+
+            public class TreeViewParameters : TreeView
+            {
+                public event ItemCheckEventHandler ItemCheck;
+                
+                public TreeViewParameters() : base ()
+                {
+                }
+
+                public void ClearNodes()
+                {
+                }
+
+                public void ItemAdd(string text, bool bChecked)
+                {
+                }
+
+                public void UpdateNodes()
+                {
+                }
+            }
+
+            protected class CheckedListBoxParameters : CheckedListBox
+            {
+                public CheckedListBoxParameters() : base ()
+                {
+                }
+
+                public void ClearItems()
+                {
+                }
+
+                public void UpdateItems()
+                {
+                }
+            }
         }
     }
 
@@ -1402,7 +1548,7 @@ namespace TepCommon
         {
             UNKNOWN = -1
             , BUTTON_RUN_PREV, BUTTON_RUN_RES
-            , CLBX_COMP_CALCULATED, CLBX_PARAMETER_CALCULATED
+            , CLBX_COMP_CALCULATED, TREECBX_PARAMETER_CALCULATED
             , BUTTON_LOAD, MENUITEM_UPDATE, MENUITEM_HISTORY, BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
             , CLBX_COMP_VISIBLED, CLBX_PARAMETER_VISIBLED
             , DGV_DATA
