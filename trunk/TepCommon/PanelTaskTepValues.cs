@@ -1403,9 +1403,9 @@ namespace TepCommon
                 clbx.ItemCheck -= onItemCheck;
                 clbx.Items.Clear();
 
-                (Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as CheckedListBoxTaskTepValues).Clear();
+                (Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as IControl).ClearItems();
                 //(Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as TreeView).Nodes.Clear();
-                (Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as CheckedListBoxTaskTepValues).Clear();
+                (Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as IControl).ClearItems();
             }
 
             protected Control find(INDEX_ID id)
@@ -1459,7 +1459,7 @@ namespace TepCommon
 
             private void clear(INDEX_ID idToClear)
             {
-                (find(idToClear) as CheckedListBoxTaskTepValues).Clear ();
+                (find(idToClear) as IControl).ClearItems();
             }
 
             public void ActivateCheckedHandler (bool bActive, INDEX_ID []arIdToActivate)
@@ -1500,10 +1500,26 @@ namespace TepCommon
 
             private void addItem(string text, int id, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
             {
-                for (int i = 0; i < arIndexIdToAdd.Length; i++)
-                    (find(arIndexIdToAdd[i]) as CheckedListBoxTaskTepValues).AddItem(text, id, arChecked[i]);
-            }
+                Control ctrl = null;
 
+                for (int i = 0; i < arIndexIdToAdd.Length; i++)
+                {
+                    ctrl = find(arIndexIdToAdd[i]);
+
+                    if (!(ctrl == null))
+                        if (arIndexIdToAdd[i] == INDEX_ID.DENY_PARAMETER_CALCULATED)
+                            (ctrl as CheckedListBoxTaskTepValues).AddItem(text, id, arChecked[i]);
+                        else
+                            (ctrl as CheckedListBoxTaskTepValues).AddItem(text, id, arChecked[i]);
+                    else
+                        Logging.Logg().Error(@"PanelManagementTaskTepValues::addItem () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString (), Logging.INDEX_MESSAGE.NOT_SET);
+                }
+            }
+            /// <summary>
+            /// Обработчик события - изменение состояния элемента списка
+            /// </summary>
+            /// <param name="obj">Объект, инициировавший событие (список)</param>
+            /// <param name="ev">Аргумент события</param>
             private void onItemCheck(object obj, ItemCheckEventArgs ev)
             {
                 INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
@@ -1560,28 +1576,36 @@ namespace TepCommon
                 ItemCheck(new ItemCheckedParametaersEventArgs(id_item, indxIdDeny, ev.NewValue));
             }
 
-            //public class TreeViewParameters : TreeView
-            //{
-            //    public event ItemCheckEventHandler ItemCheck;
-                
-            //    public TreeViewParameters() : base ()
-            //    {
-            //    }
+            private interface IControl
+            {
+                void AddItem(string text, int id, bool bChecked);
 
-            //    public void ClearNodes()
-            //    {
-            //    }
+                void ClearItems ();
+            }
+            
+            public class TreeViewParameters : TreeView, IControl
+            {
+                public event ItemCheckEventHandler ItemCheck;
 
-            //    public void ItemAdd(string text, bool bChecked)
-            //    {
-            //    }
+                public TreeViewParameters()
+                    : base()
+                {
+                }
 
-            //    public void UpdateNodes()
-            //    {
-            //    }
-            //}
+                public void ClearNodes()
+                {
+                }
 
-            protected class CheckedListBoxTaskTepValues : CheckedListBox
+                public void AddItem(string text, int id, bool bChecked)
+                {
+                }
+
+                public void ClearItems()
+                {
+                }
+            }
+
+            protected class CheckedListBoxTaskTepValues : CheckedListBox, IControl
             {
                 private List <int> m_listId;
                 
@@ -1599,7 +1623,7 @@ namespace TepCommon
                     m_listId.Add(id);
                 }
 
-                public void Clear()
+                public void ClearItems()
                 {
                     Items.Clear();
                     m_listId.Clear();
