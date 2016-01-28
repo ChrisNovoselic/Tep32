@@ -690,7 +690,7 @@ namespace TepCommon
 
             public abstract void ClearValues();
 
-            public abstract void UpdateStructure(PanelTaskTepValues.INDEX_ID indxDeny, int id, bool bItemChecked);
+            public abstract void UpdateStructure(int id, PanelTaskTepValues.INDEX_ID indxDeny, bool bItemChecked);
         }
         /// <summary>
         /// Класс для размещения управляющих элементов управления
