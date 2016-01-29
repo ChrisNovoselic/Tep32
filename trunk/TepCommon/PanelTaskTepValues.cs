@@ -83,8 +83,12 @@ namespace TepCommon
         {
             string strItem = string.Empty;
             int i = -1
-                , id_comp = -1;
-            bool bChecked = false;
+                , id_comp = -1;            
+            INDEX_ID[] arIndxIdToAdd = new INDEX_ID[] {
+                        INDEX_ID.DENY_COMP_CALCULATED
+                        , INDEX_ID.DENY_COMP_VISIBLED
+                    };
+            bool[] arChecked = new bool[arIndxIdToAdd.Length];
 
             //Заполнить элементы управления с компонентами станции
             foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
@@ -92,20 +96,16 @@ namespace TepCommon
                 id_comp = (Int16)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
                 strItem = ((string)r[@"DESCRIPTION"]).Trim();
-                (PanelManagement as PanelManagementTaskTepValues).AddComponent (strItem
-                    , id_comp
-                    , new INDEX_ID [] {
-                        INDEX_ID.DENY_COMP_CALCULATED
-                        , INDEX_ID.DENY_COMP_VISIBLED
-                    }
-                    , new bool [] {                        
-                        // установить признак участия в расчете компонента станции
-                        m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0
-                        // установить признак отображения компонента станции
-                        , bChecked = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0
-                    });
+                // установить признак участия в расчете компонента станции
+                arChecked [0] = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
+                // установить признак отображения компонента станции
+                arChecked [1] = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
+                (PanelManagement as PanelManagementTaskTepValues).AddComponent (id_comp
+                    , strItem
+                    , arIndxIdToAdd
+                    , arChecked);
 
-                m_dgvValues.AddColumn(id_comp, strItem, bChecked);
+                m_dgvValues.AddColumn(id_comp, strItem, arChecked[1]);
             }
             // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
             // компонента станции для элементов управления
@@ -480,8 +480,8 @@ namespace TepCommon
                     m_arListIds[(int)INDEX_ID.ALL_PARAMETER].Add(id_alg);
 
                     strItem = ((string)r[@"N_ALG"]).Trim() + @" (" + ((string)r[@"NAME_SHR"]).Trim() + @")";
-                    (PanelManagement as PanelManagementTaskTepValues).AddParameter(strItem
-                        , id_alg
+                    (PanelManagement as PanelManagementTaskTepValues).AddParameter(id_alg
+                        , strItem
                         , arIndexIdToAdd
                         , new bool [] {
                             m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
@@ -1384,30 +1384,33 @@ namespace TepCommon
                 else
                     ;
             }
-
+            /// <summary>
+            /// Добавить кнопки, инициирующие процесс расчета
+            /// </summary>
+            /// <param name="posRow">Позиция по горизонтали для размещения 1-ой (вверху) кнопки</param>
+            /// <returns>Позиция по горизонтали для размещения следующего элемента</returns>
             protected virtual int addButtonRun(int posRow)
             {
                 int iRes = posRow;
 
                 return iRes;
             }
-
+            /// <summary>
+            /// Очистить
+            /// </summary>
             public void Clear()
             {
-                CheckedListBoxTaskTepValues clbx = null;
+                INDEX_ID []arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_COMP_CALCULATED, INDEX_ID.DENY_COMP_VISIBLED };
 
-                clbx = Controls.Find(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString(), true)[0] as CheckedListBoxTaskTepValues;
-                clbx.ItemCheck -= onItemCheck;
-                clbx.Items.Clear();
-                clbx = Controls.Find(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString(), true)[0] as CheckedListBoxTaskTepValues;
-                clbx.ItemCheck -= onItemCheck;
-                clbx.Items.Clear();
+                ActivateCheckedHandler(false, arIndxIdToClear);
 
-                (Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as IControl).ClearItems();
-                //(Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString(), true)[0] as TreeView).Nodes.Clear();
-                (Controls.Find(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString(), true)[0] as IControl).ClearItems();
+                Clear(arIndxIdToClear);
             }
-
+            /// <summary>
+            /// Найти элемент управления на панели по индексу идентификатора
+            /// </summary>
+            /// <param name="id">Индекс идентификатора, используемого для заполнения элемента управления</param>
+            /// <returns>Дочерний элемент управления</returns>
             protected Control find(INDEX_ID id)
             {
                 Control ctrlRes = null;
@@ -1416,7 +1419,11 @@ namespace TepCommon
 
                 return ctrlRes;
             }
-
+            /// <summary>
+            /// Найти элемент управления на панели идентификатору
+            /// </summary>
+            /// <param name="indxCtrl">Идентификатор элемента управления</param>
+            /// <returns></returns>
             protected Control find(INDEX_CONTROL indxCtrl)
             {
                 Control ctrlRes = null;
@@ -1425,7 +1432,12 @@ namespace TepCommon
 
                 return ctrlRes;
             }
-
+            /// <summary>
+            /// Возвратить идентификатор элемента управления по идентификатору
+            ///  , используемого для его заполнения
+            /// </summary>
+            /// <param name="indxId"></param>
+            /// <returns></returns>
             protected INDEX_CONTROL getIndexControlOfIndexID(INDEX_ID indxId)
             {
                 INDEX_CONTROL indxRes = INDEX_CONTROL.UNKNOWN;
@@ -1487,18 +1499,25 @@ namespace TepCommon
                 else
                     ;
             }
-
-            public void AddComponent(string text, int id, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
+            /// <summary>
+            /// Добавить элемент компонент станции в списки
+            ///  , в соответствии с 'arIndexIdToAdd'
+            /// </summary>
+            /// <param name="id">Идентификатор компонента</param>
+            /// <param name="text">Текст подписи к компоненту</param>
+            /// <param name="arIndexIdToAdd">Массив индексов в списке </param>
+            /// <param name="arChecked"></param>
+            public void AddComponent(int id, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
             {
-                addItem(text, id, arIndexIdToAdd, arChecked);
+                addItem(id, text, arIndexIdToAdd, arChecked);
             }
 
-            public void AddParameter(string text, int id, INDEX_ID []arIndexIdToAdd, bool[] arChecked)
+            public void AddParameter(int id, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
             {
-                addItem(text, id, arIndexIdToAdd, arChecked);
+                addItem(id, text, arIndexIdToAdd, arChecked);
             }
 
-            private void addItem(string text, int id, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
+            private void addItem(int id, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
             {
                 Control ctrl = null;
 
@@ -1508,9 +1527,9 @@ namespace TepCommon
 
                     if (!(ctrl == null))
                         if (arIndexIdToAdd[i] == INDEX_ID.DENY_PARAMETER_CALCULATED)
-                            (ctrl as CheckedListBoxTaskTepValues).AddItem(text, id, arChecked[i]);
+                            (ctrl as CheckedListBoxTaskTepValues).AddItem(id, text, arChecked[i]);
                         else
-                            (ctrl as CheckedListBoxTaskTepValues).AddItem(text, id, arChecked[i]);
+                            (ctrl as CheckedListBoxTaskTepValues).AddItem(id, text, arChecked[i]);
                     else
                         Logging.Logg().Error(@"PanelManagementTaskTepValues::addItem () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString (), Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -1575,14 +1594,26 @@ namespace TepCommon
 
                 ItemCheck(new ItemCheckedParametaersEventArgs(id_item, indxIdDeny, ev.NewValue));
             }
-
+            /// <summary>
+            /// Интерфейс для всех элементов управления с компонентами станции, параметрами расчета
+            /// </summary>
             private interface IControl
             {
-                void AddItem(string text, int id, bool bChecked);
-
+                /// <summary>
+                /// Добавить элемент в список
+                /// </summary>
+                /// <param name="text">Текст подписи элемента</param>
+                /// <param name="id">Идентификатор элемента</param>
+                /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
+                void AddItem(int id, string text, bool bChecked);
+                /// <summary>
+                /// Удалить все элементы в списке
+                /// </summary>
                 void ClearItems ();
             }
-            
+            /// <summary>
+            /// Класс для размещения параметров расчета с учетом их иерархической структуры
+            /// </summary>
             public class TreeViewParameters : TreeView, IControl
             {
                 public event ItemCheckEventHandler ItemCheck;
@@ -1591,22 +1622,30 @@ namespace TepCommon
                     : base()
                 {
                 }
-
-                public void ClearNodes()
+                /// <summary>
+                /// Добавить элемент в список
+                /// </summary>
+                /// <param name="text">Текст подписи элемента</param>
+                /// <param name="id">Идентификатор элемента</param>
+                /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
+                public void AddItem(int id, string text, bool bChecked)
                 {
                 }
-
-                public void AddItem(string text, int id, bool bChecked)
-                {
-                }
-
+                /// <summary>
+                /// Удалить все элементы в списке
+                /// </summary>
                 public void ClearItems()
                 {
                 }
             }
-
+            /// <summary>
+            /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
+            /// </summary>
             protected class CheckedListBoxTaskTepValues : CheckedListBox, IControl
             {
+                /// <summary>
+                /// Список для хранения идентификаторов переменных
+                /// </summary>
                 private List <int> m_listId;
                 
                 public CheckedListBoxTaskTepValues()
@@ -1614,15 +1653,24 @@ namespace TepCommon
                 {
                     m_listId = new List<int>();
                 }
-
+                /// <summary>
+                /// Идентификатор выбранного элемента списка
+                /// </summary>
                 public int SelectedId { get { return m_listId[SelectedIndex]; } }
-
-                public void AddItem(string text, int id, bool bChecked)
+                /// <summary>
+                /// Добавить элемент в список
+                /// </summary>
+                /// <param name="text">Текст подписи элемента</param>
+                /// <param name="id">Идентификатор элемента</param>
+                /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
+                public void AddItem(int id, string text, bool bChecked)
                 {
                     Items.Add(text, bChecked);
                     m_listId.Add(id);
                 }
-
+                /// <summary>
+                /// Удалить все элементы в списке
+                /// </summary>
                 public void ClearItems()
                 {
                     Items.Clear();

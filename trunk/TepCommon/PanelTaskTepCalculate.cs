@@ -372,6 +372,22 @@ namespace TepCommon
                             break;
                     }
                     break;
+                case TYPE.OUT_REALTIME:
+                    switch (req)
+                    {
+                        case TABLE_CALCULATE_REQUIRED.ALG:
+                            indx = INDEX_DBTABLE_NAME.INALG;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.PUT:
+                            indx = INDEX_DBTABLE_NAME.INPUT;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.VALUE:
+                            indx = INDEX_DBTABLE_NAME.INVALUES;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
                 default:
                     break;
             }
