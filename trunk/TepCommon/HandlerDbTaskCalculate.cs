@@ -22,6 +22,7 @@ namespace TepCommon
             , @"mode_dev"
             , @"ratio"
             , @"measure"
+            , @"session"
             , @"inalg"
             , @"input"
             , @"inval"

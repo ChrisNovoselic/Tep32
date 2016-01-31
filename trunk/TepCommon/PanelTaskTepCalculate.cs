@@ -513,7 +513,7 @@ namespace TepCommon
             ComboBox cbx = null;
             PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE indxCtrl = (PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE)iCtrl;
 
-            _IdSession = -1;
+            deleteSession();
             //??? повторная проверка
             if (bClose == true)
             {
@@ -537,6 +537,30 @@ namespace TepCommon
             else
             // очистить содержание представления
                 m_dgvValues.ClearValues();
+        }
+
+        protected void deleteSession()
+        {
+            int err = -1
+                , iListenerId = -1;
+            DbConnection dbConn = null;
+            string strQuery = string.Empty;
+
+            if (_IdSession > 0)
+            {
+                iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB");
+                dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
+
+                strQuery = @"DELETE FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"]"
+                    + @" WHERE [ID_CALCULATE]=" + _IdSession;
+
+                DbTSQLInterface.ExecNonQuery(ref dbConn, strQuery, null, null, out err);
+                _IdSession = -1;
+
+                DbSources.Sources().UnRegister(iListenerId);
+            }
+            else
+                ;
         }
         /// <summary>
         /// Установить новое значение для текущего периода

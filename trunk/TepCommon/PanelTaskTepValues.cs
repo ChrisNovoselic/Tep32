@@ -142,56 +142,67 @@ namespace TepCommon
             base.Stop();
         }
         /// <summary>
-        /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
+        /// Возвратить массив диапазонов даты/времени для запроса значений
         /// </summary>
-        protected string getQueryValuesVar ()
+        /// <returns>Массив диапазонов даты/времени</returns>
+        protected DateTimeRange[] getDateTimeRangeValuesVar()
         {
-            string strRes = string.Empty;
+            DateTimeRange[] arRangesRes = null;
 
             int i = -1;
-            bool bEndMonthBoudary = false
-                , bLastItem = false
-                , bEquDatetime = false;
-            DateTimeRange[] arQueryRanges = null;
+            bool bEndMonthBoudary = false;
             // привести дату/время к UTC
-            DateTime dtBegin = PanelManagement.m_dtRange.Begin.AddMinutes (-1 * _curOffsetUTC)
-                , dtEnd = PanelManagement.m_dtRange.End.AddMinutes (-1 * _curOffsetUTC);
-            arQueryRanges = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
+            DateTime dtBegin = PanelManagement.m_dtRange.Begin.AddMinutes(-1 * _curOffsetUTC)
+                , dtEnd = PanelManagement.m_dtRange.End.AddMinutes(-1 * _curOffsetUTC);
+            arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
             if (bEndMonthBoudary == false)
-                if (arQueryRanges.Length == 1)
+                if (arRangesRes.Length == 1)
                     // самый простой вариант - один элемент в массиве - одна таблица
-                    arQueryRanges[0] = new DateTimeRange(dtBegin, dtEnd);
+                    arRangesRes[0] = new DateTimeRange(dtBegin, dtEnd);
                 else
                     // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
-                    for (i = 0; i < arQueryRanges.Length; i++)
+                    for (i = 0; i < arRangesRes.Length; i++)
                         if (i == 0)
                             // предыдущих значений нет
-                            arQueryRanges[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary (dtBegin));
+                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
                         else
-                            if (i == arQueryRanges.Length - 1)
+                            if (i == arRangesRes.Length - 1)
                                 // крайний элемент массива
-                                arQueryRanges[i] = new DateTimeRange(arQueryRanges[i - 1].End, dtEnd);
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
                             else
                                 // для элементов в "середине" массива
-                                arQueryRanges[i] = new DateTimeRange(arQueryRanges[i - 1].End, HDateTime.ToNextMonthBoundary (arQueryRanges[i - 1].End));
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
             else
                 if (bEndMonthBoudary == true)
                     // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
                     // + использование следующей за 'dtEnd' таблицы
-                    for (i = 0; i < arQueryRanges.Length; i++)
+                    for (i = 0; i < arRangesRes.Length; i++)
                         if (i == 0)
                             // предыдущих значений нет
-                            arQueryRanges[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
                         else
-                            if (i == arQueryRanges.Length - 1)
+                            if (i == arRangesRes.Length - 1)
                                 // крайний элемент массива
-                                arQueryRanges[i] = new DateTimeRange(arQueryRanges[i - 1].End, dtEnd);
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
                             else
                                 // для элементов в "середине" массива
-                                arQueryRanges[i] = new DateTimeRange(arQueryRanges[i - 1].End, HDateTime.ToNextMonthBoundary(arQueryRanges[i - 1].End));
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
                 else
                     ;
+
+            return arRangesRes;
+        }
+        /// <summary>
+        /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
+        /// </summary>
+        protected string getQueryValuesVar (DateTimeRange[] arQueryRanges)
+        {
+            string strRes = string.Empty;
+
+            int i = -1;
+            bool bLastItem = false
+                , bEquDatetime = false;                        
 
             for (i = 0; i < arQueryRanges.Length; i ++)
             {
@@ -224,7 +235,8 @@ namespace TepCommon
                     ;
             }
 
-            strRes = @"SELECT p.ID, " + HTepUsers.Id + @" as [ID_USER]"
+            strRes = @"SELECT p.ID"
+                    //+ @", " + HTepUsers.Id + @" as [ID_USER]"
                     + @", v.ID_SOURCE"
                     + @", " + _IdSession + @" as [ID_SESSION]"
                     + @", CASE"
@@ -314,7 +326,7 @@ namespace TepCommon
                 }
                 else
                     // в случае ошибки "обнулить" идентификатор сессии
-                    _IdSession = -1;
+                    deleteSession();
             }
             else
             {

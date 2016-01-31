@@ -12,6 +12,7 @@ namespace TepCommon
         , MODE_DEV
         , RATIO
         , MEASURE
+        , SESSION
         , INALG
         , INPUT
         , INVALUES

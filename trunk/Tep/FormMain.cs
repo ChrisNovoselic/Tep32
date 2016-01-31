@@ -256,11 +256,19 @@ namespace Tep64
         /// <summary>
         /// Обработчик события - закрытие формы
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        /// <param name="sender">Объект, иницировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs ev)
         {
             Stop ();
+        }
+
+        protected override void Stop()
+        {
+            foreach (TabPage page in m_TabCtrl.TabPages)
+                FindMainMenuItemOfText(page.Text.Trim()).PerformClick();
+            
+            base.Stop();
         }
         /// <summary>
         /// Делегат обработки события - выбор п. меню
@@ -540,8 +548,7 @@ namespace Tep64
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие (???)</param>
         /// <param name="ev">Аргумент события</param>
-        private void TabCtrl_OnSelectedIndexChanged (object obj, EventArgs ev) {
-        }
+        private void TabCtrl_OnSelectedIndexChanged (object obj, EventArgs ev) { }
         /// <summary>
         /// Изменить подписи в строке состояния
         /// </summary>
