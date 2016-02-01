@@ -311,6 +311,11 @@ namespace TepCommon
         {
             bool bRes = base.Activate(activate);
 
+            if (IsFirstActivated == true)
+                ;
+            else
+                ;
+
             return bRes;
         }
 

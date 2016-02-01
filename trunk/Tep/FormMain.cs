@@ -548,7 +548,9 @@ namespace Tep64
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие (???)</param>
         /// <param name="ev">Аргумент события</param>
-        private void TabCtrl_OnSelectedIndexChanged (object obj, EventArgs ev) { }
+        private void TabCtrl_OnSelectedIndexChanged (object obj, EventArgs ev)
+        {
+        }
         /// <summary>
         /// Изменить подписи в строке состояния
         /// </summary>

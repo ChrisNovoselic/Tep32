@@ -11,7 +11,7 @@ namespace InterfacePlugIn
     {
         public enum ID_DATAASKED_HOST { ICON_MAINFORM = 1001, STR_VERSION = 1002 //Запросить данные у главной формы
                                     , CONNSET_MAIN_DB = 10001
-                                    , SELECT
+                                    , ACTIVATE_TAB = 10101
                                     };
 
         protected string _nameOwnerMenuItem
