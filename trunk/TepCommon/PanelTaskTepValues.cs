@@ -194,108 +194,11 @@ namespace TepCommon
             return arRangesRes;
         }
         /// <summary>
-        /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
-        /// </summary>
-        protected string getQueryValuesVar (DateTimeRange[] arQueryRanges)
-        {
-            string strRes = string.Empty;
-
-            int i = -1;
-            bool bLastItem = false
-                , bEquDatetime = false;                        
-
-            for (i = 0; i < arQueryRanges.Length; i ++)
-            {
-                bLastItem = ! (i < (arQueryRanges.Length - 1));
-
-                strRes += @"SELECT v.ID_INPUT, v.ID_TIME, v.ID_TIMEZONE"
-                        + @", v.ID_SOURCE"
-                        + @", " + _IdSession + @" as [ID_SESSION], v.QUALITY"
-                        + @", [VALUE]"
-                        //+ @", GETDATE () as [WR_DATETIME]"
-                    + @" FROM [dbo].[" + NameDbTableValues + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
-                    + @" WHERE v.[ID_TIME] = " + (int)ActualIdPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
-                    ;
-                // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
-                // 'Begin' == 'End'
-                if (bLastItem == true)
-                    bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
-                else
-                    ;
-
-                if (bEquDatetime == false)
-                    strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                        + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
-                else
-                    strRes += @" AND [DATE_TIME] = '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
-
-                if (bLastItem == false)
-                    strRes += @" UNION ";
-                else
-                    ;
-            }
-
-            strRes = @"SELECT p.ID"
-                    //+ @", " + HTepUsers.Id + @" as [ID_USER]"
-                    + @", v.ID_SOURCE"
-                    + @", " + _IdSession + @" as [ID_SESSION]"
-                    + @", CASE"
-                        + @" WHEN COUNT (*) = " + CountBasePeriod + @" THEN MIN(v.[QUALITY])"
-                        + @" WHEN COUNT (*) = 0 THEN " + (int)ID_QUALITY_VALUE.NOT_REC
-			                + @" ELSE " + (int)ID_QUALITY_VALUE.PARTIAL
-		                + @" END as [QUALITY]"
-                    + @", CASE"
-                        + @" WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
-                        + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
-                            + @" ELSE MIN (v.[VALUE])"
-                        + @" END as [VALUE]"
-                    + @", GETDATE () as [WR_DATETIME]"
-                + @" FROM (" + strRes + @") as v"
-                    + @" LEFT JOIN [dbo].[" + NameDbTablePut + @"] p ON p.ID = v.ID_INPUT"
-                    + @" LEFT JOIN [dbo].[" + NameDbTableAlg + @"] a ON p.ID_ALG = a.ID"
-                    + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
-                    + @", a.ID_MEASURE, a.N_ALG"
-                    + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
-                    + @", m.[AVG]"
-                ;
-
-            //strRes = @"SELECT"
-            //    + @" p.ID"
-            //    + @", " + HUsers.Id //ID_USER
-            //    + @", v.ID_SOURCE"
-            //    + @", 0" //ID_SESSION
-            //    //+ @", CAST ('" + m_panelManagement.m_dtRange.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-            //    //+ @", CAST ('" + m_panelManagement.m_dtRange.End.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-            //    //+ @", v.ID_TIME"
-            //    //+ @", v.ID_TIMEZONE"
-            //    + @", v.QUALITY"
-            //    + @", CASE WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
-            //        + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
-            //        + @" ELSE MIN (v.[VALUE]) END as VALUE"
-            //    + @", GETDATE ()"
-            //    + @" FROM [dbo].[" + m_strNameTableValues + @"_" + getNameTableValuesPostfixDatetime(dtBegin, dtEnd) + @"] v"
-            //        + @" LEFT JOIN [dbo].[" + m_strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
-            //        + @" LEFT JOIN [dbo].[" + m_strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
-            //        + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-            //    + @" WHERE [ID_TIME] = " + (int)ID_PERIOD.HOUR //(int)_currIdPeriod
-            //        + @" AND [DATE_TIME] > CAST ('" + dtBegin.ToString(@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-            //        + @" AND [DATE_TIME] <= CAST ('" + dtEnd.ToString (@"yyyyMMdd HH:mm:ss") + @"' as datetime2)"
-            //    + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
-            //        + @", a.ID_MEASURE, a.N_ALG"
-            //        + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
-            //        + @", m.[AVG]"
-            //        ;
-
-            return strRes;
-        }
-        /// <summary>
         /// Установить значения таблиц для редактирования
         /// </summary>
-        /// <param name="dbConn">Ссылка на объектт соединения с БД</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         /// <param name="strErr">Строка текста сообщения при галичии ошибки</param>
-        protected abstract void setValues(ref DbConnection dbConn, out int err, out string strErr);
+        protected abstract void setValues(out int err, out string strErr);
         /// <summary>
         /// Выполнить запрос к БД, отобразить рез-т запроса
         /// <param "idPeriod">Идентификатор периода расчета
@@ -304,37 +207,22 @@ namespace TepCommon
         /// </summary>
         private void updateDataValues()
         {
-            int iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB")
-                , err = -1
+            int err = -1
                 , cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
                 , iAVG = -1;
             string errMsg = string.Empty;
-            // представление очичается в 'clear ()' - при автоматическом вызове, при нажатии на кнопку "Загрузить" (аналог "Обновить")
-            DbConnection dbConn = null;
-            // получить объект для соединения с БД
-            dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
-            // проверить успешность получения 
-            if ((!(dbConn == null)) && (err == 0))
+
+            _IdSession = HMath.GetRandomNumber();
+
+            setValues(out err, out errMsg);
+
+            if (err == 0)
             {
-                _IdSession = HMath.GetRandomNumber();
-
-                setValues(ref dbConn, out err, out errMsg);
-
-                if (err == 0)
-                {
-                    m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
-                }
-                else
-                    // в случае ошибки "обнулить" идентификатор сессии
-                    deleteSession();
+                m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
             }
             else
-            {
-                errMsg = @"нет соединения с БД";
-                err = -1;
-            }
-
-            DbSources.Sources().UnRegister(iListenerId);
+                // в случае ошибки "обнулить" идентификатор сессии
+                deleteSession();
 
             if (!(err == 0))
             {
@@ -830,19 +718,19 @@ namespace TepCommon
                         && (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_bCalcDeny == false))
                         switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
                         {//??? LIMIT
-                            case ID_QUALITY_VALUE.USER:
+                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.USER];
                                 break;
-                            case ID_QUALITY_VALUE.SOURCE:
+                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.SOURCE:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
                                 break;
-                            case ID_QUALITY_VALUE.PARTIAL:
+                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
                                 break;
-                            case ID_QUALITY_VALUE.NOT_REC:
+                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
                                 break;
-                            case ID_QUALITY_VALUE.DEFAULT:
+                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
                                 break;
                             default:
@@ -876,19 +764,19 @@ namespace TepCommon
                         && ((Columns[iCol] as HDataGridViewColumn).m_bCalcDeny == false))
                         switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
                         {//??? LIMIT
-                            case ID_QUALITY_VALUE.USER:
+                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.USER];
                                 break;
-                            case ID_QUALITY_VALUE.SOURCE:
+                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.SOURCE:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
                                 break;
-                            case ID_QUALITY_VALUE.PARTIAL:
+                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
                                 break;
-                            case ID_QUALITY_VALUE.NOT_REC:
+                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
                                 break;
-                            case ID_QUALITY_VALUE.DEFAULT:
+                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
                                 break;
                             default:
@@ -918,13 +806,13 @@ namespace TepCommon
                 if (bRes == true)
                     switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
                     {//??? USER, LIMIT
-                        case ID_QUALITY_VALUE.DEFAULT: // только для входной таблицы - значение по умолчанию [inval_def]
+                        case HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT: // только для входной таблицы - значение по умолчанию [inval_def]
                             clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
                             break;
-                        case ID_QUALITY_VALUE.PARTIAL: // см. 'getQueryValuesVar' - неполные данные
+                        case HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL: // см. 'getQueryValuesVar' - неполные данные
                             clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
                             break;
-                        case ID_QUALITY_VALUE.NOT_REC: // см. 'getQueryValuesVar' - нет ни одной записи
+                        case HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC: // см. 'getQueryValuesVar' - нет ни одной записи
                             clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
                             break;
                         default:
@@ -1072,7 +960,7 @@ namespace TepCommon
 
                             iRow = Rows.IndexOf(row);
                             m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_IdParameter = idParameter;
-                            m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_iQuality = (ID_QUALITY_VALUE)iQuality;
+                            m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_iQuality = (HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality;
                             row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
 
                             if (getClrCellToValue(iCol, iRow, out clrCell) == true)

@@ -127,7 +127,7 @@ namespace TepCommon
             err = -1;
             errMsg = string.Empty;
 
-            iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB");
+            iListenerId = DbSources.Sources().Register(m_connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString ());
             DbConnection dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
 
             if ((!(dbConn == null)) && (err == 0))
@@ -219,7 +219,7 @@ namespace TepCommon
 
         protected virtual void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
         {
-            int iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB")
+            int iListenerId = DbSources.Sources().Register(m_connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString())
                 , err = -1;
             string errMsg = string.Empty;
             DbConnection dbConn = DbSources.Sources().GetConnection(iListenerId, out err);

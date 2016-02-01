@@ -38,11 +38,7 @@ namespace TepCommon
         /// <summary>
         /// Объект для обмена данными с БД
         /// </summary>
-        protected HandlerDbTaskCalculate m_handlerDb;
-        /// <summary>
-        /// Перечисление - идентификаторы состояния полученных из БД значений
-        /// </summary>
-        protected enum ID_QUALITY_VALUE { NOT_REC = -3, PARTIAL, DEFAULT, SOURCE, USER }
+        protected HandlerDbTaskCalculate m_handlerDb;        
         /// <summary>
         /// Массив списков идентификаторов компонентов ТЭЦ/параметров
         /// </summary>
@@ -202,6 +198,8 @@ namespace TepCommon
         {
             err = 0;
             errMsg = string.Empty;
+
+            m_handlerDb.InitConnectionSettings(m_connSett);
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
@@ -507,6 +505,13 @@ namespace TepCommon
             //    updateDataValues();
             //else ;
         }
+
+        protected void deleteSession()
+        {
+            m_handlerDb.DeleteSession(_IdSession);
+
+            _IdSession = -1;
+        }
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
         /// </summary>
@@ -542,30 +547,6 @@ namespace TepCommon
             else
             // очистить содержание представления
                 m_dgvValues.ClearValues();
-        }
-
-        protected void deleteSession()
-        {
-            int err = -1
-                , iListenerId = -1;
-            DbConnection dbConn = null;
-            string strQuery = string.Empty;
-
-            if (_IdSession > 0)
-            {
-                iListenerId = DbSources.Sources().Register(m_connSett, false, @"MAIN_DB");
-                dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
-
-                strQuery = @"DELETE FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"]"
-                    + @" WHERE [ID_CALCULATE]=" + _IdSession;
-
-                DbTSQLInterface.ExecNonQuery(ref dbConn, strQuery, null, null, out err);
-                _IdSession = -1;
-
-                DbSources.Sources().UnRegister(iListenerId);
-            }
-            else
-                ;
         }
         /// <summary>
         /// Установить новое значение для текущего периода
@@ -624,9 +605,9 @@ namespace TepCommon
                     /// <summary>
                     /// Признак качества значения в ячейке
                     /// </summary>
-                    public ID_QUALITY_VALUE m_iQuality;
+                    public HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
 
-                    public HDataGridViewCell(int idParameter, ID_QUALITY_VALUE iQuality, bool bCalcDeny)
+                    public HDataGridViewCell(int idParameter, HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, bool bCalcDeny)
                     {
                         m_IdParameter = idParameter;
                         m_iQuality = iQuality;
@@ -665,7 +646,7 @@ namespace TepCommon
                 {
                     m_arPropertiesCells = new HDataGridViewCell[cntCols];
                     for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, ID_QUALITY_VALUE.DEFAULT, false);
+                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT, false);
                 }
             }
             /// <summary>

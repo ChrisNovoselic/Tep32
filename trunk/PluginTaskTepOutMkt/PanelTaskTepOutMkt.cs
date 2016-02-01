@@ -53,7 +53,7 @@ namespace PluginTaskTepOutMkt
             throw new NotImplementedException();
         }
 
-        protected override void setValues(ref DbConnection dbConn, out int err, out string strErr)
+        protected override void setValues(out int err, out string strErr)
         {
             throw new NotImplementedException();
         }

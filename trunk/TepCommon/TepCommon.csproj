@@ -79,6 +79,7 @@
     <Compile Include="PanelTaskTepCalculate.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="TaskTepCalculate.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
