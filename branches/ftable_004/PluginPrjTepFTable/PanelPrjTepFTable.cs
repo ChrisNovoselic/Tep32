@@ -977,7 +977,6 @@ namespace PluginPrjTepFTable
             dgv.CurrentCell.Selected = false;
             dgv.CurrentCell = dgv.Rows[(dgv.RowCount-1)].Cells[0];
             dgv.Rows[(dgv.RowCount - 1)].Cells[0].Selected = true;
-
         }
 
         /// <summary>
