@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 
+using TepCommon;
 using ZedGraph;
 
 namespace PluginPrjTepFTable
