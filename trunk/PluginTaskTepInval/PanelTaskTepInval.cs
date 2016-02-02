@@ -117,6 +117,7 @@ namespace PluginTaskTepInval
                     // , получить входные для расчета значения для возможности редактирования
                     m_handlerDb.CreateSession(_IdSession
                         , _currIdPeriod
+                        , CountBasePeriod
                         , _currIdTimezone
                         , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
                         , ref m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE]

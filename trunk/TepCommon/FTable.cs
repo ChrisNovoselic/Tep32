@@ -7,7 +7,7 @@ using System.Data;
 
 using HClassLibrary;
 
-namespace PluginPrjTepFTable
+namespace TepCommon
 {
     // http://pmpu.ru/vf4/interpolation
     // https://ru.wikibooks.org/wiki/Реализации_алгоритмов/Интерполяция/Многочлен_Лагранжа

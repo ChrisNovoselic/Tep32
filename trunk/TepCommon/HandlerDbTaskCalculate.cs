@@ -45,11 +45,6 @@ namespace TepCommon
             m_taskTepCalculate = new TaskTepCalculate();
         }
 
-        public void InitConnectionSettings(ConnectionSettings connSett)
-        {
-            _connSett = connSett;
-        }
-
         public override void StartDbInterfaces()
         {
             throw new NotImplementedException();
@@ -95,14 +90,37 @@ namespace TepCommon
 
         private DbConnection _dbConnection;
 
+        private bool isRegisterDbConnection { get { return (_iListenerId > 0) && (!(_dbConnection == null)) && (_dbConnection.State == ConnectionState.Open); } }
+
+        public void InitConnectionSettings(ConnectionSettings connSett)
+        {
+            _connSett = connSett;
+        }
+
         public void RegisterDbConnection ()
         {
-            _iListenerId = DbSources.Sources().Register(_connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString());            
+            int err = -1;
+
+            if (isRegisterDbConnection == false)
+            {
+                _iListenerId = DbSources.Sources().Register(_connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString());
+                _dbConnection = DbSources.Sources().GetConnection(_iListenerId, out err);
+
+                if (!(err == 0))
+                {
+                    Logging.Logg().Error(@"HandlerDbTaskCalculate::RegisterDbConnection () - ошибка соединения с БД...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+                else
+                    ;
+            }
+            else
+                ;
         }
 
         public void UnRegisterDbConnection()
         {
             DbSources.Sources().UnRegister(_iListenerId);
+            _dbConnection = null;
             _iListenerId = -1;
         }
         /// <summary>
@@ -113,6 +131,7 @@ namespace TepCommon
         /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
         public void CreateSession(int idSession
             , ID_PERIOD idPeriod
+            , int cntBasePeriod
             , ID_TIMEZONE idTimezone
             , DataTable tablePars
             , ref DataTable tableInValues, ref DataTable tableDefValues
@@ -122,8 +141,7 @@ namespace TepCommon
             err = 0;
             strErr = string.Empty;
 
-            int iAVG = -1
-                , cnt = -1;
+            int iAVG = -1;
             string strQuery = string.Empty
                 , strNameColumn = string.Empty;
             string[] arNameColumns = null;
@@ -155,7 +173,7 @@ namespace TepCommon
                                         , -1 //ID_SOURCE
                                         , idSession //ID_SESSION
                                         , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT //QUALITY
-                                        , (iAVG == 0) ? cnt * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
+                                        , (iAVG == 0) ? cntBasePeriod * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
                                         , HDateTime.ToMoscowTimeZone() //??? GETADTE()
                                     }
                     );
@@ -241,14 +259,10 @@ namespace TepCommon
 
             if (idSession > 0)
             {
-                RegisterDbConnection();
-
                 strQuery = @"DELETE FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"]"
                     + @" WHERE [ID_CALCULATE]=" + idSession;
 
                 DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-
-                UnRegisterDbConnection();
             }
             else
                 ;
@@ -261,9 +275,9 @@ namespace TepCommon
             return @"SELECT * FROM " + s_NameDbTables[(int)indxDbTableName] + @" WHERE [IS_SESSION]=" + (int)idSession;
         }
 
-        private string getQueryOutNormativeValues { get { return @""; } }
+        //private string getQueryOutNormativeValues { get { return @""; } }
 
-        private string queryOutMaketValues { get { return @""; } }
+        //private string queryOutMaketValues { get { return @""; } }
         /// <summary>
         /// Запрос для получения значений "по умолчанию"
         /// </summary>
@@ -392,67 +406,41 @@ namespace TepCommon
 
             return tableRes;
         }
-
-        public void CalculateNormative()
+        /// <summary>
+        /// Подготовить таблицы для проведения расчета
+        /// </summary>
+        /// <param name="err">Признак ошибки при выполнении функции</param>
+        /// <returns>Массив таблиц со значенями для расчета</returns>
+        private TaskTepCalculate.DATATABLE[] prepareCalculateValues(out int err)
         {
-            int err = -1
-                , iListenerId = -1;
-            DbConnection dbConn = null;
-            DataTable tableSession = null
-                , tableInValues = null;
-            // регистрация соединения с БД
-            iListenerId = DbSources.Sources().Register(FormMainBaseWithStatusStrip.s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString());
-            dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
-            // прочитать паоаметры сессии для текущего пользователя
-            tableSession = DbTSQLInterface.Select(ref dbConn, querySession, null, null, out err);            
-            // прочитать входные значения для сессии
-            tableInValues = DbTSQLInterface.Select(ref dbConn, getQueryValues ((int)tableSession.Rows[0][@"ID_CALCULATE"], INDEX_DBTABLE_NAME.INVALUES), null, null, out err);
-            // произвести вычисления
-            m_taskTepCalculate.CalculateNormative(new TaskTepCalculate.DATATABLE []
-                { });
-            // сохранить результаты вычисления
-            saveResult(ref dbConn, out err);
-            // отмена регистрации БД
-            DbSources.Sources().UnRegister(iListenerId);
-        }
+            List <TaskTepCalculate.DATATABLE> listRes = new List<TaskTepCalculate.DATATABLE> ();
+            err = -1;
 
-        public void CalculateMaket()
-        {
-            int err = -1
-                , iListenerId = -1;
-            DbConnection dbConn = null;
-            DataTable tableSession = null
-                , tableInAlg = null
-                , tableInPut = null
-                , tableInValues = null
-                , tableOutNormAlg = null
-                , tableOutNormPut = null
-                , tableOutNormValues = null;
-            // регистрация соединения с БД
-            iListenerId = DbSources.Sources().Register(FormMainBaseWithStatusStrip.s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString());
-            dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
+            int idSession = -1
+                ,  cntSession = -1;
+            DataTable tableVal = null;
 
-            if ((iListenerId > 0)
+            if ((_iListenerId > 0)
                 && (err == 0))
             {
                 // прочитать параметры сессии для текущего пользователя
-                tableSession = DbTSQLInterface.Select(ref dbConn, querySession, null, null, out err);
+                tableVal = DbTSQLInterface.Select(ref _dbConnection, querySession, null, null, out err);
+                // получить количество зарегистрированных сессий для пользователя
+                cntSession = tableVal.Rows.Count;
                 if ((err == 0)
-                    && (tableSession.Rows.Count == 1))
+                    && (cntSession == 1))
                 {
+                    idSession = (int)tableVal.Rows[0][@"ID_CALCULATE"];
                     // прочитать входные значения для сессии
-                    tableInValues = DbTSQLInterface.Select(ref dbConn, getQueryValues((int)tableSession.Rows[0][@"ID_CALCULATE"], INDEX_DBTABLE_NAME.INVALUES), null, null, out err);
+                    tableVal = DbTSQLInterface.Select(ref _dbConnection, getQueryValues(idSession, INDEX_DBTABLE_NAME.INVALUES), null, null, out err);
+                    listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
                     // прочитать выходные-нормативы значения для сессии
-                    tableOutNormValues = DbTSQLInterface.Select(ref dbConn, getQueryValues((int)tableSession.Rows[0][@"ID_CALCULATE"], INDEX_DBTABLE_NAME.OUTVALUES), null, null, out err);
-                    // произвести вычисления
-                    m_taskTepCalculate.CalculateMaket(new TaskTepCalculate.DATATABLE[] {
-                    });
-                    // сохранить результаты вычисления
-                    saveResult(ref dbConn, out err);
+                    tableVal = DbTSQLInterface.Select(ref _dbConnection, getQueryValues(idSession, INDEX_DBTABLE_NAME.OUTVALUES), null, null, out err);
+                    listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_NORM_VALUES, m_table = tableVal.Copy() });
                 }
                 else
                     if (err == 0)
-                        switch (tableSession.Rows.Count)
+                        switch (cntSession)
                         {
                             case 0:
                                 err = -101;
@@ -467,18 +455,43 @@ namespace TepCommon
             else
                 ; // ошибка при регистрации соединения с БД
 
-            // отмена регистрации БД
-            DbSources.Sources().UnRegister(iListenerId);
+            return listRes.ToArray<TaskTepCalculate.DATATABLE> ();
+        }
 
-            switch (err)
-            {
-                case -101: // для пользователя не зарегистрировано сессий расчета
-                    break;
-                case -102: // для пользователя зарегистрировано больше, чем 1 сессия расчета
-                    break;
-                default: // в соответствии с 'DbTSQLInterface'
-                    break;
-            }
+        public void TepCalculateNormative()
+        {
+            int err = -1;
+
+            TaskTepCalculate.DATATABLE[] arDataTables = null;
+
+            // регистрация соединения с БД
+            RegisterDbConnection();
+            // подготовить таблицы для расчета
+            arDataTables = prepareCalculateValues(out err);
+            // произвести вычисления
+            m_taskTepCalculate.CalculateNormative(arDataTables);
+            // сохранить результаты вычисления
+            saveResult(ref _dbConnection, out err);
+            // отмена регистрации БД
+            UnRegisterDbConnection();
+        }
+
+        public void TepCalculateMaket()
+        {
+            int err = -1;
+
+            TaskTepCalculate.DATATABLE[] arDataTables = null;
+
+            // регистрация соединения с БД
+            RegisterDbConnection();
+            // подготовить таблицы для расчета
+            arDataTables = prepareCalculateValues(out err);
+            // произвести вычисления
+            m_taskTepCalculate.CalculateMaket(arDataTables);
+            // сохранить результаты вычисления
+            saveResult(ref _dbConnection, out err);
+            // отмена регистрации БД
+            UnRegisterDbConnection();
         }
 
         private void saveResult (ref DbConnection dbConn, out int err)

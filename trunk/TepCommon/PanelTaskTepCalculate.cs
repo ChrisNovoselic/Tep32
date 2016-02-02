@@ -508,7 +508,9 @@ namespace TepCommon
 
         protected void deleteSession()
         {
+            m_handlerDb.RegisterDbConnection();
             m_handlerDb.DeleteSession(_IdSession);
+            m_handlerDb.UnRegisterDbConnection();
 
             _IdSession = -1;
         }
