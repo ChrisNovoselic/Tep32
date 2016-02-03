@@ -14,9 +14,13 @@ namespace TepCommon
     public partial class HandlerDbTaskCalculate : HHandlerDb
     {
         /// <summary>
+        /// Перечисление - индексы типов вкладок (объектов наследуемых классов)
+        /// </summary>
+        public enum TYPE { UNKNOWN = -1, IN_VALUES, OUT_TEP_NORM_VALUES, OUT_VALUES, OUT_TEP_REALTIME, COUNT }
+        /// <summary>
         /// Класс для расчета технико-экономических показателей
         /// </summary>
-        private class TaskTepCalculate : Object
+        public class TaskTepCalculate : Object
         {
             /// <summary>
             /// Перечисление - индексы таблиц, передаваемых объекту в качестве элементов массива-аргумента

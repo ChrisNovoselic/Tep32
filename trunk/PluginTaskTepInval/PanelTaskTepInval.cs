@@ -26,7 +26,7 @@ namespace PluginTaskTepInval
         /// </summary>
         /// <param name="iFunc">Объект для связи с вызывающим приложением</param>
         public PanelTaskTepInval(IPlugIn iFunc)
-            : base(iFunc, TYPE.IN_VALUES)
+            : base(iFunc, HandlerDbTaskCalculate.TYPE.IN_VALUES)
         {
             m_arTableOrigin = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
@@ -47,11 +47,6 @@ namespace PluginTaskTepInval
         {
             get { return m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE]; }
         }
-
-        protected override string whereRangeRecord
-        {
-            get { return string.Empty; }
-        }        
         /// <summary>
         /// Сохранить изменения в редактируемых таблицах
         /// </summary>

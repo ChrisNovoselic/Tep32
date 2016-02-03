@@ -53,7 +53,7 @@ namespace InterfacePlugIn
                 else
                     m_dictDataHostCounter[(int)ID_DATAASKED_HOST.CONNSET_MAIN_DB]++;
 
-            //Передать главной форме параметр
+            //Вернуть главной форме параметр
             DataAskedHost(obj);
         }
 

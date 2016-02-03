@@ -34,7 +34,7 @@ namespace TepCommon
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
-        protected PanelTaskTepValues(IPlugIn iFunc, TYPE type)
+        protected PanelTaskTepValues(IPlugIn iFunc, HandlerDbTaskCalculate.TYPE type)
             : base(iFunc, type)
         {
             InitializeComponents();

@@ -15,7 +15,7 @@ namespace PluginTaskTepRealTime
     public partial class PanelTaskTepRealTime : PanelTaskTepCalculate
     {
         public PanelTaskTepRealTime(IPlugIn iFunc)
-            : base(iFunc, TYPE.OUT_REALTIME)
+            : base(iFunc, HandlerDbTaskCalculate.TYPE.OUT_TEP_REALTIME)
         {
             InitializeComponent();
             //Обязательно наличие объекта - панели управления
@@ -61,11 +61,6 @@ namespace PluginTaskTepRealTime
         /// </summary>
         protected override void initialize()
         {            
-        }
-
-        protected override string whereRangeRecord
-        {
-            get { return string.Empty; }
         }
 
         protected override void recUpdateInsertDelete(ref System.Data.Common.DbConnection dbConn, out int err)

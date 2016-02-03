@@ -690,6 +690,21 @@ namespace TepCommon
             m_nameAlg = string.Empty;
 
             return listRes[(int)fRunk][0, 0];
-        }        
+        }
+
+        public float F1(string nameALG, float arg)
+        {
+            return Calculate(nameALG, FRUNK.F1, new float [] { arg });
+        }
+
+        public float F2(string nameALG, params float[] args)
+        {
+            return Calculate(nameALG, FRUNK.F2, args);
+        }
+
+        public float F3(string nameALG, params float[] args)
+        {
+            return Calculate(nameALG, FRUNK.F3, args);
+        }
     }
 }

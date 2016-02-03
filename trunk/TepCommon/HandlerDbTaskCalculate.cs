@@ -13,6 +13,7 @@ namespace TepCommon
 {
     public partial class HandlerDbTaskCalculate : HHandlerDb
     {
+        public enum TABLE_CALCULATE_REQUIRED : short { UNKNOWN = -1, ALG, PUT, VALUE, COUNT }
         /// <summary>
         /// Наименования таблиц в БД, необходимых для расчета (длина = INDEX_DBTABLE_NAME.COUNT)
         /// </summary>
@@ -273,6 +274,184 @@ namespace TepCommon
         private string getQueryValues (int idSession, INDEX_DBTABLE_NAME indxDbTableName)
         {
             return @"SELECT * FROM " + s_NameDbTables[(int)indxDbTableName] + @" WHERE [IS_SESSION]=" + (int)idSession;
+        }
+
+        /// <summary>
+        /// Строка - условие для TSQL-запроса для указания диапазона идентификаторов
+        ///  выходных параметров алгоритма расчета
+        /// </summary>
+        private string getWhereRangeOutPut(TYPE type)
+        {
+            string strRes = string.Empty;
+
+            ID_START_RECORD idRecStart = ID_START_RECORD.ALG
+                , idRecEnd = ID_START_RECORD.PUT;
+
+            switch (type)
+            {
+                case TYPE.IN_VALUES:
+                    break;
+                case TYPE.OUT_TEP_NORM_VALUES:
+                case TYPE.OUT_VALUES:
+                    idRecStart = type == TYPE.OUT_TEP_NORM_VALUES ? ID_START_RECORD.ALG_NORMATIVE :
+                        type == TYPE.OUT_VALUES ? ID_START_RECORD.ALG :
+                            ID_START_RECORD.ALG;
+                    idRecEnd = type == TYPE.OUT_TEP_NORM_VALUES ? ID_START_RECORD.PUT :
+                        type == TYPE.OUT_VALUES ? ID_START_RECORD.ALG_NORMATIVE :
+                            ID_START_RECORD.PUT;
+
+                    strRes = @"[ID] BETWEEN " + (int)(idRecStart - 1) + @" AND " + (int)(idRecEnd - 1);
+                    break;
+                default:
+                    break;
+            }
+            //
+
+            return strRes;
+        }
+
+        public string GetQueryParameters(TYPE type)
+        {
+            string strRes = string.Empty
+                , whereParameters = string.Empty;
+            
+            whereParameters = getWhereRangeOutPut (type);
+            if (whereParameters.Equals(string.Empty) == false)
+                whereParameters = @" AND a." + whereParameters;
+            else
+                ;
+            
+            strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
+                    + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
+                    + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
+                + @" FROM [dbo].[" + GetNameDbTable (type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
+                    + @" JOIN [dbo].[" + GetNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG" + whereParameters
+                    + @" JOIN [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID";
+
+            return strRes;
+        }
+
+        public string GetQueryTimePeriods(string strIds)
+        {
+            string strRes = string.Empty;
+
+            strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.TIME] + @"] WHERE [ID] IN (" + strIds + @")";
+
+            return strRes;
+        }
+
+        public string GetQueryTimezones(string strIds)
+        {
+            string strRes = string.Empty;
+
+            strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.TIMEZONE] + @"] WHERE [ID] IN (" + strIds + @")";
+
+            return strRes;
+        }
+
+        public string GetQueryCompList()
+        {
+            string strRes = string.Empty;
+
+            strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] "
+                    + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
+                        + @" OR ([ID_COMP] = 1000)";
+
+            return strRes;
+        }
+
+        public string GetQueryModeDev()
+        {
+            string strRes = string.Empty;
+
+            strRes = @"SELECT * FROM [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MODE_DEV] + @"]";
+
+            return strRes;
+        }
+
+        public string GetQueryMeasures()
+        {
+            string strRes = string.Empty;
+
+            strRes = @"SELECT * FROM [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"]";
+
+            return strRes;
+        }
+
+        public string GetQueryRatio()
+        {
+            string strRes = string.Empty;
+
+            strRes = @"SELECT * FROM [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.RATIO] + @"]";
+
+            return strRes;
+        }
+        /// <summary>
+        /// Возвратить наименование таблицы 
+        /// </summary>
+        /// <param name="type">Тип панели/расчета</param>
+        /// <param name="req">Индекс таблицы, требуемой при расчете</param>
+        /// <returns>Наименование таблицы</returns>
+        public static string GetNameDbTable(TYPE type, TABLE_CALCULATE_REQUIRED req)
+        {
+            INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
+
+            switch (type)
+            {
+                case TYPE.IN_VALUES:
+                    switch (req)
+                    {
+                        case TABLE_CALCULATE_REQUIRED.ALG:
+                            indx = INDEX_DBTABLE_NAME.INALG;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.PUT:
+                            indx = INDEX_DBTABLE_NAME.INPUT;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.VALUE:
+                            indx = INDEX_DBTABLE_NAME.INVALUES;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case TYPE.OUT_TEP_NORM_VALUES:
+                case TYPE.OUT_VALUES:
+                    switch (req)
+                    {
+                        case TABLE_CALCULATE_REQUIRED.ALG:
+                            indx = INDEX_DBTABLE_NAME.OUTALG;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.PUT:
+                            indx = INDEX_DBTABLE_NAME.OUTPUT;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.VALUE:
+                            indx = INDEX_DBTABLE_NAME.OUTVALUES;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case TYPE.OUT_TEP_REALTIME:
+                    switch (req)
+                    {
+                        case TABLE_CALCULATE_REQUIRED.ALG:
+                            indx = INDEX_DBTABLE_NAME.INALG;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.PUT:
+                            indx = INDEX_DBTABLE_NAME.INPUT;
+                            break;
+                        case TABLE_CALCULATE_REQUIRED.VALUE:
+                            indx = INDEX_DBTABLE_NAME.INVALUES;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            return s_NameDbTables[(int)indx];
         }
 
         //private string getQueryOutNormativeValues { get { return @""; } }

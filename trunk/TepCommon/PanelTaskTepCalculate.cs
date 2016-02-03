@@ -17,20 +17,14 @@ namespace TepCommon
     public abstract partial class PanelTaskTepCalculate : HPanelTepCommon
     {
         /// <summary>
-        /// Перечисление - индексы типов вкладок (объектов наследуемых классов)
-        /// </summary>
-        protected enum TYPE { UNKNOWN = -1, IN_VALUES, OUT_NORM_VALUES, OUT_MKT_VALUES, OUT_REALTIME, COUNT }
-        /// <summary>
         /// Индекс типа вкладки для текущего объекта
         /// </summary>
-        protected TYPE m_type;
+        protected HandlerDbTaskCalculate.TYPE m_type;
         /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
         ///  "сырые" - от источников информации, "учтенные" - сохраненные в БД
         /// </summary>
         protected enum INDEX_VIEW_VALUES : uint { SOURCE, HISTORY, COUNT }
-
-        protected enum TABLE_CALCULATE_REQUIRED : short { UNKNOWN = -1, ALG, PUT, VALUE, COUNT }
         /// <summary>
         /// Признак отображаемых на текущий момент значений
         /// </summary>
@@ -180,7 +174,7 @@ namespace TepCommon
         /// <param name="strNameTableAlg">Строка - наименование таблицы с параметрами алгоритма расчета</param>
         /// <param name="strNameTablePut">Строка - наименование таблицы с параметрами, детализированных до принадлежности к компоненту станции (оборудования)</param>
         /// <param name="strNameTableValues">Строка - наименование таблицы со значениями</param>
-        protected PanelTaskTepCalculate(IPlugIn iFunc, TYPE type)
+        protected PanelTaskTepCalculate(IPlugIn iFunc, HandlerDbTaskCalculate.TYPE type)
             : base(iFunc)
         {
             m_type = type;
@@ -329,88 +323,21 @@ namespace TepCommon
                         ;
             else
                 throw new Exception(@"PanelTaskTepCalculate::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
-        }
-        /// <summary>
-        /// Строка - условие для TSQL-запроса для указания диапазона идентификаторов
-        ///  выходных параметров алгоритма расчета
-        /// </summary>
-        protected abstract string whereRangeRecord { get; }
-
-        private static string getNameDbTable(TYPE type, TABLE_CALCULATE_REQUIRED req)
-        {
-            INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
-
-            switch (type)
-            {
-                case TYPE.IN_VALUES:
-                    switch (req)
-                    {
-                        case TABLE_CALCULATE_REQUIRED.ALG:
-                            indx = INDEX_DBTABLE_NAME.INALG;
-                            break;
-                        case TABLE_CALCULATE_REQUIRED.PUT:
-                            indx = INDEX_DBTABLE_NAME.INPUT;
-                            break;
-                        case TABLE_CALCULATE_REQUIRED.VALUE:
-                            indx = INDEX_DBTABLE_NAME.INVALUES;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case TYPE.OUT_NORM_VALUES:
-                case TYPE.OUT_MKT_VALUES:
-                    switch (req)
-                    {
-                        case TABLE_CALCULATE_REQUIRED.ALG:
-                            indx = INDEX_DBTABLE_NAME.OUTALG;
-                            break;
-                        case TABLE_CALCULATE_REQUIRED.PUT:
-                            indx = INDEX_DBTABLE_NAME.OUTPUT;
-                            break;
-                        case TABLE_CALCULATE_REQUIRED.VALUE:
-                            indx = INDEX_DBTABLE_NAME.OUTVALUES;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case TYPE.OUT_REALTIME:
-                    switch (req)
-                    {
-                        case TABLE_CALCULATE_REQUIRED.ALG:
-                            indx = INDEX_DBTABLE_NAME.INALG;
-                            break;
-                        case TABLE_CALCULATE_REQUIRED.PUT:
-                            indx = INDEX_DBTABLE_NAME.INPUT;
-                            break;
-                        case TABLE_CALCULATE_REQUIRED.VALUE:
-                            indx = INDEX_DBTABLE_NAME.INVALUES;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            return HandlerDbTaskCalculate.s_NameDbTables[(int)indx];
-        }
+        }                
 
         protected string NameDbTableAlg
         {
-            get { return getNameDbTable(m_type, TABLE_CALCULATE_REQUIRED.ALG); }
+            get { return HandlerDbTaskCalculate.GetNameDbTable(m_type, HandlerDbTaskCalculate.TABLE_CALCULATE_REQUIRED.ALG); }
         }
 
         protected string NameDbTablePut
         {
-            get { return getNameDbTable(m_type, TABLE_CALCULATE_REQUIRED.PUT); }
+            get { return HandlerDbTaskCalculate.GetNameDbTable(m_type, HandlerDbTaskCalculate.TABLE_CALCULATE_REQUIRED.PUT); }
         }
 
         protected string NameDbTableValues
         {
-            get { return getNameDbTable(m_type, TABLE_CALCULATE_REQUIRED.VALUE); }
+            get { return HandlerDbTaskCalculate.GetNameDbTable(m_type, HandlerDbTaskCalculate.TABLE_CALCULATE_REQUIRED.VALUE); }
         }
         /// <summary>
         /// Массив запросов к БД по получению словарных и проектных значений
@@ -419,37 +346,24 @@ namespace TepCommon
         {
             string[] arRes = null;
 
-            string whereParameters = whereRangeRecord;
-            if (whereParameters.Equals(string.Empty) == false)
-                whereParameters = @" AND a." + whereParameters;
-            else
-                ;
-
             arRes = new string[]
             {
                 //PERIOD
-                @"SELECT * FROM [" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.TIME] + @"] WHERE [ID] IN (" + m_strIdPeriods + @")"
+                m_handlerDb.GetQueryTimePeriods (m_strIdPeriods)
                 //TIMEZONE
-                , @"SELECT * FROM [" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.TIMEZONE] + @"] WHERE [ID] IN (" + m_strIdTimezones + @")"
+                , m_handlerDb.GetQueryTimezones (m_strIdTimezones)
                 // список компонентов
-                , @"SELECT * FROM [" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] "
-                    + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
-                        + @" OR ([ID_COMP] = 1000)"
+                , m_handlerDb.GetQueryCompList ()
                 // параметры расчета
-                , @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
-                    + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
-                    + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
-                + @" FROM [dbo].[" + NameDbTablePut + @"] as p"
-                    + @" JOIN [dbo].[" + NameDbTableAlg + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG" + whereParameters
-                    + @" JOIN [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID"
+                , m_handlerDb.GetQueryParameters (m_type)
                 //// настройки визуального отображения значений
                 //, @""
                 // режимы работы
-                , @"SELECT * FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.MODE_DEV] + @"]"
+                , m_handlerDb.GetQueryModeDev ()
                 //// единицы измерения
-                //, @"SELECT * FROM [dbo].[measure]"
+                //, m_handlerDb.GetQueryMeasures ()
                 // коэффициенты для единиц измерения
-                , @"SELECT * FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.RATIO] + @"]"
+                , m_handlerDb.GetQueryRatio ()
             };
 
             return arRes;
