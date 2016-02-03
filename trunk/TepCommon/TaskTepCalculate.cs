@@ -165,7 +165,7 @@ namespace TepCommon
                 initValues(arDataTables);
 
                 if (Norm[@"1"][BL1].m_bDeny == false)
-                    Norm[@"1"][BL1].m_fValue = In[@"1"][BL4].m_fValue + In[@"2"][BL6].m_fValue * fTable.Calculate(@"2.4", FTable.FRUNK.F2, new float[] { In[@"1"][BL1].m_fValue, Norm[@"1"][BL2].m_fValue });
+                    Norm[@"1"][BL1].m_fValue = In[@"1"][BL4].m_fValue + In[@"2"][BL6].m_fValue * fTable.F2(@"2.4", In[@"1"][BL1].m_fValue, Norm[@"1"][BL2].m_fValue);
                 else
                     ;
 
