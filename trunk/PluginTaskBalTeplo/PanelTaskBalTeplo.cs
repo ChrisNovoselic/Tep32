@@ -22,13 +22,13 @@ namespace PluginTaskBalTeplo
         {
         }
 
-        protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
+        protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
         }
 
-        protected override void recUpdateInsertDelete(ref System.Data.Common.DbConnection dbConn, out int err)
+        protected override void recUpdateInsertDelete(out int err)
         {
             throw new NotImplementedException();
         }

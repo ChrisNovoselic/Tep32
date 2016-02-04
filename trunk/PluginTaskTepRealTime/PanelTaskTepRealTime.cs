@@ -49,12 +49,12 @@ namespace PluginTaskTepRealTime
         /// <param name="dbConn">Объект с установленным соединением с БД</param>
         /// <param name="err">Признак ошибки при выполнении функции</param>
         /// <param name="errMsg">Детализация ошибки (при наличии)</param>
-        protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
+        protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
 
-            base.initialize(ref dbConn, out err, out errMsg);
+            base.initialize(out err, out errMsg);
         }
         /// <summary>
         /// Заполнение значениями элементов управления
@@ -63,7 +63,7 @@ namespace PluginTaskTepRealTime
         {            
         }
 
-        protected override void recUpdateInsertDelete(ref System.Data.Common.DbConnection dbConn, out int err)
+        protected override void recUpdateInsertDelete(out int err)
         {
             throw new NotImplementedException();
         }

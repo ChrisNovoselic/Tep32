@@ -19,11 +19,7 @@ namespace TepCommon
         /// <summary>
         /// Дополнительные действия при сохранении значений
         /// </summary>
-        protected DelegateIntFunc delegateSaveAdding;
-        /// <summary>
-        /// Объект с параметрами соединения БД
-        /// </summary>
-        protected ConnectionSettings m_connSett;
+        protected DelegateFunc delegateSaveAdding;
         /// <summary>
         /// Объект для реализации взаимодействия с главной программой
         /// </summary>
@@ -67,80 +63,92 @@ namespace TepCommon
             initializeLayoutStyleEvenly(cols, rows);
         }
 
-        public void Initialize(object obj)
-        {
-            try
-            {
-                if (this.IsHandleCreated == true)
-                    //if (this.InvokeRequired == true)
-                    this.BeginInvoke(new DelegateObjectFunc(initialize), obj);
-                else
-                    ;
-            }
-            catch (Exception e)
-            {
-                Logging.Logg().Exception(e, @"HPanelEdit::Initialize () - BeginInvoke (initialize) - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            }
-        }
         /// <summary>
-        /// Инициализация с заданными параметрами соединения с БД 
+        /// Объект для обмена данными с БД
         /// </summary>
-        /// <param name="obj">Аргумент (параметры соединения с БД)</param>
-        private void initialize(object obj)
+        protected HandlerDbTaskCalculate m_handlerDb;
+
+        public void Start(object obj)
         {
+            //try
+            //{
+            //    if (this.IsHandleCreated == true)
+            //        //if (this.InvokeRequired == true)
+            //        this.BeginInvoke(new DelegateObjectFunc(initialize), obj);
+            //    else
+            //        ;
+            //}
+            //catch (Exception e)
+            //{
+            //    Logging.Logg().Exception(e, @"HPanelEdit::Initialize () - BeginInvoke (initialize) - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //}
+
+            Start();
+
+            m_handlerDb = new HandlerDbTaskCalculate(ID_TASK.UNKNOWN);
+            m_handlerDb.InitConnectionSettings(((EventArgsDataHost)obj).par[0] as ConnectionSettings);
+        }
+        ///// <summary>
+        ///// Инициализация с заданными параметрами соединения с БД 
+        ///// </summary>
+        ///// <param name="obj">Аргумент (параметры соединения с БД)</param>
+        //private void initialize(object obj)
+        //{
+        //    int err = -1;
+        //    string errMsg = string.Empty;
+
+        //    if (((EventArgsDataHost)obj).par[0] is ConnectionSettings)
+        //    {
+        //        m_connSett = (ConnectionSettings)((EventArgsDataHost)obj).par[0];
+
+        //        err = 0;
+        //    }
+        //    else
+        //        errMsg = @"не корректен тип объекта с параметрами соедиения";
+
+        //    if (err == 0)
+        //    {
+        //        initialize(out err, out errMsg);
+        //    }
+        //    else
+        //        ;
+
+        //    if (!(err == 0))
+        //    {
+        //        throw new Exception(@"HPanelEdit::initialize () - " + errMsg);
+        //    }
+        //    else
+        //    {
+        //    }
+        //}
+        ///// <summary>
+        ///// Инициализация с предустановленными параметрами соединения с БД
+        ///// </summary>
+        ///// <param name="err">Признак результатат выполнения функции</param>
+        ///// <param name="errMsg">Пояснение в случае возникновения ошибки</param>
+        //private void initialize(out int err, out string errMsg)
+        //{
+        //    int iListenerId = -1;
+
+        //    err = -1;
+        //    errMsg = string.Empty;
+
+        //    initialize(out err, out errMsg);            
+        //}
+
+        public override bool Activate(bool active)
+        {
+            bool bRes = base.Activate(active);
             int err = -1;
-            string errMsg = string.Empty;
+            string strErrMsg = string.Empty;
 
-            if (((EventArgsDataHost)obj).par[0] is ConnectionSettings)
-            {
-                m_connSett = (ConnectionSettings)((EventArgsDataHost)obj).par[0];
-
-                err = 0;
-            }
-            else
-                errMsg = @"не корректен тип объекта с параметрами соедиения";
-
-            if (err == 0)
-            {
-                initialize(out err, out errMsg);
-            }
+            if ((bRes == true)
+                && (active == true))
+                initialize(out err, out strErrMsg);
             else
                 ;
 
-            if (!(err == 0))
-            {
-                throw new Exception(@"HPanelEdit::initialize () - " + errMsg);
-            }
-            else
-            {
-            }
-        }
-        /// <summary>
-        /// Инициализация с предустановленными параметрами соединения с БД
-        /// </summary>
-        /// <param name="err">Признак результатат выполнения функции</param>
-        /// <param name="errMsg">Пояснение в случае возникновения ошибки</param>
-        private void initialize(out int err, out string errMsg)
-        {
-            int iListenerId = -1;
-
-            err = -1;
-            errMsg = string.Empty;
-
-            iListenerId = DbSources.Sources().Register(m_connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString ());
-            DbConnection dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
-
-            if ((!(dbConn == null)) && (err == 0))
-            {
-                initialize(ref dbConn, out err, out errMsg);
-            }
-            else
-            {
-                errMsg = @"нет соединения с БД";
-                err = -1;
-            }
-
-            DbSources.Sources().UnRegister(iListenerId);
+            return bRes;
         }
         /// <summary>
         /// Повторная инициализация
@@ -161,7 +169,7 @@ namespace TepCommon
             }
         }
 
-        protected abstract void initialize(ref DbConnection dbConn, out int err, out string errMsg);
+        protected abstract void initialize(out int err, out string errMsg);
 
         //protected abstract void Activate(bool activate);
         /// <summary>
@@ -219,36 +227,24 @@ namespace TepCommon
 
         protected virtual void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
         {
-            int iListenerId = DbSources.Sources().Register(m_connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString())
-                , err = -1;
+            int err = -1;
             string errMsg = string.Empty;
-            DbConnection dbConn = DbSources.Sources().GetConnection(iListenerId, out err);
 
-            if ((!(dbConn == null)) && (err == 0))
+            recUpdateInsertDelete(out err);
+
+            if (!(err == 0))
             {
-                recUpdateInsertDelete(ref dbConn, out err);
-
-                if (!(err == 0))
-                {
-                    errMsg = @"HPanelEdit::HPanelEdit_btnSave_Click () - DbTSQLInterface.RecUpdateInsertDelete () - ...";
-                }
-                else
-                {                    
-                    successRecUpdateInsertDelete();
-
-                    if (!(delegateSaveAdding == null))
-                        delegateSaveAdding(iListenerId);
-                    else
-                        ;
-                }
+                errMsg = @"HPanelEdit::HPanelEdit_btnSave_Click () - DbTSQLInterface.RecUpdateInsertDelete () - ...";
             }
             else
-            {
-                errMsg = @"нет соединения с БД";
-                err = -1;
-            }
+            {                    
+                successRecUpdateInsertDelete();
 
-            DbSources.Sources().UnRegister(iListenerId);
+                if (!(delegateSaveAdding == null))
+                    delegateSaveAdding();
+                else
+                    ;
+            }            
 
             if (!(err == 0))
             {
@@ -258,7 +254,7 @@ namespace TepCommon
                 ;
         }
 
-        protected abstract void recUpdateInsertDelete(ref DbConnection dbConn, out int err);
+        protected abstract void recUpdateInsertDelete(out int err);
         protected abstract void successRecUpdateInsertDelete();
 
         protected virtual void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)

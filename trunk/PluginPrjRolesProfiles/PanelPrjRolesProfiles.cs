@@ -24,9 +24,9 @@ namespace PluginPrjRolesProfiles
         {            
         }
 
-        protected override void selectAccessUnit(ref DbConnection dbConn, out int err)
+        protected override void selectAccessUnit(out int err)
         {
-            base.selectAccessUnit(ref dbConn, out err);
+            base.selectAccessUnit(out err);
 
             List<int> listIdNotAccessUnit = new List<int> ();
             DataRow[] rowsNotAccessUnit = m_tblAccessUnit.Select(@"NOT ID_UNIT=" + 8);

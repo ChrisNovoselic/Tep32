@@ -23,9 +23,7 @@ namespace PluginDictPlugIns
         private void InitializeComponent () {
         }
 
-        private void saveAdding(int iListenerId)
-        {
-        }
+        private void saveAdding() { /*дополнительные действия не требуются*/ }
     }
 
     public class PlugIn : HFuncDbEdit

@@ -46,12 +46,17 @@ namespace InterfacePlugIn
             //Проверить признак выполнения запроса к вызвавшему объекту на получение параметров соединения с БД 
             if (m_dictDataHostCounter.ContainsKey((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB) == false)
                 // отправить запрос на получение параметров соединения с БД
-                DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
+                DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB); //Start
             else
                 if (m_dictDataHostCounter[(int)ID_DATAASKED_HOST.CONNSET_MAIN_DB] % 2 == 0)
-                    DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
+                    DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB); //Start
                 else
+                {
                     m_dictDataHostCounter[(int)ID_DATAASKED_HOST.CONNSET_MAIN_DB]++;
+
+                    (_object as HPanelCommon).Activate(false);
+                    (_object as HPanelCommon).Stop();
+                }
 
             //Вернуть главной форме параметр
             DataAskedHost(obj);
@@ -66,7 +71,10 @@ namespace InterfacePlugIn
             switch (((EventArgsDataHost)obj).id)
             {
                 case (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB:
-                    ((IObjectDbEdit)_object).Initialize(obj);
+                    ((IObjectDbEdit)_object).Start(obj);
+                    break;
+                case (int)ID_DATAASKED_HOST.ACTIVATE_TAB:
+                    (_object as HPanelCommon).Activate(true);
                     break;
                 default:
                     break;
@@ -79,6 +87,10 @@ namespace InterfacePlugIn
         /// Инициализация значением, полученным от главной формы
         /// </summary>
         /// <param name="obj">Массив объектов для инициализации</param>
-        void Initialize (object obj);
+        void Start (object obj);
+
+        //void Stop();
+
+        //int Activate(bool bActivate);
     }
 }

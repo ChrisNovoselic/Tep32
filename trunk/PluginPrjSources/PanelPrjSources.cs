@@ -47,13 +47,13 @@ namespace PluginPrjSources
                 r["HASH"] = Crypt.Crypting().Decrypt(r["HASH"].ToString(), Crypt.KEY);
         }
 
-        protected override void initProp(ref DbConnection dbConn, out int err, out string errMsg)
+        protected override void initProp(out int err, out string errMsg)
         {
-            base.initProp(ref dbConn, out err, out errMsg);
+            base.initProp(out err, out errMsg);
 
             if (err == 0)
             {
-                m_tblEditPswd = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM passwords WHERE ID_ROLE=" + s_iIdSourceData, null, null, out err);
+                m_tblEditPswd = m_handlerDb.Select (@"SELECT * FROM passwords WHERE ID_ROLE=" + s_iIdSourceData, out err);
                 initTablePswd ();
 
                 m_dgvProp.Rows.Add(new object[] { s_strPswdPropName, string.Empty });
@@ -257,16 +257,16 @@ namespace PluginPrjSources
             }
         }
 
-        protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
+        protected override void recUpdateInsertDelete(out int err)
         {
             //!!!Шифрация паролей
             foreach (DataRow r in m_tblEditPswd.Rows)
                 r["HASH"] = Crypt.Crypting().Encrypt(r["HASH"].ToString().Trim(), Crypt.KEY);
 
-            DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, @"passwords", @"ID_EXT, ID_ROLE", m_tblOriginPswd, m_tblEditPswd, out err);
+            m_handlerDb.RecUpdateInsertDelete(@"passwords", @"ID_EXT, ID_ROLE", m_tblOriginPswd, m_tblEditPswd, out err);
 
             if (err == 0)
-                base.recUpdateInsertDelete(ref dbConn, out err);
+                base.recUpdateInsertDelete(out err);
             else
                 throw new Exception(@"HPanelTepPrjSources::recUpdateInsertDelete () - err=" + err + @" ...");
         }

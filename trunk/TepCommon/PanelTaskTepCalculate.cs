@@ -28,11 +28,7 @@ namespace TepCommon
         /// <summary>
         /// Признак отображаемых на текущий момент значений
         /// </summary>
-        protected INDEX_VIEW_VALUES m_ViewValues;
-        /// <summary>
-        /// Объект для обмена данными с БД
-        /// </summary>
-        protected HandlerDbTaskCalculate m_handlerDb;        
+        protected INDEX_VIEW_VALUES m_ViewValues;        
         /// <summary>
         /// Массив списков идентификаторов компонентов ТЭЦ/параметров
         /// </summary>
@@ -188,12 +184,10 @@ namespace TepCommon
         {
         }
 
-        protected override void initialize(ref System.Data.Common.DbConnection dbConn, out int err, out string errMsg)
+        protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
-
-            m_handlerDb.InitConnectionSettings(m_connSett);
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
@@ -222,7 +216,7 @@ namespace TepCommon
             string[] arQueryDictPrj = getQueryDictPrj();
             for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
             {
-                m_arTableDictPrjs[i] = DbTSQLInterface.Select(ref dbConn, arQueryDictPrj[i], null, null, out err);
+                m_arTableDictPrjs[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
 
                 if (!(err == 0))
                     break;
@@ -234,8 +228,6 @@ namespace TepCommon
             {
                 try
                 {
-                    base.Start();
-
                     m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
 
                     initialize();
@@ -428,11 +420,19 @@ namespace TepCommon
             //??? повторная проверка
             if (bClose == true)
             {
-                for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-                {
-                    m_arTableDictPrjs[i].Clear();
-                    m_arTableDictPrjs[i] = null;
-                }
+                if (!(m_arTableDictPrjs == null))
+                    for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
+                    {
+                        if (!(m_arTableDictPrjs[i] == null))
+                        {
+                            m_arTableDictPrjs[i].Clear();
+                            m_arTableDictPrjs[i] = null;
+                        }
+                        else
+                            ;
+                    }
+                else
+                    ;
 
                 cbx = Controls.Find(PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;

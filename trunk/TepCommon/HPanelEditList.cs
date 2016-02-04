@@ -37,9 +37,9 @@ namespace TepCommon
             base.reinit();
         }
 
-        protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
+        protected override void recUpdateInsertDelete(out int err)
         {
-            DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, m_nameTable, m_strKeyFields, m_tblOrigin, m_tblEdit, out err);
+            m_handlerDb.RecUpdateInsertDelete(m_nameTable, m_strKeyFields, m_tblOrigin, m_tblEdit, out err);
         }
 
         protected override void successRecUpdateInsertDelete()
@@ -50,6 +50,95 @@ namespace TepCommon
 
     partial class HPanelEditList
     {
+        protected class DataGridViewEditable : DataGridView
+        {
+            public enum TYPE : short { UNKNOWN = -1
+                , LIST, PROPERTY
+                    , COUNT }
+
+            private TYPE m_type;
+
+            private int m_iId;
+
+            public event EventHandler EventSelectionChanged;
+            public event EventHandler EventValueChanged;
+
+            public DataGridViewEditable(TYPE type)
+            {
+                this.m_type = type;
+
+                InitializeComponents();
+            }
+
+            private void InitializeComponents()
+            {
+                switch (m_type)
+                {
+                    case TYPE.LIST:
+                        //Добавить столбец
+                        this.Columns.AddRange(new DataGridViewColumn[] {
+                            new DataGridViewTextBoxColumn ()
+                        });
+                        //Ширина столбца по ширине род./элемента управления
+                        this.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;                        
+                        //Установить режим "невидимые" заголовки столбцов
+                        this.ColumnHeadersVisible = false;                        
+                        break;
+                    case TYPE.PROPERTY:
+                        //Добавить столбцы
+                        this.Columns.AddRange(new DataGridViewColumn[] {
+                            new DataGridViewTextBoxColumn ()
+                            , new DataGridViewTextBoxColumn ()
+                        });
+                        //1-ый столбец
+                        this.Columns[0].HeaderText = @"Свойство"; this.Columns[0].ReadOnly = true;
+                        //Ширина столбца по ширине род./элемента управления
+                        this.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                        //2-ой столбец
+                        this.Columns[1].HeaderText = @"Значение";
+                        //Ширина столбца по ширине род./элемента управления
+                        this.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;                        
+                        //Запретить вставку строк
+                        this.AllowUserToAddRows = false;
+                        break;
+                    default:
+                        break;
+                }
+
+                //Запретить выделение "много" строк
+                this.MultiSelect = false;
+                //Установить режим выделения - "полная" строка
+                this.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                //Запретить удаление строк
+                this.AllowUserToDeleteRows = false;
+
+                //Обработчик события "Выбор строки"
+                this.SelectionChanged += new EventHandler(onSelectionChanged);
+                //Обработчик события "Редактирование свойства"
+                this.CellEndEdit += new DataGridViewCellEventHandler(onCellEndEdit);
+            }
+
+            private void onSelectionChanged(object obj, EventArgs ev)
+            {
+                EventSelectionChanged(this, EventArgs.Empty);
+            }
+
+            private void onCellEndEdit(object obj, DataGridViewCellEventArgs ev)
+            {
+                EventValueChanged(this, EventArgs.Empty);
+            }
+
+            public void ShowValues(int id, DataRow row)
+            {
+                m_iId = id;
+            }
+
+            public void ShowValues(int id, DataTable table)
+            {
+                m_iId = id;
+            }
+        }
+
         protected enum INDEX_CONTROL
         {
             BUTTON_ADD, BUTTON_DELETE, BUTTON_SAVE, BUTTON_UPDATE
@@ -57,6 +146,7 @@ namespace TepCommon
             , LABEL_PROP_DESC
             , INDEX_CONTROL_COUNT,
         };
+
         protected static string[] m_arButtonText = { @"Добавить", @"Удалить", @"Сохранить", @"Обновить" };
 
         #region Код, автоматически созданный конструктором компонентов
@@ -101,7 +191,7 @@ namespace TepCommon
             //Обработчик события "Редактирование строки"
             dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditList_dgvDictEditCellEndEdit);
             //Запретить удаление строк
-            dgv.AllowUserToDeleteRows = false;            
+            dgv.AllowUserToDeleteRows = false;
 
             //Добавить "список" свойств словарной величины
             dgv = new DataGridView();
@@ -183,12 +273,12 @@ namespace TepCommon
             base.reinit();
         }
 
-        protected virtual void initProp(ref DbConnection dbConn, out int err, out string errMsg)
+        protected virtual void initProp(out int err, out string errMsg)
         {
             err = -1;
             errMsg = string.Empty;
 
-            m_tblEdit = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + m_nameTable, null, null, out err);
+            m_tblEdit = m_handlerDb.GetDataTable (m_nameTable, out err);
             m_tblOrigin = m_tblEdit.Copy();
 
             if (err == 0)
@@ -207,11 +297,11 @@ namespace TepCommon
             }
         }
 
-        protected override void initialize(ref DbConnection dbConn, out int err, out string errMsg)
+        protected override void initialize(out int err, out string errMsg)
         {
             int i = -1;
 
-            initProp(ref dbConn, out err, out errMsg);
+            initProp(out err, out errMsg);
 
             if (err == 0)
             {

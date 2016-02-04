@@ -53,14 +53,12 @@ namespace PluginTaskTepInval
         /// <summary>
         /// Сохранить изменения в редактируемых таблицах
         /// </summary>
-        /// <param name="dbConn">Объект соединения с БД</param>
         /// <param name="err">Признак ошибки при выполнении сохранения в БД</param>
-        protected override void recUpdateInsertDelete(ref System.Data.Common.DbConnection dbConn, out int err)
+        protected override void recUpdateInsertDelete(out int err)
         {
             err = -1;
 
-            DbTSQLInterface.RecUpdateInsertDelete(ref dbConn
-                , HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVAL_DEF]
+            m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVAL_DEF]
                 , @"ID_PUT, ID_TIME"
                 , m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT]
                 , m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT]

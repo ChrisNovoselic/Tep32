@@ -43,7 +43,7 @@ namespace PluginTaskTepOutNorm
             get { throw new NotImplementedException(); }
         }
 
-        protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
+        protected override void recUpdateInsertDelete(out int err)
         {
             throw new NotImplementedException();
         }

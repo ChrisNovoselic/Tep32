@@ -67,10 +67,6 @@ namespace TepCommon
             throw new NotImplementedException();
         }
 
-        public void Load(ID_PERIOD idTime)
-        {
-        }
-
         protected override int StateCheckResponse(int state, out bool error, out object outobj)
         {
             throw new NotImplementedException();
@@ -147,6 +143,74 @@ namespace TepCommon
             else
                 ;
         }
+
+        public DbConnection DbConnection
+        {
+            get { return _dbConnection; }
+        }
+
+        public ConnectionSettings ConnectionSettings
+        {
+            get { return _connSett; }
+        }
+
+        public DataTable Select(string query, out int err)
+        {
+            err = -1;
+
+            DataTable tableRes = new DataTable();
+            
+            int iRegDbConn = -1;
+
+            RegisterDbConnection(out iRegDbConn);
+
+            if (!(iRegDbConn < 0))
+                tableRes = DbTSQLInterface.Select(ref _dbConnection, query, null, null, out err);
+            else
+                ;
+
+            if (!(iRegDbConn > 0))
+            {
+                UnRegisterDbConnection ();
+            }
+            else
+                ;
+
+            return tableRes;
+        }
+
+        public DataTable GetDataTable(string strNameTable, out int err)
+        {
+            return Select (@"SELECT * FROM [" + strNameTable + @"]", out err);
+        }
+
+        public DataTable GetDataTable(INDEX_DBTABLE_NAME indxTable, out int err)
+        {
+            return GetDataTable(s_NameDbTables[(int)indxTable], out err);
+        }
+
+        public void RecUpdateInsertDelete(string nameTable, string strKeyFields, DataTable tblOrigin, DataTable tblEdit, out int err)
+        {
+            err = -1;
+
+            int iRegDbConn = -1;
+
+            RegisterDbConnection(out iRegDbConn);
+
+            if (!(iRegDbConn < 0))
+            {
+                DbTSQLInterface.RecUpdateInsertDelete(ref _dbConnection, nameTable, strKeyFields, tblOrigin, tblEdit, out err);
+            }
+            else
+                ;
+
+            if (!(iRegDbConn > 0))
+            {
+                UnRegisterDbConnection ();
+            }
+            else
+                ;
+        }
         /// <summary>
         /// Создать новую сессию для расчета
         ///  - вставить входные данные во временную таблицу
@@ -194,7 +258,7 @@ namespace TepCommon
                                     {
                                         rValDef[@"ID_PUT"]
                                         //, HUsers.Id //ID_USER
-                                        , -1 //ID_SOURCE
+                                        //, -1 //ID_SOURCE
                                         , idSession //ID_SESSION
                                         , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT //QUALITY
                                         , (iAVG == 0) ? cntBasePeriod * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
@@ -270,7 +334,10 @@ namespace TepCommon
                 //Вставить во временную таблицу в БД входные для расчета значения
                 DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
                 // получить входные для расчета значения для возможности редактирования
-                tableInValues = DbTSQLInterface.Select(ref _dbConnection, @"SELECT [ID_PUT] as [ID],[ID_SOURCE],[ID_SESSION],[QUALITY],[VALUE],[WR_DATETIME] FROM [inval] WHERE [ID_SESSION]=" + idSession, null, null, out err);
+                strQuery = @"SELECT [ID_PUT] as [ID], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]"
+                    + @" FROM [inval]"
+                    + @" WHERE [ID_SESSION]=" + idSession;
+                tableInValues = DbTSQLInterface.Select(ref _dbConnection, strQuery, null, null, out err);
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -538,12 +605,14 @@ namespace TepCommon
             {
                 bLastItem = !(i < (arQueryRanges.Length - 1));
 
-                strRes += @"SELECT v.ID_PUT, v.ID_TIME, v.ID_TIMEZONE"
-                        + @", v.ID_SOURCE"
-                        + @", " + idSession + @" as [ID_SESSION], v.QUALITY"
-                        + @", [VALUE]"
+                strRes += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
+                        + @", " + idSession + @" as [ID_SESSION]"
+                        + @", m.[AVG]"
                     //+ @", GETDATE () as [WR_DATETIME]"
                     + @" FROM [dbo].[" + getNameDbTable (type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+                        + @" LEFT JOIN [dbo].[input] p ON p.ID = v.ID_PUT"
+		                + @" LEFT JOIN [dbo].[inalg] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)_iIdTask + whereParameters
+		                + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                     + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
                     ;
                 // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
@@ -560,14 +629,12 @@ namespace TepCommon
                     strRes += @" AND [DATE_TIME] = '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
 
                 if (bLastItem == false)
-                    strRes += @" UNION ";
+                    strRes += @" UNION ALL";
                 else
                     ;
             }
 
-            strRes = @"SELECT p.ID"
-                //+ @", " + HTepUsers.Id + @" as [ID_USER]"
-                    + @", v.ID_SOURCE"
+            strRes = @"SELECT v.ID_PUT as [ID]"
                     + @", " + idSession + @" as [ID_SESSION]"
                     + @", CASE"
                         + @" WHEN COUNT (*) = " + cntBasePeriod + @" THEN MIN(v.[QUALITY])"
@@ -575,19 +642,14 @@ namespace TepCommon
                             + @" ELSE " + (int)ID_QUALITY_VALUE.PARTIAL
                         + @" END as [QUALITY]"
                     + @", CASE"
-                        + @" WHEN m.[AVG] = 0 THEN SUM (v.[VALUE])"
-                        + @" WHEN m.[AVG] = 1 THEN AVG (v.[VALUE])"
+                        + @" WHEN v.[AVG] = 0 THEN SUM (v.[VALUE])"
+                        + @" WHEN v.[AVG] = 1 THEN AVG (v.[VALUE])"
                             + @" ELSE MIN (v.[VALUE])"
                         + @" END as [VALUE]"
                     + @", GETDATE () as [WR_DATETIME]"
                 + @" FROM (" + strRes + @") as v"
-                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
-                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)_iIdTask + whereParameters
-                    + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                + @" GROUP BY v.ID_PUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
-                    + @", a.ID_MEASURE, a.N_ALG"
-                    + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
-                    + @", m.[AVG]"
+                + @" GROUP BY v.ID_PUT"
+	                + @", v.[AVG]"
                 ;
 
             return strRes;

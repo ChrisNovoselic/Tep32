@@ -362,7 +362,7 @@ namespace TepCommon
                 ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]                
                 ;
             //Установки для отображения значений
-            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_connSett
+            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
                 , new int[] {
                     1
                     , (_iFuncPlugin as PlugInBase)._Id

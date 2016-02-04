@@ -71,17 +71,16 @@ namespace PluginPrjTepFTable
         /// <summary>
         /// Инициализация
         /// </summary>
-        /// <param name="dbConn"></param>
         /// <param name="err"></param>
         /// <param name="errMsg"></param>
-        protected override void initialize(ref DbConnection dbConn, out int err, out string errMsg)
+        protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
             DataGridView dgv = null;
             List<string> listNAlg;
             string strItem = string.Empty;
-            m_tblOrigin = DbTSQLInterface.Select(ref dbConn, "SELECT * FROM [dbo].[ftable]", null, null, out err);
+            m_tblOrigin = m_handlerDb.GetDataTable(@"ftable", out err); ;
 
             if (err == 0)
             {
@@ -340,11 +339,10 @@ namespace PluginPrjTepFTable
         ///  (обновление, вставка, удаление записей)
         ///   в соответствии с изменениями
         /// </summary>
-        /// <param name="dbConn">Объект соединения с БД</param>
         /// <param name="err">Признак ошибки при выполнении метода</param>
-        protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
+        protected override void recUpdateInsertDelete(out int err)
         {
-            DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, @"ftable", @"ID", m_tblOrigin, m_tblEdit, out err);
+            m_handlerDb.RecUpdateInsertDelete(@"ftable", @"ID", m_tblOrigin, m_tblEdit, out err);
         }
 
         /// <summary>

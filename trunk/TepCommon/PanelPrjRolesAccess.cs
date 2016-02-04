@@ -129,17 +129,17 @@ namespace TepCommon
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
 
-        protected override void initialize(ref DbConnection dbConn, out int err, out string strErr)
+        protected override void initialize(out int err, out string strErr)
         {
-            int i = -1;
-
             err = 0;
             strErr = string.Empty;
-            m_query = @"SELECT * FROM " + m_nameTable;
-            m_tblEdit = DbTSQLInterface.Select(ref dbConn, m_query, null, null, out err);            
-            m_tblItem = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + @"roles_unit", null, null, out err);
+            
+            int i = -1;
 
-            selectAccessUnit(ref dbConn, out err);
+            m_tblEdit = m_handlerDb.GetDataTable(m_nameTable, out err);
+            m_tblItem = m_handlerDb.GetDataTable(@"roles_unit", out err);
+
+            selectAccessUnit(out err);
             m_tblOrigin = m_tblEdit.Copy();
 
             if (err == 0)
@@ -193,9 +193,9 @@ namespace TepCommon
             base.reinit();
         }
 
-        protected virtual void selectAccessUnit(ref DbConnection dbConn, out int err)
+        protected virtual void selectAccessUnit(out int err)
         {
-            m_tblAccessUnit = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + m_nameTableAccessUnit, null, null, out err);
+            m_tblAccessUnit = m_handlerDb.GetDataTable (m_nameTableAccessUnit, out err);
         }
 
         private void HPanelEditTree_dgvPrjItemSelectionChanged(object obj, EventArgs ev)

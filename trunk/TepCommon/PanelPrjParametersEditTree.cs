@@ -468,7 +468,7 @@ namespace TepCommon
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
 
-        private void fillTableDictPrj(ref DbConnection dbConn, out int err, out string strErr)
+        private void fillTableDictPrj(out int err, out string strErr)
         {
             err = 0;
             strErr = string.Empty;
@@ -481,7 +481,7 @@ namespace TepCommon
                                                                                         , @"проект 'список задач ИРС'" };
             for (int i = 0; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
             {
-                m_arTableDictPrj[(int)i] = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM " + arNameTableKey[(int)i], null, null, out err);
+                m_arTableDictPrj[(int)i] = m_handlerDb.GetDataTable (arNameTableKey[(int)i], out err);
 
                 if (!(m_arTableDictPrj[(int)i].Rows.Count > 0))
                     err = -1;
@@ -499,7 +499,7 @@ namespace TepCommon
             }
         }
 
-        private void fillTableEdits(ref DbConnection dbConn, out int err, out string strErr)
+        private void fillTableEdits(out int err, out string strErr)
         {
             err = 0;
             strErr = string.Empty;
@@ -512,9 +512,7 @@ namespace TepCommon
                 if (i == (int)INDEX_PARAMETER.ALGORITM)
                     query += @" ORDER BY [N_ALG]";
 
-                m_arTableEdit[i] = DbTSQLInterface.Select(ref dbConn
-                    , query
-                    , null, null, out err);
+                m_arTableEdit[i] = m_handlerDb.Select(query, out err);
 
                 if (!(err == 0))
                 {
@@ -726,7 +724,7 @@ namespace TepCommon
                 Logging.Logg().Error(@"HPanelEditTree::initTreeNodes () - не инициализирован список 'm_listLevelParameters' ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
-        protected override void initialize(ref DbConnection dbConn, out int err, out string strErr)
+        protected override void initialize(out int err, out string strErr)
         {
             int i = -1;
 
@@ -734,10 +732,10 @@ namespace TepCommon
             strErr = string.Empty;
 
             //Заполнить редактируемые "оригинальные" таблицы из БД...
-            fillTableEdits(ref dbConn, out err, out strErr);
+            fillTableEdits(out err, out strErr);
 
             if (err == 0)
-                fillTableDictPrj(ref dbConn, out err, out strErr);
+                fillTableDictPrj(out err, out strErr);
             else
                 ; //Строка с описанием ошибки заполнена
 
@@ -975,9 +973,15 @@ namespace TepCommon
             , m_arTableEdit;
         protected DataTable [] m_arTableDictPrj;
 
-        protected override void recUpdateInsertDelete(ref DbConnection dbConn, out int err)
+        protected override void recUpdateInsertDelete(out int err)
         {
             err = 0;
+
+            int iRegDbConn = -1;
+            DbConnection dbConn = null;
+
+            m_handlerDb.RegisterDbConnection(out iRegDbConn);
+            dbConn = m_handlerDb.DbConnection;
 
             for (INDEX_PARAMETER i = INDEX_PARAMETER.ALGORITM; i < INDEX_PARAMETER.COUNT; i++)
             {
@@ -993,6 +997,8 @@ namespace TepCommon
                 else
                     ;
             }
+
+            m_handlerDb.UnRegisterDbConnection();
         }
 
         protected override void successRecUpdateInsertDelete()

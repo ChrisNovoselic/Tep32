@@ -208,7 +208,7 @@ namespace Tep64
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие (форма)</param>
         /// <param name="e">Аргумент события</param>
-        private void MainForm_Load(object sender, EventArgs e)
+        private void FormMain_Load(object sender, EventArgs e)
         {
             int iRes = -1;
 
@@ -241,6 +241,14 @@ namespace Tep64
 
             m_report.ClearStates(false);
         }
+
+        private void FormMain_Shown(object sender, EventArgs e)
+        {
+            if (m_TabCtrl.TabCount > 0)
+                m_TabCtrl.PrevSelectedIndex = 0;
+            else
+                ;
+        }
         /// <summary>
         /// Метод аврийного завершения
         /// </summary>
@@ -258,7 +266,7 @@ namespace Tep64
         /// </summary>
         /// <param name="sender">Объект, иницировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs ev)
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs ev)
         {
             Stop ();
         }
@@ -543,6 +551,19 @@ namespace Tep64
 
             return iRes;
         }
+
+        private void TabCtrl_EventPrevSelectedIndexChanged(object sender, System.EventArgs e)
+        {
+            int idPlugIn = -1;
+
+            idPlugIn = m_TabCtrl.SelectedId;
+
+            if (!(idPlugIn < 0))
+                //Отправить ответ (исходный идентификатор + требуемый объект)
+                ((PlugInBase)s_plugIns[m_TabCtrl.SelectedId]).OnEvtDataRecievedHost(new EventArgsDataHost((int)HFunc.ID_DATAASKED_HOST.ACTIVATE_TAB, new object[] { }));
+            else
+                ;
+        }
         /// <summary>
         /// Обработчик события - изменение активной вкладки
         /// </summary>
@@ -550,6 +571,7 @@ namespace Tep64
         /// <param name="ev">Аргумент события</param>
         private void TabCtrl_OnSelectedIndexChanged (object obj, EventArgs ev)
         {
+            (obj as HTabCtrlEx).PrevSelectedIndex = (obj as HTabCtrlEx).SelectedIndex;
         }
         /// <summary>
         /// Изменить подписи в строке состояния
