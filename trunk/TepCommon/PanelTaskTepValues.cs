@@ -504,7 +504,7 @@ namespace TepCommon
             /// <summary>
             /// Событие - изменение значения ячейки
             /// </summary>
-            public DataGridViewTEPValuesCellValueChangedEventHandler EventCellValueChanged;            
+            public event DataGridViewTEPValuesCellValueChangedEventHandler EventCellValueChanged;            
             ///// <summary>
             ///// Список свойств ячеек в строке
             ///// </summary>
@@ -1027,7 +1027,7 @@ namespace TepCommon
 
                 try
                 {
-                    //0 - идентификатор компонета (служебный)
+                    //0 - идентификатор компонента (служебный)
                     //1 - размерность (служебный)
                     if ((ev.ColumnIndex > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                         && (! (ev.RowIndex < 0)))

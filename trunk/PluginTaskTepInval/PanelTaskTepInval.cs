@@ -32,6 +32,9 @@ namespace PluginTaskTepInval
             m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
             
             InitializeComponent();
+
+            (Controls.Find (INDEX_CONTROL.BUTTON_RUN_PREV.ToString(), true)[0] as Button).Click += new EventHandler (btnRunPrev_onClick);
+            (Controls.Find(INDEX_CONTROL.BUTTON_RUN_RES.ToString(), true)[0] as Button).Click += new EventHandler(btnRunRes_onClick);
         }
 
         private void InitializeComponent()
@@ -87,51 +90,60 @@ namespace PluginTaskTepInval
             err = 0;
             strErr = string.Empty;
 
+            int iRegDbConn = -1;
             DateTimeRange[] arQueryRanges = getDateTimeRangeValuesVar();
 
-            m_handlerDb.RegisterDbConnection();
+            m_handlerDb.RegisterDbConnection(out iRegDbConn);
 
-            //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE] = m_handlerDb.GetValuesVar(_IdSession
-                , ActualIdPeriod
-                , CountBasePeriod
-                , NameDbTableAlg
-                , NameDbTablePut
-                , NameDbTableValues
-                , arQueryRanges
-                , out err);
-            //Проверить признак выполнения запроса
-            if (err == 0)
+            if (!(iRegDbConn < 0))
             {
-                //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
-                m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = m_handlerDb.GetValuesDef(ActualIdPeriod, out err);                
+                //Запрос для получения автоматически собираемых данных
+                m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE] = m_handlerDb.GetValuesVar(_IdSession
+                    , ActualIdPeriod
+                    , CountBasePeriod
+                    , NameDbTableAlg
+                    , NameDbTablePut
+                    , NameDbTableValues
+                    , arQueryRanges
+                    , out err);
                 //Проверить признак выполнения запроса
                 if (err == 0)
-                {                    
-                    //Начать новую сессию расчета
-                    // , получить входные для расчета значения для возможности редактирования
-                    m_handlerDb.CreateSession(_IdSession
-                        , _currIdPeriod
-                        , CountBasePeriod
-                        , _currIdTimezone
-                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
-                        , ref m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE]
-                        , ref m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT]
-                        , arQueryRanges
-                        , out err, out strErr);
-                    // создать копии для возможности сохранения изменений
-                    m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Copy();
-                    m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Copy();
+                {
+                    //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
+                    m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = m_handlerDb.GetValuesDef(ActualIdPeriod, out err);
+                    //Проверить признак выполнения запроса
+                    if (err == 0)
+                    {
+                        //Начать новую сессию расчета
+                        // , получить входные для расчета значения для возможности редактирования
+                        m_handlerDb.CreateSession(_IdSession
+                            , _currIdPeriod
+                            , CountBasePeriod
+                            , _currIdTimezone
+                            , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                            , ref m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE]
+                            , ref m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT]
+                            , arQueryRanges
+                            , out err, out strErr);
+                        // создать копии для возможности сохранения изменений
+                        m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Copy();
+                        m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Copy();
+                    }
+                    else
+                        strErr = @"ошибка получения данных по умолчанию с " + PanelManagement.m_dtRange.Begin.ToString()
+                            + @" по " + PanelManagement.m_dtRange.End.ToString();
                 }
                 else
-                    strErr = @"ошибка получения данных по умолчанию с " + PanelManagement.m_dtRange.Begin.ToString()
+                    strErr = @"ошибка получения автоматически собираемых данных с " + PanelManagement.m_dtRange.Begin.ToString()
                         + @" по " + PanelManagement.m_dtRange.End.ToString();
             }
             else
-                strErr = @"ошибка получения автоматически собираемых данных с " + PanelManagement.m_dtRange.Begin.ToString()
-                    + @" по " + PanelManagement.m_dtRange.End.ToString();
+                ;
 
-            m_handlerDb.UnRegisterDbConnection();
+            if (!(iRegDbConn > 0))
+                m_handlerDb.UnRegisterDbConnection();
+            else
+                ;
         }
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
@@ -148,6 +160,16 @@ namespace PluginTaskTepInval
             }
             else
                 ;
+        }
+
+        private void btnRunPrev_onClick(object obj, EventArgs ev)
+        {
+            m_handlerDb.TepCalculateNormative();
+        }
+
+        private void btnRunRes_onClick(object obj, EventArgs ev)
+        {
+            m_handlerDb.TepCalculateMaket();
         }
 
         protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()

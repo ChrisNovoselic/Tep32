@@ -422,9 +422,9 @@ namespace TepCommon
 
         protected void deleteSession()
         {
-            m_handlerDb.RegisterDbConnection();
-            m_handlerDb.DeleteSession(_IdSession);
-            m_handlerDb.UnRegisterDbConnection();
+            int err = -1;
+
+            m_handlerDb.DeleteSession(_IdSession, out err);
 
             _IdSession = -1;
         }

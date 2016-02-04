@@ -27,8 +27,9 @@ namespace TepCommon
             /// </summary>
             public enum INDEX_DATATABLE : short { UNKNOWN = -1
                 , FTABLE
-                , IN_ALG, IN_PUT, IN_VALUES
-                , OUT_NORM_ALG, OUT_NORM_PUT, OUT_NORM_VALUES
+                , IN_PARAMETER, IN_VALUES
+                , OUT_NORM_PARAMETER, OUT_NORM_VALUES
+                , OUT_MKT_PARAMETER, OUT_MKT_VALUES
                 , COUNT }
             /// <summary>
             /// Константы - идентификаторы компонентов оборудования ТЭЦ
