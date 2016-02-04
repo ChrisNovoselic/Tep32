@@ -31,18 +31,27 @@ namespace PluginPrjTepFTable
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1
-            , BUTTON_ADD, BUTTON_DELETE
-            , BUTTON_SAVE, BUTTON_UPDATE
-            , MENUITEM_ADD_POINT, MENUITEM_ADD_FUNCTION, MENUITEM_DELETE_POINT, MENUITEM_DELETE_FUNCTION
-            , DGV_NALG, DGV_VALUES
-            , LABEL_DESC, INDEX_CONTROL_COUNT
+            , BUTTON_ADD,
+            BUTTON_DELETE
+                , BUTTON_SAVE,
+            BUTTON_UPDATE
+                , MENUITEM_ADD_POINT, MENUITEM_ADD_FUNCTION, MENUITEM_DELETE_POINT,
+            MENUITEM_DELETE_FUNCTION
+                , DGV_NALG,
+            DGV_VALUES
+                , LABEL_DESC,
+            INDEX_CONTROL_COUNT
 
-            , ZGRAPH_fTABLE, CHRTGRAPH_fTABLE
-            , TEXTBOX_FIND, LABEL_FIND, PANEL_FIND
-            , TABLELAYOUTPANEL_CALC /*BUTTON_CALC,*/
-            // обязательно должны следовать один за другим, т.к. используются в цикле
-            , TEXTBOX_A1, TEXTBOX_A2, TEXTBOX_A3, TEXTBOX_F
-            , /*TEXTBOX_REZULT,*/ GRPBOX_CALC,
+                , ZGRAPH_fTABLE,
+            CHRTGRAPH_fTABLE
+                , TEXTBOX_FIND, LABEL_FIND,
+            PANEL_FIND
+                ,
+            TABLELAYOUTPANEL_CALC /*BUTTON_CALC,*/
+                // обязательно должны следовать один за другим, т.к. используются в цикле
+                , TEXTBOX_A1, TEXTBOX_A2, TEXTBOX_A3,
+            TEXTBOX_F
+                , /*TEXTBOX_REZULT,*/ GRPBOX_CALC,
             COMBOBOX_PARAM
         };
         /// <summary>
@@ -58,6 +67,7 @@ namespace PluginPrjTepFTable
         {
             return base.Activate(activate);
         }
+
         /// <summary>
         /// Инициализация
         /// </summary>
@@ -78,9 +88,12 @@ namespace PluginPrjTepFTable
                 m_tblEdit = m_tblOrigin.Copy();
                 m_zGraph_fTABLE.Set(m_tblEdit);
 
-                dgv = Controls.Find (INDEX_CONTROL.DGV_NALG.ToString (), true)[0] as DataGridView;
+                dgv = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView;
                 listNAlg = new List<string>();
 
+                if (dgv.RowCount > 0)
+                    dgv.Rows.Clear();
+                else ;
                 //var distinctRows = (from DataRow r in m_tblOrigin.Rows select new { nalg = r["N_ALG"] }).Distinct();
 
                 foreach (DataRow r in m_tblEdit.Rows)
@@ -99,6 +112,7 @@ namespace PluginPrjTepFTable
             Logging.Logg().Debug(@"PluginTepPrjFTable::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
 
         }
+
         /// <summary>
         /// Установить признак отображения для строк
         ///  в соответствии с введенным в поле "Поиск"
@@ -128,6 +142,7 @@ namespace PluginPrjTepFTable
                 rView.Visible = bVisible;
             }
         }
+
         ///// <summary>
         ///// Включить/блокировать кнопки
         /////  , если 'View' имеют/не_имеют фокус ввода
@@ -139,6 +154,7 @@ namespace PluginPrjTepFTable
         //    Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0].Enabled =
         //        bEnabled;
         //}
+
         /// <summary>
         /// Обработчик события - изменение выбранной строки
         ///  в отображении для таблицы с наименованями функций
@@ -159,7 +175,7 @@ namespace PluginPrjTepFTable
             if (!(iSelIndex < 0))
             {
                 runk = m_zGraph_fTABLE.GetRunk(NAlg);
-                
+
                 rowsNAlg = m_tblEdit.Select(@"N_ALG='" + NAlg + @"'");
 
                 foreach (DataRow r in rowsNAlg)
@@ -205,6 +221,7 @@ namespace PluginPrjTepFTable
             else
                 ;
         }
+
         ///// <summary>
         ///// Обработчик события - 
         ///// </summary>
@@ -225,6 +242,7 @@ namespace PluginPrjTepFTable
         //{
         //    btnAddDeleteEnabled(false);
         //}
+
         /// <summary>
         /// Обработчик события - изменение выбранной строки
         ///  в отображении для таблицы со значениями
@@ -236,7 +254,7 @@ namespace PluginPrjTepFTable
             DataGridView dgv = obj as DataGridView;
             FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки полей ввода
             TextBox tbValue = null; // элемент управления - поле для ввода текста
-            int iSelIndex = dgv.SelectedRows.Count > 0 ? dgv.SelectedRows[0].Index : -1;            
+            int iSelIndex = dgv.SelectedRows.Count > 0 ? dgv.SelectedRows[0].Index : -1;
 
             if (!(iSelIndex < 0))
             {
@@ -287,6 +305,7 @@ namespace PluginPrjTepFTable
             else
                 ; // нет ни одной выбранной строки
         }
+
         ///// <summary>
         ///// Обработчик события - 
         ///// </summary>
@@ -307,6 +326,7 @@ namespace PluginPrjTepFTable
         //{
         //    btnAddDeleteEnabled(false);
         //}
+
         /// <summary>
         /// Обработка события при успешной синхронизации целевойй таблицы в БД
         /// </summary>
@@ -314,6 +334,7 @@ namespace PluginPrjTepFTable
         {
             m_tblOrigin = m_tblEdit.Copy();
         }
+
         /// <summary>
         /// Метод синхронизации целевой таблицы в БД
         ///  (обновление, вставка, удаление записей)
@@ -325,6 +346,7 @@ namespace PluginPrjTepFTable
         {
             DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, @"ftable", @"ID", m_tblOrigin, m_tblEdit, out err);
         }
+
         /// <summary>
         /// Конструктор с параметром
         /// </summary>
@@ -334,6 +356,7 @@ namespace PluginPrjTepFTable
         {
             InitializeComponent();
         }
+
         /// <summary>
         /// Инициализация компонентов
         /// </summary>
@@ -377,6 +400,7 @@ namespace PluginPrjTepFTable
                         menuItem = btnDropDown.ContextMenuStrip.Items[iButtonDropDownMenuItem];
                         menuItem.Text = strPartLabelButtonDropDownMenuItem + @" " + arLabelButtonDropDownMenuItem[iButtonDropDownMenuItem];
                         menuItem.Name = indxControlButtonDropDownMenuItem.ToString();
+
                         // п.меню для операции с функцией
                         indxControlButtonDropDownMenuItem = i == INDEX_CONTROL.BUTTON_ADD ? INDEX_CONTROL.MENUITEM_ADD_FUNCTION :
                             i == INDEX_CONTROL.BUTTON_DELETE ? INDEX_CONTROL.MENUITEM_DELETE_FUNCTION : INDEX_CONTROL.UNKNOWN;
@@ -389,6 +413,10 @@ namespace PluginPrjTepFTable
                         addButton(i.ToString(), (int)i, m_arButtonText[(int)i]);
                         break;
                 }
+
+            //заблокировать кнопку добавить
+            //Button btn = ((Button)Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]);
+            //btn.Enabled = false;
 
             //Поиск функции
             TextBox txtbx_find = new TextBox();
@@ -450,6 +478,9 @@ namespace PluginPrjTepFTable
             dgv.Columns[2].Name = "ID_REC";
             dgv.Columns[2].Visible = false;
 
+            dgv.CellMouseDoubleClick +=dgv_CellMouseDoubleClickNALG;
+            dgv.CellEndEdit += dgv_CellEndEditNALG;
+
             //Таблица с реперными точками 
             dgv = new DataGridView();
             dgv.Name = INDEX_CONTROL.DGV_VALUES.ToString();
@@ -459,7 +490,7 @@ namespace PluginPrjTepFTable
             this.Controls.Add(dgv, 1, 6);
             this.SetColumnSpan(dgv, 4);
             this.SetRowSpan(dgv, 5);
-
+            //Запретить редактирование
             dgv.ReadOnly = true;
             //Запретить выделение "много" строк
             dgv.MultiSelect = false;
@@ -481,7 +512,7 @@ namespace PluginPrjTepFTable
             dgv.AllowUserToResizeRows = false;
             dgv.ColumnCount = 5;
             dgv.Columns[0].Name = "A1";
-            dgv.Columns[0].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight; 
+            dgv.Columns[0].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgv.Columns[1].Name = "A2";
             dgv.Columns[1].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgv.Columns[2].Name = "A3";
@@ -490,6 +521,10 @@ namespace PluginPrjTepFTable
             dgv.Columns[3].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgv.Columns[4].Name = "ID_REC";
             dgv.Columns[4].Visible = false;
+            //обработчик нажатия мышки
+            dgv.CellMouseDoubleClick += dgv_CellMouseDoubleClickValue;
+            //обработчик редактирования ячейки
+            dgv.CellEndEdit += dgv_CellEndEditValue;
 
             //Панель отображения графика
             this.m_zGraph_fTABLE = new ZedGraphFTable();
@@ -547,18 +582,18 @@ namespace PluginPrjTepFTable
             tabl.Controls.Add(tbValue, 0, 1);
 
             tbValue = new TextBox();
-            tbValue.Name = INDEX_CONTROL.TEXTBOX_A2.ToString();            
+            tbValue.Name = INDEX_CONTROL.TEXTBOX_A2.ToString();
             tbValue.TextChanged += tbCalcValue_onTextChanged;
             tbValue.TextAlign = HorizontalAlignment.Right;
             tbValue.Dock = DockStyle.Fill;
             tabl.Controls.Add(tbValue, 1, 1);
 
             tbValue = new TextBox();
-            tbValue.Name = INDEX_CONTROL.TEXTBOX_A3.ToString();            
+            tbValue.Name = INDEX_CONTROL.TEXTBOX_A3.ToString();
             tbValue.TextChanged += tbCalcValue_onTextChanged;
             tbValue.TextAlign = HorizontalAlignment.Right;
             tbValue.Dock = DockStyle.Fill;
-            tabl.Controls.Add(tbValue, 2, 1);            
+            tabl.Controls.Add(tbValue, 2, 1);
 
             tbValue = new TextBox();
             tbValue.Name = INDEX_CONTROL.TEXTBOX_F.ToString();
@@ -567,19 +602,6 @@ namespace PluginPrjTepFTable
             tbValue.Dock = DockStyle.Fill;
             tbValue.ReadOnly = true;
             tabl.Controls.Add(tbValue, 3, 1);
-
-            //tbValue = new TextBox();
-            //tbValue.Name = INDEX_CONTROL.TEXTBOX_REZULT.ToString();
-            //tbValue.Dock = DockStyle.Fill;
-            //tbValue.ReadOnly = true;
-            //tabl.Controls.Add(tbValue, 0, 3);
-            //tabl.SetColumnSpan(tbValue, 2);
-
-            //Button btn_rez = new Button();
-            //btn_rez.Name = INDEX_CONTROL.BUTTON_CALC.ToString();
-            //btn_rez.Text = "REZ";
-            //btn_rez.Dock = DockStyle.Top;
-            //tabl.Controls.Add(btn_rez, 3, 3);            
 
             tabl.RowCount = 4;
             tabl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
@@ -626,7 +648,7 @@ namespace PluginPrjTepFTable
             //Обработчики событий
             // для отображения таблиц
             dgv = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView;
-            dgv.SelectionChanged += new EventHandler (dgvnALG_onSelectionChanged);
+            dgv.SelectionChanged += new EventHandler(dgvnALG_onSelectionChanged);
             //// для определения признака удаления (ФУНКЦИЮ или точку)
             //dgv.RowEnter += new DataGridViewCellEventHandler(dgvnALG_OnRowEnter);
             //dgv.Leave += new EventHandler (dgvnALG_OnLeave);            
@@ -638,6 +660,131 @@ namespace PluginPrjTepFTable
             // для поля ввода при поиске функции
             ((TextBox)Controls.Find(INDEX_CONTROL.TEXTBOX_FIND.ToString(), true)[0]).TextChanged += new EventHandler(PluginPrjTepFTable_TextChanged);
         }
+
+        /// <summary>
+        ///  Обработчик события - окончание редактирования ячейки 
+        ///  таблицы реперных точек
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void dgv_CellEndEditValue(object sender, DataGridViewCellEventArgs e)
+        {
+            DataGridView dgv = sender as DataGridView;
+            string nameCol = dgv.Columns[e.ColumnIndex].Name;
+            string editValue = dgv.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+
+            if (editRecValue((int)dgv.Rows[dgv.SelectedRows[0].Index].Cells[dgv.ColumnCount - 1].Value, nameCol, editValue) == 1)
+                m_tblEdit.AcceptChanges();
+            else ;
+
+            m_zGraph_fTABLE.Set(m_tblEdit);
+            m_zGraph_fTABLE.Draw(NAlg);
+        }
+
+        /// <summary>
+        ///  Обработчик события - окончание редактирования ячейки
+        ///  таблицы функций
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void dgv_CellEndEditNALG(object sender, DataGridViewCellEventArgs e)
+        {
+            DataGridView dgv = sender as DataGridView;
+            string nameCol = dgv.Columns[e.ColumnIndex].Name;
+            string editValue = dgv.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+
+            if (editRecNAlg((int)dgv.Rows[e.RowIndex].Cells[dgv.ColumnCount - 1].Value, nameCol, editValue) == 1)
+                m_tblEdit.AcceptChanges();
+            else ;
+
+            m_zGraph_fTABLE.Set(m_tblEdit);
+            m_zGraph_fTABLE.Draw(NAlg);
+        }
+
+        /// <summary>
+        /// Редактирование значений реперных точек
+        /// </summary>
+        /// <param name="id_rec">Иднтификатор записи</param>
+        /// <param name="colName">имя столбца</param>
+        /// <param name="editValue">новое значение</param>
+        /// <returns></returns>
+        private int editRecValue(int id_rec, string colName, string editValue)
+        {
+            int iRes = -1;
+
+            DataRow[] rowsToEdit = m_tblEdit.Select(@"ID=" + id_rec);
+            if (rowsToEdit.Length == 1)
+            {
+                foreach (DataRow r in rowsToEdit)
+                {
+                    int indx = m_tblEdit.Rows.IndexOf(r);
+                    m_tblEdit.Rows[indx][colName] = editValue;
+                    iRes++;
+                }
+            }
+            else
+            {
+                iRes = -2;
+                Logging.Logg().Error(@"PanelPrjTepFTable::delRecItem () - неоднозначность при редактировании точки с ID=" + id_rec + @"..."
+                    , Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
+            return iRes;
+        }
+
+        /// <summary>
+        /// Редактирование значений реперных точек
+        /// </summary>
+        /// <param name="id_rec">Иднтификатор записи</param>
+        /// <param name="colName">имя столбца</param>
+        /// <param name="editValue">новое значение</param>
+        /// <returns></returns>
+        private int editRecNAlg(int id_rec, string colName, string editValue)
+        {
+            int iRes = -1;
+
+            DataRow[] rowsToEdit = m_tblEdit.Select(@"ID=" + id_rec);
+            if (rowsToEdit.Length == 1)
+            {
+                foreach (DataRow r in rowsToEdit)
+                {
+                    int indx = m_tblEdit.Rows.IndexOf(r);
+                    m_tblEdit.Rows[indx]["N_ALG"] = editValue;
+                    iRes++;
+                }
+            }
+            else
+            {
+                iRes = -2;
+                Logging.Logg().Error(@"PanelPrjTepFTable::delRecItem () - неоднозначность при редактировании функции с ID=" + id_rec + @"..."
+                    , Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
+            return iRes;
+        }
+
+        /// <summary>
+        /// Обработчик события - двойной щечок по ячейки с реперными точками
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void dgv_CellMouseDoubleClickValue(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            DataGridView dgv = sender as DataGridView;
+            dgv.ReadOnly = false;
+        }
+
+        /// <summary>
+        /// Обработчик события - двойной щечок по ячейки с функциями
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void dgv_CellMouseDoubleClickNALG(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            DataGridView dgv = sender as DataGridView;
+            dgv.ReadOnly = false;
+        }
+
         /// <summary>
         /// Строка - наименование текущей (выбранной) функции
         /// </summary>
@@ -648,11 +795,15 @@ namespace PluginPrjTepFTable
                 string strRes = string.Empty;
                 DataGridView dgv = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView;
 
-                strRes = (string)dgv.Rows[dgv.SelectedRows[0].Index].Cells[@"Функция"].Value;
-                
+                if (dgv.SelectedRows.Count == 0)
+                    strRes = (string)dgv.Rows[0].Cells[@"Функция"].Value;
+                else
+                    strRes = (string)dgv.Rows[dgv.SelectedRows[0].Index].Cells[@"Функция"].Value;
+
                 return strRes;
             }
         }
+
         /// <summary>
         /// Событие изменения текстового поля
         /// (функция поиска)
@@ -663,6 +814,7 @@ namespace PluginPrjTepFTable
         {
             nALGVisibled((sender as TextBox).Text);
         }
+
         /// <summary>
         /// Обработка клика по таблице со значениями.
         ///  изменение чекбокса, построение графика.
@@ -682,6 +834,7 @@ namespace PluginPrjTepFTable
             else
                 ;
         }
+
         ///// <summary>
         ///// Возвратить отображение с фокусом ввода
         ///// </summary>
@@ -707,6 +860,7 @@ namespace PluginPrjTepFTable
 
         //    return dgv;
         //}
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Добавить" (точку)
         /// </summary>
@@ -714,7 +868,9 @@ namespace PluginPrjTepFTable
         /// <param name="ev">Аргумент события</param>
         private void btnAddToPoint_OnClick(object obj, EventArgs ev)
         {
+            addRecNAlgPoint(NAlg);
         }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Удалить" (точку)
         /// </summary>
@@ -722,13 +878,18 @@ namespace PluginPrjTepFTable
         /// <param name="ev">Аргумент события</param>
         private void btnDeleteToPoint_OnClick(object obj, EventArgs ev)
         {
-            DataGridView dgvValues = Controls.Find (INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView;
+            DataGridView dgvValues = Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView;
             // в крайнем столбце (снятым с отображения) - идентификатор записи
             if (delRecNAlg((int)dgvValues.Rows[dgvValues.SelectedRows[0].Index].Cells[dgvValues.ColumnCount - 1].Value) == 1)
+            {
                 m_tblEdit.AcceptChanges();
+                updateDGVNalg(m_tblEdit);
+            }
             else
                 ;
+            dgvValues.Refresh();
         }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Добавить" (функцию)
         /// </summary>
@@ -736,7 +897,88 @@ namespace PluginPrjTepFTable
         /// <param name="ev">Аргумент события</param>
         private void btnAddToFunction_OnClick(object obj, EventArgs ev)
         {
+            addRecNAlg();
         }
+
+        /// <summary>
+        /// Добавить точку для функции
+        /// </summary>
+        /// <param name="nameAlg">имя функции</param>
+        private void addRecNAlgPoint(string nameAlg)
+        {
+            int err = -1;
+            int idNALG = DbTSQLInterface.GetIdNext(m_tblEdit, out err);
+
+            m_tblEdit.Rows.Add(new object[]
+            {
+                idNALG,
+               nameAlg,
+                1,
+                0,
+                0,
+                1,
+                nameAlg
+            });
+
+            m_tblEdit.AcceptChanges();
+            updateDGVNalg(m_tblEdit);
+        }
+
+        /// <summary>
+        /// Добавить функцию
+        /// </summary>
+        private void addRecNAlg()
+        {
+            int err = -1;
+            int idNALG = DbTSQLInterface.GetIdNext(m_tblEdit, out err);
+
+            m_tblEdit.Rows.Add(new object[]
+            {
+                idNALG,
+               "func:1",
+                1,
+                0,
+                0,
+                1,
+                "func:1"
+            });
+
+            m_tblEdit.AcceptChanges();
+            updateDGVNalg(m_tblEdit);
+        }
+
+        /// <summary>
+        /// Обновление записей DataGridView
+        /// </summary>
+        /// <param name="tbl"></param>
+        private void updateDGVNalg(DataTable tbl)
+        {
+            DataGridView dgv = null;
+            List<string> listNAlg;
+            string strItem = string.Empty;
+
+            m_zGraph_fTABLE.Set(tbl);
+
+            dgv = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView;
+            listNAlg = new List<string>();
+
+            foreach (DataRow r in tbl.Rows)
+            {
+                strItem = ((string)r[@"N_ALG"]).Trim();
+                if (listNAlg.Contains(strItem) == false)
+                {
+                    listNAlg.Add(strItem);
+                    dgv.Rows.Add(strItem, string.Empty, r[@"ID"]);
+                }
+                else
+                    ;
+            }
+
+            dgv.CurrentCell.Selected = false;
+            dgv.CurrentCell = dgv.Rows[(dgv.RowCount-1)].Cells[0];
+            dgv.Rows[(dgv.RowCount - 1)].Cells[0].Selected = true;
+        }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Удалить" (функцию)
         /// </summary>
@@ -744,13 +986,17 @@ namespace PluginPrjTepFTable
         /// <param name="ev">Аргумент события</param>
         private void btnDeleteToFunction_OnClick(object obj, EventArgs ev)
         {
-            DataGridView dgvValues = Controls.Find (INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView;
+            DataGridView dgvNALG = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView;
             // в 1-ом столбце - наименование функции
-            if (delRecNAlg((int)dgvValues.Rows[dgvValues.SelectedRows[0].Index].Cells[0].Value) > 0)
+            if (delRecNAlg(dgvNALG.Rows[dgvNALG.SelectedRows[0].Index].Cells[0].Value.ToString()) > 0)
+            {
                 m_tblEdit.AcceptChanges();
+                updateDGVNalg(m_tblEdit);
+            }
             else
                 ;
         }
+
         /// <summary>
         /// Удалить все записи (точки) для функции
         /// </summary>
@@ -759,8 +1005,8 @@ namespace PluginPrjTepFTable
         protected int delRecNAlg(string nameAlg)
         {
             int iRes = -1;
-            
-            DataRow[] rowsToDel = m_tblEdit.Select(@"NALG=" + nameAlg);
+
+            DataRow[] rowsToDel = m_tblEdit.Select(@"N_ALG='" + nameAlg + @"'");
             if (rowsToDel.Length > 0)
             {
                 iRes = 0;
@@ -781,6 +1027,7 @@ namespace PluginPrjTepFTable
 
             return iRes;
         }
+
         /// <summary>
         /// Удалить запись (значение) для функции
         /// </summary>
@@ -789,11 +1036,12 @@ namespace PluginPrjTepFTable
         protected int delRecNAlg(int id_rec)
         {
             int iRes = -1;
-            
+
             DataRow[] rowsToDel = m_tblEdit.Select(@"ID=" + id_rec);
             if (rowsToDel.Length == 1)
             {// удалять только, если строка есть И она единственная
                 m_tblEdit.Rows.Remove(rowsToDel[0]);
+                iRes = 1;
             }
             else
             {
@@ -804,6 +1052,7 @@ namespace PluginPrjTepFTable
 
             return iRes;
         }
+
         /// <summary>
         /// Возвратить ранг изменившегося значения
         /// </summary>
@@ -824,6 +1073,7 @@ namespace PluginPrjTepFTable
 
             return fRunkRes;
         }
+
         /// <summary>
         /// Обработчик события - изменение значения в поле ввода
         /// </summary>
@@ -848,11 +1098,12 @@ namespace PluginPrjTepFTable
             if (bCalculate == true)
                 strVal = m_zGraph_fTABLE.Calculate(NAlg, getRunkVariable(obj as TextBox), pars).ToString(@"F2");
             else
-                strVal = float.NaN.ToString ();
+                strVal = float.NaN.ToString();
 
             (Controls.Find(INDEX_CONTROL.TEXTBOX_F.ToString(), true)[0] as TextBox).Text = strVal;
         }
     }
+
     /// <summary>
     /// Класс для взаимодействия с сервером (вызывающем приложением)
     /// </summary>
