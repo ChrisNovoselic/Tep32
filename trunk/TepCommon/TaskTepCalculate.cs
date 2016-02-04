@@ -13,57 +13,25 @@ namespace TepCommon
 {
     public partial class HandlerDbTaskCalculate : HHandlerDb
     {
-        /// <summary>
-        /// Перечисление - индексы типов вкладок (объектов наследуемых классов)
-        /// </summary>
-        public enum TYPE { UNKNOWN = -1, IN_VALUES, OUT_TEP_NORM_VALUES, OUT_VALUES, OUT_TEP_REALTIME, COUNT }
-        /// <summary>
-        /// Класс для расчета технико-экономических показателей
-        /// </summary>
-        public class TaskTepCalculate : Object
+        public abstract class TaskCalculate : Object
         {
             /// <summary>
             /// Перечисление - индексы таблиц, передаваемых объекту в качестве элементов массива-аргумента
             /// </summary>
-            public enum INDEX_DATATABLE : short { UNKNOWN = -1
+            public enum INDEX_DATATABLE : short
+            {
+                UNKNOWN = -1
                 , FTABLE
                 , IN_PARAMETER, IN_VALUES
                 , OUT_NORM_PARAMETER, OUT_NORM_VALUES
-                , OUT_MKT_PARAMETER, OUT_MKT_VALUES
-                , COUNT }
-            /// <summary>
-            /// Константы - идентификаторы компонентов оборудования ТЭЦ
-            /// </summary>
-            const int BL1 = 1029
-                    , BL2 = 1030
-                    , BL3 = 1031
-                    , BL4 = 1032
-                    , BL5 = 1033
-                    , BL6 = 1034
-                    , ST = 5;
-            /// <summary>
-            /// Объект, обеспечивающий вычисление нормативных значений при работе оборудования ТЭЦ
-            /// </summary>
-            FTable fTable;
-            /// <summary>
-            /// Структура - элемент массива при передаче аргумента в функции расчета
-            /// </summary>
-            public struct DATATABLE
-            {
-                /// <summary>
-                /// Индекс - указание на предназначение таблицы
-                /// </summary>
-                public INDEX_DATATABLE m_indx;
-                /// <summary>
-                /// Таблица со значениями для выполнения расчета
-                /// </summary>
-                public DataTable m_table;
+                , OUT_PARAMETER, OUT_VALUES
+                    , COUNT
             }
             /// <summary>
             /// Класс для хранения всех значений, необъодимых для расчета
             /// </summary>
-            private class P_ALG : Dictionary <string, Dictionary<int, P_ALG.P_PUT>>
-            {                
+            protected class P_ALG : Dictionary<string, Dictionary<int, P_ALG.P_PUT>>
+            {
                 /// <summary>
                 /// Идентификатор - строка - номер алгоритма расчета
                 /// </summary>
@@ -101,17 +69,60 @@ namespace TepCommon
                 }
             }
             /// <summary>
+            /// Структура - элемент массива при передаче аргумента в функции расчета
+            /// </summary>
+            public struct DATATABLE
+            {
+                /// <summary>
+                /// Индекс - указание на предназначение таблицы
+                /// </summary>
+                public INDEX_DATATABLE m_indx;
+                /// <summary>
+                /// Таблица со значениями для выполнения расчета
+                /// </summary>
+                public DataTable m_table;                
+            }
+            /// <summary>
             /// Словарь с ВХОДными параметрами - ключ - идентификатор в алгоритме расчета
             /// </summary>
-            P_ALG In;
-            /// <summary>
-            /// Словарь с расчетными НОРМативными параметрами - ключ - идентификатор в алгоритме расчета
-            /// </summary>
-            P_ALG Norm;
+            protected P_ALG In;
             /// <summary>
             /// Словарь с расчетными ВЫХОДными параметрами - ключ - идентификатор в алгоритме расчета
             /// </summary>
-            P_ALG Mkt;
+            protected P_ALG Out;
+            /// <summary>
+            /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
+            /// </summary>
+            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
+            protected abstract void initValues(DATATABLE[] arDataTables);
+        }
+        /// <summary>
+        /// Перечисление - индексы типов вкладок (объектов наследуемых классов)
+        /// </summary>
+        public enum TYPE { UNKNOWN = -1, IN_VALUES, OUT_TEP_NORM_VALUES, OUT_VALUES, OUT_TEP_REALTIME, COUNT }
+        /// <summary>
+        /// Класс для расчета технико-экономических показателей
+        /// </summary>
+        public class TaskTepCalculate : TaskCalculate
+        {
+            /// <summary>
+            /// Константы - идентификаторы компонентов оборудования ТЭЦ
+            /// </summary>
+            const int BL1 = 1029
+                    , BL2 = 1030
+                    , BL3 = 1031
+                    , BL4 = 1032
+                    , BL5 = 1033
+                    , BL6 = 1034
+                    , ST = 5;
+            /// <summary>
+            /// Объект, обеспечивающий вычисление нормативных значений при работе оборудования ТЭЦ
+            /// </summary>
+            private FTable fTable;            
+            /// <summary>
+            /// Словарь с расчетными НОРМативными параметрами - ключ - идентификатор в алгоритме расчета
+            /// </summary>
+            private P_ALG Norm;
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
@@ -119,7 +130,7 @@ namespace TepCommon
             {
                 In = new P_ALG();
                 Norm = new P_ALG();
-                Mkt = new P_ALG();
+                Out = new P_ALG();
 
                 fTable = new FTable();
             }
@@ -127,7 +138,7 @@ namespace TepCommon
             /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
             /// </summary>
             /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
-            private void initValues(DATATABLE []arDataTables)
+            protected override void initValues(DATATABLE []arDataTables)
             {
                 foreach (DATATABLE dataTable in arDataTables)
                     switch (dataTable.m_indx)
@@ -170,8 +181,8 @@ namespace TepCommon
                 else
                     ;
 
-                if (Mkt[@"1"][BL2].m_bDeny == false)
-                    Mkt[@"1"][BL2].m_fValue = Norm[@"1"][ST].m_fValue + In[@"2"][BL2].m_fValue;
+                if (Out[@"1"][BL2].m_bDeny == false)
+                    Out[@"1"][BL2].m_fValue = Norm[@"1"][ST].m_fValue + In[@"2"][BL2].m_fValue;
                 else
                     ;
 

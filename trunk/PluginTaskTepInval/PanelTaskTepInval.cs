@@ -61,7 +61,7 @@ namespace PluginTaskTepInval
 
             DbTSQLInterface.RecUpdateInsertDelete(ref dbConn
                 , HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVAL_DEF]
-                , @"ID_INPUT, ID_TIME"
+                , @"ID_PUT, ID_TIME"
                 , m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT]
                 , m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT]
                 , out err);
@@ -101,9 +101,7 @@ namespace PluginTaskTepInval
                 m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE] = m_handlerDb.GetValuesVar(_IdSession
                     , ActualIdPeriod
                     , CountBasePeriod
-                    , NameDbTableAlg
-                    , NameDbTablePut
-                    , NameDbTableValues
+                    , m_type
                     , arQueryRanges
                     , out err);
                 //Проверить признак выполнения запроса
@@ -152,7 +150,7 @@ namespace PluginTaskTepInval
         /// <param name="ev">Аргумент события</param>
         protected override void onEventCellValueChanged(object dgv, DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
         {
-            DataRow[] rowsParameter = m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_INPUT=" + ev.m_IdParameter);
+            DataRow[] rowsParameter = m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_PUT=" + ev.m_IdParameter);
 
             if (rowsParameter.Length == 1)
             {

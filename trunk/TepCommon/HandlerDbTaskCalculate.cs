@@ -38,12 +38,23 @@ namespace TepCommon
         /// </summary>
         public enum ID_QUALITY_VALUE { NOT_REC = -3, PARTIAL, DEFAULT, SOURCE, USER }
 
-        TaskTepCalculate m_taskTepCalculate;
+        ID_TASK _iIdTask;
 
-        public HandlerDbTaskCalculate()
+        TaskCalculate m_taskCalculate;
+
+        public HandlerDbTaskCalculate(ID_TASK idTask)
             : base()
         {
-            m_taskTepCalculate = new TaskTepCalculate();
+            this._iIdTask = idTask;
+
+            switch (idTask)
+            {
+                case ID_TASK.TEP:
+                    m_taskCalculate = new TaskTepCalculate();
+                    break;
+                default:
+                    break;
+            }
         }
 
         public override void StartDbInterfaces()
@@ -107,18 +118,18 @@ namespace TepCommon
             // проверить требуется ли регистрация
             if (isRegisterDbConnection == false)
             {
+                // получить идентификатор регистрации для соединения с БД
                 _iListenerId = DbSources.Sources().Register(_connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString());
+                // получить объект соединения с БД
                 _dbConnection = DbSources.Sources().GetConnection(_iListenerId, out err);
 
                 if (!(err == 0))
-                {
                     Logging.Logg().Error(@"HandlerDbTaskCalculate::RegisterDbConnection () - ошибка соединения с БД...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
                 else
                     ;
             }
             else
-                // регистрация не требуется
+                // регистрация не требуется - признак для оповещения вызвавшего контекста
                 err = 1;
         }
         /// <summary>
@@ -167,21 +178,21 @@ namespace TepCommon
             // удалить строки из таблицы со значениями "по умолчанию"
             foreach (DataRow rValVar in tableInValues.Rows)
             {
-                rowsSel = tableDefValues.Select(@"ID_INPUT=" + rValVar[@"ID"]);
+                rowsSel = tableDefValues.Select(@"ID_PUT=" + rValVar[@"ID"]);
                 foreach (DataRow rToRemove in rowsSel)
                     tableDefValues.Rows.Remove(rToRemove);
             }
             // вставить строки из таблицы со значениями "по умолчанию"
             foreach (DataRow rValDef in tableDefValues.Rows)
             {
-                rowsSel = tablePars.Select(@"ID=" + rValDef[@"ID_INPUT"]);
+                rowsSel = tablePars.Select(@"ID=" + rValDef[@"ID_PUT"]);
                 if (rowsSel.Length == 1)
                 {
                     iAVG = (Int16)rowsSel[0][@"AVG"];
 
                     tableInValues.Rows.Add(new object[]
                                     {
-                                        rValDef[@"ID_INPUT"]
+                                        rValDef[@"ID_PUT"]
                                         //, HUsers.Id //ID_USER
                                         , -1 //ID_SOURCE
                                         , idSession //ID_SESSION
@@ -231,7 +242,7 @@ namespace TepCommon
                 {
                     arTypeColumns[c.Ordinal] = c.DataType;
                     if (c.ColumnName.Equals(@"ID") == true)
-                        strNameColumn = @"ID_INPUT";
+                        strNameColumn = @"ID_PUT";
                     else
                         strNameColumn = c.ColumnName;
                     arNameColumns[c.Ordinal] = strNameColumn;
@@ -259,7 +270,7 @@ namespace TepCommon
                 //Вставить во временную таблицу в БД входные для расчета значения
                 DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
                 // получить входные для расчета значения для возможности редактирования
-                tableInValues = DbTSQLInterface.Select(ref _dbConnection, @"SELECT [ID_INPUT] as [ID],[ID_SOURCE],[ID_SESSION],[QUALITY],[VALUE],[WR_DATETIME] FROM [inval] WHERE [ID_SESSION]=" + idSession, null, null, out err);
+                tableInValues = DbTSQLInterface.Select(ref _dbConnection, @"SELECT [ID_PUT] as [ID],[ID_SOURCE],[ID_SESSION],[QUALITY],[VALUE],[WR_DATETIME] FROM [inval] WHERE [ID_SESSION]=" + idSession, null, null, out err);
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -301,7 +312,7 @@ namespace TepCommon
 
         private string getQueryValues (long idSession, INDEX_DBTABLE_NAME indxDbTableName)
         {
-            return @"SELECT * FROM " + s_NameDbTables[(int)indxDbTableName] + @" WHERE [IS_SESSION]=" + (int)idSession;
+            return @"SELECT * FROM " + s_NameDbTables[(int)indxDbTableName] + @" WHERE [ID_CALCULATE]=" + (int)idSession;
         }
 
         /// <summary>
@@ -342,7 +353,7 @@ namespace TepCommon
         {
             string strRes = string.Empty
                 , whereParameters = string.Empty;
-            
+            // аналог в 'getQueryValuesVar'
             whereParameters = getWhereRangeOutPut (type);
             if (whereParameters.Equals(string.Empty) == false)
                 whereParameters = @" AND a." + whereParameters;
@@ -352,8 +363,8 @@ namespace TepCommon
             strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
                     + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
                     + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
-                + @" FROM [dbo].[" + GetNameDbTable (type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
-                    + @" JOIN [dbo].[" + GetNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID_TASK = 1 AND a.ID = p.ID_ALG" + whereParameters
+                + @" FROM [dbo].[" + getNameDbTable (type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
+                    + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)_iIdTask + whereParameters
                     + @" JOIN [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID";
 
             return strRes;
@@ -420,7 +431,7 @@ namespace TepCommon
         /// <param name="type">Тип панели/расчета</param>
         /// <param name="req">Индекс таблицы, требуемой при расчете</param>
         /// <returns>Наименование таблицы</returns>
-        public static string GetNameDbTable(TYPE type, TABLE_CALCULATE_REQUIRED req)
+        private static string getNameDbTable(TYPE type, TABLE_CALCULATE_REQUIRED req)
         {
             INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
 
@@ -502,16 +513,22 @@ namespace TepCommon
         }        
         /// <summary>
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
+        ///  , структура таблицы совместима с [inval], [outval]
         /// </summary>
         private string getQueryValuesVar(int idSession
             , ID_PERIOD idPeriod
             , int cntBasePeriod
-            , string strNameTableAlg
-            , string strNameTablePut
-            , string strNameTableValues
+            , TYPE type
             , DateTimeRange[] arQueryRanges)
         {
-            string strRes = string.Empty;
+            string strRes = string.Empty
+                , whereParameters = string.Empty;
+            // аналог в 'GetQueryParameters'
+            whereParameters = getWhereRangeOutPut(type);
+            if (whereParameters.Equals(string.Empty) == false)
+                whereParameters = @" AND a." + whereParameters;
+            else
+                ;
 
             int i = -1;
             bool bLastItem = false
@@ -521,12 +538,12 @@ namespace TepCommon
             {
                 bLastItem = !(i < (arQueryRanges.Length - 1));
 
-                strRes += @"SELECT v.ID_INPUT, v.ID_TIME, v.ID_TIMEZONE"
+                strRes += @"SELECT v.ID_PUT, v.ID_TIME, v.ID_TIMEZONE"
                         + @", v.ID_SOURCE"
                         + @", " + idSession + @" as [ID_SESSION], v.QUALITY"
                         + @", [VALUE]"
                     //+ @", GETDATE () as [WR_DATETIME]"
-                    + @" FROM [dbo].[" + strNameTableValues + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+                    + @" FROM [dbo].[" + getNameDbTable (type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
                     + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
                     ;
                 // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
@@ -564,10 +581,10 @@ namespace TepCommon
                         + @" END as [VALUE]"
                     + @", GETDATE () as [WR_DATETIME]"
                 + @" FROM (" + strRes + @") as v"
-                    + @" LEFT JOIN [dbo].[" + strNameTablePut + @"] p ON p.ID = v.ID_INPUT"
-                    + @" LEFT JOIN [dbo].[" + strNameTableAlg + @"] a ON p.ID_ALG = a.ID"
+                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
+                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)_iIdTask + whereParameters
                     + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                + @" GROUP BY v.ID_INPUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
+                + @" GROUP BY v.ID_PUT, v.ID_SOURCE, v.ID_TIME, v.ID_TIMEZONE, v.QUALITY"
                     + @", a.ID_MEASURE, a.N_ALG"
                     + @", p.ID, p.ID_ALG, p.ID_COMP, p.MAXVALUE, p.MINVALUE"
                     + @", m.[AVG]"
@@ -588,11 +605,37 @@ namespace TepCommon
         }
 
         public DataTable GetValuesVar(int idSession
+            , TYPE type
+            , out int err)
+        {
+            DataTable tableRes = new DataTable();
+
+            err = -1;
+
+            //tableRes = DbTSQLInterface.Select(ref _dbConnection
+            //    , getQueryValuesVar(idSession
+            //        , type)
+            //    , null, null
+            //    , out err);
+
+            return tableRes;
+        }
+        /// <summary>
+        /// Возвратить объект-таблицу со значениями из таблицы с сохраняемыми значенями
+        /// </summary>
+        /// <param name="idSession">Идентификатор сессии - назначаемый</param>
+        /// <param name="idPeriod">Идентификатор периода расчета</param>
+        /// <param name="cntBasePeriod">Количество периодов расчета в интервале запрашиваемых данных</param>
+        /// <param name="strNameTableAlg">Наименование таблицы с параметрами алгоритма расчета</param>
+        /// <param name="strNameTablePut">Наименование таблицы с детализацией параметров алгоритма расчета</param>
+        /// <param name="strNameTableValues">Наименование таблицы со значениями для параметров алгоритма расчета</param>
+        /// <param name="arQueryRanges">Массив диапазонов даты/времени - интервал(ы) заправшиваемых данных</param>
+        /// <param name="err">Признак выполнения функции</param>
+        /// <returns>Таблица со значенями</returns>
+        public DataTable GetValuesVar(int idSession
             , ID_PERIOD idPeriod
             , int cntBasePeriod
-            , string strNameTableAlg
-            , string strNameTablePut
-            , string strNameTableValues
+            , TYPE type
             , DateTimeRange[] arQueryRanges
             , out int err)
         {
@@ -604,9 +647,7 @@ namespace TepCommon
                 , getQueryValuesVar(idSession
                     , idPeriod
                     , cntBasePeriod
-                    , strNameTableAlg
-                    , strNameTablePut
-                    , strNameTableValues
+                    , type
                     , arQueryRanges)
                 , null, null
                 , out err);
@@ -678,10 +719,10 @@ namespace TepCommon
                 idSession = GetIdSession (out err);
                 if (err == 0)
                 {
-                    // прочитать входные значения для сессии
+                    // получить входные значения для сессии
                     tableVal = DbTSQLInterface.Select(ref _dbConnection, getQueryValues(idSession, INDEX_DBTABLE_NAME.INVALUES), null, null, out err);
                     listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
-                    // прочитать выходные-нормативы значения для сессии
+                    // получить выходные-нормативы значения для сессии
                     tableVal = DbTSQLInterface.Select(ref _dbConnection, getQueryValues(idSession, INDEX_DBTABLE_NAME.OUTVALUES), null, null, out err);
                     listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_NORM_VALUES, m_table = tableVal.Copy() });
                 }
@@ -711,7 +752,7 @@ namespace TepCommon
                 if (err == 0)
                 {
                     // произвести вычисления
-                    m_taskTepCalculate.CalculateNormative(arDataTables);
+                    (m_taskCalculate as TaskTepCalculate).CalculateNormative(arDataTables);
                     // сохранить результаты вычисления
                     saveResult(out err);
                 }
@@ -743,7 +784,7 @@ namespace TepCommon
                 // подготовить таблицы для расчета
                 arDataTables = prepareTepCalculateValues(TYPE.OUT_VALUES, out err);
                 // произвести вычисления
-                m_taskTepCalculate.CalculateMaket(arDataTables);
+                (m_taskCalculate as TaskTepCalculate).CalculateMaket(arDataTables);
                 // сохранить результаты вычисления
                 saveResult(out err);
             }

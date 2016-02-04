@@ -179,7 +179,7 @@ namespace TepCommon
         {
             m_type = type;
 
-            m_handlerDb = new HandlerDbTaskCalculate();
+            m_handlerDb = new HandlerDbTaskCalculate(ID_TASK.TEP);
 
             InitializeComponents();
         }
@@ -323,21 +323,6 @@ namespace TepCommon
                         ;
             else
                 throw new Exception(@"PanelTaskTepCalculate::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
-        }                
-
-        protected string NameDbTableAlg
-        {
-            get { return HandlerDbTaskCalculate.GetNameDbTable(m_type, HandlerDbTaskCalculate.TABLE_CALCULATE_REQUIRED.ALG); }
-        }
-
-        protected string NameDbTablePut
-        {
-            get { return HandlerDbTaskCalculate.GetNameDbTable(m_type, HandlerDbTaskCalculate.TABLE_CALCULATE_REQUIRED.PUT); }
-        }
-
-        protected string NameDbTableValues
-        {
-            get { return HandlerDbTaskCalculate.GetNameDbTable(m_type, HandlerDbTaskCalculate.TABLE_CALCULATE_REQUIRED.VALUE); }
         }
         /// <summary>
         /// Массив запросов к БД по получению словарных и проектных значений
