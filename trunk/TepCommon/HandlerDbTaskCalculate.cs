@@ -11,201 +11,34 @@ using TepCommon;
 
 namespace TepCommon
 {
-    public partial class HandlerDbValues : HHandlerDb
-    {
-        /// <summary>
-        /// Наименования таблиц в БД, необходимых для расчета (длина = INDEX_DBTABLE_NAME.COUNT)
-        /// </summary>
-        public static string[] s_NameDbTables = {
-            @"time"
-            , @"timezones"
-            , @"comp_list"
-            , @"mode_dev"
-            , @"ratio"
-            , @"measure"
-            , @"session"
-            , @"inalg"
-            , @"input"
-            , @"inval"
-            , @"inval_def"
-            , @"outalg"
-            , @"output"
-            , @"outval"
-        };
-
-        public HandlerDbValues()
-            : base()
-        {
-        }
-
-        public override void StartDbInterfaces()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void ClearValues()
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override int StateCheckResponse(int state, out bool error, out object outobj)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override int StateRequest(int state)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override int StateResponse(int state, object obj)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override HHandler.INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void StateWarnings(int state, int req, int res)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected ConnectionSettings _connSett;
-
-        protected int _iListenerId;
-
-        protected DbConnection _dbConnection;
-
-        protected bool isRegisterDbConnection { get { return (_iListenerId > 0) && (!(_dbConnection == null)) && (_dbConnection.State == ConnectionState.Open); } }
-
-        public void InitConnectionSettings(ConnectionSettings connSett)
-        {
-            _connSett = connSett;
-        }
-        /// <summary>
-        /// Зарегистрировать соединение с БД
-        /// </summary>
-        /// <param name="err">Признак выполнения операции (0 - ошибок нет, 1 - регистрация уже произведена, -1 - ошибка)</param>
-        public void RegisterDbConnection(out int err)
-        {
-            err = -1;
-            // проверить требуется ли регистрация
-            if (isRegisterDbConnection == false)
-            {
-                // получить идентификатор регистрации для соединения с БД
-                _iListenerId = DbSources.Sources().Register(_connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString());
-                // получить объект соединения с БД
-                _dbConnection = DbSources.Sources().GetConnection(_iListenerId, out err);
-
-                if (!(err == 0))
-                    Logging.Logg().Error(@"HandlerDbTaskCalculate::RegisterDbConnection () - ошибка соединения с БД...", Logging.INDEX_MESSAGE.NOT_SET);
-                else
-                    ;
-            }
-            else
-                // регистрация не требуется - признак для оповещения вызвавшего контекста
-                err = 1;
-        }
-        /// <summary>
-        /// Отменить регистрацию соединения с БД
-        /// </summary>
-        public void UnRegisterDbConnection()
-        {
-            // проверить требуется ли регистрация
-            if (isRegisterDbConnection == true)
-            {
-                DbSources.Sources().UnRegister(_iListenerId);
-                _dbConnection = null;
-                _iListenerId = -1;
-            }
-            else
-                ;
-        }
-
-        public DbConnection DbConnection
-        {
-            get { return _dbConnection; }
-        }
-
-        public ConnectionSettings ConnectionSettings
-        {
-            get { return _connSett; }
-        }
-
-        public DataTable Select(string query, out int err)
-        {
-            err = -1;
-
-            DataTable tableRes = new DataTable();
-
-            int iRegDbConn = -1;
-
-            RegisterDbConnection(out iRegDbConn);
-
-            if (!(iRegDbConn < 0))
-                tableRes = DbTSQLInterface.Select(ref _dbConnection, query, null, null, out err);
-            else
-                ;
-
-            if (!(iRegDbConn > 0))
-            {
-                UnRegisterDbConnection();
-            }
-            else
-                ;
-
-            return tableRes;
-        }
-
-        public DataTable GetDataTable(string strNameTable, out int err)
-        {
-            return Select(@"SELECT * FROM [" + strNameTable + @"]", out err);
-        }
-
-        public DataTable GetDataTable(INDEX_DBTABLE_NAME indxTable, out int err)
-        {
-            return GetDataTable(s_NameDbTables[(int)indxTable], out err);
-        }
-
-        public void RecUpdateInsertDelete(string nameTable, string strKeyFields, DataTable tblOrigin, DataTable tblEdit, out int err)
-        {
-            err = -1;
-
-            int iRegDbConn = -1;
-
-            RegisterDbConnection(out iRegDbConn);
-
-            if (!(iRegDbConn < 0))
-            {
-                DbTSQLInterface.RecUpdateInsertDelete(ref _dbConnection, nameTable, strKeyFields, tblOrigin, tblEdit, out err);
-            }
-            else
-                ;
-
-            if (!(iRegDbConn > 0))
-            {
-                UnRegisterDbConnection();
-            }
-            else
-                ;
-        }
-    }
-
     public partial class HandlerDbTaskCalculate : HandlerDbValues
     {
-        public enum TABLE_CALCULATE_REQUIRED : short { UNKNOWN = -1, ALG, PUT, VALUE, COUNT }
-        
+        /// <summary>
+        /// Перечисление - индексы таблиц для значений
+        ///  , собранных в автоматическом режиме
+        ///  , "по умолчанию"
+        /// </summary>
+        public enum INDEX_TABLE_VALUES : int
+        {
+            UNKNOWN = -1, ARCHIVE, SESSION, DEFAULT
+                , COUNT
+        }
+
+        public enum TABLE_CALCULATE_REQUIRED : short { UNKNOWN = -1, ALG, PUT, VALUE
+            , COUNT }        
         /// <summary>
         /// Перечисление - идентификаторы состояния полученных из БД значений
         /// </summary>
         public enum ID_QUALITY_VALUE { NOT_REC = -3, PARTIAL, DEFAULT, SOURCE, USER }
 
         private ID_TASK _iIdTask;
+        /// <summary>
+        /// Идентификатор задачи
+        /// </summary>
         public ID_TASK IdTask { get { return _iIdTask; }  set { _iIdTask = value; } }
-
+        /// <summary>
+        /// Объект для произведения расчетов
+        /// </summary>
         TaskCalculate m_taskCalculate;
 
         public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN)
@@ -233,7 +66,7 @@ namespace TepCommon
             , int cntBasePeriod
             , ID_TIMEZONE idTimezone
             , DataTable tablePars
-            , ref DataTable tableInValues, ref DataTable tableDefValues
+            , ref DataTable tableArchiveValues, ref DataTable tableSessionValues, ref DataTable tableDefValues
             , DateTimeRange []dtRanges
             , out int err, out string strErr)
         {            
@@ -251,7 +84,7 @@ namespace TepCommon
             DateTimeRange dtRange = new DateTimeRange (dtRanges[0].Begin, dtRanges[dtRanges.Length - 1].End);
 
             // удалить строки из таблицы со значениями "по умолчанию"
-            foreach (DataRow rValVar in tableInValues.Rows)
+            foreach (DataRow rValVar in tableSessionValues.Rows)
             {
                 rowsSel = tableDefValues.Select(@"ID_PUT=" + rValVar[@"ID"]);
                 foreach (DataRow rToRemove in rowsSel)
@@ -265,7 +98,7 @@ namespace TepCommon
                 {
                     iAVG = (Int16)rowsSel[0][@"AVG"];
 
-                    tableInValues.Rows.Add(new object[]
+                    tableSessionValues.Rows.Add(new object[]
                                     {
                                         rValDef[@"ID_PUT"]
                                         //, HUsers.Id //ID_USER
@@ -281,8 +114,8 @@ namespace TepCommon
                     ; // по идентификатору найден не единственный парпметр расчета
             }
 
-            if ((tableInValues.Columns.Count > 0)
-                && (tableInValues.Rows.Count > 0))
+            if ((tableSessionValues.Columns.Count > 0)
+                && (tableSessionValues.Rows.Count > 0))
             {
                 // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
                 strQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
@@ -311,9 +144,9 @@ namespace TepCommon
                 // подготовить содержание запроса при вставке значений во временную таблицу для расчета
                 strQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
 
-                arTypeColumns = new Type[tableInValues.Columns.Count];
-                arNameColumns = new string[tableInValues.Columns.Count];
-                foreach (DataColumn c in tableInValues.Columns)
+                arTypeColumns = new Type[tableSessionValues.Columns.Count];
+                arNameColumns = new string[tableSessionValues.Columns.Count];
+                foreach (DataColumn c in tableSessionValues.Columns)
                 {
                     arTypeColumns[c.Ordinal] = c.DataType;
                     if (c.ColumnName.Equals(@"ID") == true)
@@ -328,11 +161,11 @@ namespace TepCommon
 
                 strQuery += @") VALUES ";
 
-                foreach (DataRow r in tableInValues.Rows)
+                foreach (DataRow r in tableSessionValues.Rows)
                 {
                     strQuery += @"(";
 
-                    foreach (DataColumn c in tableInValues.Columns)
+                    foreach (DataColumn c in tableSessionValues.Columns)
                         strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
 
                     // исключить лишнюю запятую
@@ -348,7 +181,7 @@ namespace TepCommon
                 strQuery = @"SELECT [ID_PUT] as [ID], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]"
                     + @" FROM [inval]"
                     + @" WHERE [ID_SESSION]=" + idSession;
-                tableInValues = DbTSQLInterface.Select(ref _dbConnection, strQuery, null, null, out err);
+                tableSessionValues = DbTSQLInterface.Select(ref _dbConnection, strQuery, null, null, out err);
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -384,6 +217,16 @@ namespace TepCommon
             }
             else
                 ;
+        }
+
+        public void UpdateSession(INDEX_DBTABLE_NAME indxDbTable
+            , DataTable tableOriginInValues
+            , DataTable tableEditInValues
+            , out int err)
+        {
+            err = -1;
+
+            RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID, ID_SESSION", tableOriginInValues, tableEditInValues, out err);
         }
 
         private string querySession { get { return @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"] WHERE [ID_USER]=" + HTepUsers.Id; } }
@@ -443,62 +286,6 @@ namespace TepCommon
                 + @" FROM [dbo].[" + getNameDbTable (type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
                     + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)_iIdTask + whereParameters
                     + @" JOIN [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID";
-
-            return strRes;
-        }
-
-        public string GetQueryTimePeriods(string strIds)
-        {
-            string strRes = string.Empty;
-
-            strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.TIME] + @"] WHERE [ID] IN (" + strIds + @")";
-
-            return strRes;
-        }
-
-        public string GetQueryTimezones(string strIds)
-        {
-            string strRes = string.Empty;
-
-            strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.TIMEZONE] + @"] WHERE [ID] IN (" + strIds + @")";
-
-            return strRes;
-        }
-
-        public string GetQueryCompList()
-        {
-            string strRes = string.Empty;
-
-            strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] "
-                    + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
-                        + @" OR ([ID_COMP] = 1000)";
-
-            return strRes;
-        }
-
-        public string GetQueryModeDev()
-        {
-            string strRes = string.Empty;
-
-            strRes = @"SELECT * FROM [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MODE_DEV] + @"]";
-
-            return strRes;
-        }
-
-        public string GetQueryMeasures()
-        {
-            string strRes = string.Empty;
-
-            strRes = @"SELECT * FROM [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"]";
-
-            return strRes;
-        }
-
-        public string GetQueryRatio()
-        {
-            string strRes = string.Empty;
-
-            strRes = @"SELECT * FROM [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.RATIO] + @"]";
 
             return strRes;
         }
@@ -700,7 +487,7 @@ namespace TepCommon
         /// <param name="arQueryRanges">Массив диапазонов даты/времени - интервал(ы) заправшиваемых данных</param>
         /// <param name="err">Признак выполнения функции</param>
         /// <returns>Таблица со значенями</returns>
-        public DataTable GetValuesVar(int idSession
+        public DataTable GetValuesSession(int idSession
             , ID_PERIOD idPeriod
             , int cntBasePeriod
             , TYPE type
@@ -722,7 +509,11 @@ namespace TepCommon
 
             return tableRes;
         }
-
+        /// <summary>
+        /// Возвратить идентификатор сессии расчета
+        /// </summary>
+        /// <param name="err">Признак выполнении функции</param>
+        /// <returns>Идентификатор рпасчета сессии</returns>
         public long GetIdSession(out int err)
         {
             err = -1;

@@ -80,6 +80,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="TaskTepCalculate.cs" />
+    <Compile Include="HandlerDbValues.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

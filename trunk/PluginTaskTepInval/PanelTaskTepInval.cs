@@ -16,20 +16,14 @@ namespace PluginTaskTepInval
     public class PanelTaskTepInval : PanelTaskTepValues
     {
         /// <summary>
-        /// Перечисление - индексы таблиц для значений
-        ///  , собранных в автоматическом режиме
-        ///  , "по умолчанию"
-        /// </summary>
-        private enum INDEX_TABLE_VALUES : int { VARIABLE, DEFAULT, COUNT }
-        /// <summary>
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для связи с вызывающим приложением</param>
         public PanelTaskTepInval(IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TYPE.IN_VALUES)
         {
-            m_arTableOrigin = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
+            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             
             InitializeComponent();
 
@@ -43,12 +37,16 @@ namespace PluginTaskTepInval
 
         protected override System.Data.DataTable m_TableOrigin
         {
-            get { return m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE]; }
+            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+
+            //set { m_arTableOrigin[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
         }
 
         protected override System.Data.DataTable m_TableEdit
         {
-            get { return m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE]; }
+            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+
+            //set { m_arTableEdit[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
         }
         /// <summary>
         /// Сохранить изменения в редактируемых таблицах
@@ -58,10 +56,16 @@ namespace PluginTaskTepInval
         {
             err = -1;
 
+            m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.]
+                , @"ID_PUT, ID_TIME"
+                , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
+                , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
+                , out err);
+
             m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVAL_DEF]
                 , @"ID_PUT, ID_TIME"
-                , m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT]
-                , m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT]
+                , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
                 , out err);
         }
         /// <summary>
@@ -69,7 +73,8 @@ namespace PluginTaskTepInval
         /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
-            m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT].Copy();
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
+                m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Copy();
         }
 
         public override void Stop()
@@ -96,7 +101,7 @@ namespace PluginTaskTepInval
             if (!(iRegDbConn < 0))
             {
                 //Запрос для получения автоматически собираемых данных
-                m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE] = HandlerDb.GetValuesVar(_IdSession
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(_IdSession
                     , ActualIdPeriod
                     , CountBasePeriod
                     , m_type
@@ -106,7 +111,7 @@ namespace PluginTaskTepInval
                 if (err == 0)
                 {
                     //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
-                    m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDef(ActualIdPeriod, out err);
+                    m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDef(ActualIdPeriod, out err);
                     //Проверить признак выполнения запроса
                     if (err == 0)
                     {
@@ -117,13 +122,17 @@ namespace PluginTaskTepInval
                             , CountBasePeriod
                             , _currIdTimezone
                             , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
-                            , ref m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE]
-                            , ref m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT]
+                            , ref m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
+                            , ref m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                            , ref m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
                             , arQueryRanges
                             , out err, out strErr);
                         // создать копии для возможности сохранения изменений
-                        m_arTableEdit[(int)INDEX_TABLE_VALUES.VARIABLE] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE].Copy();
-                        m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT] = m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT].Copy();
+                        m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable ();
+                        m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
+                        m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
+                            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Copy();
                     }
                     else
                         strErr = @"ошибка получения данных по умолчанию с " + PanelManagement.m_dtRange.Begin.ToString()
@@ -148,18 +157,37 @@ namespace PluginTaskTepInval
         /// <param name="ev">Аргумент события</param>
         protected override void onEventCellValueChanged(object dgv, DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
         {
-            DataRow[] rowsParameter = m_arTableEdit[(int)INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_PUT=" + ev.m_IdParameter);
+            DataRow[] rowsParameter = null;
 
-            if (rowsParameter.Length == 1)
-            {
-                rowsParameter[0][@"VALUE"] = ev.m_Value;
-            }
-            else
-                ;
+            for (HandlerDbTaskCalculate.INDEX_TABLE_VALUES indx = (HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN + 1);
+                indx < HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT;
+                indx++)
+                if (!(indx == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT)
+                    || ((indx == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT) && (ev.m_iQuality == HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT)))
+                {
+                    rowsParameter = m_arTableEdit[(int)indx].Select(@"ID_PUT=" + ev.m_IdParameter);
+
+                    if (rowsParameter.Length == 1)
+                    {
+                        rowsParameter[0][@"VALUE"] = ev.m_Value;
+                        //rowsParameter[0][@"QUALITY"] = (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER;
+                    }
+                    else
+                        Logging.Logg().Error(@"PanelTaskInval::onEventCellValueChanged (INDEX_TABLE_VALUES=" + indx.ToString() + @") - не найден параметр при изменении значения (по умолчанию) в 'DataGridView' ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+                else
+                    ;
         }
 
         private void btnRunPrev_onClick(object obj, EventArgs ev)
         {
+            int err = -1;
+
+            HandlerDb.UpdateSession(INDEX_DBTABLE_NAME.INVALUES
+                , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                , out err);
+
             HandlerDb.TepCalculateNormative();
         }
 

@@ -466,7 +466,7 @@ namespace Tep64
 
                 if ((m_TabCtrl.PrevSelectedIndex < 0)
                     && (bMenuItemChecked == true))
-                {
+                {// только, если перед действием не была добавлена ни одна вкладка
                     m_TabCtrl.PrevSelectedIndex = 0;
                 }
                 else

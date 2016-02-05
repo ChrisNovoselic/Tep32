@@ -245,7 +245,7 @@ namespace TepCommon
 
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.HISTORY;
+            m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
 
             onButtonLoadClick();
         }
@@ -474,6 +474,7 @@ namespace TepCommon
                 public int m_IdComp
                     , m_IdAlg
                     , m_IdParameter;
+                public HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
                 public double m_Value;
 
                 public DataGridViewTEPValuesCellValueChangedEventArgs()
@@ -483,15 +484,17 @@ namespace TepCommon
                     m_IdComp =
                     m_IdParameter =
                         -1;
+                    m_iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT;
                     m_Value = -1F;
                 }
 
-                public DataGridViewTEPValuesCellValueChangedEventArgs(int id_alg, int id_comp, int id_par, double val)
+                public DataGridViewTEPValuesCellValueChangedEventArgs(int id_alg, int id_comp, int id_par, HandlerDbTaskCalculate.ID_QUALITY_VALUE quality, double val)
                     : this()
                 {
                     m_IdAlg = id_alg;
                     m_IdComp = id_comp;
                     m_IdParameter = id_par;
+                    m_iQuality = quality;
                     m_Value = val;
                 }
             }
@@ -1035,9 +1038,11 @@ namespace TepCommon
                         strValue = (string)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value;
 
                         if (double.TryParse(strValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out dblValue) == true)
-                            EventCellValueChanged(this, new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs((int)Rows[ev.RowIndex].Cells[0].Value //Идентификатор параметра [alg]
+                            EventCellValueChanged(this, new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs(
+                                (int)Rows[ev.RowIndex].Cells[0].Value //Идентификатор параметра [alg]
                                 , (Columns[ev.ColumnIndex] as HDataGridViewColumn).m_iIdComp //Идентификатор компонента
                                 , m_dictPropertiesRows[id_alg].m_arPropertiesCells[ev.ColumnIndex].m_IdParameter //Идентификатор параметра с учетом периода расчета [put]
+                                , m_dictPropertiesRows[id_alg].m_arPropertiesCells[ev.ColumnIndex].m_iQuality
                                 , dblValue));
                         else
                             ; //??? невозможно преобразовать значение - отобразить сообщение для пользователя
