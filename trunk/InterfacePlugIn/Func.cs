@@ -43,6 +43,9 @@ namespace InterfacePlugIn
         /// <param name="ev">Аргумент события</param>
         public override void OnClickMenuItem(object obj, EventArgs ev)
         {
+            //// требуется 'System.Windows.Forms'
+            //(obj as ToolStripItem).
+
             //Проверить признак выполнения запроса к вызвавшему объекту на получение параметров соединения с БД 
             if (m_dictDataHostCounter.ContainsKey((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB) == false)
                 // отправить запрос на получение параметров соединения с БД
@@ -74,7 +77,7 @@ namespace InterfacePlugIn
                     ((IObjectDbEdit)_object).Start(obj);
                     break;
                 case (int)ID_DATAASKED_HOST.ACTIVATE_TAB:
-                    (_object as HPanelCommon).Activate(true);
+                    (_object as HPanelCommon).Activate((bool)(obj as EventArgsDataHost).par[0]);
                     break;
                 default:
                     break;

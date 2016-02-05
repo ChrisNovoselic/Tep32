@@ -132,7 +132,7 @@ namespace Tep64
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "ИРС ЭТАП";
             this.Load += new System.EventHandler(this.FormMain_Load);
-            this.Shown += new System.EventHandler (FormMain_Shown);
+            //this.Shown += new System.EventHandler (FormMain_Shown);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);
             this.MainMenuStrip.ResumeLayout(false);
             this.MainMenuStrip.PerformLayout();
@@ -145,11 +145,11 @@ namespace Tep64
             //this.m_TabCtrl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.m_TabCtrl.Location = new System.Drawing.Point(0, MainMenuStrip.ClientSize.Height);
             this.m_TabCtrl.Name = "tabCtrl";
-            this.m_TabCtrl.SelectedIndex = 0;
+            //this.m_TabCtrl.SelectedIndex = 0;
             this.m_TabCtrl.Size = new System.Drawing.Size(this.ClientSize.Width, this.ClientSize.Height - MainMenuStrip.ClientSize.Height - m_statusStripMain.ClientSize.Height);
             this.m_TabCtrl.TabIndex = 3;
             this.m_TabCtrl.SelectedIndexChanged += new System.EventHandler(this.TabCtrl_OnSelectedIndexChanged);
-            this.m_TabCtrl.EventPrevSelectedIndexChanged += new System.EventHandler(TabCtrl_EventPrevSelectedIndexChanged);
+            this.m_TabCtrl.EventPrevSelectedIndexChanged += new DelegateIntFunc(TabCtrl_EventPrevSelectedIndexChanged);
             this.Controls.Add(this.m_TabCtrl);
 
             this.ResumeLayout(false);

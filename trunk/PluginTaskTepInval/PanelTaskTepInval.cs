@@ -96,7 +96,7 @@ namespace PluginTaskTepInval
             if (!(iRegDbConn < 0))
             {
                 //Запрос для получения автоматически собираемых данных
-                m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE] = m_handlerDb.GetValuesVar(_IdSession
+                m_arTableOrigin[(int)INDEX_TABLE_VALUES.VARIABLE] = HandlerDb.GetValuesVar(_IdSession
                     , ActualIdPeriod
                     , CountBasePeriod
                     , m_type
@@ -106,13 +106,13 @@ namespace PluginTaskTepInval
                 if (err == 0)
                 {
                     //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
-                    m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = m_handlerDb.GetValuesDef(ActualIdPeriod, out err);
+                    m_arTableOrigin[(int)INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDef(ActualIdPeriod, out err);
                     //Проверить признак выполнения запроса
                     if (err == 0)
                     {
                         //Начать новую сессию расчета
                         // , получить входные для расчета значения для возможности редактирования
-                        m_handlerDb.CreateSession(_IdSession
+                        HandlerDb.CreateSession(_IdSession
                             , _currIdPeriod
                             , CountBasePeriod
                             , _currIdTimezone
@@ -160,12 +160,12 @@ namespace PluginTaskTepInval
 
         private void btnRunPrev_onClick(object obj, EventArgs ev)
         {
-            m_handlerDb.TepCalculateNormative();
+            HandlerDb.TepCalculateNormative();
         }
 
         private void btnRunRes_onClick(object obj, EventArgs ev)
         {
-            m_handlerDb.TepCalculateMaket();
+            HandlerDb.TepCalculateMaket();
         }
 
         protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()

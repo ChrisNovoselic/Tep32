@@ -11,7 +11,7 @@ using TepCommon;
 
 namespace TepCommon
 {
-    public partial class HandlerDbTaskCalculate : HHandlerDb
+    public partial class HandlerDbTaskCalculate : HandlerDbValues
     {
         public abstract class TaskCalculate : Object
         {

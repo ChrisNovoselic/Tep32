@@ -171,7 +171,7 @@ namespace Tep64
         private void выходToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //Установить признак автоматических действий с вкладками (закрытие)
-            m_iAutoActionTabs = 1;
+            m_iAutoActionTabs = m_TabCtrl.TabCount;
 
             Close ();
             //Снять признак автоматических действий с вкладками (закрытие)
@@ -242,13 +242,13 @@ namespace Tep64
             m_report.ClearStates(false);
         }
 
-        private void FormMain_Shown(object sender, EventArgs e)
-        {
-            if (m_TabCtrl.TabCount > 0)
-                m_TabCtrl.PrevSelectedIndex = 0;
-            else
-                ;
-        }
+        //private void FormMain_Shown(object sender, EventArgs e)
+        //{
+        //    if (m_TabCtrl.TabCount > 0)
+        //        m_TabCtrl.PrevSelectedIndex = 0;
+        //    else
+        //        ;
+        //}
         /// <summary>
         /// Метод аврийного завершения
         /// </summary>
@@ -434,9 +434,12 @@ namespace Tep64
         /// <param name="obj">Объект загруженной библиотеки вкладки</param>
         private void onClickMenuItem (object obj) {
             PlugInMenuItem plugIn = s_plugIns[(int)((EventArgsDataHost)obj).id];
-            ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked = ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
+            bool bMenuItemChecked =
+            ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked =
+                ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
 
-            if (((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked == true) {
+            if (bMenuItemChecked == true)
+            {
                 //Отобразить вкладку
                 m_TabCtrl.AddTabPage(plugIn.NameMenuItem, plugIn._Id, HTabCtrlEx.TYPE_TAB.FIXED);
                 m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.Object);
@@ -445,14 +448,30 @@ namespace Tep64
                 m_TabCtrl.RemoveTabPage(plugIn.NameMenuItem);
             }
 
-            if ((m_iAutoActionTabs == 0)
-                && ((профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true))
-                saveProfile();
+            if (m_iAutoActionTabs > 0)
+            {
+                m_iAutoActionTabs--;
+            }
             else
                 ;
 
-            if (m_iAutoActionTabs > 0)
-                m_iAutoActionTabs--;
+            if (m_iAutoActionTabs == 0)
+            {// закончился процесс автоматической загрузки (создания/добавления) вкладок
+                if ((профайлАвтоЗагрузитьСохранитьToolStripMenuItem as ToolStripMenuItem).Checked == true)
+                {
+                    saveProfile();
+                }
+                else
+                    ;
+
+                if ((m_TabCtrl.PrevSelectedIndex < 0)
+                    && (bMenuItemChecked == true))
+                {
+                    m_TabCtrl.PrevSelectedIndex = 0;
+                }
+                else
+                    ;
+            }
             else
                 ;
         }
@@ -552,15 +571,19 @@ namespace Tep64
             return iRes;
         }
 
-        private void TabCtrl_EventPrevSelectedIndexChanged(object sender, System.EventArgs e)
+        private void TabCtrl_EventPrevSelectedIndexChanged(int iPrevSelectedindex)
         {
-            int idPlugIn = -1;
+            //'Activate(false)' и 'Stop' вызываются в 'PlugIn'-е
+            //activatePlugIn (m_TabCtrl.GetTabPageId(iPrevSelectedindex), false);
+            activatePlugIn (m_TabCtrl.GetTabPageId(), true);            
+        }
 
-            idPlugIn = m_TabCtrl.SelectedId;
-
-            if (!(idPlugIn < 0))
+        private void activatePlugIn(int id, bool bActivate)
+        {
+            if ((!(id < 0))
+                && (s_plugIns.ContainsKey (id) == true))
                 //Отправить ответ (исходный идентификатор + требуемый объект)
-                ((PlugInBase)s_plugIns[m_TabCtrl.SelectedId]).OnEvtDataRecievedHost(new EventArgsDataHost((int)HFunc.ID_DATAASKED_HOST.ACTIVATE_TAB, new object[] { }));
+                ((PlugInBase)s_plugIns[id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)HFunc.ID_DATAASKED_HOST.ACTIVATE_TAB, new object[] { bActivate }));
             else
                 ;
         }

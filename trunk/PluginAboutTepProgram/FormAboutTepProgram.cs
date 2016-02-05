@@ -62,7 +62,7 @@ namespace PluginAboutTepProgram
 
     public class PlugIn : HFunc
     {      
-        public PlugIn () : base () {            
+        public PlugIn () : base () {
             _Id = 1;
 
             _nameOwnerMenuItem = @"Помощь";

@@ -23,30 +23,22 @@ namespace Tep64
             InitializeComponent();
         }
 
-        public int SelectedId
+        public int GetTabPageId()
         {
-            get
-            {
-                int iRes = -1
-                    , indxSel = -1;
+            return GetTabPageId(SelectedIndex);
+        }
 
-                indxSel = SelectedIndex;
+        public int GetTabPageId (int indx)
+        {
+            int iRes = -1;
 
-                if (indxSel < 0)
-                    if (TabPages.Count > 0)
-                        indxSel = 0;
-                    else
-                        ;
-                else
-                    ;
+            if ((!(indx < 0))
+                && (TabPages.Count > 0))
+                iRes = m_listPropTabs[indx].id;
+            else
+                ;
 
-                if (!(indxSel < 0))
-                    iRes = m_listPropTabs[indxSel].id;
-                else
-                    ;
-
-                return iRes;
-            }
+            return iRes;
         }
     }
 }

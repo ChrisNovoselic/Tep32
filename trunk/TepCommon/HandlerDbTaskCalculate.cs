@@ -11,9 +11,8 @@ using TepCommon;
 
 namespace TepCommon
 {
-    public partial class HandlerDbTaskCalculate : HHandlerDb
+    public partial class HandlerDbValues : HHandlerDb
     {
-        public enum TABLE_CALCULATE_REQUIRED : short { UNKNOWN = -1, ALG, PUT, VALUE, COUNT }
         /// <summary>
         /// Наименования таблиц в БД, необходимых для расчета (длина = INDEX_DBTABLE_NAME.COUNT)
         /// </summary>
@@ -33,28 +32,10 @@ namespace TepCommon
             , @"output"
             , @"outval"
         };
-        /// <summary>
-        /// Перечисление - идентификаторы состояния полученных из БД значений
-        /// </summary>
-        public enum ID_QUALITY_VALUE { NOT_REC = -3, PARTIAL, DEFAULT, SOURCE, USER }
 
-        ID_TASK _iIdTask;
-
-        TaskCalculate m_taskCalculate;
-
-        public HandlerDbTaskCalculate(ID_TASK idTask)
+        public HandlerDbValues()
             : base()
         {
-            this._iIdTask = idTask;
-
-            switch (idTask)
-            {
-                case ID_TASK.TEP:
-                    m_taskCalculate = new TaskTepCalculate();
-                    break;
-                default:
-                    break;
-            }
         }
 
         public override void StartDbInterfaces()
@@ -92,13 +73,13 @@ namespace TepCommon
             throw new NotImplementedException();
         }
 
-        private ConnectionSettings _connSett;
-        
-        private int _iListenerId;
+        protected ConnectionSettings _connSett;
 
-        private DbConnection _dbConnection;
+        protected int _iListenerId;
 
-        private bool isRegisterDbConnection { get { return (_iListenerId > 0) && (!(_dbConnection == null)) && (_dbConnection.State == ConnectionState.Open); } }
+        protected DbConnection _dbConnection;
+
+        protected bool isRegisterDbConnection { get { return (_iListenerId > 0) && (!(_dbConnection == null)) && (_dbConnection.State == ConnectionState.Open); } }
 
         public void InitConnectionSettings(ConnectionSettings connSett)
         {
@@ -108,7 +89,7 @@ namespace TepCommon
         /// Зарегистрировать соединение с БД
         /// </summary>
         /// <param name="err">Признак выполнения операции (0 - ошибок нет, 1 - регистрация уже произведена, -1 - ошибка)</param>
-        public void RegisterDbConnection (out int err)
+        public void RegisterDbConnection(out int err)
         {
             err = -1;
             // проверить требуется ли регистрация
@@ -159,7 +140,7 @@ namespace TepCommon
             err = -1;
 
             DataTable tableRes = new DataTable();
-            
+
             int iRegDbConn = -1;
 
             RegisterDbConnection(out iRegDbConn);
@@ -171,7 +152,7 @@ namespace TepCommon
 
             if (!(iRegDbConn > 0))
             {
-                UnRegisterDbConnection ();
+                UnRegisterDbConnection();
             }
             else
                 ;
@@ -181,7 +162,7 @@ namespace TepCommon
 
         public DataTable GetDataTable(string strNameTable, out int err)
         {
-            return Select (@"SELECT * FROM [" + strNameTable + @"]", out err);
+            return Select(@"SELECT * FROM [" + strNameTable + @"]", out err);
         }
 
         public DataTable GetDataTable(INDEX_DBTABLE_NAME indxTable, out int err)
@@ -206,11 +187,41 @@ namespace TepCommon
 
             if (!(iRegDbConn > 0))
             {
-                UnRegisterDbConnection ();
+                UnRegisterDbConnection();
             }
             else
                 ;
         }
+    }
+
+    public partial class HandlerDbTaskCalculate : HandlerDbValues
+    {
+        public enum TABLE_CALCULATE_REQUIRED : short { UNKNOWN = -1, ALG, PUT, VALUE, COUNT }
+        
+        /// <summary>
+        /// Перечисление - идентификаторы состояния полученных из БД значений
+        /// </summary>
+        public enum ID_QUALITY_VALUE { NOT_REC = -3, PARTIAL, DEFAULT, SOURCE, USER }
+
+        private ID_TASK _iIdTask;
+        public ID_TASK IdTask { get { return _iIdTask; }  set { _iIdTask = value; } }
+
+        TaskCalculate m_taskCalculate;
+
+        public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN)
+            : base()
+        {
+            IdTask = idTask;
+
+            switch (idTask)
+            {
+                case ID_TASK.TEP:
+                    m_taskCalculate = new TaskTepCalculate();
+                    break;
+                default:
+                    break;
+            }
+        }        
         /// <summary>
         /// Создать новую сессию для расчета
         ///  - вставить входные данные во временную таблицу
@@ -381,7 +392,6 @@ namespace TepCommon
         {
             return @"SELECT * FROM " + s_NameDbTables[(int)indxDbTableName] + @" WHERE [ID_CALCULATE]=" + (int)idSession;
         }
-
         /// <summary>
         /// Строка - условие для TSQL-запроса для указания диапазона идентификаторов
         ///  выходных параметров алгоритма расчета
@@ -559,10 +569,6 @@ namespace TepCommon
 
             return s_NameDbTables[(int)indx];
         }
-
-        //private string getQueryOutNormativeValues { get { return @""; } }
-
-        //private string queryOutMaketValues { get { return @""; } }
         /// <summary>
         /// Запрос для получения значений "по умолчанию"
         /// </summary>

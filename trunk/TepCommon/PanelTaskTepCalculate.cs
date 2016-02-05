@@ -174,10 +174,16 @@ namespace TepCommon
             : base(iFunc)
         {
             m_type = type;
-
-            m_handlerDb = new HandlerDbTaskCalculate(ID_TASK.TEP);
+            HandlerDb.IdTask = ID_TASK.TEP;
 
             InitializeComponents();
+        }
+
+        protected HandlerDbTaskCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskCalculate; } }
+
+        protected override HandlerDbValues createHandlerDb()
+        {
+            return new HandlerDbTaskCalculate ();
         }
 
         private void InitializeComponents ()
@@ -326,21 +332,21 @@ namespace TepCommon
             arRes = new string[]
             {
                 //PERIOD
-                m_handlerDb.GetQueryTimePeriods (m_strIdPeriods)
+                HandlerDb.GetQueryTimePeriods (m_strIdPeriods)
                 //TIMEZONE
-                , m_handlerDb.GetQueryTimezones (m_strIdTimezones)
+                , HandlerDb.GetQueryTimezones (m_strIdTimezones)
                 // список компонентов
-                , m_handlerDb.GetQueryCompList ()
+                , HandlerDb.GetQueryCompList ()
                 // параметры расчета
-                , m_handlerDb.GetQueryParameters (m_type)
+                , HandlerDb.GetQueryParameters (m_type)
                 //// настройки визуального отображения значений
                 //, @""
                 // режимы работы
-                , m_handlerDb.GetQueryModeDev ()
+                , HandlerDb.GetQueryModeDev ()
                 //// единицы измерения
                 //, m_handlerDb.GetQueryMeasures ()
                 // коэффициенты для единиц измерения
-                , m_handlerDb.GetQueryRatio ()
+                , HandlerDb.GetQueryRatio ()
             };
 
             return arRes;
@@ -401,7 +407,7 @@ namespace TepCommon
         {
             int err = -1;
 
-            m_handlerDb.DeleteSession(_IdSession, out err);
+            HandlerDb.DeleteSession(_IdSession, out err);
 
             _IdSession = -1;
         }

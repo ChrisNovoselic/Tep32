@@ -49,6 +49,8 @@ namespace TepCommon
             //m_dictControls = new Dictionary<int, Control>();
 
             InitializeComponent();
+
+            m_handlerDb = createHandlerDb ();
         }
 
         private void InitializeComponent()
@@ -61,12 +63,13 @@ namespace TepCommon
         protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
         {
             initializeLayoutStyleEvenly(cols, rows);
-        }
-
+        }        
         /// <summary>
         /// Объект для обмена данными с БД
         /// </summary>
-        protected HandlerDbTaskCalculate m_handlerDb;
+        protected HandlerDbValues m_handlerDb;
+
+        protected virtual HandlerDbValues createHandlerDb () { return new HandlerDbValues (); }
 
         public void Start(object obj)
         {
@@ -85,7 +88,6 @@ namespace TepCommon
 
             Start();
 
-            m_handlerDb = new HandlerDbTaskCalculate(ID_TASK.UNKNOWN);
             m_handlerDb.InitConnectionSettings(((EventArgsDataHost)obj).par[0] as ConnectionSettings);
         }
         ///// <summary>
