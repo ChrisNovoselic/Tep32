@@ -28,44 +28,66 @@ namespace TepCommon
                     , COUNT
             }
             /// <summary>
-            /// Класс для хранения всех значений, необъодимых для расчета
+            /// Класс для хранения всех значений, необходимых для расчета
             /// </summary>
-            protected class P_ALG : Dictionary<string, Dictionary<int, P_ALG.P_PUT>>
+            protected class P_ALG : Dictionary<string, P_ALG.P_PUT>
             {
                 /// <summary>
-                /// Идентификатор - строка - номер алгоритма расчета
+                /// Класс для хранения всех значений для одного из параметров, необходимых для расчета
                 /// </summary>
-                public string m_strId;
-                /// <summary>
-                /// Идентификатор - целочисленное значение, уникальное в границах БД
-                /// </summary>
-                public int m_iId;
-                /// <summary>
-                /// Признак запрета на расчет/обновление/использование значения
-                /// </summary>
-                public bool m_bDeny;
-                /// <summary>
-                /// Класс для хранения значений для одного из компонентов станции
-                ///  в рамках параметра в алгоритме рачета
-                /// </summary>
-                public class P_PUT
+                public class P_PUT : Dictionary<int, P_PUT.P_VAL>
                 {
+                    ///// <summary>
+                    ///// Идентификатор - строка - номер алгоритма расчета
+                    ///// </summary>
+                    //public string m_strId;
                     /// <summary>
                     /// Идентификатор - целочисленное значение, уникальное в границах БД
                     /// </summary>
                     public int m_iId;
                     /// <summary>
-                    /// Идентификатор компонента ТЭЦ (ключ), уникальное в границах БД
-                    /// </summary>
-                    public int m_iIdComponent;
-                    /// <summary>
                     /// Признак запрета на расчет/обновление/использование значения
                     /// </summary>
                     public bool m_bDeny;
                     /// <summary>
-                    /// Значение параметра в алгоритме расчета для компонента станции
+                    /// Признак усреднения величины
                     /// </summary>
-                    public float m_fValue;
+                    public short m_sAVG;
+                    /// <summary>
+                    /// Класс для хранения значений для одного из компонентов станции
+                    ///  в рамках параметра в алгоритме рачета
+                    /// </summary>
+                    public class P_VAL
+                    {
+                        /// <summary>
+                        /// Идентификатор - целочисленное значение, уникальное в границах БД
+                        /// </summary>
+                        public int m_iId;
+                        ///// <summary>
+                        ///// Идентификатор компонента ТЭЦ (ключ), уникальное в границах БД
+                        ///// </summary>
+                        //public int m_iIdComponent;
+                        /// <summary>
+                        /// Признак запрета на расчет/обновление/использование значения
+                        /// </summary>
+                        public bool m_bDeny;
+                        /// <summary>
+                        /// Значение параметра в алгоритме расчета для компонента станции
+                        ///  , при оформлении исключение из правила (для минимизации кодирования)
+                        /// </summary>
+                        public float value;
+                        /// <summary>
+                        /// Идентификатор 
+                        /// </summary>
+                        public int m_idRatio;
+                        /// <summary>
+                        /// Минимальное, максимальное значение
+                        /// </summary>
+                        public float m_fMinValue;
+                        public float m_fMaxValue;
+                    }
+
+                    //public Dictionary<int, P_ALG.P_PUT> values;
                 }
             }
             /// <summary>
@@ -82,7 +104,9 @@ namespace TepCommon
                 /// </summary>
                 public DataTable m_table;                
             }
-
+            /// <summary>
+            /// Класс для представления аргументов при инициализации расчета
+            /// </summary>
             public class ListDATATABLE : List <DATATABLE>
             {
                 public DataTable FindDataTable(INDEX_DATATABLE indxDataTable)
@@ -125,16 +149,31 @@ namespace TepCommon
         /// </summary>
         public class TaskTepCalculate : TaskCalculate
         {
+            int n_blokov;
+            /// <summary>
+            /// Перечисления индексы для массива идентификаторов компонентов оборудования ТЭЦ
+            /// </summary>
+            private enum INDX_COMP : short { UNKNOWN = -1
+                , iBL1, iBL2, iBL3, iBL4, iBL5, iBL6, iST
+                , COUNT};
             /// <summary>
             /// Константы - идентификаторы компонентов оборудования ТЭЦ
             /// </summary>
-            const int BL1 = 1029
+            private const int BL1 = 1029
                     , BL2 = 1030
                     , BL3 = 1031
                     , BL4 = 1032
                     , BL5 = 1033
                     , BL6 = 1034
                     , ST = 5;
+            /// <summary>
+            /// Массив - идентификаторы компонентов оборудования ТЭЦ
+            /// </summary>
+            private readonly int [] ID_COMP =
+            {
+                    BL1, BL2, BL3, BL4, BL5, BL6
+                    , ST
+            };
             /// <summary>
             /// Объект, обеспечивающий вычисление нормативных значений при работе оборудования ТЭЦ
             /// </summary>
@@ -169,34 +208,49 @@ namespace TepCommon
             private void initInValues(DataTable tablePar, DataTable tableVal)
             {
                 DataRow[] rVal = null;
-                P_ALG.P_PUT itemPut = null;
-                int idPut = -1;
+                int idPut = -1
+                    , idComponent = -1;
                 string strNAlg = string.Empty;
-                
-                foreach (DataRow r in tablePar.Rows)
+                // цикл по всем параметрам расчета
+                foreach (DataRow rPar in tablePar.Rows)
                 {
-                    idPut = (int)r[@"ID"];
-                    strNAlg = ((string)r[@"N_ALG"]).Trim ();
+                    // найти соответствие параметра в алгоритме расчета и значения для него
+                    idPut = (int)rPar[@"ID"];
+                    // идентификатор параметра в алгоритме расчета - ключ для словаря с его характеристиками
+                    strNAlg = ((string)rPar[@"N_ALG"]).Trim ();
                     rVal = tableVal.Select (@"ID_PUT=" + idPut);
-
+                    // проверить успешность нахождения соответствия
                     if (rVal.Length == 1)
                     {
                         if (In.ContainsKey(strNAlg) == false)
-                            In.Add(strNAlg, new Dictionary<int, P_ALG.P_PUT>());
+                        {// добавить параметр в алгоритме расчета
+                            In.Add(strNAlg, new P_ALG.P_PUT());
+
+                            In[strNAlg].m_sAVG = (Int16)rPar[@"AVG"];
+                            In[strNAlg].m_bDeny = false;
+                        }
                         else
                             ;
+                        // идентификатор компонента станции - ключ для словаря со значением и характеристиками для него
+                        idComponent = (int)rPar[@"ID_COMP"];
 
-                        itemPut = new P_ALG.P_PUT()
+                        if (In[strNAlg].ContainsKey(idComponent) == false)
+                            In[strNAlg].Add(idComponent, new P_ALG.P_PUT.P_VAL()
+                        // добавить параметр компонента в алгоритме расчета
                             {
                                 m_iId = idPut
-                                , m_iIdComponent = (int)r[@"ID_COMP"]
+                                //, m_iIdComponent = idComponent
                                 , m_bDeny = false
-                                , m_fValue = (float)(double)rVal[0][@"VALUE"]
-                            };
-                        In[strNAlg].Add(idPut, itemPut);
+                                , value = (float)(double)rVal[0][@"VALUE"]
+                                , m_idRatio = (int)rPar[@"ID_RATIO"]
+                                , m_fMinValue = (float)rPar[@"MINVALUE"]
+                                , m_fMaxValue = (float)rPar[@"MAXVALUE"]
+                            });
+                        else
+                            ;
                     }
                     else
-                    {
+                    {// ошибка - не найдено соответствие параметр-значение
                         Logging.Logg().Error(@"TaskTepCalculate::initInValues (ID_PUT=" + idPut + @") - не найдено соответствие параметра и значения...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
@@ -218,9 +272,34 @@ namespace TepCommon
             {
                 DataTable tableRes = new DataTable();
 
-                initValues(listDataTables);                
+                int i = -1;
+                float fSum = -1F;
 
-                return tableRes;
+                initValues(listDataTables);
+
+                /*-------------Пар. 1 TAU раб-------------*/
+                fSum = 0F;
+                for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                {
+                    fSum += In[@"1"][i].value;
+                    Norm[@"1"][i].value = In[@"1"][i].value;
+                }
+                Norm[@"1"][ST].value = fSum;
+
+                /*-------------Пар. 2 Э т-------------*/
+                fSum = 0F;
+                for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                {
+                    fSum += In[@"2"][i].value;
+                    Norm[@"2"][i].value = In[@"2"][i].value;
+                }
+                Norm[@"2"][ST].value = fSum;
+
+                /*-------------Пар. 3 Q то-------------*/
+
+                /*-------------Пар. 4 Q пп-------------*/
+
+                    return tableRes;
             }
             /// <summary>
             /// Расчитать выходные значения

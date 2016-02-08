@@ -194,12 +194,16 @@ namespace TepCommon
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
-
+        /// <summary>
+        /// Удалить запись о параметрах сессии расчета (по триггеру - все входные и выходные значения)
+        /// </summary>
+        /// <param name="idSession">Идентификатор сессии расчета</param>
+        /// <param name="err">признак выполнения функции</param>
         public void DeleteSession(int idSession, out int err)
         {
             err = -1;
 
-            int iRegDbConn = -1;
+            int iRegDbConn = -1; // признак регистрации соединения с БД
             string strQuery = string.Empty;
 
             if (idSession > 0)
@@ -226,7 +230,13 @@ namespace TepCommon
             else
                 ;
         }
-
+        /// <summary>
+        /// Обновить значения
+        /// </summary>
+        /// <param name="indxDbTable"></param>
+        /// <param name="tableOriginInValues"></param>
+        /// <param name="tableEditInValues"></param>
+        /// <param name="err"></param>
         public void UpdateSession(INDEX_DBTABLE_NAME indxDbTable
             , DataTable tableOriginInValues
             , DataTable tableEditInValues
