@@ -28,16 +28,11 @@ namespace PluginDictMessage
             : base()
         {
             _Id = 4;
-
-            _nameOwnerMenuItem = @"Настройка";
-            _nameMenuItem = @"Типы сообщений журнала";
+            register(4, typeof(PanelDictMessage), @"Настройка", @"Типы сообщений журнала");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelDictMessage));
-            //createObject(this.GetType());
-
             base.OnClickMenuItem(obj, ev);
         }
     }

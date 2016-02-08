@@ -30,16 +30,11 @@ namespace PluginDictPlugIns
     {      
         public PlugIn () : base () {            
             _Id = 2;
-
-            _nameOwnerMenuItem = @"Настройка";
-            _nameMenuItem = @"Состав плюгин'ов";
+            register(2, typeof(PanelDictPlugIns), @"Настройка", @"Состав плюгин'ов");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelDictPlugIns));
-            //createObject(this.GetType());
-
             base.OnClickMenuItem(obj, ev);
         }
     }

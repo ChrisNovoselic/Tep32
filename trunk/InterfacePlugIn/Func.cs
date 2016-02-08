@@ -13,25 +13,6 @@ namespace InterfacePlugIn
                                     , CONNSET_MAIN_DB = 10001
                                     , ACTIVATE_TAB = 10101
                                     };
-
-        protected string _nameOwnerMenuItem
-            , _nameMenuItem;
-
-        public override string NameOwnerMenuItem
-        {
-            get
-            {
-                return _nameOwnerMenuItem;
-            }
-        }
-
-        public override string NameMenuItem
-        {
-            get
-            {
-                return _nameMenuItem;
-            }
-        }
     }
 
     public abstract class HFuncDbEdit : HFunc
@@ -41,10 +22,13 @@ namespace InterfacePlugIn
         /// </summary>
         /// <param name="obj">Объект, имнициировавщий событие (п. меню)</param>
         /// <param name="ev">Аргумент события</param>
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            //// требуется 'System.Windows.Forms'
-            //(obj as ToolStripItem).
+            int id = -1;
+            
+            base.OnClickMenuItem(obj, ev);
+
+            id = _Id;
 
             //Проверить признак выполнения запроса к вызвавшему объекту на получение параметров соединения с БД 
             if (m_dictDataHostCounter.ContainsKey((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB) == false)
@@ -57,8 +41,8 @@ namespace InterfacePlugIn
                 {
                     m_dictDataHostCounter[(int)ID_DATAASKED_HOST.CONNSET_MAIN_DB]++;
 
-                    (_object as HPanelCommon).Activate(false);
-                    (_object as HPanelCommon).Stop();
+                    (_objects[id] as HPanelCommon).Activate(false);
+                    (_objects[id] as HPanelCommon).Stop();
                 }
 
             //Вернуть главной форме параметр
@@ -67,17 +51,21 @@ namespace InterfacePlugIn
 
         public override void OnEvtDataRecievedHost(object obj)
         {
+            int id = -1;
+            
             //throw new NotImplementedException();
 
             base.OnEvtDataRecievedHost(obj);
 
+            id = _Id;
+
             switch (((EventArgsDataHost)obj).id)
             {
                 case (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB:
-                    ((IObjectDbEdit)_object).Start(obj);
+                    ((IObjectDbEdit)_objects[id]).Start(obj);
                     break;
                 case (int)ID_DATAASKED_HOST.ACTIVATE_TAB:
-                    (_object as HPanelCommon).Activate((bool)(obj as EventArgsDataHost).par[0]);
+                    (_objects[id] as HPanelCommon).Activate((bool)(obj as EventArgsDataHost).par[0]);
                     break;
                 default:
                     break;

@@ -28,16 +28,11 @@ namespace PluginDictSourceInterface
             : base()
         {
             _Id = 13;
-
-            _nameOwnerMenuItem = @"Настройка";
-            _nameMenuItem = @"Интерфейсы источников данных";
+            register(13, typeof(PanelDictSourceInterface), @"Настройка", @"Интерфейсы источников данных");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelDictSourceInterface));
-            //createObject(this.GetType());
-
             base.OnClickMenuItem(obj, ev);
         }
     }

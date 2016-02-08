@@ -28,16 +28,11 @@ namespace PluginPrjTask
             : base()
         {
             _Id = 9;
-
-            _nameOwnerMenuItem = @"Проект";
-            _nameMenuItem = @"Список задач ИРС";
+            register(9, typeof(PanelPrjTask), @"Проект", @"Список задач ИРС");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelPrjTask));
-            //createObject(this.GetType());
-
             base.OnClickMenuItem(obj, ev);
         }
     }

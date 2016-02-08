@@ -52,15 +52,11 @@ namespace PluginPrjRolesProfiles
             : base()
         {
             _Id = 11;
-
-            _nameOwnerMenuItem = @"Проект\Права доступа";
-            _nameMenuItem = @"Элементы интерфейса";
+            register(11, typeof(PanelPrjRolesProfiles), @"Проект\Права доступа", @"Элементы интерфейса");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelPrjRolesProfiles));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

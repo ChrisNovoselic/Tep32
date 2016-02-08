@@ -20,6 +20,7 @@ namespace TepCommon
         , OUTALG
         , OUTPUT
         , OUTVALUES
+        , FTABLE
             , COUNT
     };    
 
@@ -28,6 +29,18 @@ namespace TepCommon
     /// Перечисление - идентификаторы задач в составе системы - табл. [task]
     /// </summary>
     public enum ID_TASK : int { UNKNOWN = 0, TEP = 1, BAL_TEPLO, ENG6_GRAF, EL_JUR, VEDOM_BL, AUTOBOOK, REAKTIVKA }
+
+    public enum ID_PLUGIN : int
+    {
+        UNKNOWN = 0
+        , ABOUT = 1
+    }
+
+    public enum ID_MODULE : int
+    {
+        UNKNOWN = 0
+        , ABOUT = 1
+    }
 
     public enum CONN_SETT_TYPE
     {

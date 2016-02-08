@@ -63,16 +63,17 @@ namespace PluginAboutTepProgram
     public class PlugIn : HFunc
     {      
         public PlugIn () : base () {
-            _Id = 1;
-
-            _nameOwnerMenuItem = @"Помощь";
-            _nameMenuItem = @"О программе";
+            _Id = (int)ID_PLUGIN.ABOUT;
+            register((int)ID_MODULE.ABOUT, typeof(FormAboutTepProgram), @"Помощь", @"О программе");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            //if (createObject<FormAboutTepProgram>() == true)
-            createObject(typeof (FormAboutTepProgram));
+            int id = -1;
+            
+            base.OnClickMenuItem(obj, ev);
+
+            id = _Id;
             
             if (m_dictDataHostCounter.ContainsKey ((int)ID_DATAASKED_HOST.ICON_MAINFORM) == false)
                 DataAskedHost ((int)ID_DATAASKED_HOST.ICON_MAINFORM);
@@ -84,19 +85,23 @@ namespace PluginAboutTepProgram
             else
                 ;
 
-            ((FormAboutTepProgram)_object).ShowDialog (Host as IWin32Window);
+            (_objects[id] as FormAboutTepProgram).ShowDialog(Host as IWin32Window);
         }
 
         public override void OnEvtDataRecievedHost(object obj)
         {
+            int id = -1;
+
             //throw new NotImplementedException();
+
+            id = _Id;
 
             base.OnEvtDataRecievedHost(obj);
 
             switch (((EventArgsDataHost)obj).id) {
                 case (int)ID_DATAASKED_HOST.ICON_MAINFORM:
                 case (int)ID_DATAASKED_HOST.STR_VERSION:
-                    ((FormAboutTepProgram)_object).UpdateGUI(obj);
+                    (_objects[id] as FormAboutTepProgram).UpdateGUI(obj);
                     break;
                 default:
                     break;

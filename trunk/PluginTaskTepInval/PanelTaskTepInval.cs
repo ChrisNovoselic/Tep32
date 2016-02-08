@@ -56,11 +56,11 @@ namespace PluginTaskTepInval
         {
             err = -1;
 
-            m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.]
-                , @"ID_PUT, ID_TIME"
-                , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
-                , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
-                , out err);
+            //m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES]
+            //    , @"ID_PUT, ID_TIME"
+            //    , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
+            //    , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
+            //    , out err);
 
             m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVAL_DEF]
                 , @"ID_PUT, ID_TIME"
@@ -235,15 +235,11 @@ namespace PluginTaskTepInval
             : base()
         {
             _Id = 17;
-
-            _nameOwnerMenuItem = @"Задача\Расчет ТЭП";
-            _nameMenuItem = @"Входные данные";
+            register(17, typeof(PanelTaskTepInval), @"Задача\Расчет ТЭП", @"Входные данные");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskTepInval));
-
             base.OnClickMenuItem(obj, ev);
         }
 

@@ -28,16 +28,11 @@ namespace PluginDictTime
             : base()
         {
             _Id = 3;
-
-            _nameOwnerMenuItem = @"Настройка";
-            _nameMenuItem = @"Интервалы времени";
+            register(3, typeof(PanelDictTime), @"Настройка", @"Интервалы времени");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelDictTime));
-            //createObject(this.GetType());
-
             base.OnClickMenuItem (obj, ev);
         }
     }

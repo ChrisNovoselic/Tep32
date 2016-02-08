@@ -28,16 +28,11 @@ namespace PluginDictProfilesUnit
             : base()
         {
             _Id = 6;
-
-            _nameOwnerMenuItem = @"Настройка";
-            _nameMenuItem = @"Элементы интерфейса";
+            register(6, typeof(PanelDictProfilesUnit), @"Настройка", @"Элементы интерфейса");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelDictProfilesUnit));
-            //createObject(this.GetType());
-
             base.OnClickMenuItem(obj, ev);
         }
     }

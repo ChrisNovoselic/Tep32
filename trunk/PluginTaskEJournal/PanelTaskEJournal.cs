@@ -45,17 +45,12 @@ namespace PluginTaskEJournal
             : base()
         {
             _Id = 20;
-
-            _nameOwnerMenuItem = @"Задача";
-            _nameMenuItem = @"Электронный журнал";
+            register(20, typeof(PanelTaskEJournal), @"Задача", @"Электронный журнал");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskEJournal));
-
             base.OnClickMenuItem(obj, ev);
         }
     }
 }
-

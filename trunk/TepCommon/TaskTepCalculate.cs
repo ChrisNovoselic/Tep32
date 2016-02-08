@@ -82,6 +82,26 @@ namespace TepCommon
                 /// </summary>
                 public DataTable m_table;                
             }
+
+            public class ListDATATABLE : List <DATATABLE>
+            {
+                public DataTable FindDataTable(INDEX_DATATABLE indxDataTable)
+                {
+                    DataTable tableRes = null;
+
+                    foreach (DATATABLE dataTable in this)
+                        if (dataTable.m_indx == indxDataTable)
+                        {
+                            tableRes = dataTable.m_table;
+
+                            break;
+                        }
+                        else
+                            ;
+
+                    return tableRes;
+                }
+            }
             /// <summary>
             /// Словарь с ВХОДными параметрами - ключ - идентификатор в алгоритме расчета
             /// </summary>
@@ -94,7 +114,7 @@ namespace TepCommon
             /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
             /// </summary>
             /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
-            protected abstract void initValues(DATATABLE[] arDataTables);
+            protected abstract void initValues(ListDATATABLE listDataTables);
         }
         /// <summary>
         /// Перечисление - индексы типов вкладок (объектов наследуемых классов)
@@ -138,24 +158,48 @@ namespace TepCommon
             /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
             /// </summary>
             /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
-            protected override void initValues(DATATABLE []arDataTables)
+            protected override void initValues(ListDATATABLE listDataTables)
             {
-                foreach (DATATABLE dataTable in arDataTables)
-                    switch (dataTable.m_indx)
-                    {
-                        case INDEX_DATATABLE.FTABLE:
-                            fTable.Set (dataTable.m_table);
-                            break;
-                        case INDEX_DATATABLE.IN_VALUES:
-                            initInValues(dataTable.m_table);
-                            break;
-                        default:
-                            break;
-                    }
+                fTable.Set(listDataTables.FindDataTable (INDEX_DATATABLE.FTABLE));
+
+                initInValues(listDataTables.FindDataTable(INDEX_DATATABLE.IN_PARAMETER)
+                    , listDataTables.FindDataTable(INDEX_DATATABLE.IN_VALUES));
             }
 
-            private void initInValues(DataTable table)
+            private void initInValues(DataTable tablePar, DataTable tableVal)
             {
+                DataRow[] rVal = null;
+                P_ALG.P_PUT itemPut = null;
+                int idPut = -1;
+                string strNAlg = string.Empty;
+                
+                foreach (DataRow r in tablePar.Rows)
+                {
+                    idPut = (int)r[@"ID"];
+                    strNAlg = ((string)r[@"N_ALG"]).Trim ();
+                    rVal = tableVal.Select (@"ID_PUT=" + idPut);
+
+                    if (rVal.Length == 1)
+                    {
+                        if (In.ContainsKey(strNAlg) == false)
+                            In.Add(strNAlg, new Dictionary<int, P_ALG.P_PUT>());
+                        else
+                            ;
+
+                        itemPut = new P_ALG.P_PUT()
+                            {
+                                m_iId = idPut
+                                , m_iIdComponent = (int)r[@"ID_COMP"]
+                                , m_bDeny = false
+                                , m_fValue = (float)(double)rVal[0][@"VALUE"]
+                            };
+                        In[strNAlg].Add(idPut, itemPut);
+                    }
+                    else
+                    {
+                        Logging.Logg().Error(@"TaskTepCalculate::initInValues (ID_PUT=" + idPut + @") - не найдено соответствие параметра и значения...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
+                }
             }
 
             private void initNormValues(DataTable table)
@@ -170,21 +214,11 @@ namespace TepCommon
             /// </summary>
             /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
             /// <returns>Таблица нормативных значений, совместимая со структурой выходныъ значений в БД</returns>
-            public DataTable CalculateNormative(DATATABLE []arDataTables)
+            public DataTable CalculateNormative(ListDATATABLE listDataTables)
             {
                 DataTable tableRes = new DataTable();
 
-                initValues(arDataTables);
-
-                if (Norm[@"1"][BL1].m_bDeny == false)
-                    Norm[@"1"][BL1].m_fValue = In[@"1"][BL4].m_fValue + In[@"2"][BL6].m_fValue * fTable.F2(@"2.4", In[@"1"][BL1].m_fValue, Norm[@"1"][BL2].m_fValue);
-                else
-                    ;
-
-                if (Out[@"1"][BL2].m_bDeny == false)
-                    Out[@"1"][BL2].m_fValue = Norm[@"1"][ST].m_fValue + In[@"2"][BL2].m_fValue;
-                else
-                    ;
+                initValues(listDataTables);                
 
                 return tableRes;
             }
@@ -193,11 +227,11 @@ namespace TepCommon
             /// </summary>
             /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
             /// <returns>Таблица выходных значений, совместимая со структурой выходныъ значений в БД</returns>
-            public DataTable CalculateMaket(DATATABLE[] arDataTables)
+            public DataTable CalculateMaket(ListDATATABLE listDataTables)
             {
                 DataTable tableRes = new DataTable();
 
-                initValues(arDataTables);
+                initValues(listDataTables);
 
                 return tableRes;
             }

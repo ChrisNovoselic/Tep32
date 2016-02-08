@@ -31,6 +31,7 @@ namespace TepCommon
             , @"outalg"
             , @"output"
             , @"outval"
+            , @"ftable"
         };
 
         public HandlerDbValues()

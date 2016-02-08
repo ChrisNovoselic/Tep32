@@ -1111,15 +1111,11 @@ namespace PluginPrjTepFTable
             : base()
         {
             _Id = 16;
-
-            _nameOwnerMenuItem = @"Проект";
-            _nameMenuItem = @"Нормативные графики";
+            register(16, typeof(PanelPrjTepFTable), @"Проект", @"Нормативные графики");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelPrjTepFTable));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

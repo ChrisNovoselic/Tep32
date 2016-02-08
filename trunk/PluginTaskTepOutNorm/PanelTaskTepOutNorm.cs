@@ -97,15 +97,11 @@ namespace PluginTaskTepOutNorm
             : base()
         {
             _Id = 18;
-
-            _nameOwnerMenuItem = @"Задача\Расчет ТЭП";
-            _nameMenuItem = @"Выход-норматив";
+            register(18, typeof(PanelTaskTepOutNorm), @"Задача\Расчет ТЭП", @"Выход-норматив");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskTepOutNorm));
-
             base.OnClickMenuItem(obj, ev);
         }
 

@@ -45,15 +45,11 @@ namespace PluginTaskTepForm15506
             : base()
         {
             _Id = 25;
-
-            _nameOwnerMenuItem = @"Задача\Расчет ТЭП";
-            _nameMenuItem = @"Форма 15506";
+            register(25, typeof(PanelTaskTepForm15506), @"Задача\Расчет ТЭП", @"Форма 15506");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskTepForm15506));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

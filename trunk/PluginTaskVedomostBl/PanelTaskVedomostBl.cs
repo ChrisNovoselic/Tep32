@@ -45,15 +45,11 @@ namespace PluginTaskVedomostBl
             : base()
         {
             _Id = 21;
-
-            _nameOwnerMenuItem = @"Задача";
-            _nameMenuItem = @"Ведомости эн./блоков";
+            register(21, typeof(PanelTaskVedomostBl), @"Задача", @"Ведомости эн./блоков");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskVedomostBl));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

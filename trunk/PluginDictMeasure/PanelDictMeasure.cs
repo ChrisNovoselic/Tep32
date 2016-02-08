@@ -28,16 +28,11 @@ namespace PluginDictMeasure
             : base()
         {
             _Id = 10;
-
-            _nameOwnerMenuItem = @"Настройка";
-            _nameMenuItem = @"Единицы измерения";
+            register(10, typeof(PanelDictMeasure), @"Настройка", @"Единицы измерения");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelDictMeasure));
-            //createObject(this.GetType());
-
             base.OnClickMenuItem(obj, ev);
         }
     }

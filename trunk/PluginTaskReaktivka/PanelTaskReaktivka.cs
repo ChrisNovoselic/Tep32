@@ -45,15 +45,11 @@ namespace PluginTaskReaktivka
             : base()
         {
             _Id = 24;
-
-            _nameOwnerMenuItem = @"Задача";
-            _nameMenuItem = @"Учет реактивной э/э";
+            register(24, typeof(PanelTaskReaktivka), @"Задача", @"Учет реактивной э/э");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskReaktivka));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

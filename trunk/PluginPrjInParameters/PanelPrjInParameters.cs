@@ -76,15 +76,11 @@ namespace PluginPrjInParameters
             : base()
         {
             _Id = 8;
-
-            _nameOwnerMenuItem = @"Проект\Параметры";
-            _nameMenuItem = @"Входные";
+            register(8, typeof(PanelPrjInParameters), @"Проект\Параметры", @"Входные");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelPrjInParameters));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

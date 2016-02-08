@@ -264,15 +264,11 @@ namespace PluginPrjOutParameters
             : base()
         {
             _Id = 12;
-
-            _nameOwnerMenuItem = @"Проект\Параметры";
-            _nameMenuItem = @"Выходные";
+            register(12, typeof(PanelPrjOutParameters), @"Проект\Параметры", @"Выходные");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelPrjOutParameters));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

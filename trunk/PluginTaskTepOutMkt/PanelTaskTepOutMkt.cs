@@ -97,15 +97,11 @@ namespace PluginTaskTepOutMkt
             : base()
         {
             _Id = 28;
-
-            _nameOwnerMenuItem = @"Задача\Расчет ТЭП";
-            _nameMenuItem = @"Выход-макет";
+            register(28, typeof(PanelTaskTepOutMkt), @"Задача\Расчет ТЭП", @"Выход-макет");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskTepOutMkt));
-
             base.OnClickMenuItem(obj, ev);
         }
 

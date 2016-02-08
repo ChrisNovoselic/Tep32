@@ -45,15 +45,11 @@ namespace PluginTaskAutobook
             : base()
         {
             _Id = 23;
-
-            _nameOwnerMenuItem = @"Задача";
-            _nameMenuItem = @"Учет активной э/э";
+            register(23, typeof(PanelTaskAutobook), @"Задача", @"Учет активной э/э");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskAutobook));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

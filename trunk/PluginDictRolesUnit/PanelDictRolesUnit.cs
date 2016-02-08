@@ -28,16 +28,11 @@ namespace PluginDictRolesUnit
             : base()
         {
             _Id = 5;
-
-            _nameOwnerMenuItem = @"Проект";
-            _nameMenuItem = @"Роли(группы) пользователей";
+            register(5, typeof(PanelDictRolesUnit), @"Проект", @"Роли(группы) пользователей");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelDictRolesUnit));
-            //createObject(this.GetType());
-
             base.OnClickMenuItem(obj, ev);
         }
     }

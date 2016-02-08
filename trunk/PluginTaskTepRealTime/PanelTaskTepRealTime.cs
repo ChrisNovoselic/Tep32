@@ -205,15 +205,11 @@ namespace PluginTaskTepRealTime
             : base()
         {
             _Id = 27;
-
-            _nameOwnerMenuItem = @"Задача\Расчет ТЭП";
-            _nameMenuItem = @"Оперативно";
+            register(27, typeof(PanelTaskTepRealTime), @"Задача\Расчет ТЭП", @"Оперативно");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskTepRealTime));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

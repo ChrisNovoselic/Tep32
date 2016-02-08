@@ -45,15 +45,11 @@ namespace PluginTaskBalTeplo
             : base()
         {
             _Id = 19;
-
-            _nameOwnerMenuItem = @"Задача";
-            _nameMenuItem = @"Баланс тепла";
+            register(19, typeof(PanelTaskBalTeplo), @"Задача", @"Баланс тепла");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskBalTeplo));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

@@ -28,16 +28,11 @@ namespace PluginPrjSourceGroup
             : base()
         {
             _Id = 14;
-
-            _nameOwnerMenuItem = @"Проект";
-            _nameMenuItem = @"Группы источников данных";
+            register(14, typeof(PanelPrjSourceGroup), @"Проект", @"Группы источников данных");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelPrjSourceGroup));
-            //createObject(this.GetType());
-
             base.OnClickMenuItem(obj, ev);
         }
     }

@@ -45,15 +45,11 @@ namespace PluginTaskEng6Graf
             : base()
         {
             _Id = 26;
-
-            _nameOwnerMenuItem = @"Задача";
-            _nameMenuItem = @"Графики 3-х мин";
+            register(26, typeof(PanelTaskEng6Graf), @"Задача", @"Графики 3-х мин");
         }
 
-        public override void OnClickMenuItem(object obj, EventArgs ev)
+        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
-            createObject(typeof(PanelTaskEng6Graf));
-
             base.OnClickMenuItem(obj, ev);
         }
     }

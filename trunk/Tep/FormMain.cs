@@ -31,10 +31,11 @@ namespace Tep64
         /// <summary>
         /// Объект со списком загруженных библиотек
         /// </summary>
-        private static HPlugIns s_plugIns;        
+        private static HPlugIns s_plugIns;
+
+        //private event PlugInMenuItem.PlugInMenuItemEventHandler EventPlugInMenuItemClick;
         /// <summary>
         /// Конструктор - основной (без параметров)
-        /// </summary>
         public FormMain() : base ()
         {
             InitializeComponent();
@@ -87,18 +88,21 @@ namespace Tep64
             //ToolStripItem[] menuItems;
             //Вариант №2
             ToolStripItem menuItem;
+            int id = -1;
 
-            foreach (string id in arIds)
+            foreach (string strId in arIds)
             {
-                if (s_plugIns.ContainsKey(Convert.ToInt32(id)) == true)
+                id = Convert.ToInt32(strId);
+
+                if (s_plugIns.ContainsKey(id) == true)
                 {
                     plugIn = s_plugIns[Convert.ToInt32(id)] as PlugInMenuItem;
                     if (plugIn == null)
                         continue;
                     else
                         ;
-                    strNameOwnerMenuItem = plugIn.NameOwnerMenuItem;
-                    strNameMenuItem = plugIn.NameMenuItem;
+                    strNameOwnerMenuItem = plugIn.GetNameOwnerMenuItem (id);
+                    strNameMenuItem = plugIn.GetNameMenuItem (id);
 
                     ////Вариант №1
                     //menuItems = this.MainMenuStrip.Items.Find(strNameMenuItem, true);
@@ -284,7 +288,7 @@ namespace Tep64
         /// <param name="obj">Объект, инициировавший событие (плюгИн вкладки)</param>
         private void FormMain_EvtDataAskedHost(object obj)
         {
-            this.BeginInvoke(new DelegateObjectFunc(onClickMenuItem), obj);
+            this.BeginInvoke(new DelegateObjectFunc(postOnClickMenuItem), obj);
         }
         /// <summary>
         /// Дополнительные действия по инициализации плюг'ина
@@ -346,9 +350,10 @@ namespace Tep64
                         , miItem = null;
                     string[] arHierarchyOwnerMenuItems;
                     //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
-                    foreach (IPlugIn plugIn in s_plugIns.Values) {
+                    foreach (KeyValuePair<int, PlugInMenuItem> pairKeyPlugIn in s_plugIns)
+                    {
                         arHierarchyOwnerMenuItems =
-                            (plugIn as PlugInMenuItem).NameOwnerMenuItem.Split(new char [] {'\\'}, StringSplitOptions.None);;
+                            pairKeyPlugIn.Value.GetNameOwnerMenuItem(pairKeyPlugIn.Key).Split(new char[] { '\\' }, StringSplitOptions.None); ;
                         //Поиск пункта "родительского" пункта меню для плюг'ина
                         miOwner = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[0]);
                         //Проверка найден ли "родительский" пункт меню для плюг'ина
@@ -384,13 +389,13 @@ namespace Tep64
                             miOwner = miItem;
                         }
                         //Добавить пункт меню для плюг'ина
-                        miItem = miOwner.DropDownItems.Add((plugIn as PlugInMenuItem).NameMenuItem) as ToolStripMenuItem;
+                        miItem = miOwner.DropDownItems.Add(pairKeyPlugIn.Value.GetNameMenuItem(pairKeyPlugIn.Key)) as ToolStripMenuItem;
                         //Обработку выбора пункта меню предоставить плюг'ину
-                        miItem.Click += (plugIn as PlugInMenuItem).OnClickMenuItem;
+                        miItem.Click += pairKeyPlugIn.Value.OnClickMenuItem; //postOnClickMenuItem;
                         //Добавить обработчик запросов для плюг'ина от главной формы
-                        (plugIn as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
+                        (pairKeyPlugIn.Value as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
 
-                        initializePlugIn(plugIn);                            
+                        initializePlugIn(pairKeyPlugIn.Value);                            
                     }
 
                     if (iRes == 0)
@@ -428,12 +433,18 @@ namespace Tep64
 
             return iRes;
         }
+
+        //private void onClickMenuItem(object obj, EventArgs ev)
+        //{
+        //    EventPlugInMenuItemClick(obj, new PlugInMenuItem.PlugInMenuItemEventArgs(-1));
+        //}
         /// <summary>
         /// Обработчик события выбора (отобразить/закрыть вкладку) п. меню
         /// </summary>
         /// <param name="obj">Объект загруженной библиотеки вкладки</param>
-        private void onClickMenuItem (object obj) {
-            PlugInMenuItem plugIn = s_plugIns[(int)((EventArgsDataHost)obj).id];
+        private void postOnClickMenuItem (object obj) {
+            int id = (int)((EventArgsDataHost)obj).id;
+            PlugInMenuItem plugIn = s_plugIns[id];
             bool bMenuItemChecked =
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked =
                 ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
@@ -441,11 +452,11 @@ namespace Tep64
             if (bMenuItemChecked == true)
             {
                 //Отобразить вкладку
-                m_TabCtrl.AddTabPage(plugIn.NameMenuItem, plugIn._Id, HTabCtrlEx.TYPE_TAB.FIXED);
-                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.Object);
+                m_TabCtrl.AddTabPage(plugIn.GetNameMenuItem(id), plugIn._Id, HTabCtrlEx.TYPE_TAB.FIXED);
+                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.GetObject (id));
             } else {
                 //Закрыть вкладку
-                m_TabCtrl.RemoveTabPage(plugIn.NameMenuItem);
+                m_TabCtrl.RemoveTabPage(plugIn.GetNameMenuItem(id));
             }
 
             if (m_iAutoActionTabs > 0)
