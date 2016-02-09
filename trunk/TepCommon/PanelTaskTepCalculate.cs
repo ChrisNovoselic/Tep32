@@ -17,10 +17,6 @@ namespace TepCommon
     public abstract partial class PanelTaskTepCalculate : HPanelTepCommon
     {
         /// <summary>
-        /// Индекс типа вкладки для текущего объекта
-        /// </summary>
-        protected HandlerDbTaskCalculate.TYPE m_type;
-        /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
         ///  "сырые" - от источников информации, "учтенные" - сохраненные в БД
         /// </summary>
@@ -171,11 +167,11 @@ namespace TepCommon
         /// <param name="strNameTableAlg">Строка - наименование таблицы с параметрами алгоритма расчета</param>
         /// <param name="strNameTablePut">Строка - наименование таблицы с параметрами, детализированных до принадлежности к компоненту станции (оборудования)</param>
         /// <param name="strNameTableValues">Строка - наименование таблицы со значениями</param>
-        protected PanelTaskTepCalculate(IPlugIn iFunc, HandlerDbTaskCalculate.TYPE type)
+        protected PanelTaskTepCalculate(IPlugIn iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc)
-        {
-            m_type = type;
+        {            
             HandlerDb.IdTask = ID_TASK.TEP;
+            HandlerDb.CreateTaskCalculate(type);
 
             InitializeComponents();
         }
@@ -339,7 +335,7 @@ namespace TepCommon
                 // список компонентов
                 , HandlerDb.GetQueryCompList ()
                 // параметры расчета
-                , HandlerDb.GetQueryParameters (m_type)
+                , HandlerDb.GetQueryParameters ()
                 //// настройки визуального отображения значений
                 //, @""
                 // режимы работы

@@ -20,7 +20,7 @@ namespace PluginTaskTepInval
         /// </summary>
         /// <param name="iFunc">Объект для связи с вызывающим приложением</param>
         public PanelTaskTepInval(IPlugIn iFunc)
-            : base(iFunc, HandlerDbTaskCalculate.TYPE.IN_VALUES)
+            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
@@ -104,7 +104,7 @@ namespace PluginTaskTepInval
                 m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(_IdSession
                     , ActualIdPeriod
                     , CountBasePeriod
-                    , m_type
+                    //, HandlerDb.Type
                     , arQueryRanges
                     , out err);
                 //Проверить признак выполнения запроса

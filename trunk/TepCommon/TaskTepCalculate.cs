@@ -16,6 +16,15 @@ namespace TepCommon
         public abstract class TaskCalculate : Object
         {
             /// <summary>
+            /// Перечисление - индексы типов вкладок (объектов наследуемых классов)
+            /// </summary>
+            public enum TYPE { UNKNOWN = -1, IN_VALUES, OUT_TEP_NORM_VALUES, OUT_VALUES, OUT_TEP_REALTIME, COUNT }
+            private TYPE _type;
+            /// <summary>
+            /// Индекс типа вкладки для текущего объекта
+            /// </summary>
+            public TYPE Type { get { return _type; } set { _type = value; } }
+            /// <summary>
             /// Перечисление - индексы таблиц, передаваемых объекту в качестве элементов массива-аргумента
             /// </summary>
             public enum INDEX_DATATABLE : short
@@ -77,6 +86,10 @@ namespace TepCommon
                         /// </summary>
                         public float value;
                         /// <summary>
+                        /// Признак качества значения параметра
+                        /// </summary>
+                        public short m_sQuality;
+                        /// <summary>
                         /// Идентификатор 
                         /// </summary>
                         public int m_idRatio;
@@ -134,20 +147,83 @@ namespace TepCommon
             /// Словарь с расчетными ВЫХОДными параметрами - ключ - идентификатор в алгоритме расчета
             /// </summary>
             protected P_ALG Out;
+
+            public TaskCalculate(TYPE type)
+            {
+                Type = type;
+            }
+
+            public static INDEX_DBTABLE_NAME GetIndexNameDbTable (TYPE type, TABLE_CALCULATE_REQUIRED req)
+            {
+                INDEX_DBTABLE_NAME indxRes = INDEX_DBTABLE_NAME.UNKNOWN;
+                
+                switch (type)
+                {
+                    case TaskCalculate.TYPE.IN_VALUES:
+                        switch (req)
+                        {
+                            case TABLE_CALCULATE_REQUIRED.ALG:
+                                indxRes = INDEX_DBTABLE_NAME.INALG;
+                                break;
+                            case TABLE_CALCULATE_REQUIRED.PUT:
+                                indxRes = INDEX_DBTABLE_NAME.INPUT;
+                                break;
+                            case TABLE_CALCULATE_REQUIRED.VALUE:
+                                indxRes = INDEX_DBTABLE_NAME.INVALUES;
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case TaskCalculate.TYPE.OUT_TEP_NORM_VALUES:
+                    case TaskCalculate.TYPE.OUT_VALUES:
+                        switch (req)
+                        {
+                            case TABLE_CALCULATE_REQUIRED.ALG:
+                                indxRes = INDEX_DBTABLE_NAME.OUTALG;
+                                break;
+                            case TABLE_CALCULATE_REQUIRED.PUT:
+                                indxRes = INDEX_DBTABLE_NAME.OUTPUT;
+                                break;
+                            case TABLE_CALCULATE_REQUIRED.VALUE:
+                                indxRes = INDEX_DBTABLE_NAME.OUTVALUES;
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case TaskCalculate.TYPE.OUT_TEP_REALTIME:
+                        switch (req)
+                        {
+                            case TABLE_CALCULATE_REQUIRED.ALG:
+                                indxRes = INDEX_DBTABLE_NAME.INALG;
+                                break;
+                            case TABLE_CALCULATE_REQUIRED.PUT:
+                                indxRes = INDEX_DBTABLE_NAME.INPUT;
+                                break;
+                            case TABLE_CALCULATE_REQUIRED.VALUE:
+                                indxRes = INDEX_DBTABLE_NAME.INVALUES;
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                return indxRes;
+            }
             /// <summary>
             /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
             /// </summary>
             /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
             protected abstract void initValues(ListDATATABLE listDataTables);
-        }
-        /// <summary>
-        /// Перечисление - индексы типов вкладок (объектов наследуемых классов)
-        /// </summary>
-        public enum TYPE { UNKNOWN = -1, IN_VALUES, OUT_TEP_NORM_VALUES, OUT_VALUES, OUT_TEP_REALTIME, COUNT }
+        }        
         /// <summary>
         /// Класс для расчета технико-экономических показателей
         /// </summary>
-        public class TaskTepCalculate : TaskCalculate
+        public partial class TaskTepCalculate : TaskCalculate
         {
             int n_blokov;
             /// <summary>
@@ -185,7 +261,7 @@ namespace TepCommon
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public TaskTepCalculate()
+            public TaskTepCalculate(TYPE type) : base (type)
             {
                 In = new P_ALG();
                 Norm = new P_ALG();
@@ -242,6 +318,7 @@ namespace TepCommon
                                 //, m_iIdComponent = idComponent
                                 , m_bDeny = false
                                 , value = (float)(double)rVal[0][@"VALUE"]
+                                , m_sQuality = 0 // не рассчитывался
                                 , m_idRatio = (int)rPar[@"ID_RATIO"]
                                 , m_fMinValue = (float)rPar[@"MINVALUE"]
                                 , m_fMaxValue = (float)rPar[@"MAXVALUE"]
@@ -264,7 +341,7 @@ namespace TepCommon
             {
             }
             /// <summary>
-            /// Расчитать выходные значения
+            /// Расчитать выходные-нормативные значения
             /// </summary>
             /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
             /// <returns>Таблица нормативных значений, совместимая со структурой выходныъ значений в БД</returns>
@@ -272,35 +349,121 @@ namespace TepCommon
             {
                 DataTable tableRes = new DataTable();
 
-                int i = -1;
-                float fSum = -1F;
-
+                // инициализация входных значений
                 initValues(listDataTables);
+                // расчет
+                /*-------------1 - TAU раб-------------*/
+                Norm[@"1"][ST].value = calculateNormative(@"1");
+                /*---------------------------------------*/
 
-                /*-------------Пар. 1 TAU раб-------------*/
-                fSum = 0F;
-                for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                {
-                    fSum += In[@"1"][i].value;
-                    Norm[@"1"][i].value = In[@"1"][i].value;
-                }
-                Norm[@"1"][ST].value = fSum;
+                /*-------------2 - Э т-------------*/
+                Norm[@"2"][ST].value = calculateNormative(@"2");
+                /*---------------------------------------*/
 
-                /*-------------Пар. 2 Э т-------------*/
-                fSum = 0F;
-                for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                {
-                    fSum += In[@"2"][i].value;
-                    Norm[@"2"][i].value = In[@"2"][i].value;
-                }
-                Norm[@"2"][ST].value = fSum;
+                /*-------------3 - Q то-------------*/
+                Norm[@"3"][ST].value = calculateNormative(@"3");
+                /*---------------------------------------*/
 
-                /*-------------Пар. 3 Q то-------------*/
+                /*-------------4 - Q пп-------------*/
+                Norm[@"4"][ST].value = calculateNormative(@"4");
+                /*---------------------------------------*/
 
-                /*-------------Пар. 4 Q пп-------------*/
+                /*-------------5 - Q отп ст-------------*/
+                Norm[@"5"][ST].value = calculateNormative(@"5");
+                /*---------------------------------------*/
 
-                    return tableRes;
-            }
+                /*-------------6 - Q отп роу-------------*/
+                Norm[@"6"][ST].value = calculateNormative(@"6");
+                /*---------------------------------------*/
+
+                /*-------------7 - Q отп тепл-------------*/
+                Norm[@"7"][ST].value = calculateNormative(@"7");
+                /*---------------------------------------*/
+
+                /*-------------8 - Q отп-------------*/
+                Norm[@"8"][ST].value = calculateNormative(@"8");
+                /*---------------------------------------*/
+
+                /*-------------9 - N т-------------*/
+                Norm[@"9"][ST].value = calculateNormative(@"9");
+                /*---------------------------------------*/
+
+                /*-------------10 - Q т ср-------------*/
+                Norm[@"10"][ST].value = calculateNormative(@"10");
+                /*---------------------------------------*/
+
+                /*-------------10.1 P вто-------------*/
+                calculateNormative(@"10.1");
+                /*---------------------------------------*/
+
+                /*-------------11 - Q роу ср-------------*/
+                Norm[@"11"][ST].value = calculateNormative(@"11");
+                /*---------------------------------------*/
+
+                /*-------------12 - q т бр (исх)-------------*/
+                calculateNormative(@"12");
+                /*---------------------------------------*/
+
+                /*-------------13 - G о-------------*/
+                calculateNormative(@"13");
+                /*---------------------------------------*/
+
+                /*-------------14 - G 2-------------*/
+                Norm[@"14"][ST].value = calculateNormative(@"14");
+                /*---------------------------------------*/
+
+                /*-------------15 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------16 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------17 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------18 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------19 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------20 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------21 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------22 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------23 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------24 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------25 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------26 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------27 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------28 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------29 -------------*/
+                /*---------------------------------------*/
+
+                /*-------------30 -------------*/
+                /*---------------------------------------*/
+
+                // преобразование в таблицу
+
+                return tableRes;
+            }            
             /// <summary>
             /// Расчитать выходные значения
             /// </summary>
@@ -310,7 +473,17 @@ namespace TepCommon
             {
                 DataTable tableRes = new DataTable();
 
+                // инициализация входных значений
                 initValues(listDataTables);
+
+                // расчет
+                foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Norm)
+                    pAlg.Value[ST].value = calculateNormative(pAlg.Key);
+
+                foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Out)
+                    pAlg.Value[ST].value = calculateMaket(pAlg.Key);
+
+                // преобразование в таблицу
 
                 return tableRes;
             }

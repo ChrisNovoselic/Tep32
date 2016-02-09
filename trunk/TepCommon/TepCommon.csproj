@@ -81,6 +81,8 @@
     </Compile>
     <Compile Include="TaskTepCalculate.cs" />
     <Compile Include="HandlerDbValues.cs" />
+    <Compile Include="TaskTepNTEC5NormCalculate.cs" />
+    <Compile Include="TaskTepNTEC5MktCalculate.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

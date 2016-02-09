@@ -15,7 +15,7 @@ namespace PluginTaskTepRealTime
     public partial class PanelTaskTepRealTime : PanelTaskTepCalculate
     {
         public PanelTaskTepRealTime(IPlugIn iFunc)
-            : base(iFunc, HandlerDbTaskCalculate.TYPE.OUT_TEP_REALTIME)
+            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME)
         {
             InitializeComponent();
             //Обязательно наличие объекта - панели управления

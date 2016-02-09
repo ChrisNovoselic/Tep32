@@ -21,7 +21,7 @@ namespace TepCommon
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
-        protected PanelTaskTepOutVal(IPlugIn iFunc, HandlerDbTaskCalculate.TYPE type)
+        protected PanelTaskTepOutVal(IPlugIn iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc, type)
         {
             InitializeComponents();
