@@ -245,7 +245,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 14 -
+                    #region 14 - G 2
                     case @"14":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -258,10 +258,10 @@ namespace TepCommon
                                     break;
                                 case 2: //[MODE_DEV].2 - Электр.граф (2 ст.)
                                 case 4: //[MODE_DEV].3 - По тепл. граф.
-                                    fTmp = fTable.F3(@"2.3á:3", Norm[@"13"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
+                                    fTmp = fTable.F3(@"2.3а:3", Norm[@"13"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
                                     break;
                                 case 3: //[MODE_DEV].2а - Электр.граф (1 ст.)
-                                    fTmp = fTable.F3(@"2.3à:3", Norm[@"13"][i].value, Norm[@"10"][i].value, In[@"38"][i].value);
+                                    fTmp = fTable.F3(@"2.3а:3", Norm[@"13"][i].value, Norm[@"10"][i].value, In[@"38"][i].value);
                                     break;
                                 default:
                                     Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);

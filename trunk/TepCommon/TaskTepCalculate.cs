@@ -250,6 +250,8 @@ namespace TepCommon
                     BL1, BL2, BL3, BL4, BL5, BL6
                     , ST
             };
+
+            private INDX_COMP m_indxCompRealTime;
             /// <summary>
             /// Объект, обеспечивающий вычисление нормативных значений при работе оборудования ТЭЦ
             /// </summary>
