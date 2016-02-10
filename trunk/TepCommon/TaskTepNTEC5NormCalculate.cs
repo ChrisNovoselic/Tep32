@@ -39,6 +39,7 @@ namespace TepCommon
                 int i = -1; // переменная цикла
                 float fSum = 0F // промежуточная величина
                     , fTmp = -1F;
+                float []fRunkValues = new float [(int)FTable.FRUNK.COUNT];
 
                 switch (nAlg)
                 {
@@ -55,7 +56,7 @@ namespace TepCommon
 
                     #region 3 - Q то
                     case @"3": //Q то
-                        if (Type == TYPE.OUT_TEP_REALTIME)
+                        if (isRealTime == true)
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
                                 if (In[@"47"][i].value / In[@"1"][i].value < 0.7F)
@@ -76,7 +77,7 @@ namespace TepCommon
 
                     #region 4 - Q пп
                     case @"4": //Q пп
-                        if (Type == TYPE.OUT_TEP_REALTIME)
+                        if (isRealTime == true)
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
                                 if (Norm[@"3"][i].value == 0F)
@@ -105,7 +106,7 @@ namespace TepCommon
                     case @"6": //Q отп роу
                         fRes = In[@"82"][ST].value;
 
-                        if (Type == TYPE.OUT_TEP_REALTIME)
+                        if (isRealTime == true)
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                                 Norm[nAlg][i].value = Norm[@"4"][i].value / 2;
                         else
@@ -127,7 +128,7 @@ namespace TepCommon
                     case @"7":
                         fRes = Norm[@"5"][ST].value - Norm[@"6"][ST].value - In[@"85"][ST].value;
 
-                        if (Type == TYPE.OUT_TEP_REALTIME)
+                        if (isRealTime == true)
                         {
                             fTmp = qSeason ? 0.97F : 0.95F;
                             //16 мая - 30 сентября, 1 октября - 15 мая
@@ -233,7 +234,7 @@ namespace TepCommon
                                     fTmp = fTable.F3(@"2.87:3", Norm[@"9"][i].value, Norm[@"10"][i].value, In[@"38"][i].value);
                                     break;
                                 case 4: //[MODE_DEV].3 - По тепл. граф.
-                                    fTmp = fTable.F3(@"2.2:3", Norm[@"9"][i].value, Norm[@"10.1"][i].value);
+                                    fTmp = fTable.F3(@"2.2:3", Norm[@"9"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
                                     break;
                                 default:
                                     Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -269,13 +270,45 @@ namespace TepCommon
                             }
 
                             Norm[nAlg][i].value = fTmp - In[@"46"][i].value / 0.7F / In[@"1"][i].value;
+                            fSum += Norm[nAlg][i].value;
                         }
 
-                        fRes = -1F;
+                        if (isRealTimeBL1456 == true)
+                            //??? почему умножаем на кол-во блоков
+                            //??? как определяется кол-во блоков
+                            Norm[nAlg][ST].value = fSum * n_blokov1;
+                        else
+                            Norm[nAlg][ST].value = fSum;
                         break;
                     #endregion
 
-                    #region 15 -
+                    #region 14.1 - G цв
+                    case @"14.1":
+                        if (In[@"70"][ST].value == 0F)
+                            fRes = 0F;
+                        else
+                        {
+                            fTmp = (isRealTimeBL1456 == true) ? n_blokov1 : In[@"89"][ST].value;
+                            fRunkValues[(int)FTable.FRUNK.F1] = fTmp;
+                            fRunkValues[(int)FTable.FRUNK.F2] = (float)Math.Round ((decimal)(In[@"6"][ST].value / In[@"70"][ST].value / 1.9F), 1);
+
+                            fRes = fTable.F2 (@"2.4а:2", fRunkValues[(int)FTable.FRUNK.F1], fRunkValues[(int)FTable.FRUNK.F2]);
+                        }
+                        break;
+                    #endregion
+
+                    #region 15 - P 2 (н)
+                    case @"15":
+                        fRunkValues[(int)FTable.FRUNK.F3] = -1F;
+
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"14"][i].value;
+                            fRunkValues[(int)FTable.FRUNK.F2] = In[@"28"][i].value; ;                            
+
+                            Norm[nAlg][i].value = fTable.F3 (@"2.4:3", fRunkValues);
+                        }
+                        break;
                     #endregion
 
                     #region 16 -

@@ -694,17 +694,39 @@ namespace TepCommon
 
         public float F1(string nameALG, float arg)
         {
-            return Calculate(nameALG, FRUNK.F1, new float [] { arg });
+            return Calculate(nameALG, FRUNK.F1, arg);
         }
 
-        public float F2(string nameALG, params float[] args)
+        //public float F2(string nameALG, params float[] args)
+        //{
+        //    return Calculate(nameALG, FRUNK.F2, args);
+        //}
+
+        public float F2(string nameALG, float[] args)
         {
-            return Calculate(nameALG, FRUNK.F2, args);
+            ///??? проверить длину массива
+            return Calculate(nameALG, FRUNK.F2, args[(int)FRUNK.F1], args[(int)FRUNK.F2]);
         }
 
-        public float F3(string nameALG, params float[] args)
+        public float F2(string nameALG, float argRunk1, float argRunk2)
         {
-            return Calculate(nameALG, FRUNK.F3, args);
+            return Calculate(nameALG, FRUNK.F2, argRunk1, argRunk2);
+        }
+
+        //public float F3(string nameALG, params float[] args)
+        //{
+        //    return Calculate(nameALG, FRUNK.F3, args);
+        //}
+
+        public float F3(string nameALG, float[] args)
+        {
+            ///??? проверить длину массива
+            return Calculate(nameALG, FRUNK.F3, args[(int)FRUNK.F1], args[(int)FRUNK.F2], args[(int)FRUNK.F3]);
+        }
+
+        public float F3(string nameALG, float argRunk1, float argRunk2, float argRunk3)
+        {
+            return Calculate(nameALG, FRUNK.F3, argRunk1, argRunk2, argRunk3);
         }
     }
 }

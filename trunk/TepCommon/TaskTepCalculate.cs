@@ -24,6 +24,8 @@ namespace TepCommon
             /// Индекс типа вкладки для текущего объекта
             /// </summary>
             public TYPE Type { get { return _type; } set { _type = value; } }
+
+            protected virtual bool isRealTime { get { return Type == TYPE.OUT_TEP_REALTIME; } }
             /// <summary>
             /// Перечисление - индексы таблиц, передаваемых объекту в качестве элементов массива-аргумента
             /// </summary>
@@ -225,7 +227,26 @@ namespace TepCommon
         /// </summary>
         public partial class TaskTepCalculate : TaskCalculate
         {
-            int n_blokov;
+            /// <summary>
+            /// Признак расчета ТЭП-оперативно
+            /// </summary>
+            protected override bool isRealTime { get { return ! (m_indxCompRealTime == INDX_COMP.UNKNOWN); } }
+
+            private bool isRealTimeBL1456
+            {
+                get
+                {
+                    return (m_indxCompRealTime == INDX_COMP.iBL1)
+                        || (m_indxCompRealTime == INDX_COMP.iBL4)
+                        || (m_indxCompRealTime == INDX_COMP.iBL5)
+                        || (m_indxCompRealTime == INDX_COMP.iBL6);
+                }
+            }
+            /// <summary>
+            /// ???
+            /// </summary>
+            int n_blokov
+                , n_blokov1;
             /// <summary>
             /// Перечисления индексы для массива идентификаторов компонентов оборудования ТЭЦ
             /// </summary>
@@ -250,7 +271,9 @@ namespace TepCommon
                     BL1, BL2, BL3, BL4, BL5, BL6
                     , ST
             };
-
+            /// <summary>
+            /// Индекс целевого компонента ТЭЦ при расчете ТЭП-оперативно
+            /// </summary>
             private INDX_COMP m_indxCompRealTime;
             /// <summary>
             /// Объект, обеспечивающий вычисление нормативных значений при работе оборудования ТЭЦ
@@ -265,6 +288,8 @@ namespace TepCommon
             /// </summary>
             public TaskTepCalculate(TYPE type) : base (type)
             {
+                m_indxCompRealTime = INDX_COMP.UNKNOWN;
+
                 In = new P_ALG();
                 Norm = new P_ALG();
                 Out = new P_ALG();
@@ -414,7 +439,12 @@ namespace TepCommon
                 Norm[@"14"][ST].value = calculateNormative(@"14");
                 /*---------------------------------------*/
 
-                /*-------------15 -------------*/
+                /*-------------14.1 - G цв-------------*/
+                Norm[@"14.1"][ST].value = calculateNormative(@"14.1");
+                /*---------------------------------------*/
+
+                /*-------------15 - P 2 (н)-------------*/
+                calculateNormative(@"15");
                 /*---------------------------------------*/
 
                 /*-------------16 -------------*/
