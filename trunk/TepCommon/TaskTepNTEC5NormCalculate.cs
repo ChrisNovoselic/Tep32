@@ -26,7 +26,13 @@ namespace TepCommon
                         || ((DateTime.Now.Month == 5) && (DateTime.Now.Day > 15));
                 }
             }
-            
+            /// <summary>
+            /// Зафиксировать в журнале сообщение об ошибке - неизвестный тип режима работы оборудования
+            /// </summary>
+            private void logErrorUnknownModeDev(string nAlg)
+            {
+                Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }            
             /// <summary>
             /// Рассчитать значения для параметра в алгоритме расчета по идентификатору
             /// </summary>
@@ -39,7 +45,10 @@ namespace TepCommon
                 int i = -1; // переменная цикла
                 float fSum = 0F // промежуточная величина
                     , fTmp = -1F;
-                float []fRunkValues = new float [(int)FTable.FRUNK.COUNT];
+                float[] fRunkValues = new float[(int)FTable.FRUNK.COUNT];
+                // только для вычисления пар.20 - 4-х мерная функция
+                string nameF4 = string.Empty; 
+                float [,]fRunk4 = null;
 
                 switch (nAlg)
                 {
@@ -192,22 +201,22 @@ namespace TepCommon
                         {
                             fTmp = 0F;
 
-                            switch ((short)In[@"74"][i].value)
+                            switch (_modeDev[i])
                             {
-                                case 1: //[MODE_DEV].1 - Конденсационный
+                                case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
                                     fTmp = fTable.F1(@"2.40:1", Norm[@"9"][i].value);
                                     break;
-                                case 2: //[MODE_DEV].2 - Электр.граф (2 ст.)
+                                case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
                                     fTmp = fTable.F3(@"2.1:3", Norm[@"9"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
                                     break;
-                                case 3: //[MODE_DEV].2а - Электр.граф (1 ст.)
+                                case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
                                     fTmp = fTable.F3(@"2.86:3", Norm[@"9"][i].value, Norm[@"10"][i].value, In[@"38"][i].value);
                                     break;
-                                case 4: //[MODE_DEV].3 - По тепл. граф.
+                                case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
                                     fTmp = fTable.F2(@"2.50:2", Norm[@"9"][i].value, Norm[@"10.1"][i].value);
                                     break;
                                 default:
-                                    Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
+                                    logErrorUnknownModeDev(nAlg);
                                     break;
                             }
 
@@ -222,22 +231,22 @@ namespace TepCommon
                         {
                             fTmp = 0F;
 
-                            switch ((short)In[@"74"][i].value)
+                            switch (_modeDev[i])
                             {
-                                case 1: //[MODE_DEV].1 - Конденсационный
+                                case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
                                     fTmp = fTable.F1(@"2.55:1", Norm[@"9"][i].value);
                                     break;
-                                case 2: //[MODE_DEV].2 - Электр.граф (2 ст.)
+                                case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
                                     fTmp = fTable.F3(@"2.2:3", Norm[@"9"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
                                     break;
-                                case 3: //[MODE_DEV].2а - Электр.граф (1 ст.)
+                                case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
                                     fTmp = fTable.F3(@"2.87:3", Norm[@"9"][i].value, Norm[@"10"][i].value, In[@"38"][i].value);
                                     break;
-                                case 4: //[MODE_DEV].3 - По тепл. граф.
+                                case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
                                     fTmp = fTable.F3(@"2.2:3", Norm[@"9"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
                                     break;
                                 default:
-                                    Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
+                                    logErrorUnknownModeDev(nAlg);
                                     break;
                             }
 
@@ -252,20 +261,20 @@ namespace TepCommon
                         {
                             fTmp = 0F;
 
-                            switch ((short)In[@"74"][i].value)
+                            switch (_modeDev[i])
                             {
-                                case 1: //[MODE_DEV].1 - Конденсационный
+                                case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
                                     fTmp = fTable.F1(@"2.3:1", Norm[@"13"][i].value);
                                     break;
-                                case 2: //[MODE_DEV].2 - Электр.граф (2 ст.)
-                                case 4: //[MODE_DEV].3 - По тепл. граф.
-                                    fTmp = fTable.F3(@"2.3а:3", Norm[@"13"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
+                                case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
+                                case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
+                                    fTmp = fTable.F3(@"2.3б:3", Norm[@"13"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
                                     break;
-                                case 3: //[MODE_DEV].2а - Электр.граф (1 ст.)
+                                case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
                                     fTmp = fTable.F3(@"2.3а:3", Norm[@"13"][i].value, Norm[@"10"][i].value, In[@"38"][i].value);
                                     break;
                                 default:
-                                    Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
+                                    logErrorUnknownModeDev(nAlg);
                                     break;
                             }
 
@@ -304,26 +313,250 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"14"][i].value;
-                            fRunkValues[(int)FTable.FRUNK.F2] = In[@"28"][i].value; ;                            
+                            fRunkValues[(int)FTable.FRUNK.F2] = In[@"28"][i].value;
 
                             Norm[nAlg][i].value = fTable.F3 (@"2.4:3", fRunkValues);
                         }
                         break;
                     #endregion
 
-                    #region 16 -
+                    #region 15.1 - dQ э (P2)
+                    case @"15.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"15"][i].value;
+                            fRunkValues[(int)FTable.FRUNK.F2] = Norm[@"14"][i].value;
+
+                            Norm[nAlg][i].value = fTable.F2(@"2.84:2", fRunkValues);
+                        }
+                        break;
                     #endregion
 
-                    #region 17 -
+                    #region 16 - dQ бр (P2)
+                    case @"16":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Norm[nAlg][i].value = 1000 * Norm[@"15.1"][i].value / Norm[@"9"][i].value;
+                        }
+                        break;
                     #endregion
 
-                    #region 18 -
+                    #region 17 - dqт бр (P2)
+                    case @"17":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            fTmp = 0F;
+
+                            switch (_modeDev[i])
+                            {
+                                case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
+                                    fTmp = fTable.F1(@"2.5а:1", Norm[@"13"][i].value);
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
+                                case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
+                                case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
+                                    fTmp = fTable.F2(@"2.5:2", Norm[@"13"][i].value, Norm[@"10"][i].value);
+                                    break;
+                                default:
+                                    logErrorUnknownModeDev(nAlg);
+                                    break;
+                            }
+
+                            Norm[nAlg][i].value = fTmp * Norm[@"11"][i].value;
+                        }
+                        break;
                     #endregion
 
-                    #region 19 -
+                    #region 18 - t 2(н)
+                    case @"18":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            fTmp = 0F;
+
+                            switch (_modeDev[i])
+                            {
+                                case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
+                                    fTmp = -1F;
+                                    Logging.Logg().Warning(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - не расчитывается при режиме '1 - Конденсационный'...", Logging.INDEX_MESSAGE.NOT_SET);
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
+                                    fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][i].value);
+                                    break;
+                                case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
+                                    fTmp = fTable.F1(@"2.89:1", Norm[@"38"][i].value);
+                                    break;
+                                case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
+                                    fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][i].value);
+                                    break;
+                                default:
+                                    logErrorUnknownModeDev(nAlg);
+                                    break;
+                            }
+
+                            Norm[nAlg][i].value = fTmp;
+                        }
+                        break;
                     #endregion
 
-                    #region 20 -
+                    #region 19 - dt 2
+                    case @"19":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                            Norm[nAlg][i].value = In[@"49"][i].value - Norm[@"18"][i].value;
+                        break;
+                    #endregion
+
+                    #region 20 - dqт бр (t 2)
+                    case @"20":
+                        nameF4 = @"2.7";
+                        fRunk4 = new float[2, (int)(INDX_COMP.COUNT - 1)];
+                        // для левой границы [0, i] 4-х мерной функции
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            fTmp = Norm[@"10.1"][i].value;
+
+                            switch (_modeDev[i])
+                            {
+                                case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
+                                case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
+                                    fRunk4[0, i] = 0F;
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
+                                case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
+                                    if (fTmp < 0.8F)
+                                        ;
+                                    else
+                                        if ((!(fTmp < 0.8F)) && (!(fTmp > 0.99F)))
+                                            ;
+                                        else
+                                            if ((!(fTmp < 1.0F)) && (!(fTmp > 1.19F)))
+                                                nameF4 += @"а";
+                                            else
+                                                if ((!(fTmp < 1.2F)) && (!(fTmp > 1.39F)))
+                                                    nameF4 += @"б";
+                                                else
+                                                    if ((!(fTmp < 1.4F)) && (!(fTmp > 1.59F)))
+                                                        nameF4 += @"в";
+                                                    else
+                                                        if ((!(fTmp < 1.6F)) && (!(fTmp > 1.79F)))
+                                                            nameF4 += @"г";
+                                                        else
+                                                            if (!(fTmp < 1.8F))
+                                                                nameF4 += @"д";
+                                                            else
+                                                                ;
+                                    if (! (Norm[@"19"][i].value < 0))
+                                        nameF4 += @"+";
+                                    else
+                                        nameF4 += @"-";
+
+                                    nameF4 += @":3";
+
+                                    fRunk4[0, i] = fTable.F3(nameF4, Norm[@"13"][i].value, Norm[@"10"][i].value, Norm[@"19"][i].value);
+                                    break;
+                                default:
+                                    logErrorUnknownModeDev(nAlg);
+                                    break;
+                            }
+                        }
+
+                        nameF4 = @"2.7";
+                        // для правой границы [1, i] 4-х мерной функции
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            fTmp = Norm[@"10.1"][i].value;
+
+                            switch (_modeDev[i])
+                            {
+                                case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
+                                case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
+                                    fRunk4[1, i] = 0F;
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
+                                case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
+                                    if (fTmp < 0.8F)
+                                        ;
+                                    else                                            
+                                        if ((!(fTmp < 0.8F)) && (!(fTmp > 0.99F)))
+                                            nameF4 += @"а";
+                                        else
+                                            if ((!(fTmp < 1.0F)) && (!(fTmp > 1.19F)))
+                                                nameF4 += @"б";
+                                            else
+                                                if ((!(fTmp < 1.2F)) && (!(fTmp > 1.39F)))
+                                                    nameF4 += @"в";
+                                                else
+                                                    if ((!(fTmp < 1.4F)) && (!(fTmp > 1.59F)))
+                                                        nameF4 += @"г";
+                                                    else
+                                                        if ((!(fTmp < 1.6F)) && (!(fTmp > 1.79F)))
+                                                            nameF4 += @"д";
+                                                        else
+                                                            if (!(fTmp < 1.8F))
+                                                                nameF4 += @"е";
+                                                            else
+                                                                ;
+                                    if (!(Norm[@"19"][i].value < 0))
+                                        nameF4 += @"+";
+                                    else
+                                        nameF4 += @"-";
+
+                                    nameF4 += @":3";
+
+                                    fRunk4[1, i] = fTable.F3(nameF4, Norm[@"13"][i].value, Norm[@"10"][i].value, Norm[@"19"][i].value);
+                                    break;
+                                default:
+                                    logErrorUnknownModeDev(nAlg);
+                                    break;
+                            }
+                        }
+
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            fTmp = Norm[@"10.1"][i].value;
+
+                            switch (_modeDev[i])
+                            {
+                                case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
+                                case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
+                                case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
+                                    if (fTmp < 0.8F)
+                                        Norm[nAlg][i].value = fRunk4[0, i];
+                                    else                                            
+                                        if ((!(fTmp < 0.8F)) && (!(fTmp > 0.99F)))
+                                            Norm[nAlg][i].value = (fRunk4[0, i] * (0.99F - fTmp) + fRunk4[1, i] * (fTmp - 0.8F)) / 0.19F;
+                                        else
+                                            if ((!(fTmp < 1.0F)) && (!(fTmp > 1.19F)))
+                                                Norm[nAlg][i].value = (fRunk4[0, i] * (1.19F - fTmp) + fRunk4[1, i] * (fTmp - 1.0F)) / 0.19F;
+                                            else
+                                                if ((!(fTmp < 1.2F)) && (!(fTmp > 1.39F)))
+                                                    Norm[nAlg][i].value = (fRunk4[0, i] * (1.39F - fTmp) + fRunk4[1, i] * (fTmp - 1.2F)) / 0.19F;
+                                                else
+                                                    if ((!(fTmp < 1.4F)) && (!(fTmp > 1.59F)))
+                                                        Norm[nAlg][i].value = (fRunk4[0, i] * (1.59F - fTmp) + fRunk4[1, i] * (fTmp - 1.4F)) / 0.19F;
+                                                    else
+                                                        if ((!(fTmp < 1.6F)) && (!(fTmp > 1.79F)))
+                                                            Norm[nAlg][i].value = (fRunk4[0, i] * (1.79F - fTmp) + fRunk4[1, i] * (fTmp - 1.6F)) / 0.19F;
+                                                        else
+                                                            if (!(fTmp < 1.8F))
+                                                                Norm[nAlg][i].value = (fRunk4[0, i] * (1.99F - fTmp) + fRunk4[1, i] * (fTmp - 1.8F)) / 0.19F;
+                                                            else
+                                                                Norm[nAlg][i].value = fRunk4[1, i];
+                                    break;
+                                default:
+                                    logErrorUnknownModeDev(nAlg);
+                                    break;
+                            }
+                        }
+
+                        //??? - зачем предыдущие вычисления, если есть прямая ~ от пар.19 ???
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                            if (Norm[@"19"][i].value == 0F)
+                                Norm[nAlg][i].value = 0F;
+                            else
+                                ;
+                        break;
                     #endregion
 
                     #region 21 -
