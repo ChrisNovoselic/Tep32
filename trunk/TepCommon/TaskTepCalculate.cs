@@ -82,11 +82,23 @@ namespace TepCommon
                         /// Признак запрета на расчет/обновление/использование значения
                         /// </summary>
                         public bool m_bDeny;
+                        private float _value;
                         /// <summary>
                         /// Значение параметра в алгоритме расчета для компонента станции
                         ///  , при оформлении исключение из правила (для минимизации кодирования)
                         /// </summary>
-                        public float value;
+                        public float value
+                        {
+                            get { return _value; }
+
+                            set
+                            {
+                                if (m_bDeny == false)
+                                    _value = value;
+                                else
+                                    ;
+                            }
+                        }
                         /// <summary>
                         /// Признак качества значения параметра
                         /// </summary>
@@ -101,8 +113,6 @@ namespace TepCommon
                         public float m_fMinValue;
                         public float m_fMaxValue;
                     }
-
-                    //public Dictionary<int, P_ALG.P_PUT> values;
                 }
             }
             /// <summary>
@@ -220,7 +230,71 @@ namespace TepCommon
             /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
             /// </summary>
             /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
-            protected abstract void initValues(ListDATATABLE listDataTables);
+            protected abstract int initValues(ListDATATABLE listDataTables);
+            /// <summary>
+            /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
+            /// </summary>
+            /// <param name="pAlg">Объект - словарь структур для расчета</param>
+            /// <param name="tablePar">Таблица с параметрами</param>
+            /// <param name="tableVal">Таблица со значениями</param>
+            protected int initValues(P_ALG pAlg, DataTable tablePar, DataTable tableVal)
+            {
+                int iRes = 0; //Предположение, что ошибки нет
+                
+                DataRow[] rVal = null;
+                int idPut = -1
+                    , idComponent = -1;
+                string strNAlg = string.Empty;
+
+                // цикл по всем параметрам расчета
+                foreach (DataRow rPar in tablePar.Rows)
+                {
+                    // найти соответствие параметра в алгоритме расчета и значения для него
+                    idPut = (int)rPar[@"ID"];
+                    // идентификатор параметра в алгоритме расчета - ключ для словаря с его характеристиками
+                    strNAlg = ((string)rPar[@"N_ALG"]).Trim();
+                    rVal = tableVal.Select(@"ID_PUT=" + idPut);
+                    // проверить успешность нахождения соответствия
+                    if (rVal.Length == 1)
+                    {
+                        if (pAlg.ContainsKey(strNAlg) == false)
+                        {// добавить параметр в алгоритме расчета
+                            pAlg.Add(strNAlg, new P_ALG.P_PUT());
+
+                            pAlg[strNAlg].m_sAVG = (Int16)rPar[@"AVG"];
+                            pAlg[strNAlg].m_bDeny = false;
+                        }
+                        else
+                            ;
+                        // идентификатор компонента станции - ключ для словаря со значением и характеристиками для него
+                        idComponent = (int)rPar[@"ID_COMP"];
+
+                        if (pAlg[strNAlg].ContainsKey(idComponent) == false)
+                            pAlg[strNAlg].Add(idComponent, new P_ALG.P_PUT.P_VAL()
+                            // добавить параметр компонента в алгоритме расчета
+                            {
+                                m_iId = idPut
+                                //, m_iIdComponent = idComponent
+                                , m_bDeny = false
+                                , value = (float)(double)rVal[0][@"VALUE"]
+                                , m_sQuality = 0 // не рассчитывался
+                                , m_idRatio = (int)rPar[@"ID_RATIO"]
+                                , m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (int)rPar[@"MINVALUE"] //??? - ошибка д.б. float
+                                , m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (int)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
+                            });
+                        else
+                            ;
+                    }
+                    else
+                    {// ошибка - не найдено соответствие параметр-значение
+                        iRes = -1;
+
+                        Logging.Logg().Error(@"TaskCalculate::initValues (ID_PUT=" + idPut + @") - не найдено соответствие параметра и значения...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
+                }
+
+                return iRes;
+            }
         }        
         /// <summary>
         /// Класс для расчета технико-экономических показателей
@@ -305,108 +379,90 @@ namespace TepCommon
 
                 fTable = new FTable();
             }
-            /// <summary>
-            /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
-            /// </summary>
-            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
-            protected override void initValues(ListDATATABLE listDataTables)
-            {
-                fTable.Set(listDataTables.FindDataTable (INDEX_DATATABLE.FTABLE));
 
-                initInValues(listDataTables.FindDataTable(INDEX_DATATABLE.IN_PARAMETER)
+            protected override int initValues(ListDATATABLE listDataTables)
+            {
+                int iRes = -1;
+
+                // инициализация нормативных значений для оборудования
+                fTable.Set(listDataTables.FindDataTable(INDEX_DATATABLE.FTABLE));
+                // инициализация входных значений
+                iRes = initInValues(listDataTables.FindDataTable(INDEX_DATATABLE.IN_PARAMETER)
                     , listDataTables.FindDataTable(INDEX_DATATABLE.IN_VALUES));
+
+                // инициализация выходных-нормативных значений
+                iRes = initNormValues(listDataTables.FindDataTable(INDEX_DATATABLE.OUT_NORM_PARAMETER)
+                    , listDataTables.FindDataTable(INDEX_DATATABLE.OUT_NORM_VALUES));
+
+                return iRes;
             }
 
-            private void initInValues(DataTable tablePar, DataTable tableVal)
+            private int initInValues(DataTable tablePar, DataTable tableVal)
             {
-                DataRow[] rVal = null;
-                int idPut = -1
-                    , idComponent = -1;
-                string strNAlg = string.Empty;
+                int iRes = 0;
+                
                 MODE_DEV mDev = MODE_DEV.UNKNOWN;
 
-                // цикл по всем параметрам расчета
-                foreach (DataRow rPar in tablePar.Rows)
-                {
-                    // найти соответствие параметра в алгоритме расчета и значения для него
-                    idPut = (int)rPar[@"ID"];
-                    // идентификатор параметра в алгоритме расчета - ключ для словаря с его характеристиками
-                    strNAlg = ((string)rPar[@"N_ALG"]).Trim ();
-                    rVal = tableVal.Select (@"ID_PUT=" + idPut);
-                    // проверить успешность нахождения соответствия
-                    if (rVal.Length == 1)
-                    {
-                        if (In.ContainsKey(strNAlg) == false)
-                        {// добавить параметр в алгоритме расчета
-                            In.Add(strNAlg, new P_ALG.P_PUT());
+                iRes = initValues(In, tablePar, tableVal);
 
-                            In[strNAlg].m_sAVG = (Int16)rPar[@"AVG"];
-                            In[strNAlg].m_bDeny = false;
+                if (In.ContainsKey(@"74") == true)
+                {
+                    _modeDev = new Dictionary<int, MODE_DEV>();
+
+                    for (int i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.COUNT; i++)
+                    {
+                        switch ((int)In[@"74"][ID_COMP[i]].value)
+                        {
+                            case 1: //[MODE_DEV].1 - Конденсационный
+                                mDev = MODE_DEV.COND_1;
+                                break;
+                            case 2: //[MODE_DEV].2 - Электр.граф (2 ст.)
+                                mDev = MODE_DEV.ELEKTRO2_2;
+                                break;
+                            case 3: //[MODE_DEV].2а - Электр.граф (1 ст.)
+                                mDev = MODE_DEV.ELEKTRO1_2a;
+                                break;
+                            case 4: //[MODE_DEV].3 - По тепл. граф.
+                                mDev = MODE_DEV.TEPLO_3;
+                                break;
+                            default:
+                                logErrorUnknownModeDev(@"InitInValues");
+                                break;
                         }
-                        else
-                            ;
-                        // идентификатор компонента станции - ключ для словаря со значением и характеристиками для него
-                        idComponent = (int)rPar[@"ID_COMP"];
 
-                        if (In[strNAlg].ContainsKey(idComponent) == false)
-                            In[strNAlg].Add(idComponent, new P_ALG.P_PUT.P_VAL()
-                        // добавить параметр компонента в алгоритме расчета
-                            {
-                                m_iId = idPut
-                                //, m_iIdComponent = idComponent
-                                , m_bDeny = false
-                                , value = (float)(double)rVal[0][@"VALUE"]
-                                , m_sQuality = 0 // не рассчитывался
-                                , m_idRatio = (int)rPar[@"ID_RATIO"]
-                                , m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (int)rPar[@"MINVALUE"] //??? - ошибка д.б. float
-                                , m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (int)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
-                            });
+                        if ((_modeDev.ContainsKey(i) == false)
+                            && (!(mDev == MODE_DEV.UNKNOWN)))
+                            _modeDev.Add(i, mDev);
                         else
                             ;
-                    }
-                    else
-                    {// ошибка - не найдено соответствие параметр-значение
-                        Logging.Logg().Error(@"TaskTepCalculate::initInValues (ID_PUT=" + idPut + @") - не найдено соответствие параметра и значения...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
-
-                _modeDev = new Dictionary<int, MODE_DEV>();
-
-                for (int i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.COUNT; i++)
+                else
                 {
-                    switch ((int)In[@"74"][i].value)
-                    {
-                        case 1: //[MODE_DEV].1 - Конденсационный
-                            mDev = MODE_DEV.COND_1;
-                            break;
-                        case 2: //[MODE_DEV].2 - Электр.граф (2 ст.)
-                            mDev = MODE_DEV.ELEKTRO2_2;
-                            break;
-                        case 3: //[MODE_DEV].2а - Электр.граф (1 ст.)
-                            mDev = MODE_DEV.ELEKTRO1_2a;
-                            break;
-                        case 4: //[MODE_DEV].3 - По тепл. граф.
-                            mDev = MODE_DEV.TEPLO_3;
-                            break;
-                        default:
-                            logErrorUnknownModeDev(@"InitInValues");
-                            break;
-                    }
+                    iRes = -1;
 
-                    if ((_modeDev.ContainsKey (i) == false)
-                        && (! (mDev == MODE_DEV.UNKNOWN)))
-                        _modeDev.Add (i, mDev);
-                    else
-                        ;
+                    Logging.Logg().Error(@"TaskTepCalculate::initInValues () - во входной таблице не установлен режим оборудования...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
+
+                return iRes;
             }
 
-            private void initNormValues(DataTable table)
+            private int initNormValues(DataTable tablePar, DataTable tableVal)
             {
+                int iRes = -1;
+
+                iRes = initValues(Norm, tablePar, tableVal);
+
+                return iRes;
             }
 
-            private void initMktValues(DataTable table)
+            private int initMktValues(DataTable tablePar, DataTable tableVal)
             {
+                int iRes = -1;
+
+                iRes = initValues(Out, tablePar, tableVal);
+
+                return iRes;
             }
             /// <summary>
             /// Расчитать выходные-нормативные значения
@@ -415,43 +471,62 @@ namespace TepCommon
             /// <returns>Таблица нормативных значений, совместимая со структурой выходныъ значений в БД</returns>
             public DataTable CalculateNormative(ListDATATABLE listDataTables)
             {
-                DataTable tableRes = new DataTable();
+                int iInitValuesRes = -1;
 
-                // инициализация входных значений
-                initValues(listDataTables);
-                // расчет
+                DataTable tableRes = null;
+
+                iInitValuesRes = initValues(listDataTables);                
+
+                if (iInitValuesRes == 0)
+                {
+                    // расчет
+                    calculateNormative();
+
+                    // преобразование в таблицу
+                    tableRes = resultToTable(Norm);
+                }
+                else
+                    ; // ошибка при инициализации параметров, значений
+
+                return tableRes;
+            }
+
+            private int calculateNormative()
+            {
+                int iRes = 0;
+
                 /*-------------1 - TAU раб-------------*/
                 Norm[@"1"][ST].value = calculateNormative(@"1");
                 /*-------------2 - Э т-------------*/
-                Norm[@"2"][ST].value = calculateNormative(@"2");
+                Norm[@"2"][ID_COMP[ST]].value = calculateNormative(@"2");
                 /*-------------3 - Q то-------------*/
-                Norm[@"3"][ST].value = calculateNormative(@"3");
+                Norm[@"3"][ID_COMP[ST]].value = calculateNormative(@"3");
                 /*-------------4 - Q пп-------------*/
-                Norm[@"4"][ST].value = calculateNormative(@"4");
+                Norm[@"4"][ID_COMP[ST]].value = calculateNormative(@"4");
                 /*-------------5 - Q отп ст-------------*/
-                Norm[@"5"][ST].value = calculateNormative(@"5");
+                Norm[@"5"][ID_COMP[ST]].value = calculateNormative(@"5");
                 /*-------------6 - Q отп роу-------------*/
-                Norm[@"6"][ST].value = calculateNormative(@"6");
+                Norm[@"6"][ID_COMP[ST]].value = calculateNormative(@"6");
                 /*-------------7 - Q отп тепл-------------*/
-                Norm[@"7"][ST].value = calculateNormative(@"7");
+                Norm[@"7"][ID_COMP[ST]].value = calculateNormative(@"7");
                 /*-------------8 - Q отп-------------*/
-                Norm[@"8"][ST].value = calculateNormative(@"8");
+                Norm[@"8"][ID_COMP[ST]].value = calculateNormative(@"8");
                 /*-------------9 - N т-------------*/
-                Norm[@"9"][ST].value = calculateNormative(@"9");
+                Norm[@"9"][ID_COMP[ST]].value = calculateNormative(@"9");
                 /*-------------10 - Q т ср-------------*/
-                Norm[@"10"][ST].value = calculateNormative(@"10");
+                Norm[@"10"][ID_COMP[ST]].value = calculateNormative(@"10");
                 /*-------------10.1 P вто-------------*/
                 calculateNormative(@"10.1");
                 /*-------------11 - Q роу ср-------------*/
-                Norm[@"11"][ST].value = calculateNormative(@"11");
+                Norm[@"11"][ID_COMP[ST]].value = calculateNormative(@"11");
                 /*-------------12 - q т бр (исх)-------------*/
                 calculateNormative(@"12");
                 /*-------------13 - G о-------------*/
                 calculateNormative(@"13");
                 /*-------------14 - G 2-------------*/
-                Norm[@"14"][ST].value = calculateNormative(@"14");
+                Norm[@"14"][ID_COMP[ST]].value = calculateNormative(@"14");
                 /*-------------14.1 - G цв-------------*/
-                Norm[@"14.1"][ST].value = calculateNormative(@"14.1");
+                Norm[@"14.1"][ID_COMP[ST]].value = calculateNormative(@"14.1");
                 /*-------------15 - P 2 (н)-------------*/
                 calculateNormative(@"15");
                 /*-------------15.1 - dQ э (P2)-------------*/
@@ -477,10 +552,8 @@ namespace TepCommon
                 /*-------------29 -------------*/
                 /*-------------30 -------------*/
 
-                // преобразование в таблицу
-
-                return tableRes;
-            }            
+                return iRes;
+            }
             /// <summary>
             /// Расчитать выходные значения
             /// </summary>
@@ -488,19 +561,40 @@ namespace TepCommon
             /// <returns>Таблица выходных значений, совместимая со структурой выходныъ значений в БД</returns>
             public DataTable CalculateMaket(ListDATATABLE listDataTables)
             {
+                int iInitValuesRes = -1;
+
+                DataTable tableRes = null;
+
+                iInitValuesRes = initValues(listDataTables);
+
+                if (iInitValuesRes == 0)
+                {
+                    // расчет
+                    foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Norm)
+                        pAlg.Value[ST].value = calculateNormative(pAlg.Key);
+
+                    foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Out)
+                        pAlg.Value[ST].value = calculateMaket(pAlg.Key);
+
+                    // преобразование в таблицу
+                    tableRes = resultToTable(Out);
+                }
+                else
+                    ; // ошибка при инициализации параметров, значений
+
+                return tableRes;
+            }
+
+            private int calculateMaket()
+            {
+                int iRes = 0;
+
+                return iRes;
+            }
+
+            private DataTable resultToTable(P_ALG pAlg)
+            {
                 DataTable tableRes = new DataTable();
-
-                // инициализация входных значений
-                initValues(listDataTables);
-
-                // расчет
-                foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Norm)
-                    pAlg.Value[ST].value = calculateNormative(pAlg.Key);
-
-                foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Out)
-                    pAlg.Value[ST].value = calculateMaket(pAlg.Key);
-
-                // преобразование в таблицу
 
                 return tableRes;
             }

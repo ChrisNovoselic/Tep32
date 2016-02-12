@@ -57,8 +57,8 @@ namespace TepCommon
                     case @"2": //Э т
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            Norm[nAlg][i].value = In[nAlg][i].value;
-                            fRes += Norm[nAlg][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value;
+                            fRes += Norm[nAlg][ID_COMP[i]].value;
                         }
                         break;
                     #endregion
@@ -68,18 +68,18 @@ namespace TepCommon
                         if (isRealTime == true)
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                if (In[@"47"][i].value / In[@"1"][i].value < 0.7F)
-                                    Norm[nAlg][i].value = 0F;
+                                if (In[@"47"][ID_COMP[i]].value / In[@"1"][ID_COMP[i]].value < 0.7F)
+                                    Norm[nAlg][ID_COMP[i]].value = 0F;
                                 else
-                                    Norm[nAlg][i].value = In[@"47"][i].value * In[@"48"][i].value - In[@"49"][i].value;
+                                    Norm[nAlg][ID_COMP[i]].value = In[@"47"][ID_COMP[i]].value * In[@"48"][ID_COMP[i]].value - In[@"49"][ID_COMP[i]].value;
 
-                                fRes += Norm[nAlg][i].value;
+                                fRes += Norm[nAlg][ID_COMP[i]].value;
                             }
                         else
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                Norm[nAlg][i].value = In[@"47"][i].value * In[@"48"][i].value - In[@"49"][i].value;
-                                fRes += Norm[nAlg][i].value;
+                                Norm[nAlg][ID_COMP[i]].value = In[@"47"][ID_COMP[i]].value * In[@"48"][ID_COMP[i]].value - In[@"49"][ID_COMP[i]].value;
+                                fRes += Norm[nAlg][ID_COMP[i]].value;
                             }
                         break;
                     #endregion
@@ -89,18 +89,18 @@ namespace TepCommon
                         if (isRealTime == true)
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                if (Norm[@"3"][i].value == 0F)
-                                    Norm[nAlg][i].value = 0F;
+                                if (Norm[@"3"][ID_COMP[i]].value == 0F)
+                                    Norm[nAlg][ID_COMP[i]].value = 0F;
                                 else
-                                    Norm[nAlg][i].value = In[@"46"][i].value;
+                                    Norm[nAlg][ID_COMP[i]].value = In[@"46"][ID_COMP[i]].value;
 
-                                fRes += Norm[nAlg][i].value;
+                                fRes += Norm[nAlg][ID_COMP[i]].value;
                             }
                         else
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                Norm[nAlg][i].value = In[@"46"][i].value;
-                                fRes += Norm[nAlg][i].value;
+                                Norm[nAlg][ID_COMP[i]].value = In[@"46"][ID_COMP[i]].value;
+                                fRes += Norm[nAlg][ID_COMP[i]].value;
                             }
                         break;
                     #endregion
@@ -117,18 +117,18 @@ namespace TepCommon
 
                         if (isRealTime == true)
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                                Norm[nAlg][i].value = Norm[@"4"][i].value / 2;
+                                Norm[nAlg][ID_COMP[i]].value = Norm[@"4"][ID_COMP[i]].value / 2;
                         else
                         {
                             fSum = 0F;
 
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                                fSum += In[@"3"][i].value == 0 ? 0 : Norm[@"4"][i].value;
+                                fSum += In[@"3"][ID_COMP[i]].value == 0 ? 0 : Norm[@"4"][ID_COMP[i]].value;
 
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                                Norm[nAlg][i].value = Norm[@"3"][i].value == 0F ? 0F :
-                                    Norm[@"4"][i].value == 0F ? 0F :
-                                        fRes * Norm[@"4"][i].value / fSum;
+                                Norm[nAlg][ID_COMP[i]].value = Norm[@"3"][ID_COMP[i]].value == 0F ? 0F :
+                                    Norm[@"4"][ID_COMP[i]].value == 0F ? 0F :
+                                        fRes * Norm[@"4"][ID_COMP[i]].value / fSum;
                         }
                         break;
                     #endregion
@@ -142,12 +142,12 @@ namespace TepCommon
                             fTmp = qSeason ? 0.97F : 0.95F;
                             //16 мая - 30 сентября, 1 октября - 15 мая
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                                Norm[nAlg][i].value = Norm[@"3"][i].value * fTmp;
+                                Norm[nAlg][ID_COMP[i]].value = Norm[@"3"][ID_COMP[i]].value * fTmp;
                         }
                         else
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                                Norm[nAlg][i].value = Norm[@"3"][ST].value == 0F ? 0F :
-                                    fRes * Norm[@"3"][i].value / Norm[@"3"][ST].value;
+                                Norm[nAlg][ID_COMP[i]].value = Norm[@"3"][ST].value == 0F ? 0F :
+                                    fRes * Norm[@"3"][ID_COMP[i]].value / Norm[@"3"][ST].value;
                         break;
                     #endregion
 
@@ -155,8 +155,8 @@ namespace TepCommon
                     case @"8":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            Norm[nAlg][i].value = Norm[@"6"][i].value + Norm[@"7"][i].value;
-                            fRes += Norm[nAlg][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = Norm[@"6"][ID_COMP[i]].value + Norm[@"7"][ID_COMP[i]].value;
+                            fRes += Norm[nAlg][ID_COMP[i]].value;
                         }
                         break;
                     #endregion
@@ -164,7 +164,7 @@ namespace TepCommon
                     #region 9 - N т
                     case @"9":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                            Norm[nAlg][i].value = Norm[@"2"][i].value / Norm[@"1"][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = Norm[@"2"][ID_COMP[i]].value / Norm[@"1"][ID_COMP[i]].value;
 
                         fRes = Norm[@"2"][ST].value / Norm[@"1"][ST].value;
                         break;
@@ -173,7 +173,7 @@ namespace TepCommon
                     #region 10 - Q т ср
                     case @"10":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                            Norm[nAlg][i].value = Norm[@"3"][i].value / Norm[@"1"][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = Norm[@"3"][ID_COMP[i]].value / Norm[@"1"][ID_COMP[i]].value;
 
                         fRes = Norm[@"3"][ST].value / Norm[@"1"][ST].value;
                         break;
@@ -182,14 +182,14 @@ namespace TepCommon
                     #region 10.1 - P вто
                     case @"10.1":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                            Norm[nAlg][i].value = In[@"37"][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = In[@"37"][ID_COMP[i]].value;
                         break;
                     #endregion
 
                     #region 11 - Q роу ср
                     case @"11":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                            Norm[nAlg][i].value = Norm[@"4"][i].value / Norm[@"1"][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = Norm[@"4"][ID_COMP[i]].value / Norm[@"1"][ID_COMP[i]].value;
 
                         fRes = Norm[@"4"][ST].value / Norm[@"1"][ST].value;
                         break;
@@ -204,23 +204,23 @@ namespace TepCommon
                             switch (_modeDev[i])
                             {
                                 case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
-                                    fTmp = fTable.F1(@"2.40:1", Norm[@"9"][i].value);
+                                    fTmp = fTable.F1(@"2.40:1", Norm[@"9"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
-                                    fTmp = fTable.F3(@"2.1:3", Norm[@"9"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
+                                    fTmp = fTable.F3(@"2.1:3", Norm[@"9"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"10.1"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
-                                    fTmp = fTable.F3(@"2.86:3", Norm[@"9"][i].value, Norm[@"10"][i].value, In[@"38"][i].value);
+                                    fTmp = fTable.F3(@"2.86:3", Norm[@"9"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, In[@"38"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
-                                    fTmp = fTable.F2(@"2.50:2", Norm[@"9"][i].value, Norm[@"10.1"][i].value);
+                                    fTmp = fTable.F2(@"2.50:2", Norm[@"9"][ID_COMP[i]].value, Norm[@"10.1"][ID_COMP[i]].value);
                                     break;
                                 default:
                                     logErrorUnknownModeDev(nAlg);
                                     break;
                             }
 
-                            Norm[nAlg][i].value = fTmp;
+                            Norm[nAlg][ID_COMP[i]].value = fTmp;
                         }
                         break;
                     #endregion
@@ -234,23 +234,23 @@ namespace TepCommon
                             switch (_modeDev[i])
                             {
                                 case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
-                                    fTmp = fTable.F1(@"2.55:1", Norm[@"9"][i].value);
+                                    fTmp = fTable.F1(@"2.55:1", Norm[@"9"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
-                                    fTmp = fTable.F3(@"2.2:3", Norm[@"9"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
+                                    fTmp = fTable.F3(@"2.2:3", Norm[@"9"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"10.1"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
-                                    fTmp = fTable.F3(@"2.87:3", Norm[@"9"][i].value, Norm[@"10"][i].value, In[@"38"][i].value);
+                                    fTmp = fTable.F3(@"2.87:3", Norm[@"9"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, In[@"38"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
-                                    fTmp = fTable.F3(@"2.2:3", Norm[@"9"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
+                                    fTmp = fTable.F3(@"2.2:3", Norm[@"9"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"10.1"][ID_COMP[i]].value);
                                     break;
                                 default:
                                     logErrorUnknownModeDev(nAlg);
                                     break;
                             }
 
-                            Norm[nAlg][i].value = fTmp + In[@"46"][i].value / 0.7F / In[@"1"][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = fTmp + In[@"46"][ID_COMP[i]].value / 0.7F / In[@"1"][ID_COMP[i]].value;
                         }
                         break;
                     #endregion
@@ -264,22 +264,22 @@ namespace TepCommon
                             switch (_modeDev[i])
                             {
                                 case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
-                                    fTmp = fTable.F1(@"2.3:1", Norm[@"13"][i].value);
+                                    fTmp = fTable.F1(@"2.3:1", Norm[@"13"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
                                 case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
-                                    fTmp = fTable.F3(@"2.3б:3", Norm[@"13"][i].value, Norm[@"10"][i].value, Norm[@"10.1"][i].value);
+                                    fTmp = fTable.F3(@"2.3б:3", Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"10.1"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
-                                    fTmp = fTable.F3(@"2.3а:3", Norm[@"13"][i].value, Norm[@"10"][i].value, In[@"38"][i].value);
+                                    fTmp = fTable.F3(@"2.3а:3", Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, In[@"38"][ID_COMP[i]].value);
                                     break;
                                 default:
                                     logErrorUnknownModeDev(nAlg);
                                     break;
                             }
 
-                            Norm[nAlg][i].value = fTmp - In[@"46"][i].value / 0.7F / In[@"1"][i].value;
-                            fSum += Norm[nAlg][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = fTmp - In[@"46"][ID_COMP[i]].value / 0.7F / In[@"1"][ID_COMP[i]].value;
+                            fSum += Norm[nAlg][ID_COMP[i]].value;
                         }
 
                         if (isRealTimeBL1456 == true)
@@ -312,10 +312,10 @@ namespace TepCommon
 
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"14"][i].value;
-                            fRunkValues[(int)FTable.FRUNK.F2] = In[@"28"][i].value;
+                            fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"14"][ID_COMP[i]].value;
+                            fRunkValues[(int)FTable.FRUNK.F2] = In[@"28"][ID_COMP[i]].value;
 
-                            Norm[nAlg][i].value = fTable.F3 (@"2.4:3", fRunkValues);
+                            Norm[nAlg][ID_COMP[i]].value = fTable.F3 (@"2.4:3", fRunkValues);
                         }
                         break;
                     #endregion
@@ -324,10 +324,10 @@ namespace TepCommon
                     case @"15.1":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"15"][i].value;
-                            fRunkValues[(int)FTable.FRUNK.F2] = Norm[@"14"][i].value;
+                            fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"15"][ID_COMP[i]].value;
+                            fRunkValues[(int)FTable.FRUNK.F2] = Norm[@"14"][ID_COMP[i]].value;
 
-                            Norm[nAlg][i].value = fTable.F2(@"2.84:2", fRunkValues);
+                            Norm[nAlg][ID_COMP[i]].value = fTable.F2(@"2.84:2", fRunkValues);
                         }
                         break;
                     #endregion
@@ -336,7 +336,7 @@ namespace TepCommon
                     case @"16":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            Norm[nAlg][i].value = 1000 * Norm[@"15.1"][i].value / Norm[@"9"][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = 1000 * Norm[@"15.1"][ID_COMP[i]].value / Norm[@"9"][ID_COMP[i]].value;
                         }
                         break;
                     #endregion
@@ -350,19 +350,19 @@ namespace TepCommon
                             switch (_modeDev[i])
                             {
                                 case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
-                                    fTmp = fTable.F1(@"2.5а:1", Norm[@"13"][i].value);
+                                    fTmp = fTable.F1(@"2.5а:1", Norm[@"13"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
                                 case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
                                 case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
-                                    fTmp = fTable.F2(@"2.5:2", Norm[@"13"][i].value, Norm[@"10"][i].value);
+                                    fTmp = fTable.F2(@"2.5:2", Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value);
                                     break;
                                 default:
                                     logErrorUnknownModeDev(nAlg);
                                     break;
                             }
 
-                            Norm[nAlg][i].value = fTmp * Norm[@"11"][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = fTmp * Norm[@"11"][ID_COMP[i]].value;
                         }
                         break;
                     #endregion
@@ -380,20 +380,20 @@ namespace TepCommon
                                     Logging.Logg().Warning(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - не расчитывается при режиме '1 - Конденсационный'...", Logging.INDEX_MESSAGE.NOT_SET);
                                     break;
                                 case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
-                                    fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][i].value);
+                                    fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
-                                    fTmp = fTable.F1(@"2.89:1", Norm[@"38"][i].value);
+                                    fTmp = fTable.F1(@"2.89:1", Norm[@"38"][ID_COMP[i]].value);
                                     break;
                                 case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
-                                    fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][i].value);
+                                    fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][ID_COMP[i]].value);
                                     break;
                                 default:
                                     logErrorUnknownModeDev(nAlg);
                                     break;
                             }
 
-                            Norm[nAlg][i].value = fTmp;
+                            Norm[nAlg][ID_COMP[i]].value = fTmp;
                         }
                         break;
                     #endregion
@@ -401,7 +401,7 @@ namespace TepCommon
                     #region 19 - dt 2
                     case @"19":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                            Norm[nAlg][i].value = In[@"49"][i].value - Norm[@"18"][i].value;
+                            Norm[nAlg][ID_COMP[i]].value = In[@"49"][ID_COMP[i]].value - Norm[@"18"][ID_COMP[i]].value;
                         break;
                     #endregion
 
@@ -412,7 +412,7 @@ namespace TepCommon
                         // для левой границы [0, i] 4-х мерной функции
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            fTmp = Norm[@"10.1"][i].value;
+                            fTmp = Norm[@"10.1"][ID_COMP[i]].value;
 
                             switch (_modeDev[i])
                             {
@@ -444,14 +444,14 @@ namespace TepCommon
                                                                 nameF4 += @"д";
                                                             else
                                                                 ;
-                                    if (! (Norm[@"19"][i].value < 0))
+                                    if (! (Norm[@"19"][ID_COMP[i]].value < 0))
                                         nameF4 += @"+";
                                     else
                                         nameF4 += @"-";
 
                                     nameF4 += @":3";
 
-                                    fRunk4[0, i] = fTable.F3(nameF4, Norm[@"13"][i].value, Norm[@"10"][i].value, Norm[@"19"][i].value);
+                                    fRunk4[0, i] = fTable.F3(nameF4, Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"19"][ID_COMP[i]].value);
                                     break;
                                 default:
                                     logErrorUnknownModeDev(nAlg);
@@ -463,7 +463,7 @@ namespace TepCommon
                         // для правой границы [1, i] 4-х мерной функции
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            fTmp = Norm[@"10.1"][i].value;
+                            fTmp = Norm[@"10.1"][ID_COMP[i]].value;
 
                             switch (_modeDev[i])
                             {
@@ -495,14 +495,14 @@ namespace TepCommon
                                                                 nameF4 += @"е";
                                                             else
                                                                 ;
-                                    if (!(Norm[@"19"][i].value < 0))
+                                    if (!(Norm[@"19"][ID_COMP[i]].value < 0))
                                         nameF4 += @"+";
                                     else
                                         nameF4 += @"-";
 
                                     nameF4 += @":3";
 
-                                    fRunk4[1, i] = fTable.F3(nameF4, Norm[@"13"][i].value, Norm[@"10"][i].value, Norm[@"19"][i].value);
+                                    fRunk4[1, i] = fTable.F3(nameF4, Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"19"][ID_COMP[i]].value);
                                     break;
                                 default:
                                     logErrorUnknownModeDev(nAlg);
@@ -512,7 +512,7 @@ namespace TepCommon
 
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            fTmp = Norm[@"10.1"][i].value;
+                            fTmp = Norm[@"10.1"][ID_COMP[i]].value;
 
                             switch (_modeDev[i])
                             {
@@ -522,27 +522,27 @@ namespace TepCommon
                                 case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
                                 case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
                                     if (fTmp < 0.8F)
-                                        Norm[nAlg][i].value = fRunk4[0, i];
+                                        Norm[nAlg][ID_COMP[i]].value = fRunk4[0, i];
                                     else                                            
                                         if ((!(fTmp < 0.8F)) && (!(fTmp > 0.99F)))
-                                            Norm[nAlg][i].value = (fRunk4[0, i] * (0.99F - fTmp) + fRunk4[1, i] * (fTmp - 0.8F)) / 0.19F;
+                                            Norm[nAlg][ID_COMP[i]].value = (fRunk4[0, i] * (0.99F - fTmp) + fRunk4[1, i] * (fTmp - 0.8F)) / 0.19F;
                                         else
                                             if ((!(fTmp < 1.0F)) && (!(fTmp > 1.19F)))
-                                                Norm[nAlg][i].value = (fRunk4[0, i] * (1.19F - fTmp) + fRunk4[1, i] * (fTmp - 1.0F)) / 0.19F;
+                                                Norm[nAlg][ID_COMP[i]].value = (fRunk4[0, i] * (1.19F - fTmp) + fRunk4[1, i] * (fTmp - 1.0F)) / 0.19F;
                                             else
                                                 if ((!(fTmp < 1.2F)) && (!(fTmp > 1.39F)))
-                                                    Norm[nAlg][i].value = (fRunk4[0, i] * (1.39F - fTmp) + fRunk4[1, i] * (fTmp - 1.2F)) / 0.19F;
+                                                    Norm[nAlg][ID_COMP[i]].value = (fRunk4[0, i] * (1.39F - fTmp) + fRunk4[1, i] * (fTmp - 1.2F)) / 0.19F;
                                                 else
                                                     if ((!(fTmp < 1.4F)) && (!(fTmp > 1.59F)))
-                                                        Norm[nAlg][i].value = (fRunk4[0, i] * (1.59F - fTmp) + fRunk4[1, i] * (fTmp - 1.4F)) / 0.19F;
+                                                        Norm[nAlg][ID_COMP[i]].value = (fRunk4[0, i] * (1.59F - fTmp) + fRunk4[1, i] * (fTmp - 1.4F)) / 0.19F;
                                                     else
                                                         if ((!(fTmp < 1.6F)) && (!(fTmp > 1.79F)))
-                                                            Norm[nAlg][i].value = (fRunk4[0, i] * (1.79F - fTmp) + fRunk4[1, i] * (fTmp - 1.6F)) / 0.19F;
+                                                            Norm[nAlg][ID_COMP[i]].value = (fRunk4[0, i] * (1.79F - fTmp) + fRunk4[1, i] * (fTmp - 1.6F)) / 0.19F;
                                                         else
                                                             if (!(fTmp < 1.8F))
-                                                                Norm[nAlg][i].value = (fRunk4[0, i] * (1.99F - fTmp) + fRunk4[1, i] * (fTmp - 1.8F)) / 0.19F;
+                                                                Norm[nAlg][ID_COMP[i]].value = (fRunk4[0, i] * (1.99F - fTmp) + fRunk4[1, i] * (fTmp - 1.8F)) / 0.19F;
                                                             else
-                                                                Norm[nAlg][i].value = fRunk4[1, i];
+                                                                Norm[nAlg][ID_COMP[i]].value = fRunk4[1, i];
                                     break;
                                 default:
                                     logErrorUnknownModeDev(nAlg);
@@ -552,8 +552,8 @@ namespace TepCommon
 
                         //??? - зачем предыдущие вычисления, если есть прямая ~ от пар.19 ???
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                            if (Norm[@"19"][i].value == 0F)
-                                Norm[nAlg][i].value = 0F;
+                            if (Norm[@"19"][ID_COMP[i]].value == 0F)
+                                Norm[nAlg][ID_COMP[i]].value = 0F;
                             else
                                 ;
                         break;

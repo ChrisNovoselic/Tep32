@@ -122,13 +122,13 @@ namespace PluginTaskTepInval
                             , CountBasePeriod
                             , _currIdTimezone
                             , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
-                            , ref m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
+                            //, ref m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
                             , ref m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                             , ref m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
-                            , arQueryRanges
+                            , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                             , out err, out strErr);
                         // создать копии для возможности сохранения изменений
-                        m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable ();
+                        //m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable ();
                         m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
                         m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
@@ -181,19 +181,37 @@ namespace PluginTaskTepInval
 
         private void btnRunPrev_onClick(object obj, EventArgs ev)
         {
-            int err = -1;
-
-            HandlerDb.UpdateSession(INDEX_DBTABLE_NAME.INVALUES
-                , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                , out err);
-
-            HandlerDb.TepCalculateNormative();
+            btnRun_onClick(HandlerDb.TepCalculateNormative);
         }
 
         private void btnRunRes_onClick(object obj, EventArgs ev)
         {
-            HandlerDb.TepCalculateMaket();
+            btnRun_onClick (HandlerDb.TepCalculateMaket);            
+        }
+
+        private void btnRun_onClick(DelegateFunc fRun)
+        {
+            int err = -1;
+
+            try
+            {
+                HandlerDb.UpdateSession(INDEX_DBTABLE_NAME.INVALUES
+                    , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                    , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                    , out err);
+
+                fRun();
+            }
+            catch (Exception e)
+            {
+                //deleteSession ();
+
+                Logging.Logg().Exception(e, @"PanelTaskTepInval::" + fRun.Method.Name + @" () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
+            finally
+            {
+                //??? сообщение пользователю
+            }
         }
 
         protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()

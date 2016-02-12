@@ -31,6 +31,8 @@ namespace TepCommon
         /// </summary>
         public enum ID_QUALITY_VALUE { NOT_REC = -3, PARTIAL, DEFAULT, SOURCE, USER }
 
+        private const int MAX_ROWCOUNT_TO_INSERT = 666;
+
         private ID_TASK _iIdTask;
         /// <summary>
         /// Идентификатор задачи
@@ -72,6 +74,14 @@ namespace TepCommon
         /// Создать новую сессию для расчета
         ///  - вставить входные данные во временную таблицу
         /// </summary>
+        /// <param name="idSession">Идентификатор сессии</param>
+        /// <param name="idPeriod">Идентификатор периода расчета</param>
+        /// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
+        /// <param name="idTimezone">Идентификатор часового пояса</param>
+        /// <param name="tablePars">Таблица характеристик входных параметров</param>
+        /// <param name="tableSessionValues">Таблица значений входных параметров</param>
+        /// <param name="tableDefValues">Таблица значений по умолчанию входных параметров</param>
+        /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
         public void CreateSession(int idSession
@@ -79,22 +89,18 @@ namespace TepCommon
             , int cntBasePeriod
             , ID_TIMEZONE idTimezone
             , DataTable tablePars
-            , ref DataTable tableArchiveValues, ref DataTable tableSessionValues, ref DataTable tableDefValues
-            , DateTimeRange []dtRanges
+            , ref DataTable tableSessionValues, ref DataTable tableDefValues
+            , DateTimeRange dtRange
             , out int err, out string strErr)
         {            
             err = 0;
             strErr = string.Empty;
 
             int iAVG = -1;
-            string strQuery = string.Empty
-                , strNameColumn = string.Empty;
-            string[] arNameColumns = null;
+            string strQuery = string.Empty;            
             // строки для удаления из таблицы значений "по умолчанию"
             // при наличии дубликатов строк в таблице с загруженными из источников с данными
             DataRow[] rowsSel = null;
-            Type[] arTypeColumns = null;
-            DateTimeRange dtRange = new DateTimeRange (dtRanges[0].Begin, dtRanges[dtRanges.Length - 1].End);
 
             // удалить строки из таблицы со значениями "по умолчанию"
             foreach (DataRow rValVar in tableSessionValues.Rows)
@@ -130,80 +136,209 @@ namespace TepCommon
             if ((tableSessionValues.Columns.Count > 0)
                 && (tableSessionValues.Rows.Count > 0))
             {
-                // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
-                strQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
-                    + @"[ID_CALCULATE]"
-                    + @", [ID_TASK]"
-                    + @", [ID_USER]"
-                    + @", [ID_TIME]"
-                    + @", [ID_TIMEZONE]"
-                    + @", [DATETIME_BEGIN]"
-                    + @", [DATETIME_END]) VALUES ("
-                    ;
+                //Вситвить строку с идентификатором новой сессии
+                insertIdSession(idSession, idPeriod, cntBasePeriod, idTimezone, dtRange, out err);
+                //Вставить строки в таблицу БД со входными значениями для расчета
+                insertInValues(tableSessionValues, out err);
+                //Вставить строки в таблицу БД со выходными значениями для расчета
+                insertOutValues(idSession, out err);
 
-                strQuery += idSession;
-                strQuery += @"," + (int)ID_TASK.TEP;
-                strQuery += @"," + HTepUsers.Id;
-                strQuery += @"," + (int)idPeriod;
-                strQuery += @"," + (int)idTimezone;
-                strQuery += @",'" + dtRange.Begin.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"'"; // @"yyyyMMdd HH:mm:ss"
-                strQuery += @",'" + dtRange.End.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"'"; // @"yyyyMMdd HH:mm:ss"
-
-                strQuery += @")";
-
-                //Вставить в таблицу БД новый идентификтор сессии
-                DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-
-                // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-                strQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
-
-                arTypeColumns = new Type[tableSessionValues.Columns.Count];
-                arNameColumns = new string[tableSessionValues.Columns.Count];
-                foreach (DataColumn c in tableSessionValues.Columns)
-                {
-                    arTypeColumns[c.Ordinal] = c.DataType;
-                    if (c.ColumnName.Equals(@"ID") == true)
-                        strNameColumn = @"ID_PUT";
-                    else
-                        strNameColumn = c.ColumnName;
-                    arNameColumns[c.Ordinal] = strNameColumn;
-                    strQuery += strNameColumn + @",";
-                }
-                // исключить лишнюю запятую
-                strQuery = strQuery.Substring(0, strQuery.Length - 1);
-
-                strQuery += @") VALUES ";
-
-                foreach (DataRow r in tableSessionValues.Rows)
-                {
-                    strQuery += @"(";
-
-                    foreach (DataColumn c in tableSessionValues.Columns)
-                        strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
-
-                    // исключить лишнюю запятую
-                    strQuery = strQuery.Substring(0, strQuery.Length - 1);
-
-                    strQuery += @"),";
-                }
-                // исключить лишнюю запятую
-                strQuery = strQuery.Substring(0, strQuery.Length - 1);
-                //Вставить во временную таблицу в БД входные для расчета значения
-                DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT] as [ID], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]"
                     + @" FROM [inval]"
                     + @" WHERE [ID_SESSION]=" + idSession;
-                tableSessionValues = DbTSQLInterface.Select(ref _dbConnection, strQuery, null, null, out err);
+                tableSessionValues = Select(strQuery, out err);
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
+        /// Вставить в таблицу БД идентификатор новой сессии
+        /// </summary>
+        /// <param name="id">Идентификатор сессии</param>
+        /// <param name="idPeriod">Идентификатор периода расчета</param>
+        /// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
+        /// <param name="idTimezone">Идентификатор часового пояса</param>
+        /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
+        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        private void insertIdSession(int id
+            , ID_PERIOD idPeriod
+            , int cntBasePeriod
+            , ID_TIMEZONE idTimezone
+            , DateTimeRange dtRange
+            , out int err)
+        {
+            err = -1;
+
+            string strQuery = string.Empty;
+
+            // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
+            strQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
+                + @"[ID_CALCULATE]"
+                + @", [ID_TASK]"
+                + @", [ID_USER]"
+                + @", [ID_TIME]"
+                + @", [ID_TIMEZONE]"
+                + @", [DATETIME_BEGIN]"
+                + @", [DATETIME_END]) VALUES ("
+                ;
+
+            strQuery += id;
+            strQuery += @"," + (int)ID_TASK.TEP;
+            strQuery += @"," + HTepUsers.Id;
+            strQuery += @"," + (int)idPeriod;
+            strQuery += @"," + (int)idTimezone;
+            strQuery += @",'" + dtRange.Begin.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"'"; // @"yyyyMMdd HH:mm:ss"
+            strQuery += @",'" + dtRange.End.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"'"; // @"yyyyMMdd HH:mm:ss"
+
+            strQuery += @")";
+
+            //Вставить в таблицу БД строку с идентификтором новой сессии
+            DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+        }
+        /// <summary>
+        /// Вставить значения в таблицу для временных входных значений
+        /// </summary>
+        /// <param name="tableInValues">Таблица со значениями для вставки</param>
+        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        private void insertInValues(DataTable tableInValues, out int err)
+        {
+            err = -1;
+
+            string strQuery = string.Empty
+                , strNameColumn = string.Empty;
+            string[] arNameColumns = null;
+            Type[] arTypeColumns = null;
+
+            // подготовить содержание запроса при вставке значений во временную таблицу для расчета
+            strQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+
+            arTypeColumns = new Type[tableInValues.Columns.Count];
+            arNameColumns = new string[tableInValues.Columns.Count];
+            foreach (DataColumn c in tableInValues.Columns)
+            {
+                arTypeColumns[c.Ordinal] = c.DataType;
+                if (c.ColumnName.Equals(@"ID") == true)
+                    strNameColumn = @"ID_PUT";
+                else
+                    strNameColumn = c.ColumnName;
+                arNameColumns[c.Ordinal] = strNameColumn;
+                strQuery += strNameColumn + @",";
+            }
+            // исключить лишнюю запятую
+            strQuery = strQuery.Substring(0, strQuery.Length - 1);
+
+            strQuery += @") VALUES ";
+
+            foreach (DataRow r in tableInValues.Rows)
+            {
+                strQuery += @"(";
+
+                foreach (DataColumn c in tableInValues.Columns)
+                    strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
+
+                // исключить лишнюю запятую
+                strQuery = strQuery.Substring(0, strQuery.Length - 1);
+
+                strQuery += @"),";
+            }
+            // исключить лишнюю запятую
+            strQuery = strQuery.Substring(0, strQuery.Length - 1);
+            //Вставить во временную таблицу в БД входные для расчета значения
+            DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+        }
+        /// <summary>
+        /// Вставить значения в таблицу для временных выходных значений сессии расчета
+        /// </summary>
+        /// <param name="idSession">Идентификатор сессии расчета</param>
+        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
+        private void insertOutValues(int idSession, out int err)
+        {
+            err = -1;
+
+            if (IdTask == ID_TASK.TEP)
+                insertOutValues (idSession, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
+            else
+                ;
+
+            if (err == 0)
+                insertOutValues (idSession, TaskCalculate.TYPE.OUT_VALUES, out err);
+            else
+                ;
+        }
+        /// <summary>
+        /// Вставить значения в таблицу для временных выходных значений сессии расчета
+        /// </summary>
+        /// <param name="idSession">Идентификатор сессии расчета</param>
+        /// <param name="typeCalc">Тип расчета</param>
+        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
+        private void insertOutValues(int idSession, TaskCalculate.TYPE typeCalc, out int err)
+        {
+            err = -1;
+
+            DataTable tableParameters = null;
+            string strBaseQuery = string.Empty
+                , strQuery = string.Empty;
+            int iRowCounterToInsert = -1;
+
+            strQuery = GetQueryParameters(typeCalc);
+            tableParameters = Select(strQuery, out err);
+
+            strBaseQuery =
+            strQuery =
+                @"INSERT INTO " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @" VALUES ";
+
+            iRowCounterToInsert = 0;
+            foreach (DataRow rPar in tableParameters.Rows)
+            {
+                if (iRowCounterToInsert > MAX_ROWCOUNT_TO_INSERT)
+                {
+                    // исключить лишнюю запятую
+                    strQuery = strQuery.Substring(0, strQuery.Length - 1);
+                    // вставить строки в таблицу
+                    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+
+                    if (!(err == 0))
+                    // при ошибке - не продолжать
+                        break;
+                    else
+                        ;
+
+                    strQuery = strBaseQuery;
+                    iRowCounterToInsert = 0;
+                }
+                else
+                    ;
+
+                strQuery += @"(";
+                
+                strQuery += idSession + @"," //ID_SEESION
+                    + rPar[@"ID"] + @"," //ID_PUT
+                    + 0.ToString() + @"," //QUALITY
+                    + 0.ToString() + @"," //VALUE
+                    + @"GETDATE()"
+                    ;
+
+                strQuery += @"),";
+
+                iRowCounterToInsert++;
+            }
+
+            if (err == 0)
+            {
+                // исключить лишнюю запятую
+                strQuery = strQuery.Substring(0, strQuery.Length - 1);
+                // вставить строки в таблицу
+                DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+            }
+            else
+                ; // при ошибке - не продолжать
+        }
+        /// <summary>
         /// Удалить запись о параметрах сессии расчета (по триггеру - все входные и выходные значения)
         /// </summary>
         /// <param name="idSession">Идентификатор сессии расчета</param>
-        /// <param name="err">признак выполнения функции</param>
+        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         public void DeleteSession(int idSession, out int err)
         {
             err = -1;
@@ -236,24 +371,31 @@ namespace TepCommon
                 ;
         }
         /// <summary>
-        /// Обновить значения
+        /// Обновить значения во временой таблице
         /// </summary>
-        /// <param name="indxDbTable"></param>
-        /// <param name="tableOriginInValues"></param>
-        /// <param name="tableEditInValues"></param>
-        /// <param name="err"></param>
+        /// <param name="indxDbTable">Индекс таблицы в списке таблиц БД</param>
+        /// <param name="tableOriginValues">Таблица с исходными значениями</param>
+        /// <param name="tableEditValues">Таблица с измененными значениями</param>
+        /// <param name="err">Идентификатор ошибки при выполнении операции</param>
         public void UpdateSession(INDEX_DBTABLE_NAME indxDbTable
-            , DataTable tableOriginInValues
-            , DataTable tableEditInValues
+            , DataTable tableOriginValues
+            , DataTable tableEditValues
             , out int err)
         {
             err = -1;
 
-            RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID, ID_SESSION", tableOriginInValues, tableEditInValues, out err);
+            RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID, ID_SESSION", tableOriginValues, tableEditValues, out err);
         }
-
+        /// <summary>
+        /// Возвратить строку запроса для получения текущего идентификатора сессии расчета
+        /// </summary>
         private string querySession { get { return @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"] WHERE [ID_USER]=" + HTepUsers.Id; } }
-
+        /// <summary>
+        /// Возвратить строку запроса для получения
+        /// </summary>
+        /// <param name="idSession">Идентификатор сессии</param>
+        /// <param name="type">Тип значений (входные, выходные-нормативы - только для ТЭП, выходные)</param>
+        /// <returns>Строка - содержание запроса</returns>
         private string getQueryValuesVar (long idSession, TaskCalculate.TYPE type)
         {
             string strRes = string.Empty
@@ -326,8 +468,8 @@ namespace TepCommon
                 strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
                         + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
                         + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
-                    + @" FROM [dbo].[" + getNameDbTable(TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
-                        + @" JOIN [dbo].[" + getNameDbTable(TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
+                    + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
+                        + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
                         + @" JOIN [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID";
             }
             else
@@ -596,20 +738,32 @@ namespace TepCommon
                     // получить таблицу со значеняими нормативных графиков
                     tableVal = GetDataTable (INDEX_DBTABLE_NAME.FTABLE, out err);
                     listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.FTABLE, m_table = tableVal.Copy() });
-                    // получить описание входных парметров в алгоритме расчета                    
+                    // получить описание входных парметров в алгоритме расчета
                     tableVal = Select(GetQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err);
                     listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.IN_PARAMETER, m_table = tableVal.Copy() });
                     // получить входные значения для сессии
                     tableVal = GetValuesVar(idSession, TaskCalculate.TYPE.IN_VALUES, out err);
                     listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
 
-                    if (m_taskCalculate.Type == TaskCalculate.TYPE.OUT_VALUES)
-                    {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
+                    if (IdTask == ID_TASK.TEP)
+                    {
+                        // получить описание выходных-нормативных парметров в алгоритме расчета
                         tableVal = Select(GetQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES), out err);
                         listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_NORM_PARAMETER, m_table = tableVal.Copy() });
-                        //
+                        // получить выходные-нормативные значения для сессии
                         tableVal = GetValuesVar(idSession, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
                         listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_NORM_VALUES, m_table = tableVal.Copy() });
+                    }
+                    else
+                        ;
+
+                    if (m_taskCalculate.Type == TaskCalculate.TYPE.OUT_VALUES)
+                    {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
+                        tableVal = Select(GetQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err);
+                        listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_PARAMETER, m_table = tableVal.Copy() });
+                        // получить выходные значения для сессии
+                        tableVal = GetValuesVar(idSession, TaskCalculate.TYPE.OUT_VALUES, out err);
+                        listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_VALUES, m_table = tableVal.Copy() });
                     }
                     else
                         ;
