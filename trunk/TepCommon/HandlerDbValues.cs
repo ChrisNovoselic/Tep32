@@ -125,17 +125,26 @@ namespace TepCommon
             else
                 ;
         }
-
+        /// <summary>
+        /// Объект с установленным соединением с БД
+        /// </summary>
         public DbConnection DbConnection
         {
             get { return _dbConnection; }
         }
-
+        /// <summary>
+        /// Объект с параметрами для установления соединения с БД
+        /// </summary>
         public ConnectionSettings ConnectionSettings
         {
             get { return _connSett; }
         }
-
+        /// <summary>
+        /// Выполнить запрос с возвращением результата в виде таблицы
+        /// </summary>
+        /// <param name="query">Содержание запроса к БД</param>
+        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
+        /// <returns>Таблица - результат запроса</returns>
         public DataTable Select(string query, out int err)
         {
             err = -1;
@@ -160,12 +169,22 @@ namespace TepCommon
 
             return tableRes;
         }
-
+        /// <summary>
+        /// Возвратить значения одной таблицы
+        /// </summary>
+        /// <param name="strNameTable">Наименование таблицы</param>
+        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
+        /// <returns>Таблица - результат запроса - значения таблицы БД</returns>
         public DataTable GetDataTable(string strNameTable, out int err)
         {
             return Select(@"SELECT * FROM [" + strNameTable + @"]", out err);
         }
-
+        /// <summary>
+        /// Возвратить значения одной таблицы по индексу
+        /// </summary>
+        /// <param name="indxTable">Индекс таблицы в перечне таблиц БД</param>
+        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
+        /// <returns>Таблица - результат запроса - значения таблицы БД</returns>
         public DataTable GetDataTable(INDEX_DBTABLE_NAME indxTable, out int err)
         {
             return GetDataTable(s_NameDbTables[(int)indxTable], out err);

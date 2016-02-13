@@ -50,7 +50,10 @@ namespace TepCommon
 
             CreateTaskCalculate(type);
         }
-
+        /// <summary>
+        /// Создать объект расчета для типа задачи
+        /// </summary>
+        /// <param name="type">Тип расчетной задачи</param>
         public void CreateTaskCalculate (TaskCalculate.TYPE type)
         {
             if (!(m_taskCalculate == null))
@@ -89,7 +92,7 @@ namespace TepCommon
             , int cntBasePeriod
             , ID_TIMEZONE idTimezone
             , DataTable tablePars
-            , ref DataTable tableSessionValues, ref DataTable tableDefValues
+            , ref DataTable [] arTableValues
             , DateTimeRange dtRange
             , out int err, out string strErr)
         {            
@@ -103,51 +106,53 @@ namespace TepCommon
             DataRow[] rowsSel = null;
 
             // удалить строки из таблицы со значениями "по умолчанию"
-            foreach (DataRow rValVar in tableSessionValues.Rows)
+            foreach (DataRow rValVar in arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows)
             {
-                rowsSel = tableDefValues.Select(@"ID_PUT=" + rValVar[@"ID"]);
+                rowsSel = arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_PUT=" + rValVar[@"ID"]);
                 foreach (DataRow rToRemove in rowsSel)
-                    tableDefValues.Rows.Remove(rToRemove);
+                    arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Remove(rToRemove);
             }
             // вставить строки из таблицы со значениями "по умолчанию"
-            foreach (DataRow rValDef in tableDefValues.Rows)
+            foreach (DataRow rValDef in arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows)
             {
                 rowsSel = tablePars.Select(@"ID=" + rValDef[@"ID_PUT"]);
                 if (rowsSel.Length == 1)
                 {
                     iAVG = (Int16)rowsSel[0][@"AVG"];
 
-                    tableSessionValues.Rows.Add(new object[]
-                                    {
-                                        rValDef[@"ID_PUT"]
-                                        //, HUsers.Id //ID_USER
-                                        //, -1 //ID_SOURCE
-                                        , idSession //ID_SESSION
-                                        , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT //QUALITY
-                                        , (iAVG == 0) ? cntBasePeriod * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
-                                        , HDateTime.ToMoscowTimeZone() //??? GETADTE()
-                                    }
+                    arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Add(new object[]
+                        {
+                            rValDef[@"ID_PUT"]
+                            //, HUsers.Id //ID_USER
+                            //, -1 //ID_SOURCE
+                            , idSession //ID_SESSION
+                            , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT //QUALITY
+                            , (iAVG == 0) ? cntBasePeriod * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
+                            , HDateTime.ToMoscowTimeZone() //??? GETADTE()
+                        }
                     );
                 }
                 else
                     ; // по идентификатору найден не единственный парпметр расчета
             }
 
-            if ((tableSessionValues.Columns.Count > 0)
-                && (tableSessionValues.Rows.Count > 0))
+            if ((arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
+                && (arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
             {
                 //Вситвить строку с идентификатором новой сессии
                 insertIdSession(idSession, idPeriod, cntBasePeriod, idTimezone, dtRange, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(tableSessionValues, out err);
+                insertInValues(arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
                 //Вставить строки в таблицу БД со выходными значениями для расчета
                 insertOutValues(idSession, out err);
 
+                // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+                arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT] as [ID], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]"
-                    + @" FROM [inval]"
+                    + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
                     + @" WHERE [ID_SESSION]=" + idSession;
-                tableSessionValues = Select(strQuery, out err);
+                arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -399,24 +404,27 @@ namespace TepCommon
         private string getQueryValuesVar (long idSession, TaskCalculate.TYPE type)
         {
             string strRes = string.Empty
-                , whereParameters = string.Empty;
-            // аналог в 'getQueryValuesVar'
-            whereParameters = getWhereRangeOutPut(type);
-            if (whereParameters.Equals(string.Empty) == false)
-                whereParameters = @" AND " + whereParameters;
-            else
-                ;
+                , strJoinValues = string.Empty;
 
-            strRes = @"SELECT * FROM " + getNameDbTable (TABLE_CALCULATE_REQUIRED.VALUE) + @" WHERE [ID_SESSION]=" + (int)idSession
-                + whereParameters;
+            if (!(type == TaskCalculate.TYPE.UNKNOWN))
+            {
+                strJoinValues = getRangeAlg(type);
+                if (strJoinValues.Equals(string.Empty) == false)
+                    strJoinValues = @" AS v JOIN [" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT AND p.ID_ALG" + strJoinValues;
+                else
+                    ;
+
+                strRes = @"SELECT * FROM " + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE)
+                    + strJoinValues
+                    + @" WHERE [ID_SESSION]=" + (int)idSession;
+            }
+            else
+                Logging.Logg().Error(@"HandlerDbTaskCalculate::getQueryValuesVar () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return strRes;
         }
-        /// <summary>
-        /// Строка - условие для TSQL-запроса для указания диапазона идентификаторов
-        ///  выходных параметров алгоритма расчета
-        /// </summary>
-        private string getWhereRangeOutPut(TaskCalculate.TYPE type, string strNameFieldId = @"ID")
+
+        private string getRangeAlg(TaskCalculate.TYPE type)
         {
             string strRes = string.Empty;
 
@@ -436,12 +444,33 @@ namespace TepCommon
                         type == TaskCalculate.TYPE.OUT_VALUES ? ID_START_RECORD.ALG_NORMATIVE :
                             ID_START_RECORD.PUT;
 
-                    strRes = @"[" + strNameFieldId + @"] BETWEEN " + (int)(idRecStart - 1) + @" AND " + (int)(idRecEnd - 1);
+                    strRes = @" BETWEEN " + (int)(idRecStart - 1) + @" AND " + (int)(idRecEnd - 1);
                     break;
                 default:
                     break;
             }
-            //
+
+            return strRes;
+        }
+        /// <summary>
+        /// Строка - условие для TSQL-запроса для указания диапазона идентификаторов
+        ///  выходных параметров алгоритма расчета
+        /// </summary>
+        private string getWhereRangeAlg(TaskCalculate.TYPE type, string strNameFieldId = @"ID")
+        {
+            string strRes = string.Empty;
+
+            switch (type)
+            {
+                case TaskCalculate.TYPE.IN_VALUES:
+                    break;
+                case TaskCalculate.TYPE.OUT_TEP_NORM_VALUES:
+                case TaskCalculate.TYPE.OUT_VALUES:
+                    strRes = @"[" + strNameFieldId + @"]" + getRangeAlg (type);
+                    break;
+                default:
+                    break;
+            }
 
             return strRes;
         }
@@ -459,7 +488,7 @@ namespace TepCommon
             if (!(type == TaskCalculate.TYPE.UNKNOWN))
             {
                 // аналог в 'getQueryValuesVar'
-                whereParameters = getWhereRangeOutPut(type);
+                whereParameters = getWhereRangeAlg(type);
                 if (whereParameters.Equals(string.Empty) == false)
                     whereParameters = @" AND a." + whereParameters;
                 else
@@ -531,7 +560,7 @@ namespace TepCommon
             if (!(m_taskCalculate.Type == TaskCalculate.TYPE.UNKNOWN))
             {
                 // аналог в 'GetQueryParameters'
-                whereParameters = getWhereRangeOutPut(m_taskCalculate.Type);
+                whereParameters = getWhereRangeAlg(m_taskCalculate.Type);
                 if (whereParameters.Equals(string.Empty) == false)
                     whereParameters = @" AND a." + whereParameters;
                 else
@@ -647,7 +676,6 @@ namespace TepCommon
         public DataTable GetValuesVar(long idToSession
             , ID_PERIOD idPeriod
             , int cntBasePeriod
-            //, TYPE type
             , DateTimeRange[] arQueryRanges
             , out int err)
         {

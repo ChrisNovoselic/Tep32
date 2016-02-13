@@ -159,12 +159,20 @@ namespace TepCommon
             /// Словарь с расчетными ВЫХОДными параметрами - ключ - идентификатор в алгоритме расчета
             /// </summary>
             protected P_ALG Out;
-
+            /// <summary>
+            /// Конструктор основной (с параметром)
+            /// </summary>
+            /// <param name="type">Тип расчета</param>
             public TaskCalculate(TYPE type)
             {
                 Type = type;
             }
-
+            /// <summary>
+            /// Возвратить индкус таблицы БД по указанным типам расчета и рассчитываемых значений
+            /// </summary>
+            /// <param name="type">Тип расчета</param>
+            /// <param name="req">Тип рассчитываемых значений</param>
+            /// <returns>Индекс таблицы БД в списке</returns>
             public static INDEX_DBTABLE_NAME GetIndexNameDbTable (TYPE type, TABLE_CALCULATE_REQUIRED req)
             {
                 INDEX_DBTABLE_NAME indxRes = INDEX_DBTABLE_NAME.UNKNOWN;
@@ -246,6 +254,8 @@ namespace TepCommon
                     , idComponent = -1;
                 string strNAlg = string.Empty;
 
+                pAlg.Clear();
+
                 // цикл по всем параметрам расчета
                 foreach (DataRow rPar in tablePar.Rows)
                 {
@@ -279,8 +289,8 @@ namespace TepCommon
                                 , value = (float)(double)rVal[0][@"VALUE"]
                                 , m_sQuality = 0 // не рассчитывался
                                 , m_idRatio = (int)rPar[@"ID_RATIO"]
-                                , m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (int)rPar[@"MINVALUE"] //??? - ошибка д.б. float
-                                , m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (int)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
+                                , m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (float)rPar[@"MINVALUE"] //??? - ошибка д.б. float
+                                , m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (float)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
                             });
                         else
                             ;
@@ -331,18 +341,18 @@ namespace TepCommon
             /// Константы - идентификаторы компонентов оборудования ТЭЦ
             /// </summary>
             private const int BL1 = 1029
-                    , BL2 = 1030
-                    , BL3 = 1031
-                    , BL4 = 1032
-                    , BL5 = 1033
-                    , BL6 = 1034
+                , BL2 = 1030
+                , BL3 = 1031
+                , BL4 = 1032
+                , BL5 = 1033
+                , BL6 = 1034
                     , ST = 5;
             /// <summary>
             /// Массив - идентификаторы компонентов оборудования ТЭЦ
             /// </summary>
             private readonly int [] ID_COMP =
             {
-                    BL1, BL2, BL3, BL4, BL5, BL6
+                BL1, BL2, BL3, BL4, BL5, BL6
                     , ST
             };
             /// <summary>
@@ -409,7 +419,7 @@ namespace TepCommon
                 {
                     _modeDev = new Dictionary<int, MODE_DEV>();
 
-                    for (int i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.COUNT; i++)
+                    for (int i = (int)INDX_COMP.iBL1; (i < (int)INDX_COMP.COUNT) && (iRes == 0); i++)
                     {
                         switch ((int)In[@"74"][ID_COMP[i]].value)
                         {
@@ -426,7 +436,9 @@ namespace TepCommon
                                 mDev = MODE_DEV.TEPLO_3;
                                 break;
                             default:
-                                logErrorUnknownModeDev(@"InitInValues");
+                                iRes = -1;
+
+                                logErrorUnknownModeDev(@"InitInValues", ID_COMP[i]);
                                 break;
                         }
 

@@ -100,11 +100,12 @@ namespace PluginTaskTepInval
 
             if (!(iRegDbConn < 0))
             {
+                //Запрос для получения архивных данных
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
                 //Запрос для получения автоматически собираемых данных
                 m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(_IdSession
                     , ActualIdPeriod
                     , CountBasePeriod
-                    //, HandlerDb.Type
                     , arQueryRanges
                     , out err);
                 //Проверить признак выполнения запроса
@@ -122,17 +123,15 @@ namespace PluginTaskTepInval
                             , CountBasePeriod
                             , _currIdTimezone
                             , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
-                            //, ref m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
-                            , ref m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                            , ref m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                            , ref m_arTableOrigin
                             , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                             , out err, out strErr);
                         // создать копии для возможности сохранения изменений
-                        //m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable ();
-                        m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
-                        m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Copy();
+                        for (HandlerDbTaskCalculate.INDEX_TABLE_VALUES indx = (HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN + 1);
+                            indx < HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT;
+                            indx ++)
+                            m_arTableEdit[(int)indx] =
+                                m_arTableOrigin[(int)indx].Copy();
                     }
                     else
                         strErr = @"ошибка получения данных по умолчанию с " + PanelManagement.m_dtRange.Begin.ToString()
@@ -165,15 +164,21 @@ namespace PluginTaskTepInval
                 if (!(indx == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT)
                     || ((indx == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT) && (ev.m_iQuality == HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT)))
                 {
-                    rowsParameter = m_arTableEdit[(int)indx].Select(@"ID_PUT=" + ev.m_IdParameter);
-
-                    if (rowsParameter.Length == 1)
+                    if ((!(m_arTableEdit[(int)indx] == null))
+                        && (m_arTableEdit[(int)indx].Columns.Contains(@"ID_PUT") == true))
                     {
-                        rowsParameter[0][@"VALUE"] = ev.m_Value;
-                        //rowsParameter[0][@"QUALITY"] = (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER;
+                        rowsParameter = m_arTableEdit[(int)indx].Select(@"ID_PUT=" + ev.m_IdParameter);
+
+                        if (rowsParameter.Length == 1)
+                        {
+                            rowsParameter[0][@"VALUE"] = ev.m_Value;
+                            //rowsParameter[0][@"QUALITY"] = (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER;
+                        }
+                        else
+                            Logging.Logg().Error(@"PanelTaskInval::onEventCellValueChanged (INDEX_TABLE_VALUES=" + indx.ToString() + @") - не найден параметр при изменении значения (по умолчанию) в 'DataGridView' ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                     else
-                        Logging.Logg().Error(@"PanelTaskInval::onEventCellValueChanged (INDEX_TABLE_VALUES=" + indx.ToString() + @") - не найден параметр при изменении значения (по умолчанию) в 'DataGridView' ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        ; //??? ошибка - таблица не инициализирована ИЛИ таблица не содержит столбец 'ID_PUT'
                 }
                 else
                     ;

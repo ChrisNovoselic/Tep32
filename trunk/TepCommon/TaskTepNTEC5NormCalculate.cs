@@ -29,9 +29,9 @@ namespace TepCommon
             /// <summary>
             /// Зафиксировать в журнале сообщение об ошибке - неизвестный тип режима работы оборудования
             /// </summary>
-            private void logErrorUnknownModeDev(string nAlg)
+            private void logErrorUnknownModeDev(string nAlg, int indxComp)
             {
-                Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @", ID_COMP=" + ID_COMP[indxComp] + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
             }            
             /// <summary>
             /// Рассчитать значения для параметра в алгоритме расчета по идентификатору
@@ -216,7 +216,7 @@ namespace TepCommon
                                     fTmp = fTable.F2(@"2.50:2", Norm[@"9"][ID_COMP[i]].value, Norm[@"10.1"][ID_COMP[i]].value);
                                     break;
                                 default:
-                                    logErrorUnknownModeDev(nAlg);
+                                    logErrorUnknownModeDev(nAlg, i);
                                     break;
                             }
 
@@ -246,7 +246,7 @@ namespace TepCommon
                                     fTmp = fTable.F3(@"2.2:3", Norm[@"9"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"10.1"][ID_COMP[i]].value);
                                     break;
                                 default:
-                                    logErrorUnknownModeDev(nAlg);
+                                    logErrorUnknownModeDev(nAlg, i);
                                     break;
                             }
 
@@ -274,7 +274,7 @@ namespace TepCommon
                                     fTmp = fTable.F3(@"2.3а:3", Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, In[@"38"][ID_COMP[i]].value);
                                     break;
                                 default:
-                                    logErrorUnknownModeDev(nAlg);
+                                    logErrorUnknownModeDev(nAlg, i);
                                     break;
                             }
 
@@ -358,7 +358,7 @@ namespace TepCommon
                                     fTmp = fTable.F2(@"2.5:2", Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value);
                                     break;
                                 default:
-                                    logErrorUnknownModeDev(nAlg);
+                                    logErrorUnknownModeDev(nAlg, i);
                                     break;
                             }
 
@@ -389,7 +389,7 @@ namespace TepCommon
                                     fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][ID_COMP[i]].value);
                                     break;
                                 default:
-                                    logErrorUnknownModeDev(nAlg);
+                                    logErrorUnknownModeDev(nAlg, i);
                                     break;
                             }
 
@@ -406,12 +406,12 @@ namespace TepCommon
                     #endregion
 
                     #region 20 - dqт бр (t 2)
-                    case @"20":
-                        nameF4 = @"2.7";
+                    case @"20":                        
                         fRunk4 = new float[2, (int)(INDX_COMP.COUNT - 1)];
                         // для левой границы [0, i] 4-х мерной функции
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
+                            nameF4 = @"2.7";                            
                             fTmp = Norm[@"10.1"][ID_COMP[i]].value;
 
                             switch (_modeDev[i])
@@ -444,7 +444,8 @@ namespace TepCommon
                                                                 nameF4 += @"д";
                                                             else
                                                                 ;
-                                    if (! (Norm[@"19"][ID_COMP[i]].value < 0))
+
+                                    if (!(Norm[@"19"][ID_COMP[i]].value < 0))
                                         nameF4 += @"+";
                                     else
                                         nameF4 += @"-";
@@ -454,15 +455,15 @@ namespace TepCommon
                                     fRunk4[0, i] = fTable.F3(nameF4, Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"19"][ID_COMP[i]].value);
                                     break;
                                 default:
-                                    logErrorUnknownModeDev(nAlg);
+                                    logErrorUnknownModeDev(nAlg, i);
                                     break;
                             }
                         }
 
-                        nameF4 = @"2.7";
                         // для правой границы [1, i] 4-х мерной функции
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
+                            nameF4 = @"2.7";
                             fTmp = Norm[@"10.1"][ID_COMP[i]].value;
 
                             switch (_modeDev[i])
@@ -475,7 +476,7 @@ namespace TepCommon
                                 case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
                                     if (fTmp < 0.8F)
                                         ;
-                                    else                                            
+                                    else
                                         if ((!(fTmp < 0.8F)) && (!(fTmp > 0.99F)))
                                             nameF4 += @"а";
                                         else
@@ -495,6 +496,7 @@ namespace TepCommon
                                                                 nameF4 += @"е";
                                                             else
                                                                 ;
+
                                     if (!(Norm[@"19"][ID_COMP[i]].value < 0))
                                         nameF4 += @"+";
                                     else
@@ -505,7 +507,7 @@ namespace TepCommon
                                     fRunk4[1, i] = fTable.F3(nameF4, Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"19"][ID_COMP[i]].value);
                                     break;
                                 default:
-                                    logErrorUnknownModeDev(nAlg);
+                                    logErrorUnknownModeDev(nAlg, i);
                                     break;
                             }
                         }
@@ -545,7 +547,7 @@ namespace TepCommon
                                                                 Norm[nAlg][ID_COMP[i]].value = fRunk4[1, i];
                                     break;
                                 default:
-                                    logErrorUnknownModeDev(nAlg);
+                                    logErrorUnknownModeDev(nAlg, i);
                                     break;
                             }
                         }

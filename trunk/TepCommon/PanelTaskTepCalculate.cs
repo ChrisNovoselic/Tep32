@@ -18,7 +18,7 @@ namespace TepCommon
     {
         /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
-        ///  "сырые" - от источников информации, "учтенные" - сохраненные в БД
+        ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
         /// </summary>
         protected enum INDEX_VIEW_VALUES : short { UNKNOWN = -1, SOURCE, ARCHIVE
             , COUNT }
