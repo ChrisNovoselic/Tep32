@@ -80,7 +80,18 @@ namespace TepCommon
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
-        protected PanelManagementTaskTepCalculate PanelManagement { get { if (_panelManagement == null) _panelManagement = createPanelManagement (); else ; return _panelManagement; } }
+        protected PanelManagementTaskTepCalculate PanelManagement
+        {
+            get
+            {
+                if (_panelManagement == null)
+                    _panelManagement = createPanelManagement ();
+                else
+                    ;
+
+                return _panelManagement;
+            }
+        }
         /// <summary>
         /// Отображение значений в табличном представлении
         /// </summary>
