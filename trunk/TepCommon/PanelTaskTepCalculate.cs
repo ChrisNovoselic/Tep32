@@ -154,6 +154,8 @@ namespace TepCommon
                 return strRes;
             }
         }
+
+        protected HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         /// <summary>
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
@@ -180,9 +182,10 @@ namespace TepCommon
         /// <param name="strNameTableValues">Строка - наименование таблицы со значениями</param>
         protected PanelTaskTepCalculate(IPlugIn iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc)
-        {            
+        {
+            Type = type;
+
             HandlerDb.IdTask = ID_TASK.TEP;
-            HandlerDb.CreateTaskCalculate(type);
 
             InitializeComponents();
         }
@@ -346,7 +349,7 @@ namespace TepCommon
                 // список компонентов
                 , HandlerDb.GetQueryCompList ()
                 // параметры расчета
-                , HandlerDb.GetQueryParameters ()
+                , HandlerDb.GetQueryParameters (Type)
                 //// настройки визуального отображения значений
                 //, @""
                 // режимы работы

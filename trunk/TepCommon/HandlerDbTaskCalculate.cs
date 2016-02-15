@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data;
@@ -29,7 +30,7 @@ namespace TepCommon
         /// <summary>
         /// Перечисление - идентификаторы состояния полученных из БД значений
         /// </summary>
-        public enum ID_QUALITY_VALUE { NOT_REC = -3, PARTIAL, DEFAULT, SOURCE, USER }
+        public enum ID_QUALITY_VALUE { NOT_REC = -3, PARTIAL, DEFAULT, SOURCE, USER, CALCULATED }
 
         private const int MAX_ROWCOUNT_TO_INSERT = 666;
 
@@ -37,41 +38,38 @@ namespace TepCommon
         /// <summary>
         /// Идентификатор задачи
         /// </summary>
-        public ID_TASK IdTask { get { return _iIdTask; } set { if (!(_iIdTask == value)) { _iIdTask = value; /*createTaskCalculate()*/; } else ; } }
+        public ID_TASK IdTask { get { return _iIdTask; } set { if (!(_iIdTask == value)) { _iIdTask = value; createTaskCalculate(); } else ; } }
         /// <summary>
         /// Объект для произведения расчетов
         /// </summary>
         private TaskCalculate m_taskCalculate;
 
-        public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN, TaskCalculate.TYPE type = TaskCalculate.TYPE.UNKNOWN)
+        public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN)
             : base()
         {
             IdTask = idTask;
-
-            CreateTaskCalculate(type);
         }
         /// <summary>
         /// Создать объект расчета для типа задачи
         /// </summary>
         /// <param name="type">Тип расчетной задачи</param>
-        public void CreateTaskCalculate (TaskCalculate.TYPE type)
+        private void createTaskCalculate (/*ID_TASK idTask*/)
         {
             if (!(m_taskCalculate == null))
                 m_taskCalculate = null;
             else
                 ;
 
-            if (!(type == TaskCalculate.TYPE.UNKNOWN))
+            //if (!(type == TaskCalculate.TYPE.UNKNOWN))
                 switch (IdTask)
                 {
                     case ID_TASK.TEP:
-                        m_taskCalculate = new TaskTepCalculate(type);
+                        m_taskCalculate = new TaskTepCalculate();
                         break;
                     default:
                         break;
                 }
-            else
-                ;
+            //else ;
         }
         /// <summary>
         /// Создать новую сессию для расчета
@@ -410,11 +408,11 @@ namespace TepCommon
             {
                 strJoinValues = getRangeAlg(type);
                 if (strJoinValues.Equals(string.Empty) == false)
-                    strJoinValues = @" AS v JOIN [" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT AND p.ID_ALG" + strJoinValues;
+                    strJoinValues = @" JOIN [" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT AND p.ID_ALG" + strJoinValues;
                 else
                     ;
 
-                strRes = @"SELECT * FROM " + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE)
+                strRes = @"SELECT v.* FROM " + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @" as v"
                     + strJoinValues
                     + @" WHERE [ID_SESSION]=" + (int)idSession;
             }
@@ -475,15 +473,15 @@ namespace TepCommon
             return strRes;
         }
 
-        public string GetQueryParameters(TaskCalculate.TYPE type = TaskCalculate.TYPE.UNKNOWN)
+        public string GetQueryParameters(TaskCalculate.TYPE type/* = TaskCalculate.TYPE.UNKNOWN*/)
         {
             string strRes = string.Empty
                 , whereParameters = string.Empty;
 
-            if (type == TaskCalculate.TYPE.UNKNOWN)
-                type = m_taskCalculate.Type;
-            else
-                ;
+            //if (type == TaskCalculate.TYPE.UNKNOWN)
+            //    type = m_taskCalculate.Type;
+            //else
+            //    ;
 
             if (!(type == TaskCalculate.TYPE.UNKNOWN))
             {
@@ -520,15 +518,15 @@ namespace TepCommon
 
             return s_NameDbTables[(int)indx];
         }
-        /// <summary>
-        /// Возвратить наименование таблицы 
-        /// </summary>
-        /// <param name="req">Индекс таблицы, требуемой при расчете</param>
-        /// <returns>Наименование таблицы</returns>
-        private string getNameDbTable(TABLE_CALCULATE_REQUIRED req)
-        {
-            return getNameDbTable(m_taskCalculate.Type, req);
-        }
+        ///// <summary>
+        ///// Возвратить наименование таблицы 
+        ///// </summary>
+        ///// <param name="req">Индекс таблицы, требуемой при расчете</param>
+        ///// <returns>Наименование таблицы</returns>
+        //private string getNameDbTable(TABLE_CALCULATE_REQUIRED req)
+        //{
+        //    return getNameDbTable(m_taskCalculate.Type, req);
+        //}
         /// <summary>
         /// Запрос для получения значений "по умолчанию"
         /// </summary>
@@ -548,19 +546,19 @@ namespace TepCommon
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
         ///  , структура таблицы совместима с [inval], [outval]
         /// </summary>
-        private string getQueryValuesVar(long idSession
+        private string getQueryValuesVar(TaskCalculate.TYPE type
+            , long idSession
             , ID_PERIOD idPeriod
             , int cntBasePeriod
-            //, TYPE type
             , DateTimeRange[] arQueryRanges)
         {
             string strRes = string.Empty
                 , whereParameters = string.Empty;
 
-            if (!(m_taskCalculate.Type == TaskCalculate.TYPE.UNKNOWN))
+            if (!(type == TaskCalculate.TYPE.UNKNOWN))
             {
                 // аналог в 'GetQueryParameters'
-                whereParameters = getWhereRangeAlg(m_taskCalculate.Type);
+                whereParameters = getWhereRangeAlg(type);
                 if (whereParameters.Equals(string.Empty) == false)
                     whereParameters = @" AND a." + whereParameters;
                 else
@@ -578,9 +576,9 @@ namespace TepCommon
                             + @", " + idSession + @" as [ID_SESSION]"
                             + @", m.[AVG]"
                         //+ @", GETDATE () as [WR_DATETIME]"
-                        + @" FROM [dbo].[" + getNameDbTable(TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
-                            + @" LEFT JOIN [dbo].[" + getNameDbTable(TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
-                            + @" LEFT JOIN [dbo].[" + getNameDbTable(TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)_iIdTask + whereParameters
+                        + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+                            + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
+                            + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)_iIdTask + whereParameters
                             + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                         + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
                         ;
@@ -649,8 +647,8 @@ namespace TepCommon
         /// <param name="type">Тип значений (входные, выходные)</param>
         /// <param name="err">Признак выполнения функции</param>
         /// <returns>Объект-таблица</returns>
-        public DataTable GetValuesVar(long idSession
-            , TaskCalculate.TYPE type
+        public DataTable GetValuesVar(TaskCalculate.TYPE type
+            , long idSession
             , out int err)
         {
             DataTable tableRes = new DataTable();
@@ -673,7 +671,8 @@ namespace TepCommon
         /// <param name="arQueryRanges">Массив диапазонов даты/времени - интервал(ы) заправшиваемых данных</param>
         /// <param name="err">Признак выполнения функции</param>
         /// <returns>Таблица со значенями</returns>
-        public DataTable GetValuesVar(long idToSession
+        public DataTable GetValuesVar(TaskCalculate.TYPE type
+            , long idToSession
             , ID_PERIOD idPeriod
             , int cntBasePeriod
             , DateTimeRange[] arQueryRanges
@@ -684,10 +683,10 @@ namespace TepCommon
             err = -1;
 
             tableRes = DbTSQLInterface.Select(ref _dbConnection
-                , getQueryValuesVar(idToSession
+                , getQueryValuesVar(type
+                    , idToSession
                     , idPeriod
                     , cntBasePeriod
-                    //, Type
                     , arQueryRanges)
                 , null, null
                 , out err);
@@ -749,7 +748,7 @@ namespace TepCommon
         /// </summary>
         /// <param name="err">Признак ошибки при выполнении функции</param>
         /// <returns>Массив таблиц со значенями для расчета</returns>
-        private TaskTepCalculate.ListDATATABLE prepareTepCalculateValues(out int err)
+        private TaskTepCalculate.ListDATATABLE prepareTepCalculateValues(TaskCalculate.TYPE type, out int err)
         {
             TaskTepCalculate.ListDATATABLE listRes = new TaskTepCalculate.ListDATATABLE ();
             err = -1;
@@ -770,7 +769,7 @@ namespace TepCommon
                     tableVal = Select(GetQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err);
                     listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.IN_PARAMETER, m_table = tableVal.Copy() });
                     // получить входные значения для сессии
-                    tableVal = GetValuesVar(idSession, TaskCalculate.TYPE.IN_VALUES, out err);
+                    tableVal = GetValuesVar(TaskCalculate.TYPE.IN_VALUES, idSession, out err);
                     listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
 
                     if (IdTask == ID_TASK.TEP)
@@ -779,18 +778,18 @@ namespace TepCommon
                         tableVal = Select(GetQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES), out err);
                         listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_NORM_PARAMETER, m_table = tableVal.Copy() });
                         // получить выходные-нормативные значения для сессии
-                        tableVal = GetValuesVar(idSession, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
+                        tableVal = GetValuesVar(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, idSession, out err);
                         listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_NORM_VALUES, m_table = tableVal.Copy() });
                     }
                     else
                         ;
 
-                    if (m_taskCalculate.Type == TaskCalculate.TYPE.OUT_VALUES)
+                    if (type == TaskCalculate.TYPE.OUT_VALUES)
                     {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
                         tableVal = Select(GetQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err);
                         listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_PARAMETER, m_table = tableVal.Copy() });
                         // получить выходные значения для сессии
-                        tableVal = GetValuesVar(idSession, TaskCalculate.TYPE.OUT_VALUES, out err);
+                        tableVal = GetValuesVar(TaskCalculate.TYPE.OUT_VALUES, idSession, out err);
                         listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_VALUES, m_table = tableVal.Copy() });
                     }
                     else
@@ -809,10 +808,12 @@ namespace TepCommon
         /// Расчитать выходные-нормативные значения для задачи "Расчет ТЭП"
         ///  , сохранить значения во временной таблице для возможности предварительного просмотра результата
         /// </summary>
-        public void TepCalculateNormative()
+        public void Calculate(TaskCalculate.TYPE type)
         {
             int err = -1
                 , iRegDbConn = -1;
+            DataTable tableOrigin = null
+                , tableCalcRes = null;
 
             TaskTepCalculate.ListDATATABLE listDataTables = null;
 
@@ -821,52 +822,39 @@ namespace TepCommon
 
             if (!(iRegDbConn < 0))
             {
-                // подготовить таблицы для расчета
-                listDataTables = prepareTepCalculateValues(out err);
-                if (err == 0)
+                switch (IdTask)
                 {
-                    // произвести вычисления
-                    (m_taskCalculate as TaskTepCalculate).CalculateNormative(listDataTables);
-                    // сохранить результаты вычисления
-                    saveResult(out err);
+                    case ID_TASK.TEP:
+                        // подготовить таблицы для расчета
+                        listDataTables = prepareTepCalculateValues(type, out err);
+                        if (err == 0)
+                        {
+                            // произвести вычисления
+                            switch (type)
+                            {
+                                case TaskCalculate.TYPE.OUT_TEP_NORM_VALUES:
+                                    tableOrigin = listDataTables.FindDataTable(TaskCalculate.INDEX_DATATABLE.OUT_NORM_VALUES);
+                                    tableCalcRes = (m_taskCalculate as TaskTepCalculate).CalculateNormative(listDataTables);
+                                    break;
+                                case TaskCalculate.TYPE.OUT_VALUES:
+                                    tableCalcRes = (m_taskCalculate as TaskTepCalculate).CalculateMaket(listDataTables);
+                                    break;
+                                default:
+                                    break;
+                            }                            
+                            // сохранить результаты вычисления
+                            saveResult(tableOrigin, tableCalcRes, out err);
+                        }
+                        else
+                            Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при подготовке данных для расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+                        break;
+                    default:
+                        Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - неизвестный тип задачи расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+                        break;
                 }
-                else
-                    Logging.Logg().Error(@"HandlerDbTaskCalculate::TepCalculateNormative () - при подготовке данных для расчета...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             else
-                Logging.Logg().Error(@"HandlerDbTaskCalculate::TepCalculateNormative () - при регистрации соединения...", Logging.INDEX_MESSAGE.NOT_SET);
-
-            // отмена регистрации БД - только, если регистрация произведена в текущем контексте
-            if (!(iRegDbConn > 0))
-                UnRegisterDbConnection();
-            else
-                ;
-        }
-        /// <summary>
-        /// Расчитать выходные значения для задачи "Расчет ТЭП"
-        ///  , сохранить значения во временной таблице для возможности предварительного просмотра результата
-        /// </summary>
-        public void TepCalculateMaket()
-        {
-            int err = -1
-                , iRegDbConn = -1;
-
-            TaskTepCalculate.ListDATATABLE listDataTables = null;
-
-            // регистрация соединения с БД
-            RegisterDbConnection(out iRegDbConn);
-
-            if (!(iRegDbConn < 0))
-            {
-                // подготовить таблицы для расчета
-                listDataTables = prepareTepCalculateValues(out err);
-                // произвести вычисления
-                (m_taskCalculate as TaskTepCalculate).CalculateMaket(listDataTables);
-                // сохранить результаты вычисления
-                saveResult(out err);
-            }
-            else
-                ;
+                Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при регистрации соединения...", Logging.INDEX_MESSAGE.NOT_SET);
 
             // отмена регистрации БД - только, если регистрация произведена в текущем контексте
             if (!(iRegDbConn > 0))
@@ -875,11 +863,35 @@ namespace TepCommon
                 ;
         }
 
-        private void saveResult (out int err)
+        private void saveResult (DataTable tableOrigin, DataTable tableRes, out int err)
         {
             err = -1;
 
-            DbTSQLInterface.ExecNonQuery(ref _dbConnection, @"", null, null, out err);
+            DataTable tableEdit = new DataTable();
+            DataRow[] rowSel = null;
+
+            tableEdit = tableOrigin.Clone();
+
+            foreach (DataRow r in tableOrigin.Rows)
+            {
+                rowSel = tableRes.Select(@"ID=" + r[@"ID_PUT"]);
+
+                if (rowSel.Length == 1)
+                {
+                    tableEdit.Rows.Add(new object[] {
+                        //r[@"ID"],
+                        r[@"ID_SESSION"]
+                        , r[@"ID_PUT"]
+                        , rowSel[0][@"QUALITY"]
+                        , rowSel[0][@"VALUE"]                        
+                        , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
+                    });
+                }
+                else
+                    ; //??? ошибка
+            }
+
+            RecUpdateInsertDelete(s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES], @"ID_PUT", tableOrigin, tableEdit, out err);
         }
     }
 }

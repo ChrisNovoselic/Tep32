@@ -103,7 +103,8 @@ namespace PluginTaskTepInval
                 //Запрос для получения архивных данных
                 m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
                 //Запрос для получения автоматически собираемых данных
-                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(_IdSession
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
+                    , _IdSession
                     , ActualIdPeriod
                     , CountBasePeriod
                     , arQueryRanges
@@ -186,15 +187,15 @@ namespace PluginTaskTepInval
 
         private void btnRunPrev_onClick(object obj, EventArgs ev)
         {
-            btnRun_onClick(HandlerDb.TepCalculateNormative);
+            btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES);
         }
 
         private void btnRunRes_onClick(object obj, EventArgs ev)
         {
-            btnRun_onClick (HandlerDb.TepCalculateMaket);            
+            btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);            
         }
 
-        private void btnRun_onClick(DelegateFunc fRun)
+        private void btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE type)
         {
             int err = -1;
 
@@ -205,13 +206,13 @@ namespace PluginTaskTepInval
                     , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                     , out err);
 
-                fRun();
+                HandlerDb.Calculate (type);
             }
             catch (Exception e)
             {
                 //deleteSession ();
 
-                Logging.Logg().Exception(e, @"PanelTaskTepInval::" + fRun.Method.Name + @" () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Exception(e, @"PanelTaskTepInval::btnRun_onClick (type=" + type.ToString () + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             finally
             {

@@ -23,9 +23,9 @@ namespace TepCommon
             /// <summary>
             /// Индекс типа вкладки для текущего объекта
             /// </summary>
-            public TYPE Type { get { return _type; } set { _type = value; } }
+            //public TYPE Type { get { return _type; } set { _type = value; } }
 
-            protected virtual bool isRealTime { get { return Type == TYPE.OUT_TEP_REALTIME; } }
+            protected virtual bool isRealTime { get { return _type == TYPE.OUT_TEP_REALTIME; } }
             /// <summary>
             /// Перечисление - индексы таблиц, передаваемых объекту в качестве элементов массива-аргумента
             /// </summary>
@@ -94,7 +94,11 @@ namespace TepCommon
                             set
                             {
                                 if (m_bDeny == false)
+                                {
                                     _value = value;
+                                    m_sQuality = ID_QUALITY_VALUE.CALCULATED;
+
+                                }
                                 else
                                     ;
                             }
@@ -102,7 +106,7 @@ namespace TepCommon
                         /// <summary>
                         /// Признак качества значения параметра
                         /// </summary>
-                        public short m_sQuality;
+                        public ID_QUALITY_VALUE m_sQuality;
                         /// <summary>
                         /// Идентификатор 
                         /// </summary>
@@ -163,9 +167,9 @@ namespace TepCommon
             /// Конструктор основной (с параметром)
             /// </summary>
             /// <param name="type">Тип расчета</param>
-            public TaskCalculate(TYPE type)
+            public TaskCalculate(/*TYPE type*/)
             {
-                Type = type;
+                //Type = type;
             }
             /// <summary>
             /// Возвратить индкус таблицы БД по указанным типам расчета и рассчитываемых значений
@@ -287,7 +291,7 @@ namespace TepCommon
                                 //, m_iIdComponent = idComponent
                                 , m_bDeny = false
                                 , value = (float)(double)rVal[0][@"VALUE"]
-                                , m_sQuality = 0 // не рассчитывался
+                                , m_sQuality = ID_QUALITY_VALUE.DEFAULT // не рассчитывался
                                 , m_idRatio = (int)rPar[@"ID_RATIO"]
                                 , m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (float)rPar[@"MINVALUE"] //??? - ошибка д.б. float
                                 , m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (float)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
@@ -379,7 +383,7 @@ namespace TepCommon
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public TaskTepCalculate(TYPE type) : base (type)
+            public TaskTepCalculate() : base ()
             {
                 m_indxCompRealTime = INDX_COMP.UNKNOWN;
 
@@ -607,6 +611,21 @@ namespace TepCommon
             private DataTable resultToTable(P_ALG pAlg)
             {
                 DataTable tableRes = new DataTable();
+
+                tableRes.Columns.AddRange(new DataColumn[] {
+                    new DataColumn (@"ID", typeof(int))
+                    , new DataColumn (@"QUALITY", typeof(short))
+                    , new DataColumn (@"VALUE", typeof(float))                    
+                });
+
+                foreach (P_ALG.P_PUT pPut in pAlg.Values)
+                    foreach (P_ALG.P_PUT.P_VAL val in pPut.Values)
+                        tableRes.Rows.Add(new object[]
+                            {
+                                val.m_iId //ID_PUT
+                                , val.m_sQuality //QUALITY
+                                , val.value //VALUE
+                            });
 
                 return tableRes;
             }

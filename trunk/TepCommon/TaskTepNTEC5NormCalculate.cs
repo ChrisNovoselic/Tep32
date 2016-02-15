@@ -54,6 +54,13 @@ namespace TepCommon
                 {
                     #region 1, 2 - TAU раб, Э т
                     case @"1": //TAU раб
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Norm[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value;                            
+                        }
+                        //??? для станции и для компонентов д.б. одинаковое значение
+                        fRes = Norm[nAlg][ID_COMP[0]].value;
+                        break;
                     case @"2": //Э т
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -164,7 +171,10 @@ namespace TepCommon
                     #region 9 - N т
                     case @"9":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                            Norm[nAlg][ID_COMP[i]].value = Norm[@"2"][ID_COMP[i]].value / Norm[@"1"][ID_COMP[i]].value;
+                            if (! (Norm[@"1"][ID_COMP[i]].value == 0F))
+                                Norm[nAlg][ID_COMP[i]].value = Norm[@"2"][ID_COMP[i]].value / Norm[@"1"][ID_COMP[i]].value;
+                            else
+                                ;
 
                         fRes = Norm[@"2"][ST].value / Norm[@"1"][ST].value;
                         break;
@@ -336,7 +346,10 @@ namespace TepCommon
                     case @"16":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            Norm[nAlg][ID_COMP[i]].value = 1000 * Norm[@"15.1"][ID_COMP[i]].value / Norm[@"9"][ID_COMP[i]].value;
+                            if (Norm[@"9"][ID_COMP[i]].m_sQuality == ID_QUALITY_VALUE.CALCULATED)
+                                Norm[nAlg][ID_COMP[i]].value = 1000 * Norm[@"15.1"][ID_COMP[i]].value / Norm[@"9"][ID_COMP[i]].value;
+                            else
+                                ;
                         }
                         break;
                     #endregion
