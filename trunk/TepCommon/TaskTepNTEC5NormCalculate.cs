@@ -47,7 +47,8 @@ namespace TepCommon
                     , fTmp = -1F;
                 float[] fRunkValues = new float[(int)FTable.FRUNK.COUNT];
                 // только для вычисления пар.20 - 4-х мерная функция
-                string nameF4 = string.Empty; 
+                string nameFTable = string.Empty
+                    , postfixFTable = string.Empty; 
                 float [,]fRunk4 = null;
 
                 switch (nAlg)
@@ -346,7 +347,7 @@ namespace TepCommon
                     case @"16":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            if (Norm[@"9"][ID_COMP[i]].m_sQuality == ID_QUALITY_VALUE.CALCULATED)
+                            if (! (Norm[@"9"][ID_COMP[i]].value == 0F))
                                 Norm[nAlg][ID_COMP[i]].value = 1000 * Norm[@"15.1"][ID_COMP[i]].value / Norm[@"9"][ID_COMP[i]].value;
                             else
                                 ;
@@ -424,7 +425,7 @@ namespace TepCommon
                         // для левой границы [0, i] 4-х мерной функции
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            nameF4 = @"2.7";                            
+                            nameFTable = @"2.7";                            
                             fTmp = Norm[@"10.1"][ID_COMP[i]].value;
 
                             switch (_modeDev[i])
@@ -442,30 +443,31 @@ namespace TepCommon
                                             ;
                                         else
                                             if ((!(fTmp < 1.0F)) && (!(fTmp > 1.19F)))
-                                                nameF4 += @"а";
+                                                nameFTable += @"а";
                                             else
                                                 if ((!(fTmp < 1.2F)) && (!(fTmp > 1.39F)))
-                                                    nameF4 += @"б";
+                                                    nameFTable += @"б";
                                                 else
                                                     if ((!(fTmp < 1.4F)) && (!(fTmp > 1.59F)))
-                                                        nameF4 += @"в";
+                                                        nameFTable += @"в";
                                                     else
                                                         if ((!(fTmp < 1.6F)) && (!(fTmp > 1.79F)))
-                                                            nameF4 += @"г";
+                                                            nameFTable += @"г";
                                                         else
                                                             if (!(fTmp < 1.8F))
-                                                                nameF4 += @"д";
+                                                                nameFTable += @"д";
                                                             else
                                                                 ;
 
                                     if (!(Norm[@"19"][ID_COMP[i]].value < 0))
-                                        nameF4 += @"+";
+                                        postfixFTable = @"+";
                                     else
-                                        nameF4 += @"-";
+                                        postfixFTable = @"-";
 
-                                    nameF4 += @":3";
+                                    nameFTable += postfixFTable;
+                                    nameFTable += @":3";
 
-                                    fRunk4[0, i] = fTable.F3(nameF4, Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"19"][ID_COMP[i]].value);
+                                    fRunk4[0, i] = fTable.F3(nameFTable, Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"19"][ID_COMP[i]].value);
                                     break;
                                 default:
                                     logErrorUnknownModeDev(nAlg, i);
@@ -476,7 +478,7 @@ namespace TepCommon
                         // для правой границы [1, i] 4-х мерной функции
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            nameF4 = @"2.7";
+                            nameFTable = @"2.7";
                             fTmp = Norm[@"10.1"][ID_COMP[i]].value;
 
                             switch (_modeDev[i])
@@ -491,33 +493,34 @@ namespace TepCommon
                                         ;
                                     else
                                         if ((!(fTmp < 0.8F)) && (!(fTmp > 0.99F)))
-                                            nameF4 += @"а";
+                                            nameFTable += @"а";
                                         else
                                             if ((!(fTmp < 1.0F)) && (!(fTmp > 1.19F)))
-                                                nameF4 += @"б";
+                                                nameFTable += @"б";
                                             else
                                                 if ((!(fTmp < 1.2F)) && (!(fTmp > 1.39F)))
-                                                    nameF4 += @"в";
+                                                    nameFTable += @"в";
                                                 else
                                                     if ((!(fTmp < 1.4F)) && (!(fTmp > 1.59F)))
-                                                        nameF4 += @"г";
+                                                        nameFTable += @"г";
                                                     else
                                                         if ((!(fTmp < 1.6F)) && (!(fTmp > 1.79F)))
-                                                            nameF4 += @"д";
+                                                            nameFTable += @"д";
                                                         else
                                                             if (!(fTmp < 1.8F))
-                                                                nameF4 += @"е";
+                                                                nameFTable += @"е";
                                                             else
                                                                 ;
 
                                     if (!(Norm[@"19"][ID_COMP[i]].value < 0))
-                                        nameF4 += @"+";
+                                        postfixFTable = @"+";
                                     else
-                                        nameF4 += @"-";
+                                        postfixFTable = @"-";
 
-                                    nameF4 += @":3";
+                                    nameFTable += postfixFTable;
+                                    nameFTable += @":3";
 
-                                    fRunk4[1, i] = fTable.F3(nameF4, Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"19"][ID_COMP[i]].value);
+                                    fRunk4[1, i] = fTable.F3(nameFTable, Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Norm[@"19"][ID_COMP[i]].value);
                                     break;
                                 default:
                                     logErrorUnknownModeDev(nAlg, i);
@@ -574,7 +577,52 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 21 -
+                    #region 21 - dqт бр(Gпв)
+                    case @"21":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            fTmp = In[@"25"][ID_COMP[i]].value / Norm[@"1"][ID_COMP[i]].value;
+
+                            if (fTmp > Norm[@"13"][ID_COMP[i]].value)
+                                postfixFTable = @"-";
+                            else
+                                postfixFTable = @"+";
+
+                            if (fTmp == Norm[@"13"][ID_COMP[i]].value)
+                                Norm[nAlg][ID_COMP[i]].value = 0F;
+                            else
+                            {
+                                switch (_modeDev[ID_COMP[i]])
+                                {
+                                    case MODE_DEV.COND_1:
+                                        nameFTable = @"2.8";
+
+                                        nameFTable += postfixFTable;
+                                        nameFTable += @":1";
+
+                                        Norm[nAlg][ID_COMP[i]].value = fTable.F1(nameFTable, Norm[@"13"][ID_COMP[i]].value);
+                                        break;
+                                    case MODE_DEV.ELEKTRO2_2:
+                                    case MODE_DEV.ELEKTRO1_2a:
+                                    case MODE_DEV.TEPLO_3:
+                                        nameFTable = @"2.8а";
+
+                                        if (fTmp > Norm[@"13"][ID_COMP[i]].value)
+                                            nameFTable += @"-";
+                                        else
+                                            nameFTable += @"+";
+
+                                        nameFTable += @":2";
+
+                                        Norm[nAlg][ID_COMP[i]].value = fTable.F2(nameFTable, Norm[@"13"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value);
+                                        break;
+                                    default:
+                                        //??? ошибка
+                                        break;
+                                }
+                            }
+                        }
+                        break;
                     #endregion
 
                     #region 22 -

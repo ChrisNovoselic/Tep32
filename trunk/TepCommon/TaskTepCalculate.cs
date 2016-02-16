@@ -95,9 +95,13 @@ namespace TepCommon
                             {
                                 if (m_bDeny == false)
                                 {
-                                    _value = value;
-                                    m_sQuality = ID_QUALITY_VALUE.CALCULATED;
-
+                                    if (float.IsInfinity(value) == false)
+                                    {
+                                        _value = value;
+                                        m_sQuality = ID_QUALITY_VALUE.CALCULATED;
+                                    }
+                                    else
+                                        ;
                                 }
                                 else
                                     ;
@@ -557,7 +561,8 @@ namespace TepCommon
                 calculateNormative(@"19");
                 /*-------------20 - dqт бр (t 2)-------------*/
                 calculateNormative(@"20");
-                /*-------------21 -------------*/
+                /*-------------21 - dqт бр(Gпв)-------------*/
+                calculateNormative(@"21");
                 /*-------------22 -------------*/
                 /*-------------23 -------------*/
                 /*-------------24 -------------*/
