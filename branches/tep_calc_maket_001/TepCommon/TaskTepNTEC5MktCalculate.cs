@@ -18,6 +18,7 @@ namespace TepCommon
         /// </summary>
         public partial class TaskTepCalculate : TaskCalculate
         {
+            
             private float calculateMaket(string nAlg)
             {
                 float fRes = 0F,
