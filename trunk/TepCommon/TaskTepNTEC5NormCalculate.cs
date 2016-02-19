@@ -32,7 +32,7 @@ namespace TepCommon
             private void logErrorUnknownModeDev(string nAlg, int indxComp)
             {
                 Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @", ID_COMP=" + ID_COMP[indxComp] + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
-            }            
+            }
             /// <summary>
             /// Рассчитать значения для параметра в алгоритме расчета по идентификатору
             /// </summary>
@@ -834,7 +834,7 @@ namespace TepCommon
                                 case INDX_COMP.iBL3:
                                     Norm[nAlg][ID_COMP[BL5]].value = In[@"17"][id_comp].value
                                         + In[@"17.1"][id_comp].value / 2
-                                        + fTable.F1(@"2.22:1", Out[@"50"][ID_COMP[BL5]].value);
+                                        - fTable.F1(@"2.22:1", Out[@"50"][ID_COMP[BL5]].value);
                                     break;
                                 case INDX_COMP.iBL1:
                                 case INDX_COMP.iBL4:
@@ -846,29 +846,164 @@ namespace TepCommon
                                 default:
                                     break;
                             }
-                                id_comp = ID_COMP[i];
-
-                                Norm[nAlg][id_comp].value = In[@"17"][id_comp].value + In[@"17.1"][id_comp].value / 2;
                         }
                         break;
                     #endregion
 
-                    #region 52 -
+                    #region 52 - t гпп
+                    case @"52":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+
+                            switch ((INDX_COMP)i)
+                            {
+                                default:
+                                    Norm[nAlg][id_comp].value = In[@"21"][id_comp].value + In[@"21.1"][id_comp].value / 2;
+                                    break;
+                                case INDX_COMP.iBL5:
+                                    Norm[nAlg][id_comp].value = In[@"22"][id_comp].value
+                                        + In[@"22.1"][id_comp].value / 2
+                                        + fTable.F1("2.22б:1", Norm[@"55"][id_comp].value / Norm[@"1"][id_comp].value);
+                                    break;
+                            }
+                        }
+                        break;
                     #endregion
 
-                    #region 53 -
+                    #region 52.1 - t гпп
+                    case @"52.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+
+                            switch ((INDX_COMP)i)
+                            {
+                                case INDX_COMP.iBL2:
+                                case INDX_COMP.iBL3:
+                                    Norm[nAlg][id_comp].value = In[@"22"][id_comp].value
+                                        + In[@"22.1"][id_comp].value / 2
+                                        + fTable.F1("2.22б:1", Norm[@"55"][id_comp].value / Norm[@"1"][id_comp].value);
+                                    break;
+                                case INDX_COMP.iBL1:
+                                case INDX_COMP.iBL4:
+                                case INDX_COMP.iBL5:
+                                case INDX_COMP.iBL6:
+                                    Norm[nAlg][id_comp].value = In[@"22"][id_comp].value + In[@"22.1"][id_comp].value / 2;
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        break;
                     #endregion
 
-                    #region 54 -
+                    #region 53 - P гпп
+                    case @"53":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+
+                            Norm[nAlg][id_comp].value = In[@"19"][id_comp].value;
+                        }
+                        break;
                     #endregion
 
-                    #region 55 -
+                    #region 54 - D хпп
+                    case @"54":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+
+                            switch (_modeDev[id_comp])
+                            {
+                                case MODE_DEV.COND_1:
+                                    nameFTable = @"2.24а:1";
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2:
+                                case MODE_DEV.TEPLO_3:
+                                    nameFTable = @"2.24:1";
+                                    break;
+                                case MODE_DEV.ELEKTRO1_2a:
+                                    nameFTable = @"2.24б:1";
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                            Norm[nAlg][id_comp].value = fTable.F1(nameFTable, Norm[@"50"][id_comp].value);
+                        }
+                        break;
                     #endregion
 
-                    #region 56 -
+                    #region 55 - D гпп
+                    case @"55":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+                            
+                            Norm[nAlg][id_comp].value = Norm[@"54"][id_comp].value * Norm[@"1"][id_comp].value - In[@"46"][id_comp].value / 0.7F;
+                        }
+                        break;
                     #endregion
 
-                    #region 57 -
+                    #region 56 - P пе
+                    case @"56":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+
+                            Norm[nAlg][id_comp].value = In[@"15"][id_comp].value
+                                + In[@"15.1"][id_comp].value / 2;
+
+                            switch ((INDX_COMP)i)
+                            {
+                                case INDX_COMP.iBL1:
+                                case INDX_COMP.iBL2:
+                                case INDX_COMP.iBL3:
+                                case INDX_COMP.iBL5:
+                                    Norm[nAlg][id_comp].value += fTable.F1(@"2.41а:1", Norm[@"50"][id_comp].value);
+                                    break;
+                                case INDX_COMP.iBL4:
+                                case INDX_COMP.iBL6:
+                                default:
+                                    break;
+                            }
+                        }
+                        break;
+                    #endregion
+
+                    #region 56.1 - Pо
+                    case @"56.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+
+                            Norm[nAlg][id_comp].value = In[@"15.2"][id_comp].value;
+                        }
+                        break;
+                    #endregion
+
+                    #region 57 - i пе
+                    case @"57":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+
+                            fTmp = Norm[@"51"][id_comp].value;
+
+                            Norm[nAlg][id_comp].value = (float)(503.43F
+                                + 11.02849F * (float)Math.Log((fTmp + 273.15F) / 647.27F)
+                                + 229.2569F * (fTmp + 273.15) / 647.27F
+                                + 37.93129F * (float)Math.Pow(((fTmp + 273.15F) / 647.27F), 2)
+                                + 0.758195F - 7.97826F / (float)Math.Pow(((fTmp + 273.15F) / 1000), 2)
+                                - (3.078455F * (fTmp + 273.15F) / 1000 - 0.21549F) / (float)Math.Pow(((fTmp + 273.15F) / 1000 - 0.21F), 3)
+                                    * Norm[@"56"][id_comp].value / 100)
+                                + (float)(0.0644126F - 0.268671F / (float)Math.Pow(((fTmp + 273.15F) / 1000), 8)
+                                - 0.216661F / 100 / (float)Math.Pow(((fTmp + 273.15F) / 1000), 14))
+                                    * (float)Math.Pow((Norm[@"56"][id_comp].value / 100), 2);
+                        }
+                        break;
                     #endregion
 
                     #region 58 -
@@ -1162,6 +1297,7 @@ namespace TepCommon
                     #region 154 -
                     #endregion
 
+                    case @"":
                     default:
                         Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный параметр...", Logging.INDEX_MESSAGE.NOT_SET);
                         break;
