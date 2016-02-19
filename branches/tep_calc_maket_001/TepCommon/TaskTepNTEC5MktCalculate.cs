@@ -311,8 +311,6 @@ namespace TepCommon
                         }
                         else
                         {
-                            //float sum = 0;
-                            //float sum1 = 0;
                             for (int j = 0; j < n_blokov; j++)
                             {
                                 sum += Norm[@"8"][ID_COMP[j]].value;
@@ -1924,7 +1922,6 @@ namespace TepCommon
                         {
                             Out[nAlg][ID_COMP[i]].value = Out[@"4"][ID_COMP[i]].value / 200 / In[@"70"][ID_COMP[i]].value * 100;
                         }
-
                         fRes = Out[@"4"][ID_COMP[ST]].value / 1200 / In[@"70"][ID_COMP[ST]].value * 100;
                         break;
                     #endregion
