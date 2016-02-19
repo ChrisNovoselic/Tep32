@@ -45,12 +45,14 @@ namespace TepCommon
                 int i = -1 // переменная цикла
                     , id_comp = -1; // идентификатор компонента
                 float fSum = 0F // промежуточная величина
-                    , fTmp = -1F;
+                    , fTmp = -1F
+                    , fSum1 = 0F
+                ,fSum2 = 0F;
                 float[] fRunkValues = new float[(int)FTable.FRUNK.COUNT];
                 // только для вычисления пар.20 - 4-х мерная функция
                 string nameFTable = string.Empty
-                    , postfixFTable = string.Empty; 
-                float [,]fRunk4 = null;
+                    , postfixFTable = string.Empty;
+                float[,] fRunk4 = null;
 
                 switch (nAlg)
                 {
@@ -58,7 +60,7 @@ namespace TepCommon
                     case @"1": //TAU раб
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            Norm[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value;                            
+                            Norm[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value;
                         }
                         //??? для станции и для компонентов д.б. одинаковое значение
                         fRes = Norm[nAlg][ID_COMP[0]].value;
@@ -173,7 +175,7 @@ namespace TepCommon
                     #region 9 - N т
                     case @"9":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                            if (! (Norm[@"1"][ID_COMP[i]].value == 0F))
+                            if (!(Norm[@"1"][ID_COMP[i]].value == 0F))
                                 Norm[nAlg][ID_COMP[i]].value = Norm[@"2"][ID_COMP[i]].value / Norm[@"1"][ID_COMP[i]].value;
                             else
                                 ;
@@ -311,9 +313,9 @@ namespace TepCommon
                         {
                             fTmp = (isRealTimeBL1456 == true) ? n_blokov1 : In[@"89"][ST].value;
                             fRunkValues[(int)FTable.FRUNK.F1] = fTmp;
-                            fRunkValues[(int)FTable.FRUNK.F2] = (float)Math.Round ((decimal)(In[@"6"][ST].value / In[@"70"][ST].value / 1.9F), 1);
+                            fRunkValues[(int)FTable.FRUNK.F2] = (float)Math.Round((decimal)(In[@"6"][ST].value / In[@"70"][ST].value / 1.9F), 1);
 
-                            fRes = fTable.F2 (@"2.4а:2", fRunkValues[(int)FTable.FRUNK.F1], fRunkValues[(int)FTable.FRUNK.F2]);
+                            fRes = fTable.F2(@"2.4а:2", fRunkValues[(int)FTable.FRUNK.F1], fRunkValues[(int)FTable.FRUNK.F2]);
                         }
                         break;
                     #endregion
@@ -327,7 +329,7 @@ namespace TepCommon
                             fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"14"][ID_COMP[i]].value;
                             fRunkValues[(int)FTable.FRUNK.F2] = In[@"28"][ID_COMP[i]].value;
 
-                            Norm[nAlg][ID_COMP[i]].value = fTable.F3 (@"2.4:3", fRunkValues);
+                            Norm[nAlg][ID_COMP[i]].value = fTable.F3(@"2.4:3", fRunkValues);
                         }
                         break;
                     #endregion
@@ -348,7 +350,7 @@ namespace TepCommon
                     case @"16":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            if (! (Norm[@"9"][ID_COMP[i]].value == 0F))
+                            if (!(Norm[@"9"][ID_COMP[i]].value == 0F))
                                 Norm[nAlg][ID_COMP[i]].value = 1000 * Norm[@"15.1"][ID_COMP[i]].value / Norm[@"9"][ID_COMP[i]].value;
                             else
                                 ;
@@ -421,12 +423,12 @@ namespace TepCommon
                     #endregion
 
                     #region 20 - dqт бр (t 2)
-                    case @"20":                        
+                    case @"20":
                         fRunk4 = new float[2, (int)(INDX_COMP.COUNT - 1)];
                         // для левой границы [0, i] 4-х мерной функции
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            nameFTable = @"2.7";                            
+                            nameFTable = @"2.7";
                             fTmp = Norm[@"10.1"][ID_COMP[i]].value;
 
                             switch (_modeDev[i])
@@ -542,7 +544,7 @@ namespace TepCommon
                                 case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
                                     if (fTmp < 0.8F)
                                         Norm[nAlg][ID_COMP[i]].value = fRunk4[0, i];
-                                    else                                            
+                                    else
                                         if ((!(fTmp < 0.8F)) && (!(fTmp > 0.99F)))
                                             Norm[nAlg][ID_COMP[i]].value = (fRunk4[0, i] * (0.99F - fTmp) + fRunk4[1, i] * (fTmp - 0.8F)) / 0.19F;
                                         else
@@ -706,36 +708,115 @@ namespace TepCommon
                     #endregion
 
                     #region 26 -
+                    case "26":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Norm[nAlg][id_comp].value = Out[@"4"][ID_COMP[i]].value
+                                * (Out[@"57.1"][ID_COMP[i]].value - Out[@"60"][ID_COMP[i]].value) / .7F / 860;
+                        }
+                        break;
                     #endregion
 
                     #region 27 -
+                    case "27":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            if (Out[@"4"][ID_COMP[i]].value == 0)
+                                Norm[nAlg][id_comp].value = 0;
+                            else
+                                Norm[nAlg][id_comp].value = fTable.F1("2.9в:1", Out[@"13"][ID_COMP[i]].value);
+                        }
+                        break;
                     #endregion
 
                     #region 28 -
+                    case "28":
+                        //???
+                        break;
                     #endregion
 
                     #region 29 -
+                    case "29":
+                        //???
+                        break;
                     #endregion
 
                     #region 30 -
+                    case "30":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Norm[nAlg][id_comp].value = fTable.F1("2.95:1", Out[@"13"][ID_COMP[i]].value);
+                        }
+                        break;
                     #endregion
 
                     #region 31 -
+                    case "31":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Norm[nAlg][id_comp].value = 0.36F;
+                        }
+                        break;
                     #endregion
 
                     #region 32 -
+                    case "32":
+                        //n_blokov??
+                        if (isRealTime)
+                            fRes = fTable.F1("2.11:1", Out[@"14"][ID_COMP[ST]].value * n_blokov);
+                        else
+                            fRes = fTable.F1("2.11:1", Out[@"14"][ID_COMP[ST]].value);
+                        break;
                     #endregion
 
                     #region 33 -
+                    case "33":
+
+                        break;
                     #endregion
 
                     #region 34 -
                     #endregion
 
                     #region 35 -
+                    case "35":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Norm[nAlg][id_comp].value = 5.19F * In["69"][ID_COMP[i]].value;
+                            fRes += Norm[nAlg][id_comp].value;
+                        }
+                        break;
                     #endregion
 
                     #region 36 -
+                    case "36":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            if (isRealTime)
+                            {
+
+                                Norm[nAlg][id_comp].value = (1.03F * (Out["30"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value
+                                    + Out["31"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value + (Out["29"][ID_COMP[ST]].value
+                                    + Out["32"][ID_COMP[ST]].value) * In["70"][ID_COMP[ST]].value / n_blokov1)
+                                + Out["35"][ID_COMP[i]].value) / Out["2"][ID_COMP[i]].value * 100;
+
+                            }
+                            else
+
+                                Norm[nAlg][id_comp].value = (1.03F * (Out["30"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value
+                                    + Out["31"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value + (Out["29"][ID_COMP[ST]].value
+                                    + Out["32"][ID_COMP[ST]].value) * In["70"][ID_COMP[ST]].value * Out[@"2"][ID_COMP[i]].value
+                                    / Out[@"2"][ID_COMP[ST]].value)
+                                + Out["35"][ID_COMP[i]].value) / Out["2"][ID_COMP[i]].value * 100;
+
+                            fSum += Out["30"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value;
+                            fSum1 += Out["31"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value;
+                            fSum2=+ Norm[nAlg][id_comp].value;
+
+                        }
+                        fRes = (1.03F * (fSum + fSum1 + (Out["29"][ID_COMP[ST]].value + Out["32"][ID_COMP[ST]].value)
+                            * In["70"][ID_COMP[ST]].value) + fSum2) / Out["2"][ID_COMP[ST]].value * 100;
+                        break;
                     #endregion
 
                     #region 37 -
@@ -818,7 +899,7 @@ namespace TepCommon
 
                         Norm[nAlg][ID_COMP[BL5]].value = In[@"18"][id_comp].value
                             + In[@"18.1"][id_comp].value / 2
-                            + fTable.F1 (@"2.22:1", Out[@"50"][ID_COMP[BL5]].value);
+                            + fTable.F1(@"2.22:1", Out[@"50"][ID_COMP[BL5]].value);
                         break;
                     #endregion
 
@@ -841,7 +922,7 @@ namespace TepCommon
                                 case INDX_COMP.iBL5:
                                 case INDX_COMP.iBL6:
                                     Norm[nAlg][id_comp].value = In[@"18"][id_comp].value
-                                        + In[@"18.1"][id_comp].value / 2;                                
+                                        + In[@"18.1"][id_comp].value / 2;
                                     break;
                                 default:
                                     break;
@@ -941,7 +1022,7 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             id_comp = ID_COMP[i];
-                            
+
                             Norm[nAlg][id_comp].value = Norm[@"54"][id_comp].value * Norm[@"1"][id_comp].value - In[@"46"][id_comp].value / 0.7F;
                         }
                         break;

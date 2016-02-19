@@ -18,13 +18,13 @@ namespace TepCommon
         /// </summary>
         public partial class TaskTepCalculate : TaskCalculate
         {
-            
+
             private float calculateMaket(string nAlg)
             {
                 float fRes = 0F,
                      fTmp = -1F;//промежуточная велечина
-                float sum = 0,
-                    sum1 = 0;
+                float fSum = 0,
+                    fSum1 = 0;
                 int i = -1;
 
                 switch (nAlg)
@@ -105,7 +105,8 @@ namespace TepCommon
                     case @"9":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            Out[nAlg][ID_COMP[i]].value = Out[@"6"][ID_COMP[i]].value + Out[@"7"][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[i]].value = Out[@"6"][ID_COMP[i]].value
+                                + Out[@"7"][ID_COMP[i]].value;
                             fRes += Out[nAlg][ID_COMP[i]].value;
                         }
                         break;
@@ -175,7 +176,9 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"41"][ID_COMP[i]].value
-                                * Out[@"15"][ID_COMP[i]].value / 100 + (float)15.4 * (In[@"68"][ID_COMP[i]].value
+                                * Out[@"15"][ID_COMP[i]].value
+                                / 100 + (float)15.4
+                                * (In[@"68"][ID_COMP[i]].value
                                 - In[@"69"][ID_COMP[i]].value);
                             fRes += Out[nAlg][ID_COMP[i]].value;
                         }
@@ -314,17 +317,17 @@ namespace TepCommon
                         {
                             for (int j = 0; j < n_blokov; j++)
                             {
-                                sum += Norm[@"8"][ID_COMP[j]].value;
-                                sum1 += In[@"10"][ID_COMP[j]].value;
+                                fSum += Norm[@"8"][ID_COMP[j]].value;
+                                fSum1 += In[@"10"][ID_COMP[j]].value;
                             }
 
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                if (sum == 0)
+                                if (fSum == 0)
                                     Out[nAlg][ID_COMP[i]].value = 0;
                                 else
                                     Out[nAlg][ID_COMP[i]].value = In[@"10"][ID_COMP[i]].value + (In[@"10"][ID_COMP[ST]].value
-                                        - sum1) * In[@"47"][ID_COMP[i]].value / sum; ;
+                                        - fSum1) * In[@"47"][ID_COMP[i]].value / fSum; ;
 
                                 fRes += Out[nAlg][ID_COMP[i]].value;
                             }
@@ -346,11 +349,11 @@ namespace TepCommon
                         else
                         {
                             for (int j = 0; j < n_blokov; j++)
-                                sum += In[@"4"][ID_COMP[j]].value;
+                                fSum += In[@"4"][ID_COMP[j]].value;
 
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                Out[nAlg][ID_COMP[i]].value = In[@"4"][ID_COMP[i]].value + (In[@"4"][ID_COMP[ST]].value - sum) *
+                                Out[nAlg][ID_COMP[i]].value = In[@"4"][ID_COMP[i]].value + (In[@"4"][ID_COMP[ST]].value - fSum) *
                                     Out[@"4"][ID_COMP[i]].value / Out[@"4"][ID_COMP[ST]].value;
                                 fRes += Out[nAlg][ID_COMP[i]].value;
                             }
@@ -371,11 +374,11 @@ namespace TepCommon
                         else
                         {
                             for (int j = 0; j < n_blokov; j++)
-                                sum += In[@"7"][ID_COMP[j]].value;
+                                fSum += In[@"7"][ID_COMP[j]].value;
 
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                Out[nAlg][ID_COMP[i]].value = In[@"7"][ID_COMP[i]].value + (In[@"7"][ID_COMP[ST]].value - sum) *
+                                Out[nAlg][ID_COMP[i]].value = In[@"7"][ID_COMP[i]].value + (In[@"7"][ID_COMP[ST]].value - fSum) *
                                     Out[@"4"][ID_COMP[i]].value / Out[@"4"][ID_COMP[ST]].value;
                                 fRes += Out[nAlg][ID_COMP[i]].value;
                             }
@@ -572,7 +575,7 @@ namespace TepCommon
                         float param = 0;
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            if (In[@"47"][ID_COMP[i]].value.ToString() == "2a")
+                            if (_modeDev[ID_COMP[i]] == MODE_DEV.ELEKTRO2_2)
                                 //LOG???
                                 param = In[@"38"][ID_COMP[i]].value;
                             else
@@ -622,7 +625,7 @@ namespace TepCommon
                     case @"49":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            if (In[@"74"][ID_COMP[i]].value.ToString() == "1")
+                            if (_modeDev[ID_COMP[i]] == MODE_DEV.COND_1)
                                 Out[nAlg][ID_COMP[i]].value = 0;
                             else
                                 Out[nAlg][ID_COMP[i]].value = (Out[@"47"][ID_COMP[i]].value * (Norm[@"57.1"][ID_COMP[i]].value
@@ -704,10 +707,10 @@ namespace TepCommon
                                 + .95F * In[@"57"][ID_COMP[i]].value / (100 - In[@"57"][ID_COMP[i]].value))
                                 * 7800 * In[@"55"][ID_COMP[ST]].value / 1E2F / In[@"53"][ID_COMP[ST]].value;
 
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -729,10 +732,10 @@ namespace TepCommon
                                 * (Norm[@"59"][ID_COMP[i]].value / 1E2) * (In[@"35"][ID_COMP[i]].value + In[@"36"][ID_COMP[i]].value)
                                 / 2) / (21 - (In[@"35"][ID_COMP[i]].value + In[@""][ID_COMP[i]].value) / 2));
 
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -741,10 +744,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"67"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -771,10 +774,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = In[@"44"][ID_COMP[i]].value * (float)Math.Sqrt(472.2F / Norm[@"65"][ID_COMP[i]].value);
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -783,10 +786,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"68"][ID_COMP[i]].value * 1E2F;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -813,10 +816,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = In[@"44.1"][ID_COMP[i]].value * (float)Math.Sqrt(446.1 / Norm[@"65"][ID_COMP[i]].value);
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -825,10 +828,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = (In[@"31"][ID_COMP[i]].value * In[@"31.1"][ID_COMP[i]].value) / 2;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -837,10 +840,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = (In[@"32"][ID_COMP[i]].value * In[@"32.1"][ID_COMP[i]].value) / 2;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -849,10 +852,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = (In[@"39"][ID_COMP[i]].value * In[@"40"][ID_COMP[i]].value) / 2;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -899,10 +902,10 @@ namespace TepCommon
                                         * (1 - .01F * Out[@"57"][ID_COMP[i]].value) / 1E2F + (.2F - .95F * In[@"55"][ID_COMP[ST]].value
                                         * Out[@"89"][ID_COMP[i]].value / 1E2F * Out[@"66"][ID_COMP[ST]].value) / In[@"53"][ID_COMP[ST]].value;
 
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -952,10 +955,10 @@ namespace TepCommon
                         {
                             Out[nAlg][ID_COMP[i]].value = 100 - Out[@"68"][ID_COMP[i]].value - Out[@"57"][ID_COMP[i]].value
                                 - Norm[@"84"][ID_COMP[i]].value - Norm[@"85"][ID_COMP[i]].value - Out[@"71"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1175,10 +1178,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"135"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"79"][ID_COMP[i]].value;
-                            sum1 += Out[@"135"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"79"][ID_COMP[i]].value;
+                            fSum1 += Out[@"135"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1188,12 +1191,12 @@ namespace TepCommon
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"135"][ID_COMP[i]].value;
 
-                            sum += (Out[nAlg][ID_COMP[i]].value - Out[@"79"][ID_COMP[i]].value - Out[@"81"][ID_COMP[i]].value
+                            fSum += (Out[nAlg][ID_COMP[i]].value - Out[@"79"][ID_COMP[i]].value - Out[@"81"][ID_COMP[i]].value
                                 * Out[@"27"][ID_COMP[i]].value / 1E3F) * Out[@"92"][ID_COMP[i]].value;
-                            sum1 += (Out[nAlg][ID_COMP[i]].value - Out[@"79"][ID_COMP[i]].value - Out[@"81"][ID_COMP[i]].value
+                            fSum1 += (Out[nAlg][ID_COMP[i]].value - Out[@"79"][ID_COMP[i]].value - Out[@"81"][ID_COMP[i]].value
                                 * Out[@"27"][ID_COMP[i]].value / 1E3F);
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1203,10 +1206,10 @@ namespace TepCommon
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"56.1"][ID_COMP[i]].value;
 
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"70"][ID_COMP[i]].value;
-                            sum1 += Out[@"70"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"70"][ID_COMP[i]].value;
+                            fSum1 += Out[@"70"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1216,10 +1219,10 @@ namespace TepCommon
                         {
                             Out[nAlg][ID_COMP[i]].value = fTable.F1(@"2.65a:1", Norm[@"50"][ID_COMP[i]].value);
 
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"70"][ID_COMP[i]].value;
-                            sum1 += Out[@"70"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"70"][ID_COMP[i]].value;
+                            fSum1 += Out[@"70"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1227,54 +1230,66 @@ namespace TepCommon
                     case @"95":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            if (In[@"74"][ID_COMP[i]].value.ToString() == "1")
-                                Out[nAlg][ID_COMP[i]].value = fTable.F2(@"2.66:2", Norm[@"50"][ID_COMP[i]].value, Out[@"93"][ID_COMP[i]].value);
-                            else
+                            switch (_modeDev[ID_COMP[i]])
                             {
-                                if (Norm[@"10"][ID_COMP[i]].value <= 60 && Norm[@"50"][ID_COMP[i]].value <= 510 && Out[@"93"][ID_COMP[i]].value <= 130)
-                                    Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
-                                else
-                                {
-                                    if (Norm[@"10"][ID_COMP[i]].value <= 60)
-                                    {
-                                        if (Norm[@"50"][ID_COMP[i]].value <= 510)
-                                        {
-                                            if (Out[@"93"][ID_COMP[i]].value <= 130)
-                                                Out[nAlg][ID_COMP[i]].value = -0.32F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
-                                            else
-                                                Out[nAlg][ID_COMP[i]].value = 0.32F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
-                                        }
-                                        else
-                                        {
-                                            if (Out[@"93"][ID_COMP[i]].value <= 130)
-                                                Out[nAlg][ID_COMP[i]].value = 0.7F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
-                                            else
-                                                Out[nAlg][ID_COMP[i]].value = -0.7F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
-                                        }
-                                    }
+                                case MODE_DEV.UNKNOWN:
+                                    break;
+                                case MODE_DEV.COND_1:
+                                    Out[nAlg][ID_COMP[i]].value = fTable.F2(@"2.66:2", Norm[@"50"][ID_COMP[i]].value, Out[@"93"][ID_COMP[i]].value);
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2:
+                                case MODE_DEV.ELEKTRO1_2a:
+                                case MODE_DEV.TEPLO_3:
+                                    if (Norm[@"10"][ID_COMP[i]].value <= 60 && Norm[@"50"][ID_COMP[i]].value <= 510 && Out[@"93"][ID_COMP[i]].value <= 130)
+                                        Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
                                     else
                                     {
-                                        if (Norm[@"50"][ID_COMP[i]].value <= 510)
+                                        if (Norm[@"10"][ID_COMP[i]].value <= 60)
                                         {
-                                            if (Out[@"93"][ID_COMP[i]].value <= 130)
-                                                Out[nAlg][ID_COMP[i]].value = -0.37F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
-                                            else
-                                                Out[nAlg][ID_COMP[i]].value = 0.37F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
-                                        }
-                                        else
-                                        {
-                                            if (Out[@"93"][ID_COMP[i]].value <= 125)
-                                                Out[nAlg][ID_COMP[i]].value = 0.76F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                            if (Norm[@"50"][ID_COMP[i]].value <= 510)
+                                            {
+                                                if (Out[@"93"][ID_COMP[i]].value <= 130)
+                                                    Out[nAlg][ID_COMP[i]].value = -0.32F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                                else
+                                                    Out[nAlg][ID_COMP[i]].value = 0.32F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                            }
                                             else
                                             {
                                                 if (Out[@"93"][ID_COMP[i]].value <= 130)
-                                                    Out[nAlg][ID_COMP[i]].value = 1.04F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                                    Out[nAlg][ID_COMP[i]].value = 0.7F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
                                                 else
-                                                    Out[nAlg][ID_COMP[i]].value = -0.8F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                                    Out[nAlg][ID_COMP[i]].value = -0.7F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (Norm[@"50"][ID_COMP[i]].value <= 510)
+                                            {
+                                                if (Out[@"93"][ID_COMP[i]].value <= 130)
+                                                    Out[nAlg][ID_COMP[i]].value = -0.37F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                                else
+                                                    Out[nAlg][ID_COMP[i]].value = 0.37F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                            }
+                                            else
+                                            {
+                                                if (Out[@"93"][ID_COMP[i]].value <= 125)
+                                                    Out[nAlg][ID_COMP[i]].value = 0.76F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                                else
+                                                {
+                                                    if (Out[@"93"][ID_COMP[i]].value <= 130)
+                                                        Out[nAlg][ID_COMP[i]].value = 1.04F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                                    else
+                                                        Out[nAlg][ID_COMP[i]].value = -0.8F * Math.Abs(Out[@"93"][ID_COMP[i]].value - Out[@"94"][ID_COMP[i]].value);
+                                                }
                                             }
                                         }
                                     }
-                                }
+
+                                    break;
+                                case MODE_DEV.COUNT:
+                                    break;
+                                default:
+                                    break;
                             }
                         }
                         //                   if(inm(getIndexOfIInM("74"),i)=="1",F2(iom(getIndexOfIIoM("50"),i),oum(getIndexOfIOutM("93"),i),"2.66:2"),
@@ -1309,10 +1324,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = In[@"23"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"6"][ID_COMP[i]].value;
-                            sum1 += Out[@"6"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"6"][ID_COMP[i]].value;
+                            fSum1 += Out[@"6"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1320,9 +1335,9 @@ namespace TepCommon
                     case @"97":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            switch (In[@"74"][ID_COMP[i]].value.ToString())
+                            switch (_modeDev[ID_COMP[i]])
                             {
-                                case "2a":
+                                case MODE_DEV.ELEKTRO1_2a:
                                     Out[nAlg][ID_COMP[i]].value = In[@"38"][ID_COMP[i]].value;
                                     break;
                                 default:
@@ -1330,10 +1345,10 @@ namespace TepCommon
                                     break;
                             }
 
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"7"][ID_COMP[i]].value;
-                            sum1 += Out[@"7"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"7"][ID_COMP[i]].value;
+                            fSum1 += Out[@"7"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1342,10 +1357,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"51.1"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"4"][ID_COMP[i]].value;
-                            sum1 += Out[@"4"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"4"][ID_COMP[i]].value;
+                            fSum1 += Out[@"4"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1363,17 +1378,23 @@ namespace TepCommon
                     case @"100":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            if (In[@"74"][ID_COMP[i]].value.ToString() == "1")
-                                Out[nAlg][ID_COMP[i]].value = fTable.F1(@"2.70:1", Out[@"98"][ID_COMP[i]].value);
-                            else
-                                if (In[@"74"][ID_COMP[i]].value.ToString() == "2" || In[@"74"][ID_COMP[i]].value.ToString() == "2a"
-                                    || In[@"74"][ID_COMP[i]].value.ToString() == "3")
+                            switch (_modeDev[ID_COMP[i]])
+                            {
+                                case MODE_DEV.UNKNOWN:
+                                    break;
+                                case MODE_DEV.COND_1:
+                                    Out[nAlg][ID_COMP[i]].value = fTable.F1(@"2.70:1", Out[@"98"][ID_COMP[i]].value);
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2:
+                                case MODE_DEV.ELEKTRO1_2a:
+                                case MODE_DEV.TEPLO_3:
                                     Out[nAlg][ID_COMP[i]].value = fTable.F3(@"2.71:3", Norm[@"50"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Out[@"98"][ID_COMP[i]].value);
-                                else
-                                {
-                                    //??error
-                                    //1 / 0;
-                                }
+                                    break;
+                                case MODE_DEV.COUNT:
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
                         break;
                     #endregion
@@ -1394,10 +1415,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"52.1"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"4"][ID_COMP[i]].value;
-                            sum1 += Out[@"4"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"4"][ID_COMP[i]].value;
+                            fSum1 += Out[@"4"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1415,17 +1436,34 @@ namespace TepCommon
                     case @"103":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            if (In[@"74"][ID_COMP[i]].value.ToString() == "1")
-                                Out[nAlg][ID_COMP[i]].value = fTable.F1(@"2.72:1", Out[@"101"][ID_COMP[i]].value);
-                            else
-                                if (In[@"74"][ID_COMP[i]].value.ToString() == "2" || In[@"74"][ID_COMP[i]].value.ToString() == "2a"
-                                    || In[@"74"][ID_COMP[i]].value.ToString() == "3")
+                            switch (_modeDev[ID_COMP[i]])
+                            {
+                                case MODE_DEV.UNKNOWN:
+                                    break;
+                                case MODE_DEV.COND_1:
+                                    Out[nAlg][ID_COMP[i]].value = fTable.F1(@"2.72:1", Out[@"101"][ID_COMP[i]].value);
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2:
+                                case MODE_DEV.ELEKTRO1_2a:
+                                case MODE_DEV.TEPLO_3:
                                     Out[nAlg][ID_COMP[i]].value = fTable.F3(@"2.73:3", Norm[@"50"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Out[@"101"][ID_COMP[i]].value);
-                                else
-                                {
-                                    //??error
-                                    //1 / 0;
-                                }
+                                    break;
+                                case MODE_DEV.COUNT:
+                                    break;
+                                default:
+                                    break;
+                            }
+                            //if (In[@"74"][ID_COMP[i]].value.ToString() == "1")
+                            //    Out[nAlg][ID_COMP[i]].value = fTable.F1(@"2.72:1", Out[@"101"][ID_COMP[i]].value);
+                            //else
+                            //    if (In[@"74"][ID_COMP[i]].value.ToString() == "2" || In[@"74"][ID_COMP[i]].value.ToString() == "2a"
+                            //        || In[@"74"][ID_COMP[i]].value.ToString() == "3")
+                            //        Out[nAlg][ID_COMP[i]].value = fTable.F3(@"2.73:3", Norm[@"50"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Out[@"101"][ID_COMP[i]].value);
+                            //    else
+                            //    {
+                            //        //??error
+                            //        //1 / 0;
+                            //    }
                         }
                         break;
                     #endregion
@@ -1434,25 +1472,46 @@ namespace TepCommon
                     case @"103.1":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            if (In[@"74"][ID_COMP[i]].value.ToString() == "1")
+                            switch (_modeDev[ID_COMP[i]])
                             {
-                                Out[nAlg][ID_COMP[i]].value = Out[@"81"][ID_COMP[i]].value * Out[@"31"][ID_COMP[i]].value
+                                case MODE_DEV.UNKNOWN:
+                                    break;
+                                case MODE_DEV.COND_1:
+                                              Out[nAlg][ID_COMP[i]].value = Out[@"81"][ID_COMP[i]].value * Out[@"31"][ID_COMP[i]].value
                                     * Out[@"103/1E5F"][ID_COMP[i]].value;
                                 fRes += Out[nAlg][ID_COMP[i]].value;
-                            }
-                            else
-                                if (In[@"74"][ID_COMP[i]].value.ToString() == "2" || In[@"74"][ID_COMP[i]].value.ToString() == "2a"
-                                    || In[@"74"][ID_COMP[i]].value.ToString() == "3")
-                                {
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2:
+                                case MODE_DEV.ELEKTRO1_2a:
+                                case MODE_DEV.TEPLO_3:
                                     Out[nAlg][ID_COMP[i]].value = Out[@"103"][ID_COMP[i]].value * Out[@"4"][ID_COMP[i]].value * 10
                                         / (Out[@"176"][ID_COMP[i]].value * Out[@"183"][ID_COMP[i]].value * 7);
                                     fRes += Out[nAlg][ID_COMP[i]].value;
-                                }
-                                else
-                                {
-                                    //??error
-                                    //1 / 0;
-                                }
+                                    break;
+                                case MODE_DEV.COUNT:
+                                    break;
+                                default:
+                                    break;
+                            }
+                            //if (In[@"74"][ID_COMP[i]].value.ToString() == "1")
+                            //{
+                            //    Out[nAlg][ID_COMP[i]].value = Out[@"81"][ID_COMP[i]].value * Out[@"31"][ID_COMP[i]].value
+                            //        * Out[@"103/1E5F"][ID_COMP[i]].value;
+                            //    fRes += Out[nAlg][ID_COMP[i]].value;
+                            //}
+                            //else
+                            //    if (In[@"74"][ID_COMP[i]].value.ToString() == "2" || In[@"74"][ID_COMP[i]].value.ToString() == "2a"
+                            //        || In[@"74"][ID_COMP[i]].value.ToString() == "3")
+                            //    {
+                            //        Out[nAlg][ID_COMP[i]].value = Out[@"103"][ID_COMP[i]].value * Out[@"4"][ID_COMP[i]].value * 10
+                            //            / (Out[@"176"][ID_COMP[i]].value * Out[@"183"][ID_COMP[i]].value * 7);
+                            //        fRes += Out[nAlg][ID_COMP[i]].value;
+                            //    }
+                            //    else
+                            //    {
+                            //        //??error
+                            //        //1 / 0;
+                            //    }
                         }
                         break;
                     #endregion
@@ -1479,10 +1538,10 @@ namespace TepCommon
 
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
-                            sum1 += Out[@"104"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
+                            fSum1 += Out[@"104"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1491,10 +1550,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"15"][ID_COMP[i]].value / 98.067F;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
-                            sum1 += Out[@"104"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
+                            fSum1 += Out[@"104"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1539,10 +1598,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = In[@"28"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
-                            sum1 += Out[@"104"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
+                            fSum1 += Out[@"104"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1551,10 +1610,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = In[@"29"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
-                            sum1 += Out[@"104"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
+                            fSum1 += Out[@"104"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1572,10 +1631,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = In[@"28"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
-                            sum1 += Out[@"104"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
+                            fSum1 += Out[@"104"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1584,10 +1643,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = fTable.F3("2.64;3", Norm[@"14"][ID_COMP[i]].value, Out[@"109"][ID_COMP[i]].value, Norm[@"14.1"][ID_COMP[ST]].value);
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
-                            sum1 += Out[@"104"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"104"][ID_COMP[i]].value;
+                            fSum1 += Out[@"104"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -1661,10 +1720,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Out[@"115"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"44"][ID_COMP[i]].value;
-                            sum1 += Out[@"44"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"44"][ID_COMP[i]].value;
+                            fSum1 += Out[@"44"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -2174,10 +2233,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"56"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -2186,10 +2245,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Norm[@"51"][ID_COMP[i]].value;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -2198,10 +2257,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = (In[@"33"][ID_COMP[i]].value + In[@"34"][ID_COMP[i]].value) / 2;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -2216,10 +2275,10 @@ namespace TepCommon
 
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"78"][ID_COMP[i]].value;
-                            sum1 += Out[@"78"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"78"][ID_COMP[i]].value;
+                            fSum1 += Out[@"78"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -2228,10 +2287,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = In[@"57"][ID_COMP[i]].value * Norm[@"89"][ID_COMP[i]].value / 1E2F;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"78"][ID_COMP[i]].value;
-                            sum1 += Out[@"78"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"78"][ID_COMP[i]].value;
+                            fSum1 += Out[@"78"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -2245,10 +2304,10 @@ namespace TepCommon
                         Out[nAlg][ID_COMP[i]].value = fTable.F1("2.43:1(б)", Out[@"164"][ID_COMP[i]].value);
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"78"][ID_COMP[i]].value;
-                            sum1 += Out[@"78"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"78"][ID_COMP[i]].value;
+                            fSum1 += Out[@"78"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -2257,10 +2316,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[0]].value = In[@"56"][ID_COMP[i]].value - Norm[@"89"][ID_COMP[i]].value / 1E2F;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"78"][ID_COMP[i]].value;
-                            sum1 += Out[@"78"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"78"][ID_COMP[i]].value;
+                            fSum1 += Out[@"78"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -2281,10 +2340,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Out[@"62"][ID_COMP[i]].value + 10 * (472.2F / Norm[@"65"][ID_COMP[i]].value);
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
@@ -2293,10 +2352,10 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Out[@"61"][ID_COMP[i]].value + Out[@"63"][ID_COMP[i]].value / 100;
-                            sum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
-                            sum1 += Out[@"17"][ID_COMP[i]].value;
+                            fSum += Out[nAlg][ID_COMP[i]].value * Out[@"17"][ID_COMP[i]].value;
+                            fSum1 += Out[@"17"][ID_COMP[i]].value;
                         }
-                        fRes = sum / sum1;
+                        fRes = fSum / fSum1;
                         break;
                     #endregion
 
