@@ -93,9 +93,12 @@ namespace TepCommon
                         fRes = Norm[@"3"][ID_COMP[ST]].value;
                         break;
                     #endregion
+
+                    #region 8 -
                     case @"8":
 
                         break;
+                    #endregion
 
                     #region 9 - Q
                     case @"9":
@@ -146,9 +149,12 @@ namespace TepCommon
                         fRes = Norm[@"8"][ID_COMP[ST]].value;
                         break;
                     #endregion
+
+                    #region 14 -
                     case @"14":
 
                         break;
+                    #endregion
 
                     #region 15 - Qэ
                     case @"15":
@@ -669,7 +675,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region
+                    #region 54-
                     case @"54":
 
                         break;
@@ -743,6 +749,24 @@ namespace TepCommon
                         break;
                     #endregion
 
+                    #region 60.1 - dB (alfa p)
+                    case @"60.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"69"][ID_COMP[i]].value * Out[@"75"][ID_COMP[i]].value / Out[@"74"][ID_COMP[i]].value
+                                * ((Norm[@"80"][ID_COMP[i]].value * Out[@"59"][ID_COMP[i]].value + Out[@"62"][ID_COMP[i]].value / 1E2F)
+                                + Norm[@"81"][ID_COMP[i]].value) * (Out[@"67"][ID_COMP[i]].value - (Out[@"59"][ID_COMP[i]].value
+                                    + Out[@"62"][ID_COMP[i]].value / 1E2F) * Out[@"64"][ID_COMP[i]].value / (Out[@"59"][ID_COMP[i]].value
+                                    + Out[@"62"][ID_COMP[i]].value / 1E2F + Norm[@"82"][ID_COMP[i]].value)) / (Norm[@"80"][ID_COMP[i]].value
+                                    * (Out[@"60"][ID_COMP[i]].value + Out[@"62"][ID_COMP[i]].value / 1E2F) + Norm[@"81"][ID_COMP[i]].value)
+                                    / (Out[@"67"][ID_COMP[i]].value - (Out[@"60"][ID_COMP[i]].value + Out[@"62"][ID_COMP[i]].value / 1E2F)
+                                    * Out[@"64"][ID_COMP[i]].value / Out[@"60"][ID_COMP[i]].value + Out[@"62"][ID_COMP[i]].value / 1E2F
+                                    + Norm[@"82"][ID_COMP[i]].value) - 1;
+                            fRes += Out[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
+                    #endregion
+
                     #region 61 - dalfa pyx
                     case @"61":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
@@ -764,6 +788,24 @@ namespace TepCommon
                             sum1 += Out[@"17"][ID_COMP[i]].value;
                         }
                         fRes = sum / sum1;
+                        break;
+                    #endregion
+
+                    #region 62.1 - dB (dalfa pyx)
+                    case @"62.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"69"][ID_COMP[i]].value * Out[@"75"][ID_COMP[i]].value / Out[@"74"][ID_COMP[i]].value
+                                * ((Norm[@"80"][ID_COMP[i]].value * Out[@"60"][ID_COMP[i]].value + Out[@"61"][ID_COMP[i]].value / 1E2F)
+                                + Norm[@"81"][ID_COMP[i]].value) * (Out[@"67"][ID_COMP[i]].value - (Out[@"60"][ID_COMP[i]].value
+                                    + Out[@"61"][ID_COMP[i]].value / 1E2F) * Out[@"64"][ID_COMP[i]].value / (Out[@"60"][ID_COMP[i]].value
+                                    + Out[@"61"][ID_COMP[i]].value / 1E2F + Norm[@"82"][ID_COMP[i]].value)) / (Norm[@"80"][ID_COMP[i]].value
+                                    * (Out[@"60"][ID_COMP[i]].value + Out[@"62"][ID_COMP[i]].value / 1E2F) + Norm[@"81"][ID_COMP[i]].value)
+                                    / (Out[@"67"][ID_COMP[i]].value - (Out[@"60"][ID_COMP[i]].value + Out[@"62"][ID_COMP[i]].value / 1E2F)
+                                    * Out[@"64"][ID_COMP[i]].value / Out[@"60"][ID_COMP[i]].value + Out[@"62"][ID_COMP[i]].value / 1E2F
+                                    + Norm[@"82"][ID_COMP[i]].value) - 1;
+                            fRes += Out[nAlg][ID_COMP[i]].value;
+                        }
                         break;
                     #endregion
 
@@ -1252,6 +1294,17 @@ namespace TepCommon
                         break;
                     #endregion
 
+                    #region 95.1 - dB (Po)
+                    case @"95.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"95"][ID_COMP[i]].value * Out[@"4"][ID_COMP[i]].value
+                                * 10 / (Out[@"176"][ID_COMP[i]].value * Out[@"183"][ID_COMP[i]].value * 7);
+                            fRes += Out[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
+                    #endregion
+
                     #region 96 - Pп
                     case @"96":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
@@ -1326,6 +1379,17 @@ namespace TepCommon
                         break;
                     #endregion
 
+                    #region 100.1 - t цдс
+                    case @"100.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"100"][ID_COMP[i]].value * Out[@"4"][ID_COMP[i]].value
+                                * 10 / (Out[@"176"][ID_COMP[i]].value * Out[@"183"][ID_COMP[i]].value * 7);
+                            fRes += Out[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
+                    #endregion
+
                     #region 101 - t цдс
                     case @"101":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
@@ -1358,6 +1422,33 @@ namespace TepCommon
                                 if (In[@"74"][ID_COMP[i]].value.ToString() == "2" || In[@"74"][ID_COMP[i]].value.ToString() == "2a"
                                     || In[@"74"][ID_COMP[i]].value.ToString() == "3")
                                     Out[nAlg][ID_COMP[i]].value = fTable.F3(@"2.73:3", Norm[@"50"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value, Out[@"101"][ID_COMP[i]].value);
+                                else
+                                {
+                                    //??error
+                                    //1 / 0;
+                                }
+                        }
+                        break;
+                    #endregion
+
+                    #region 103.1 - dB (tцсд)
+                    case @"103.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            if (In[@"74"][ID_COMP[i]].value.ToString() == "1")
+                            {
+                                Out[nAlg][ID_COMP[i]].value = Out[@"81"][ID_COMP[i]].value * Out[@"31"][ID_COMP[i]].value
+                                    * Out[@"103/1E5F"][ID_COMP[i]].value;
+                                fRes += Out[nAlg][ID_COMP[i]].value;
+                            }
+                            else
+                                if (In[@"74"][ID_COMP[i]].value.ToString() == "2" || In[@"74"][ID_COMP[i]].value.ToString() == "2a"
+                                    || In[@"74"][ID_COMP[i]].value.ToString() == "3")
+                                {
+                                    Out[nAlg][ID_COMP[i]].value = Out[@"103"][ID_COMP[i]].value * Out[@"4"][ID_COMP[i]].value * 10
+                                        / (Out[@"176"][ID_COMP[i]].value * Out[@"183"][ID_COMP[i]].value * 7);
+                                    fRes += Out[nAlg][ID_COMP[i]].value;
+                                }
                                 else
                                 {
                                     //??error
@@ -1429,6 +1520,17 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = 1.929F * Out[@"107"][ID_COMP[i]].value;
+                        }
+                        break;
+                    #endregion
+
+                    #region 108.1 - dB(P2)
+                    case @"108.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"108"][ID_COMP[i]].value * Out[@"20"][ID_COMP[i]].value * 1E4F
+                                / (Out[@"176"][ID_COMP[i]].value * Out[@"183"][ID_COMP[i]].value * 7);
+                            fRes += Out[nAlg][ID_COMP[i]].value;
                         }
                         break;
                     #endregion
@@ -1544,6 +1646,17 @@ namespace TepCommon
                         break;
                     #endregion
 
+                    #region 118.1 - dB (dt)
+                    case @"118.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"118"][ID_COMP[i]].value * Out[@"20"][ID_COMP[i]].value * 1E4F
+                                / (Out[@"176"][ID_COMP[i]].value * Out[@"183"][ID_COMP[i]].value * 7);
+                            fRes += Out[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
+                    #endregion
+
                     #region 119 - t пв
                     case @"119":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
@@ -1587,7 +1700,18 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 122 - 
+                    #region 121.1 - dB (t пв)
+                    case @"121.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"121"][ID_COMP[i]].value * Out[@"4"][ID_COMP[i]].value * 10
+                                / (Out[@"176"][ID_COMP[i]].value * Out[@"183"][ID_COMP[i]].value * 7);
+                            fRes += Out[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
+                    #endregion
+
+                    #region 122 -
                     case @"122":
 
                         break;
@@ -1672,7 +1796,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 128 - 
+                    #region 128 -
                     case @"128":
 
                         break;
@@ -2198,7 +2322,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 176 - Кпдк"нетто"   
+                    #region 176 - Кпдк"нетто"
                     case @"176":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2278,11 +2402,72 @@ namespace TepCommon
 
                     #region 184 - n вн
                     case @"184":
-                               for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Out[@"24"][ID_COMP[i]].value - Out[@"25"][ID_COMP[i]].value;
-                            fRes = Out[nAlg][ID_COMP[i]].value;
+                            fRes += Out[nAlg][ID_COMP[i]].value;
                         }
+                        break;
+                    #endregion
+
+                    #region 185 -  СУМ dB т
+                    case @"185":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"95.1"][ID_COMP[i]].value + Out[@"100.1"][ID_COMP[i]].value
+                                + Out[@"103.1"][ID_COMP[i]].value + Out[@"108.1"][ID_COMP[i]].value + Out[@"121.1"][ID_COMP[i]].value;
+                            fRes += Out[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
+                    #endregion
+
+                    #region 186 - СУМ dB к
+                    case @"186":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"67.2"][ID_COMP[i]].value + Out[@"60.1"][ID_COMP[i]].value
+                                + Out[@"62.1"][ID_COMP[i]].value + Out[@"25.1"][ID_COMP[i]].value;
+                            fRes += Out[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
+                    #endregion
+
+                    #region 187 - Небаланс
+                    case @"187":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"17"][ID_COMP[i]].value - (Out[@"15"][ID_COMP[i]].value
+                                + Out[@"11"][ID_COMP[i]].value - Out[@"32"][ID_COMP[i]].value) *
+                                (100 + Norm[@"125"][ID_COMP[i]].value) / 1E2F + Out[@"16.1"][ID_COMP[i]].value + Out[@"19"][ID_COMP[i]].value;
+                        }
+                        fRes = Out[nAlg][ID_COMP[ST]].value;
+                        break;
+                    #endregion
+
+                    #region 188 - Небаланс
+                    case @"188":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"187"][ID_COMP[i]].value / Out[@"17"][ID_COMP[i]].value * 1E2F;
+                        }
+                        fRes = Out[@"187"][ID_COMP[ST]].value / Out[@"17"][ID_COMP[ST]].value * 1E2F;
+                        break;
+                    #endregion
+
+                    #region 189 - alfa газа
+                    case @"189":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Out[nAlg][ID_COMP[i]].value = Out[@"76"][ID_COMP[i]].value / Out[@"75"][ID_COMP[i]].value * 1E2F;
+                        }
+                        fRes = Out[@"76"][ID_COMP[ST]].value / Out[@"75"][ID_COMP[ST]].value * 1E2F;
+                        break;
+                    #endregion
+
+                    #region 190 - G птс ср
+                    case @"190":
+                        fRes = (In[@"50"][ID_COMP[ST]].value + In[@"51"][ID_COMP[ST]].value) * 1E3F
+                            / In[@"70"][ID_COMP[ST]].value;
                         break;
                     #endregion
 
