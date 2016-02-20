@@ -65,7 +65,7 @@ namespace PluginTaskTepOutMkt
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected class PanelManagementTaskTepOuMkt : PanelManagementTaskTepValues
+        protected class PanelManagementTaskTepOuMkt : PanelManagementTaskTepOutVal
         {
             protected override int addButtonRun(int posRow)
             {

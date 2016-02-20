@@ -76,7 +76,9 @@ namespace PluginTaskTepInval
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
                 m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Copy();
         }
-
+        /// <summary>
+        /// Освободить (при закрытии), связанные с функционалом ресурсы
+        /// </summary>
         public override void Stop()
         {
             deleteSession();
@@ -184,17 +186,30 @@ namespace PluginTaskTepInval
                 else
                     ;
         }
-
+        /// <summary>
+        /// Обработчик события - нажатие кнопки "Предварительное действие - К нормативу"
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void btnRunPrev_onClick(object obj, EventArgs ev)
         {
             btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES);
         }
-
+        /// <summary>
+        /// Обработчик события - нажатие кнопки "Результирующее действие - К макету"
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void btnRunRes_onClick(object obj, EventArgs ev)
         {
             btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);            
         }
-
+        /// <summary>
+        /// Инициировать подготовку к расчету
+        ///  , выполнить расчет
+        ///  , актуализировать таблицы с временными значениями
+        /// </summary>
+        /// <param name="type">Тип требуемого расчета</param>
         private void btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE type)
         {
             int err = -1;
@@ -219,7 +234,10 @@ namespace PluginTaskTepInval
                 //??? сообщение пользователю
             }
         }
-
+        /// <summary>
+        /// Создать объект - панель с управляющими элементами управления
+        /// </summary>
+        /// <returns></returns>
         protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()
         {
             return new PanelManagementTaskTepInval();

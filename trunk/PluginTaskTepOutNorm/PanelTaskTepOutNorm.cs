@@ -60,12 +60,12 @@ namespace PluginTaskTepOutNorm
 
         protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()
         {
-            return new PanelManagementTaskTepOuNorm();
+            return new PanelManagementTaskTepOutNorm();
         }
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected class PanelManagementTaskTepOuNorm : PanelManagementTaskTepOutVal
+        protected class PanelManagementTaskTepOutNorm : PanelManagementTaskTepOutVal
         {
             protected override int addButtonRun(int posRow)
             {

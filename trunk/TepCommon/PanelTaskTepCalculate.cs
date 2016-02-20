@@ -168,7 +168,7 @@ namespace TepCommon
             UNKNOWN = -1
             , PERIOD // идентификаторы периодов расчетов, использующихся на форме
             , TIMEZONE // идентификаторы (целочисленные, из БД системы) часовых поясов
-            , ALL_COMPONENT, ALL_PARAMETER // все идентификаторы компонентов ТЭЦ/параметров
+            , ALL_COMPONENT, ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
             , DENY_COMP_CALCULATED, DENY_PARAMETER_CALCULATED // запрещенных для расчета
             , DENY_COMP_VISIBLED, DENY_PARAMETER_VISIBLED // запрещенных для отображения
                 , COUNT
@@ -634,7 +634,7 @@ namespace TepCommon
 
             public abstract void ClearValues();
 
-            public abstract void UpdateStructure(int id, PanelTaskTepValues.INDEX_ID indxDeny, bool bItemChecked);
+            public abstract void UpdateStructure(int id_comp, int id_par, PanelTaskTepValues.INDEX_ID indxDeny, bool bItemChecked);
         }
         /// <summary>
         /// Класс для размещения управляющих элементов управления

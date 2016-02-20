@@ -110,7 +110,7 @@ namespace PluginTaskTepRealTime
             {
             }
 
-            public override void UpdateStructure(int id, PanelTaskTepValues.INDEX_ID indxDeny, bool bItemChecked)
+            public override void UpdateStructure(int id_comp, int id_par, PanelTaskTepValues.INDEX_ID indxDeny, bool bItemChecked)
             {
             }
         }
