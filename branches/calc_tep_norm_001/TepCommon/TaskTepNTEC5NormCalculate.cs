@@ -47,7 +47,7 @@ namespace TepCommon
                 float fSum = 0F // промежуточная величина
                     , fTmp = -1F
                     , fSum1 = 0F
-                ,fSum2 = 0F;
+                , fSum2 = 0F;
                 float[] fRunkValues = new float[(int)FTable.FRUNK.COUNT];
                 // только для вычисления пар.20 - 4-х мерная функция
                 string nameFTable = string.Empty
@@ -711,8 +711,8 @@ namespace TepCommon
                     case "26":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            Norm[nAlg][id_comp].value = Out[@"4"][ID_COMP[i]].value
-                                * (Out[@"57.1"][ID_COMP[i]].value - Out[@"60"][ID_COMP[i]].value) / .7F / 860;
+                            Norm[nAlg][id_comp].value = Norm[@"4"][ID_COMP[i]].value
+                                * (Norm[@"57.1"][ID_COMP[i]].value - Norm[@"60"][ID_COMP[i]].value) / .7F / 860;
                         }
                         break;
                     #endregion
@@ -721,10 +721,10 @@ namespace TepCommon
                     case "27":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            if (Out[@"4"][ID_COMP[i]].value == 0)
+                            if (Norm[@"4"][ID_COMP[i]].value == 0)
                                 Norm[nAlg][id_comp].value = 0;
                             else
-                                Norm[nAlg][id_comp].value = fTable.F1("2.9в:1", Out[@"13"][ID_COMP[i]].value);
+                                Norm[nAlg][id_comp].value = fTable.F1("2.9в:1", Norm[@"13"][ID_COMP[i]].value);
                         }
                         break;
                     #endregion
@@ -745,16 +745,16 @@ namespace TepCommon
                     case "30":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            Norm[nAlg][id_comp].value = fTable.F1("2.95:1", Out[@"13"][ID_COMP[i]].value);
+                            Norm[nAlg][id_comp].value = fTable.F1("2.95:1", Norm[@"13"][ID_COMP[i]].value);
                         }
                         break;
                     #endregion
 
-                    #region 31 -
+                    #region 31 - 
                     case "31":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
-                            Norm[nAlg][id_comp].value = 0.36F;
+                            Norm[nAlg][ID_COMP[i]].value = 0.36F;
                         }
                         break;
                     #endregion
@@ -763,9 +763,9 @@ namespace TepCommon
                     case "32":
                         //n_blokov??
                         if (isRealTime)
-                            fRes = fTable.F1("2.11:1", Out[@"14"][ID_COMP[ST]].value * n_blokov);
+                            fRes = fTable.F1("2.11:1", Norm[@"14"][ID_COMP[ST]].value * n_blokov);
                         else
-                            fRes = fTable.F1("2.11:1", Out[@"14"][ID_COMP[ST]].value);
+                            fRes = fTable.F1("2.11:1", Norm[@"14"][ID_COMP[ST]].value);
                         break;
                     #endregion
 
@@ -792,67 +792,210 @@ namespace TepCommon
                     case "36":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
+                            id_comp = ID_COMP[i];
+
                             if (isRealTime)
                             {
-
-                                Norm[nAlg][id_comp].value = (1.03F * (Out["30"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value
-                                    + Out["31"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value + (Out["29"][ID_COMP[ST]].value
-                                    + Out["32"][ID_COMP[ST]].value) * In["70"][ID_COMP[ST]].value / n_blokov1)
-                                + Out["35"][ID_COMP[i]].value) / Out["2"][ID_COMP[i]].value * 100;
-
+                                Norm[nAlg][id_comp].value = (1.03F * (Norm["30"][ID_COMP[i]].value * Norm["1"][ID_COMP[i]].value
+                                    + Norm["31"][ID_COMP[i]].value * Norm["1"][ID_COMP[i]].value + (Norm["29"][ID_COMP[ST]].value
+                                    + Norm["32"][ID_COMP[ST]].value) * In["70"][ID_COMP[ST]].value / n_blokov1)
+                                + Norm["35"][ID_COMP[i]].value) / Out["2"][ID_COMP[i]].value * 100;
                             }
                             else
+                                Norm[nAlg][id_comp].value = (1.03F * (Norm["30"][ID_COMP[i]].value * Norm["1"][ID_COMP[i]].value
+                                    + Norm["31"][ID_COMP[i]].value * Norm["1"][ID_COMP[i]].value + (Norm["29"][ID_COMP[ST]].value
+                                    + Norm["32"][ID_COMP[ST]].value) * In["70"][ID_COMP[ST]].value * Norm[@"2"][ID_COMP[i]].value
+                                    / Norm[@"2"][ID_COMP[ST]].value) + Norm["35"][ID_COMP[i]].value)
+                                    / Norm["2"][ID_COMP[i]].value * 100;
 
-                                Norm[nAlg][id_comp].value = (1.03F * (Out["30"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value
-                                    + Out["31"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value + (Out["29"][ID_COMP[ST]].value
-                                    + Out["32"][ID_COMP[ST]].value) * In["70"][ID_COMP[ST]].value * Out[@"2"][ID_COMP[i]].value
-                                    / Out[@"2"][ID_COMP[ST]].value)
-                                + Out["35"][ID_COMP[i]].value) / Out["2"][ID_COMP[i]].value * 100;
-
-                            fSum += Out["30"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value;
-                            fSum1 += Out["31"][ID_COMP[i]].value * Out["1"][ID_COMP[i]].value;
-                            fSum2=+ Norm[nAlg][id_comp].value;
-
+                            fSum += Norm["30"][ID_COMP[i]].value * Norm["1"][ID_COMP[i]].value;
+                            fSum1 += Norm["31"][ID_COMP[i]].value * Norm["1"][ID_COMP[i]].value;
+                            fSum2 = +Norm[nAlg][id_comp].value;
                         }
-                        fRes = (1.03F * (fSum + fSum1 + (Out["29"][ID_COMP[ST]].value + Out["32"][ID_COMP[ST]].value)
-                            * In["70"][ID_COMP[ST]].value) + fSum2) / Out["2"][ID_COMP[ST]].value * 100;
+                        fRes = (1.03F * (fSum + fSum1 + (Norm["29"][ID_COMP[ST]].value + Norm["32"][ID_COMP[ST]].value)
+                            * In["70"][ID_COMP[ST]].value) + fSum2) / Norm["2"][ID_COMP[ST]].value * 100;
                         break;
                     #endregion
 
                     #region 37 -
+                    case "37":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+                            Norm[nAlg][id_comp].value = Norm["29"][ID_COMP[ST]].value * In["70"][ID_COMP[ST]].value * Norm["2"][ID_COMP[i]].value
+                                / Norm["2"][ID_COMP[ST]].value / Norm["28"][ID_COMP[i]].value / Norm["1"][ID_COMP[i]].value * 100;
+                        }
+                        break;
                     #endregion
 
                     #region 38 -
+                    case "38":
+                        if (In["43"][ID_COMP[ST]].value > 10)
+                            fRes = 0;
+                        else
+                            fRes = fTable.F2("2.13:2", In["43"][ID_COMP[ST]].value, (In["70"][ID_COMP[ST]].value
+                                * 6 - Norm["1"][ID_COMP[ST]].value) / (6 * In["70"][ID_COMP[ST]].value));
+                        break;
                     #endregion
 
                     #region 39 -
+                    case "39":
+                        if (In["43"][ID_COMP[ST]].value > 10)
+                            fRes = 0;
+                        else
+                            fRes = fTable.F2("2.13а:2", In["43"][ID_COMP[ST]].value, Norm[@"65"][ID_COMP[ST]].value / 447.5F);
+                        break;
                     #endregion
 
                     #region 40 -
+                    case "40":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+
+                            Norm[nAlg][id_comp].value = 15.4F * In[@"69"][id_comp].value;
+                            fRes += Norm[nAlg][id_comp].value;
+                        }
+                        break;
                     #endregion
 
-                    #region 41 -
+                    #region 41 - q т сн(ном)
+                    case "41":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+
+                            if (isRealTime)
+                                Norm[nAlg][id_comp].value = (Norm[@"38"][ID_COMP[ST]].value + Norm[@"38"][ID_COMP[ST]].value)
+                                    * Norm[@"1"][ID_COMP[i]].value * 1E5F / n_blokov1 / (Norm[@"24"][ID_COMP[ST]].value * Norm[@"2"][ID_COMP[ST]].value);
+                            else
+                                Norm[nAlg][id_comp].value = ((Norm[@"38"][ID_COMP[ST]].value + Norm[@"39"][ID_COMP[ST]].value)
+                                    * In[@"70"][ID_COMP[ST]].value * Norm[@"1"][ID_COMP[i]].value / Norm[@"1"][ID_COMP[ST]].value
+                                    + Norm[@"40"][ID_COMP[i]].value) * 1E5F / (Norm[@"24"][ID_COMP[i]].value * Norm[@"2"][ID_COMP[i]].value);
+
+                            fSum += Norm[@"40"][ID_COMP[i]].value;
+                        }
+                        fRes = ((Norm[@"48"][ID_COMP[ST]].value + Norm[@"39"][ID_COMP[ST]].value) * In[@"70"][ID_COMP[ST]].value + fSum)
+                            * 1E5F / (Norm[@"24"][ID_COMP[ST]].value * Norm[@"2"][ID_COMP[ST]].value);
+                        break;
                     #endregion
 
-                    #region 42 -
+                    #region 42 - q т н (ном)
+                    case "42":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+                            Norm[nAlg][id_comp].value = Norm[@"24"][ID_COMP[i]].value * (100 + Norm[@"41"][ID_COMP[i]].value)
+                                / (100 - Norm[@"36"][ID_COMP[i]].value);
+                        }
+                        fRes = Norm[@"24"][ID_COMP[ST]].value * (100 + Norm[@"41"][ID_COMP[ST]].value)
+                                 / (100 - Norm[@"36"][ID_COMP[ST]].value);
+                        break;
                     #endregion
 
-                    #region 43 -
+                    #region 43 - k по
+                    case "43":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Norm[nAlg][ID_COMP[i]].value = (Norm[@"60"][ID_COMP[i]].value + (Norm[@"59.1"][ID_COMP[i]].value
+                                - Norm[@"60"][ID_COMP[i]].value) - Norm[@"63"][ID_COMP[i]].value) / (Norm[@"57.1"][ID_COMP[i]].value
+                                + (Norm[@"59"][ID_COMP[i]].value - Norm[@"60"][ID_COMP[i]].value) - Norm[@"63"][ID_COMP[i]].value)
+                                * (1 + .4F * (Norm[@"57.1"][ID_COMP[i]].value - Norm[@"60"][ID_COMP[i]].value) / (Norm[@"57.1"][ID_COMP[i]].value
+                                + (Norm[@"59.1"][ID_COMP[i]].value - Norm[@"60"][ID_COMP[i]].value) - Norm[@"63"][ID_COMP[i]].value));
+                        }
+                        break;
                     #endregion
 
-                    #region 44 -
+                    #region 44 - k то
+                    case "44":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            fTmp = Norm[@"59.1"][ID_COMP[i]].value - Norm[@"60"][ID_COMP[i]].value;
+
+                            switch (_modeDev[ID_COMP[i]])
+                            {
+                                case MODE_DEV.COND_1:
+                                    Norm[nAlg][ID_COMP[i]].value = 0;
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2:
+                                case MODE_DEV.ELEKTRO1_2a:
+                                case MODE_DEV.TEPLO_3:
+                                    Norm[nAlg][ID_COMP[i]].value = ((Norm[@"62"][ID_COMP[i]].value
+                                        - Norm[@"63"][ID_COMP[i]].value)
+                                        / (Norm[@"57.1"][ID_COMP[i]].value + (fTmp)
+                                       - Norm[@"63"][ID_COMP[i]].value))
+                                       * (1 + .4F * (Norm[@"57.1"][ID_COMP[i]].value
+                                           + (fTmp) - Norm[@"62"][ID_COMP[i]].value)
+                                           / (Norm[@"57.1"][ID_COMP[i]].value + (fTmp)
+                                          - Norm[@"63"][ID_COMP[i]].value));
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        break;
                     #endregion
 
-                    #region 45 -
+                    #region 45 - dQ э по
+                    case "45":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            if (Norm[@"3"][ID_COMP[i]].value + Norm[@"4"][ID_COMP[i]].value == 0)
+                            {
+                                Norm[nAlg][ID_COMP[i]].value = 0;
+                            }
+                            else
+                                Norm[nAlg][ID_COMP[i]].value = (Norm[@"4"][ID_COMP[i]].value * (1 - Norm[@"43"][ID_COMP[i]].value)
+                                    * Norm[@"8"][ID_COMP[i]].value) / (Norm[@"3"][ID_COMP[i]].value + Norm[@"4"][ID_COMP[i]].value);
+
+                            fRes += Norm[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
                     #endregion
 
-                    #region 46 -
+                    #region 46 - dQ э то
+                    case "46":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            if (Norm[@"3"][ID_COMP[i]].value + Norm[@"4"][ID_COMP[i]].value == 0)
+                            {
+                                Norm[nAlg][ID_COMP[i]].value = 0;
+                            }
+                            else
+                                Norm[nAlg][ID_COMP[i]].value = (Norm[@"4"][ID_COMP[i]].value * (1 - Norm[@"44"][ID_COMP[i]].value)
+                                    * Norm[@"8"][ID_COMP[i]].value) / (Norm[@"3"][ID_COMP[i]].value + Norm[@"4"][ID_COMP[i]].value);
+
+                            fRes += Norm[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
                     #endregion
 
-                    #region 47 -
+                    #region 47 - dQ э
+                    case "47":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Norm[nAlg][ID_COMP[i]].value = Norm[@"45"][ID_COMP[i]].value + Norm[@"46"][ID_COMP[i]].value;
+
+                            fRes += Norm[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
                     #endregion
 
-                    #region 48 -
+                    #region 48 - k отр (т)
+                    case "48":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Norm[nAlg][ID_COMP[i]].value = (Norm[@"24"][ID_COMP[i]].value * Norm[@"2"][ID_COMP[i]].value
+                                *(100+Norm[@"41"][ID_COMP[i]].value)/1E5F+Norm[@"47"][ID_COMP[i]].value)
+                                /(Norm[@"24"][ID_COMP[i]].value*Norm[@"2"][ID_COMP[i]].value*(100+Norm[@"41"][ID_COMP[i]].value)/1E5F);
+
+                            fSum += Norm[@"47"][ID_COMP[i]].value;
+                        }
+                        fRes += (Norm[@"24"][ID_COMP[ST]].value * Norm[@"2"][ID_COMP[ST]].value
+                                * (100 + Norm[@"41"][ID_COMP[ST]].value) / 1E5F + fSum)
+                                / (Norm[@"24"][ID_COMP[ST]].value * Norm[@"2"][ID_COMP[ST]].value 
+                                * (100 + Norm[@"41"][ID_COMP[ST]].value) / 1E5F);
+                        break;
                     #endregion
 
                     #region 49 - D пе
@@ -1070,7 +1213,6 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             id_comp = ID_COMP[i];
-
                             fTmp = Norm[@"51"][id_comp].value;
 
                             Norm[nAlg][id_comp].value = (float)(503.43F
@@ -1088,30 +1230,175 @@ namespace TepCommon
                     #endregion
 
                     #region 58 -
+                    case "58":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+                            fTmp = In[@"26"][id_comp].value / 100;
+
+                            Norm[nAlg][id_comp].value = (float)(49.4F + 402.5F * fTmp + 4.767F * (float)Math.Pow((fTmp), 2)
+                                + .0333F * (float)Math.Pow((fTmp), 6)
+                                + (float)(-9.25F + 1.67F * fTmp + .00736F * (float)Math.Pow((fTmp), 6))
+                                - .008F * (float)Math.Pow((1 / (fTmp + .5F)), 5))
+                                * (float)(50 - In[@"16"][ID_COMP[i]].value * .0980665) / 10
+                                + (float)(-.073F + .079F * fTmp + .00068F * (float)Math.Pow((fTmp), 6))
+                                * (float)Math.Pow(((50 - In[@"16"][ID_COMP[i]].value * .0980665F) / 10F), 2)
+                                + 3.39F / 1E8F * (float)Math.Pow((fTmp), 12)
+                                 + (float)Math.Pow(((50 - In[@"16"][ID_COMP[i]].value * .0980665F) / 10F), 4) / 4.1868F;
+                        }
+                        break;
                     #endregion
 
                     #region 59 -
+                    case "59":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+                            fTmp = Norm[@"52"][id_comp].value + 273.15F;
+
+                            Norm[nAlg][id_comp].value = (float)(503.43F + 11.02849 * (float)Math.Log(fTmp / 647.27F)
+                                + 229.2569F * fTmp / 647.27F + 37.93129F * (float)Math.Pow((fTmp / 647.27F), 2)
+                                + (float)Math.Pow((0.758195F - 7.97826F / (float)(fTmp) / 1000), 2)
+                                - (float)(3.078455F * fTmp / 1000 - .21549F) / (float)Math.Pow((fTmp / 1000 - .21), 3)
+                                * Norm[@"53"][ID_COMP[i]].value / 100 + (float)Math.Pow((.0644126F - .268671F / fTmp / 1000), 8)
+                                - .216661F / 100 / (float)Math.Pow((fTmp / 1000), 14)
+                                * (float)Math.Pow((Norm[@"53"][ID_COMP[i]].value / 100), 2));
+                        }
+                        break;
+                    #endregion
+
+                    #region 59.1 -
+                    case "59.1":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+                            fTmp = Norm[@"52.1"][id_comp].value + 273.15F;
+
+                            Norm[nAlg][id_comp].value = (float)(503.43F + 11.02849 * (float)Math.Log(fTmp / 647.27F)
+                                + 229.2569F * fTmp / 647.27F + 37.93129F * (float)Math.Pow((fTmp / 647.27F), 2)
+                                + (float)Math.Pow((0.758195F - 7.97826F / (float)(fTmp) / 1000), 2)
+                                - (float)(3.078455F * fTmp / 1000 - .21549F) / (float)Math.Pow((fTmp / 1000 - .21), 3)
+                                * Norm[@"53"][ID_COMP[i]].value / 100 + (float)Math.Pow((.0644126F - .268671F / fTmp / 1000), 8)
+                                - .216661F / 100 / (float)Math.Pow((fTmp / 1000), 14)
+                                * (float)Math.Pow((Norm[@"53"][ID_COMP[i]].value / 100), 2));
+                        }
+                        break;
                     #endregion
 
                     #region 60 -
+                    case "60":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+                            fTmp = In[@"24"][id_comp].value + 273.15F;
+
+                            Norm[nAlg][id_comp].value = (float)(503.43F + 11.02849 * (float)Math.Log(fTmp / 647.27F)
+                                + 229.2569F * fTmp / 647.27F + 37.93129F * (float)Math.Pow((fTmp / 647.27F), 2)
+                                + (float)Math.Pow((0.758195F - 7.97826F / (float)(fTmp) / 1000), 2)
+                                - (float)(3.078455F * fTmp / 1000 - .21549F) / (float)Math.Pow((fTmp / 1000 - .21), 3)
+                                * Norm[@"53"][ID_COMP[i]].value / 100 + (float)Math.Pow((.0644126F - .268671F / fTmp / 1000), 8)
+                                - .216661F / 100 / (float)Math.Pow((fTmp / 1000), 14)
+                                * (float)Math.Pow((Norm[@"53"][ID_COMP[i]].value / 100), 2));
+                        }
+                        break;
                     #endregion
 
                     #region 61 -
+                    case "61":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+                            fTmp = (float)Math.Log(In[@"41"][id_comp].value);
+
+                            fSum = 1 / (float)(2.6864264F - .20096551F * fTmp - 2.16688F / 1E3F
+                                * (float)Math.Pow(fTmp, 2) - 9.480808 / 1E5 * (float)Math.Pow(fTmp, 3)
+                                + 6.135062 / 1E6F * (float)Math.Pow(fTmp, 4) + 3.6917245 / 1E6F * (float)Math.Pow(fTmp, 5));
+                            Norm[nAlg][id_comp].value = -753.317F + 6959.4093F * fTmp - 29257.981F * (float)Math.Pow(fTmp, 2)
+                                + (float)Math.Pow(fTmp, 5);
+                        }
+                        break;
                     #endregion
 
                     #region 62 -
+                    case "62":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            switch (_modeDev[i])
+                            {
+                                case MODE_DEV.COND_1:
+                                    //???1 / 0;
+                                    break;
+                                case MODE_DEV.ELEKTRO1_2a:
+                                    Norm[nAlg][id_comp].value = fTable.F2("2.83а:2", Norm[@"50"][ID_COMP[i]].value, In[@"38"][ID_COMP[i]].value);
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2:
+                                case MODE_DEV.TEPLO_3:
+                                    Norm[nAlg][id_comp].value = fTable.F2("2.83:2", Norm[@"50"][ID_COMP[i]].value, Norm[@"10.1"][ID_COMP[i]].value);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        break;
                     #endregion
 
                     #region 63 -
+                    case "63":
+                        Norm[nAlg][0].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[0]].value / 98.067F);
+                        Norm[nAlg][1].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[1]].value / 98.067F);
+                        Norm[nAlg][2].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[2]].value / 98.067F);
+                        Norm[nAlg][3].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[3]].value / 98.067F);
+                        Norm[nAlg][4].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[4]].value / 98.067F);
+                        Norm[nAlg][5].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[5]].value);
+                        break;
                     #endregion
 
                     #region 64 -
+                    case "64":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            switch (m_indxCompRealTime)
+                            {
+                                case INDX_COMP.iBL1:
+                                case INDX_COMP.iBL2:
+                                case INDX_COMP.iBL3:
+                                case INDX_COMP.iBL4:
+                                case INDX_COMP.iBL6:
+                                    Norm[nAlg][ID_COMP[i]].value = (Norm[@"49"][ID_COMP[i]].value * (Norm[@"57"][ID_COMP[i]].value
+                                    - Norm[@"58"][ID_COMP[i]].value) + Norm[@"55"][ID_COMP[i]].value
+                                    * (Norm[@"59"][ID_COMP[i]].value - Norm[@"60"][ID_COMP[i]].value) + In[@"27"][ID_COMP[i]].value
+                                    * (Norm[@"61"][ID_COMP[i]].value - Norm[@"58"][ID_COMP[i]].value)) / 1000;
+                                    break;
+                                case INDX_COMP.iBL5:
+                                    Norm[nAlg][ID_COMP[i]].value = (Norm[@"49"][ID_COMP[i]].value * (Norm[@"57"][ID_COMP[i]].value
+                                        - Norm[@"58"][ID_COMP[i]].value) + Norm[@"55"][ID_COMP[i]].value
+                                        * (Norm[@"59"][ID_COMP[i]].value - Norm[@"60"][ID_COMP[i]].value) + In[@"25"][ID_COMP[i]].value
+                                        * .004F * (Norm[@"61"][ID_COMP[i]].value - Norm[@"58"][ID_COMP[i]].value)) / 1000;
+                                    break;
+                                default:
+                                    break;
+                            }
+                            fRes += Norm[nAlg][ID_COMP[i]].value;
+                        }
+                        break;
                     #endregion
 
                     #region 65 -
+                    case "65":
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            id_comp = ID_COMP[i];
+
+                            Norm[nAlg][id_comp].value = Norm[@"64"][id_comp].value / Norm[@"1"][id_comp].value;
+                        }
+                        fRes = Norm[@"64"][ID_COMP[ST]].value / Norm[@"1"][ID_COMP[ST]].value;
+                        break;
                     #endregion
 
                     #region 66 -
+                    case "66":
+
+                        break;
                     #endregion
 
                     #region 67 -
