@@ -577,10 +577,10 @@ namespace TepCommon
                         {
                             if (_modeDev[ID_COMP[i]] == MODE_DEV.ELEKTRO2_2)
                                 //LOG???
-                                param = In[@"38"][ID_COMP[i]].value;
+                                param = (float)Math.Log(In[@"38"][ID_COMP[i]].value);
                             else
                                 //LOG???
-                                param = In[@"37"][ID_COMP[i]].value;
+                                param = (float)Math.Log(In[@"37"][ID_COMP[i]].value);
 
                             //???pow==^
                             param =
