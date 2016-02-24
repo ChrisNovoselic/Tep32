@@ -435,19 +435,36 @@ namespace TepCommon
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Арнумент события, описывающий состояние элемента</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         private void panelManagement_ItemCheck(PanelManagementTaskTepValues.ItemCheckedParametersEventArgs ev)
         {
+            int idItem = -1;
+
+            //if ((ev.m_address.m_idComp > 0)
+            //    && ((ev.m_address.m_idAlg > 0)))
+            //{
+            //}
+            //else
+            //    if (ev.m_address.m_idComp > 0)
+            //    {
+            //    }
+            //    else
+            //        if (ev.m_address.m_idAlg > 0)
+            //        {
+            //        }
+            //        else
+            //            throw new Exception(@"PanelTaskTepValues::panelManagement_ItemCheck () - ...");
+
             //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
             if (ev.m_newCheckState == CheckState.Unchecked)
-                if (m_arListIds[(int)ev.m_indxIdDeny].IndexOf(ev.m_idItem) < 0)
-                    m_arListIds[(int)ev.m_indxIdDeny].Add(ev.m_idItem);
+                if (m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0)
+                    m_arListIds[(int)ev.m_indxIdDeny].Add(idItem);
                 else
                     ; //throw new Exception (@"");
             else
                 if (ev.m_newCheckState == CheckState.Checked)
-                    if (!(m_arListIds[(int)ev.m_indxIdDeny].IndexOf(ev.m_idItem) < 0))
-                        m_arListIds[(int)ev.m_indxIdDeny].Remove(ev.m_idItem);
+                    if (!(m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0))
+                        m_arListIds[(int)ev.m_indxIdDeny].Remove(idItem);
                     else
                         ; //throw new Exception (@"");
                 else
@@ -457,9 +474,7 @@ namespace TepCommon
             ;
             //Изменить структуру 'DataGridView'
             //m_dgvValues.UpdateStructure ();            
-            m_dgvValues.UpdateStructure(ev.m_address.m_idComp
-                , ev.m_address.m_idAlg
-                , ev.m_indxIdDeny
+            m_dgvValues.UpdateStructure(ev.m_address
                 , ev.m_newCheckState == CheckState.Checked ? true : ev.m_newCheckState == CheckState.Unchecked ? false : false);
         }        
         /// <summary>
@@ -839,20 +854,24 @@ namespace TepCommon
             /// <param name="indxDeny">Индекс элемента в массиве списков с отмененными для расчета/отображения компонентами ТЭЦ/параметрами алгоритма расчета</param>
             /// <param name="id">Идентификатор элемента (компонента/параметра)</param>
             /// <param name="bCheckedItem">Признак участия в расчете/отображения</param>
-            public override void UpdateStructure(int id_comp, int id_par, PanelTaskTepValues.INDEX_ID indxDeny, bool bItemChecked)
+            public /*override*/ void UpdateStructure(PanelManagementTaskTepValues.ItemCheckedParametersEventArgs item)
             {
                 Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
                 int indx = -1
                     , cIndx = -1
                     , rKey = -1;
+                bool bItemChecked = item.m_newCheckState == CheckState.Checked ? true :
+                    item.m_newCheckState == CheckState.Unchecked ? false :
+                        false;
+
                 //Поиск индекса элемента отображения
-                switch (indxDeny)
+                switch (item.m_indxIdDeny)
                 {
                     case INDEX_ID.DENY_COMP_CALCULATED:
                     case INDEX_ID.DENY_COMP_VISIBLED:
                         // найти индекс столбца (компонента) - по идентификатору
                         foreach (HDataGridViewColumn c in Columns)
-                            if (c.m_iIdComp == id_comp)
+                            if (c.m_iIdComp == item.m_idItem)
                             {
                                 indx = Columns.IndexOf(c);
                                 break;
@@ -864,7 +883,7 @@ namespace TepCommon
                     case INDEX_ID.DENY_PARAMETER_VISIBLED:
                         // найти индекс строки (параметра) - по идентификатору
                         foreach (DataGridViewRow r in Rows)
-                            if ((int)r.Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value == id_par)
+                            if ((int)r.Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value == item.m_idItem)
                             {
                                 indx = Rows.IndexOf(r);
                                 break;
@@ -878,7 +897,7 @@ namespace TepCommon
 
                 if (!(indx < 0))
                 {
-                    switch (indxDeny)
+                    switch (item.m_indxIdDeny)
                     {
                         case INDEX_ID.DENY_COMP_CALCULATED:
                             cIndx = indx;
@@ -1071,28 +1090,33 @@ namespace TepCommon
         /// </summary>
         protected class PanelManagementTaskTepValues : PanelManagementTaskTepCalculate
         {
-            /// <summary>
-            /// Структура для хранения координат элемента расчета
-            /// </summary>
-            public struct ADDRESS_CALC
-            {
-                /// <summary>
-                /// Идентификатор компонента ТЭЦ
-                /// </summary>
-                public int m_idComp;
-                /// <summary>
-                /// Идентификатор в алгоритме расчета
-                /// </summary>
-                public int m_idAlg;
-                ///// <summary>
-                ///// Идентификатор в алгоритме расчета для компонента ТЭЦ
-                ///// </summary>
-                //public int m_idPut;
-                /// <summary>
-                /// Индекс типа идентификаторов
-                /// </summary>
-                public INDEX_ID m_indxIdDeny; 
-            }
+            ///// <summary>
+            ///// Структура для хранения координат элемента расчета
+            ///// </summary>
+            //public struct ADDRESS_CALC
+            //{
+            //    public ADDRESS_CALC(ADDRESS_CALC src)
+            //    {
+            //        m_idItem = src.m_idItem;
+            //        m_indxIdDeny = src.m_indxIdDeny;
+            //    }
+            //    ///// <summary>
+            //    ///// Идентификатор компонента ТЭЦ
+            //    ///// </summary>
+            //    //public int m_idComp;
+            //    /// <summary>
+            //    /// Идентификатор в алгоритме расчета
+            //    /// </summary>
+            //    public int m_idItem;
+            //    ///// <summary>
+            //    ///// Идентификатор в алгоритме расчета для компонента ТЭЦ
+            //    ///// </summary>
+            //    //public int m_idPut;
+            //    /// <summary>
+            //    /// Индекс типа идентификаторов
+            //    /// </summary>
+            //    public INDEX_ID m_indxIdDeny;
+            //}
             /// <summary>
             /// Класс аргумента для события - изменение выбора запрет/разрешение
             ///  для компонента/параметра при участии_в_расчете/отображении
@@ -1105,18 +1129,19 @@ namespace TepCommon
                 /// </summary>
                 public INDEX_ID m_indxIdDeny;
                 /// <summary>
-                /// Идентификатор компонента/параметра_расчета
+                /// Идентификатор в алгоритме расчета
                 /// </summary>
-                public ADDRESS_CALC m_address;
+                public int m_idItem;
                 /// <summary>
                 /// Состояние элемента, связанного с компонентом/параметром_расчета
                 /// </summary>
                 public CheckState m_newCheckState;
 
-                public ItemCheckedParametersEventArgs(ADDRESS_CALC address, CheckState newCheckState)
+                public ItemCheckedParametersEventArgs(int idItem, INDEX_ID indxIdDeny, CheckState newCheckState)
                     : base()
                 {
-                    m_address = address;
+                    m_idItem = idItem;
+                    m_indxIdDeny = indxIdDeny;
                     m_newCheckState = newCheckState;
                 }
             }
@@ -1525,7 +1550,7 @@ namespace TepCommon
                     ;
             }
 
-            protected void onSelectedIndexChanged(object obj, EventArgs ev)
+            private void onSelectedIndexChanged(object obj, EventArgs ev)
             {
                 INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
                 INDEX_ID indxIdDeny = INDEX_ID.UNKNOWN;
@@ -1539,18 +1564,18 @@ namespace TepCommon
                     {
                         case INDEX_CONTROL.CLBX_COMP_CALCULATED:
                         case INDEX_CONTROL.CLBX_COMP_VISIBLED:
-                            m_address.m_idComp = (obj as IControl).SelectedId;
-                            m_address.m_idAlg =
-                            //m_address.m_idPut =
-                                -1;
+                            m_address.m_idItem = (obj as IControl).SelectedId;
+                            //m_address.m_idAlg =
+                            ////m_address.m_idPut =
+                            //    -1;
 
                             indxIdDeny = id == INDEX_CONTROL.CLBX_COMP_CALCULATED ? INDEX_ID.DENY_COMP_CALCULATED :
                                 id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
                             break;
                         case INDEX_CONTROL.CLBX_PARAMETER_CALCULATED:
                         case INDEX_CONTROL.CLBX_PARAMETER_VISIBLED:
-                            m_address.m_idComp = -1;
-                            m_address.m_idAlg = (obj as IControl).SelectedId;
+                            //m_address.m_idComp = -1;
+                            m_address.m_idItem = (obj as IControl).SelectedId;
 
                             indxIdDeny = id == INDEX_CONTROL.CLBX_PARAMETER_CALCULATED ? INDEX_ID.DENY_PARAMETER_CALCULATED :
                                 id == INDEX_CONTROL.CLBX_PARAMETER_VISIBLED ? INDEX_ID.DENY_PARAMETER_VISIBLED : INDEX_ID.UNKNOWN;

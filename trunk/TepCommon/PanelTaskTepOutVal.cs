@@ -59,7 +59,7 @@ namespace TepCommon
 
                     if (bActive == true)
                     {
-                        tv.NodeSelect += new DelegateIntIntFunc (onNodeSelect);
+                        tv.NodeSelect += new DelegateIntFunc (onNodeSelect);
                         tv.ItemCheck += new DelegateBoolFunc (onItemCheck);
                     }
                     else
@@ -72,10 +72,10 @@ namespace TepCommon
                     base.activateCheckedHandler(bActive, idToActivate);
             }
 
-            private void onNodeSelect(int id_comp, int id_par)
+            private void onNodeSelect(int id_item)
             {
-                m_address.m_idComp = id_comp;
-                m_address.m_idAlg = id_par;
+                m_address.m_idItem = id_item;
+                //m_address.m_idAlg = id_par;
                 m_address.m_indxIdDeny = INDEX_ID.DENY_PARAMETER_CALCULATED;
             }
 
@@ -98,11 +98,19 @@ namespace TepCommon
             {
                 private static string DELIMETER_KEY = @"::";
 
-                public event DelegateIntIntFunc NodeSelect;
+                public event DelegateIntFunc NodeSelect;
                 
                 public event DelegateBoolFunc ItemCheck;
 
-                public int SelectedId { get { return -1; } }
+                public int SelectedId
+                {
+                    get
+                    {
+                        int iRes = -1;
+
+                        return iRes;
+                    }
+                }
 
                 public TreeViewTaskTepCalcParameters()
                     : base()
@@ -179,9 +187,14 @@ namespace TepCommon
                 public void ActivateCheckedHandler(bool bActive)
                 {
                     if (bActive == true)
+                    {
+                        this.AfterSelect +=  new TreeViewEventHandler(onAfterSelect);
                         this.AfterCheck += new TreeViewEventHandler(onAfterCheck);
+                    }
                     else
+                    {
                         this.AfterCheck -= onAfterCheck;
+                    }
                 }
                 /// <summary>
                 /// Обработчик события - изменение значения признака элемента
@@ -206,6 +219,12 @@ namespace TepCommon
                     {
                         itemCheck(Int32.Parse(ev.Node.Name.Split(new string[] { DELIMETER_KEY }, StringSplitOptions.RemoveEmptyEntries)[1]), ev.Node.Checked);
                     }
+                }
+
+                private void onAfterSelect(object obj, TreeViewEventArgs ev)
+                {
+                    string[] strIds = ev.Node.Name.Split();
+                    NodeSelect(SelectedId);
                 }
 
                 private void itemCheck(int id, bool bChecked)
