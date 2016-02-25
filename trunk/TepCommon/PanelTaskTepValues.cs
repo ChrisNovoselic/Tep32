@@ -32,6 +32,14 @@ namespace TepCommon
         /// </summary>
         protected abstract DataTable m_TableEdit { get; }
         /// <summary>
+        /// Событие для добавления основного параметра для панели управления
+        /// </summary>
+        protected event DelegateObjectFunc eventAddNAlgParameter;
+        /// <summary>
+        /// Событие для добавления детализированного (компонент) параметра для панели управления
+        /// </summary>
+        protected event DelegateObjectFunc eventAddCompParameter;
+        /// <summary>
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
@@ -108,6 +116,8 @@ namespace TepCommon
 
                 m_dgvValues.AddColumn(id_comp, strItem, arChecked[1]);
             }
+            //Установить обработчик события - добавить параметр
+            eventAddNAlgParameter += new DelegateObjectFunc ((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
             // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
             // компонента станции для элементов управления
             (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_CALCULATED, INDEX_ID.DENY_COMP_VISIBLED });
@@ -132,6 +142,28 @@ namespace TepCommon
             }
             else
                 ;
+        }
+
+        public override bool Activate(bool activate)
+        {
+            bool bRes = false;
+            int err = -1;
+
+            bRes = base.Activate(activate);
+
+            if (bRes == true)
+            {
+                if (activate == true)
+                {
+                    _Session = HandlerDb.GetIdSession(out err);
+                }
+                else
+                    ;
+            }
+            else
+                ;
+
+            return bRes;
         }
         /// <summary>
         /// Остановить сопутствующие объекты
@@ -212,9 +244,8 @@ namespace TepCommon
                 , cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
                 , iAVG = -1;
             string errMsg = string.Empty;
-
-            _IdSession = HMath.GetRandomNumber();
-
+            // установить значения в таблицах для расчета, создать новую сессию
+            // предыдущая сессия удалена в 'clear'
             setValues(out err, out errMsg);
 
             if (err == 0)
@@ -331,7 +362,7 @@ namespace TepCommon
 
                 return listRes;
             }
-        }
+        }        
         /// <summary>
         /// Обработчик события при изменении периода расчета
         /// </summary>
@@ -357,11 +388,11 @@ namespace TepCommon
             m_arListIds[(int)INDEX_ID.ALL_NALG].Clear();
             //??? проверить сохранены ли значения
             m_dgvValues.ClearRows();
-            ////Список параметров для отображения            
-            //IEnumerable<DataRow> listParameter =
-            //    // в каждой строке значения полей, относящихся к параметру алгоритма расчета одинаковые, т.к. 'ListParameter' объединение 2-х таблиц
-            //    ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]                
-            //    ;
+            //Список параметров для отображения            
+            IEnumerable<DataRow> listParameter =
+                // в каждой строке значения полей, относящихся к параметру алгоритма расчета одинаковые, т.к. 'ListParameter' объединение 2-х таблиц
+                //ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]
+                ListParameter.Select (x => x);
             //Установки для отображения значений
             dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
                 , new int[] {
@@ -371,7 +402,7 @@ namespace TepCommon
                     , (int)_currIdPeriod }
                 , out err);
             //Заполнить элементы управления с компонентами станции 
-            foreach (DataRow r in ListParameter)
+            foreach (DataRow r in listParameter)
             {
                 id_alg = (int)r[@"ID_ALG"];
                 // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
@@ -381,15 +412,23 @@ namespace TepCommon
                     m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
 
                     strItem = ((string)r[@"N_ALG"]).Trim() + @" (" + ((string)r[@"NAME_SHR"]).Trim() + @")";
-                    (PanelManagement as PanelManagementTaskTepValues).AddParameter(id_alg
-                        , (int)r[@"ID_COMP"]
-                        , (int)r[@"ID"]
-                        , strItem
-                        , arIndexIdToAdd
-                        , new bool [] {
-                            m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
-                            , m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0
-                        });
+                    eventAddNAlgParameter(new PanelManagementTaskTepValues.ADDING_PARAMETER()
+                    {
+                        m_idNAlg = id_alg
+                        ,
+                        m_idComp = (int)r[@"ID_COMP"]
+                        ,
+                        m_idPut = (int)r[@"ID"]
+                        ,
+                        m_strText = strItem
+                        ,
+                        m_arIndexIdToAdd = arIndexIdToAdd
+                        ,
+                        m_arChecked = new bool[] {
+                                m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
+                                , m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0
+                            }
+                    });
                     // получить значения для настройки визуального отображения
                     if (dictVisualSettings.ContainsKey(id_alg) == true)
                     {// установленные в проекте
@@ -417,14 +456,21 @@ namespace TepCommon
                 }
                 else
                     // параметр уже был добавлен
-                    (PanelManagement as PanelManagementTaskTepValues).AddParameter(id_alg
-                        , (int)r[@"ID_COMP"]
-                        , (int)r[@"ID"]
-                        , strItem
-                        , new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED }
-                        , new bool[] {
-                            m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
+                    if (! (eventAddCompParameter == null))
+                    // только, если назначенн обработчик в 'PanelTaskTepOutVal'
+                        eventAddCompParameter(new PanelManagementTaskTepValues.ADDING_PARAMETER()
+                        {
+                            m_idNAlg = id_alg
+                            , m_idComp = (int)r[@"ID_COMP"]
+                            , m_idPut = (int)r[@"ID"]
+                            , m_strText = strItem
+                            , m_arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED }
+                            , m_arChecked = new bool[] {
+                                    m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
+                            }
                         });
+                    else
+                        ;
             }
             //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
             (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(true, arIndexIdToAdd);
@@ -474,8 +520,7 @@ namespace TepCommon
             ;
             //Изменить структуру 'DataGridView'
             //m_dgvValues.UpdateStructure ();            
-            m_dgvValues.UpdateStructure(ev.m_address
-                , ev.m_newCheckState == CheckState.Checked ? true : ev.m_newCheckState == CheckState.Unchecked ? false : false);
+            (m_dgvValues as DataGridViewTEPValues).UpdateStructure(ev);
         }        
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
@@ -1157,7 +1202,7 @@ namespace TepCommon
             /// </summary>
             public event ItemCheckedParametersEventHandler ItemCheck;
 
-            protected ADDRESS_CALC m_address;
+            //protected ADDRESS_CALC m_address;
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
@@ -1365,6 +1410,40 @@ namespace TepCommon
 
                 Clear(arIndxIdToClear);
             }
+
+            protected INDEX_ID getIndexIdOfControl(Control ctrl)
+            {
+                INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
+                INDEX_ID indxRes = INDEX_ID.UNKNOWN;
+
+                try
+                {
+                    //Определить идентификатор
+                    id = getIndexControl(ctrl);
+                    // , соответствующий изменившему состояние элементу 'CheckedListBox'
+                    switch (id)
+                    {
+                        case INDEX_CONTROL.CLBX_COMP_CALCULATED:
+                        case INDEX_CONTROL.CLBX_COMP_VISIBLED:
+                            indxRes = id == INDEX_CONTROL.CLBX_COMP_CALCULATED ? INDEX_ID.DENY_COMP_CALCULATED :
+                                id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
+                            break;
+                        case INDEX_CONTROL.CLBX_PARAMETER_CALCULATED:
+                        case INDEX_CONTROL.CLBX_PARAMETER_VISIBLED:
+                            indxRes = id == INDEX_CONTROL.CLBX_PARAMETER_CALCULATED ? INDEX_ID.DENY_PARAMETER_CALCULATED :
+                                id == INDEX_CONTROL.CLBX_PARAMETER_VISIBLED ? INDEX_ID.DENY_PARAMETER_VISIBLED : INDEX_ID.UNKNOWN;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+
+                return indxRes;
+            }
             /// <summary>
             /// Найти элемент управления на панели по индексу идентификатора
             /// </summary>
@@ -1475,12 +1554,12 @@ namespace TepCommon
 
                     if (bActive == true)
                     {
-                        clbx.SelectedIndexChanged += new EventHandler (onSelectedIndexChanged);
+                        //clbx.SelectedIndexChanged += new EventHandler (onSelectedIndexChanged);
                         clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
                     }
                     else
                     {
-                        clbx.SelectedIndexChanged -= onSelectedIndexChanged;
+                        //clbx.SelectedIndexChanged -= onSelectedIndexChanged;
                         clbx.ItemCheck -= onItemCheck;
                     }
                 }
@@ -1522,18 +1601,40 @@ namespace TepCommon
                 return strRes;
             }
 
-            public void AddParameter(int id_alg, int id_comp, int id_put, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
+            public struct ADDING_PARAMETER
             {
+                public int m_idNAlg;
+                public int m_idComp;
+                public int m_idPut;
+                public string m_strText;
+                public INDEX_ID[] m_arIndexIdToAdd;
+                public bool[] m_arChecked;
+
+                public ADDING_PARAMETER(int id_alg, int id_comp, int id_put, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
+                {
+                    m_idNAlg = id_alg;
+                    m_idComp = id_comp;
+                    m_idPut = id_put;
+                    m_strText = text;
+                    m_arIndexIdToAdd = new INDEX_ID[arIndexIdToAdd.Length]; arIndexIdToAdd.CopyTo(m_arIndexIdToAdd, 0);
+                    m_arChecked = new bool[arChecked.Length]; arChecked.CopyTo(m_arChecked, 0);
+                }
+            }
+
+            //public void AddParameter(int id_alg, int id_comp, int id_put, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
+            public void OnAddParameter(object obj)
+            {
+                ADDING_PARAMETER addPar = (ADDING_PARAMETER)obj;
                 Control ctrl = null;
 
-                for (int i = 0; i < arIndexIdToAdd.Length; i++)
+                for (int i = 0; i < addPar.m_arIndexIdToAdd.Length; i++)
                 {
-                    ctrl = find(arIndexIdToAdd[i]);
+                    ctrl = find(addPar.m_arIndexIdToAdd[i]);
 
                     if (!(ctrl == null))
-                        addParameter (ctrl, id_alg, id_comp, id_put, text, arChecked[i]);
+                        addParameter(ctrl, addPar.m_idNAlg, addPar.m_idComp, addPar.m_idPut, addPar.m_strText, addPar.m_arChecked[i]);
                     else
-                        Logging.Logg().Error(@"PanelManagementTaskTepValues::AddParameter () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Error(@"PanelManagementTaskTepValues::AddParameter () - не найден элемент для INDEX_ID=" + addPar.m_arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
@@ -1550,47 +1651,9 @@ namespace TepCommon
                     ;
             }
 
-            private void onSelectedIndexChanged(object obj, EventArgs ev)
-            {
-                INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
-                INDEX_ID indxIdDeny = INDEX_ID.UNKNOWN;
-
-                try
-                {
-                    //Определить идентификатор
-                    id = getIndexControl((obj as Control));
-                    // , соответствующий изменившему состояние элементу 'CheckedListBox'
-                    switch (id)
-                    {
-                        case INDEX_CONTROL.CLBX_COMP_CALCULATED:
-                        case INDEX_CONTROL.CLBX_COMP_VISIBLED:
-                            m_address.m_idItem = (obj as IControl).SelectedId;
-                            //m_address.m_idAlg =
-                            ////m_address.m_idPut =
-                            //    -1;
-
-                            indxIdDeny = id == INDEX_CONTROL.CLBX_COMP_CALCULATED ? INDEX_ID.DENY_COMP_CALCULATED :
-                                id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
-                            break;
-                        case INDEX_CONTROL.CLBX_PARAMETER_CALCULATED:
-                        case INDEX_CONTROL.CLBX_PARAMETER_VISIBLED:
-                            //m_address.m_idComp = -1;
-                            m_address.m_idItem = (obj as IControl).SelectedId;
-
-                            indxIdDeny = id == INDEX_CONTROL.CLBX_PARAMETER_CALCULATED ? INDEX_ID.DENY_PARAMETER_CALCULATED :
-                                id == INDEX_CONTROL.CLBX_PARAMETER_VISIBLED ? INDEX_ID.DENY_PARAMETER_VISIBLED : INDEX_ID.UNKNOWN;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    m_address.m_indxIdDeny = indxIdDeny;
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
+            //private void onSelectedIndexChanged(object obj, EventArgs ev)
+            //{                
+            //}
 
             //protected virtual void addItem(INDEX_ID indxId, Control ctrl, int id, string text, bool bChecked)
             //{
@@ -1603,16 +1666,16 @@ namespace TepCommon
             /// <param name="ev">Аргумент события</param>
             protected void onItemCheck(object obj, ItemCheckEventArgs ev)
             {
-                itemCheck(m_address, ev.NewValue);
+                itemCheck((obj as IControl).SelectedId, getIndexIdOfControl (obj as Control), ev.NewValue);
             }
             /// <summary>
             /// Инициировать событие - изменение признака элемента
             /// </summary>
             /// <param name="address">Адрес элемента</param>
             /// <param name="checkState">Значение признака элемента</param>
-            protected void itemCheck(ADDRESS_CALC address, CheckState checkState)
+            protected void itemCheck(int idItem, INDEX_ID indxIdDeny, CheckState checkState)
             {
-                ItemCheck(new ItemCheckedParametersEventArgs(address, checkState));
+                ItemCheck(new ItemCheckedParametersEventArgs(idItem, indxIdDeny, checkState));
             }
             /// <summary>
             /// Интерфейс для всех элементов управления с компонентами станции, параметрами расчета

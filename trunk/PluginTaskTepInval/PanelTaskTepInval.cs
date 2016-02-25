@@ -102,11 +102,12 @@ namespace PluginTaskTepInval
 
             if (!(iRegDbConn < 0))
             {
+                _IdSession = HMath.GetRandomNumber();
                 //Запрос для получения архивных данных
                 m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
                 //Запрос для получения автоматически собираемых данных
                 m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
-                    , _IdSession
+                    , _IdSession //!!! для записи
                     , ActualIdPeriod
                     , CountBasePeriod
                     , arQueryRanges

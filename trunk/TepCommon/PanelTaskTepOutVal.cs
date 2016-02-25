@@ -30,6 +30,13 @@ namespace TepCommon
         private void InitializeComponents()
         {
         }
+
+        protected override void initialize()
+        {
+            base.initialize();
+
+            eventAddCompParameter += new DelegateObjectFunc ((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
+        }
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>
@@ -38,7 +45,6 @@ namespace TepCommon
         {
             throw new NotImplementedException();
         }
-
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
@@ -59,12 +65,12 @@ namespace TepCommon
 
                     if (bActive == true)
                     {
-                        tv.NodeSelect += new DelegateIntFunc (onNodeSelect);
-                        tv.ItemCheck += new DelegateBoolFunc (onItemCheck);
+                        //tv.NodeSelect += new DelegateIntFunc (onNodeSelect);
+                        tv.ItemCheck += new DelegateIntIntFunc (onItemCheck);
                     }
                     else
                     {
-                        tv.NodeSelect -= onNodeSelect;
+                        //tv.NodeSelect -= onNodeSelect;
                         tv.ItemCheck -= onItemCheck;
                     }
                 }
@@ -72,16 +78,18 @@ namespace TepCommon
                     base.activateCheckedHandler(bActive, idToActivate);
             }
 
-            private void onNodeSelect(int id_item)
-            {
-                m_address.m_idItem = id_item;
-                //m_address.m_idAlg = id_par;
-                m_address.m_indxIdDeny = INDEX_ID.DENY_PARAMETER_CALCULATED;
-            }
+            //private void onNodeSelect(int id_item)
+            //{
+            //    m_address.m_idItem = id_item;
+            //    //m_address.m_idAlg = id_par;
+            //    m_address.m_indxIdDeny = INDEX_ID.DENY_PARAMETER_CALCULATED;
+            //}
 
-            protected void onItemCheck(bool bChecked)
+            protected void onItemCheck(int idItem, int iChecked)
             {
-                itemCheck(m_address, bChecked == true ? CheckState.Checked : CheckState.Unchecked);
+                itemCheck(idItem
+                    , INDEX_ID.DENY_PARAMETER_CALCULATED
+                    , iChecked == 1 ? CheckState.Checked : CheckState.Unchecked);
             }
 
             protected override void addParameter(Control ctrl, int id_alg, int id_comp, int id_put, string text, bool bChecked)
@@ -98,15 +106,20 @@ namespace TepCommon
             {
                 private static string DELIMETER_KEY = @"::";
 
-                public event DelegateIntFunc NodeSelect;
+                //public event DelegateIntFunc NodeSelect;
                 
-                public event DelegateBoolFunc ItemCheck;
+                public event DelegateIntIntFunc ItemCheck;
 
                 public int SelectedId
                 {
                     get
                     {
                         int iRes = -1;
+
+                        string[] strIds = null;
+
+                        strIds = SelectedNode.Name.Split(new string[] { DELIMETER_KEY }, StringSplitOptions.RemoveEmptyEntries);
+                        iRes = Int32.Parse(strIds[strIds.Length - 1]);
 
                         return iRes;
                     }
@@ -188,11 +201,12 @@ namespace TepCommon
                 {
                     if (bActive == true)
                     {
-                        this.AfterSelect +=  new TreeViewEventHandler(onAfterSelect);
+                        //this.AfterSelect +=  new TreeViewEventHandler(onAfterSelect);
                         this.AfterCheck += new TreeViewEventHandler(onAfterCheck);
                     }
                     else
                     {
+                        //this.AfterSelect -= onAfterSelect;
                         this.AfterCheck -= onAfterCheck;
                     }
                 }
@@ -208,28 +222,25 @@ namespace TepCommon
                         ActivateCheckedHandler(false);
 
                         foreach (TreeNode n in ev.Node.Nodes)
-                        {
                             n.Checked = ev.Node.Checked;
-                            itemCheck(Int32.Parse(n.Name.Split(new string[] { DELIMETER_KEY }, StringSplitOptions.RemoveEmptyEntries)[1]), ev.Node.Checked);
-                        }
 
                         ActivateCheckedHandler(true);
                     }
                     else
-                    {
-                        itemCheck(Int32.Parse(ev.Node.Name.Split(new string[] { DELIMETER_KEY }, StringSplitOptions.RemoveEmptyEntries)[1]), ev.Node.Checked);
-                    }
+                        ;
+
+                    itemCheck(SelectedId, ev.Node.Checked == true ? 1 : 0);
                 }
 
-                private void onAfterSelect(object obj, TreeViewEventArgs ev)
-                {
-                    string[] strIds = ev.Node.Name.Split();
-                    NodeSelect(SelectedId);
-                }
+                //private void onAfterSelect(object obj, TreeViewEventArgs ev)
+                //{
+                //    string[] strIds = ev.Node.Name.Split();
+                //    NodeSelect(SelectedId);
+                //}
 
-                private void itemCheck(int id, bool bChecked)
+                private void itemCheck(int id, int iChecked)
                 {
-                    ItemCheck(bChecked);
+                    ItemCheck(id, iChecked);
                 }
             }            
 

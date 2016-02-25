@@ -43,7 +43,38 @@ namespace TepCommon
         /// Объект для произведения расчетов
         /// </summary>
         private TaskCalculate m_taskCalculate;
+        /// <summary>
+        /// Параметры сессии
+        /// </summary>
+        public struct SESSION
+        {
+            /// <summary>
+            /// Идентификатор сессии - уникальный идентификатор
+            ///  для наблов входных, расчетных (нормативных, макетных) значений
+            /// </summary>
+            public long m_Id;
+            /// <summary>
+            /// Текущий выбранный идентификатор периода расчета
+            /// </summary>
+            public ID_PERIOD m_currIdPeriod;
+            /// <summary>
+            /// Идентификатор текущий выбранного часового пояса
+            /// </summary>
+            public ID_TIMEZONE m_currIdTimezone;
 
+            public DateTimeRange m_rangeDatetime;
+
+            public SESSION(DataRow row)
+            {
+                m_Id = (long)row[@"ID_CALCULATE"];
+
+                m_currIdPeriod = (ID_PERIOD)row[@"ID_TIME"];
+
+                m_currIdTimezone = (ID_TIMEZONE)row[@"ID_TIMEZONE"];
+
+                m_rangeDatetime = new DateTimeRange((DateTime)row[@"DATEIME_BEGIN"], (DateTime)row[@"DATEIME_END"]);
+            }
+        }
         public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN)
             : base()
         {
@@ -85,7 +116,7 @@ namespace TepCommon
         /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        public void CreateSession(int idSession
+        public void CreateSession(long idSession
             , ID_PERIOD idPeriod
             , int cntBasePeriod
             , ID_TIMEZONE idTimezone
@@ -164,7 +195,7 @@ namespace TepCommon
         /// <param name="idTimezone">Идентификатор часового пояса</param>
         /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        private void insertIdSession(int id
+        private void insertIdSession(long id
             , ID_PERIOD idPeriod
             , int cntBasePeriod
             , ID_TIMEZONE idTimezone
@@ -255,7 +286,7 @@ namespace TepCommon
         /// </summary>
         /// <param name="idSession">Идентификатор сессии расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнении функции</param>
-        private void insertOutValues(int idSession, out int err)
+        private void insertOutValues(long idSession, out int err)
         {
             err = -1;
 
@@ -275,7 +306,7 @@ namespace TepCommon
         /// <param name="idSession">Идентификатор сессии расчета</param>
         /// <param name="typeCalc">Тип расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнении функции</param>
-        private void insertOutValues(int idSession, TaskCalculate.TYPE typeCalc, out int err)
+        private void insertOutValues(long idSession, TaskCalculate.TYPE typeCalc, out int err)
         {
             err = -1;
 
@@ -342,7 +373,7 @@ namespace TepCommon
         /// </summary>
         /// <param name="idSession">Идентификатор сессии расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        public void DeleteSession(int idSession, out int err)
+        public void DeleteSession(long idSession, out int err)
         {
             err = -1;
 
@@ -697,11 +728,11 @@ namespace TepCommon
         /// Возвратить идентификатор сессии расчета
         /// </summary>
         /// <param name="err">Признак выполнении функции</param>
-        /// <returns>Идентификатор рпасчета сессии</returns>
-        public long GetIdSession(out int err)
+        /// <returns>Идентификатор расчета сессии</returns>
+        public SESSION GetIdSession(out int err)
         {
             err = -1;
-            long iRes = -1;
+            SESSION? sessionRes = null;
 
             DataTable tableSession = null;
             int iRegDbConn = -1
@@ -718,7 +749,7 @@ namespace TepCommon
 
                 if ((err == 0)
                     && (iCntSession == 1))
-                    iRes = (long)tableSession.Rows[0][@"ID_CALCULATE"];
+                    sessionRes = new SESSION (tableSession.Rows[0]);
                 else
                     if (err == 0)
                         switch (iCntSession)
@@ -740,8 +771,8 @@ namespace TepCommon
                 UnRegisterDbConnection();
             else
                 ;
-            
-            return iRes;
+
+            return sessionRes.GetValueOrDefault ();
         }
         /// <summary>
         /// Подготовить таблицы для проведения расчета

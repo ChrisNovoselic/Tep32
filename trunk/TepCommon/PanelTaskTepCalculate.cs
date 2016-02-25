@@ -48,24 +48,15 @@ namespace TepCommon
         ///// <summary>
         ///// Составной признак, указывающий на индексы, используемых на панели значений
         ///// </summary>
-        //HMark m_markUseValues;
+        //HMark m_markUseValues;        
         /// <summary>
-        /// Идентификатор сессии - уникальный идентификатор
-        ///  для наблов входных, расчетных (нормативных, макетных) значений
+        /// Значения параметров сессии
         /// </summary>
-        protected int _IdSession;
-        /// <summary>
-        /// Текущий выбранный идентификатор периода расчета
-        /// </summary>
-        protected ID_PERIOD _currIdPeriod;
+        protected HandlerDbTaskCalculate.SESSION _Session;
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : _currIdPeriod; } }
-        /// <summary>
-        /// Идентификатор текущий выбранного часового пояса
-        /// </summary>
-        protected ID_TIMEZONE _currIdTimezone;
+        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : _Session.m_currIdPeriod; } }        
         /// <summary>
         /// Смещение (минуты) текущее от UTC в ~ от выбранного часового пояса
         /// </summary>
@@ -372,7 +363,7 @@ namespace TepCommon
             //Отменить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(false);
             //Установить новые режимы для "календарей"
-            PanelManagement.SetPeriod(_currIdPeriod);
+            PanelManagement.SetPeriod(_Session.m_currIdPeriod);
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
 

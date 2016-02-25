@@ -55,7 +55,23 @@ namespace PluginTaskTepOutNorm
 
         protected override void setValues(out int err, out string strErr)
         {
-            throw new NotImplementedException();
+            err = 0;
+            strErr = string.Empty;
+
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetValuesVar(Type
+                , _Session.m_IdSession
+                , out err);
+            //Запрос для получения автоматически собираемых данных
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
+                , _Session.m_IdSession
+                , out err);
+
+            switch (err)
+            {
+                case 0:
+                default:
+                    break;
+            }
         }
 
         protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()
