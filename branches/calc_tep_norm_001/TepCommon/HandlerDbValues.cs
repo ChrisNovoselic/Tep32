@@ -213,6 +213,11 @@ namespace TepCommon
                 ;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="strIds"></param>
+        /// <returns></returns>
         public string GetQueryTimePeriods(string strIds)
         {
             string strRes = string.Empty;
@@ -222,6 +227,11 @@ namespace TepCommon
             return strRes;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="strIds"></param>
+        /// <returns></returns>
         public string GetQueryTimezones(string strIds)
         {
             string strRes = string.Empty;

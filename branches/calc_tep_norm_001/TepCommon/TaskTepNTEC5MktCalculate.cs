@@ -11,6 +11,9 @@ using TepCommon;
 
 namespace TepCommon
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public partial class HandlerDbTaskCalculate : HandlerDbValues
     {
         /// <summary>
