@@ -2234,7 +2234,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 131 -К з
+                    #region 131 - К з
                     case "131":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
