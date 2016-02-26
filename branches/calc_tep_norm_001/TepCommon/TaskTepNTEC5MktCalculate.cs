@@ -1343,7 +1343,9 @@ namespace TepCommon
                                 case MODE_DEV.ELEKTRO1_2a:
                                     Out[nAlg][ID_COMP[i]].value = In[@"38"][ID_COMP[i]].value;
                                     break;
-                                default:
+                                case MODE_DEV.COND_1:
+                                case MODE_DEV.ELEKTRO2_2:
+                                case MODE_DEV.TEPLO_3:
                                     Out[nAlg][ID_COMP[i]].value = In[@"37"][ID_COMP[i]].value;
                                     break;
                             }
@@ -1746,17 +1748,24 @@ namespace TepCommon
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = Out[@"120"][ID_COMP[i]].value - Out[@"119"][ID_COMP[i]].value;
-
-                            if (In[@"74"][ID_COMP[i]].value.ToString() == "1")
-                                Out[nAlg][ID_COMP[i]].value = fTable.F1("2.77:1", Out[@"121"][ID_COMP[i]].value);
-                            else
-                                if (In[@"74"][ID_COMP[i]].value.ToString() == "2" || In[@"74"][ID_COMP[i]].value.ToString() == "2a"
-                                    || In[@"74"][ID_COMP[i]].value.ToString() == "3")
-                                {
-                                    Out[nAlg][ID_COMP[i]].value = fTable.F2("2.87:2", Norm[@"50"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value)
+                            switch (_modeDev[ID_COMP[i]])
+                            {
+                                case MODE_DEV.UNKNOWN:
+                                    break;
+                                case MODE_DEV.COND_1:
+                                     Out[nAlg][ID_COMP[i]].value = fTable.F1("2.77:1", Out[@"121"][ID_COMP[i]].value);
+                                    break;
+                                case MODE_DEV.ELEKTRO2_2:
+                                case MODE_DEV.ELEKTRO1_2a:
+                                case MODE_DEV.TEPLO_3:
+                                      Out[nAlg][ID_COMP[i]].value = fTable.F2("2.87:2", Norm[@"50"][ID_COMP[i]].value, Norm[@"10"][ID_COMP[i]].value)
                                         * Out[@"121"][ID_COMP[i]].value / 2;
-                                }
-                                else ;
+                                    break;
+                                case MODE_DEV.COUNT:
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
                         break;
                     #endregion
