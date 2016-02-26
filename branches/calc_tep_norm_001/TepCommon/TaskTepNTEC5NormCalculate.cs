@@ -48,8 +48,8 @@ namespace TepCommon
                     , fTmp = -1F
                     , fSum1 = 0F
                 , fSum2 = 0F;
-                int fDay = DateTime.Now.Day
-                    , fMonth = DateTime.Now.Month;//пар.144
+                int iDay = DateTime.Now.Day
+                    , iMonth = DateTime.Now.Month;//пар.144
                 float[] fRunkValues = new float[(int)FTable.FRUNK.COUNT];
                 // только для вычисления пар.20 - 4-х мерная функция
                 string nameFTable = string.Empty
@@ -2142,7 +2142,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 126 -
+                    #region 126 - Q нас (н)
                     case "126":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2152,7 +2152,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 126.1 -
+                    #region 126.1 - alfa нас (н)
                     case "126.1":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2168,7 +2168,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 127 -
+                    #region 127 - К э
                     case "127":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2200,7 +2200,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 128 -
+                    #region 128 - Э э сн (н)
                     case "128":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2212,7 +2212,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 129 -
+                    #region 129 - КПД к н (ном)
                     case "129":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2224,7 +2224,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 130 -
+                    #region 130 - НЮ тп
                     case "130":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2234,7 +2234,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 131 -
+                    #region 131 -К з
                     case "131":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2244,7 +2244,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 132 -
+                    #region 132 - К ст
                     case "132":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2259,7 +2259,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 133 -
+                    #region 133 - K осв э
                     case "133":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2280,7 +2280,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 134 -
+                    #region 134 - K осв т
                     case "134":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2301,7 +2301,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 135 -
+                    #region 135 - K отр (к)
                     case "135":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2319,7 +2319,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 136 -
+                    #region 136 - b э (н)
                     case "136":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2335,7 +2335,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 137 -
+                    #region 137 - b э (нор)
                     case "137":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2347,7 +2347,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 138 -
+                    #region 138 - G св
                     case "138":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2362,7 +2362,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 139 -
+                    #region 139 - N сет
                     case "139":
                         if (Norm[@"138"][ID_COMP[i]].value <= 4500)
                             Norm[nAlg][ID_COMP[0]].value = (float)(fTable.F1("2.39б:1", Norm[@"138"][ID_COMP[i]].value)
@@ -2389,19 +2389,19 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 140 -
+                    #region 140 - G птс
                     case "140":
                         fRes = (In[@"50"][ID_COMP[ST]].value + In[@"51"][ID_COMP[ST]].value) / In[@"71"][ID_COMP[ST]].value * 1E3F;
                         break;
                     #endregion
 
-                    #region 141 -
+                    #region 141 - N подп
                     case "141":
                         fRes = fTable.F1("2.36:1", Norm[@"140"][ID_COMP[ST]].value);
                         break;
                     #endregion
 
-                    #region 142 -
+                    #region 142 - N хов
                     case "142":
                         if (In[@"43"][ID_COMP[ST]].value < 8)
                             fRes = fTable.F1("2.37:1", Norm[@"140"][ID_COMP[ST]].value);
@@ -2410,7 +2410,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 143 -
+                    #region 143 - N кнб
                     case "143":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2433,13 +2433,13 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 144 -
+                    #region 144 - Э тепл(н)
                     case "144":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
                             if (isRealTime)
                             {
-                                if (((!(fMonth < 6) && !(fMonth > 9)) || fMonth == 5) && fDay > 15)
+                                if (((!(iMonth < 6) && !(iMonth > 9)) || iMonth == 5) && iDay > 15)
                                 {
                                     switch (_modeDev[ID_COMP[i]])
                                     {
@@ -2511,7 +2511,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 145 -
+                    #region 145 - b тэ бл
                     case "145":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2540,19 +2540,19 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 146 -
+                    #region 146 - b тэ пвк
                     case "146":
                         fRes = In[@"86"][ID_COMP[ST]].value;
                         break;
                     #endregion
 
-                    #region 146.1 -
+                    #region 146.1 - alfa пвк
                     case "146.1":
                         fRes = In[@"85"][ID_COMP[ST]].value / Norm[@"5"][ID_COMP[ST]].value;
                         break;
                     #endregion
 
-                    #region 147 -
+                    #region 147 - db тэ
                     case "147":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2568,7 +2568,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 148 -
+                    #region 148 - b тэ (н)
                     case "148":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2580,7 +2580,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 149 -
+                    #region 149 - b тэ (н) ст
                     case "149":
                         fRes = (Norm[@"145"][ID_COMP[ST]].value * (100 - Norm[@"146.1"][ID_COMP[ST]].value - Norm[@"126.1"][ID_COMP[ST]].value)
                             + Norm[@"146"][ID_COMP[ST]].value * Norm[@"146.1"][ID_COMP[ST]].value) / 1E2F + In[@"87"][ID_COMP[ST]].value * 1E3F
@@ -2588,7 +2588,7 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 150 -
+                    #region 150 - b тэ (нр)
                     case "150":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2603,13 +2603,25 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 151 -
+                    #region 151 - balance
                     case "151":
-
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            Norm[nAlg][ID_COMP[i]].value = Norm[@"24"][ID_COMP[i]].value * Norm[@"2"][ID_COMP[i]].value / 1E3F
+                                + (Norm[@"8"][ID_COMP[i]].value - Norm[@"126"][ID_COMP[i]].value) * (100 + Norm[@"125"][ID_COMP[i]].value)
+                                / 1E2F + Norm[@"41"][ID_COMP[i]].value * Norm[@"24"][ID_COMP[i]].value * Norm[@"2"][ID_COMP[i]].value
+                                / 1E3F / 1E2F + Norm[@"121"][ID_COMP[i]].value * Norm[@"64"][ID_COMP[i]].value / 100 + 472.2F
+                                * Norm[@"1"][ID_COMP[i]].value / 1E2F;
+                        }
+                        fRes = Norm[@"24"][ID_COMP[ST]].value * Norm[@"2"][ID_COMP[ST]].value / 1E3F
+                                + (Norm[@"8"][ID_COMP[ST]].value - Norm[@"126"][ID_COMP[ST]].value) * (100 + Norm[@"125"][ID_COMP[ST]].value)
+                                / 1E2F + Norm[@"41"][ID_COMP[ST]].value * Norm[@"24"][ID_COMP[ST]].value * Norm[@"2"][ID_COMP[ST]].value
+                                / 1E3F / 1E2F + Norm[@"121"][ID_COMP[ST]].value * Norm[@"64"][ID_COMP[ST]].value / 100 + 472.2F
+                                * Norm[@"1"][ID_COMP[ST]].value / 1E2F;
                         break;
                     #endregion
 
-                    #region 152 -
+                    #region 152 - balance
                     case "152":
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                         {
@@ -2621,14 +2633,14 @@ namespace TepCommon
                         break;
                     #endregion
 
-                    #region 153 -
+                    #region 153 - S Э сн (н)
                     case "153":
                         fRes = Norm[@"36"][ID_COMP[ST]].value * Norm[@"2"][ID_COMP[ST]].value / 1E2F + Norm[@"108"][ID_COMP[ST]].value
                             + Norm[@"144"][ID_COMP[ST]].value;
                         break;
                     #endregion
 
-                    #region 154 -
+                    #region 154 - S Э сн (ф)
                     case "154":
                         fRes = In[@"3"][ID_COMP[ST]].value;
                         break;
@@ -2639,7 +2651,6 @@ namespace TepCommon
                         Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный параметр...", Logging.INDEX_MESSAGE.NOT_SET);
                         break;
                 }
-
                 return fRes;
             }
         }
