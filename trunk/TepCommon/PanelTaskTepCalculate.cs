@@ -52,15 +52,11 @@ namespace TepCommon
         /// <summary>
         /// Значения параметров сессии
         /// </summary>
-        protected HandlerDbTaskCalculate.SESSION _Session;
+        protected HandlerDbTaskCalculate.SESSION Session { get { return HandlerDb._Session; } }
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : _Session.m_currIdPeriod; } }        
-        /// <summary>
-        /// Смещение (минуты) текущее от UTC в ~ от выбранного часового пояса
-        /// </summary>
-        protected int _curOffsetUTC;
+        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : Session.m_currIdPeriod; } }        
         /// <summary>
         /// Метод для создания панели с активными объектами управления
         /// </summary>
@@ -104,9 +100,9 @@ namespace TepCommon
                     //    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalDays - 0 :
                     //    24
                     idPeriod == ID_PERIOD.HOUR ?
-                        (int)(PanelManagement.m_dtRange.End - PanelManagement.m_dtRange.Begin).TotalHours - 0 :
+                        (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalHours - 0 :
                         idPeriod == ID_PERIOD.DAY ?
-                            (int)(PanelManagement.m_dtRange.End - PanelManagement.m_dtRange.Begin).TotalDays - 0 :
+                            (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalDays - 0 :
                             24
                             ;
 
@@ -179,6 +175,8 @@ namespace TepCommon
             HandlerDb.IdTask = ID_TASK.TEP;
 
             InitializeComponents();
+
+            Session.SetRangeDatetime(PanelManagementTaskTepCalculate.s_dtDefault, PanelManagementTaskTepCalculate.s_dtDefault.AddHours(1));
         }
 
         protected HandlerDbTaskCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskCalculate; } }
@@ -315,7 +313,7 @@ namespace TepCommon
         {
             if (! (PanelManagement == null))
                 if (active == true)
-                    PanelManagement.DateTimeRangeValue_Changed += new EventHandler(datetimeRangeValue_onChanged);
+                    PanelManagement.DateTimeRangeValue_Changed += new PanelManagementTaskTepCalculate.DateTimeRangeValueChangedEventArgs (datetimeRangeValue_onChanged);
                 else
                     if (active == false)
                         PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
@@ -363,7 +361,7 @@ namespace TepCommon
             //Отменить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(false);
             //Установить новые режимы для "календарей"
-            PanelManagement.SetPeriod(_Session.m_currIdPeriod);
+            PanelManagement.SetPeriod(Session.m_currIdPeriod);
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
 
@@ -391,14 +389,28 @@ namespace TepCommon
             //else ;
         }
         /// <summary>
+        /// Установить новое значение для текущего периода
+        /// </summary>
+        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны двты/времени</param>
+        protected void setCurrentTimeZone(ComboBox cbxTimezone)
+        {
+            int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
+
+            Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
+                , (int)m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+        }
+        /// <summary>
         /// Обработчик события - изменение интервала (диапазона между нач. и оконч. датой/временем) расчета
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        private void datetimeRangeValue_onChanged(object obj, EventArgs ev)
+        private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
         {
             // очистить содержание представления
             clear();
+
+            Session.SetRangeDatetime(dtBegin, dtEnd);
+
             //// при наличии признака - загрузить/отобразить значения из БД
             //if (s_bAutoUpdateValues == true)
             //    updateDataValues();
@@ -409,9 +421,7 @@ namespace TepCommon
         {
             int err = -1;
 
-            HandlerDb.DeleteSession(_IdSession, out err);
-
-            _IdSession = -1;
+            HandlerDb.DeleteSession(out err);
         }
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
@@ -456,16 +466,7 @@ namespace TepCommon
             else
             // очистить содержание представления
                 m_dgvValues.ClearValues();
-        }
-        /// <summary>
-        /// Установить новое значение для текущего периода
-        /// </summary>
-        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны двты/времени</param>
-        protected void setCurrentTimeZone(ComboBox cbxTimezone)
-        {
-            _currIdTimezone = (ID_TIMEZONE)m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
-            _curOffsetUTC = (int)m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + (int)_currIdTimezone)[0][@"OFFSET_UTC"];
-        }
+        }        
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
         /// </summary>
@@ -638,30 +639,32 @@ namespace TepCommon
                 , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END
                     , COUNT
             }
-            
-            public EventHandler DateTimeRangeValue_Changed;
-            public DateTimeRange m_dtRange;
+
+            public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
+
+            public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
+
+            public static DateTime s_dtDefault = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, 0, 0, 0);
 
             public PanelManagementTaskTepCalculate()
                 : base(8, 21)
             {
                 InitializeComponents();
 
-                HDateTimePicker hdtpEnd = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-                m_dtRange = new DateTimeRange((Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value
-                    , hdtpEnd.Value);
+                //HDateTimePicker hdtpEnd = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
+                //m_dtRange = new DateTimeRange((Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value
+                //    , hdtpEnd.Value);
                 ////Назначить обработчик события - изменение дата/время начала периода
                 //hdtpBegin.ValueChanged += new EventHandler(hdtpBegin_onValueChanged);
                 //Назначить обработчик события - изменение дата/время окончания периода
                 // при этом отменить обработку события - изменение дата/время начала периода
                 // т.к. при изменении дата/время начала периода изменяется и дата/время окончания периода
-                hdtpEnd.ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
+                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
             }
 
             private void InitializeComponents()
             {
-                Control ctrl = null;
-                DateTime today = DateTime.Today;                
+                Control ctrl = null;         
 
                 SuspendLayout();
 
@@ -681,13 +684,13 @@ namespace TepCommon
                 //??? точное (столбец, строка) размещенеие в коде целевого класса
                 this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска (без указания столбца, строки)
 
-                ctrl = new HDateTimePicker(today.Year, today.Month, today.Day, 0, null);
+                ctrl = new HDateTimePicker(s_dtDefault, null);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 //??? точное (столбец, строка) размещенеие в коде целевого класса
                 this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска (без указания столбца, строки)
 
-                ctrl = new HDateTimePicker(today.Year, today.Month, today.Day, 1, Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
+                ctrl = new HDateTimePicker(s_dtDefault.AddHours (1), Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 //??? точное (столбец, строка) размещенеие в коде целевого класса
@@ -717,13 +720,13 @@ namespace TepCommon
             /// </summary>
             /// <param name="obj">Составной объект - календарь</param>
             /// <param name="ev">Аргумент события</param>
-            private void hdtpEnd_onValueChanged(object obj, EventArgs ev)
+            protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
             {
                 HDateTimePicker hdtpEnd = obj as HDateTimePicker;
-                m_dtRange.Set(hdtpEnd.LeadingValue, hdtpEnd.Value);
+                //m_dtRange.Set(hdtpEnd.LeadingValue, hdtpEnd.Value);
 
                 if (!(DateTimeRangeValue_Changed == null))
-                    DateTimeRangeValue_Changed(this, EventArgs.Empty);
+                    DateTimeRangeValue_Changed(hdtpEnd.LeadingValue, hdtpEnd.Value);
                 else
                     ;
             }

@@ -46,6 +46,9 @@ namespace TepCommon
         protected PanelTaskTepValues(IPlugIn iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc, type)
         {
+            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+
             InitializeComponents();
             //Обязательно наличие объекта - панели управления
             activateDateTimeRangeValue_OnChanged(true);
@@ -155,7 +158,7 @@ namespace TepCommon
             {
                 if (activate == true)
                 {
-                    _Session = HandlerDb.GetIdSession(out err);
+                    HandlerDb.InitSession(out err);
                 }
                 else
                     ;
@@ -185,8 +188,8 @@ namespace TepCommon
             int i = -1;
             bool bEndMonthBoudary = false;
             // привести дату/время к UTC
-            DateTime dtBegin = PanelManagement.m_dtRange.Begin.AddMinutes(-1 * _curOffsetUTC)
-                , dtEnd = PanelManagement.m_dtRange.End.AddMinutes(-1 * _curOffsetUTC);
+            DateTime dtBegin = Session.m_rangeDatetime.Begin.AddMinutes(-1 * Session.m_curOffsetUTC)
+                , dtEnd = Session.m_rangeDatetime.End.AddMinutes(-1 * Session.m_curOffsetUTC);
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
             if (bEndMonthBoudary == false)
@@ -379,7 +382,7 @@ namespace TepCommon
             INDEX_ID[] arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED };
             Dictionary<int, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<int, HTepUsers.VISUAL_SETTING>();
             //Установить новое значение для текущего периода
-            _currIdPeriod = (ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex];
+            Session.SetCurrentPeriod ((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex]);
             //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
             (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(false, arIndexIdToAdd);
             //Очистиить списки - элементы интерфейса
@@ -399,7 +402,7 @@ namespace TepCommon
                     1
                     , (_iFuncPlugin as PlugInBase)._Id
                     , (_iFuncPlugin as PlugInBase)._Id
-                    , (int)_currIdPeriod }
+                    , (int)Session.m_currIdPeriod }
                 , out err);
             //Заполнить элементы управления с компонентами станции 
             foreach (DataRow r in listParameter)
@@ -1373,21 +1376,21 @@ namespace TepCommon
 
             //    DateTimeRangeValue_Changed(this, EventArgs.Empty);
             //}
-            /// <summary>
-            /// Обработчик события - изменение дата/время окончания периода
-            /// </summary>
-            /// <param name="obj">Составной объект - календарь</param>
-            /// <param name="ev">Аргумент события</param>
-            private void hdtpEnd_onValueChanged(object obj, EventArgs ev)
-            {
-                HDateTimePicker hdtpEnd = obj as HDateTimePicker;
-                m_dtRange.Set(hdtpEnd.LeadingValue, hdtpEnd.Value);
+            ///// <summary>
+            ///// Обработчик события - изменение дата/время окончания периода
+            ///// </summary>
+            ///// <param name="obj">Составной объект - календарь</param>
+            ///// <param name="ev">Аргумент события</param>
+            //private void hdtpEnd_onValueChanged(object obj, EventArgs ev)
+            //{
+            //    HDateTimePicker hdtpEnd = obj as HDateTimePicker;
+            //    m_dtRange.Set(hdtpEnd.LeadingValue, hdtpEnd.Value);
 
-                if (! (DateTimeRangeValue_Changed == null))
-                    DateTimeRangeValue_Changed(this, EventArgs.Empty);
-                else
-                    ;
-            }
+            //    if (! (DateTimeRangeValue_Changed == null))
+            //        DateTimeRangeValue_Changed(this, EventArgs.Empty);
+            //    else
+            //        ;
+            //}
             /// <summary>
             /// Добавить кнопки, инициирующие процесс расчета
             /// </summary>

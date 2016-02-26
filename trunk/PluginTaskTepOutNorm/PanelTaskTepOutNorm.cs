@@ -57,14 +57,14 @@ namespace PluginTaskTepOutNorm
         {
             err = 0;
             strErr = string.Empty;
-
+            //Запрос для получения ранее учтенных (сохраненных) данных
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetValuesVar(Type
-                , _Session.m_IdSession
+                , Session.m_currIdPeriod
+                , CountBasePeriod
+                , getDateTimeRangeValuesVar ()
                 , out err);
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
-                , _Session.m_IdSession
-                , out err);
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type, out err);
 
             switch (err)
             {

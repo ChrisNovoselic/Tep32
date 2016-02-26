@@ -233,10 +233,10 @@ namespace TepCommon
         /// <param name="day">Номер дня в месяце</param>
         /// <param name="hour">Номер часа в сутках</param>
         /// <param name="objLeading">Объект от значений которого зависит значения создаваемого объекта</param>
-        public HDateTimePicker(int year, int month, int day, int hour, HDateTimePicker objLeading)
+        public HDateTimePicker(DateTime dtValue, HDateTimePicker objLeading)
             : base(12, 1)
         {
-            _value = new DateTime [] { DateTime.MinValue, new DateTime(year, month, day, hour, 0 , 0) };
+            _value = new DateTime [] { DateTime.MinValue, dtValue };
 
             m_arSelectIndexChangedHandlers = new EventHandler [(int)INDEX_CONTROL.COUNT] { cbxDay_onSelectedIndexChanged
                 , cbxMonth_onSelectedIndexChanged

@@ -21,10 +21,7 @@ namespace PluginTaskTepInval
         /// <param name="iFunc">Объект для связи с вызывающим приложением</param>
         public PanelTaskTepInval(IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
-        {
-            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
-            
+        {            
             InitializeComponent();
 
             (Controls.Find (INDEX_CONTROL.BUTTON_RUN_PREV.ToString(), true)[0] as Button).Click += new EventHandler (btnRunPrev_onClick);
@@ -102,12 +99,11 @@ namespace PluginTaskTepInval
 
             if (!(iRegDbConn < 0))
             {
-                _IdSession = HMath.GetRandomNumber();
+                Session.New();
                 //Запрос для получения архивных данных
                 m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
                 //Запрос для получения автоматически собираемых данных
                 m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
-                    , _IdSession //!!! для записи
                     , ActualIdPeriod
                     , CountBasePeriod
                     , arQueryRanges
@@ -122,10 +118,8 @@ namespace PluginTaskTepInval
                     {
                         //Начать новую сессию расчета
                         // , получить входные для расчета значения для возможности редактирования
-                        HandlerDb.CreateSession(_IdSession
-                            , _currIdPeriod
-                            , CountBasePeriod
-                            , _currIdTimezone
+                        HandlerDb.CreateSession(
+                            CountBasePeriod
                             , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
                             , ref m_arTableOrigin
                             , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
@@ -138,12 +132,12 @@ namespace PluginTaskTepInval
                                 m_arTableOrigin[(int)indx].Copy();
                     }
                     else
-                        strErr = @"ошибка получения данных по умолчанию с " + PanelManagement.m_dtRange.Begin.ToString()
-                            + @" по " + PanelManagement.m_dtRange.End.ToString();
+                        strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
+                            + @" по " + Session.m_rangeDatetime.End.ToString();
                 }
                 else
-                    strErr = @"ошибка получения автоматически собираемых данных с " + PanelManagement.m_dtRange.Begin.ToString()
-                        + @" по " + PanelManagement.m_dtRange.End.ToString();
+                    strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
+                        + @" по " + Session.m_rangeDatetime.End.ToString();
             }
             else
                 ;

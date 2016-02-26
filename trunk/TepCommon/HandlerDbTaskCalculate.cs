@@ -46,7 +46,7 @@ namespace TepCommon
         /// <summary>
         /// Параметры сессии
         /// </summary>
-        public struct SESSION
+        public class SESSION
         {
             /// <summary>
             /// Идентификатор сессии - уникальный идентификатор
@@ -62,22 +62,65 @@ namespace TepCommon
             /// </summary>
             public ID_TIMEZONE m_currIdTimezone;
 
+            public int m_curOffsetUTC;
+
             public DateTimeRange m_rangeDatetime;
 
-            public SESSION(DataRow row)
+            public void Initialize(DataRow r)
             {
-                m_Id = (long)row[@"ID_CALCULATE"];
+                Initialize((long)r[@"ID"]
+                    , (ID_PERIOD)r[@"ID_TIME"]
+                    , (ID_TIMEZONE)r[@"ID_TIMEZONE"]
+                    , (int)r[@"OFFSET_UTC"]
+                    , new DateTimeRange ((DateTime)r[@"DATETIME_BEGIN"], (DateTime)r[@"DATETIME_END"]));
+            }
 
-                m_currIdPeriod = (ID_PERIOD)row[@"ID_TIME"];
+            public void Initialize(long id, ID_PERIOD idPeriod, ID_TIMEZONE idTimezone, int curOffsetUTC, DateTimeRange rangeDatetime)
+            {
+                m_Id = id;
+                m_currIdPeriod = idPeriod;
+                m_currIdTimezone = idTimezone;
+                m_curOffsetUTC = curOffsetUTC;
+                m_rangeDatetime = rangeDatetime;
+            }
 
-                m_currIdTimezone = (ID_TIMEZONE)row[@"ID_TIMEZONE"];
+            public void New()
+            {
+                m_Id = HMath.GetRandomNumber();
+            }
 
-                m_rangeDatetime = new DateTimeRange((DateTime)row[@"DATEIME_BEGIN"], (DateTime)row[@"DATEIME_END"]);
+            public void SetRangeDatetime(DateTimeRange dtRange)
+            {
+                SetRangeDatetime (dtRange.Begin, dtRange.End);
+            }
+
+            public void SetRangeDatetime(DateTime dtBegin, DateTime dtEnd)
+            {
+                m_rangeDatetime.Set (dtBegin, dtEnd);
+            }
+            /// <summary>
+            /// Установить новое значение для текущего периода
+            /// </summary>
+            /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны двты/времени</param>
+            public void SetCurrentTimeZone(ID_TIMEZONE idTimazone, int offsetUTC)
+            {
+                m_currIdTimezone = idTimazone;
+                m_curOffsetUTC = offsetUTC;
+            }
+
+            public void SetCurrentPeriod(ID_PERIOD idPeriod)
+            {
+                m_currIdPeriod = idPeriod;
             }
         }
+
+        public SESSION _Session;
+
         public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN)
             : base()
         {
+            _Session = new SESSION() { m_Id = -1, m_currIdPeriod = ID_PERIOD.UNKNOWN, m_currIdTimezone = ID_TIMEZONE.UNKNOWN, m_curOffsetUTC = int.MinValue, m_rangeDatetime = new DateTimeRange() };
+
             IdTask = idTask;
         }
         /// <summary>
@@ -106,20 +149,15 @@ namespace TepCommon
         /// Создать новую сессию для расчета
         ///  - вставить входные данные во временную таблицу
         /// </summary>
-        /// <param name="idSession">Идентификатор сессии</param>
-        /// <param name="idPeriod">Идентификатор периода расчета</param>
         /// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
-        /// <param name="idTimezone">Идентификатор часового пояса</param>
         /// <param name="tablePars">Таблица характеристик входных параметров</param>
         /// <param name="tableSessionValues">Таблица значений входных параметров</param>
         /// <param name="tableDefValues">Таблица значений по умолчанию входных параметров</param>
         /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        public void CreateSession(long idSession
-            , ID_PERIOD idPeriod
-            , int cntBasePeriod
-            , ID_TIMEZONE idTimezone
+        public void CreateSession(
+            int cntBasePeriod
             , DataTable tablePars
             , ref DataTable [] arTableValues
             , DateTimeRange dtRange
@@ -154,7 +192,7 @@ namespace TepCommon
                             rValDef[@"ID_PUT"]
                             //, HUsers.Id //ID_USER
                             //, -1 //ID_SOURCE
-                            , idSession //ID_SESSION
+                            , _Session.m_Id //ID_SESSION
                             , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT //QUALITY
                             , (iAVG == 0) ? cntBasePeriod * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
                             , HDateTime.ToMoscowTimeZone() //??? GETADTE()
@@ -169,18 +207,18 @@ namespace TepCommon
                 && (arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
             {
                 //Вситвить строку с идентификатором новой сессии
-                insertIdSession(idSession, idPeriod, cntBasePeriod, idTimezone, dtRange, out err);
+                insertIdSession(cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
                 insertInValues(arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
                 //Вставить строки в таблицу БД со выходными значениями для расчета
-                insertOutValues(idSession, out err);
+                insertOutValues(out err);
 
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
                 arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT] as [ID], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]"
                     + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
-                    + @" WHERE [ID_SESSION]=" + idSession;
+                    + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                 arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
             else
@@ -195,11 +233,8 @@ namespace TepCommon
         /// <param name="idTimezone">Идентификатор часового пояса</param>
         /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        private void insertIdSession(long id
-            , ID_PERIOD idPeriod
-            , int cntBasePeriod
-            , ID_TIMEZONE idTimezone
-            , DateTimeRange dtRange
+        private void insertIdSession(
+            int cntBasePeriod
             , out int err)
         {
             err = -1;
@@ -217,13 +252,13 @@ namespace TepCommon
                 + @", [DATETIME_END]) VALUES ("
                 ;
 
-            strQuery += id;
+            strQuery += _Session.m_Id;
             strQuery += @"," + (int)ID_TASK.TEP;
             strQuery += @"," + HTepUsers.Id;
-            strQuery += @"," + (int)idPeriod;
-            strQuery += @"," + (int)idTimezone;
-            strQuery += @",'" + dtRange.Begin.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"'"; // @"yyyyMMdd HH:mm:ss"
-            strQuery += @",'" + dtRange.End.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"'"; // @"yyyyMMdd HH:mm:ss"
+            strQuery += @"," + (int)_Session.m_currIdPeriod;
+            strQuery += @"," + (int)_Session.m_currIdTimezone;
+            strQuery += @",'" + _Session.m_rangeDatetime.Begin.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"'"; // @"yyyyMMdd HH:mm:ss"
+            strQuery += @",'" + _Session.m_rangeDatetime.End.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"'"; // @"yyyyMMdd HH:mm:ss"
 
             strQuery += @")";
 
@@ -284,19 +319,18 @@ namespace TepCommon
         /// <summary>
         /// Вставить значения в таблицу для временных выходных значений сессии расчета
         /// </summary>
-        /// <param name="idSession">Идентификатор сессии расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнении функции</param>
-        private void insertOutValues(long idSession, out int err)
+        private void insertOutValues(out int err)
         {
             err = -1;
 
             if (IdTask == ID_TASK.TEP)
-                insertOutValues (idSession, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
+                insertOutValues (_Session.m_Id, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
             else
                 ;
 
             if (err == 0)
-                insertOutValues (idSession, TaskCalculate.TYPE.OUT_VALUES, out err);
+                insertOutValues (_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err);
             else
                 ;
         }
@@ -373,23 +407,28 @@ namespace TepCommon
         /// </summary>
         /// <param name="idSession">Идентификатор сессии расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        public void DeleteSession(long idSession, out int err)
+        public void DeleteSession(out int err)
         {
             err = -1;
 
             int iRegDbConn = -1; // признак регистрации соединения с БД
             string strQuery = string.Empty;
 
-            if (idSession > 0)
+            if (_Session.m_Id > 0)
             {
                 RegisterDbConnection(out iRegDbConn);
 
                 if (!(iRegDbConn < 0))
                 {
                     strQuery = @"DELETE FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"]"
-                        + @" WHERE [ID_CALCULATE]=" + idSession;
+                        + @" WHERE [ID_CALCULATE]=" + _Session.m_Id;
 
                     DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+
+                    if (err == 0)
+                        _Session.m_Id = -1;
+                    else
+                        ;
                 }
                 else
                     ;
@@ -423,14 +462,22 @@ namespace TepCommon
         /// <summary>
         /// Возвратить строку запроса для получения текущего идентификатора сессии расчета
         /// </summary>
-        private string querySession { get { return @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"] WHERE [ID_USER]=" + HTepUsers.Id; } }
+        private string querySession
+        {
+            get
+            {
+                return @"SELECT s.*, tz.[OFFSET_UTC] FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"] as s"
+                    + @" JOIN [timezones] tz ON s.ID_TIMEZONE = tz.ID"
+                    + @" WHERE [ID_USER]=" + HTepUsers.Id;
+            }
+        }
         /// <summary>
         /// Возвратить строку запроса для получения
         /// </summary>
         /// <param name="idSession">Идентификатор сессии</param>
         /// <param name="type">Тип значений (входные, выходные-нормативы - только для ТЭП, выходные)</param>
         /// <returns>Строка - содержание запроса</returns>
-        private string getQueryValuesVar (long idSession, TaskCalculate.TYPE type)
+        private string getQueryValuesVar (TaskCalculate.TYPE type)
         {
             string strRes = string.Empty
                 , strJoinValues = string.Empty;
@@ -445,7 +492,7 @@ namespace TepCommon
 
                 strRes = @"SELECT v.* FROM " + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @" as v"
                     + strJoinValues
-                    + @" WHERE [ID_SESSION]=" + (int)idSession;
+                    + @" WHERE [ID_SESSION]=" + _Session.m_Id;
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::getQueryValuesVar () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -578,7 +625,6 @@ namespace TepCommon
         ///  , структура таблицы совместима с [inval], [outval]
         /// </summary>
         private string getQueryValuesVar(TaskCalculate.TYPE type
-            , long idSession
             , ID_PERIOD idPeriod
             , int cntBasePeriod
             , DateTimeRange[] arQueryRanges)
@@ -604,7 +650,7 @@ namespace TepCommon
                     bLastItem = !(i < (arQueryRanges.Length - 1));
 
                     strRes += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
-                            + @", " + idSession + @" as [ID_SESSION]"
+                            + @", " + _Session.m_Id + @" as [ID_SESSION]"
                             + @", m.[AVG]"
                         //+ @", GETDATE () as [WR_DATETIME]"
                         + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
@@ -633,7 +679,7 @@ namespace TepCommon
                 }
 
                 strRes = @"SELECT v.ID_PUT as [ID]"
-                        + @", " + idSession + @" as [ID_SESSION]"
+                        + @", " + _Session.m_Id + @" as [ID_SESSION]"
                         + @", CASE"
                             + @" WHEN COUNT (*) = " + cntBasePeriod + @" THEN MIN(v.[QUALITY])"
                             + @" WHEN COUNT (*) = 0 THEN " + (int)ID_QUALITY_VALUE.NOT_REC
@@ -674,12 +720,10 @@ namespace TepCommon
         /// <summary>
         /// Возвратить объект-таблицу со значениями из таблицы с временными для расчета
         /// </summary>
-        /// <param name="idSession">Идентификатор сессии расчета</param>
         /// <param name="type">Тип значений (входные, выходные)</param>
         /// <param name="err">Признак выполнения функции</param>
         /// <returns>Объект-таблица</returns>
         public DataTable GetValuesVar(TaskCalculate.TYPE type
-            , long idSession
             , out int err)
         {
             DataTable tableRes = new DataTable();
@@ -687,7 +731,7 @@ namespace TepCommon
             err = -1;
 
             tableRes = DbTSQLInterface.Select(ref _dbConnection
-                , getQueryValuesVar(idSession, type)
+                , getQueryValuesVar(type)
                 , null, null
                 , out err);
 
@@ -696,14 +740,11 @@ namespace TepCommon
         /// <summary>
         /// Возвратить объект-таблицу со значениями из таблицы с сохраняемыми значениями из источников информации
         /// </summary>
-        /// <param name="idSession">Идентификатор сессии - назначаемый</param>
-        /// <param name="idPeriod">Идентификатор периода расчета</param>
         /// <param name="cntBasePeriod">Количество периодов расчета в интервале запрашиваемых данных</param>
         /// <param name="arQueryRanges">Массив диапазонов даты/времени - интервал(ы) заправшиваемых данных</param>
         /// <param name="err">Признак выполнения функции</param>
         /// <returns>Таблица со значенями</returns>
         public DataTable GetValuesVar(TaskCalculate.TYPE type
-            , long idToSession
             , ID_PERIOD idPeriod
             , int cntBasePeriod
             , DateTimeRange[] arQueryRanges
@@ -715,7 +756,6 @@ namespace TepCommon
 
             tableRes = DbTSQLInterface.Select(ref _dbConnection
                 , getQueryValuesVar(type
-                    , idToSession
                     , idPeriod
                     , cntBasePeriod
                     , arQueryRanges)
@@ -725,22 +765,22 @@ namespace TepCommon
             return tableRes;
         }
         /// <summary>
-        /// Возвратить идентификатор сессии расчета
+        /// Возвратить объект сессии расчета
         /// </summary>
         /// <param name="err">Признак выполнении функции</param>
-        /// <returns>Идентификатор расчета сессии</returns>
-        public SESSION GetIdSession(out int err)
+        /// <returns>Сессия расчета</returns>
+        public void InitSession(out int err)
         {
             err = -1;
-            SESSION? sessionRes = null;
 
             DataTable tableSession = null;
+            DataRow rowSession = null;
             int iRegDbConn = -1
                 , iCntSession = -1;
 
             RegisterDbConnection(out iRegDbConn);
 
-            if (! (iRegDbConn < 0))
+            if (!(iRegDbConn < 0))
             {
                 // прочитать параметры сессии для текущего пользователя
                 tableSession = DbTSQLInterface.Select(ref _dbConnection, querySession, null, null, out err);
@@ -749,7 +789,10 @@ namespace TepCommon
 
                 if ((err == 0)
                     && (iCntSession == 1))
-                    sessionRes = new SESSION (tableSession.Rows[0]);
+                {
+                    rowSession = tableSession.Rows[0];
+                    _Session.Initialize(rowSession);
+                }
                 else
                     if (err == 0)
                         switch (iCntSession)
@@ -771,8 +814,6 @@ namespace TepCommon
                 UnRegisterDbConnection();
             else
                 ;
-
-            return sessionRes.GetValueOrDefault ();
         }
         /// <summary>
         /// Подготовить таблицы для проведения расчета
@@ -784,14 +825,12 @@ namespace TepCommon
             TaskTepCalculate.ListDATATABLE listRes = new TaskTepCalculate.ListDATATABLE ();
             err = -1;
 
-            long idSession = -1;
+            //long idSession = -1;
             DataTable tableVal = null;
 
             if (isRegisterDbConnection == true)
-            {
-                // получить количество зарегистрированных сессий для пользователя
-                idSession = GetIdSession (out err);
-                if (err == 0)
+                // проверить наличие сессии
+                if (_Session.m_Id > 0)
                 {
                     // получить таблицу со значеняими нормативных графиков
                     tableVal = GetDataTable (INDEX_DBTABLE_NAME.FTABLE, out err);
@@ -800,7 +839,7 @@ namespace TepCommon
                     tableVal = Select(GetQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err);
                     listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.IN_PARAMETER, m_table = tableVal.Copy() });
                     // получить входные значения для сессии
-                    tableVal = GetValuesVar(TaskCalculate.TYPE.IN_VALUES, idSession, out err);
+                    tableVal = GetValuesVar(TaskCalculate.TYPE.IN_VALUES, out err);
                     listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
 
                     if (IdTask == ID_TASK.TEP)
@@ -809,7 +848,7 @@ namespace TepCommon
                         tableVal = Select(GetQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES), out err);
                         listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_NORM_PARAMETER, m_table = tableVal.Copy() });
                         // получить выходные-нормативные значения для сессии
-                        tableVal = GetValuesVar(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, idSession, out err);
+                        tableVal = GetValuesVar(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
                         listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_NORM_VALUES, m_table = tableVal.Copy() });
                     }
                     else
@@ -820,16 +859,14 @@ namespace TepCommon
                         tableVal = Select(GetQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err);
                         listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_PARAMETER, m_table = tableVal.Copy() });
                         // получить выходные значения для сессии
-                        tableVal = GetValuesVar(TaskCalculate.TYPE.OUT_VALUES, idSession, out err);
+                        tableVal = GetValuesVar(TaskCalculate.TYPE.OUT_VALUES, out err);
                         listRes.Add(new TaskTepCalculate.DATATABLE() { m_indx = TaskTepCalculate.INDEX_DATATABLE.OUT_VALUES, m_table = tableVal.Copy() });
                     }
                     else
-                        ;
-                    
+                        ;                    
                 }
                 else
                     Logging.Logg().Error(@"HandlerDbTaskCalculate::prepareTepCalculateValues () - при получении идентифкатора сессии расчета...", Logging.INDEX_MESSAGE.NOT_SET);
-            }
             else
                 ; // ошибка при регистрации соединения с БД
 
