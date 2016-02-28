@@ -466,7 +466,26 @@ namespace TepCommon
             else
             // очистить содержание представления
                 m_dgvValues.ClearValues();
-        }        
+        }
+        /// <summary>
+        /// Обработчик события - нажатие кнопки "Результирующее действие - К макету"
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
+        protected abstract void btnRunRes_onClick(object obj, EventArgs ev);
+        ///// <summary>
+        ///// Инициировать подготовку к расчету
+        /////  , выполнить расчет
+        /////  , актуализировать таблицы с временными значениями
+        ///// </summary>
+        ///// <param name="type">Тип требуемого расчета</param>
+        //protected abstract void btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE type);
+        /// <summary>
+        /// Установить значения таблиц для редактирования
+        /// </summary>
+        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        /// <param name="strErr">Строка текста сообщения при галичии ошибки</param>
+        protected abstract void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr);        
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
         /// </summary>
@@ -603,14 +622,10 @@ namespace TepCommon
                     m_dictRatio.Add((int)r[@"ID"], new RATIO()
                     {
                         m_id = (int)r[@"ID"]
-                        ,
-                        m_value = (int)r[@"VALUE"]
-                        ,
-                        m_nameRU = (string)r[@"NAME_RU"]
-                        ,
-                        m_nameEN = (string)r[@"NAME_RU"]
-                        ,
-                        m_strDesc = (string)r[@"DESCRIPTION"]
+                        , m_value = (int)r[@"VALUE"]
+                        , m_nameRU = (string)r[@"NAME_RU"]
+                        , m_nameEN = (string)r[@"NAME_RU"]
+                        , m_strDesc = (string)r[@"DESCRIPTION"]
                     });
             }
 

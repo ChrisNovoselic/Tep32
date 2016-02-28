@@ -14,17 +14,18 @@ namespace PluginTaskTepOutNorm
 {
     public class PanelTaskTepOutNorm : PanelTaskTepOutVal
     {
-        /// <summary>
-        /// Перечисление - индексы таблиц для значений
-        ///  , собранных в автоматическом режиме
-        ///  , "по умолчанию"
-        /// </summary>
-        private enum INDEX_TABLE_VALUES : int { REGISTRED, COUNT }
+        ///// <summary>
+        ///// Перечисление - индексы таблиц для значений
+        /////  , собранных в автоматическом режиме
+        /////  , "по умолчанию"
+        ///// </summary>
+        //private enum INDEX_TABLE_VALUES : int { REGISTRED, COUNT }
+
         public PanelTaskTepOutNorm(IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES)
         {
-            m_arTableOrigin = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
+            //m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            //m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponent();
         }
@@ -33,15 +34,15 @@ namespace PluginTaskTepOutNorm
         {
         }
 
-        protected override System.Data.DataTable m_TableOrigin
-        {
-            get { throw new NotImplementedException(); }
-        }
+        //protected override System.Data.DataTable m_TableOrigin
+        //{
+        //    get { throw new NotImplementedException(); }
+        //}
 
-        protected override System.Data.DataTable m_TableEdit
-        {
-            get { throw new NotImplementedException(); }
-        }
+        //protected override System.Data.DataTable m_TableEdit
+        //{
+        //    get { throw new NotImplementedException(); }
+        //}
 
         protected override void recUpdateInsertDelete(out int err)
         {
@@ -51,27 +52,6 @@ namespace PluginTaskTepOutNorm
         protected override void successRecUpdateInsertDelete()
         {
             throw new NotImplementedException();
-        }
-
-        protected override void setValues(out int err, out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-            //Запрос для получения ранее учтенных (сохраненных) данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetValuesVar(Type
-                , Session.m_currIdPeriod
-                , CountBasePeriod
-                , getDateTimeRangeValuesVar ()
-                , out err);
-            //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type, out err);
-
-            switch (err)
-            {
-                case 0:
-                default:
-                    break;
-            }
         }
 
         protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()

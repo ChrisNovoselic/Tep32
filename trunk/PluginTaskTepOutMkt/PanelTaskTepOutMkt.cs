@@ -14,17 +14,18 @@ namespace PluginTaskTepOutMkt
 {
     public class PanelTaskTepOutMkt : PanelTaskTepOutVal
     {
-        /// <summary>
-        /// Перечисление - индексы таблиц для значений
-        ///  , собранных в автоматическом режиме
-        ///  , "по умолчанию"
-        /// </summary>
-        private enum INDEX_TABLE_VALUES : int { REGISTRED, COUNT }
+        ///// <summary>
+        ///// Перечисление - индексы таблиц для значений
+        /////  , собранных в автоматическом режиме
+        /////  , "по умолчанию"
+        ///// </summary>
+        //private enum INDEX_TABLE_VALUES : int { REGISTRED, COUNT }
+
         public PanelTaskTepOutMkt(IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
-            m_arTableOrigin = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)INDEX_TABLE_VALUES.COUNT];
+            //m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            //m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponent();
         }
@@ -33,15 +34,15 @@ namespace PluginTaskTepOutMkt
         {
         }
 
-        protected override System.Data.DataTable m_TableOrigin
-        {
-            get { throw new NotImplementedException(); }
-        }
+        //protected override System.Data.DataTable m_TableOrigin
+        //{
+        //    get { throw new NotImplementedException(); }
+        //}
 
-        protected override System.Data.DataTable m_TableEdit
-        {
-            get { throw new NotImplementedException(); }
-        }
+        //protected override System.Data.DataTable m_TableEdit
+        //{
+        //    get { throw new NotImplementedException(); }
+        //}
 
         protected override void recUpdateInsertDelete(out int err)
         {
@@ -53,10 +54,10 @@ namespace PluginTaskTepOutMkt
             throw new NotImplementedException();
         }
 
-        protected override void setValues(out int err, out string strErr)
-        {
-            throw new NotImplementedException();
-        }
+        //protected override void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()
         {

@@ -22,15 +22,28 @@ namespace TepCommon
         /// </summary>
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
-        /// <summary>
-        /// Оригигальная таблица со значениями для отображения
-        /// </summary>
-        protected abstract DataTable m_TableOrigin { get; }
-        /// <summary>
-        /// Редактируемая (с внесенными изменениями)
-        ///  таблица со значениями для отображения
-        /// </summary>
-        protected abstract DataTable m_TableEdit { get; }
+        ///// <summary>
+        ///// Оригигальная таблица со значениями для отображения
+        ///// </summary>
+        //protected abstract DataTable m_TableOrigin { get; }
+        ///// <summary>
+        ///// Редактируемая (с внесенными изменениями)
+        /////  таблица со значениями для отображения
+        ///// </summary>
+        //protected abstract DataTable m_TableEdit { get; }
+        protected System.Data.DataTable m_TableOrigin
+        {
+            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+
+            //set { m_arTableOrigin[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
+        }
+
+        protected System.Data.DataTable m_TableEdit
+        {
+            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+
+            //set { m_arTableEdit[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
+        }
         /// <summary>
         /// Событие для добавления основного параметра для панели управления
         /// </summary>
@@ -50,6 +63,8 @@ namespace TepCommon
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponents();
+            // назначить обработчики для кнопок 'Результат'
+            (Controls.Find(INDEX_CONTROL.BUTTON_RUN_RES.ToString(), true)[0] as Button).Click += new EventHandler(btnRunRes_onClick);
             //Обязательно наличие объекта - панели управления
             activateDateTimeRangeValue_OnChanged(true);
             (m_dgvValues as DataGridViewTEPValues).EventCellValueChanged += new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventHandler(onEventCellValueChanged);
@@ -176,65 +191,21 @@ namespace TepCommon
             clear((int)INDEX_CONTROL.UNKNOWN, true);
             
             base.Stop();
-        }
-        /// <summary>
-        /// Возвратить массив диапазонов даты/времени для запроса значений
-        /// </summary>
-        /// <returns>Массив диапазонов даты/времени</returns>
-        protected DateTimeRange[] getDateTimeRangeValuesVar()
-        {
-            DateTimeRange[] arRangesRes = null;
-
-            int i = -1;
-            bool bEndMonthBoudary = false;
-            // привести дату/время к UTC
-            DateTime dtBegin = Session.m_rangeDatetime.Begin.AddMinutes(-1 * Session.m_curOffsetUTC)
-                , dtEnd = Session.m_rangeDatetime.End.AddMinutes(-1 * Session.m_curOffsetUTC);
-            arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
-            bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
-            if (bEndMonthBoudary == false)
-                if (arRangesRes.Length == 1)
-                    // самый простой вариант - один элемент в массиве - одна таблица
-                    arRangesRes[0] = new DateTimeRange(dtBegin, dtEnd);
-                else
-                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
-                    for (i = 0; i < arRangesRes.Length; i++)
-                        if (i == 0)
-                            // предыдущих значений нет
-                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-                        else
-                            if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-            else
-                if (bEndMonthBoudary == true)
-                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
-                    // + использование следующей за 'dtEnd' таблицы
-                    for (i = 0; i < arRangesRes.Length; i++)
-                        if (i == 0)
-                            // предыдущих значений нет
-                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-                        else
-                            if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-                else
-                    ;
-
-            return arRangesRes;
-        }
+        }        
         /// <summary>
         /// Установить значения таблиц для редактирования
         /// </summary>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        /// <param name="strErr">Строка текста сообщения при галичии ошибки</param>
-        protected abstract void setValues(out int err, out string strErr);
+        protected void setValues()
+        {
+            for (HandlerDbTaskCalculate.INDEX_TABLE_VALUES indx = (HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN + 1);
+                indx < HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT;
+                indx++)
+                if (!(m_arTableOrigin[(int)indx] == null))
+                    m_arTableEdit[(int)indx] =
+                        m_arTableOrigin[(int)indx].Copy();
+                else
+                    ;
+        }
         /// <summary>
         /// Выполнить запрос к БД, отобразить рез-т запроса
         /// <param "idPeriod">Идентификатор периода расчета
@@ -245,26 +216,40 @@ namespace TepCommon
         {
             int err = -1
                 , cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
-                , iAVG = -1;
+                , iAVG = -1
+                , iRegDbConn = -1;
             string errMsg = string.Empty;
-            // установить значения в таблицах для расчета, создать новую сессию
-            // предыдущая сессия удалена в 'clear'
-            setValues(out err, out errMsg);
 
-            if (err == 0)
-            {
-                m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
-            }
-            else
-                // в случае ошибки "обнулить" идентификатор сессии
-                deleteSession();
+            m_handlerDb.RegisterDbConnection(out iRegDbConn);
 
-            if (!(err == 0))
+            if (!(iRegDbConn < 0))
             {
-                throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                // установить значения в таблицах для расчета, создать новую сессию
+                // предыдущая сессия удалена в 'clear'
+                setValues(HandlerDb.GetDateTimeRangeValuesVar(), out err, out errMsg);
+
+                if (err == 0)
+                {
+                    // создать копии для возможности сохранения изменений
+                    setValues();
+                    // отобразить значкения
+                    m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
+                }
+                else
+                {
+                    // в случае ошибки "обнулить" идентификатор сессии
+                    deleteSession();
+
+                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                }
             }
             else
                 ;
+
+            if (!(iRegDbConn > 0))
+                m_handlerDb.UnRegisterDbConnection();
+            else
+                ;            
         }        
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Загрузить" (кнопка - аналог "Обновить")
@@ -285,13 +270,8 @@ namespace TepCommon
             onButtonLoadClick();
         }
 
-        private void onButtonLoadClick()
+        protected virtual void onButtonLoadClick()
         {
-            // вызов 'reinit()'
-            //base.HPanelTepCommon_btnUpdate_Click(obj, ev);
-            // для этой вкладки - требуется просто 'clear'
-            // очистить содержание представления
-            clear();
             // ... - загрузить/отобразить значения из БД
             updateDataValues();
         }
@@ -1020,11 +1000,11 @@ namespace TepCommon
                             parameterRows = parameter.Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + idAlg);
                             if (parameterRows.Length == 1)
                             {
-                                cellRows = values.Select(@"ID=" + parameterRows[0][@"ID"]);
+                                cellRows = values.Select(@"ID_PUT=" + parameterRows[0][@"ID"]);
 
                                 if (cellRows.Length == 1)
                                 {
-                                    idParameter = (int)cellRows[0][@"ID"];
+                                    idParameter = (int)cellRows[0][@"ID_PUT"];
                                     dblVal = ((double)cellRows[0][@"VALUE"]);
                                     iQuality = (int)cellRows[0][@"QUALITY"];
                                 }

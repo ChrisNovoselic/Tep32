@@ -23,28 +23,28 @@ namespace PluginTaskTepInval
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {            
             InitializeComponent();
-
+            // назначить обработчики для кнопок 'К нормативу', 'К макету'
             (Controls.Find (INDEX_CONTROL.BUTTON_RUN_PREV.ToString(), true)[0] as Button).Click += new EventHandler (btnRunPrev_onClick);
-            (Controls.Find(INDEX_CONTROL.BUTTON_RUN_RES.ToString(), true)[0] as Button).Click += new EventHandler(btnRunRes_onClick);
+            // обработчик 'К макету' - см. в базовом классе
         }
 
         private void InitializeComponent()
         {
         }
 
-        protected override System.Data.DataTable m_TableOrigin
-        {
-            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+        //protected override System.Data.DataTable m_TableOrigin
+        //{
+        //    get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
 
-            //set { m_arTableOrigin[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
-        }
+        //    //set { m_arTableOrigin[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
+        //}
 
-        protected override System.Data.DataTable m_TableEdit
-        {
-            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+        //protected override System.Data.DataTable m_TableEdit
+        //{
+        //    get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
 
-            //set { m_arTableEdit[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
-        }
+        //    //set { m_arTableEdit[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
+        //}
         /// <summary>
         /// Сохранить изменения в редактируемых таблицах
         /// </summary>
@@ -87,65 +87,42 @@ namespace PluginTaskTepInval
         /// </summary>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        protected override void setValues(out int err, out string strErr)
+        protected override void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
         {
             err = 0;
             strErr = string.Empty;
 
-            int iRegDbConn = -1;
-            DateTimeRange[] arQueryRanges = getDateTimeRangeValuesVar();
-
-            m_handlerDb.RegisterDbConnection(out iRegDbConn);
-
-            if (!(iRegDbConn < 0))
+            Session.New();
+            //Запрос для получения архивных данных
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            //Запрос для получения автоматически собираемых данных
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
+                , ActualIdPeriod
+                , CountBasePeriod
+                , arQueryRanges
+                , out err);
+            //Проверить признак выполнения запроса
+            if (err == 0)
             {
-                Session.New();
-                //Запрос для получения архивных данных
-                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
-                //Запрос для получения автоматически собираемых данных
-                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
-                    , ActualIdPeriod
-                    , CountBasePeriod
-                    , arQueryRanges
-                    , out err);
+                //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDef(ActualIdPeriod, out err);
                 //Проверить признак выполнения запроса
                 if (err == 0)
-                {
-                    //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
-                    m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDef(ActualIdPeriod, out err);
-                    //Проверить признак выполнения запроса
-                    if (err == 0)
-                    {
-                        //Начать новую сессию расчета
-                        // , получить входные для расчета значения для возможности редактирования
-                        HandlerDb.CreateSession(
-                            CountBasePeriod
-                            , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
-                            , ref m_arTableOrigin
-                            , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
-                            , out err, out strErr);
-                        // создать копии для возможности сохранения изменений
-                        for (HandlerDbTaskCalculate.INDEX_TABLE_VALUES indx = (HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN + 1);
-                            indx < HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT;
-                            indx ++)
-                            m_arTableEdit[(int)indx] =
-                                m_arTableOrigin[(int)indx].Copy();
-                    }
-                    else
-                        strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
-                            + @" по " + Session.m_rangeDatetime.End.ToString();
-                }
+                    //Начать новую сессию расчета
+                    // , получить входные для расчета значения для возможности редактирования
+                    HandlerDb.CreateSession(
+                        CountBasePeriod
+                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                        , ref m_arTableOrigin
+                        , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
+                        , out err, out strErr);
                 else
-                    strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
+                    strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
                         + @" по " + Session.m_rangeDatetime.End.ToString();
             }
             else
-                ;
-
-            if (!(iRegDbConn > 0))
-                m_handlerDb.UnRegisterDbConnection();
-            else
-                ;
+                strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
+                    + @" по " + Session.m_rangeDatetime.End.ToString();            
         }
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
@@ -181,6 +158,17 @@ namespace PluginTaskTepInval
                 else
                     ;
         }
+
+        protected override void onButtonLoadClick()
+        {
+            // вызов 'reinit()'
+            //base.HPanelTepCommon_btnUpdate_Click(obj, ev);
+            // для этой вкладки - требуется просто 'clear'
+            // очистить содержание представления
+            clear();
+            // ... - загрузить/отобразить значения из БД
+            base.onButtonLoadClick();
+        }
         /// <summary>
         /// Обработчик события - нажатие кнопки "Предварительное действие - К нормативу"
         /// </summary>
@@ -195,9 +183,9 @@ namespace PluginTaskTepInval
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        private void btnRunRes_onClick(object obj, EventArgs ev)
+        protected override void btnRunRes_onClick(object obj, EventArgs ev)
         {
-            btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);            
+            btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
         }
         /// <summary>
         /// Инициировать подготовку к расчету
@@ -211,18 +199,19 @@ namespace PluginTaskTepInval
 
             try
             {
+                // обновить входные значения для расчета
                 HandlerDb.UpdateSession(INDEX_DBTABLE_NAME.INVALUES
-                    , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                    , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                    , m_TableOrigin
+                    , m_TableEdit
                     , out err);
-
-                HandlerDb.Calculate (type);
+                // выполнить расчет
+                HandlerDb.Calculate(type);
             }
             catch (Exception e)
             {
                 //deleteSession ();
 
-                Logging.Logg().Exception(e, @"PanelTaskTepInval::btnRun_onClick (type=" + type.ToString () + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Exception(e, @"PanelTaskTepInval::btnRun_onClick (type=" + type.ToString() + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             finally
             {

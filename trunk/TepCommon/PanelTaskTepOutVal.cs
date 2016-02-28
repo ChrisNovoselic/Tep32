@@ -45,6 +45,49 @@ namespace TepCommon
         {
             throw new NotImplementedException();
         }
+
+        protected override void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
+        {
+            err = 0;
+            strErr = string.Empty;
+            //Запрос для получения ранее учтенных (сохраненных) данных
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] =
+                //HandlerDb.GetValuesVar(Type
+                //    , Session.m_currIdPeriod
+                //    , CountBasePeriod
+                //    , getDateTimeRangeValuesVar ()
+                //    , out err)
+                new DataTable()
+                    ;
+            //Запрос для получения автоматически собираемых данных
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type, out err);
+
+            switch (err)
+            {
+                case 0:
+                default:
+                    break;
+            }
+        }
+        /// <summary>
+        /// Обработчик события - нажатие кнопки "Результирующее действие - К макету"
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
+        protected override void btnRunRes_onClick(object obj, EventArgs ev)
+        {
+            throw new NotImplementedException();
+        }
+        ///// <summary>
+        ///// Инициировать подготовку к расчету
+        /////  , выполнить расчет
+        /////  , актуализировать таблицы с временными значениями
+        ///// </summary>
+        ///// <param name="type">Тип требуемого расчета</param>
+        //protected override void btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        //{
+        //    throw new NotImplementedException();
+        //}
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>

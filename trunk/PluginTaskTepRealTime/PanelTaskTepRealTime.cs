@@ -18,6 +18,8 @@ namespace PluginTaskTepRealTime
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME)
         {
             InitializeComponent();
+
+            (Controls.Find(INDEX_CONTROL.BUTTON_RUN.ToString(), true)[0] as Button).Click += new EventHandler(btnRunRes_onClick);
             //Обязательно наличие объекта - панели управления
             activateDateTimeRangeValue_OnChanged(true);
         }
@@ -71,6 +73,49 @@ namespace PluginTaskTepRealTime
         protected override void successRecUpdateInsertDelete()
         {
             throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Обработчик события - нажатие кнопки "Результирующее действие - Расчет"
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
+        protected override void btnRunRes_onClick(object obj, EventArgs ev)
+        {
+            int err = -1;
+            string strErr = string.Empty;
+
+            DateTimeRange[] arQueryRanges = null;
+            
+            // удалить устаревшую сессию
+            deleteSession();
+            // создать новую сессию
+            arQueryRanges = HandlerDb.GetDateTimeRangeValuesVar();
+            // загрузить значения для новой сесии
+
+            // произвести расчет
+            HandlerDb.Calculate(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME);
+            // установить/отобразить значения
+            setValues(arQueryRanges, out err, out strErr);
+        }
+        ///// <summary>
+        ///// Инициировать подготовку к расчету
+        /////  , выполнить расчет
+        /////  , актуализировать таблицы с временными значениями
+        ///// </summary>
+        ///// <param name="type">Тип требуемого расчета</param>
+        //protected override void btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        //{
+        //    throw new NotImplementedException();
+        //}
+        /// <summary>
+        /// Установить значения таблиц для редактирования
+        /// </summary>
+        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        /// <param name="strErr">Строка текста сообщения при галичии ошибки</param>
+        protected override void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
+        {
+            err = 0;
+            strErr = string.Empty;
         }
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
