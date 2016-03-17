@@ -484,6 +484,7 @@ namespace TepCommon
 
                 return iRes;
             }
+
             /// <summary>
             /// Расчитать выходные-нормативные значения
             /// </summary>
