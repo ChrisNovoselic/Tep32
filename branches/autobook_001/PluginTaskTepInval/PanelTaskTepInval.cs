@@ -45,6 +45,7 @@ namespace PluginTaskTepInval
 
         //    //set { m_arTableEdit[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
         //}
+
         /// <summary>
         /// Сохранить изменения в редактируемых таблицах
         /// </summary>
@@ -81,7 +82,8 @@ namespace PluginTaskTepInval
             deleteSession();
 
             base.Stop();
-        }        
+        }  
+      
         /// <summary>
         /// Установить значения таблиц для редактирования
         /// </summary>
@@ -124,6 +126,7 @@ namespace PluginTaskTepInval
                 strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
                     + @" по " + Session.m_rangeDatetime.End.ToString();            
         }
+
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>
@@ -169,6 +172,7 @@ namespace PluginTaskTepInval
             // ... - загрузить/отобразить значения из БД
             base.onButtonLoadClick();
         }
+
         /// <summary>
         /// Обработчик события - нажатие кнопки "Предварительное действие - К нормативу"
         /// </summary>
@@ -178,6 +182,7 @@ namespace PluginTaskTepInval
         {
             btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES);
         }
+
         /// <summary>
         /// Обработчик события - нажатие кнопки "Результирующее действие - К макету"
         /// </summary>
@@ -187,6 +192,7 @@ namespace PluginTaskTepInval
         {
             btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
         }
+
         /// <summary>
         /// Инициировать подготовку к расчету
         ///  , выполнить расчет

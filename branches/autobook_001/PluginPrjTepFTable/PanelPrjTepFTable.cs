@@ -78,7 +78,7 @@ namespace PluginPrjTepFTable
             DataGridView dgv = null;
             List<string> listNAlg;
             string strItem = string.Empty;
-            m_tblOrigin = m_handlerDb.GetDataTable(@"ftable", out err); ;
+            m_tblOrigin = m_handlerDb.GetDataTable(@"ftable", out err);
 
             if (err == 0)
             {
@@ -139,18 +139,6 @@ namespace PluginPrjTepFTable
                 rView.Visible = bVisible;
             }
         }
-
-        ///// <summary>
-        ///// Включить/блокировать кнопки
-        /////  , если 'View' имеют/не_имеют фокус ввода
-        ///// </summary>
-        ///// <param name="bEnabled">Признак доступности</param>
-        //private void btnAddDeleteEnabled(bool bEnabled)
-        //{
-        //    Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0].Enabled =
-        //    Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0].Enabled =
-        //        bEnabled;
-        //}
 
         /// <summary>
         /// Обработчик события - изменение выбранной строки

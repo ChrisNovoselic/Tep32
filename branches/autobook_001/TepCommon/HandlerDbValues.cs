@@ -231,7 +231,7 @@ namespace TepCommon
             return strRes;
         }
 
-        public string GetQueryCompList()
+        public virtual string GetQueryCompList()
         {
             string strRes = string.Empty;
 

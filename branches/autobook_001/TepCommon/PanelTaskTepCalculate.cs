@@ -61,7 +61,7 @@ namespace TepCommon
         /// Метод для создания панели с активными объектами управления
         /// </summary>
         /// <returns>Панель управления</returns>
-        protected abstract PanelManagementTaskTepCalculate createPanelManagement ();
+        protected abstract PanelManagementTaskTepCalculate createPanelManagement();
         
         private PanelManagementTaskTepCalculate _panelManagement;
         /// <summary>
@@ -109,6 +109,7 @@ namespace TepCommon
                 return iRes;                    
             }
         }
+
         /// <summary>
         /// Строка для запроса информации по периодам расчетов
         /// </summary>        
@@ -308,12 +309,15 @@ namespace TepCommon
 
             return bRes;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="active"></param>
         protected void activateDateTimeRangeValue_OnChanged (bool active)
         {
             if (! (PanelManagement == null))
                 if (active == true)
-                    PanelManagement.DateTimeRangeValue_Changed += new PanelManagementTaskTepCalculate.DateTimeRangeValueChangedEventArgs (datetimeRangeValue_onChanged);
+                    PanelManagement.DateTimeRangeValue_Changed += new PanelManagementTaskTepCalculate.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
                 else
                     if (active == false)
                         PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
@@ -351,6 +355,7 @@ namespace TepCommon
 
             return arRes;
         }
+
         /// <summary>
         /// Обработчик события при изменении периода расчета
         /// </summary>
@@ -372,6 +377,7 @@ namespace TepCommon
             //    updateDataValues();
             //else ;
         }
+
         /// <summary>
         /// Обработчик события - изменение часового пояса
         /// </summary>
@@ -388,10 +394,11 @@ namespace TepCommon
             //    updateDataValues();
             //else ;
         }
+
         /// <summary>
         /// Установить новое значение для текущего периода
         /// </summary>
-        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны двты/времени</param>
+        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны даты/времени</param>
         protected void setCurrentTimeZone(ComboBox cbxTimezone)
         {
             int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
@@ -399,6 +406,7 @@ namespace TepCommon
             Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
                 , (int)m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
+
         /// <summary>
         /// Обработчик события - изменение интервала (диапазона между нач. и оконч. датой/временем) расчета
         /// </summary>
@@ -416,7 +424,9 @@ namespace TepCommon
             //    updateDataValues();
             //else ;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
         protected void deleteSession()
         {
             int err = -1;
@@ -473,6 +483,7 @@ namespace TepCommon
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
         protected abstract void btnRunRes_onClick(object obj, EventArgs ev);
+
         ///// <summary>
         ///// Инициировать подготовку к расчету
         /////  , выполнить расчет
@@ -480,6 +491,7 @@ namespace TepCommon
         ///// </summary>
         ///// <param name="type">Тип требуемого расчета</param>
         //protected abstract void btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE type);
+
         /// <summary>
         /// Установить значения таблиц для редактирования
         /// </summary>
@@ -556,10 +568,12 @@ namespace TepCommon
                     , m_strToolTipText
                     , m_strMeasure
                     , m_strSymbol;
+
                 ///// <summary>
                 ///// Признак отображения строки
                 ///// </summary>
                 //public bool m_bVisibled;
+
                 /// <summary>
                 /// Идентификатор множителя при отображении (визуальные установки) значений в строке
                 /// </summary>
@@ -719,6 +733,7 @@ namespace TepCommon
             {
                 initializeLayoutStyleEvenly();
             }
+
             ///// <summary>
             ///// Обработчик события - изменение дата/время начала периода
             ///// </summary>
@@ -730,6 +745,7 @@ namespace TepCommon
 
             //    DateTimeRangeValue_Changed(this, EventArgs.Empty);
             //}
+
             /// <summary>
             /// Обработчик события - изменение дата/время окончания периода
             /// </summary>

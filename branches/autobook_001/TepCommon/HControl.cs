@@ -18,7 +18,8 @@ namespace TepCommon
         /// </summary>
         public enum MODE
         {
-            UNKNOWN = -1, DAY, MONTH, YEAR, HOUR           
+            UNKNOWN = -1, DAY, MONTH, YEAR,
+            HOUR
                 , COUNT
         }
         /// <summary>
@@ -26,7 +27,8 @@ namespace TepCommon
         /// </summary>
         private enum INDEX_CONTROL
         {
-            UNKNOWN = -1, DAY, MONTH, YEAR, HOUR
+            UNKNOWN = -1, DAY, MONTH, YEAR,
+            HOUR
                 , COUNT
         }
         /// <summary>
@@ -62,7 +64,7 @@ namespace TepCommon
                 if (!(_mode == value))
                 {// при изменении  - изменить доступность дочерних элементов управления
                     _mode = value;
-                    
+
                     enable();
                 }
                 else
@@ -83,7 +85,7 @@ namespace TepCommon
         public event EventHandler ValueChanged;
 
         private enum INDEX_VALUE : uint { PREVIOUS, CURRENT }
-        private DateTime [] _value;
+        private DateTime[] _value;
         /// <summary>
         /// Значение дата/время объекта
         /// </summary>
@@ -133,7 +135,13 @@ namespace TepCommon
         /// <summary>
         /// Значение ведущего элемента управления
         /// </summary>
-        public DateTime LeadingValue { get { return _value[(int)INDEX_VALUE.CURRENT] - m_tsLeading; } }
+        public DateTime LeadingValue
+        {
+            get
+            {
+                return _value[(int)INDEX_VALUE.CURRENT] - m_tsLeading;
+            }
+        }
 
         private EventHandler[] m_arSelectIndexChangedHandlers;
         /// <summary>
@@ -236,9 +244,9 @@ namespace TepCommon
         public HDateTimePicker(DateTime dtValue, HDateTimePicker objLeading)
             : base(12, 1)
         {
-            _value = new DateTime [] { DateTime.MinValue, dtValue };
+            _value = new DateTime[] { DateTime.MinValue, dtValue };
 
-            m_arSelectIndexChangedHandlers = new EventHandler [(int)INDEX_CONTROL.COUNT] { cbxDay_onSelectedIndexChanged
+            m_arSelectIndexChangedHandlers = new EventHandler[(int)INDEX_CONTROL.COUNT] { cbxDay_onSelectedIndexChanged
                 , cbxMonth_onSelectedIndexChanged
                 , cbxYear_onSelectedIndexChanged
                 , cbxHour_onSelectedIndexChanged };
@@ -359,7 +367,7 @@ namespace TepCommon
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        private void leading_ValueChanged (object obj, EventArgs ev)
+        private void leading_ValueChanged(object obj, EventArgs ev)
         {
             HDateTimePicker objLeading = obj as HDateTimePicker;
             ComboBox cbxYear = null
@@ -367,13 +375,13 @@ namespace TepCommon
                 , cbxDay = null
                 , cbxHour = null;
             int iDiffYear = -1;
-            
+
             //??? учитывать значение в "ведущем" календаре
             iDiffYear = objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
             _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
             _value[(int)INDEX_VALUE.CURRENT] = objLeading.Value + m_tsLeading;
 
-            cbxYear = Controls.Find (INDEX_CONTROL.YEAR.ToString (), true)[0] as ComboBox;
+            cbxYear = Controls.Find(INDEX_CONTROL.YEAR.ToString(), true)[0] as ComboBox;
             cbxMonth = Controls.Find(INDEX_CONTROL.MONTH.ToString(), true)[0] as ComboBox;
             cbxDay = Controls.Find(INDEX_CONTROL.DAY.ToString(), true)[0] as ComboBox;
             cbxHour = Controls.Find(INDEX_CONTROL.HOUR.ToString(), true)[0] as ComboBox;
@@ -393,7 +401,7 @@ namespace TepCommon
             cbxDay.SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY];
             cbxHour.SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.HOUR];
 
-            ValueChanged (this, EventArgs.Empty);
+            ValueChanged(this, EventArgs.Empty);
         }
     }
 
@@ -458,7 +466,7 @@ namespace TepCommon
             ctrl.Dock = DockStyle.Fill;
             (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
             Controls.Add(ctrl, 2, 0);
-            SetColumnSpan(ctrl, 5); SetRowSpan(ctrl, 1);
+            SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
             for (i = 0; i < 12; i++)
                 (ctrl as ComboBox).Items.Add(HDateTime.NameMonths[i]);
             (ctrl as ComboBox).SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Month - 1;
@@ -470,8 +478,8 @@ namespace TepCommon
             ctrl.Name = indx.ToString();
             ctrl.Dock = DockStyle.Fill;
             (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
-            Controls.Add(ctrl, 7, 0);
-            SetColumnSpan(ctrl, 3); SetRowSpan(ctrl, 1);
+            Controls.Add(ctrl, 6, 0);
+            SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
             for (i = (_value[(int)INDEX_VALUE.CURRENT].Year - s_iBackwardYears); i < (_value[(int)INDEX_VALUE.CURRENT].Year + s_iForwardYears); i++)
                 (ctrl as ComboBox).Items.Add(i.ToString());
             (ctrl as ComboBox).SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Year - (_value[(int)INDEX_VALUE.CURRENT].Year - s_iBackwardYears);

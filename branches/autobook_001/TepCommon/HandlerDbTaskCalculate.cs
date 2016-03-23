@@ -140,6 +140,9 @@ namespace TepCommon
                     case ID_TASK.TEP:
                         m_taskCalculate = new TaskTepCalculate();
                         break;
+                    case ID_TASK.AUTOBOOK:
+                        m_taskCalculate = new TaskTepCalculate();
+                        break;
                     default:
                         break;
                 }
@@ -200,7 +203,7 @@ namespace TepCommon
                     );
                 }
                 else
-                    ; // по идентификатору найден не единственный парпметр расчета
+                    ; // по идентификатору найден не единственный параметр расчета
             }
 
             if ((arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
@@ -551,7 +554,7 @@ namespace TepCommon
             return strRes;
         }
 
-        public string GetQueryParameters(TaskCalculate.TYPE type/* = TaskCalculate.TYPE.UNKNOWN*/)
+        public virtual string GetQueryParameters(TaskCalculate.TYPE type/* = TaskCalculate.TYPE.UNKNOWN*/)
         {
             string strRes = string.Empty
                 , whereParameters = string.Empty;
