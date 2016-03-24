@@ -105,7 +105,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        protected HandlerDbTaskCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskCalculate; } }
+        protected HandlerDbTaskCalcAutoBook HandlerDb { get { return m_handlerDb as HandlerDbTaskCalcAutoBook; } }
         /// <summary>
         /// Массив списков параметров
         /// </summary>
@@ -113,11 +113,15 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        protected HandlerDbAutoBook handlerdbAU;
+        protected HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         /// <summary>
-        /// Отображение значений в табличном представлении
+        /// Отображение значений в табличном представлении(значения)
         /// </summary>
         protected DGVAutoBook dgvAB;
+        /// <summary>
+        /// Отображение значений в табличном представлении(план)
+        /// </summary>
+        protected DGVAutoBook dgvYear;
         /// <summary>
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
@@ -152,11 +156,16 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
+        private static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
         /// <summary>
         /// Набор текстов для подписей для кнопок
         /// </summary>
         protected static string[] m_arButtonText = { @"Отправить", @"Сохранить", @"Загрузить" };
+
+        protected override HandlerDbValues createHandlerDb()
+        {
+            return new HandlerDbTaskCalcAutoBook();
+        }
 
         /// <summary>
         /// Класс для грида
@@ -275,29 +284,186 @@ namespace PluginTaskAutobook
 
             }
         }
+
         /// <summary>
         /// 
         /// </summary>
-        protected class HandlerDbAutoBook : HandlerDbValues
+        public class HandlerDbTaskCalcAutoBook : HandlerDbTaskCalculate
         {
-            public override string GetQueryCompList()
+            /// <summary>
+            /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
+            ///  , структура таблицы совместима с [inval], [outval]
+            /// </summary>
+            /// <param name="type"></param>
+            /// <param name="idPeriod">период</param>
+            /// <param name="cntBasePeriod"></param>
+            /// <param name="arQueryRanges">диапазон времени запроса</param>
+            /// <returns></returns>
+            public override string getQueryValuesVar(TaskCalculate.TYPE type, ID_PERIOD idPeriod, int cntBasePeriod, DateTimeRange[] arQueryRanges)
             {
-                string strRes = string.Empty;
+                string strRes = string.Empty
+                , whereParameters = string.Empty;
 
-                strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] "
-                        + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
-                            + @" OR ([ID_COMP] = 1000)";
+                if (!(type == TaskCalculate.TYPE.UNKNOWN))
+                {
+                    // аналог в 'GetQueryParameters'
+                    //whereParameters = getWhereRangeAlg(type);
+                    //if (whereParameters.Equals(string.Empty) == false)
+                    //    whereParameters = @" AND a." + whereParameters;
+                    //else
+                    //    ;
+
+                    int i = -1;
+                    bool bLastItem = false
+                        , bEquDatetime = false;
+
+                    for (i = 0; i < arQueryRanges.Length; i++)
+                    {
+                        bLastItem = !(i < (arQueryRanges.Length - 1));
+
+                        strRes += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
+                                + @", " + _Session.m_Id + @" as [ID_SESSION]"
+                                + @",[DATE_TIME]"
+                                + @", m.[AVG]"
+                            //+ @", GETDATE () as [WR_DATETIME]"
+                            + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+                                + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
+                                + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
+                                + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
+                            + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
+                            ;
+                        // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
+                        // 'Begin' == 'End'
+                        if (bLastItem == true)
+                            bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
+                        else
+                            ;
+
+                        if (bEquDatetime == false)
+                            strRes += @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                          + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+
+                        if (bLastItem == false)
+                            strRes += @" UNION ALL";
+                        else
+                            ;
+                    }
+
+                    strRes = @"SELECT v.ID_PUT" // as [ID]"
+                            + @", " + _Session.m_Id + @" as [ID_SESSION]"
+                            + @", [QUALITY]"
+                            + ",[VALUE]"
+                             + ",[DATE_TIME] as [WR_DATETIME]"
+                        + @" FROM (" + strRes + @") as v"
+                        + @" ORDER BY  v.ID_PUT,v.DATE_TIME"
+                        ;
+                }
+                else
+                    Logging.Logg().Error(@"HandlerDbTaskCalculate::getQueryValuesVar () - неизветстный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 return strRes;
+            }
+
+            ///// <summary>
+            ///// 
+            ///// </summary>
+            ///// <param name="cntBasePeriod"></param>
+            ///// <param name="tablePars"></param>
+            ///// <param name="arTableValues"></param>
+            ///// <param name="dtRange"></param>
+            ///// <param name="err"></param>
+            ///// <param name="strErr"></param>
+            //public override void CreateSession(int cntBasePeriod, DataTable tablePars, ref DataTable[] arTableValues, DateTimeRange dtRange, out int err, out string strErr)
+            //{
+            //    err = 0;
+            //    strErr = string.Empty;
+
+            //    int iAVG = -1;
+            //    string strQuery = string.Empty;
+            //    // строки для удаления из таблицы значений "по умолчанию"
+            //    // при наличии дубликатов строк в таблице с загруженными из источников с данными
+            //    DataRow[] rowsSel = null;
+
+            //    // удалить строки из таблицы со значениями "по умолчанию"???
+            //    //foreach (DataRow rValVar in arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows)
+            //    //{
+            //    //    rowsSel = arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_PUT=" + rValVar[@"ID_PUT"]);
+            //    //    foreach (DataRow rToRemove in rowsSel)
+            //    //        arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Remove(rToRemove);
+            //    //}
+            //    // вставить строки из таблицы со значениями 
+            //    foreach (DataRow rValDef in arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows)
+            //    {
+            //        rowsSel = tablePars.Select(@"ID=" + rValDef[@"ID_PUT"]);
+            //        if (rowsSel.Length == 1)
+            //        {
+            //            iAVG = (Int16)rowsSel[0][@"AVG"];
+
+            //            arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Add(new object[]
+            //            {
+            //             rValDef[@"ID_PUT"]
+            //                , _Session.m_Id //ID_SESSION
+            //                , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT //QUALITY
+            //                , (iAVG == 0) ? cntBasePeriod * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
+            //                , HDateTime.ToMoscowTimeZone() //??? GETADTE()
+            //            }
+            //            );
+            //        }
+            //        else
+            //            ; // по идентификатору найден не единственный параметр расчета
+            //    }
+
+
+            //    if ((arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
+            //        && (arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
+            //    {
+            //        //Вситвить строку с идентификатором новой сессии
+            //        insertIdSession(cntBasePeriod, out err);
+            //        //Вставить строки в таблицу БД со входными значениями для расчета
+            //        insertInValues(arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
+            //        //Вставить строки в таблицу БД со выходными значениями для расчета
+            //        insertOutValues(out err);
+
+            //        // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+            //        arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+            //        // получить входные для расчета значения для возможности редактирования
+            //        strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
+            //            + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
+            //            + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+            //        arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+            //    }
+            //    else
+            //        Logging.Logg().Error(@"HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
+
+            //}
+
+            /// <summary>
+            /// Возвратить наименование таблицы 
+            /// </summary>
+            /// <param name="type">Тип панели/расчета</param>
+            /// <param name="req">Индекс таблицы, требуемой при расчете</param>
+            /// <returns>Наименование таблицы</returns>
+            private static string getNameDbTable(TaskCalculate.TYPE type, TABLE_CALCULATE_REQUIRED req)
+            {
+                INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
+
+                indx = TaskCalculate.GetIndexNameDbTable(type, req);
+
+                return s_NameDbTables[(int)indx];
             }
         }
 
         /// <summary>
         /// 
         /// </summary>
-        class TaskAutobookCalculate : HandlerDbTaskCalculate.TaskCalculate
+        public class TaskAutobookCalculate : HandlerDbTaskCalculate.TaskCalculate
         {
             public TaskAutobookCalculate()
+            {
+
+            }
+
+            private void Calculate()
             {
 
             }
@@ -327,8 +493,9 @@ namespace PluginTaskAutobook
 
             InitializeComponent();
 
-            Session.SetRangeDatetime(s_dtDefaultAU, s_dtDefaultAU.AddDays(monthIsDays(s_dtDefaultAU.Month)));
+            Session.SetRangeDatetime(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
         }
+
         /// <summary>
         /// кол-во дней в текущем месяце
         /// </summary>
@@ -354,7 +521,7 @@ namespace PluginTaskAutobook
             //this.Controls.Add(PanelManagement, 0, posRow);
             //this.SetColumnSpan(PanelManagement, posColdgvTEPValues);
             //this.SetRowSpan(PanelManagement, this.RowCount);
-            DGVAutoBook dgvYear = new DGVAutoBook(INDEX_CONTROL.DGV_PLANEYAR.ToString());
+            dgvYear = new DGVAutoBook(INDEX_CONTROL.DGV_PLANEYAR.ToString());
             dgvYear.AddColumn("Месяц", true);
             dgvYear.AddColumn("Выработка, тыс. кВтч", false);
             //dgv.RowCount = GetMonth.Length;
@@ -490,16 +657,6 @@ namespace PluginTaskAutobook
             lblTEC.Dock = DockStyle.Top;
             lblTEC.Text = @"Новосибирская ТЭЦ-5";
             //
-            //DataGridView dgv = new DataGridView();
-            //dgv.
-            //dgv.ColumnCount = 2;
-            //dgv.Columns[0].HeaderText = "Месяц";
-            //dgv.Columns[0].HeaderText = "Выработка, тыс. кВтч";
-            //dgv.ReadOnly = false;
-   
-            //dgv.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.ColumnHeader);
-            //dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.ColumnHeader;
-            //
             TableLayoutPanel tlpYear = new TableLayoutPanel();
             tlpYear.Dock = DockStyle.Fill;
             tlpYear.AutoSize = true;
@@ -511,6 +668,18 @@ namespace PluginTaskAutobook
             this.SetColumnSpan(tlpYear, 4); this.SetRowSpan(tlpYear, 7);
 
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString());
+            ////сборка всех элементов
+            //TableLayoutPanel tlpAllComp = new TableLayoutPanel();
+            //tlpAllComp.Dock = DockStyle.Fill;
+            //tlpAllComp.AutoSize = true;
+            //tlpAllComp.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
+            //tlpAllComp.Controls.Add(tlp, 0, 0);
+            //tlpAllComp.Controls.Add(tlpPeriod, 0, 1);
+            //tlpAllComp.Controls.Add(tlpValue, 0, 2);
+            //tlpAllComp.Controls.Add(tlpButton, 0, 3);
+            //tlpAllComp.Controls.Add(tlpYear, 0, 4);
+            //this.Controls.Add(tlpAllComp, 0, posRow);
+            //this.SetColumnSpan(tlpAllComp, 4); this.SetRowSpan(tlpAllComp, 20);
 
             ResumeLayout(false);
             PerformLayout();
@@ -526,6 +695,82 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="arQueryRanges"></param>
+        /// <param name="err"></param>
+        /// <param name="strErr"></param>
+        private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr, int i)
+        {
+            err = 0;
+            strErr = string.Empty;
+            //
+            Session.New();
+            //изменение начальной даты
+            arQueryRanges[0] = new DateTimeRange(arQueryRanges[0].Begin.AddDays(-(arQueryRanges[0].Begin.Day - 1 - i)), arQueryRanges[0].End.AddDays(-(arQueryRanges[0].End.Day - 2 - i)));
+            //Запрос для получения архивных данных
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            //Запрос для получения автоматически собираемых данных
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+                (
+                Type
+                , ActualIdPeriod
+                , CountBasePeriod
+                , arQueryRanges
+               , out err
+                );
+
+            //Проверить признак выполнения запроса
+            if (err == 0)
+            {
+                //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDef(ActualIdPeriod, out err);
+                //Проверить признак выполнения запроса
+                if (err == 0)
+                    //Начать новую сессию расчета
+                    // , получить входные для расчета значения для возможности редактирования
+                    HandlerDb.CreateSession(
+                        CountBasePeriod
+                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                        , ref m_arTableOrigin
+                        , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
+                        , out err, out strErr);
+                else
+                    strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
+                        + @" по " + Session.m_rangeDatetime.End.ToString();
+            }
+            else
+                strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
+                    + @" по " + Session.m_rangeDatetime.End.ToString();
+        }
+
+        private void setValues()
+        {
+
+        }
+        /// <summary>
+        /// Количество базовых периодов
+        /// </summary>
+        protected int CountBasePeriod
+        {
+            get
+            {
+                int iRes = -1;
+                ID_PERIOD idPeriod = ActualIdPeriod;
+
+                iRes =
+                    idPeriod == ID_PERIOD.HOUR ?
+                        (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalHours - 0 :
+                        idPeriod == ID_PERIOD.DAY ?
+                            (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalDays - 0 :
+                            24
+                            ;
+
+                return iRes;
+            }
+        }
+
+        /// <summary>
         /// обработчик кнопки-архивные значения
         /// </summary>
         /// <param name="obj"></param>
@@ -534,17 +779,81 @@ namespace PluginTaskAutobook
         {
             m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
 
-            //onButtonLoadClick();
+            onButtonLoadClick();
+        }
+
+        /// <summary>
+        /// оброботчик события кнопки
+        /// </summary>
+        protected virtual void onButtonLoadClick()
+        {
+            // ... - загрузить/отобразить значения из БД
+            updateDataValues();
+        }
+
+        /// <summary>
+        /// загрузка/обновление данных
+        /// </summary>
+        private void updateDataValues()
+        {
+            int err = -1
+                , cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
+                , iAVG = -1
+                , iRegDbConn = -1;
+            string errMsg = string.Empty;
+
+            m_handlerDb.RegisterDbConnection(out iRegDbConn);
+
+            if (!(iRegDbConn < 0))
+            {
+
+                for (int i = 0; i < monthIsDays(Session.m_rangeDatetime.Begin.Month); i++)
+                {
+
+                    // установить значения в таблицах для расчета, создать новую сессию
+                    // предыдущая сессия удалена в 'clear'
+                    setValues(HandlerDb.GetDateTimeRangeValuesVar(), out err, out errMsg, i);
+
+                    if (err == 0)
+                    {
+                        // создать копии для возможности сохранения изменений
+                        setValues();
+                        // отобразить значкения
+                        //dgvAB.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
+                    }
+                    else
+                    {
+                        // в случае ошибки "обнулить" идентификатор сессии
+                        deleteSession();
+                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                    }
+                    //deleteSession();
+                }
+            }
+            else
+                ;
+
+            if (!(iRegDbConn > 0))
+                m_handlerDb.UnRegisterDbConnection();
+            else
+                ;
+        }
+
+        /// <summary>
+        /// Обработчик события - нажатие на кнопку "Загрузить" (кнопка - аналог "Обновить")
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (??? кнопка или п. меню)</param>
+        /// <param name="ev">Аргумент события</param>
+        protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
+        {
+            m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
+
+            onButtonLoadClick();
         }
 
         public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
 
         public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
-
-        protected override HandlerDbValues createHandlerDb()
-        {
-            return new HandlerDbTaskCalculate();
-        }
 
         protected System.Data.DataTable m_TableOrigin
         {
@@ -698,7 +1007,6 @@ namespace PluginTaskAutobook
                 }
 
             m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
-            handlerdbAU = new HandlerDbAutoBook();
             HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
 
             Control ctrl = null;
@@ -828,13 +1136,13 @@ namespace PluginTaskAutobook
         {
             DateTime dt = new DateTime(date.Year, date.Month, 1);
             dgvAB.ClearRows();
-        
-                for (int i = 0; i < monthIsDays(numMonth); i++)
-                {
-                    dgvAB.AddRow();
-                    dgvAB.Rows[i].Cells[0].Value = dt.AddDays(i).ToShortDateString();
-                }
-            dgvAB.Rows[date.Day-1].Selected = true;
+
+            for (int i = 0; i < monthIsDays(numMonth); i++)
+            {
+                dgvAB.AddRow();
+                dgvAB.Rows[i].Cells[0].Value = dt.AddDays(i).ToShortDateString();
+            }
+            dgvAB.Rows[date.Day - 1].Selected = true;
         }
 
         /// <summary>
@@ -883,7 +1191,8 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// удаление сессии и очистка таблиц 
+        /// с временными данными
         /// </summary>
         protected void deleteSession()
         {
@@ -962,7 +1271,7 @@ namespace PluginTaskAutobook
                 //TIMEZONE
                 , HandlerDb.GetQueryTimezones (m_strIdTimezones)
                 // список компонентов
-                , handlerdbAU.GetQueryCompList()
+                , HandlerDb.GetQueryCompList()
                 // параметры расчета
                 , HandlerDb.GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
                 //// настройки визуального отображения значений
@@ -1012,14 +1321,28 @@ namespace PluginTaskAutobook
             }
         }
 
+        /// <summary>
+        /// Сохранить изменения в редактируемых таблицах
+        /// </summary>
+        /// <param name="err">Признак ошибки при выполнении сохранения в БД</param>
         protected override void recUpdateInsertDelete(out int err)
         {
-            throw new NotImplementedException();
+            err = -1;
+
+            m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES]
+                , @"ID_PUT, ID_TIME"
+                , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                , out err);
         }
 
+        /// <summary>
+        /// Обработчик события при успешном сохранении изменений в редактируемых на вкладке таблицах
+        /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
-            throw new NotImplementedException();
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
+               m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Copy();
         }
     }
 

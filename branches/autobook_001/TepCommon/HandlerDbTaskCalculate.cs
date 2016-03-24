@@ -141,7 +141,7 @@ namespace TepCommon
                         m_taskCalculate = new TaskTepCalculate();
                         break;
                     case ID_TASK.AUTOBOOK:
-                        m_taskCalculate = new TaskTepCalculate();
+                        //m_taskCalculate = new TaskTepCalculate();
                         break;
                     default:
                         break;
@@ -159,7 +159,7 @@ namespace TepCommon
         /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        public void CreateSession(
+        public virtual void CreateSession(
             int cntBasePeriod
             , DataTable tablePars
             , ref DataTable [] arTableValues
@@ -256,12 +256,12 @@ namespace TepCommon
                 ;
 
             strQuery += _Session.m_Id;
-            strQuery += @"," + (int)ID_TASK.TEP;
+            strQuery += @"," + (Int32)IdTask;
             strQuery += @"," + HTepUsers.Id;
             strQuery += @"," + (int)_Session.m_currIdPeriod;
             strQuery += @"," + (int)_Session.m_currIdTimezone;
-            strQuery += @",'" + _Session.m_rangeDatetime.Begin.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"'"; // @"yyyyMMdd HH:mm:ss"
-            strQuery += @",'" + _Session.m_rangeDatetime.End.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"'"; // @"yyyyMMdd HH:mm:ss"
+            strQuery += @",'" + _Session.m_rangeDatetime.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture)  // @"yyyyMMdd HH:mm:ss"
+            strQuery += @",'" + _Session.m_rangeDatetime.End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture) ; // @"yyyyMMdd HH:mm:ss"
 
             strQuery += @")";
 
@@ -307,7 +307,12 @@ namespace TepCommon
                 strQuery += @"(";
 
                 foreach (DataColumn c in tableInValues.Columns)
+                {
+                    if (c.ColumnName == "WR_DATETIME")
+                         strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal],arTypeColumns[c.Ordinal]) + @",";
+                    else
                     strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
+                }
 
                 // исключить лишнюю запятую
                 strQuery = strQuery.Substring(0, strQuery.Length - 1);
@@ -577,7 +582,8 @@ namespace TepCommon
                         + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
                         + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
                     + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
-                        + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
+                        + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask 
+                        + whereParameters
                         + @" JOIN [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID";
             }
             else
@@ -679,7 +685,7 @@ namespace TepCommon
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
         ///  , структура таблицы совместима с [inval], [outval]
         /// </summary>
-        private string getQueryValuesVar(TaskCalculate.TYPE type
+        public virtual string getQueryValuesVar(TaskCalculate.TYPE type
             , ID_PERIOD idPeriod
             , int cntBasePeriod
             , DateTimeRange[] arQueryRanges)
@@ -974,7 +980,11 @@ namespace TepCommon
                     default:
                         Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - неизвестный тип задачи расчета...", Logging.INDEX_MESSAGE.NOT_SET);
                         break;
-                }
+
+                    case ID_TASK.AUTOBOOK:
+
+                        break;
+                } 
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при регистрации соединения...", Logging.INDEX_MESSAGE.NOT_SET);

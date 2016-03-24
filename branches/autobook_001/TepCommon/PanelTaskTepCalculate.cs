@@ -179,7 +179,7 @@ namespace TepCommon
 
             Session.SetRangeDatetime(PanelManagementTaskTepCalculate.s_dtDefault, PanelManagementTaskTepCalculate.s_dtDefault.AddHours(1));
         }
-
+        
         protected HandlerDbTaskCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskCalculate; } }
 
         protected override HandlerDbValues createHandlerDb()
