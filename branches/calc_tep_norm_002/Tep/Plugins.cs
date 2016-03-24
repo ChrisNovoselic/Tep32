@@ -173,21 +173,28 @@ namespace Tep64
                 //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
                 for (int i = 0; (i < tableNamePlugins.Rows.Count) && (iRes == 0); i++)
                 {
-                    plugIn = Load(tableNamePlugins.Rows[i][@"NAME"].ToString().Trim(), out iRes);
+                    //Идентификатор плюг'ина
+                    idPlugIn = Int16.Parse(tableNamePlugins.Rows[i][@"ID"].ToString());
 
-                    if (iRes == 0) {
-                        //Идентификатор плюг'ина
-                        idPlugIn = Int16.Parse(tableNamePlugins.Rows[i][@"ID"].ToString());
-                        //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
-                        if (((PlugInBase)plugIn)._Id == idPlugIn)
+                    if (ContainsKey(idPlugIn) == false)
+                    {
+                        plugIn = Load(tableNamePlugins.Rows[i][@"NAME"].ToString().Trim(), out iRes);
+
+                        if (iRes == 0)
                         {
-                            Add(idPlugIn, plugIn);
+                            //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
+                            if (((PlugInBase)plugIn)._Id == idPlugIn)
+                            {
+                                Add(idPlugIn, plugIn);
+                            }
+                            else
+                                iRes = -2;
                         }
                         else
-                            iRes =  -2;
+                            ;
                     }
                     else
-                        ;
+                        ; // plugIn уже загружен...
                 }
             }
         }
