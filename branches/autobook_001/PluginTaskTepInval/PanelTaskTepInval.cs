@@ -130,7 +130,7 @@ namespace PluginTaskTepInval
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>
-        /// <param name="dgv">Объект, инициирововший событие</param>
+        /// <param name="dgv">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
         protected override void onEventCellValueChanged(object dgv, DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
         {
