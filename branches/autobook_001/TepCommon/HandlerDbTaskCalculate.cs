@@ -759,7 +759,7 @@ namespace TepCommon
                         strRes += @" AND [DATE_TIME] = '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
 
                     if (bLastItem == false)
-                        strRes += @" UNION ALL";
+                        strRes += @" UNION ALL ";
                     else
                         ;
                 }

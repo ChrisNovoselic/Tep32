@@ -79,6 +79,7 @@ namespace TepCommon
                 return _panelManagement;
             }
         }
+
         /// <summary>
         /// Отображение значений в табличном представлении
         /// </summary>
@@ -719,7 +720,7 @@ namespace TepCommon
                 //??? точное (столбец, строка) размещенеие в коде целевого класса
                 this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска (без указания столбца, строки)
 
-                ctrl = new HDateTimePicker(s_dtDefault.AddHours (1), Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
+                ctrl = new HDateTimePicker(s_dtDefault.AddHours(1), Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 //??? точное (столбец, строка) размещенеие в коде целевого класса
