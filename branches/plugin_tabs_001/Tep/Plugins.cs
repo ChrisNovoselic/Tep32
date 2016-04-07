@@ -42,7 +42,7 @@ namespace Tep64
             /// <param name="name">Наименование плюгИна</param>
             /// <param name="iRes">Результат загрузки (код ошибки)</param>
             /// <returns>Загруженный плюгИн</returns>
-            public PlugInMenuItem Load(string name, out int iRes)
+            private PlugInMenuItem load(string name, out int iRes)
             {
                 PlugInMenuItem plugInRes = null;
                 iRes = -1;
@@ -164,30 +164,37 @@ namespace Tep64
             /// Загрузить все плюгИны
             /// </summary>
             /// <param name="tableNamePlugins">Таблица с наименованиями</param>
-            public void Load (DataTable tableNamePlugins)
+            public void Load (DataTable tableFPanels)
             {
                 int iRes = 0
-                    , idPlugIn = -1;
+                    , idPlugIn = -1, idFPanel = -1;
                 PlugInMenuItem plugIn = null;
 
-                //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
-                for (int i = 0; (i < tableNamePlugins.Rows.Count) && (iRes == 0); i++)
+                //Цикл по строкам - идентификатрам/разрешениям использовать функц./панель из плюгина
+                for (int i = 0; (i < tableFPanels.Rows.Count) && (iRes == 0); i++)
                 {
-                    plugIn = Load(tableNamePlugins.Rows[i][@"NAME"].ToString().Trim(), out iRes);
+                    //Идентификатор плюг'ина
+                    idPlugIn = Int16.Parse(tableFPanels.Rows[i][@"ID_PLUGIN"].ToString());
 
-                    if (iRes == 0) {
-                        //Идентификатор плюг'ина
-                        idPlugIn = Int16.Parse(tableNamePlugins.Rows[i][@"ID"].ToString());
-                        //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
-                        if (((PlugInBase)plugIn)._Id == idPlugIn)
-                        {
-                            Add(idPlugIn, plugIn);
+                    if (ContainsKey(idPlugIn) == false)
+                    {
+                        plugIn = load(tableFPanels.Rows[i][@"NAME_PLUGIN"].ToString().Trim(), out iRes);
+
+                        if (iRes == 0)
+                        {                            
+                            //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
+                            if (((PlugInBase)plugIn)._Id == idPlugIn)
+                            {
+                                Add(idPlugIn, plugIn);
+                            }
+                            else
+                                iRes = -2;
                         }
                         else
-                            iRes =  -2;
+                            ; // ошибка при загрузке плюгИна
                     }
                     else
-                        ;
+                        ; //plugIn уже был загружен
                 }
             }
         }

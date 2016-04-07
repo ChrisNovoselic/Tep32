@@ -76,6 +76,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTaskTepOutNorm", "Plu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTaskTepOutMkt", "PluginTaskTepOutMkt\PluginTaskTepOutMkt.csproj", "{C8E734D7-29B2-40C2-950A-CD5EE3107652}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginDictianary", "PluginDictianary\PluginDictianary.csproj", "{41670031-F408-46C4-B279-3028C7C6D1BD}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = Tep32.vsmdi
@@ -429,6 +431,16 @@ Global
 		{C8E734D7-29B2-40C2-950A-CD5EE3107652}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{C8E734D7-29B2-40C2-950A-CD5EE3107652}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{C8E734D7-29B2-40C2-950A-CD5EE3107652}.Release|x86.ActiveCfg = Release|Any CPU
+		{41670031-F408-46C4-B279-3028C7C6D1BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41670031-F408-46C4-B279-3028C7C6D1BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41670031-F408-46C4-B279-3028C7C6D1BD}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{41670031-F408-46C4-B279-3028C7C6D1BD}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{41670031-F408-46C4-B279-3028C7C6D1BD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{41670031-F408-46C4-B279-3028C7C6D1BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41670031-F408-46C4-B279-3028C7C6D1BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41670031-F408-46C4-B279-3028C7C6D1BD}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{41670031-F408-46C4-B279-3028C7C6D1BD}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{41670031-F408-46C4-B279-3028C7C6D1BD}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
