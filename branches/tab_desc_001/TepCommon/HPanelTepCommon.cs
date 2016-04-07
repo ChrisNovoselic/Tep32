@@ -32,24 +32,26 @@ namespace TepCommon
         private System.ComponentModel.IContainer components = null;
 
         #region Apelgans
-        public enum ID_DESC
-        {
-            Group = 0//Группа вкладок
-                , Tab = 1//Вкладка
-        };
+
         public enum ID_TABLE
         {
             MAIN = 1//Главная
-            , PROP = 2//Свойства
+            ,PROP = 2//Свойства
             ,DESC = 3
         };
 
         /// <summary>
-        /// Строки для описания вкладки/группы вкладок
+        /// Список групп
         /// </summary>
-        public string[] Description = new string[2];
+        string[] m_arr_name_group_panel = { "Настройка", "Проект", "Задача" };
 
+        /// <summary>
+        /// Строки для описания групп вкладок
+        /// </summary>
+        string[] m_description_group = new string[] { "Группа для настроек", "Группа для проектов", "Группа для задач" };
+        
         string m_name_panel_desc = string.Empty;
+
         #endregion
 
         /// <summary> 
@@ -104,12 +106,33 @@ namespace TepCommon
             if (m_name_panel_desc != string.Empty)
             {
                 Control ctrl = this.Controls.Find(m_name_panel_desc, true)[0];
-                ((HPanelDesc)ctrl).SetLblGroup = new string[] { ((PlugInMenuItem)_iFuncPlugin).GetNameOwnerMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id), Description[(int)ID_DESC.Group] };
-                ((HPanelDesc)ctrl).SetLblTab = new string[] { ((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id), Description[(int)ID_DESC.Tab] };
+                string desc = "";
+                string name = ((PlugInMenuItem)_iFuncPlugin).GetNameOwnerMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id);
+                string[] ar_name = name.Split('\\');
+                name = ar_name[0];
+                for (int i = 0; i < m_arr_name_group_panel.Length; i++)
+                {
+                    if (m_arr_name_group_panel[i] == name)
+                    {
+                        ((HPanelDesc)ctrl).SetLblGroup = new string[] { name, m_description_group[i] };
+                    }
+                }
+                
 
-                string query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                //Описание вкладки
+                string query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                DataTable dt = m_handlerDb.Select(query, out err);
+                if (dt.Rows.Count != 0)
+                {
+                    desc = dt.Rows[0][0].ToString();
+                    ((HPanelDesc)ctrl).SetLblTab = new string[] { ((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id), desc };
+                }
+
+                //Описания таблиц
+                query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
                 descriptions[(int)ID_DT_DESC.TABLE] = m_handlerDb.Select(query, out err);
 
+                //Описания параметров
                 query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
                 descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
                 
@@ -364,9 +387,9 @@ namespace TepCommon
     {
         enum ID_LBL {lblGroup, lblTab, lblDGV1, lblDGV2, lblDGV3, selRow };
 
-        string[] desc_lbl = new string[] {"lblGroupDesc", "lblTabDesc", "lblDGV1Desc", "lblDGV2Desc", "lblDGV3Desc", "selRowDesc" };
-        string[] name_lbl = new string[] { "lblGroupName", "lblTabName", "lblDGV1Name", "lblDGV2Name", "lblDGV3Name", "selRowName" };
-        string[] name_lbl_text = new string[] { "Группа вкладок: ", "Вкладка: ", "Таблица: ", "Таблица: ", "Таблица: ", "Выбранная строка: " };
+        string[] m_desc_lbl = new string[] {"lblGroupDesc", "lblTabDesc", "lblDGV1Desc", "lblDGV2Desc", "lblDGV3Desc", "selRowDesc" };
+        string[] m_name_lbl = new string[] { "lblGroupName", "lblTabName", "lblDGV1Name", "lblDGV2Name", "lblDGV3Name", "selRowName" };
+        string[] m_name_lbl_text = new string[] { "Группа вкладок: ", "Вкладка: ", "Таблица: ", "Таблица: ", "Таблица: ", "Выбранная строка: " };
 
         private void Initialize()
         {
@@ -410,11 +433,11 @@ namespace TepCommon
             col = 0;
             rows = 2;
 
-            for (i = 0; i < desc_lbl.Length; i++)
+            for (i = 0; i < m_desc_lbl.Length; i++)
             {
                 ctrl = new Label();
-                ctrl.Name = name_lbl[i];
-                ctrl.Text = name_lbl_text[i];
+                ctrl.Name = m_name_lbl[i];
+                ctrl.Text = m_name_lbl_text[i];
                 ctrl.Dock = DockStyle.Fill;
                 ctrl.Visible = false;
 
@@ -423,7 +446,7 @@ namespace TepCommon
                 this.SetColumnSpan(ctrl, 2);
 
                 ctrl = new Label();
-                ctrl.Name = desc_lbl[i];
+                ctrl.Name = m_desc_lbl[i];
                 ctrl.Dock = DockStyle.Fill;
                 ctrl.Visible = false;
 
@@ -454,11 +477,11 @@ namespace TepCommon
             set
             {
                 Control ctrl = new Control();
-                ctrl = this.Controls.Find(desc_lbl[(int)ID_LBL.lblGroup], true)[0];
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.lblGroup], true)[0];
                 ctrl.Text = value[1];
                 ctrl.Visible = true;
 
-                ctrl = this.Controls.Find(name_lbl[(int)ID_LBL.lblGroup], true)[0];
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.lblGroup], true)[0];
                 ctrl.Text = "Группа вкладок: " + value[0];
                 ctrl.Visible = true;
             }
@@ -472,11 +495,11 @@ namespace TepCommon
             set
             {
                 Control ctrl = new Control();
-                ctrl = this.Controls.Find(desc_lbl[(int)ID_LBL.lblTab], true)[0];
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.lblTab], true)[0];
                 ctrl.Text = value[1];
                 ctrl.Visible = true;
 
-                ctrl = this.Controls.Find(name_lbl[(int)ID_LBL.lblTab], true)[0];
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.lblTab], true)[0];
                 ctrl.Text = "Вкладка: " + value[0];
                 ctrl.Visible = true;
             }
@@ -490,11 +513,11 @@ namespace TepCommon
             set
             {
                 Control ctrl = new Control();
-                ctrl = this.Controls.Find(desc_lbl[(int)ID_LBL.lblDGV1], true)[0];
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.lblDGV1], true)[0];
                 ctrl.Text = value[1];
                 ctrl.Visible = true;
 
-                ctrl = this.Controls.Find(name_lbl[(int)ID_LBL.lblDGV1], true)[0];
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.lblDGV1], true)[0];
                 ctrl.Text = "Таблица: " + value[0];
                 ctrl.Visible = true;
             }
@@ -508,11 +531,11 @@ namespace TepCommon
             set
             {
                 Control ctrl = new Control();
-                ctrl = this.Controls.Find(desc_lbl[(int)ID_LBL.lblDGV2], true)[0];
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.lblDGV2], true)[0];
                 ctrl.Text = value[1];
                 ctrl.Visible = true;
 
-                ctrl = this.Controls.Find(name_lbl[(int)ID_LBL.lblDGV2], true)[0];
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.lblDGV2], true)[0];
                 ctrl.Text = "Таблица: " + value[0];
                 ctrl.Visible = true;
             }
@@ -526,11 +549,11 @@ namespace TepCommon
             set
             {
                 Control ctrl = new Control();
-                ctrl = this.Controls.Find(desc_lbl[(int)ID_LBL.lblDGV3], true)[0];
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.lblDGV3], true)[0];
                 ctrl.Text = value[1];
                 ctrl.Visible = true;
 
-                ctrl = this.Controls.Find(name_lbl[(int)ID_LBL.lblDGV3], true)[0];
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.lblDGV3], true)[0];
                 ctrl.Text = "Таблица: " + value[0];
                 ctrl.Visible = true;
             }
@@ -544,7 +567,7 @@ namespace TepCommon
             set
             {
                 Control ctrl = new Control();
-                ctrl = this.Controls.Find(desc_lbl[(int)ID_LBL.selRow], true)[0];
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.selRow], true)[0];
                 if (value[1] != string.Empty)
                 {
                     ctrl.Text = value[1];
@@ -553,7 +576,7 @@ namespace TepCommon
                 else
                     ctrl.Visible = false;
 
-                ctrl = this.Controls.Find(name_lbl[(int)ID_LBL.selRow], true)[0];
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.selRow], true)[0];
                 if (value[0] != string.Empty)
                 {
                     value[0].Replace('_', ' ');

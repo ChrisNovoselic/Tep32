@@ -453,7 +453,7 @@ namespace TepCommon
 
         private void HPanelEditList_dgvDictEditCellEndEdit(object obj, DataGridViewCellEventArgs ev)
         {
-            int indx = ((DataGridView)obj).SelectedRows[0].Index;
+            int indx = ev.RowIndex;
             string valEdit = ((DataGridView)obj).Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value as string;
 
             if (!(valEdit == null))
