@@ -281,6 +281,7 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         private void cbxDay_onSelectedIndexChanged(object obj, EventArgs ev)
         {
+            
             _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
             _value[(int)INDEX_VALUE.CURRENT] = new DateTime(
                 _value[(int)INDEX_VALUE.CURRENT].Year
@@ -473,7 +474,7 @@ namespace TepCommon
             (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
             Controls.Add(ctrl, 0, 0);
             SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
-            for (i = 0; i <31 ; i++)//DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, _value[(int)INDEX_VALUE.CURRENT].Month)
+            for (i = 0; i < 31 ; i++)//DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, _value[(int)INDEX_VALUE.CURRENT].Month)
                 (ctrl as ComboBox).Items.Add(i + 1);
             (ctrl as ComboBox).SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Day - 1;
             (ctrl as ComboBox).SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)indx];

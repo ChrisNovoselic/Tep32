@@ -641,7 +641,7 @@ namespace TepCommon
         /// Возвратить массив диапазонов даты/времени для запроса значений
         /// </summary>
         /// <returns>Массив диапазонов даты/времени</returns>
-        public DateTimeRange[] GetDateTimeRangeValuesVar()
+        public virtual DateTimeRange[] GetDateTimeRangeValuesVar()
         {
             DateTimeRange[] arRangesRes = null;
 
@@ -650,6 +650,7 @@ namespace TepCommon
             // привести дату/время к UTC
             DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMinutes(-1 * _Session.m_curOffsetUTC)
                 , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC);
+
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
             if (bEndMonthBoudary == false)
