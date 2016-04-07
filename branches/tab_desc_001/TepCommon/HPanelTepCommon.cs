@@ -16,8 +16,6 @@ namespace TepCommon
 {
     public abstract class HPanelTepCommon : HPanelCommon, IObjectDbEdit
     {
-        enum ID_DT_DESC {TABLE, PROP};
-        DataTable[] descriptions = new DataTable[]{new DataTable(), new DataTable() };
         /// <summary>
         /// Дополнительные действия при сохранении значений
         /// </summary>
@@ -32,6 +30,10 @@ namespace TepCommon
         private System.ComponentModel.IContainer components = null;
 
         #region Apelgans
+
+
+        public enum ID_DT_DESC { TABLE, PROP };
+        public DataTable[] Descriptions = new DataTable[] { new DataTable(), new DataTable() };
 
         public enum ID_TABLE
         {
@@ -50,7 +52,7 @@ namespace TepCommon
         /// </summary>
         string[] m_description_group = new string[] { "Группа для настроек", "Группа для проектов", "Группа для задач" };
         
-        string m_name_panel_desc = string.Empty;
+        public string m_name_panel_desc = string.Empty;
 
         #endregion
 
@@ -130,33 +132,34 @@ namespace TepCommon
 
                 //Описания таблиц
                 query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
-                descriptions[(int)ID_DT_DESC.TABLE] = m_handlerDb.Select(query, out err);
+                Descriptions[(int)ID_DT_DESC.TABLE] = m_handlerDb.Select(query, out err);
 
                 //Описания параметров
                 query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
-                descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
+                Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
                 
                 if (err != 0)
                 {
                     Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
-                DataRow[] rows = descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
+                DataRow[] rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
                 if (rows.Length == 1)
                 {
                     ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                 }
 
-                rows = descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.PROP);
+                rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.PROP);
                 if (rows.Length == 1)
                 {
                     ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                 }
 
-                rows = descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.DESC);
+                rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.DESC);
                 if (rows.Length == 1)
                 {
                     ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                    ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
                 }
             }
         }
@@ -290,18 +293,21 @@ namespace TepCommon
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        protected void HPanelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
+        protected virtual void HPanelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
         {
             string desc = string.Empty;
             string name = string.Empty;
             try
             {
-                name = ((DataGridView)obj).SelectedRows[0].Cells[0].Value.ToString();
-                foreach (DataRow r in descriptions[(int)ID_DT_DESC.PROP].Rows)
+                if (((DataGridView)obj).SelectedRows.Count>0)
                 {
-                    if (name == r["PARAM_NAME"].ToString())
+                    name = ((DataGridView)obj).SelectedRows[0].Cells[0].Value.ToString();
+                    foreach (DataRow r in Descriptions[(int)ID_DT_DESC.PROP].Rows)
                     {
-                        desc = r["DESCRIPTION"].ToString();
+                        if (name == r["PARAM_NAME"].ToString())
+                        {
+                            desc = r["DESCRIPTION"].ToString();
+                        }
                     }
                 }
             }
@@ -583,6 +589,103 @@ namespace TepCommon
                     ctrl.Text = "Cтрока: " + value[0];
                     ctrl.Visible = true;
                 }
+
+            }
+        }
+
+        /// <summary>
+        /// Поле отображения описания группы вкладок
+        /// </summary>
+        public bool SetLblGroup_View
+        {
+            set
+            {
+                Control ctrl = new Control();
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.lblGroup], true)[0];
+                ctrl.Visible = value;
+
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.lblGroup], true)[0];
+                ctrl.Visible = value;
+            }
+        }
+
+        /// <summary>
+        /// Поле отображения описания вкладки
+        /// </summary>
+        public bool SetLblTab_View
+        {
+            set
+            {
+                Control ctrl = new Control();
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.lblTab], true)[0];
+                ctrl.Visible = value;
+
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.lblTab], true)[0];
+                ctrl.Visible = value;
+            }
+        }
+
+        /// <summary>
+        /// Поле отображения описания таблицы 1
+        /// </summary>
+        public bool SetLblDGV1Desc_View
+        {
+            set
+            {
+                Control ctrl = new Control();
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.lblDGV1], true)[0];
+                ctrl.Visible = value;
+
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.lblDGV1], true)[0];
+                ctrl.Visible = value;
+            }
+        }
+
+        /// <summary>
+        /// Поле описания таблицы 2
+        /// </summary>
+        public bool SetLblDGV2Desc_View
+        {
+            set
+            {
+                Control ctrl = new Control();
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.lblDGV2], true)[0];
+                ctrl.Visible = value;
+
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.lblDGV2], true)[0];
+                ctrl.Visible = value;
+            }
+        }
+
+        /// <summary>
+        /// Поле описания таблицы 3
+        /// </summary>
+        public bool SetLblDGV3Desc_View
+        {
+            set
+            {
+                Control ctrl = new Control();
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.lblDGV3], true)[0];
+                ctrl.Visible = value;
+
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.lblDGV3], true)[0];
+                ctrl.Visible = value;
+            }
+        }
+
+        /// <summary>
+        /// Поле отображения описания выбранной строки
+        /// </summary>
+        public bool SetLblRowDesc_View
+        {
+            set
+            {
+                Control ctrl = new Control();
+                ctrl = this.Controls.Find(m_desc_lbl[(int)ID_LBL.selRow], true)[0];
+                ctrl.Visible = value;
+
+                ctrl = this.Controls.Find(m_name_lbl[(int)ID_LBL.selRow], true)[0];
+                ctrl.Visible = value;
 
             }
         }

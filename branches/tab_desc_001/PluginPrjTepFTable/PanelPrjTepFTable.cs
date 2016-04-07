@@ -65,7 +65,12 @@ namespace PluginPrjTepFTable
         /// <returns>Результат актвации</returns>
         public override bool Activate(bool activate)
         {
-            return base.Activate(activate);
+            bool activ = base.Activate(activate);
+
+            Control ctrl = this.Controls.Find(m_name_panel_desc, true)[0];
+            ((HPanelDesc)ctrl).SetLblDGV3Desc_View = true;
+
+            return activ;
         }
 
         /// <summary>

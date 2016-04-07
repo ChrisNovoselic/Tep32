@@ -307,7 +307,7 @@ namespace TepCommon
         protected override void initialize(out int err, out string errMsg)
         {
             int i = -1;
-            if (((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]).RowCount > 1)
+            if (((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]).RowCount > 1 || ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).RowCount > 0)
             {
                 err = 0;
                 errMsg = string.Empty;

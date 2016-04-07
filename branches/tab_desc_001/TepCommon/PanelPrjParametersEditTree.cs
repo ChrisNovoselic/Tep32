@@ -1164,6 +1164,10 @@ namespace TepCommon
             else
                 ;
 
+
+            Control ctrl = this.Controls.Find(m_name_panel_desc, true)[0];
+            ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
+
             return iErr;
         }
         /// <summary>
@@ -1199,6 +1203,9 @@ namespace TepCommon
                     //???снова используется индекс...
                     m_dgvPrjDetail.Rows[++indxRow].Cells[1].Value = rowsPut.Length > 0;
             }
+
+            Control ctrl = this.Controls.Find(m_name_panel_desc, true)[0];
+            ((HPanelDesc)ctrl).SetLblDGV3Desc_View = true;
 
             //Добавить обработку события
             //if (bUpdate == true)
@@ -1440,6 +1447,31 @@ namespace TepCommon
             }
             else
                 ; //Не для значения
+        }
+
+        protected override void HPanelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
+        {
+            string desc = string.Empty;
+            string name = string.Empty;
+            try
+            {
+                if (((DataGridView)obj).SelectedRows.Count > 0)
+                {
+                    name = ((DataGridView)obj).SelectedRows[0].Cells[0].Value.ToString();
+                    foreach (DataRow r in Descriptions[(int)ID_DT_DESC.PROP].Select("ID_TABLE=" + (int)m_Level))
+                    {
+                        if (name == r["PARAM_NAME"].ToString())
+                        {
+                            desc = r["DESCRIPTION"].ToString();
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
+            SetDescSelRow(desc, name);
         }
     }
 }

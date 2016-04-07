@@ -78,6 +78,7 @@ namespace TepCommon
         {
             throw new NotImplementedException();
         }
+
         ///// <summary>
         ///// Инициировать подготовку к расчету
         /////  , выполнить расчет
