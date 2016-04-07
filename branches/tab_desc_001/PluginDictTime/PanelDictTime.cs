@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using System.Windows.Forms;
+
 using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
@@ -15,6 +17,9 @@ namespace PluginDictTime
             : base(iFunc, @"time", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
+
+            Description[(int)ID_DESC.Tab] = "Вкладка для редактирования временных интервалов ПО";
+            Description[(int)ID_DESC.Group] = "Группа для настроек";
         }
 
         private void InitializeComponent()

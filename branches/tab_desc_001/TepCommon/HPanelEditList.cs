@@ -225,8 +225,10 @@ namespace TepCommon
             dgv.AllowUserToDeleteRows = false;
             //Запретить вставку строк
             dgv.AllowUserToAddRows = false;
+            dgv.MultiSelect = false;
 
             addLabelDesc(INDEX_CONTROL.LABEL_PROP_DESC.ToString ());
+
 
             this.ResumeLayout();
 
@@ -238,6 +240,8 @@ namespace TepCommon
         }
 
         #endregion
+
+        
     }
 
     public partial class HPanelEditList : HPanelEditListCommon
@@ -256,6 +260,7 @@ namespace TepCommon
             : this(plugIn, nameTable, keyFields, nameDescField)
         {
             container.Add(this);
+
         }        
 
         public override bool Activate(bool activate)
@@ -286,7 +291,9 @@ namespace TepCommon
                 DataGridView dgv = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]);
                 //Заполнение содержимым...
                 for (int i = 0; i < m_tblEdit.Columns.Count; i++)
+                {
                     dgv.Rows.Add(new object[] { m_tblEdit.Columns[i].ColumnName, string.Empty });
+                }
                 //Только "для чтения", если строк нет
                 dgv.ReadOnly = !(m_tblEdit.Rows.Count > 0);
             }
@@ -300,20 +307,27 @@ namespace TepCommon
         protected override void initialize(out int err, out string errMsg)
         {
             int i = -1;
-
-            initProp(out err, out errMsg);
-
-            if (err == 0)
+            if (((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]).RowCount > 1)
             {
-                DataGridView dgv = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]);
-                //Заполнение содержимым...
-                for (i = 0; i < m_tblEdit.Rows.Count; i++)
-                    dgv.Rows.Add(new object[] { m_tblEdit.Rows[i][m_nameDescField].ToString().Trim() });
-
-                Logging.Logg().Debug(@"HPanelEditList::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
+                err = 0;
+                errMsg = string.Empty;
             }
             else
-                ;
+            {
+                initProp(out err, out errMsg);
+
+                if (err == 0)
+                {
+                    DataGridView dgv = ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_ITEM.ToString(), true)[0]);
+                    //Заполнение содержимым...
+                    for (i = 0; i < m_tblEdit.Rows.Count; i++)
+                        dgv.Rows.Add(new object[] { m_tblEdit.Rows[i][m_nameDescField].ToString().Trim() });
+
+                    Logging.Logg().Debug(@"HPanelEditList::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+                else
+                    ;
+            }
         }
 
         private void setCellsReadOnly()
@@ -369,7 +383,10 @@ namespace TepCommon
             }
             else
                 Logging.Logg().Error(@"HPanelEditList::HPanelEdit_SelectionChanged () - выделена НЕ 1 строка", Logging.INDEX_MESSAGE.NOT_SET);
+
         }
+
+        //private void 
 
         protected virtual void setTableEditValue(DataGridView dgvProp, int indxRow, int indxCol)
         {
@@ -493,4 +510,5 @@ namespace TepCommon
                 ;
         }        
     }
+
 }
