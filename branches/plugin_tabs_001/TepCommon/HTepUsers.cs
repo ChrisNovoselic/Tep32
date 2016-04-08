@@ -59,7 +59,7 @@ namespace TepCommon
         /// <param name="dbConn">Объект соединения с БД</param>
         /// <param name="iRes">Результат выполнения функции</param>
         /// <returns>Строка с идентификаторами (разделитель - запятая)</returns>
-        public static string GetIdIsUsePlugins(ref DbConnection dbConn, out int iRes)
+        public static string GetIdIsUseFPanels(ref DbConnection dbConn, out int iRes)
         {
             string strRes = string.Empty;
             iRes = -1;
@@ -72,21 +72,21 @@ namespace TepCommon
 
             int i = -1
                 , indxRow = -1
-                , idPlugin = -1;
+                , idFPanel = -1;
             //Сформировать список идентификаторов плюгинов
             DataRow[] rowsIsUse;
-            List <int> listIdParsedPlugins = new List<int> ();
+            List <int> listIdParsedFPanel = new List<int> ();
 
             //Цикл по строкам - идентификатрам/разрешениям использовать плюгин                    
             for (i = 0; i < tableRoles.Rows.Count; i++)
             {
-                idPlugin = (Int16)tableRoles.Rows[i][@"ID_PLUGIN"];
-                if (listIdParsedPlugins.IndexOf(idPlugin) < 0)
+                idFPanel = (Int16)tableRoles.Rows[i][@"ID_FPANEL"];
+                if (listIdParsedFPanel.IndexOf(idFPanel) < 0)
                 {
-                    listIdParsedPlugins.Add (idPlugin);
+                    listIdParsedFPanel.Add(idFPanel);
                     //??? возможна повторная обработка
                     indxRow = -1;
-                    rowsIsUse = tableRoles.Select(@"ID_PLUGIN=" + idPlugin);
+                    rowsIsUse = tableRoles.Select(@"ID_FPANEL=" + idFPanel);
                     //Проверить разрешение использовать плюгин
                     switch (rowsIsUse.Length)
                     {
@@ -113,7 +113,7 @@ namespace TepCommon
 
                     if (!(indxRow < 0))
                         if ((Byte)rowsIsUse[indxRow][@"IsUse"] == 1)
-                            strRes += idPlugin + @",";
+                            strRes += idFPanel + @",";
                         else
                             ;
                     else
@@ -136,13 +136,13 @@ namespace TepCommon
         /// <param name="idListener">Идентификатор установленного соединения с БД</param>
         /// <param name="iRes">Результат выполнения функции</param>
         /// <returns>Строка с идентификаторами (разделитель - запятая)</returns>
-        public static string GetIdIsUsePlugins(int idListener, out int iRes)
+        public static string GetIdIsUseFPanels(int idListener, out int iRes)
         {
             string strRes = string.Empty;
             DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out iRes);
 
             if (iRes == 0)
-                strRes = GetIdIsUsePlugins (ref dbConn, out iRes);
+                strRes = GetIdIsUseFPanels (ref dbConn, out iRes);
             else
                 ;
 
@@ -158,17 +158,22 @@ namespace TepCommon
         {
             DataTable tableRes = null;
             iRes = -1;
-            string strIdPlugins = string.Empty;
+            string strIdFPanels = string.Empty;
             DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out iRes);
 
             if (iRes == 0)
             {
-                strIdPlugins = GetIdIsUsePlugins(ref dbConn, out iRes);
+                strIdFPanels = GetIdIsUseFPanels(ref dbConn, out iRes);
 
                 if (iRes == 0)
                 {
                     //Прочитать наименования плюгинов
-                    tableRes = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM plugins WHERE ID IN (" + strIdPlugins + @")", null, null, out iRes);
+                    tableRes = DbTSQLInterface.Select(ref dbConn
+                        ,
+                            //@"SELECT * FROM plugins WHERE ID IN ("
+                            @"SELECT p.[ID] as [ID_PLUGIN], p.[NAME] as [NAME_PLUGIN] FROM plugins as p WHERE [ID] IN (SELECT [ID_PLUGIN] FROM [fpanels] WHERE [ID] IN ("
+                                 + strIdFPanels + @")" + @")"
+                        , null, null, out iRes);
                 }
                 else
                     ;

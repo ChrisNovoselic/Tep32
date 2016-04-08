@@ -8,8 +8,8 @@
     <ProjectGuid>{41670031-F408-46C4-B279-3028C7C6D1BD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginDictMeasure</RootNamespace>
-    <AssemblyName>PluginDictMeasure</AssemblyName>
+    <RootNamespace>PluginDictianary</RootNamespace>
+    <AssemblyName>PluginDictianary</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
