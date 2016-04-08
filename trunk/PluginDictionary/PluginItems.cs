@@ -7,7 +7,7 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginDictianary
+namespace PluginDictionary
 {
     public class PlugIn : HFuncDbEdit
     {

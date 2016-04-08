@@ -197,6 +197,23 @@ namespace Tep64
                         ; //plugIn уже был загружен
                 }
             }
+
+            public int GetKeyOfIdFPanel(int idFPanel)
+            {
+                int iRes = -1;
+
+                foreach (KeyValuePair<int, PlugInMenuItem> pair in this)
+                    if (pair.Value.IsRegistred(idFPanel) == true)
+                    {
+                        iRes = pair.Key;
+
+                        break;
+                    }
+                    else
+                        ;
+
+                return iRes;
+            }
         }
     }
 }

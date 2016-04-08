@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Forms;
 
 using HClassLibrary;
 
@@ -28,7 +29,7 @@ namespace InterfacePlugIn
             
             base.OnClickMenuItem(obj, ev);
 
-            id = _Id;
+            id = (int)(obj as ToolStripMenuItem).Tag;
 
             //Проверить признак выполнения запроса к вызвавшему объекту на получение параметров соединения с БД 
             if (m_dictDataHostCounter.ContainsKey((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB) == false)

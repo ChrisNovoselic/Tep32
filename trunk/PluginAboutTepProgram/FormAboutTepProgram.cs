@@ -73,7 +73,7 @@ namespace PluginAboutTepProgram
             
             base.OnClickMenuItem(obj, ev);
 
-            id = _Id;
+            id = (int)(obj as ToolStripMenuItem).Tag;
             
             if (m_dictDataHostCounter.ContainsKey ((int)ID_DATAASKED_HOST.ICON_MAINFORM) == false)
                 DataAskedHost ((int)ID_DATAASKED_HOST.ICON_MAINFORM);

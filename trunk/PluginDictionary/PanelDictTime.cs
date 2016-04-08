@@ -7,12 +7,12 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginDictianary
+namespace PluginDictionary
 {
-    public class PanelDictMeasure : HPanelEditList
+    public class PanelDictTime : HPanelEditList
     {
-        public PanelDictMeasure(IPlugIn iFunc)
-            : base(iFunc, @"measure", @"ID", @"DESCRIPTION")
+        public PanelDictTime(IPlugIn iFunc)
+            : base(iFunc, @"time", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
         }

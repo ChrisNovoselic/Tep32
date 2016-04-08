@@ -331,10 +331,11 @@ namespace Tep64
         private int initializeMenu (out string strErr) {
             int iRes = -1
                 , idListener = -1
-                ;
+                , iKeyPlugIn = -1, iKeyFPanel = -1;
             strErr = string.Empty;
 
             string strUserDomainName = string.Empty;
+            string []arIdFPanels = null;
 
             idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, @"MAIN_DB");
 
@@ -343,6 +344,7 @@ namespace Tep64
             s_plugIns.Load(HTepUsers.GetPlugins(idListener, out iRes));
 
             if (iRes == 0) {
+                arIdFPanels = HTepUsers.GetIdIsUseFPanels(idListener, out iRes).Split(new char[] { ',' }, StringSplitOptions.None);
                 //Проверить рез-т чтения наименования плюгина
                 if (iRes == 0)
                 {
@@ -350,10 +352,11 @@ namespace Tep64
                         , miItem = null;
                     string[] arHierarchyOwnerMenuItems;
                     //Циклл по строкам - идентификатрам/разрешениям использовать плюгин
-                    foreach (KeyValuePair<int, PlugInMenuItem> pairKeyPlugIn in s_plugIns)
+                    foreach (string key in arIdFPanels)
                     {
-                        arHierarchyOwnerMenuItems =
-                            pairKeyPlugIn.Value.GetNameOwnerMenuItem(pairKeyPlugIn.Key).Split(new char[] { '\\' }, StringSplitOptions.None); ;
+                        iKeyFPanel = Int32.Parse(key);
+                        iKeyPlugIn = s_plugIns.GetKeyOfIdFPanel(iKeyFPanel);
+                        arHierarchyOwnerMenuItems = s_plugIns[iKeyPlugIn].GetNameOwnerMenuItem(iKeyFPanel).Split(new char[] { '\\' }, StringSplitOptions.None);
                         //Поиск пункта "родительского" пункта меню для плюг'ина
                         miOwner = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[0]);
                         //Проверка найден ли "родительский" пункт меню для плюг'ина
@@ -389,13 +392,14 @@ namespace Tep64
                             miOwner = miItem;
                         }
                         //Добавить пункт меню для плюг'ина
-                        miItem = miOwner.DropDownItems.Add(pairKeyPlugIn.Value.GetNameMenuItem(pairKeyPlugIn.Key)) as ToolStripMenuItem;
+                        miItem = miOwner.DropDownItems.Add(s_plugIns[iKeyPlugIn].GetNameMenuItem(iKeyFPanel)) as ToolStripMenuItem;
+                        miItem.Tag = iKeyFPanel;
                         //Обработку выбора пункта меню предоставить плюг'ину
-                        miItem.Click += pairKeyPlugIn.Value.OnClickMenuItem; //postOnClickMenuItem;
+                        miItem.Click += s_plugIns[iKeyPlugIn].OnClickMenuItem; //postOnClickMenuItem;
                         //Добавить обработчик запросов для плюг'ина от главной формы
-                        (pairKeyPlugIn.Value as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
+                        (s_plugIns[iKeyPlugIn] as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
 
-                        initializePlugIn(pairKeyPlugIn.Value);                            
+                        initializePlugIn(s_plugIns[iKeyPlugIn]);                            
                     }
 
                     if (iRes == 0)

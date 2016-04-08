@@ -68,6 +68,7 @@ namespace TepCommon
             //Обязательно наличие объекта - панели управления
             activateDateTimeRangeValue_OnChanged(true);
             (m_dgvValues as DataGridViewTEPValues).EventCellValueChanged += new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventHandler(onEventCellValueChanged);
+            (m_dgvValues as DataGridViewTEPValues).SelectionChanged += new EventHandler(m_dgvValues_SelectionChanged);
         }
         /// <summary>
         /// Инициализация элементов управления объекта
@@ -510,6 +511,22 @@ namespace TepCommon
         /// </summary>
         /// <param name="pars"></param>
         protected abstract void onEventCellValueChanged(object dgv, DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev);
+
+        protected void m_dgvValues_SelectionChanged(object sender, EventArgs ev)
+        {
+            DataTable inalg = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER];
+            if(inalg!=null)
+                foreach (DataRow r in inalg.Rows)
+                {
+                    if (m_dgvValues.Rows[m_dgvValues.SelectedCells[0].RowIndex].HeaderCell.Value != null)
+
+                        if (r["n_ALG"].ToString().Trim() == m_dgvValues.Rows[m_dgvValues.SelectedCells[0].RowIndex].HeaderCell.Value.ToString())
+                        {
+                            SetDescSelRow(r["DESCRIPTION"].ToString(), r["NAME_SHR"].ToString());
+                        }
+                }
+        }
+
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
         /// </summary>
