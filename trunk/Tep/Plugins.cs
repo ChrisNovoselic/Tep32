@@ -106,7 +106,7 @@ namespace Tep64
                             rec = Application.ProductVersion;
                             break;
                         default: // обработка индивидуальных для каждой вкладки запросов
-                            switch ((int)((EventArgsDataHost)obj).id)
+                            switch ((int)((EventArgsDataHost)obj).id_detail)
                             {
                                 case 1: //FormAboutTepProgram
                                     switch ((int)((EventArgsDataHost)obj).par[0])
@@ -136,7 +136,11 @@ namespace Tep64
                             break;
                     }
                     //Отправить ответ (исходный идентификатор + требуемый объект)
-                    ((PlugInBase)this[((EventArgsDataHost)obj).id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)((EventArgsDataHost)obj).par[0], new object[] { rec }));
+                    ((PlugInBase)this[((EventArgsDataHost)obj).id_main]).OnEvtDataRecievedHost(
+                        new EventArgsDataHost(
+                            ((EventArgsDataHost)obj).id_detail
+                            , (int)((EventArgsDataHost)obj).par[0]
+                            , new object[] { rec }));
                 }
                 else
                 {
@@ -148,7 +152,7 @@ namespace Tep64
                         }
                         catch (Exception e)
                         {
-                            Logging.Logg().Exception(e, @"FormMain_EvtDataAskedHost () - BeginInvoke (addTabPage) [id] = " + (int)((EventArgsDataHost)obj).id, Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Exception(e, @"FormMain_EvtDataAskedHost () - BeginInvoke (addTabPage) [id] = " + (int)((EventArgsDataHost)obj).id_detail, Logging.INDEX_MESSAGE.NOT_SET);
                         }
                     }
                     else

@@ -400,7 +400,11 @@ namespace Tep64
                             //Обработку выбора пункта меню предоставить плюг'ину
                             miItem.Click += s_plugIns[iKeyPlugIn].OnClickMenuItem; //postOnClickMenuItem;
                             //Добавить обработчик запросов для плюг'ина от главной формы
-                            (s_plugIns[iKeyPlugIn] as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
+                            // только ОДИН раз
+                            if ((s_plugIns[iKeyPlugIn] as PlugInBase).IsEvtDataAskedHostHandled == false)
+                                (s_plugIns[iKeyPlugIn] as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
+                            else
+                                ;
 
                             initializePlugIn(s_plugIns[iKeyPlugIn]);
                         }
@@ -453,8 +457,9 @@ namespace Tep64
         /// </summary>
         /// <param name="obj">Объект загруженной библиотеки вкладки</param>
         private void postOnClickMenuItem (object obj) {
-            int id = (int)((EventArgsDataHost)obj).id;
-            PlugInMenuItem plugIn = s_plugIns[id];
+            int idPlugIn = (int)((EventArgsDataHost)obj).id_main
+                , idFPanel = (int)((EventArgsDataHost)obj).id_detail;
+            PlugInMenuItem plugIn = s_plugIns[idPlugIn];
             bool bMenuItemChecked =
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked =
                 ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
@@ -462,11 +467,11 @@ namespace Tep64
             if (bMenuItemChecked == true)
             {
                 //Отобразить вкладку
-                m_TabCtrl.AddTabPage(plugIn.GetNameMenuItem(id), plugIn._Id, HTabCtrlEx.TYPE_TAB.FIXED);
-                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.GetObject (id));
+                m_TabCtrl.AddTabPage(plugIn.GetNameMenuItem(idFPanel), idFPanel, HTabCtrlEx.TYPE_TAB.FIXED);
+                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.GetObject(idFPanel));
             } else {
                 //Закрыть вкладку
-                m_TabCtrl.RemoveTabPage(plugIn.GetNameMenuItem(id));
+                m_TabCtrl.RemoveTabPage(plugIn.GetNameMenuItem(idFPanel));
             }
 
             if (m_iAutoActionTabs > 0)
@@ -604,7 +609,7 @@ namespace Tep64
             if ((!(id < 0))
                 && (s_plugIns.ContainsKey (id) == true))
                 //Отправить ответ (исходный идентификатор + требуемый объект)
-                ((PlugInBase)s_plugIns[id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)HFunc.ID_DATAASKED_HOST.ACTIVATE_TAB, new object[] { bActivate }));
+                ((PlugInBase)s_plugIns[id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)HFunc.ID_DATAASKED_HOST.ACTIVATE_TAB, -1, new object[] { bActivate }));
             else
                 ;
         }

@@ -26,28 +26,30 @@ namespace InterfacePlugIn
         public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
             int id = -1;
+            KeyValuePair<int, int> pair;
             
             base.OnClickMenuItem(obj, ev);
 
             id = (int)(obj as ToolStripMenuItem).Tag;
+            pair = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
 
             //Проверить признак выполнения запроса к вызвавшему объекту на получение параметров соединения с БД 
-            if (m_dictDataHostCounter.ContainsKey((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB) == false)
+            if (m_dictDataHostCounter.ContainsKey(pair) == false)
                 // отправить запрос на получение параметров соединения с БД
-                DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB); //Start
+                DataAskedHost(new object [] {id, (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB}); //Start
             else
-                if (m_dictDataHostCounter[(int)ID_DATAASKED_HOST.CONNSET_MAIN_DB] % 2 == 0)
-                    DataAskedHost((int)ID_DATAASKED_HOST.CONNSET_MAIN_DB); //Start
+                if (m_dictDataHostCounter[pair] % 2 == 0)
+                    DataAskedHost(new object [] {id, (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB}); //Start
                 else
                 {
-                    m_dictDataHostCounter[(int)ID_DATAASKED_HOST.CONNSET_MAIN_DB]++;
+                    m_dictDataHostCounter[pair]++;
 
                     (_objects[id] as HPanelCommon).Activate(false);
                     (_objects[id] as HPanelCommon).Stop();
                 }
 
             //Вернуть главной форме параметр
-            DataAskedHost(obj);
+            DataAskedHost(new object [] {id, obj});
         }
 
         public override void OnEvtDataRecievedHost(object obj)
@@ -58,12 +60,12 @@ namespace InterfacePlugIn
 
             base.OnEvtDataRecievedHost(obj);
 
-            id = _Id;
+            id = ((EventArgsDataHost)obj).id_main; // идентификатор объекта (см. 'OnEvtDataAskedHost')
 
-            switch (((EventArgsDataHost)obj).id)
+            switch (((EventArgsDataHost)obj).id_detail)
             {
                 case (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB:
-                    ((IObjectDbEdit)_objects[id]).Start(obj);
+                    ((IObjectDbEdit)_objects[id]).Start((obj as EventArgsDataHost).par[0]);
                     break;
                 case (int)ID_DATAASKED_HOST.ACTIVATE_TAB:
                     (_objects[id] as HPanelCommon).Activate((bool)(obj as EventArgsDataHost).par[0]);

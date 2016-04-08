@@ -45,7 +45,7 @@ namespace PluginAboutTepProgram
         }
 
         private void updateGUI  (object obj) {
-            switch (((EventArgsDataHost)obj).id)
+            switch (((EventArgsDataHost)obj).id_detail)
             {
                 case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
                     this.Icon = (Icon)((EventArgsDataHost)obj).par[0];
@@ -70,18 +70,21 @@ namespace PluginAboutTepProgram
         public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
             int id = -1;
+            KeyValuePair<int, int> pair;
             
             base.OnClickMenuItem(obj, ev);
 
             id = (int)(obj as ToolStripMenuItem).Tag;
+            pair = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.ICON_MAINFORM);
             
-            if (m_dictDataHostCounter.ContainsKey ((int)ID_DATAASKED_HOST.ICON_MAINFORM) == false)
-                DataAskedHost ((int)ID_DATAASKED_HOST.ICON_MAINFORM);
+            if (m_dictDataHostCounter.ContainsKey (pair) == false)
+                DataAskedHost (new object [] {id, (int)ID_DATAASKED_HOST.ICON_MAINFORM});
             else
                 ;
 
-            if (m_dictDataHostCounter.ContainsKey((int)ID_DATAASKED_HOST.STR_VERSION) == false)                
-                DataAskedHost((int)ID_DATAASKED_HOST.STR_VERSION);
+            pair = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.STR_VERSION);
+            if (m_dictDataHostCounter.ContainsKey(pair) == false)                
+                DataAskedHost(new object [] {id, (int)ID_DATAASKED_HOST.STR_VERSION});
             else
                 ;
 
@@ -98,7 +101,7 @@ namespace PluginAboutTepProgram
 
             base.OnEvtDataRecievedHost(obj);
 
-            switch (((EventArgsDataHost)obj).id) {
+            switch (((EventArgsDataHost)obj).id_detail) {
                 case (int)ID_DATAASKED_HOST.ICON_MAINFORM:
                 case (int)ID_DATAASKED_HOST.STR_VERSION:
                     (_objects[id] as FormAboutTepProgram).UpdateGUI(obj);

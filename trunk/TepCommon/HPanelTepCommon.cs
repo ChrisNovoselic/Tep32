@@ -187,7 +187,8 @@ namespace TepCommon
 
             Start();
 
-            m_handlerDb.InitConnectionSettings(((EventArgsDataHost)obj).par[0] as ConnectionSettings);
+            //m_handlerDb.InitConnectionSettings(((EventArgsDataHost)obj).par[0] as ConnectionSettings);
+            m_handlerDb.InitConnectionSettings(obj as ConnectionSettings);
         }
         ///// <summary>
         ///// Инициализация с заданными параметрами соединения с БД 

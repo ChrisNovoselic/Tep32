@@ -66,7 +66,7 @@ namespace Tep64
             this.выходToolStripMenuItem});
             this.файлToolStripMenuItem.Name = "файлToolStripMenuItem";
             this.файлToolStripMenuItem.Size = new System.Drawing.Size(45, 20);
-            this.файлToolStripMenuItem.Text = "Файл";
+            this.файлToolStripMenuItem.Text = "Файл";            
             // 
             // профайлToolStripMenuItem
             // 
@@ -76,7 +76,8 @@ namespace Tep64
             new System.Windows.Forms.ToolStripSeparator(),
             this.профайлАвтоЗагрузитьСохранитьToolStripMenuItem});
             this.профайлToolStripMenuItem.Name = "профайлToolStripMenuItem";
-            this.профайлToolStripMenuItem.Text = "Профайл";            
+            this.профайлToolStripMenuItem.Text = "Профайл";
+            this.профайлToolStripMenuItem.Enabled = false;
             // 
             // профайлЗагрузитьToolStripMenuItem
             // 
