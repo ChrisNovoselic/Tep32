@@ -356,50 +356,56 @@ namespace Tep64
                     {
                         iKeyFPanel = Int32.Parse(key);
                         iKeyPlugIn = s_plugIns.GetKeyOfIdFPanel(iKeyFPanel);
-                        arHierarchyOwnerMenuItems = s_plugIns[iKeyPlugIn].GetNameOwnerMenuItem(iKeyFPanel).Split(new char[] { '\\' }, StringSplitOptions.None);
-                        //Поиск пункта "родительского" пункта меню для плюг'ина
-                        miOwner = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[0]);
-                        //Проверка найден ли "родительский" пункт меню для плюг'ина
-                        if (miOwner == null)
-                        {//НЕ найден - создаем
-                            int indx = -1; // индекс для добавляемого пункта                                
-                            if (arHierarchyOwnerMenuItems[0].Equals(@"Помощь") == false)
-                                // индекс для всех пунктов кроме "Помощь"
-                                indx = this.MainMenuStrip.Items.Count - 1;
+                        if (!(iKeyPlugIn < 0))
+                        {
+                            arHierarchyOwnerMenuItems = s_plugIns[iKeyPlugIn].GetNameOwnerMenuItem(iKeyFPanel).Split(new char[] { '\\' }, StringSplitOptions.None);
+                            //Поиск пункта "родительского" пункта меню для плюг'ина
+                            miOwner = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[0]);
+                            //Проверка найден ли "родительский" пункт меню для плюг'ина
+                            if (miOwner == null)
+                            {//НЕ найден - создаем
+                                int indx = -1; // индекс для добавляемого пункта                                
+                                if (arHierarchyOwnerMenuItems[0].Equals(@"Помощь") == false)
+                                    // индекс для всех пунктов кроме "Помощь"
+                                    indx = this.MainMenuStrip.Items.Count - 1;
+                                else
+                                    ;
+
+                                if (indx < 0)
+                                    // для пункта "Помощь" - он всегда крайний
+                                    //  , и не имеет сложной иерархии
+                                    this.MainMenuStrip.Items.Add(miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
+                                else
+                                    // для всех пунктов кроме "Помощь"
+                                    this.MainMenuStrip.Items.Insert(indx, miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
+                            }
                             else
                                 ;
+                            //Реализовать иерархию п.п. (признак наличия иерархии - длина массива)
+                            for (int i = 1; i < arHierarchyOwnerMenuItems.Length; i++)
+                            {
+                                //Найти п. меню очередного уровня
+                                miItem = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[i]);
+                                if (miItem == null)
+                                    // в случае отсутствия добавить к ранее найденному
+                                    miOwner.DropDownItems.Add(miItem = new ToolStripMenuItem(arHierarchyOwnerMenuItems[i]));
+                                else
+                                    ;
 
-                            if (indx < 0)
-                                // для пункта "Помощь" - он всегда крайний
-                                //  , и не имеет сложной иерархии
-                                this.MainMenuStrip.Items.Add(miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
-                            else
-                                // для всех пунктов кроме "Помощь"
-                                this.MainMenuStrip.Items.Insert(indx, miOwner = new ToolStripMenuItem(arHierarchyOwnerMenuItems[0]));
+                                miOwner = miItem;
+                            }
+                            //Добавить пункт меню для плюг'ина
+                            miItem = miOwner.DropDownItems.Add(s_plugIns[iKeyPlugIn].GetNameMenuItem(iKeyFPanel)) as ToolStripMenuItem;
+                            miItem.Tag = iKeyFPanel;
+                            //Обработку выбора пункта меню предоставить плюг'ину
+                            miItem.Click += s_plugIns[iKeyPlugIn].OnClickMenuItem; //postOnClickMenuItem;
+                            //Добавить обработчик запросов для плюг'ина от главной формы
+                            (s_plugIns[iKeyPlugIn] as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
+
+                            initializePlugIn(s_plugIns[iKeyPlugIn]);
                         }
                         else
-                            ;
-                        //Реализовать иерархию п.п. (признак наличия иерархии - длина массива)
-                        for (int i = 1; i < arHierarchyOwnerMenuItems.Length; i++) {
-                            //Найти п. меню очередного уровня
-                            miItem = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[i]);
-                            if (miItem == null)
-                                // в случае отсутствия добавить к ранее найденному
-                                miOwner.DropDownItems.Add(miItem = new ToolStripMenuItem(arHierarchyOwnerMenuItems[i]));
-                            else
-                                ;
-
-                            miOwner = miItem;
-                        }
-                        //Добавить пункт меню для плюг'ина
-                        miItem = miOwner.DropDownItems.Add(s_plugIns[iKeyPlugIn].GetNameMenuItem(iKeyFPanel)) as ToolStripMenuItem;
-                        miItem.Tag = iKeyFPanel;
-                        //Обработку выбора пункта меню предоставить плюг'ину
-                        miItem.Click += s_plugIns[iKeyPlugIn].OnClickMenuItem; //postOnClickMenuItem;
-                        //Добавить обработчик запросов для плюг'ина от главной формы
-                        (s_plugIns[iKeyPlugIn] as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
-
-                        initializePlugIn(s_plugIns[iKeyPlugIn]);                            
+                            Logging.Logg().Error(@"FormMain::initializeMenu () - не найден плюгИн для вкладки (ID=" + iKeyFPanel + @")...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
 
                     if (iRes == 0)
