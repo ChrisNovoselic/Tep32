@@ -5,13 +5,14 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{BDA6E7AF-C01E-40FD-B02B-E70390CEB014}</ProjectGuid>
+    <ProjectGuid>{5F3F4106-7169-4308-89A9-ADB39B158E07}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PluginTaskTepRealTime</RootNamespace>
-    <AssemblyName>PluginTaskTepRealTime</AssemblyName>
+    <RootNamespace>PluginTaskTepMain</RootNamespace>
+    <AssemblyName>PluginTaskTepMain</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -40,9 +41,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PanelTaskTepInval.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelTaskTepOutMkt.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelTaskTepOutNorm.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PanelTaskTepRealTime.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="PluginItems.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

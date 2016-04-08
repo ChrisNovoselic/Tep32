@@ -58,6 +58,9 @@
     <Compile Include="PanelPrjRolesAccess.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="PanelTaskTepCalculate.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PanelTaskTepOutVal.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -76,13 +79,14 @@
     <Compile Include="HPanelEditTree.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="PanelTaskTepCalculate.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="TaskTepCalculate.cs" />
     <Compile Include="HandlerDbValues.cs" />
-    <Compile Include="TaskTepNTEC5NormCalculate.cs" />
-    <Compile Include="TaskTepNTEC5MktCalculate.cs" />
+    <Compile Include="TaskTepNTEC5MktCalculate.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="TaskTepNTEC5NormCalculate.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

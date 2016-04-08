@@ -10,7 +10,7 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTaskTepRealTime
+namespace PluginTaskTepMain
 {
     public partial class PanelTaskTepRealTime : PanelTaskTepCalculate
     {
@@ -241,21 +241,6 @@ namespace PluginTaskTepRealTime
             , BUTTON_RUN
             , LABEL_DESC
                 , COUNT
-        }
-    }
-
-    public class PlugIn : HFuncDbEdit
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 27;
-            register(27, typeof(PanelTaskTepRealTime), @"Задача\Расчет ТЭП", @"Оперативно");
-        }
-
-        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
-        {
-            base.OnClickMenuItem(obj, ev);
         }
     }
 }

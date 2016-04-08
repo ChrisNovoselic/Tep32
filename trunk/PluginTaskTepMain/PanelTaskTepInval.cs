@@ -11,7 +11,7 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTaskTepInval
+namespace PluginTaskTepMain
 {
     public class PanelTaskTepInval : PanelTaskTepValues
     {
@@ -192,7 +192,7 @@ namespace PluginTaskTepInval
         /// <param name="ev">Аргумент события</param>
         protected override void btnRunRes_onClick(object obj, EventArgs ev)
         {
-            btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+            btnRun_onClick(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
         }
 
         /// <summary>
@@ -201,7 +201,7 @@ namespace PluginTaskTepInval
         ///  , актуализировать таблицы с временными значениями
         /// </summary>
         /// <param name="type">Тип требуемого расчета</param>
-        private void btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        private void btnRun_onClick(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
         {
             int err = -1;
 
@@ -260,26 +260,6 @@ namespace PluginTaskTepInval
 
                 return iRes;
             }
-        }
-    }
-
-    public class PlugIn : PlugInTepTaskCalculate
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 17;
-            register(17, typeof(PanelTaskTepInval), @"Задача\Расчет ТЭП", @"Входные данные");
-        }
-
-        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
-        {
-            base.OnClickMenuItem(obj, ev);
-        }
-
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            base.OnEvtDataRecievedHost(obj);
         }
     }
 }

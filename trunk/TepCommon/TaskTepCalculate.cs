@@ -32,10 +32,14 @@ namespace TepCommon
             public enum INDEX_DATATABLE : short
             {
                 UNKNOWN = -1
-                , FTABLE
-                , IN_PARAMETER, IN_VALUES
-                , OUT_NORM_PARAMETER, OUT_NORM_VALUES
-                , OUT_PARAMETER, OUT_VALUES
+                ,
+                FTABLE
+                    , IN_PARAMETER,
+                IN_VALUES
+                    , OUT_NORM_PARAMETER,
+                OUT_NORM_VALUES
+                    , OUT_PARAMETER,
+                OUT_VALUES
                     , COUNT
             }
             /// <summary>
@@ -135,12 +139,12 @@ namespace TepCommon
                 /// <summary>
                 /// Таблица со значениями для выполнения расчета
                 /// </summary>
-                public DataTable m_table;                
+                public DataTable m_table;
             }
             /// <summary>
             /// Класс для представления аргументов при инициализации расчета
             /// </summary>
-            public class ListDATATABLE : List <DATATABLE>
+            public class ListDATATABLE : List<DATATABLE>
             {
                 public DataTable FindDataTable(INDEX_DATATABLE indxDataTable)
                 {
@@ -181,10 +185,10 @@ namespace TepCommon
             /// <param name="type">Тип расчета</param>
             /// <param name="req">Тип рассчитываемых значений</param>
             /// <returns>Индекс таблицы БД в списке</returns>
-            public static INDEX_DBTABLE_NAME GetIndexNameDbTable (TYPE type, TABLE_CALCULATE_REQUIRED req)
+            public static INDEX_DBTABLE_NAME GetIndexNameDbTable(TYPE type, TABLE_CALCULATE_REQUIRED req)
             {
                 INDEX_DBTABLE_NAME indxRes = INDEX_DBTABLE_NAME.UNKNOWN;
-                
+
                 switch (type)
                 {
                     case TaskCalculate.TYPE.IN_VALUES:
@@ -256,7 +260,7 @@ namespace TepCommon
             protected int initValues(P_ALG pAlg, DataTable tablePar, DataTable tableVal)
             {
                 int iRes = 0; //Предположение, что ошибки нет
-                
+
                 DataRow[] rVal = null;
                 int idPut = -1
                     , idComponent = -1;
@@ -292,13 +296,19 @@ namespace TepCommon
                             // добавить параметр компонента в алгоритме расчета
                             {
                                 m_iId = idPut
-                                //, m_iIdComponent = idComponent
-                                , m_bDeny = false
-                                , value = (float)(double)rVal[0][@"VALUE"]
-                                , m_sQuality = ID_QUALITY_VALUE.DEFAULT // не рассчитывался
-                                , m_idRatio = (int)rPar[@"ID_RATIO"]
-                                , m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (float)rPar[@"MINVALUE"] //??? - ошибка д.б. float
-                                , m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (float)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
+                                    //, m_iIdComponent = idComponent
+                                ,
+                                m_bDeny = false
+                                ,
+                                value = (float)(double)rVal[0][@"VALUE"]
+                                ,
+                                m_sQuality = ID_QUALITY_VALUE.DEFAULT // не рассчитывался
+                                ,
+                                m_idRatio = (int)rPar[@"ID_RATIO"]
+                                ,
+                                m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (float)rPar[@"MINVALUE"] //??? - ошибка д.б. float
+                                ,
+                                m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (float)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
                             });
                         else
                             ;
@@ -313,7 +323,8 @@ namespace TepCommon
 
                 return iRes;
             }
-        }        
+        }
+
         /// <summary>
         /// Класс для расчета технико-экономических показателей
         /// </summary>
@@ -322,7 +333,7 @@ namespace TepCommon
             /// <summary>
             /// Признак расчета ТЭП-оперативно
             /// </summary>
-            protected override bool isRealTime { get { return ! (m_indxCompRealTime == INDX_COMP.UNKNOWN); } }
+            protected override bool isRealTime { get { return !(m_indxCompRealTime == INDX_COMP.UNKNOWN); } }
 
             private bool isRealTimeBL1456
             {
@@ -342,9 +353,13 @@ namespace TepCommon
             /// <summary>
             /// Перечисления индексы для массива идентификаторов компонентов оборудования ТЭЦ
             /// </summary>
-            private enum INDX_COMP : short { UNKNOWN = -1
-                , iBL1, iBL2, iBL3, iBL4, iBL5, iBL6, iST
-                , COUNT};
+            private enum INDX_COMP : short
+            {
+                UNKNOWN = -1
+                    , iBL1, iBL2, iBL3, iBL4, iBL5, iBL6,
+                iST
+                    , COUNT
+            };
             /// <summary>
             /// Константы - идентификаторы компонентов оборудования ТЭЦ
             /// </summary>
@@ -358,7 +373,7 @@ namespace TepCommon
             /// <summary>
             /// Массив - идентификаторы компонентов оборудования ТЭЦ
             /// </summary>
-            private readonly int [] ID_COMP =
+            private readonly int[] ID_COMP =
             {
                 BL1, BL2, BL3, BL4, BL5, BL6
                     , ST
@@ -370,7 +385,7 @@ namespace TepCommon
             /// <summary>
             /// Объект, обеспечивающий вычисление нормативных значений при работе оборудования ТЭЦ
             /// </summary>
-            private FTable fTable;            
+            private FTable fTable;
             /// <summary>
             /// Словарь с расчетными НОРМативными параметрами - ключ - идентификатор в алгоритме расчета
             /// </summary>
@@ -378,16 +393,21 @@ namespace TepCommon
             /// <summary>
             /// Перечисление - режимы работы оборудования
             /// </summary>
-            private enum MODE_DEV : short { UNKNOWN = -1, COND_1 = 1, ELEKTRO2_2, ELEKTRO1_2a, TEPLO_3
-                , COUNT }
+            private enum MODE_DEV : short
+            {
+                UNKNOWN = -1, COND_1 = 1, ELEKTRO2_2, ELEKTRO1_2a,
+                TEPLO_3
+                    , COUNT
+            }
             /// <summary>
             /// Словарь - режимы работы для компонентов станции
             /// </summary>
-            private Dictionary <int, MODE_DEV> _modeDev;
+            private Dictionary<int, MODE_DEV> _modeDev;
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public TaskTepCalculate() : base ()
+            public TaskTepCalculate()
+                : base()
             {
                 m_indxCompRealTime = INDX_COMP.UNKNOWN;
 
@@ -418,7 +438,7 @@ namespace TepCommon
             private int initInValues(DataTable tablePar, DataTable tableVal)
             {
                 int iRes = 0;
-                
+
                 MODE_DEV mDev = MODE_DEV.UNKNOWN;
 
                 iRes = initValues(In, tablePar, tableVal);
@@ -496,7 +516,7 @@ namespace TepCommon
 
                 DataTable tableRes = null;
 
-                iInitValuesRes = initValues(listDataTables);                
+                iInitValuesRes = initValues(listDataTables);
 
                 if (iInitValuesRes == 0)
                 {
@@ -572,7 +592,7 @@ namespace TepCommon
                 Norm[@"24"][ID_COMP[ST]].value = calculateNormative(@"24");
                 /*-------------25 - W т/тф(ном)-------------*/
                 calculateNormative(@"25");
-                
+
                 //Изменение прямого порядка вычисления
                 /*-------------49 - D пе -------------*/
                 Norm[@"49"][ID_COMP[ST]].value = calculateNormative(@"49");
