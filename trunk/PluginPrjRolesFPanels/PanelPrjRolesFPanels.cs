@@ -10,12 +10,12 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginPrjRolesPlugIns
+namespace PluginPrjRolesFPanels
 {
-    public class PanelPrjRolesPlugIns : PanelPrjRolesAccess
+    public class PanelPrjRolesFPanels : PanelPrjRolesAccess
     {
-        public PanelPrjRolesPlugIns(IPlugIn iFunc)
-            : base(iFunc, @"roles", @"ID_EXT,ID_PLUGIN", @"plugins", @"IsUse")
+        public PanelPrjRolesFPanels(IPlugIn iFunc)
+            : base(iFunc, @"roles", @"ID_EXT,ID_FPANEL", @"fpanels", @"IsUse")
         {
             InitializeComponent();
         }
@@ -31,7 +31,7 @@ namespace PluginPrjRolesPlugIns
             : base()
         {
             _Id = 7;
-            register(7, typeof(PanelPrjRolesPlugIns), @"Проект\Права доступа", @"Роли (группы)");
+            register(7, typeof(PanelPrjRolesFPanels), @"Проект\Права доступа", @"Роли (группы)");
         }
 
         public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)

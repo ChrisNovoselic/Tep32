@@ -14,7 +14,7 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginTaskAutobookYearlyPlan
+namespace PluginTaskAutobook
 {
     public class PanelTaskAutobookYearlyPlan : HPanelTepCommon
     {
@@ -1540,21 +1540,6 @@ namespace PluginTaskAutobookYearlyPlan
                 + dtBegin.Year + " год.";
 
             dgvYear.Rows[dtBegin.Month - 1].Selected = true;
-        }
-    }
-
-    public class PlugIn : HFuncDbEdit
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 29;
-            register(29, typeof(PanelTaskAutobookYearlyPlan), @"Задача\Учет активной э/э", @"Годовой план");
-        }
-
-        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
-        {
-            base.OnClickMenuItem(obj, ev);
         }
     }
 }

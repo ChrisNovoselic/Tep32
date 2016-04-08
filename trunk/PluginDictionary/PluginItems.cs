@@ -16,7 +16,7 @@ namespace PluginDictionary
         {
             _Id = 2;
 
-            register(2, typeof(PanelDictPlugIns), @"Настройка", @"Состав плюгин'ов");
+            register(2, typeof(PanelDictFPanels), @"Настройка", @"Состав вкладок");
             register(3, typeof(PanelDictTime), @"Настройка", @"Интервалы времени");
             register(4, typeof(PanelDictMessage), @"Настройка", @"Типы сообщений журнала");
             register(6, typeof(PanelDictProfilesUnit), @"Настройка", @"Элементы интерфейса");

@@ -41,13 +41,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PanelDictFPanels.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PanelDictMeasure.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="PanelDictMessage.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="PanelDictPlugIns.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="PanelDictProfilesUnit.cs">

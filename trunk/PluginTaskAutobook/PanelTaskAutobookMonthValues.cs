@@ -16,7 +16,7 @@ using InterfacePlugIn;
 
 namespace PluginTaskAutobook
 {
-    public class PanelTaskAutobook : HPanelTepCommon
+    public class PanelTaskAutobookMonthValues : HPanelTepCommon
     {
         /// <summary>
         /// 
@@ -924,7 +924,7 @@ namespace PluginTaskAutobook
         /// 
         /// </summary>
         /// <param name="iFunc"></param>
-        public PanelTaskAutobook(IPlugIn iFunc)
+        public PanelTaskAutobookMonthValues(IPlugIn iFunc)
             : base(iFunc)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
@@ -1736,10 +1736,10 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="iCtrl"></param>
         /// <param name="bClose"></param>
-        protected void clear(int iCtrl = (int)PanelTaskAutobook.INDEX_CONTROL.UNKNOWN, bool bClose = false)
+        protected void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
         {
             ComboBox cbx = null;
-            PanelTaskAutobook.INDEX_CONTROL indxCtrl = (PanelTaskAutobook.INDEX_CONTROL)iCtrl;
+            INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
 
             deleteSession();
             //??? повторная проверка
@@ -2031,21 +2031,6 @@ namespace PluginTaskAutobook
         {
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
-        }
-    }
-
-    public class PlugIn : HFuncDbEdit
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 23;
-            register(23, typeof(PanelTaskAutobook), @"Задача\Учет активной э/э", @"Помесячно");
-        }
-
-        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
-        {
-            base.OnClickMenuItem(obj, ev);
         }
     }
 }

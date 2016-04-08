@@ -9,10 +9,10 @@ using InterfacePlugIn;
 
 namespace PluginDictionary
 {
-    public class PanelDictPlugIns : HPanelEditList
+    public class PanelDictFPanels : HPanelEditList
     {
-        public PanelDictPlugIns(IPlugIn iFunc)
-            : base(iFunc, @"plugins", @"ID", @"DESCRIPTION")
+        public PanelDictFPanels(IPlugIn iFunc)
+            : base(iFunc, @"fpanels", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();
 

@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2012 for Windows Desktop
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HClassLibrary", "..\HClassLibrary\HClassLibrary.csproj", "{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TepCommon", "TepCommon\TepCommon.csproj", "{96E92AAE-CC42-4F6B-B737-C9AADA560D20}"
@@ -48,7 +48,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginPrjInParameters", "Pl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginPrjOutParameters", "PluginPrjOutParameters\PluginPrjOutParameters.csproj", "{FB914F95-D740-45E0-AF61-3B51B3A0CE2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginPrjRolesPlugIns", "PluginPrjRolesPlugIns\PluginPrjRolesPlugIns.csproj", "{9B12B796-9E55-43D9-A2DA-A076842A3EB0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginPrjRolesFPanels", "PluginPrjRolesFPanels\PluginPrjRolesFPanels.csproj", "{9B12B796-9E55-43D9-A2DA-A076842A3EB0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginPrjRolesProfiles", "PluginPrjRolesProfiles\PluginPrjRolesProfiles.csproj", "{FFD3933C-33D4-4178-84F6-5E6D56AA1D8D}"
 EndProject
@@ -65,8 +65,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTaskTepOutMkt", "PluginTaskTepOutMkt\PluginTaskTepOutMkt.csproj", "{C8E734D7-29B2-40C2-950A-CD5EE3107652}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginDictionary", "PluginDictionary\PluginDictionary.csproj", "{41670031-F408-46C4-B279-3028C7C6D1BD}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginTaskAutobookYearlyPlan", "PluginTaskAutobookYearlyPlan\PluginTaskAutobookYearlyPlan.csproj", "{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}"
 EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
@@ -371,16 +369,6 @@ Global
 		{41670031-F408-46C4-B279-3028C7C6D1BD}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{41670031-F408-46C4-B279-3028C7C6D1BD}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{41670031-F408-46C4-B279-3028C7C6D1BD}.Release|x86.ActiveCfg = Release|Any CPU
-		{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{3BD963E6-0A1B-4C9E-8657-ABC9300D5F49}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -7,21 +7,17 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginDictionary
+namespace PluginTaskAutobook
 {
     public class PlugIn : HFuncDbEdit
     {
         public PlugIn()
             : base()
         {
-            _Id = 2;
+            _Id = 23;
 
-            register(2, typeof(PanelDictPlugIns), @"Настройка", @"Состав плюгин'ов");
-            register(3, typeof(PanelDictTime), @"Настройка", @"Интервалы времени");
-            register(4, typeof(PanelDictMessage), @"Настройка", @"Типы сообщений журнала");
-            register(6, typeof(PanelDictProfilesUnit), @"Настройка", @"Элементы интерфейса");
-            register(10, typeof(PanelDictMeasure), @"Настройка", @"Единицы измерения");
-            register(13, typeof(PanelDictSourceInterface), @"Настройка", @"Интерфейсы источников данных");            
+            register(23, typeof(PanelTaskAutobookMonthValues), @"Задача\Учет активной э/э", @"По-месячно");
+            register(29, typeof(PanelTaskAutobookYearlyPlan), @"Задача\Учет активной э/э", @"Годовой план");            
         }
 
         public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
