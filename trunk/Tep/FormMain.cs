@@ -601,15 +601,23 @@ namespace Tep64
         {
             //'Activate(false)' и 'Stop' вызываются в 'PlugIn'-е
             //activatePlugIn (m_TabCtrl.GetTabPageId(iPrevSelectedindex), false);
-            activatePlugIn (m_TabCtrl.GetTabPageId(), true);            
+            activateFPanel (m_TabCtrl.GetTabPageId(), true);            
         }
 
-        private void activatePlugIn(int id, bool bActivate)
+        private void activateFPanel(int id_fpanel, bool bActivate)
         {
-            if ((!(id < 0))
-                && (s_plugIns.ContainsKey (id) == true))
-                //Отправить ответ (исходный идентификатор + требуемый объект)
-                ((PlugInBase)s_plugIns[id]).OnEvtDataRecievedHost(new EventArgsDataHost((int)HFunc.ID_DATAASKED_HOST.ACTIVATE_TAB, -1, new object[] { bActivate }));
+            int id_plugIn = -1;
+
+            if (!(id_fpanel < 0))
+            {
+                id_plugIn = s_plugIns.GetKeyOfIdFPanel(id_fpanel);
+
+                if (!(id_plugIn < 0))
+                    //Отправить ответ (исходный идентификатор + требуемый объект)
+                    ((PlugInBase)s_plugIns[id_plugIn]).OnEvtDataRecievedHost(new EventArgsDataHost(id_fpanel, (int)HFunc.ID_DATAASKED_HOST.ACTIVATE_TAB, new object[] { bActivate }));
+                else
+                    ;
+            }
             else
                 ;
         }
