@@ -41,9 +41,7 @@ namespace PluginPrjTepFTable
             DGV_VALUES
                 , LABEL_DESC,
             INDEX_CONTROL_COUNT
-
-                , ZGRAPH_fTABLE,
-            CHRTGRAPH_fTABLE
+                , ZGRAPH_fTABLE
                 , TEXTBOX_FIND, LABEL_FIND,
             PANEL_FIND
                 ,
@@ -85,7 +83,7 @@ namespace PluginPrjTepFTable
             DataGridView dgv = null;
             List<string> listNAlg;
             string strItem = string.Empty;
-            m_tblOrigin = m_handlerDb.GetDataTable(@"ftable", out err); ;
+            m_tblOrigin = m_handlerDb.GetDataTable(@"ftable", out err);
 
             if (err == 0)
             {
@@ -146,18 +144,6 @@ namespace PluginPrjTepFTable
                 rView.Visible = bVisible;
             }
         }
-
-        ///// <summary>
-        ///// Включить/блокировать кнопки
-        /////  , если 'View' имеют/не_имеют фокус ввода
-        ///// </summary>
-        ///// <param name="bEnabled">Признак доступности</param>
-        //private void btnAddDeleteEnabled(bool bEnabled)
-        //{
-        //    Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0].Enabled =
-        //    Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0].Enabled =
-        //        bEnabled;
-        //}
 
         /// <summary>
         /// Обработчик события - изменение выбранной строки
@@ -309,27 +295,6 @@ namespace PluginPrjTepFTable
             else
                 ; // нет ни одной выбранной строки
         }
-
-        ///// <summary>
-        ///// Обработчик события - 
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событий (отображение таблицы значений)</param>
-        ///// <param name="ev">Аргумент события</param>
-        //private void dgvValues_OnRowEnter(object obj, DataGridViewCellEventArgs ev)
-        //{
-        //    //btnAddDeleteEnabled(true);
-        //    (obj as DataGridView).BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-        //    (Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true)[0] as DataGridView).BorderStyle = System.Windows.Forms.BorderStyle.None;
-        //}
-        ///// <summary>
-        ///// Обработчик события - 
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событий (отображение таблицы значений)</param>
-        ///// <param name="ev">Аргумент события</param>
-        //private void dgvValues_OnLeave(object obj, EventArgs ev)
-        //{
-        //    btnAddDeleteEnabled(false);
-        //}
 
         /// <summary>
         /// Обработка события при успешной синхронизации целевойй таблицы в БД
