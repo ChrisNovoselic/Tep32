@@ -341,7 +341,7 @@ namespace Tep64
 
             initializeLogging ();
 
-            s_plugIns.Load(HTepUsers.GetPlugins(idListener, out iRes));
+            s_plugIns.Load(HTepUsers.GetPlugins(idListener, out iRes), out iRes);
 
             if (iRes == 0) {
                 arIdFPanels = HTepUsers.GetIdIsUseFPanels(idListener, out iRes).Split(new char[] { ',' }, StringSplitOptions.None);

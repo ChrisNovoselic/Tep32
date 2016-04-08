@@ -77,56 +77,67 @@ namespace TepCommon
             DataRow[] rowsIsUse;
             List <int> listIdParsedFPanel = new List<int> ();
 
-            //Цикл по строкам - идентификатрам/разрешениям использовать плюгин                    
-            for (i = 0; i < tableRoles.Rows.Count; i++)
+            if (!(tableRoles.Columns.IndexOf(@"ID_FPANEL") < 0))
             {
-                idFPanel = (Int16)tableRoles.Rows[i][@"ID_FPANEL"];
-                if (listIdParsedFPanel.IndexOf(idFPanel) < 0)
+                //Цикл по строкам - идентификатрам/разрешениям использовать плюгин                    
+                for (i = 0; i < tableRoles.Rows.Count; i++)
                 {
-                    listIdParsedFPanel.Add(idFPanel);
-                    //??? возможна повторная обработка
-                    indxRow = -1;
-                    rowsIsUse = tableRoles.Select(@"ID_FPANEL=" + idFPanel);
-                    //Проверить разрешение использовать плюгин
-                    switch (rowsIsUse.Length)
+                    idFPanel = (Int16)tableRoles.Rows[i][@"ID_FPANEL"];
+                    if (listIdParsedFPanel.IndexOf(idFPanel) < 0)
                     {
-                        case 0:
-                            break;
-                        case 1: // в БД указано разрешение только для группы (пользователя)
-                            indxRow = 0;
-                            break;
-                        case 2: // в БД указаны значения как для группы так для пользователя
-                            foreach (DataRow r in rowsIsUse)
-                            {
-                                indxRow++;
+                        listIdParsedFPanel.Add(idFPanel);
+                        //??? возможна повторная обработка
+                        indxRow = -1;
+                        rowsIsUse = tableRoles.Select(@"ID_FPANEL=" + idFPanel);
+                        //Проверить разрешение использовать плюгин
+                        switch (rowsIsUse.Length)
+                        {
+                            case 0:
+                                break;
+                            case 1: // в БД указано разрешение только для группы (пользователя)
+                                indxRow = 0;
+                                break;
+                            case 2: // в БД указаны значения как для группы так для пользователя
+                                foreach (DataRow r in rowsIsUse)
+                                {
+                                    indxRow++;
 
-                                if ((Byte)r[@"IS_ROLE"] == 0)
-                                    // приоритет индивидуальной настройки
-                                    break;
-                                else
-                                    ;
-                            }
-                            break;
-                        default:
-                            throw new Exception(@"HTepUsers::GetIdIsUsePlugins (ID_PLUGIN=" + tableRoles.Rows[i][@"ID_PLUGIN"]);
-                    }
+                                    if ((Byte)r[@"IS_ROLE"] == 0)
+                                        // приоритет индивидуальной настройки
+                                        break;
+                                    else
+                                        ;
+                                }
+                                break;
+                            default:
+                                throw new Exception(@"HTepUsers::GetIdIsUsePlugins (ID_PLUGIN=" + tableRoles.Rows[i][@"ID_PLUGIN"]);
+                        }
 
-                    if (!(indxRow < 0))
-                        if ((Byte)rowsIsUse[indxRow][@"IsUse"] == 1)
-                            strRes += idFPanel + @",";
+                        if (!(indxRow < 0))
+                            if ((Byte)rowsIsUse[indxRow][@"IsUse"] == 1)
+                                strRes += idFPanel + @",";
+                            else
+                                ;
                         else
                             ;
+                    }
                     else
-                        ;
+                        ; // плюгИн уже обработан
                 }
+                //Удалить крайний символ
+                if (strRes.Length > 0)
+                    strRes = strRes.Substring(0, strRes.Length - 1);
                 else
-                    ; // плюгИн уже обработан
+                    ;
             }
-            //Удалить крайний символ
-            if (strRes.Length > 0)
-                strRes = strRes.Substring(0, strRes.Length - 1);
             else
-                ;
+            {// не найдено необходимое поле в таблице для  формирования списка вккладок для пользователя
+                iRes = -1;
+
+                Logging.Logg().Error(@"HTepUsers::GetIdIsUseFPanels () - не найдено необходимое поле [ID_FPANEL] в таблице [" + tableRoles.TableName
+                    + @"] для  формирования списка вккладок для пользователя"
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+            }
 
             return strRes;
         }

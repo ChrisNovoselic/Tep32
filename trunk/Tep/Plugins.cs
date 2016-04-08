@@ -164,37 +164,45 @@ namespace Tep64
             /// Загрузить все плюгИны
             /// </summary>
             /// <param name="tableNamePlugins">Таблица с наименованиями</param>
-            public void Load (DataTable tableFPanels)
+            public void Load (DataTable tableFPanels, out int err)
             {
-                int iRes = 0
-                    , idPlugIn = -1, idFPanel = -1;
+                err = 0;
+
+                int idPlugIn = -1, idFPanel = -1;
                 PlugInMenuItem plugIn = null;
 
-                //Цикл по строкам - идентификатрам/разрешениям использовать функц./панель из плюгина
-                for (int i = 0; (i < tableFPanels.Rows.Count) && (iRes == 0); i++)
-                {
-                    //Идентификатор плюг'ина
-                    idPlugIn = Int16.Parse(tableFPanels.Rows[i][@"ID_PLUGIN"].ToString());
-
-                    if (ContainsKey(idPlugIn) == false)
+                if (!(tableFPanels == null))
+                    //Цикл по строкам - идентификатрам/разрешениям использовать функц./панель из плюгина
+                    for (int i = 0; (i < tableFPanels.Rows.Count) && (err == 0); i++)
                     {
-                        plugIn = load(tableFPanels.Rows[i][@"NAME_PLUGIN"].ToString().Trim(), out iRes);
+                        //Идентификатор плюг'ина
+                        idPlugIn = Int16.Parse(tableFPanels.Rows[i][@"ID_PLUGIN"].ToString());
 
-                        if (iRes == 0)
-                        {                            
-                            //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
-                            if (((PlugInBase)plugIn)._Id == idPlugIn)
+                        if (ContainsKey(idPlugIn) == false)
+                        {
+                            plugIn = load(tableFPanels.Rows[i][@"NAME_PLUGIN"].ToString().Trim(), out err);
+
+                            if (err == 0)
                             {
-                                Add(idPlugIn, plugIn);
+                                //Проверка на соответствие идентификаторов в БД и коде (м.б. и не нужно???)
+                                if (((PlugInBase)plugIn)._Id == idPlugIn)
+                                {
+                                    Add(idPlugIn, plugIn);
+                                }
+                                else
+                                    err = -2;
                             }
                             else
-                                iRes = -2;
+                                ; // ошибка при загрузке плюгИна
                         }
                         else
-                            ; // ошибка при загрузке плюгИна
+                            ; //plugIn уже был загружен
                     }
-                    else
-                        ; //plugIn уже был загружен
+                else
+                {
+                    err = -1;
+
+                    Logging.Logg().Error(@"HPlugIns::Load () - входная таблица = NULL...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
