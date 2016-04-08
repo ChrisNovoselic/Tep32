@@ -298,19 +298,22 @@ namespace PluginTaskAutobook
             {
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
-                    if (dgvView.Rows[i].Cells[0].Value.ToString() ==
-                        Convert.ToDateTime(tbOrigin.Rows[0]["WR_DATETIME"]).ToShortDateString())
+                    for (int j = 0; j < tbOrigin.Rows.Count; j++)
                     {
-                        dgvView.Rows[i].Cells[INDEX_GTP.GTP12.ToString()].Value =
-                            tbOrigin.Rows[(int)INDEX_GTP.GTP12]["VALUE"];
-                        dgvView.Rows[i].Cells[INDEX_GTP.GTP36.ToString()].Value =
-                            tbOrigin.Rows[(int)INDEX_GTP.GTP36]["VALUE"];
-                        dgvView.Rows[i].Cells[INDEX_GTP.TEC.ToString()].Value =
-                            tbOrigin.Rows[(int)INDEX_GTP.TEC]["VALUE"];
+                        do
+                        {
+                            if (dgvView.Rows[i].Cells[0].Value.ToString() ==
+                                Convert.ToDateTime(tbOrigin.Rows[j]["WR_DATETIME"]).ToShortDateString())
+                            {
+                                dgvView.Rows[i].Cells[INDEX_GTP.GTP12.ToString()].Value =
+                                    tbOrigin.Rows[j]["VALUE"];
+                                break;
+                            }
 
-                        fillCells(i, dgvView);
-                        break;
+                        } while (true);
+
                     }
+                    //fillCells(i, dgvView);
                 }
             }
 
@@ -341,6 +344,11 @@ namespace PluginTaskAutobook
             private void fillCells(int i, DataGridView dgvView)
             {
                 int STswen = 0;
+
+                //for (int i = 0; i < length; i++)
+                //{
+
+                //}
 
                 if (i == 0)
                     dgvView.Rows[i].Cells["StSwen"].Value =
@@ -412,10 +420,13 @@ namespace PluginTaskAutobook
                                 + @", " + _Session.m_Id + @" as [ID_SESSION]"
                                 + @",[DATE_TIME]"
                                 + @", m.[AVG]"
+                                 + @", ROW_NUMBER() OVER(ORDER BY v.ID_PUT) as [EXTENDED_DEFINITION] "
                             //+ @", GETDATE () as [WR_DATETIME]"
-                            + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+                            + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                            + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
                                 + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
-                                + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
+                                + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
+                                + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
                                 + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                             + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
                             ;
@@ -441,6 +452,7 @@ namespace PluginTaskAutobook
                             + @", [QUALITY]"
                             + ",[VALUE]"
                              + ",[DATE_TIME] as [WR_DATETIME]"
+                              + @",[EXTENDED_DEFINITION]"
                         + @" FROM (" + strRes + @") as v"
                         + @" ORDER BY  v.ID_PUT,v.DATE_TIME"
                         ;
@@ -501,7 +513,7 @@ namespace PluginTaskAutobook
                     // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
                     arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                     // получить входные для расчета значения для возможности редактирования
-                    strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
+                    strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
                         + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
                         + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                     arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
@@ -671,7 +683,8 @@ namespace PluginTaskAutobook
                           + rowSel[@"ID_PUT"] + @"," //ID_PUT
                           + rowSel[@"QUALITY"] + @"," //QUALITY
                           + rowSel[@"VALUE"] + @"," + //VALUE
-                        "'" + rowSel[@"WR_DATETIME"] + "'"
+                        "'" + rowSel[@"WR_DATETIME"] + "',"
+                          + rowSel[@"EXTENDED_DEFINITION"]
                           ;
 
                         strQuery += @"),";
@@ -803,49 +816,62 @@ namespace PluginTaskAutobook
             /// /// <param name="dtOut">таблица с параметрами</param>
             public void getTable(DataTable dtOrigin, DataTable dtOut)
             {
-                int i = 0;
-                int count = 0;
+                int i = 0
+                , count = 0;
+                string fltrDate;
 
                 calcTable[(int)INDEX_GTP.GTP12] = dtOrigin.Clone();
                 calcTable[(int)INDEX_GTP.TEC] = dtOrigin.Clone();
                 calcTable[(int)INDEX_GTP.GTP36] = dtOrigin.Clone();
 
-                foreach (DataRow row in dtOrigin.Rows)
-                {
-                    if (i < 2)
-                    {
-                        calcTable[(int)INDEX_GTP.GTP12].Rows.Add(new object[]
-                            {
-                                row["ID_PUT"]
-                                ,row["ID_SESSION"]
-                                ,row["QUALITY"]
-                                ,row["VALUE"]
-                                ,row["WR_DATETIME"]
-                            });
-                    }
-                    else
-                        calcTable[(int)INDEX_GTP.GTP36].Rows.Add(new object[]
-                            {
-                                row["ID_PUT"]
-                                ,row["ID_SESSION"]
-                                ,row["QUALITY"]
-                                ,row["VALUE"]
-                                ,row["WR_DATETIME"]
-                            });
-                    i++;
-                }
-                calculate(calcTable);
+                var m_enumModes = (from r in dtOrigin.AsEnumerable()
+                                   orderby r.Field<DateTime>("WR_DATETIME")
+                                   select new
+                                   {
+                                       DATE_TIME = r.Field<DateTime>("WR_DATETIME"),
+                                   }).Distinct();
 
-                for (int t = 0; t < value.Count(); t++)
+                for (int j = 0; j < m_enumModes.Count(); j++)
                 {
-                    calcTable[(int)INDEX_GTP.TEC].Rows.Add(new object[]
+                    DataRow[] drOrigin = dtOrigin.Select(String.Format(dtOrigin.Locale, "WR_DATETIME = '{0:o}'", m_enumModes.ElementAt(j).DATE_TIME));
+
+                    foreach (DataRow row in drOrigin)
+                    {
+                        if (i < 2)
+                        {
+                            calcTable[(int)INDEX_GTP.GTP12].Rows.Add(new object[]
+                            {
+                                row["ID_PUT"]
+                                ,row["ID_SESSION"]
+                                ,row["QUALITY"]
+                                ,row["VALUE"]
+                                ,m_enumModes.ElementAt(j).DATE_TIME
+                            });
+                        }
+                        else
+                            calcTable[(int)INDEX_GTP.GTP36].Rows.Add(new object[]
+                            {
+                                row["ID_PUT"]
+                                ,row["ID_SESSION"]
+                                ,row["QUALITY"]
+                                ,row["VALUE"]
+                                ,m_enumModes.ElementAt(j).DATE_TIME
+                            });
+                        i++;
+                    }
+                    calculate(calcTable);
+
+                    for (int t = 0; t < value.Count(); t++)
+                    {
+                        calcTable[(int)INDEX_GTP.TEC].Rows.Add(new object[]
                             {
                                 dtOut.Rows[t]["ID"]
                                 ,dtOrigin.Rows[count]["ID_SESSION"]
                                 ,dtOrigin.Rows[count]["QUALITY"]
                                 ,value[t]
-                                ,dtOrigin.Rows[count]["WR_DATETIME"]
+                                ,m_enumModes.ElementAt(j).DATE_TIME
                             });
+                    }
                 }
             }
 
@@ -862,7 +888,7 @@ namespace PluginTaskAutobook
                 if (value.Count() > 0)
                     value.Clear();
 
-                for (int i = 0; i < (int)INDEX_GTP.COUNT; i++)
+                for (int i = (int)INDEX_GTP.GTP12; i < (int)INDEX_GTP.CorGTP12; i++)
                 {
                     switch (i)
                     {
@@ -882,7 +908,6 @@ namespace PluginTaskAutobook
                             break;
                     }
                 }
-
             }
 
             /// <summary>
@@ -1339,7 +1364,7 @@ namespace PluginTaskAutobook
         /// <param name="arQueryRanges"></param>
         /// <param name="err"></param>
         /// <param name="strErr"></param>
-        private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr, int i)
+        private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
         {
             err = 0;
             strErr = string.Empty;
@@ -1347,11 +1372,11 @@ namespace PluginTaskAutobook
             Session.New();
             //изменение начальной даты
             if (arQueryRanges.Count() > 1)
-                arQueryRanges[1] = new DateTimeRange(arQueryRanges[1].Begin.AddDays(-(arQueryRanges[1].Begin.Day - 1 - i))
-                    , arQueryRanges[1].End.AddDays(-(arQueryRanges[1].End.Day - 2 - i)));
+                arQueryRanges[1] = new DateTimeRange(arQueryRanges[1].Begin.AddDays(-(arQueryRanges[1].Begin.Day - 1))
+                    , arQueryRanges[1].End.AddDays(-(arQueryRanges[1].End.Day - 2)));
             else
-                arQueryRanges[0] = new DateTimeRange(arQueryRanges[0].Begin.AddDays(-(arQueryRanges[0].Begin.Day - 1 - i))
-                    , arQueryRanges[0].End.AddDays(-(arQueryRanges[0].End.Day - 2 - i)));
+                arQueryRanges[0] = new DateTimeRange(arQueryRanges[0].Begin.AddDays(-(arQueryRanges[0].Begin.Day - 1))
+                    , arQueryRanges[0].End.AddDays(dayIsMonth - arQueryRanges[0].End.Day));
             //Запрос для получения архивных данных
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
             //Запрос для получения автоматически собираемых данных
@@ -1453,42 +1478,42 @@ namespace PluginTaskAutobook
 
             if (!(iRegDbConn < 0))
             {
-                for (int i = 0; i < dayIsMonth; i++)
+                //for (int i = 0; i < dayIsMonth; i++)
+                //{
+                // установить значения в таблицах для расчета, создать новую сессию
+                setValues(HandlerDb.GetDateTimeRangeValuesVar(), out err, out errMsg);
+
+                if (err == 0)
                 {
-                    // установить значения в таблицах для расчета, создать новую сессию
-                    setValues(HandlerDb.GetDateTimeRangeValuesVar(), out err, out errMsg, i);
-
-                    if (err == 0)
+                    if (m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
                     {
-                        if (m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
-                        {
-                            // создать копии для возможности сохранения изменений
-                            setValues();
+                        // создать копии для возможности сохранения изменений
+                        setValues();
 
-                            AutoBookCalc.getTable(m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION],
-                                        HandlerDb.getOutValues(out err));
-                            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
-                            //break;
-                            //запись выходных значений во временную таблицу
-                            HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
-                            // отобразить значения
-                            dgvAB.ShowValues(m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                                , dgvAB);
-
-                        }
-                        else
-                            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.getOutValues(out err);
+                        AutoBookCalc.getTable(m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION],
+                                    HandlerDb.getOutValues(out err));
+                        m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
                         //break;
+                        //запись выходных значений во временную таблицу
+                        //HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
+                        // отобразить значения
+                        dgvAB.ShowValues(m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                            , dgvAB);
+
                     }
                     else
-                    {
-                        // в случае ошибки "обнулить" идентификатор сессии
-                        deleteSession();
-                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-                    }
-                    //удалить сессию
-                    deleteSession();
+                        m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.getOutValues(out err);
+                    //break;
                 }
+                else
+                {
+                    // в случае ошибки "обнулить" идентификатор сессии
+                    deleteSession();
+                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                }
+                //удалить сессию
+                deleteSession();
+                //}
             }
             else
                 ;
@@ -1703,7 +1728,7 @@ namespace PluginTaskAutobook
                 dgvAB.Rows[i].Cells[0].Value = dt.AddDays(i).ToShortDateString();
             }
             dgvAB.Rows[date.Day - 1].Selected = true;
-        
+
         }
 
         /// <summary>
@@ -1986,16 +2011,16 @@ namespace PluginTaskAutobook
             //                ,rowNew["WR_DATETIME"]
 
             //            });
-                //}
+            //}
 
-                m_handlerDb.RecUpdateInsertDelete(GetNameTable((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
-               , true)[0] as HDateTimePicker).Value)
-               , @"ID_PUT, DATE_TIME"
-               , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-               , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-               , out err);
+            m_handlerDb.RecUpdateInsertDelete(GetNameTable((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
+           , true)[0] as HDateTimePicker).Value)
+           , @"ID_PUT, DATE_TIME"
+           , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+           , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+           , out err);
 
-                //editTable.Rows.Clear();
+            //editTable.Rows.Clear();
             //}
         }
 
