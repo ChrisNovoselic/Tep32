@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("PluginTepPrjSources")]
+[assembly: AssemblyTitle("PluginTepDictMeasure")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("WORKGROUP")]
-[assembly: AssemblyProduct("PluginTepPrjSources")]
+[assembly: AssemblyProduct("PluginTepDictMeasure")]
 [assembly: AssemblyCopyright("Copyright © WORKGROUP 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Следующий GUID служит для идентификации библиотеки типов, если этот проект будет видимым для COM
-[assembly: Guid("e29d8749-a4fe-46fc-9f4c-6e8ac2258269")]
+[assembly: Guid("c4d2559b-26a0-412d-9de5-8f2eb77cca43")]
 
 // Сведения о версии сборки состоят из следующих четырех значений:
 //

@@ -10,7 +10,7 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginPrjRolesProfiles
+namespace PluginProject
 {
     public class PanelPrjRolesProfiles : PanelPrjRolesAccess
     {
@@ -43,21 +43,6 @@ namespace PluginPrjRolesProfiles
                 foreach (DataRow r in rowsNotAccessUnit)
                     m_tblEdit.Rows.Remove(r);
             }
-        }
-    }
-
-    public class PlugIn : HFuncDbEdit
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 11;
-            register(11, typeof(PanelPrjRolesProfiles), @"Проект\Права доступа", @"Элементы интерфейса");
-        }
-
-        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
-        {
-            base.OnClickMenuItem(obj, ev);
         }
     }
 }

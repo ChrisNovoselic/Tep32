@@ -7,7 +7,7 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginPrjSourceGroup
+namespace PluginProject
 {
     public class PanelPrjSourceGroup : HPanelEditList
     {
@@ -19,21 +19,6 @@ namespace PluginPrjSourceGroup
 
         private void InitializeComponent()
         {
-        }
-    }
-
-    public class PlugIn : HFuncDbEdit
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 14;
-            register(14, typeof(PanelPrjSourceGroup), @"Проект", @"Группы источников данных");
-        }
-
-        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
-        {
-            base.OnClickMenuItem(obj, ev);
         }
     }
 }

@@ -5,14 +5,14 @@ using System.Text;
 
 using System.Windows.Forms; //DataGridView
 using System.Data.Common; //DbConnection
-using System.Drawing;
+//using System.Drawing;
 using System.Data; //DataTable
 
 using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginPrjSources
+namespace PluginProject
 {
     public class PanelPrjSources : HPanelEditList
     {
@@ -276,21 +276,6 @@ namespace PluginPrjSources
             initTablePswd();
 
             base.successRecUpdateInsertDelete();
-        }
-    }
-
-    public class PlugIn : HFuncDbEdit
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 15;
-            register(15, typeof(PanelPrjSources), @"Проект", @"Список источников данных");
-        }
-
-        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
-        {
-            base.OnClickMenuItem(obj, ev);
         }
     }
 }
