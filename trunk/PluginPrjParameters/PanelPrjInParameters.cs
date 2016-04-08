@@ -10,7 +10,7 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
-namespace PluginPrjInParameters
+namespace PluginPrjParameters
 {
     public class PanelPrjInParameters : PanelPrjParametersEditTree
     {
@@ -67,21 +67,6 @@ namespace PluginPrjInParameters
                 , -65384 //MIN
                 , 65385 //MAX
             });
-        }
-    }
-
-    public class PlugIn : HFuncDbEdit
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 8;
-            register(8, typeof(PanelPrjInParameters), @"Проект\Параметры", @"Входные");
-        }
-
-        public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
-        {
-            base.OnClickMenuItem(obj, ev);
         }
     }
 }
