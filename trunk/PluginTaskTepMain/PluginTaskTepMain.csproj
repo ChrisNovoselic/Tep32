@@ -48,8 +48,12 @@
     <Compile Include="PanelTaskTepInval.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="PanelTaskTepOutMkt.cs" />
-    <Compile Include="PanelTaskTepOutNorm.cs" />
+    <Compile Include="PanelTaskTepOutMkt.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelTaskTepOutNorm.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PanelTaskTepOutVal.cs">
       <SubType>Component</SubType>
     </Compile>

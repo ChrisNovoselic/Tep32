@@ -185,7 +185,7 @@ namespace PluginTaskTepMain
 
         protected override HandlerDbValues createHandlerDb()
         {
-            return new HandlerDbTaskCalculate ();
+            return new HandlerDbTaskTepCalculate();
         }
 
         private void InitializeComponents ()
