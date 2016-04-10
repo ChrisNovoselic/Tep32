@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PanelPrjRolesAccess.cs" />
     <Compile Include="PanelPrjRolesFPanels.cs">
       <SubType>Component</SubType>
     </Compile>

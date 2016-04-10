@@ -20,7 +20,7 @@ namespace PluginTaskTepMain
         /// </summary>
         /// <param name="iFunc">Объект для связи с вызывающим приложением</param>
         public PanelTaskTepInval(IPlugIn iFunc)
-            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
+            : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {            
             InitializeComponent();
             // назначить обработчики для кнопок 'К нормативу', 'К макету'
@@ -62,8 +62,8 @@ namespace PluginTaskTepMain
 
             m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVAL_DEF]
                 , @"ID_PUT, ID_TIME"
-                , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
-                , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                , m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
                 , out err);
         }
         /// <summary>
@@ -71,8 +71,8 @@ namespace PluginTaskTepMain
         /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Copy();
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
+                m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Copy();
         }
         /// <summary>
         /// Освободить (при закрытии), связанные с функционалом ресурсы
@@ -96,9 +96,9 @@ namespace PluginTaskTepMain
 
             Session.New();
             //Запрос для получения архивных данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
                 , ActualIdPeriod
                 , CountBasePeriod
                 , arQueryRanges
@@ -107,7 +107,7 @@ namespace PluginTaskTepMain
             if (err == 0)
             {
                 //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
-                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDef(ActualIdPeriod, out err);
+                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDef(ActualIdPeriod, out err);
                 //Проверить признак выполнения запроса
                 if (err == 0)
                     //Начать новую сессию расчета
@@ -136,11 +136,11 @@ namespace PluginTaskTepMain
         {
             DataRow[] rowsParameter = null;
 
-            for (HandlerDbTaskCalculate.INDEX_TABLE_VALUES indx = (HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN + 1);
-                indx < HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT;
+            for (TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES indx = (TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN + 1);
+                indx < TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT;
                 indx++)
-                if (!(indx == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT)
-                    || ((indx == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT) && (ev.m_iQuality == HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT)))
+                if (!(indx == TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT)
+                    || ((indx == TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT) && (ev.m_iQuality == TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT)))
                 {
                     if ((!(m_arTableEdit[(int)indx] == null))
                         && (m_arTableEdit[(int)indx].Columns.Contains(@"ID_PUT") == true))
@@ -182,7 +182,7 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         private void btnRunPrev_onClick(object obj, EventArgs ev)
         {
-            btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES);
+            btnRun_onClick(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES);
         }
 
         /// <summary>

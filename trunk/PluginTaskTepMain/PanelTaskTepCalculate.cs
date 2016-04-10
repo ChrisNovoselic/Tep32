@@ -12,7 +12,7 @@ using HClassLibrary;
 using InterfacePlugIn;
 using TepCommon;
 
-namespace TepCommon
+namespace PluginTaskTepMain
 {
     public abstract partial class PanelTaskTepCalculate : HPanelTepCommon
     {
@@ -52,7 +52,7 @@ namespace TepCommon
         /// <summary>
         /// Значения параметров сессии
         /// </summary>
-        protected HandlerDbTaskCalculate.SESSION Session { get { return HandlerDb._Session; } }
+        protected TepCommon.HandlerDbTaskCalculate.SESSION Session { get { return HandlerDb._Session; } }
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
@@ -144,7 +144,7 @@ namespace TepCommon
             }
         }
 
-        protected HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
+        protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         /// <summary>
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
@@ -169,7 +169,7 @@ namespace TepCommon
         /// <param name="strNameTableAlg">Строка - наименование таблицы с параметрами алгоритма расчета</param>
         /// <param name="strNameTablePut">Строка - наименование таблицы с параметрами, детализированных до принадлежности к компоненту станции (оборудования)</param>
         /// <param name="strNameTableValues">Строка - наименование таблицы со значениями</param>
-        protected PanelTaskTepCalculate(IPlugIn iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        protected PanelTaskTepCalculate(IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc)
         {
             Type = type;
@@ -180,8 +180,8 @@ namespace TepCommon
 
             Session.SetRangeDatetime(PanelManagementTaskTepCalculate.s_dtDefault, PanelManagementTaskTepCalculate.s_dtDefault.AddHours(1));
         }
-        
-        protected HandlerDbTaskCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskCalculate; } }
+
+        protected TepCommon.HandlerDbTaskCalculate HandlerDb { get { return m_handlerDb as TepCommon.HandlerDbTaskCalculate; } }
 
         protected override HandlerDbValues createHandlerDb()
         {
@@ -241,7 +241,7 @@ namespace TepCommon
                     initialize();
 
                     //Заполнить элемент управления с часовыми поясами
-                    ctrl = Controls.Find(TepCommon.PanelTaskTepCalculate.PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
+                    ctrl = Controls.Find(PanelTaskTepCalculate.PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
@@ -547,9 +547,9 @@ namespace TepCommon
                     /// <summary>
                     /// Признак качества значения в ячейке
                     /// </summary>
-                    public HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
+                    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
 
-                    public HDataGridViewCell(int idParameter, HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, bool bCalcDeny)
+                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, bool bCalcDeny)
                     {
                         m_IdParameter = idParameter;
                         m_iQuality = iQuality;
@@ -590,7 +590,7 @@ namespace TepCommon
                 {
                     m_arPropertiesCells = new HDataGridViewCell[cntCols];
                     for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT, false);
+                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT, false);
                 }
             }
             /// <summary>

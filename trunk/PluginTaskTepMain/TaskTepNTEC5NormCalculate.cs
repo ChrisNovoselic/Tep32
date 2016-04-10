@@ -9,14 +9,14 @@ using HClassLibrary;
 using InterfacePlugIn;
 using TepCommon;
 
-namespace TepCommon
+namespace PluginTaskTepMain
 {
     public partial class HandlerDbTaskCalculate : HandlerDbValues
     {
         /// <summary>
         /// Класс для расчета технико-экономических показателей
         /// </summary>
-        public partial class TaskTepCalculate : TaskCalculate
+        public partial class TaskTepCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
             private bool qSeason
             {

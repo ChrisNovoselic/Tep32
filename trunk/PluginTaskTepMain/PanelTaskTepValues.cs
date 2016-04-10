@@ -13,7 +13,7 @@ using HClassLibrary;
 using InterfacePlugIn;
 using TepCommon;
 
-namespace TepCommon
+namespace PluginTaskTepMain
 {
     public abstract partial class PanelTaskTepValues : PanelTaskTepCalculate
     {
@@ -35,14 +35,14 @@ namespace TepCommon
 
         protected System.Data.DataTable m_TableOrigin
         {
-            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
 
             //set { m_arTableOrigin[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
         }
 
         protected System.Data.DataTable m_TableEdit
         {
-            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
 
             //set { m_arTableEdit[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
         }
@@ -58,11 +58,11 @@ namespace TepCommon
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
-        protected PanelTaskTepValues(IPlugIn iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        protected PanelTaskTepValues(IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc, type)
         {
-            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponents();
             // назначить обработчики для кнопок 'Результат'
@@ -202,8 +202,8 @@ namespace TepCommon
         /// </summary>
         protected void setValues()
         {
-            for (HandlerDbTaskCalculate.INDEX_TABLE_VALUES indx = (HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN + 1);
-                indx < HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT;
+            for (TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES indx = (TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN + 1);
+                indx < TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT;
                 indx++)
                 if (!(m_arTableOrigin[(int)indx] == null))
                     m_arTableEdit[(int)indx] =
@@ -558,7 +558,7 @@ namespace TepCommon
                 public int m_IdComp
                     , m_IdAlg
                     , m_IdParameter;
-                public HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
+                public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
                 public double m_Value;
 
                 public DataGridViewTEPValuesCellValueChangedEventArgs()
@@ -568,12 +568,16 @@ namespace TepCommon
                     m_IdComp =
                     m_IdParameter =
                         -1;
-                    m_iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT;
+                    m_iQuality = TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT;
                     m_Value = -1F;
                 }
 
-                public DataGridViewTEPValuesCellValueChangedEventArgs(int id_alg, int id_comp, int id_par, HandlerDbTaskCalculate.ID_QUALITY_VALUE quality, double val)
-                    : this()
+                public DataGridViewTEPValuesCellValueChangedEventArgs(int id_alg
+                    , int id_comp
+                    , int id_par
+                    , TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE quality
+                    , double val)
+                        : this()
                 {
                     m_IdAlg = id_alg;
                     m_IdComp = id_comp;
@@ -806,19 +810,19 @@ namespace TepCommon
                         && (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_bCalcDeny == false))
                         switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
                         {//??? LIMIT
-                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
+                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.USER];
                                 break;
-                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.SOURCE:
+                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.SOURCE:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
                                 break;
-                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL:
+                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
                                 break;
-                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC:
+                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
                                 break;
-                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT:
+                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
                                 break;
                             default:
@@ -852,19 +856,19 @@ namespace TepCommon
                         && ((Columns[iCol] as HDataGridViewColumn).m_bCalcDeny == false))
                         switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
                         {//??? LIMIT
-                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
+                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.USER];
                                 break;
-                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.SOURCE:
+                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.SOURCE:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
                                 break;
-                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL:
+                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
                                 break;
-                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC:
+                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
                                 break;
-                            case HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT:
+                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
                                 break;
                             default:
@@ -894,13 +898,13 @@ namespace TepCommon
                 if (bRes == true)
                     switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
                     {//??? USER, LIMIT
-                        case HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT: // только для входной таблицы - значение по умолчанию [inval_def]
+                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT: // только для входной таблицы - значение по умолчанию [inval_def]
                             clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
                             break;
-                        case HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL: // см. 'getQueryValuesVar' - неполные данные
+                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL: // см. 'getQueryValuesVar' - неполные данные
                             clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
                             break;
-                        case HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC: // см. 'getQueryValuesVar' - нет ни одной записи
+                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC: // см. 'getQueryValuesVar' - нет ни одной записи
                             clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
                             break;
                         default:
@@ -1052,7 +1056,7 @@ namespace TepCommon
 
                             iRow = Rows.IndexOf(row);
                             m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_IdParameter = idParameter;
-                            m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_iQuality = (HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality;
+                            m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality;
                             row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
 
                             if (getClrCellToValue(iCol, iRow, out clrCell) == true)

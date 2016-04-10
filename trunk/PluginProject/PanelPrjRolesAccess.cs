@@ -8,8 +8,9 @@ using System.Windows.Forms; //DataGridView...
 
 using HClassLibrary;
 using InterfacePlugIn;
+using TepCommon;
 
-namespace TepCommon
+namespace PluginProject
 {
     public abstract class PanelPrjRolesAccess : HPanelEditListCommon
     {

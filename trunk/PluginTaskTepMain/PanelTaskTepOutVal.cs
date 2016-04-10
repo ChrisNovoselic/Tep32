@@ -12,7 +12,7 @@ using HClassLibrary;
 using InterfacePlugIn;
 using TepCommon;
 
-namespace TepCommon
+namespace PluginTaskTepMain
 {
     public abstract partial class PanelTaskTepOutVal : PanelTaskTepValues
     {
@@ -21,7 +21,7 @@ namespace TepCommon
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
-        protected PanelTaskTepOutVal(IPlugIn iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        protected PanelTaskTepOutVal(IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc, type)
         {
             InitializeComponents();
@@ -51,7 +51,7 @@ namespace TepCommon
             err = 0;
             strErr = string.Empty;
             //Запрос для получения ранее учтенных (сохраненных) данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] =
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] =
                 //HandlerDb.GetValuesVar(Type
                 //    , Session.m_currIdPeriod
                 //    , CountBasePeriod
@@ -60,7 +60,7 @@ namespace TepCommon
                 new DataTable()
                     ;
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type, out err);
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type, out err);
 
             switch (err)
             {

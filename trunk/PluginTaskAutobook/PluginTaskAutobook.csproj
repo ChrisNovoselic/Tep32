@@ -49,6 +49,7 @@
     </Compile>
     <Compile Include="PluginItems.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TaskAutobookCalculate.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">

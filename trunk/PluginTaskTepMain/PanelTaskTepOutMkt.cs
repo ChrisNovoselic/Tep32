@@ -22,7 +22,7 @@ namespace PluginTaskTepMain
         //private enum INDEX_TABLE_VALUES : int { REGISTRED, COUNT }
 
         public PanelTaskTepOutMkt(IPlugIn iFunc)
-            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+            : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             //m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             //m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];

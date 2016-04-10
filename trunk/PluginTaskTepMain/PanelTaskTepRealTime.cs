@@ -15,7 +15,7 @@ namespace PluginTaskTepMain
     public partial class PanelTaskTepRealTime : PanelTaskTepCalculate
     {
         public PanelTaskTepRealTime(IPlugIn iFunc)
-            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME)
+            : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME)
         {
             InitializeComponent();
 
@@ -93,7 +93,7 @@ namespace PluginTaskTepMain
             // загрузить значения для новой сесии
 
             // произвести расчет
-            HandlerDb.Calculate(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME);
+            HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME);
             // установить/отобразить значения
             setValues(arQueryRanges, out err, out strErr);
         }
