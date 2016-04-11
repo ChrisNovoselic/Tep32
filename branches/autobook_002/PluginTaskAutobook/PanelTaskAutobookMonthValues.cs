@@ -272,17 +272,14 @@ namespace PluginTaskAutobook
             /// </summary>
             public void ClearValues()
             {
-                //CellValueChanged -= onCellValueChanged;
-
-                //foreach (DataGridViewRow r in Rows)
-                //    foreach (DataGridViewCell c in r.Cells)
-                //        if (r.Cells.IndexOf(c) > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) // нельзя удалять идентификатор параметра
-                //        {
-                //            c.Value = string.Empty;
-                //            c.Style.BackColor = s_arCellColors[(int)INDEX_COLOR.EMPTY];
-                //        }
-                //        else
-                //            ;
+                foreach (DataGridViewRow r in Rows)
+                    foreach (DataGridViewCell c in r.Cells)
+                        if (r.Cells.IndexOf(c) > 0) // нельзя удалять идентификатор параметра
+                        {
+                            c.Value = null;
+                        }
+                        else
+                            ;
 
                 //CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
 
@@ -296,24 +293,26 @@ namespace PluginTaskAutobook
             /// <param name="parametrs">параметры</param>
             public void ShowValues(DataTable tbOrigin, DataGridView dgvView)
             {
-                for (int i = 0; i < dgvView.Rows.Count; i++)
+                Array namePut = Enum.GetValues(typeof(INDEX_GTP));
+                ClearValues();
+
+                for (int i = 0; i < tbOrigin.Rows.Count / 3; i++)
                 {
+                    int count = 0;
+
                     for (int j = 0; j < tbOrigin.Rows.Count; j++)
                     {
-                        do
+                        if (dgvView.Rows[i].Cells[0].Value.ToString() ==
+                            Convert.ToDateTime(tbOrigin.Rows[j]["WR_DATETIME"]).ToShortDateString())
                         {
-                            if (dgvView.Rows[i].Cells[0].Value.ToString() ==
-                                Convert.ToDateTime(tbOrigin.Rows[j]["WR_DATETIME"]).ToShortDateString())
-                            {
-                                dgvView.Rows[i].Cells[INDEX_GTP.GTP12.ToString()].Value =
-                                    tbOrigin.Rows[j]["VALUE"];
-                                break;
-                            }
-
-                        } while (true);
-
+                            dgvView.Rows[i].Cells[namePut.GetValue(count).ToString()].Value =
+                                tbOrigin.Rows[j]["VALUE"];
+                            count++;
+                        }
+                        else
+                            break;
                     }
-                    //fillCells(i, dgvView);
+                    fillCells(i, dgvView);
                 }
             }
 
@@ -349,17 +348,19 @@ namespace PluginTaskAutobook
                 //{
 
                 //}
-
-                if (i == 0)
-                    dgvView.Rows[i].Cells["StSwen"].Value =
-                       dgvView.Rows[i].Cells[INDEX_GTP.TEC.ToString()].Value;
-                else
+                if (dgvView.Rows[i].Cells[INDEX_GTP.TEC.ToString()].Value != null)
                 {
-                    STswen = Convert.ToInt32(dgvView.Rows[i].Cells[INDEX_GTP.TEC.ToString()].Value);
-                    dgvView.Rows[i].Cells["StSwen"].Value = STswen + Convert.ToSingle(dgvView.Rows[i - 1].Cells["StSwen"].Value);
+                    if (i == 0)
+                        dgvView.Rows[i].Cells["StSwen"].Value =
+                           dgvView.Rows[i].Cells[INDEX_GTP.TEC.ToString()].Value;
+                    else
+                    {
+                        STswen = Convert.ToInt32(dgvView.Rows[i].Cells[INDEX_GTP.TEC.ToString()].Value);
+                        dgvView.Rows[i].Cells["StSwen"].Value = STswen + Convert.ToSingle(dgvView.Rows[i - 1].Cells["StSwen"].Value);
+                    }
+                    countDeviation(i, dgvView);
                 }
-
-                countDeviation(i, dgvView);
+                else ;
             }
 
             /// <summary>
@@ -823,18 +824,6 @@ namespace PluginTaskAutobook
 
             posRow = 0;
 
-            //dgvYear = new DGVAutoBook(INDEX_CONTROL.DGV_PLANEYAR.ToString());
-            //dgvYear.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            //dgvYear.AllowUserToResizeRows = false;
-            //dgvYear.AddColumn("Месяц", true, "Month");
-            //dgvYear.AddColumn("Выработка, тыс. кВтч", false, "Output");
-            //for (int i = 0; i < GetMonth.Length; i++)
-            //{
-            //    dgvYear.AddRow();
-            //    dgvYear.Rows[i].Cells[0].Value = GetMonth[i];
-            //}
-            //dgvYear.CellParsing += dgvYear_CellParsing;
-            //
             dgvAB = new DGVAutoBook(INDEX_CONTROL.DGV_DATA.ToString());
             dgvAB.Name = INDEX_CONTROL.DGV_DATA.ToString();
             dgvAB.AllowUserToResizeRows = false;
@@ -853,15 +842,7 @@ namespace PluginTaskAutobook
             //
             this.Controls.Add(PanelManagement, 0, posRow);
             this.SetColumnSpan(PanelManagement, posColdgvTEPValues);
-            this.SetRowSpan(PanelManagement, posRow = posRow + 5);//this.RowCount);
-            //
-            //Label lblyearDGV = new System.Windows.Forms.Label();
-            //lblyearDGV.Dock = DockStyle.Top;
-            //lblyearDGV.Text = @"Плановая выработка электроэнергии на "
-            //    + DateTime.Now.Year + " год.";
-            //Label lblTEC = new System.Windows.Forms.Label();
-            //lblTEC.Dock = DockStyle.Top;
-            //lblTEC.Text = @"Новосибирская ТЭЦ-5";
+            this.SetRowSpan(PanelManagement, posRow = posRow + 5);//this.RowCount);            
             ////
             //TableLayoutPanel tlpYear = new TableLayoutPanel();
             //tlpYear.Dock = DockStyle.Fill;
@@ -1105,10 +1086,11 @@ namespace PluginTaskAutobook
                         m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
                         //break;
                         //запись выходных значений во временную таблицу
-                        //HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
+                        HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
                         // отобразить значения
                         dgvAB.ShowValues(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                             , dgvAB);
+                        m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.getOutValues(out err);
 
                     }
                     else
