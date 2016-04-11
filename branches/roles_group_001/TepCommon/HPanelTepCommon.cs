@@ -143,7 +143,7 @@ namespace TepCommon
                 }
 
                 DataRow[] rows = null;
-                if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0))
+                if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE") < 0))
                 {
                     rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
                     if (rows.Length == 1)

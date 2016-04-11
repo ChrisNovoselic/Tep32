@@ -1458,13 +1458,14 @@ namespace TepCommon
                 if (((DataGridView)obj).SelectedRows.Count > 0)
                 {
                     name = ((DataGridView)obj).SelectedRows[0].Cells[0].Value.ToString();
-                    foreach (DataRow r in Descriptions[(int)ID_DT_DESC.PROP].Select("ID_TABLE=" + (int)m_Level))
-                    {
-                        if (name == r["PARAM_NAME"].ToString())
+                    if(Descriptions[(int)ID_DT_DESC.PROP].Rows.Count>0)
+                        foreach (DataRow r in Descriptions[(int)ID_DT_DESC.PROP].Select("ID_TABLE=" + (int)m_Level))
                         {
-                            desc = r["DESCRIPTION"].ToString();
+                            if (name == r["PARAM_NAME"].ToString())
+                            {
+                                desc = r["DESCRIPTION"].ToString();
+                            }
                         }
-                    }
                 }
             }
             catch (Exception e)
