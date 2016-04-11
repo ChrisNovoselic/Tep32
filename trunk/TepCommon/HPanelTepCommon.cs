@@ -105,68 +105,81 @@ namespace TepCommon
         protected void initializeDescPanel()
         {
             int err = -1;
+
+            Control ctrl = null;
+            string desc = string.Empty
+                , name = string.Empty;
+            string[] ar_name = null;
+
             if (m_name_panel_desc != string.Empty)
             {
-                Control ctrl = this.Controls.Find(m_name_panel_desc, true)[0];
-                string desc = "";
-                string name = ((PlugInMenuItem)_iFuncPlugin).GetNameOwnerMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id);
-                string[] ar_name = name.Split('\\');
-                name = ar_name[0];
-                for (int i = 0; i < m_arr_name_group_panel.Length; i++)
+                try
                 {
-                    if (m_arr_name_group_panel[i] == name)
-                    {
-                        ((HPanelDesc)ctrl).SetLblGroup = new string[] { name, m_description_group[i] };
-                    }
-                }                
+                    ctrl = this.Controls.Find(m_name_panel_desc, true)[0];
+                    name = ((PlugInMenuItem)_iFuncPlugin).GetNameOwnerMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id);
+                    ar_name = name.Split('\\');
+                    name = ar_name[0];
 
-                //Описание вкладки
-                string query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
-                DataTable dt = m_handlerDb.Select(query, out err);
-                if (dt.Rows.Count != 0)
-                {
-                    desc = dt.Rows[0][0].ToString();
-                    ((HPanelDesc)ctrl).SetLblTab = new string[] { ((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id), desc };
+                    for (int i = 0; i < m_arr_name_group_panel.Length; i++)
+                        if (m_arr_name_group_panel[i] == name)
+                        {
+                            ((HPanelDesc)ctrl).SetLblGroup = new string[] { name, m_description_group[i] };
+                        }
+                        else
+                            ;
+
+                    //Описание вкладки
+                    string query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    DataTable dt = m_handlerDb.Select(query, out err);
+                    if (dt.Rows.Count != 0)
+                    {
+                        desc = dt.Rows[0][0].ToString();
+                        ((HPanelDesc)ctrl).SetLblTab = new string[] { ((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id), desc };
+                    }
+
+                    //Описания таблиц
+                    query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    Descriptions[(int)ID_DT_DESC.TABLE] = m_handlerDb.Select(query, out err);
+
+                    //Описания параметров
+                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
+
+                    if (err != 0)
+                    {
+                        Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
+                    }
+
+                    DataRow[] rows = null;
+                    if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0))
+                    {
+                        rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
+                        if (rows.Length == 1)
+                        {
+                            ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                        }
+
+                        rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.PROP);
+                        if (rows.Length == 1)
+                        {
+                            ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                        }
+
+                        rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.DESC);
+                        if (rows.Length == 1)
+                        {
+                            ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                            ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
+                        }
+                    }
+                    else
+                        Logging.Logg().Error(@"HPanelTepCommon::initializeDescPanel () - в таблице [" + Descriptions[(int)ID_DT_DESC.TABLE].TableName + @"] не найдено поле [ID_TABLE]"
+                            , Logging.INDEX_MESSAGE.NOT_SET);
                 }
-
-                //Описания таблиц
-                query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
-                Descriptions[(int)ID_DT_DESC.TABLE] = m_handlerDb.Select(query, out err);
-
-                //Описания параметров
-                query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
-                Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
-                
-                if (err != 0)
+                catch (Exception e)
                 {
-                    Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Exception(e, @"HPanelTepCommon::initializeDescPanel () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
-
-                DataRow[] rows = null;
-                if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0))
-                {
-                    rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
-                    if (rows.Length == 1)
-                    {
-                        ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
-                    }
-
-                    rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.PROP);
-                    if (rows.Length == 1)
-                    {
-                        ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
-                    }
-
-                    rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.DESC);
-                    if (rows.Length == 1)
-                    {
-                        ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
-                        ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
-                    }
-                }
-                else
-                    Logging.Logg().Error(@"HPanelTepCommon::initializeDescPanel () - в таблице [" + Descriptions[(int)ID_DT_DESC.TABLE].TableName + @"] не найдено поле [ID_TABLE]"
-                        , Logging.INDEX_MESSAGE.NOT_SET);                
             }
         }
 
@@ -244,11 +257,19 @@ namespace TepCommon
             int err = -1;
             string strErrMsg = string.Empty;
 
-            if ((bRes == true)
-                && (active == true))
-                initialize(out err, out strErrMsg);
-            else
-                ;
+            try
+            {
+                if ((bRes == true)
+                    && (active == true))
+                    initialize(out err, out strErrMsg);
+                else
+                    ;
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, @"HPanelTepCommon::Activate () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
             initializeDescPanel();
 
             return bRes;
