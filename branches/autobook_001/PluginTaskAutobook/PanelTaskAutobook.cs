@@ -296,24 +296,25 @@ namespace PluginTaskAutobook
             /// <param name="parametrs">параметры</param>
             public void ShowValues(DataTable tbOrigin, DataGridView dgvView)
             {
+                Array namePut = Enum.GetValues(typeof(INDEX_GTP));
+
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
+                    int count = 0;
+
                     for (int j = 0; j < tbOrigin.Rows.Count; j++)
                     {
-                        do
+                        if (dgvView.Rows[i].Cells[0].Value.ToString() ==
+                            Convert.ToDateTime(tbOrigin.Rows[j]["WR_DATETIME"]).ToShortDateString())
                         {
-                            if (dgvView.Rows[i].Cells[0].Value.ToString() ==
-                                Convert.ToDateTime(tbOrigin.Rows[j]["WR_DATETIME"]).ToShortDateString())
-                            {
-                                dgvView.Rows[i].Cells[INDEX_GTP.GTP12.ToString()].Value =
-                                    tbOrigin.Rows[j]["VALUE"];
-                                break;
-                            }
-
-                        } while (true);
-
+                            dgvView.Rows[i].Cells[namePut.GetValue(count).ToString()].Value =
+                                tbOrigin.Rows[j]["VALUE"];
+                            count++;
+                        }
+                        else
+                            break;
                     }
-                    //fillCells(i, dgvView);
+                    fillCells(i, dgvView);
                 }
             }
 
@@ -344,11 +345,6 @@ namespace PluginTaskAutobook
             private void fillCells(int i, DataGridView dgvView)
             {
                 int STswen = 0;
-
-                //for (int i = 0; i < length; i++)
-                //{
-
-                //}
 
                 if (i == 0)
                     dgvView.Rows[i].Cells["StSwen"].Value =
@@ -818,7 +814,7 @@ namespace PluginTaskAutobook
             {
                 int i = 0
                 , count = 0;
-                string fltrDate;
+                //string fltrDate;
 
                 calcTable[(int)INDEX_GTP.GTP12] = dtOrigin.Clone();
                 calcTable[(int)INDEX_GTP.TEC] = dtOrigin.Clone();
@@ -1000,7 +996,7 @@ namespace PluginTaskAutobook
             }
 
             public PanelManagementAutobook()
-                : base(8, 5)
+                : base(9, 5)
             {
                 InitializeComponents();
                 (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
@@ -1207,24 +1203,12 @@ namespace PluginTaskAutobook
             string strPartLabelButtonDropDownMenuItem = string.Empty;
             int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
                 , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
-            int posColdgvTEPValues = 4;
+            int posColdgvTEPValues = 5;
 
             SuspendLayout();
 
             posRow = 0;
 
-            //dgvYear = new DGVAutoBook(INDEX_CONTROL.DGV_PLANEYAR.ToString());
-            //dgvYear.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            //dgvYear.AllowUserToResizeRows = false;
-            //dgvYear.AddColumn("Месяц", true, "Month");
-            //dgvYear.AddColumn("Выработка, тыс. кВтч", false, "Output");
-            //for (int i = 0; i < GetMonth.Length; i++)
-            //{
-            //    dgvYear.AddRow();
-            //    dgvYear.Rows[i].Cells[0].Value = GetMonth[i];
-            //}
-            //dgvYear.CellParsing += dgvYear_CellParsing;
-            //
             dgvAB = new DGVAutoBook(INDEX_CONTROL.DGV_DATA.ToString());
             dgvAB.Name = INDEX_CONTROL.DGV_DATA.ToString();
             dgvAB.AllowUserToResizeRows = false;
@@ -1238,21 +1222,13 @@ namespace PluginTaskAutobook
             dgvAB.AddColumn("Станция,нараст.", true, "StSwen");
             dgvAB.AddColumn("План нараст.", false, "PlanSwen");
             dgvAB.AddColumn("Отклонение от плана", true, "DevOfPlan");
-            this.Controls.Add(dgvAB, 4, posRow);
-            this.SetColumnSpan(dgvAB, 9); this.SetRowSpan(dgvAB, 10);
+            this.Controls.Add(dgvAB, 5, posRow);
+            this.SetColumnSpan(dgvAB, 8); this.SetRowSpan(dgvAB, 10);
             //
             this.Controls.Add(PanelManagement, 0, posRow);
             this.SetColumnSpan(PanelManagement, posColdgvTEPValues);
             this.SetRowSpan(PanelManagement, posRow = posRow + 5);//this.RowCount);
             //
-            //Label lblyearDGV = new System.Windows.Forms.Label();
-            //lblyearDGV.Dock = DockStyle.Top;
-            //lblyearDGV.Text = @"Плановая выработка электроэнергии на "
-            //    + DateTime.Now.Year + " год.";
-            //Label lblTEC = new System.Windows.Forms.Label();
-            //lblTEC.Dock = DockStyle.Top;
-            //lblTEC.Text = @"Новосибирская ТЭЦ-5";
-            ////
             //TableLayoutPanel tlpYear = new TableLayoutPanel();
             //tlpYear.Dock = DockStyle.Fill;
             //tlpYear.AutoSize = true;
