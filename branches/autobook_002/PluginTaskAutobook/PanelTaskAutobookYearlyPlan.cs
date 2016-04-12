@@ -188,6 +188,10 @@ namespace PluginTaskAutobook
             private class HDataGridViewColumn : DataGridViewTextBoxColumn
             {
                 /// <summary>
+                /// Идентификатор компонента
+                /// </summary>
+                public int m_iIdComp;
+                /// <summary>
                 /// Признак запрета участия в расчете
                 /// </summary>
                 public bool m_bCalcDeny;
@@ -206,7 +210,37 @@ namespace PluginTaskAutobook
 
                 try
                 {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false };
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false};
+                    alignText = DataGridViewContentAlignment.MiddleRight;
+                    autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
+                    //column.Frozen = true;
+                    column.ReadOnly = bRead;
+                    column.Name = nameCol;
+                    column.HeaderText = txtHeader;
+                    column.DefaultCellStyle.Alignment = alignText;
+                    column.AutoSizeMode = autoSzColMode;
+                    Columns.Add(column as DataGridViewTextBoxColumn);
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+            }
+
+            /// <summary>
+            /// Добавить столбец
+            /// </summary>
+            /// <param name="text">Текст для заголовка столбца</param>
+            /// <param name="bRead"></param>
+            public void AddColumn(string txtHeader, bool bRead, string nameCol, int idPut)
+            {
+                DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
+                DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
+                DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+
+                try
+                {
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_iIdComp = idPut };
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
                     //column.Frozen = true;

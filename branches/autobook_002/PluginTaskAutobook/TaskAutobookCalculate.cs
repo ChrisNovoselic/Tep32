@@ -77,7 +77,7 @@ namespace PluginTaskAutobook
                             + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
                             + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
                             + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                        + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
+                        + @" WHERE v.[ID_TIME] = " + (int)idPeriod + " AND ID_SOURCE > 0 " //???ID_PERIOD.HOUR //??? _currIdPeriod
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
@@ -110,6 +110,73 @@ namespace PluginTaskAutobook
                 Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::getQueryValuesVar () - неизветстный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return strRes;
+        }
+
+        /// <summary>
+        /// Получение всех входных параметров
+        /// </summary>
+        /// <param name="err"></param>
+        /// <param name="m_TableOrigin">таблица для записи</param>
+        public DataTable getCorInPut(TaskCalculate.TYPE type
+            , DateTimeRange[] arQueryRanges
+            , ID_PERIOD idPeriod, out int err)
+        {
+            string strQuery = string.Empty;
+
+            for (int i = 0; i < arQueryRanges.Length; i++)
+            {
+                strQuery = "SELECT  p.ID as ID_PUT"
+                        + @", " + _Session.m_Id + @" as [ID_SESSION]"
+                        + @", v.QUALITY as QUALITY, v.VALUE as VALUE"
+                          + @",v.DATE_TIME as WR_DATETIME,  ROW_NUMBER() OVER(ORDER BY p.ID) as [EXTENDED_DEFINITION] "
+                          + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
+                           + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
+                          + @" ON a.ID = p.ID_ALG"
+                           + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                           + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
+                          + @" ON v.ID_PUT = p.ID"
+                          + @" WHERE  ID_TASK = " + (int)IdTask
+                          + @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                        + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                       + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0";
+            }
+
+            return Select(strQuery, out err);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="arQueryRanges"></param>
+        /// <param name="idPeriod"></param>
+        /// <param name="err"></param>
+        /// <returns></returns>
+        public DataTable getPlanOnMonth(TaskCalculate.TYPE type
+            , DateTimeRange[] arQueryRanges
+            , ID_PERIOD idPeriod, out int err)
+        {
+            string strQuery = string.Empty;
+
+            for (int i = 0; i < arQueryRanges.Length; i++)
+            {
+                strQuery = "SELECT  p.ID as ID_PUT"
+                        + @", " + _Session.m_Id + @" as [ID_SESSION]"
+                        + @", v.QUALITY as QUALITY, v.VALUE as VALUE"
+                          + @",v.DATE_TIME as WR_DATETIME,  ROW_NUMBER() OVER(ORDER BY p.ID) as [EXTENDED_DEFINITION] "
+                          + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
+                           + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
+                          + @" ON a.ID = p.ID_ALG"
+                           + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                           + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
+                          + @" ON v.ID_PUT = p.ID"
+                          + @" WHERE  ID_TASK = " + (int)IdTask
+                          + @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                          + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddMonths(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND v.ID_TIME = 24";
+            }
+
+            return Select(strQuery, out err);
         }
 
         /// <summary>
@@ -765,6 +832,7 @@ namespace PluginTaskAutobook
 
             return s_NameDbTables[(int)indx];
         }
+
         /// <summary>
         /// 
         /// </summary>
