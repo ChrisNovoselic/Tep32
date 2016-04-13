@@ -517,6 +517,11 @@ namespace PluginProject
             cbTasks.DataSource = arr_Tables_orig[(int)INDEX_COMBOBOX.TASKS];
             cbTasks.ValueMember = "ID";
             cbTasks.DisplayMember = "DESCRIPTION";
+            cbTasks.Text = string.Empty;
+            cbPlugins.Text = string.Empty;
+            cbPanels.Text = string.Empty;
+            cbItems.Text = string.Empty;
+            listContext.DataSource = new DataTable();
             //cbTasks.SelectedIndex = 1;
             //cbTasks.SelectedIndex = 0;
             cbTasks.SelectedIndexChanged += cbTasks_SelectedIndexChanged;
@@ -534,6 +539,10 @@ namespace PluginProject
             cbPlugins.DisplayMember = "DESCRIPTION";
             //cbPlugins.SelectedIndex = 1;
            //cbPlugins.SelectedIndex = 0;
+            cbPlugins.Text = string.Empty;
+            cbPanels.Text = string.Empty;
+            cbItems.Text = string.Empty;
+            listContext.DataSource = new DataTable();
             cbPlugins.SelectedIndexChanged += cbPlugins_SelectedIndexChanged;
         }
 
@@ -549,12 +558,16 @@ namespace PluginProject
             cbPanels.DisplayMember = "DESCRIPTION";
             //cbPanels.SelectedIndex = 1;
             //cbPanels.SelectedIndex = 0;
+            cbPanels.Text = string.Empty;
+            cbItems.Text = string.Empty;
+            listContext.DataSource = new DataTable();
             cbPanels.SelectedIndexChanged += cbPanels_SelectedIndexChanged;
         }
 
         private void cbPanels_SelectedIndexChanged(object sender, EventArgs e)
         {
             cbItems.SelectedIndexChanged -= cbItems_SelectedIndexChanged;
+            arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows.Clear();
             foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString()))
             {
                 arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows.Add(row.ItemArray);
@@ -574,6 +587,8 @@ namespace PluginProject
             cbItems.ValueMember = "ID";
             //listBoxItems.SelectedIndex = 1;
             //listBoxItems.SelectedIndex = 0;
+            cbItems.Text = string.Empty;
+            listContext.DataSource = new DataTable();
             cbItems.SelectedIndexChanged += cbItems_SelectedIndexChanged;
         }
 
