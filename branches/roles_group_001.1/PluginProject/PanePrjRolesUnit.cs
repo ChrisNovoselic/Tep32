@@ -218,6 +218,7 @@ namespace PluginProject
 
             //m_list_TEC = new InitTEC_200(idListener, true, new int[] { 0, (int)TECComponent.ID.GTP }, false).tec;
             m_table_TEC.Rows.Clear();
+            m_table_TEC.Rows.Add(new object[] {"5","ТЭЦ-5" });
 
             //foreach (TEC t in m_list_TEC)
             //{
@@ -934,7 +935,7 @@ namespace PluginProject
         /// Идентификаторы для типов объектов
         /// </summary>
         public enum ID_OBJ : int { Role = 0, User };
-
+        private bool m_b_visible_context_menu;
         string m_warningReport;
 
         public struct ID_Comp
@@ -996,6 +997,7 @@ namespace PluginProject
             this.contextMenu_TreeView.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             добавитьРольToolStripMenuItem});
             this.contextMenu_TreeView.Name = "contextMenu_TreeView";
+            this.contextMenu_TreeView.Visible = m_b_visible_context_menu;
             // 
             // добавитьТЭЦToolStripMenuItem
             // 
@@ -1006,9 +1008,11 @@ namespace PluginProject
             this.HideSelection = false;
         }
 
-        public TreeView_Users()
+        public TreeView_Users(bool context_visible=true)
             : base()
         {
+            m_b_visible_context_menu = context_visible;
+
             InitializeComponent();
 
             this.NodeMouseClick += new TreeNodeMouseClickEventHandler(this.tree_NodeClick);
