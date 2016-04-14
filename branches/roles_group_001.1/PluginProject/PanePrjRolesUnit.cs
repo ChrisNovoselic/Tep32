@@ -35,6 +35,7 @@ namespace PluginProject
                 , ROLE /*Роль*/, USER /*Пользователь*/
         };
 
+        DataTable m_AllUnits;
         /// <summary>
         /// Текущий(выбранный) уровень "дерева"
         /// </summary>
@@ -91,7 +92,7 @@ namespace PluginProject
         /// <summary>
         /// Идентификаторы типов таблиц
         /// </summary>
-        public enum ID_Table : int { Unknown = -1, Role, User, Count }
+        public enum ID_Table : int { Unknown = -1, Role, User, Profiles, Count }
         
         /// <summary>
         /// Возвратить наименование компонента 
@@ -100,7 +101,7 @@ namespace PluginProject
         /// <returns>Строка - наименование</returns>
         protected static string getNameMode(ID_Table id)
         {
-            string[] nameModes = { "roles_unit", "users" };
+            string[] nameModes = { "roles_unit", "users", "profiles" };
 
             return nameModes[(int)id];
         }
@@ -179,7 +180,7 @@ namespace PluginProject
         }
 
         #region Наследуемые
-
+        
         protected override void recUpdateInsertDelete(out int err)
         {
             err = 0;
@@ -210,6 +211,7 @@ namespace PluginProject
 
             idListener = register_idListenerConfDB(out err);
             connConfigDB = DbSources.Sources().GetConnection(idListener, out err);
+
             if (m_table_TEC.Columns.Count == 0)
             {
                 DataColumn[] columns = { new DataColumn("ID"), new DataColumn("DESCRIPTION") };
@@ -232,6 +234,14 @@ namespace PluginProject
 
             HTepUsers.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
+
+            m_AllUnits = HUsers.GetTableProfileUnits;
+            foreach (DataRow r in m_AllUnits.Select("ID>3"))
+            {
+                m_AllUnits.Rows.Remove(r);
+            }
+
+            m_arr_origTable[(int)ID_Table.Profiles] = User.GetTableAllProfile(connConfigDB);
 
             unregister_idListenerConfDB(idListener);
         }
@@ -394,13 +404,20 @@ namespace PluginProject
             if (list_id.id_user.Equals(-1) == false)
             {
                 m_arr_editTable[(int)ID_Table.User].Rows.Remove(m_arr_editTable[(int)ID_Table.User].Select("ID=" + list_id.id_user)[0]);
+                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_user + " and IS_ROLE=0 and ID_TAB=0 and ID_ITEM=0 and ID_CONTEXT=0"))
+                {
+                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Remove(r);
+                }
                 iRes = 1;
             }
 
             if (list_id.id_user.Equals(-1) == true & list_id.id_role.Equals(-1) == false)
             {
                 m_arr_editTable[(int)ID_Table.Role].Rows.Remove(m_arr_editTable[(int)ID_Table.Role].Select("ID=" + list_id.id_role)[0]);
-                
+                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_role + " and IS_ROLE=1 and ID_TAB=0 and ID_ITEM=0 and ID_CONTEXT=0"))
+                {
+                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Remove(r);
+                }
                 iRes = 1;
             }
 
@@ -477,6 +494,10 @@ namespace PluginProject
                 }
 
                 m_arr_editTable[(int)ID_Table.User].Rows.Add(obj);
+                foreach (DataRow r in m_AllUnits.Rows)
+                {
+                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { obj [0],0,r["ID"],"0","0","0","0"});
+                }
                 iRes = 1;
             }
 
@@ -498,6 +519,10 @@ namespace PluginProject
                 }
 
                 m_arr_editTable[(int)ID_Table.Role].Rows.Add(obj_role);
+                foreach (DataRow r in m_AllUnits.Rows)
+                {
+                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { obj_role[0], 1, r["ID"], "0", "0", "0", "0" });
+                }
                 
                 iRes = 1;
             }
@@ -604,17 +629,14 @@ namespace PluginProject
                         case ID_Table.User:
                             keys = @"ID";
                             break;
+                        case ID_Table.Profiles:
+                            keys = @"ID_EXT,IS_ROLE,ID_TAB,ID_ITEM,ID_CONTEXT,ID_UNIT";
+                            break;
                         default:
                             break;
                     }
 
-                    int idListener = register_idListenerConfDB(out err);
-
-                    DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-
-                    DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, getNameMode(i), keys, m_arr_origTable[(int)i], m_arr_editTable[(int)i], out err);
-
-                    unregister_idListenerConfDB(idListener);
+                    m_handlerDb.RecUpdateInsertDelete(getNameMode(i), keys, m_arr_origTable[(int)i], m_arr_editTable[(int)i], out err);
                 }
 
                 fillDataTable();
