@@ -49,7 +49,7 @@ namespace PluginProject
 
             set { _Level = value; }
         }
-
+        bool bIsRole = false;
         /// <summary>
         /// Идентификаторы объектов формы
         /// </summary>
@@ -149,6 +149,8 @@ namespace PluginProject
             panelProfiles.GetContext += new PanelProfiles.GetContextEventHandler(panelProfiles_GetContext);
             ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0])).Click += new EventHandler(btnSave_Click);
             ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0])).Click += new EventHandler(btnBreak_Click);
+            dgvProp.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_CellEndEdit);
+            dgvProp_Context.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_Context_CellEndEdit);
 
             return base.Activate(active);
         }
@@ -298,15 +300,26 @@ namespace PluginProject
         {
             DataTable[] massTable = new DataTable[1];
             DataTable[] tables = new DataTable[3];
-            bool bIsRole = false;
+            bIsRole = false;
             m_sel_comp = IdComp;
             m_list_id = list_id;
             massTable[0] = getProfileTable(m_arr_editTable[(int)ID_Table.Profiles], list_id.id_role, list_id.id_user, bIsRole);
             dgvProp.Update_dgv(IdComp, massTable);
-            if (list_id.id_user != -1)
+            
+            if (list_id.id_user.Equals(-1) == false)
+            {
+                bIsRole = false;
+                m_type_sel_node = TreeView_Users.Type_Comp.User;
                 panelProfiles.FillControls(m_ar_panel_table, m_arr_editTable[(int)ID_Table.Profiles], IdComp, false);
-            else
+
+            }
+
+            if (list_id.id_user.Equals(-1) == true & list_id.id_role.Equals(-1) == false)
+            {
+                bIsRole = true;
+                m_type_sel_node = TreeView_Users.Type_Comp.Role;
                 panelProfiles.FillControls(m_ar_panel_table, m_arr_editTable[(int)ID_Table.Profiles], IdComp, true);
+            }
         }
 
         /// <summary>
@@ -480,6 +493,40 @@ namespace PluginProject
                 //delegateWarningReport(warning[(int)ID_Table.Role] + warning[(int)ID_Table.User]);
                 //MessageBox.Show(warning[0] + warning[1] + warning[2] + warning[3], "Внимание!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+        }
+
+        protected void dgvProp_CellEndEdit(object sender,DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventArgs e)
+        {
+            string id = m_AllUnits.Select(@"DESCRIPTION='" + e.m_Header_name + @"'")[0]["ID"].ToString();
+            object[] obj = new object[2];
+            
+            if (m_type_sel_node == TreeView_Users.Type_Comp.Role)
+            {
+                obj[0] = 1;
+            }
+            if (m_type_sel_node == TreeView_Users.Type_Comp.User)
+            {
+                obj[0] = 0;
+            }
+
+            if (e.m_Value == "True")
+                obj[1] = 1;
+            else
+                if (e.m_Value == "False")
+                    obj[1] = 0;
+                else
+                    obj[1] = e.m_Value;
+            DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + m_sel_comp + " and IS_ROLE=" + obj[0] + " and ID_UNIT=" + id + " and ID_TAB=0");
+            if (rows.Length == 0)
+                m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { m_sel_comp, obj[0], id ,obj[1], 0, 0, 0 });
+            else
+                rows[0]["VALUE"] = obj[1];
+            activate_btn(true);
+
+        }
+
+        protected void dgvProp_Context_CellEndEdit(object sender, DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventArgs e)
+        {
         }
 
         /// <summary>
@@ -703,6 +750,16 @@ namespace PluginProject
             arr_Tables_edit = new DataTable[(int)INDEX_COMBOBOX.COUNT];
         }
 
+        public string GetSelectQuery
+        {
+            get
+            {
+                string query = "ID_CONTEXT="+dgvContext.SelectedRows[0].Cells[0].Value+" and ID_ITEM=" + cbItems.SelectedValue.ToString() + " and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString();
+
+                return query;
+            }
+        }
+
         public void FillControls(DataTable[] ar_cbTable, DataTable profiles, int id_role_user, bool role)
         {
             dgvContext.RowsAdded -= dgvContext_RowsAdded;
@@ -816,7 +873,8 @@ namespace PluginProject
             {
                 if (items.Select("ID=" + row["ID_CONTEXT"].ToString().Trim()).Length == 0)
                 {
-                    items.Rows.Add(new object[] { row["ID_CONTEXT"].ToString().Trim() });
+                    if(Convert.ToInt32(row["ID_CONTEXT"]) != -1)
+                        items.Rows.Add(new object[] { row["ID_CONTEXT"].ToString().Trim() });
                 }
             }
             items.DefaultView.Sort="ID";
@@ -825,6 +883,7 @@ namespace PluginProject
             foreach (DataRow row in items.Rows)
             {
                 dgvContext.Rows.Add(row["ID"]);
+                dgvContext.Rows[dgvContext.Rows.Count-1].ReadOnly = true;
             }
             dgvContext.Sort(dgvContext.Columns["Context"], ListSortDirection.Ascending);
             //cbPanels.SelectedIndex = 1;
@@ -890,12 +949,11 @@ namespace PluginProject
                                 + cbPanels.SelectedValue.ToString() + " and ID_EXT ="
                                 + m_id_obj + " and IS_ROLE="
                                 + m_b_role.ToString())[0]["ID_CONTEXT"] = dgvContext.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
-                            dgvContext.Rows[e.RowIndex - 1].Cells[e.ColumnIndex].Value = dgvContext.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
                             
                             if (GetContext != null)
                                 GetContext(this, new GetContextEventArgs(rows[0]));
 
-                            dgvContext.Rows.RemoveAt(e.RowIndex);
+                            //dgvContext.Rows.RemoveAt(e.RowIndex);
                         }
                         else
                         {
@@ -910,7 +968,7 @@ namespace PluginProject
                 }
                 catch (Exception ec)
                 {
-                    dgvContext.Rows.RemoveAt(e.RowIndex);
+                    //dgvContext.Rows.RemoveAt(e.RowIndex);
 
                     MessageBox.Show(ec.Message + '\n'+"Введите другое значение!");
                 }
@@ -921,6 +979,7 @@ namespace PluginProject
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
+            cbItems.Enabled = false;
             btnSave.Enabled = true;
             btnBreak.Enabled = true;
             tbAddItem.Enabled = true;
@@ -949,6 +1008,7 @@ namespace PluginProject
         }
         private void btnBreak_Click(object sender, EventArgs e)
         {
+            cbItems.Enabled = true;
             btnSave.Enabled = false;
             btnBreak.Enabled = false;
             tbAddItem.Enabled = false;
@@ -1049,6 +1109,9 @@ namespace PluginProject
             : base()
         {
             this.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
+            //this.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.EnableResizing;
+            //this.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllHeaders;
+            //this.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         }
 
         /// <summary>
