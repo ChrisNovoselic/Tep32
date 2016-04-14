@@ -210,7 +210,7 @@ namespace PluginTaskAutobook
 
                 try
                 {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false};
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false };
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
                     //column.Frozen = true;
@@ -309,7 +309,7 @@ namespace PluginTaskAutobook
             /// <param name="dgvView">контрол</param>
             public void ShowValues(DataTable tbOrigin, DataGridView dgvView)
             {
-                for (int i = 0; i < tbOrigin.Rows.Count; i++)
+                for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
                     for (int j = 0; j < tbOrigin.Rows.Count; j++)
                     {
@@ -318,8 +318,6 @@ namespace PluginTaskAutobook
                         {
                             dgvView.Rows[i].Cells["Output"].Value =
                                 editCells(Convert.ToSingle(tbOrigin.Rows[j]["VALUE"])).ToString("####");
-
-                            //fillCells(i, dgvView);
                             break;
                         }
                     }
@@ -339,43 +337,8 @@ namespace PluginTaskAutobook
 
                 return value;
             }
-
-            /// <summary>
-            /// Вычисление параметров
-            /// и заполнение грида
-            /// </summary>
-            /// <param name="i">номер строки</param>
-            /// <param name="dgvView">отображение</param>
-            private void fillCells(int i, DataGridView dgvView)
-            {
-                int STswen = 0;
-
-                //if (i == 0)
-                //    dgvView.Rows[i].Cells["StSwen"].Value =
-                //       dgvView.Rows[i].Cells[INDEX_GTP.TEC.ToString()].Value;
-                //else
-                //{
-                //    STswen = Convert.ToInt32(dgvView.Rows[i].Cells[INDEX_GTP.TEC.ToString()].Value);
-                //    dgvView.Rows[i].Cells["StSwen"].Value = STswen + Convert.ToSingle(dgvView.Rows[i - 1].Cells["StSwen"].Value);
-                //}
-
-                countDeviation(i, dgvView);
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="i">номер строки</param>
-            /// <param name="dgvView">отображение</param>
-            public void countDeviation(int i, DataGridView dgvView)
-            {
-                if (dgvView.Rows[i].Cells["StSwen"].Value == null)
-                    dgvView.Rows[i].Cells["DevOfPlan"].Value = "";
-                else
-                    dgvView.Rows[i].Cells["DevOfPlan"].Value =
-                        Convert.ToSingle(dgvView.Rows[i].Cells["StSwen"].Value) - Convert.ToInt32(dgvView.Rows[i].Cells["PlanSwen"].Value);
-            }
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -638,12 +601,18 @@ namespace PluginTaskAutobook
             dgvYear.AllowUserToResizeRows = false;
             dgvYear.AddColumn("Месяц", true, "Month");
             dgvYear.AddColumn("Выработка, тыс. кВтч", false, "Output");
+            dgvYear.AddColumn("", false, "DATE");
+            dgvYear.Columns["DATE"].Visible = false;
+            DateTime dtNew = new DateTime(s_dtDefaultAU.Year, 1, 1);
             for (int i = 0; i < GetMonth.Length; i++)
             {
                 dgvYear.AddRow();
-                dgvYear.Rows[i].Cells[0].Value = GetMonth[i];
+                dgvYear.Rows[i].Cells["Month"].Value = GetMonth[i];
+                dgvYear.Rows[i].Cells["DATE"].Value = dtNew;
+                dtNew = dtNew.AddMonths(1);
             }
-            dgvYear.CellParsing += dgvYear_CellParsing;
+            dgvYear.CellEndEdit += dgvYear_CellEndEdit;
+
 
             this.Controls.Add(PanelManagement, 0, posRow);
             this.SetColumnSpan(PanelManagement, posColdgvTEPValues);
@@ -683,19 +652,21 @@ namespace PluginTaskAutobook
             (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
 
         }
-
         /// <summary>
-        /// обработчик события датагрида 
-        /// - заполнение плана
+        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void dgvYear_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
+        void dgvYear_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            int value = Convert.ToInt32(e.Value);
-            //PlanInMonth(value, e.RowIndex + 1);
+           
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="err">номер ошибки</param>
+        /// <param name="errMsg">сообщение ошибки</param>
         protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
@@ -800,15 +771,29 @@ namespace PluginTaskAutobook
                         break;
                 }
         }
-
+        /// <summary>
+        /// Обработчик события при успешном сохранении изменений в редактируемых на вкладке таблицах
+        /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
-
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+              m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
         }
-
+        /// <summary>
+        ///  Сохранить изменения в редактируемых таблицах
+        /// </summary>
+        /// <param name="err"></param>
         protected override void recUpdateInsertDelete(out int err)
         {
             err = -1;
+            //DateTimeRange[] dtr = HandlerDb.GetDateTimeRangeValuesVar();
+
+            m_handlerDb.RecUpdateInsertDelete(GetNameTableIn(s_dtDefaultAU)
+            , @"ID_PUT, DATE_TIME"
+            , @"ID"
+            , m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+            , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+            , out err);
         }
 
         /// <summary>
@@ -848,8 +833,6 @@ namespace PluginTaskAutobook
 
             if (!(iRegDbConn < 0))
             {
-                //for (int i = 0; i < GetMonth.Count(); i++)
-                //{
                 // установить значения в таблицах для расчета, создать новую сессию
                 setValues(HandlerDb.GetDateTimeRangeValuesVar(), out err, out errMsg);
 
@@ -860,20 +843,10 @@ namespace PluginTaskAutobook
                         // создать копии для возможности сохранения изменений
                         //setValues();
 
-                        //AutoBookCalc.getTable(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION],
-                        //HandlerDb.getOutValues(out err));
-                        //m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
-                        ////break;
-                        ////запись выходных значений во временную таблицу
-                        //HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
-                        //// отобразить значения
                         dgvYear.ShowValues(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                             , dgvYear);
-
                     }
                     else ;
-                    //m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.getOutValues(out err);
-                    //break;
                 }
                 else
                 {
@@ -1146,6 +1119,66 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
+        /// Сохранение значений в БД
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="ev"></param>
+        protected override void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
+        {
+            int err = -1;
+            string errMsg = string.Empty;
+            DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
+
+            for (int i = 0; i < dtrPer.Length; i++)
+            {
+                s_dtDefaultAU = dtrPer[i].Begin;
+                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i].Begin, out err);
+
+                m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                    HandlerDb.savePlanValue(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                    , HandlerDb.getPlan(Type, dtrPer[i].Begin, ActualIdPeriod, out err), dgvYear, out err);
+
+                base.HPanelTepCommon_btnSave_Click(obj, ev);
+            }
+        }
+
+        /// <summary>
+        /// получает структуру таблицы 
+        /// INVAL_XXXXXX
+        /// </summary>
+        /// <param name="err"></param>
+        /// <returns>таблица</returns>
+        private DataTable getStructurInval(DateTime dtrange, out int err)
+        {
+            string strRes = string.Empty;
+
+            strRes = "SELECT * FROM "
+                + GetNameTableIn(dtrange)
+                + " WHERE ID_TIME = " + (int)ActualIdPeriod;
+
+            return HandlerDb.Select(strRes, out err);
+        }
+
+        /// <summary>
+        /// Получение имени таблицы вх.зн. в БД
+        /// </summary>
+        /// <param name="dtInsert"></param>
+        /// <returns>имя таблицы</returns>
+        public string GetNameTableIn(DateTime dtInsert)
+        {
+            string strRes = string.Empty;
+
+            if (dtInsert == null)
+                throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
+            else
+                ;
+
+            strRes = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+
+            return strRes;
+        }
+
+        /// <summary>
         /// обработчик кнопки-архивные значения
         /// </summary>
         /// <param name="obj"></param>
@@ -1178,6 +1211,10 @@ namespace PluginTaskAutobook
             onButtonLoadClick();
         }
 
+        /// <summary>
+        /// Изменение года)
+        /// </summary>
+        /// <param name="dtBegin"></param>
         private void changeDateInGrid(DateTime dtBegin)
         {
             (Controls.Find(INDEX_CONTROL.LABEL_YEARPLAN.ToString(), true)[0] as Label).Text =

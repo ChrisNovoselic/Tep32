@@ -467,7 +467,12 @@ namespace TepCommon
         {
             err = -1;
 
-            RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID, ID_SESSION", tableOriginValues, tableEditValues, out err);
+            RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable]
+                , @"ID, ID_SESSION"
+                , @""
+                , tableOriginValues
+                , tableEditValues
+                , out err);
         }
 
         /// <summary>
@@ -1030,7 +1035,7 @@ namespace TepCommon
                     ; //??? ошибка
             }
 
-            RecUpdateInsertDelete(s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES], @"ID_PUT", tableOrigin, tableEdit, out err);
+            RecUpdateInsertDelete(s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES], @"ID_PUT", @"",tableOrigin, tableEdit, out err);
         }
     }
 }

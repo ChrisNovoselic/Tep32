@@ -78,7 +78,7 @@ namespace TepCommon
 
             InitializeComponent();
 
-            m_handlerDb = createHandlerDb ();
+            m_handlerDb = createHandlerDb();
         }
 
         private void InitializeComponent()
