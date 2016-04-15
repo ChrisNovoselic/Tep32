@@ -225,9 +225,6 @@ namespace PluginTaskAutobook
                 //Вставить строки в таблицу БД со входными значениями для расчета
                 insertInValues(arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
 
-                //Вставить строки в таблицу БД со выходными значениями для расчета
-                //insertOutValues(out err, arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]);
-
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
                 arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
@@ -693,9 +690,6 @@ namespace PluginTaskAutobook
                 //Вставить строки в таблицу БД со входными значениями для расчета
                 insertInValues(arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
 
-                //Вставить строки в таблицу БД со выходными значениями для расчета
-                insertOutValues(out err, arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]);
-
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
                 arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
@@ -969,43 +963,45 @@ namespace PluginTaskAutobook
         /// <param name="tableRes"></param>
         /// <param name="dgvRes"></param>
         /// <param name="err"></param>
-        /// <returns></returns>
-        public DataTable savePlanValue(DataTable tableOrigin, DataTable tableRes, DataGridView dgvRes, out int err)
+        /// <returns>таблица значений</returns>
+        public DataTable savePlanValue(DataTable tableOrigin, DataRow rowRes, out int err)
         {
             err = -1;
-            float ResValue;
+            double ResValue;
             DataTable tableEdit = new DataTable();
             string rowSel = null;
             tableEdit = tableOrigin.Clone();//копия структуры
 
-            if (tableRes != null)
+            //if (tableRes != null)
+            //{
+            //for (int i = 0; i < tableRes.Rows.Count; i++)
+            //{
+            //foreach (DataGridViewRow r in dgvRes.Rows)
+            //{
+            //    if (r.Cells["DateTime"].Value.ToString() ==
+            //        Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"]).ToShortDateString())
+            //    {
+            rowSel = rowRes["ID_PUT"].ToString();
+            ResValue = Convert.ToDouble(rowRes["VALUE"]);
+
+            tableEdit.Rows.Add(new object[] 
             {
-                for (int i = 0; i < tableRes.Rows.Count; i++)
-                {
-                    foreach (DataGridViewRow r in dgvRes.Rows)
-                    {
-                        if (r.Cells["DATE"].Value.ToString() ==
-                            Convert.ToDateTime(tableRes.Rows[i]["DATE_TIME"]).AddMonths(-1).ToString())
-                        {
-                            ResValue = Convert.ToSingle(Convert.ToSingle(r.Cells["Output"].Value) * Math.Pow(10, 6));
-                            tableEdit.Rows.Add(new object[] 
-                                {
-                                    DbTSQLInterface.GetIdNext(tableOrigin, out err)
-                                    ,rowSel
-                                    ,HUsers.Id.ToString()
-                                    , 0.ToString()
-                                    ,Convert.ToDateTime(r.Cells["DATE"].Value.ToString()).AddMonths(1).ToString(CultureInfo.InvariantCulture)
-                                    , ID_PERIOD.MONTH
-                                    , ID_TIMEZONE.NSK
-                                    , 1.ToString()
-                                    , ResValue         
-                                    , DateTime.Now
-                                });
-                            break;
-                        }
-                    }
-                }
-            }
+                DbTSQLInterface.GetIdNext(tableOrigin, out err)
+                ,rowSel
+                ,HUsers.Id.ToString()
+                , 0.ToString()
+                ,Convert.ToDateTime(rowRes["WR_DATETIME"].ToString()).AddMonths(1).ToString(CultureInfo.InvariantCulture)
+                , ID_PERIOD.MONTH
+                , ID_TIMEZONE.NSK
+                , 1.ToString()
+                , ResValue         
+                , DateTime.Now
+            });
+            //break;
+            //}
+            //}
+            //}
+            //}
             return tableEdit;
         }
 

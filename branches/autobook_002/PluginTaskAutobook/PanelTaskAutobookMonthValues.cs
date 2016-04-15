@@ -970,6 +970,7 @@ namespace PluginTaskAutobook
 
         /// <summary>
         /// обработчик события датагрида -
+        /// редактирвание значений
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -1028,10 +1029,19 @@ namespace PluginTaskAutobook
                     break;
             }
         }
-
+        /// <summary>
+        /// окнчание редактирваония
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void dgvAB_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
+            if ((sender as DataGridView).Columns[e.ColumnIndex].Name == INDEX_GTP.CorGTP12.ToString()
+                || (sender as DataGridView).Columns[e.ColumnIndex].Name == INDEX_GTP.CorGTP36.ToString())
+            {
 
+            }
+            else ;
         }
 
         /// <summary>
