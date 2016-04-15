@@ -17,9 +17,11 @@ namespace PluginProject
 {
     public class PanelPrjRolesFPanels : HPanelEditTree
     {
+        enum INDEX_PARSE_UNIT {USER=0, CONTEXT=3, PANEL=5 };
         TreeView_Users tvUsers = new TreeView_Users(false);
         DataGridView_Prop_Text_Check dgvProp = new DataGridView_Prop_Text_Check();
         DataGridView_Prop_Text_Check dgvProp_Context = new DataGridView_Prop_Text_Check();
+        DataGridView_Prop_Text_Check dgvProp_Panel = new DataGridView_Prop_Text_Check();
         PanelProfiles panelProfiles = new PanelProfiles();
         TableLayoutPanel panel_Prop = new TableLayoutPanel();
 
@@ -69,7 +71,7 @@ namespace PluginProject
         /// </summary>
         protected static string[] m_arButtonText = { @"Сохранить", @"Отмена" };
 
-        DataTable m_AllUnits, m_context_Unit;
+        DataTable m_AllUnits, m_context_Unit, m_panel_Unit;
 
         /// <summary>
         /// Текущий выбранный компонент
@@ -126,13 +128,20 @@ namespace PluginProject
             m_context_Unit = new DataTable();
             m_AllUnits = HUsers.GetTableProfileUnits;
             m_context_Unit = m_AllUnits.Clone();
-            foreach (DataRow r in m_AllUnits.Select("ID>3"))
+            m_panel_Unit = m_AllUnits.Clone();
+            foreach (DataRow r in m_AllUnits.Select("ID>"+(int)INDEX_PARSE_UNIT.CONTEXT))
             {
                 m_context_Unit.Rows.Add(r.ItemArray);
                 m_AllUnits.Rows.Remove(r);
             }
+            foreach (DataRow r in m_context_Unit.Select("ID>" + (int)INDEX_PARSE_UNIT.PANEL))
+            {
+                m_panel_Unit.Rows.Add(r.ItemArray);
+                m_context_Unit.Rows.Remove(r);
+            }
             dgvProp.create_dgv(m_AllUnits);
             dgvProp_Context.create_dgv(m_context_Unit);
+            dgvProp_Panel.create_dgv(m_panel_Unit);
 
         }
 
@@ -147,10 +156,13 @@ namespace PluginProject
             panelProfiles.GetTableContext += new PanelProfiles.GetTableContextEventHandler(panelProfiles_GetTableContext);
             panelProfiles.GetItem += new PanelProfiles.GetItemEventHandler(panelProfiles_GetItem);
             panelProfiles.GetContext += new PanelProfiles.GetContextEventHandler(panelProfiles_GetContext);
+            panelProfiles.GetPanel += new PanelProfiles.GetPanelEventHandler(panelProfiles_GetPanel);
+
             ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0])).Click += new EventHandler(btnSave_Click);
             ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0])).Click += new EventHandler(btnBreak_Click);
             dgvProp.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_CellEndEdit);
             dgvProp_Context.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_Context_CellEndEdit);
+            dgvProp_Panel.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_Panel_CellEndEdit);
 
             return base.Activate(active);
         }
@@ -172,6 +184,7 @@ namespace PluginProject
             tvUsers.Dock = DockStyle.Fill;
             dgvProp.Dock = DockStyle.Fill;
             dgvProp_Context.Dock = DockStyle.Fill;
+            dgvProp_Panel.Dock = DockStyle.Fill;
             panelProfiles.Dock = DockStyle.Fill;
             panel_Prop.Dock = DockStyle.Fill;
 
@@ -179,16 +192,20 @@ namespace PluginProject
             this.SetColumnSpan(tvUsers, 4); this.SetRowSpan(tvUsers, 13);
 
             this.panel_Prop.ColumnCount = 1;
-            this.panel_Prop.RowCount = 2;
+            this.panel_Prop.RowCount = 3;
 
-            this.panel_Prop.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.panel_Prop.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.panel_Prop.RowStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
+            this.panel_Prop.RowStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
+            this.panel_Prop.RowStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 34F));
 
-            this.panel_Prop.RowStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+
+            this.panel_Prop.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
 
             this.panel_Prop.Controls.Add(dgvProp, 0, 0);
             this.SetColumnSpan(dgvProp, 1); this.SetRowSpan(dgvProp, 1);
             this.panel_Prop.Controls.Add(dgvProp_Context, 0, 1);
+            this.SetColumnSpan(dgvProp_Context, 1); this.SetRowSpan(dgvProp_Context, 1);
+            this.panel_Prop.Controls.Add(dgvProp_Panel, 0, 2);
             this.SetColumnSpan(dgvProp_Context, 1); this.SetRowSpan(dgvProp_Context, 1);
 
             this.Controls.Add(panel_Prop, 9, 0);
@@ -227,14 +244,12 @@ namespace PluginProject
         /// </summary>
         private void fillDataTable()
         {
-            int idListener;
-            
-            DbConnection connConfigDB;
-
             int err = -1;
 
-            idListener = register_idListenerConfDB(out err);
-            connConfigDB = DbSources.Sources().GetConnection(idListener, out err);
+            m_handlerDb.RegisterDbConnection(out err);
+
+            DbConnection connConfigDB = m_handlerDb.DbConnection;
+
             if (m_table_TEC.Columns.Count == 0)
             {
                 DataColumn[] columns = { new DataColumn("ID"), new DataColumn("DESCRIPTION") };
@@ -270,7 +285,8 @@ namespace PluginProject
             query = "Select * from dbo.fpanels";
             m_ar_panel_table[2] = m_handlerDb.Select(query, out err);
 
-            unregister_idListenerConfDB(idListener);
+            m_handlerDb.UnRegisterDbConnection();
+
         }
 
         /// <summary>
@@ -337,17 +353,14 @@ namespace PluginProject
             profileTable.Columns.Add("VALUE");
             profileTable.Columns.Add("ID_UNIT");
             DbConnection connConfigDB;
-            int idListener
-                , err;
+            int  err;
             Dictionary<int, User.UNIT_VALUE> profile = null;
-
-            idListener = register_idListenerConfDB(out err);
-            connConfigDB = DbSources.Sources().GetConnection(idListener, out err);
+            m_handlerDb.RegisterDbConnection(out err);
+            connConfigDB = m_handlerDb.DbConnection;
 
             profile = User.GetDictProfileItem(connConfigDB, id_role, id_user, bIsRole, tableAllProfiles);
 
-            unregister_idListenerConfDB(idListener);
-
+            m_handlerDb.UnRegisterDbConnection();
             for (int i = 0; i < profile.Count; i++)
             {
                 object[] obj = new object[3];
@@ -358,31 +371,6 @@ namespace PluginProject
             }
 
             return profileTable;
-        }
-
-        /// <summary>
-        /// Регистрация ID
-        /// </summary>
-        /// <param name="err">Ошибка в процессе регистрации</param>
-        /// <returns>Возвращает ID</returns>
-        protected int register_idListenerConfDB(out int err)
-        {
-            err = -1;
-            int idListener = -1;
-
-            ConnectionSettings connSett = FormMainBaseWithStatusStrip.s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
-            idListener = DbSources.Sources().Register(connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString());
-
-            return idListener;
-        }
-
-        /// <summary>
-        /// Отмена регистрации ID
-        /// </summary>
-        /// <param name="idListener">ID</param>
-        protected void unregister_idListenerConfDB(int idListener)
-        {
-            DbSources.Sources().UnRegister(idListener);
         }
 
         protected void panelProfiles_GetTableContext(object sender, PanelProfiles.GetTableContextEventArgs e)
@@ -458,6 +446,43 @@ namespace PluginProject
             tvUsers.SelectedNode = sel_node;
         }
 
+        protected void panelProfiles_GetPanel(object sender, PanelProfiles.GetPanelEventArgs e)
+        {
+            DataTable profile_panel = m_arr_editTable[(int)ID_Table.Profiles].Clone();
+            DataRow context_row = e.rowPanel;
+            foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT="
+                + context_row["ID_EXT"]
+                + " and IS_ROLE="
+                + context_row["IS_ROLE"]
+                + " AND ID_TAB="
+                + context_row["ID_TAB"]
+                + " AND ID_ITEM="
+                + context_row["ID_ITEM"]
+                + " AND ID_CONTEXT="
+                + context_row["ID_CONTEXT"]))
+            {
+                if(r["VALUE"].ToString().Trim()!="-1")
+                    profile_panel.Rows.Add(r.ItemArray);
+            }
+            if (profile_panel.Rows.Count == 0)
+            {
+                foreach (DataRow r in m_panel_Unit.Rows)
+                {
+                    context_row["ID_UNIT"] = r["ID"];
+                    context_row["VALUE"] = "0";
+                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(context_row.ItemArray);
+                    profile_panel.Rows.Add(context_row.ItemArray);
+                }
+                activate_btn(true);
+            }
+
+            if (profile_panel.Rows.Count == m_panel_Unit.Rows.Count)
+            {
+                dgvProp_Panel.Update_dgv(0, new DataTable[] { profile_panel });
+            }
+        }
+
+
         protected void activate_btn(bool active)
         {
             this.Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(),true)[0].Enabled = active;
@@ -478,9 +503,9 @@ namespace PluginProject
 
             if (validate_saving(m_arr_editTable[(int)ID_Table.Profiles], out warning) == false)
             {
-
+                m_handlerDb.RegisterDbConnection(out err);
                 m_handlerDb.RecUpdateInsertDelete(getNameMode(ID_Table.Profiles), "ID_EXT,IS_ROLE,ID_TAB,ID_ITEM,ID_CONTEXT,ID_UNIT", m_arr_origTable[(int)ID_Table.Profiles], m_arr_editTable[(int)ID_Table.Profiles], out err);
-                
+                m_handlerDb.UnRegisterDbConnection();
                 fillDataTable();
                 resetDataTable();
 
@@ -495,11 +520,11 @@ namespace PluginProject
             }
         }
 
+
         protected void dgvProp_CellEndEdit(object sender,DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventArgs e)
         {
             string id = m_AllUnits.Select(@"DESCRIPTION='" + e.m_Header_name + @"'")[0]["ID"].ToString();
             object[] obj = new object[2];
-            
             if (m_type_sel_node == TreeView_Users.Type_Comp.Role)
             {
                 obj[0] = 1;
@@ -516,6 +541,7 @@ namespace PluginProject
                     obj[1] = 0;
                 else
                     obj[1] = e.m_Value;
+            
             DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + m_sel_comp + " and IS_ROLE=" + obj[0] + " and ID_UNIT=" + id + " and ID_TAB=0");
             if (rows.Length == 0)
                 m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { m_sel_comp, obj[0], id ,obj[1], 0, 0, 0 });
@@ -527,6 +553,64 @@ namespace PluginProject
 
         protected void dgvProp_Context_CellEndEdit(object sender, DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventArgs e)
         {
+            string id = m_context_Unit.Select(@"DESCRIPTION='" + e.m_Header_name + @"'")[0]["ID"].ToString();
+            object[] obj = new object[2];
+            string[] query = panelProfiles.GetSelectQuery;
+            if (m_type_sel_node == TreeView_Users.Type_Comp.Role)
+            {
+                obj[0] = 1;
+            }
+            if (m_type_sel_node == TreeView_Users.Type_Comp.User)
+            {
+                obj[0] = 0;
+            }
+
+            if (e.m_Value == "True")
+                obj[1] = 1;
+            else
+                if (e.m_Value == "False")
+                    obj[1] = 0;
+                else
+                    obj[1] = e.m_Value;
+
+            DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + query[0] + " and IS_ROLE=" + query[1] + " and ID_UNIT=" + id + " AND ID_TAB=" + query[2] + " and ID_ITEM=" + query[3] + " AND ID_CONTEXT=" + query[4]);
+            if (rows.Length == 0)
+                m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { m_sel_comp, obj[0], id, obj[1], query[2], query[3], query[4] });
+            else
+                rows[0]["VALUE"] = obj[1];
+
+            activate_btn(true);
+        }
+
+        protected void dgvProp_Panel_CellEndEdit(object sender, DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventArgs e)
+        {
+            string id = m_panel_Unit.Select(@"DESCRIPTION='" + e.m_Header_name + @"'")[0]["ID"].ToString();
+            object[] obj = new object[2];
+            string[] query = panelProfiles.GetSelectQuery;
+            if (m_type_sel_node == TreeView_Users.Type_Comp.Role)
+            {
+                obj[0] = 1;
+            }
+            if (m_type_sel_node == TreeView_Users.Type_Comp.User)
+            {
+                obj[0] = 0;
+            }
+
+            if (e.m_Value == "True")
+                obj[1] = 1;
+            else
+                if (e.m_Value == "False")
+                    obj[1] = 0;
+                else
+                    obj[1] = e.m_Value;
+
+            DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + query[0] + " and IS_ROLE=" + query[1] + " and ID_UNIT=" + id + " AND ID_TAB=" + query[2] + " and ID_ITEM=0 AND ID_CONTEXT=0");
+            if (rows.Length == 0)
+                m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { m_sel_comp, obj[0], id, obj[1], query[2], 0, 0 });
+            else
+                rows[0]["VALUE"] = obj[1];
+
+            activate_btn(true);
         }
 
         /// <summary>
@@ -556,7 +640,7 @@ namespace PluginProject
 
     }
 
-    public partial class PanelProfiles : TableLayoutPanel
+    public class PanelProfiles : TableLayoutPanel
     {
         /// <summary> 
         /// Требуется переменная конструктора.
@@ -750,11 +834,36 @@ namespace PluginProject
             arr_Tables_edit = new DataTable[(int)INDEX_COMBOBOX.COUNT];
         }
 
-        public string GetSelectQuery
+        public string[] GetSelectQuery
         {
             get
             {
-                string query = "ID_CONTEXT="+dgvContext.SelectedRows[0].Cells[0].Value+" and ID_ITEM=" + cbItems.SelectedValue.ToString() + " and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString();
+                object[] query_selected = new object[3];
+                if (dgvContext.SelectedRows.Count == 0)
+                {
+                    query_selected[0] = 0;
+                }
+                else
+                {
+                    query_selected[0] = dgvContext.SelectedRows[0].Cells[0].Value;
+                }
+                if (cbItems.Text == string.Empty || cbItems.Text == "")
+                {
+                    query_selected[1] = 0;
+                }
+                else
+                {
+                    query_selected[1] = cbItems.SelectedValue.ToString();
+                }
+                if (cbPanels.Text == string.Empty || cbPanels.Text == "")
+                {
+                    query_selected[2] = 0;
+                }
+                else
+                {
+                    query_selected[2] = cbPanels.SelectedValue.ToString();
+                }
+                string[] query = { m_id_obj.ToString(), m_b_role.ToString(), query_selected[2].ToString(), query_selected[1].ToString(), query_selected[0].ToString() };
 
                 return query;
             }
@@ -833,15 +942,28 @@ namespace PluginProject
 
         private void cbPanels_SelectedIndexChanged(object sender, EventArgs e)
         {
+            DataTable items = new DataTable();
+            DataTable newItemTable = arr_Tables_edit[(int)INDEX_COMBOBOX.PROFILES].Clone();
+
+
             dgvContext.RowsAdded -= dgvContext_RowsAdded;
             cbItems.SelectedIndexChanged -= cbItems_SelectedIndexChanged;
             arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows.Clear();
-            foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString()))
+            foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("ID_CONTEXT<>'0' and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString()))
             {
                 arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows.Add(row.ItemArray);
             }
 
-            DataTable items = new DataTable();
+            if (cbPanels.SelectedValue != null)
+            {
+                newItemTable.Rows.Add(new object[] { m_id_obj, Convert.ToInt32(m_b_role), -1, -1, cbPanels.SelectedValue.ToString(), 0, 0 });
+            }
+
+            if (GetPanel != null)
+            {
+                GetPanel(this, new GetPanelEventArgs(newItemTable.Rows[0]));
+            }
+
             items.Columns.Add("ID");
             foreach (DataRow row in arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows)
             {
@@ -1072,6 +1194,32 @@ namespace PluginProject
         public GetItemEventHandler GetItem;
 
 
+        /// <summary>
+        /// Класс для описания аргумента события - получение строки нового Item
+        /// </summary>
+        public class GetPanelEventArgs : EventArgs
+        {
+            /// <summary>
+            /// таблица с профайлами элементов
+            /// </summary>
+            public DataRow rowPanel;
+
+            public GetPanelEventArgs(DataRow RowPanel)
+            {
+                rowPanel = RowPanel;
+            }
+        }
+
+        /// <summary>
+        /// Тип делегата для обработки события - получение строки нового Item
+        /// </summary>
+        public delegate void GetPanelEventHandler(object obj, GetPanelEventArgs e);
+
+        /// <summary>
+        /// Событие - получение строки нового Item
+        /// </summary>
+        public GetPanelEventHandler GetPanel;
+
 
         /// <summary>
         /// Класс для описания аргумента события - получение строки нового Item
@@ -1148,24 +1296,26 @@ namespace PluginProject
         public override void Update_dgv(int id_component, DataTable[] tables)
         {
             this.CellValueChanged -= cell_EndEdit;
+            DataTable inputTable = tables[0];
+            
             for (int i = 0; i < this.Rows.Count; i++)
             {
                 if (this.Rows[i].Cells[0] is DataGridViewCheckBoxCell)
                 {
-                    if (Convert.ToInt32(tables[0].Rows[i]["VALUE"]) == 0)
+                    if (Convert.ToInt32(inputTable.Rows[i]["VALUE"]) == 0)
                         this.Rows[i].Cells[0].Value = false;
                     else
                         this.Rows[i].Cells[0].Value = true;
                 }
                 else
                 {
-                    if (tables[0].Rows.Count <= i)
+                    if (inputTable.Rows.Count <= i)
                     {
                         this.Rows[i].Cells[0].Value = string.Empty;
                     }
                     else
                     {
-                        this.Rows[i].Cells[0].Value = tables[0].Rows[i]["VALUE"];
+                        this.Rows[i].Cells[0].Value = inputTable.Rows[i]["VALUE"];
                     }
                 }
             }
@@ -1321,7 +1471,7 @@ namespace PluginProject
                 string query = string.Empty
                     , errMsg = string.Empty;
 
-                query = @"SELECT * FROM " + m_nameTableProfilesData;
+                query = @"SELECT * FROM " + m_nameTableProfilesData +" ORDER BY ID_UNIT";
                 m_allProfile = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 return m_allProfile;
             }

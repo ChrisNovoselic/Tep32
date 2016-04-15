@@ -117,9 +117,15 @@ namespace PluginProject
         {
             InitializeComponent();
 
+            m_handlerDb = createHandlerDb();
+
             m_arr_origTable = new DataTable[(int)ID_Table.Count];
             m_arr_editTable = new DataTable[(int)ID_Table.Count];
+                        
+        }
 
+        public override bool Activate(bool active)
+        {
             fillDataTable();
             resetDataTable();
 
@@ -130,7 +136,8 @@ namespace PluginProject
             ((TreeView_Users)ctrl).GetID += new TreeView_Users.intGetID(this.GetNextID);
             ((TreeView_Users)ctrl).EditNode += new TreeView_Users.EditNodeEventHandler(this.get_operation_tree);
             ((TreeView_Users)ctrl).Report += new TreeView_Users.ReportEventHandler(this.tree_report);
-            
+
+            return base.Activate(active);
         }
 
         /// <summary>
@@ -204,13 +211,11 @@ namespace PluginProject
         /// </summary>
         private void fillDataTable()
         {
-            int idListener;
             DbConnection connConfigDB;
 
             int err = -1;
-
-            idListener = register_idListenerConfDB(out err);
-            connConfigDB = DbSources.Sources().GetConnection(idListener, out err);
+            m_handlerDb.RegisterDbConnection(out err);
+            connConfigDB = m_handlerDb.DbConnection;
 
             if (m_table_TEC.Columns.Count == 0)
             {
@@ -243,7 +248,7 @@ namespace PluginProject
 
             m_arr_origTable[(int)ID_Table.Profiles] = User.GetTableAllProfile(connConfigDB);
 
-            unregister_idListenerConfDB(idListener);
+            m_handlerDb.UnRegisterDbConnection();
         }
 
         /// <summary>
@@ -253,32 +258,6 @@ namespace PluginProject
         {
             for (ID_Table i = ID_Table.Unknown + 1; i < ID_Table.Count; i++)
                 m_arr_editTable[(int)i] = m_arr_origTable[(int)i].Copy();
-        }
-
-
-        /// <summary>
-        /// Регистрация ID
-        /// </summary>
-        /// <param name="err">Ошибка в процессе регистрации</param>
-        /// <returns>Возвращает ID</returns>
-        protected int register_idListenerConfDB(out int err)
-        {
-            err = -1;
-            int idListener = -1;
-
-            ConnectionSettings connSett = FormMainBaseWithStatusStrip.s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
-            idListener = DbSources.Sources().Register(connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString());
-
-            return idListener;
-        }
-
-        /// <summary>
-        /// Отмена регистрации ID
-        /// </summary>
-        /// <param name="idListener">ID</param>
-        protected void unregister_idListenerConfDB(int idListener)
-        {
-            DbSources.Sources().UnRegister(idListener);
         }
 
         /// <summary>
