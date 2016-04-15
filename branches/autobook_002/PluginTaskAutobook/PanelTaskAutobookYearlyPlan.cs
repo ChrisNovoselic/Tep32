@@ -337,7 +337,7 @@ namespace PluginTaskAutobook
             /// <param name="editTable"></param>
             /// <param name="dgvView"></param>
             /// <returns></returns>
-            public DataTable FillTableEdit(ref DataTable editTable, DataGridView dgvView, int idSession)
+            public void FillTableEdit(ref DataTable editTable, DataGridView dgvView, int idSession)
             {
                 int err = -1;
                 double valueToRes;
@@ -366,7 +366,6 @@ namespace PluginTaskAutobook
                     else
                         break;
                 }
-                return editTable;
             }
         }
 
@@ -885,7 +884,7 @@ namespace PluginTaskAutobook
                     throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
                 }
                 //удалить сессию
-                //deleteSession();
+                deleteSession();
                 //}
             }
             else
@@ -1174,7 +1173,7 @@ namespace PluginTaskAutobook
 
                 if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] != null)
                 {
-                    if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows[(int)INDEX_VIEW_VALUES.SOURCE] != null)
+                    if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count > 0)
                     {
                         m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                             HandlerDb.savePlanValue(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]

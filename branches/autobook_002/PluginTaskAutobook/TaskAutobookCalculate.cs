@@ -472,7 +472,7 @@ namespace PluginTaskAutobook
         /// <param name="dgvRes">отображение</param>
         /// <param name="err"></param>
         /// <returns>таблицу значений</returns>
-        public DataTable saveResOut(DataTable tableOrigin, DataTable tableRes, DataGridView dgvRes, out int err)
+        public DataTable saveResOut(DataTable tableOrigin, DataTable tableRes, out int err)
         {
             err = -1;
             DataTable tableEdit = new DataTable();
