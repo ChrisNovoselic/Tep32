@@ -110,6 +110,7 @@ namespace TepCommon
             string desc = string.Empty
                 , name = string.Empty;
             string[] ar_name = null;
+            DataRow[] rows = null;
 
             if (m_name_panel_desc != string.Empty)
             {
@@ -145,36 +146,49 @@ namespace TepCommon
                     query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
                     Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
 
+                    //Описания параметров
+                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
+
                     if (err != 0)
                     {
                         Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
                     }
 
-                    DataRow[] rows = null;
-                    if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0))
+                    if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE") < 0))
                     {
                         rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
                         if (rows.Length == 1)
                         {
-                            ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                            Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
                         }
 
-                        rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.PROP);
-                        if (rows.Length == 1)
+                        //DataRow[] rows = null;
+                        if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0))
                         {
-                            ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
-                        }
+                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
+                            if (rows.Length == 1)
+                            {
+                                ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                            }
 
-                        rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.DESC);
-                        if (rows.Length == 1)
-                        {
-                            ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
-                            ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
+                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.PROP);
+                            if (rows.Length == 1)
+                            {
+                                ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                            }
+
+                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.DESC);
+                            if (rows.Length == 1)
+                            {
+                                ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                                ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
+                            }
                         }
+                        else
+                            Logging.Logg().Error(@"HPanelTepCommon::initializeDescPanel () - в таблице [" + Descriptions[(int)ID_DT_DESC.TABLE].TableName + @"] не найдено поле [ID_TABLE]"
+                                , Logging.INDEX_MESSAGE.NOT_SET);
                     }
-                    else
-                        Logging.Logg().Error(@"HPanelTepCommon::initializeDescPanel () - в таблице [" + Descriptions[(int)ID_DT_DESC.TABLE].TableName + @"] не найдено поле [ID_TABLE]"
-                            , Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 catch (Exception e)
                 {
