@@ -117,7 +117,7 @@ namespace PluginProject
         {
             InitializeComponent();
 
-            m_handlerDb = createHandlerDb();
+            //m_handlerDb = createHandlerDb();
 
             m_arr_origTable = new DataTable[(int)ID_Table.Count];
             m_arr_editTable = new DataTable[(int)ID_Table.Count];
@@ -240,13 +240,13 @@ namespace PluginProject
             HTepUsers.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
 
-            m_AllUnits = HUsers.GetTableProfileUnits;
+            m_AllUnits = HUsers.GetTableProfileUnits.Copy();
             foreach (DataRow r in m_AllUnits.Select("ID>3"))
             {
                 m_AllUnits.Rows.Remove(r);
             }
 
-            m_arr_origTable[(int)ID_Table.Profiles] = User.GetTableAllProfile(connConfigDB);
+            m_arr_origTable[(int)ID_Table.Profiles] = User.GetTableAllProfile(connConfigDB).Copy();
 
             m_handlerDb.UnRegisterDbConnection();
         }

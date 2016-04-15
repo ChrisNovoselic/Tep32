@@ -121,12 +121,12 @@ namespace PluginProject
         {
             InitializeComponent();
 
-            m_handlerDb = createHandlerDb();
+            //m_handlerDb = createHandlerDb();
             m_arr_origTable = new DataTable[(int)ID_Table.Count];
             m_arr_editTable = new DataTable[(int)ID_Table.Count];
 
             m_context_Unit = new DataTable();
-            m_AllUnits = HUsers.GetTableProfileUnits;
+            m_AllUnits = HUsers.GetTableProfileUnits.Copy(); ;
             m_context_Unit = m_AllUnits.Clone();
             m_panel_Unit = m_AllUnits.Clone();
             foreach (DataRow r in m_AllUnits.Select("ID>"+(int)INDEX_PARSE_UNIT.CONTEXT))
@@ -272,7 +272,7 @@ namespace PluginProject
             HTepUsers.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
 
-            m_arr_origTable[(int)ID_Table.Profiles] = User.GetTableAllProfile(connConfigDB);
+            m_arr_origTable[(int)ID_Table.Profiles] = User.GetTableAllProfile(connConfigDB).Copy();
 
             
             string query = "Select * from dbo.task";
