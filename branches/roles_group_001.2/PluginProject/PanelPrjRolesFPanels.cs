@@ -69,7 +69,7 @@ namespace PluginProject
         /// <summary>
         /// Имена кнопок на панели
         /// </summary>
-        protected static string[] m_arButtonText = { @"Сохранить", @"Отмена" };
+        protected static string[] m_arButtonText = { @"Сохранить", @"Обновить" };
 
         DataTable m_AllUnits, m_context_Unit, m_panel_Unit;
 
@@ -143,26 +143,26 @@ namespace PluginProject
             dgvProp_Context.create_dgv(m_context_Unit);
             dgvProp_Panel.create_dgv(m_panel_Unit);
 
-        }
-
-        public override bool Activate(bool active)
-        {
-
-            fillDataTable();
-            resetDataTable();
-
-            tvUsers.Update_tree(m_arr_editTable[(int)ID_Table.User], m_arr_editTable[(int)ID_Table.Role]);
             tvUsers.EditNode += new TreeView_Users.EditNodeEventHandler(this.get_operation_tree);
             panelProfiles.GetTableContext += new PanelProfiles.GetTableContextEventHandler(panelProfiles_GetTableContext);
             panelProfiles.GetItem += new PanelProfiles.GetItemEventHandler(panelProfiles_GetItem);
             panelProfiles.GetContext += new PanelProfiles.GetContextEventHandler(panelProfiles_GetContext);
             panelProfiles.GetPanel += new PanelProfiles.GetPanelEventHandler(panelProfiles_GetPanel);
+            panelProfiles.GetDelContext += new PanelProfiles.GetDelContextEventHandler(panelProfiles_GetDelContext);
+
 
             ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0])).Click += new EventHandler(btnSave_Click);
             ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0])).Click += new EventHandler(btnBreak_Click);
             dgvProp.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_CellEndEdit);
             dgvProp_Context.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_Context_CellEndEdit);
             dgvProp_Panel.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_Panel_CellEndEdit);
+
+        }
+
+        public override bool Activate(bool active)
+        {
+
+            fillDataTable();
 
             return base.Activate(active);
         }
@@ -178,7 +178,7 @@ namespace PluginProject
 
             ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0])).Enabled = false;
             //btnOK.Enabled = true;
-            ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0])).Enabled = false;
+            ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0])).Enabled = true;
             //btnBreak.Enabled = true;
             
             tvUsers.Dock = DockStyle.Fill;
@@ -203,9 +203,9 @@ namespace PluginProject
 
             this.panel_Prop.Controls.Add(dgvProp, 0, 0);
             this.SetColumnSpan(dgvProp, 1); this.SetRowSpan(dgvProp, 1);
-            this.panel_Prop.Controls.Add(dgvProp_Context, 0, 1);
+            this.panel_Prop.Controls.Add(dgvProp_Context, 0, 2);
             this.SetColumnSpan(dgvProp_Context, 1); this.SetRowSpan(dgvProp_Context, 1);
-            this.panel_Prop.Controls.Add(dgvProp_Panel, 0, 2);
+            this.panel_Prop.Controls.Add(dgvProp_Panel, 0, 1);
             this.SetColumnSpan(dgvProp_Context, 1); this.SetRowSpan(dgvProp_Context, 1);
 
             this.Controls.Add(panel_Prop, 9, 0);
@@ -287,6 +287,9 @@ namespace PluginProject
 
             m_handlerDb.UnRegisterDbConnection();
 
+            resetDataTable();
+
+            tvUsers.Update_tree(m_arr_editTable[(int)ID_Table.User], m_arr_editTable[(int)ID_Table.Role]);
         }
 
         /// <summary>
@@ -482,16 +485,28 @@ namespace PluginProject
             }
         }
 
+        protected void panelProfiles_GetDelContext(object sender, PanelProfiles.GetDelContextEventArgs e)
+        {
+            DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + e.rowDelContext[0] + " and IS_ROLE=" + e.rowDelContext[1] + " and ID_TAB=" + e.rowDelContext[2] + " and ID_ITEM=" + e.rowDelContext[3] + " and ID_CONTEXT=" + e.rowDelContext[4]);
+            if (rows.Length == 2)
+            {
+                foreach (DataRow r in rows)
+                {
+                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Remove(r);
+                }
+                activate_btn(true);
+            }
+        }
 
         protected void activate_btn(bool active)
         {
             this.Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(),true)[0].Enabled = active;
-            this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0].Enabled = active;
+            //this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0].Enabled = active;
         }
 
         protected void btnBreak_Click(object sender, EventArgs e)
         {
-            resetDataTable();
+            fillDataTable();
             activate_btn(false);
         }
 
@@ -612,7 +627,7 @@ namespace PluginProject
 
             activate_btn(true);
         }
-
+        
         /// <summary>
         /// Проверка критичных параметров перед сохранением
         /// </summary>
@@ -738,11 +753,13 @@ namespace PluginProject
             this.dgvContext.Name = "dgvContext";
             this.dgvContext.TabIndex = 0;
             this.dgvContext.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            this.dgvContext.MultiSelect = false;
             this.dgvContext.Columns.Add("Context", "Context");
             this.dgvContext.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.dgvContext.SelectionChanged += new System.EventHandler(this.dgvContext_SelectionChanged);
             this.dgvContext.RowsAdded += new DataGridViewRowsAddedEventHandler(this.dgvContext_RowsAdded);
             this.dgvContext.CellEndEdit += new DataGridViewCellEventHandler(this.dgvContext_EndCellEdit);
+            this.dgvContext.UserDeletedRow += new DataGridViewRowEventHandler(this.dgvContext_DelRow);
             // 
             // tbAddItem
             // 
@@ -893,125 +910,146 @@ namespace PluginProject
             cbPanels.Text = string.Empty;
             cbItems.Text = string.Empty;
             dgvContext.Rows.Clear();
-            //cbTasks.SelectedIndex = 1;
-            //cbTasks.SelectedIndex = 0;
+            
             cbTasks.SelectedIndexChanged += cbTasks_SelectedIndexChanged;
+            cbTasks.SelectedIndex = -1;
+            cbTasks.SelectedIndex = 0;
             dgvContext.RowsAdded += dgvContext_RowsAdded;
         }
 
         private void cbTasks_SelectedIndexChanged(object sender, EventArgs e)
         {
-            dgvContext.RowsAdded -= dgvContext_RowsAdded;
-            cbPlugins.SelectedIndexChanged -= cbPlugins_SelectedIndexChanged;
-            arr_Tables_edit[(int)INDEX_COMBOBOX.PLUGINS].Rows.Clear();
-            foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PLUGINS].Select("ID_TASK=" + cbTasks.SelectedValue.ToString()))
-                arr_Tables_edit[(int)INDEX_COMBOBOX.PLUGINS].Rows.Add(row.ItemArray);
+            if (cbTasks.SelectedValue != null)
+            {
+                dgvContext.RowsAdded -= dgvContext_RowsAdded;
+                cbPlugins.SelectedIndexChanged -= cbPlugins_SelectedIndexChanged;
+                arr_Tables_edit[(int)INDEX_COMBOBOX.PLUGINS].Rows.Clear();
+                foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PLUGINS].Select("ID_TASK=" + cbTasks.SelectedValue.ToString()))
+                    arr_Tables_edit[(int)INDEX_COMBOBOX.PLUGINS].Rows.Add(row.ItemArray);
 
-            cbPlugins.DataSource = arr_Tables_edit[(int)INDEX_COMBOBOX.PLUGINS];
-            cbPlugins.ValueMember = "ID";
-            cbPlugins.DisplayMember = "DESCRIPTION";
-            //cbPlugins.SelectedIndex = 1;
-           //cbPlugins.SelectedIndex = 0;
-            cbPlugins.Text = string.Empty;
-            cbPanels.Text = string.Empty;
-            cbItems.Text = string.Empty;
-            dgvContext.Rows.Clear();
-            cbPlugins.SelectedIndexChanged += cbPlugins_SelectedIndexChanged;
-            dgvContext.RowsAdded += dgvContext_RowsAdded;
+                cbPlugins.DataSource = arr_Tables_edit[(int)INDEX_COMBOBOX.PLUGINS];
+                cbPlugins.ValueMember = "ID";
+                cbPlugins.DisplayMember = "DESCRIPTION";
+
+                cbPlugins.Text = string.Empty;
+                cbPanels.Text = string.Empty;
+                cbItems.Text = string.Empty;
+
+                dgvContext.Rows.Clear();
+                cbPlugins.SelectedIndexChanged += cbPlugins_SelectedIndexChanged;
+                cbPlugins.SelectedIndex = -1;
+                cbPlugins.SelectedIndex = 0;
+                dgvContext.RowsAdded += dgvContext_RowsAdded;
+            }
         }
 
         private void cbPlugins_SelectedIndexChanged(object sender, EventArgs e)
         {
-            dgvContext.RowsAdded -= dgvContext_RowsAdded;
-            cbPanels.SelectedIndexChanged -= cbPanels_SelectedIndexChanged;
-            arr_Tables_edit[(int)INDEX_COMBOBOX.PANELS].Rows.Clear();
-            foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PANELS].Select("ID_PLUGIN=" + cbPlugins.SelectedValue.ToString()))
-                arr_Tables_edit[(int)INDEX_COMBOBOX.PANELS].Rows.Add(row.ItemArray);
+            if (cbPlugins.SelectedValue != null)
+            {
+                dgvContext.RowsAdded -= dgvContext_RowsAdded;
+                cbPanels.SelectedIndexChanged -= cbPanels_SelectedIndexChanged;
+                arr_Tables_edit[(int)INDEX_COMBOBOX.PANELS].Rows.Clear();
+                foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PANELS].Select("ID_PLUGIN=" + cbPlugins.SelectedValue.ToString()))
+                    arr_Tables_edit[(int)INDEX_COMBOBOX.PANELS].Rows.Add(row.ItemArray);
 
-            cbPanels.DataSource = arr_Tables_edit[(int)INDEX_COMBOBOX.PANELS];
-            cbPanels.ValueMember = "ID";
-            cbPanels.DisplayMember = "DESCRIPTION";
-            //cbPanels.SelectedIndex = 1;
-            //cbPanels.SelectedIndex = 0;
-            cbPanels.Text = string.Empty;
-            cbItems.Text = string.Empty;
-            dgvContext.Rows.Clear(); 
-            cbPanels.SelectedIndexChanged += cbPanels_SelectedIndexChanged;
-            dgvContext.RowsAdded += dgvContext_RowsAdded;
+                cbPanels.DataSource = arr_Tables_edit[(int)INDEX_COMBOBOX.PANELS];
+                cbPanels.ValueMember = "ID";
+                cbPanels.DisplayMember = "DESCRIPTION";
+                //cbPanels.SelectedIndex = 1;
+                //cbPanels.SelectedIndex = 0;
+                cbPanels.Text = string.Empty;
+                cbItems.Text = string.Empty;
+                dgvContext.Rows.Clear();
+                cbPanels.SelectedIndexChanged += cbPanels_SelectedIndexChanged;
+                cbPanels.SelectedIndex = -1;
+                cbPanels.SelectedIndex = 0;
+                dgvContext.RowsAdded += dgvContext_RowsAdded;
+            }
         }
 
         private void cbPanels_SelectedIndexChanged(object sender, EventArgs e)
         {
-            DataTable items = new DataTable();
-            DataTable newItemTable = arr_Tables_edit[(int)INDEX_COMBOBOX.PROFILES].Clone();
-
-
-            dgvContext.RowsAdded -= dgvContext_RowsAdded;
-            cbItems.SelectedIndexChanged -= cbItems_SelectedIndexChanged;
-            arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows.Clear();
-            foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("ID_CONTEXT<>'0' and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString()))
-            {
-                arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows.Add(row.ItemArray);
-            }
-
             if (cbPanels.SelectedValue != null)
             {
-                newItemTable.Rows.Add(new object[] { m_id_obj, Convert.ToInt32(m_b_role), -1, -1, cbPanels.SelectedValue.ToString(), 0, 0 });
-            }
+                DataTable items = new DataTable();
+                DataTable newItemTable = arr_Tables_edit[(int)INDEX_COMBOBOX.PROFILES].Clone();
 
-            if (GetPanel != null)
-            {
-                GetPanel(this, new GetPanelEventArgs(newItemTable.Rows[0]));
-            }
 
-            items.Columns.Add("ID");
-            foreach (DataRow row in arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows)
-            {
-                if (items.Select("ID=" + row["ID_ITEM"].ToString().Trim()).Length == 0)
+                dgvContext.RowsAdded -= dgvContext_RowsAdded;
+                cbItems.SelectedIndexChanged -= cbItems_SelectedIndexChanged;
+                arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows.Clear();
+                foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("ID_CONTEXT<>'0' and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString()))
                 {
-                    items.Rows.Add(new object[] { row["ID_ITEM"].ToString().Trim() });
+                    arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows.Add(row.ItemArray);
                 }
+
+                if (cbPanels.SelectedValue != null)
+                {
+                    newItemTable.Rows.Add(new object[] { m_id_obj, Convert.ToInt32(m_b_role), -1, -1, cbPanels.SelectedValue.ToString(), 0, 0 });
+                }
+
+                if (GetPanel != null)
+                {
+                    GetPanel(this, new GetPanelEventArgs(newItemTable.Rows[0]));
+                }
+
+                items.Columns.Add("ID");
+                foreach (DataRow row in arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows)
+                {
+                    if (items.Select("ID=" + row["ID_ITEM"].ToString().Trim()).Length == 0)
+                    {
+                        items.Rows.Add(new object[] { row["ID_ITEM"].ToString().Trim() });
+                    }
+                }
+                cbItems.DataSource = items;
+                cbItems.DisplayMember = "ID";
+                cbItems.ValueMember = "ID";
+                //listBoxItems.SelectedIndex = 1;
+                //listBoxItems.SelectedIndex = 0;
+                cbItems.Text = string.Empty;
+                dgvContext.Rows.Clear();
+                cbItems.SelectedIndexChanged += cbItems_SelectedIndexChanged;
+                cbItems.SelectedIndex = -1;
+                cbItems.SelectedIndex = 0;
+                dgvContext.RowsAdded += dgvContext_RowsAdded;
             }
-            cbItems.DataSource = items;
-            cbItems.DisplayMember = "ID";
-            cbItems.ValueMember = "ID";
-            //listBoxItems.SelectedIndex = 1;
-            //listBoxItems.SelectedIndex = 0;
-            cbItems.Text = string.Empty;
-            dgvContext.Rows.Clear(); 
-            cbItems.SelectedIndexChanged += cbItems_SelectedIndexChanged;
-            dgvContext.RowsAdded += dgvContext_RowsAdded;
         }
 
         private void cbItems_SelectedIndexChanged(object sender, EventArgs e)
         {
-            dgvContext.RowsAdded -= dgvContext_RowsAdded;
-            dgvContext.SelectionChanged -= dgvContext_SelectionChanged;
-
-            DataTable items = new DataTable();
-            items.Columns.Add("ID");
-            items.Rows.Clear();
-            foreach (DataRow row in arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Select("ID_ITEM=" + cbItems.SelectedValue.ToString()))
+            if (cbItems.SelectedValue != null)
             {
-                if (items.Select("ID=" + row["ID_CONTEXT"].ToString().Trim()).Length == 0)
+                dgvContext.RowsAdded -= dgvContext_RowsAdded;
+                dgvContext.SelectionChanged -= dgvContext_SelectionChanged;
+
+                DataTable items = new DataTable();
+                items.Columns.Add("ID");
+                items.Rows.Clear();
+                foreach (DataRow row in arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Select("ID_ITEM=" + cbItems.SelectedValue.ToString()))
                 {
-                    if(Convert.ToInt32(row["ID_CONTEXT"]) != -1)
-                        items.Rows.Add(new object[] { row["ID_CONTEXT"].ToString().Trim() });
+                    if (items.Select("ID=" + row["ID_CONTEXT"].ToString().Trim()).Length == 0)
+                    {
+                        if (Convert.ToInt32(row["ID_CONTEXT"]) != -1)
+                            items.Rows.Add(new object[] { row["ID_CONTEXT"].ToString().Trim() });
+                    }
                 }
-            }
-            items.DefaultView.Sort="ID";
+                items.DefaultView.Sort = "ID";
 
-            dgvContext.Rows.Clear();
-            foreach (DataRow row in items.Rows)
-            {
-                dgvContext.Rows.Add(row["ID"]);
-                dgvContext.Rows[dgvContext.Rows.Count-1].ReadOnly = true;
+                dgvContext.Rows.Clear();
+                foreach (DataRow row in items.Rows)
+                {
+                    dgvContext.Rows.Add(row["ID"]);
+                    dgvContext.Rows[dgvContext.Rows.Count - 2].ReadOnly = true;
+                }
+                dgvContext.Sort(dgvContext.Columns["Context"], ListSortDirection.Ascending);
+                //cbPanels.SelectedIndex = 1;
+                //cbPanels.SelectedIndex = 0;
+                dgvContext.SelectionChanged += dgvContext_SelectionChanged;
+                dgvContext.Rows[1].Selected = true;
+                dgvContext.Rows[0].Selected = true;
+                dgvContext.RowsAdded += dgvContext_RowsAdded;
             }
-            dgvContext.Sort(dgvContext.Columns["Context"], ListSortDirection.Ascending);
-            //cbPanels.SelectedIndex = 1;
-            //cbPanels.SelectedIndex = 0;
-            dgvContext.SelectionChanged += dgvContext_SelectionChanged;
-            dgvContext.RowsAdded += dgvContext_RowsAdded;
 
         }
 
@@ -1034,7 +1072,36 @@ namespace PluginProject
                         GetTableContext(this, new GetTableContextEventArgs((object)items));
                     }
                 }
+            
             dgvContext.RowsAdded += dgvContext_RowsAdded;
+        }
+
+        private void dgvContext_DelRow(object sender, DataGridViewRowEventArgs e)
+        {
+            object[] query_selected = new object[3];
+            query_selected[0] = 0;
+
+            if (cbItems.Text == string.Empty || cbItems.Text == "")
+            {
+                query_selected[1] = 0;
+            }
+            else
+            {
+                query_selected[1] = cbItems.SelectedValue.ToString();
+            }
+            if (cbPanels.Text == string.Empty || cbPanels.Text == "")
+            {
+                query_selected[2] = 0;
+            }
+            else
+            {
+                query_selected[2] = cbPanels.SelectedValue.ToString();
+            }
+            string[] deleted = { m_id_obj.ToString(), m_b_role.ToString(), query_selected[2].ToString(), query_selected[1].ToString(), query_selected[0].ToString() };
+
+            deleted[4] = e.Row.Cells[0].Value.ToString();
+            if (GetDelContext != null)
+                GetDelContext(this, new GetDelContextEventArgs(deleted));
         }
 
         bool new_row_need = false;
@@ -1246,6 +1313,32 @@ namespace PluginProject
         /// Событие - получение строки нового Item
         /// </summary>
         public GetContextEventHandler GetContext;
+
+        /// <summary>
+        /// Класс для описания аргумента события - получение строки нового Item
+        /// </summary>
+        public class GetDelContextEventArgs : EventArgs
+        {
+            /// <summary>
+            /// таблица с профайлами элементов
+            /// </summary>
+            public string[] rowDelContext;
+
+            public GetDelContextEventArgs(string[] RowDelContext)
+            {
+                rowDelContext = RowDelContext;
+            }
+        }
+
+        /// <summary>
+        /// Тип делегата для обработки события - получение строки нового Item
+        /// </summary>
+        public delegate void GetDelContextEventHandler(object obj, GetDelContextEventArgs e);
+
+        /// <summary>
+        /// Событие - получение строки нового Item
+        /// </summary>
+        public GetDelContextEventHandler GetDelContext;
 
     }
 

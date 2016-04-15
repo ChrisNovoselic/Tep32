@@ -1113,7 +1113,8 @@ namespace PluginProject
                     Nodes[num_node].Nodes[Nodes[num_node].Nodes.Count - 1].Name = Nodes[num_node].Name + ":" + r_u["ID"].ToString();
                 }
             }
-
+            this.SelectedNode = this.Nodes[1];
+            this.SelectedNode = this.Nodes[0];
             checked_node(this.Nodes, 0, true);
 
             //foreach (TreeNode n in this.Nodes)
