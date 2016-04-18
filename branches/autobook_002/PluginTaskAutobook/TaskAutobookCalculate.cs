@@ -13,6 +13,9 @@ using TepCommon;
 
 namespace PluginTaskAutobook
 {
+    /// <summary>
+    /// DayAutoBook
+    /// </summary>
     public class HandlerDbTaskAutobookMonthValuesCalculate : HandlerDbTaskCalculate
     {
         /// <summary>
@@ -114,15 +117,17 @@ namespace PluginTaskAutobook
 
         /// <summary>
         /// Получение корр. входных значений
+        /// из INVAL
         /// </summary>
         /// <param name="type"></param>
         /// <param name="arQueryRanges"></param>
-        /// <param name="idPeriod"></param>
+        /// <param name="idPeriod">тек. период</param>
         /// <param name="err"></param>
         /// <returns>таблица занчений</returns>
         public DataTable getCorInPut(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
-            , ID_PERIOD idPeriod, out int err)
+            , ID_PERIOD idPeriod
+            , out int err)
         {
             string strQuery = string.Empty;
 
@@ -430,7 +435,8 @@ namespace PluginTaskAutobook
         /// <returns></returns>
         public DataTable getInPut(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
-            , ID_PERIOD idPeriod, out int err)
+            , ID_PERIOD idPeriod
+            , out int err)
         {
             string strQuery = string.Empty;
 
@@ -597,12 +603,14 @@ namespace PluginTaskAutobook
         ///  , структура таблицы совместима с [inval], [outval]
         /// </summary>
         /// <param name="type"></param>
-        /// <param name="idPeriod">период</param>
-        /// <param name="cntBasePeriod"></param>
+        /// <param name="idPeriod">ид периода</param>
+        /// <param name="cntBasePeriod">период</param>
         /// <param name="arQueryRanges">диапазон времени запроса</param>
         /// <returns></returns>
-        public override string getQueryValuesVar(TaskCalculate.TYPE type, ID_PERIOD idPeriod
-            , int cntBasePeriod, DateTimeRange[] arQueryRanges)
+        public override string getQueryValuesVar(TaskCalculate.TYPE type
+            , ID_PERIOD idPeriod
+            , int cntBasePeriod
+            , DateTimeRange[] arQueryRanges)
         {
             string strRes = string.Empty
             , whereParameters = string.Empty;
@@ -634,7 +642,8 @@ namespace PluginTaskAutobook
                             //+ @", GETDATE () as [WR_DATETIME]"
                             + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
                                 + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
-                                + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
+                                + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " 
+                                + (int)IdTask + whereParameters
                                 + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                             + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
                             ;

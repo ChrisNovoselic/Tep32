@@ -221,7 +221,8 @@ namespace PluginTaskAutobook
             /// Добавить столбец
             /// </summary>
             /// <param name="text">Текст для заголовка столбца</param>
-            /// <param name="bRead"></param>
+            /// <param name="bRead">флаг изменения пользователем ячейки</param>
+            /// <param name="nameCol">имя столбца</param>
             public void AddColumn(string txtHeader, bool bRead, string nameCol)
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
@@ -251,9 +252,9 @@ namespace PluginTaskAutobook
             /// Добавить столбец
             /// </summary>
             /// <param name="text">Текст для заголовка столбца</param>
-            /// <param name="bRead"></param>
-            /// <param name="nameCol"></param>
-            /// <param name="idPut"></param>
+            /// <param name="bRead">флаг изменения пользователем ячейки</param>
+            /// <param name="nameCol">имя столбца</param>
+            /// <param name="idPut">индентификатор источника</param>
             public void AddColumn(string txtHeader, bool bRead, string nameCol, int idPut)
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
@@ -332,18 +333,18 @@ namespace PluginTaskAutobook
                 Array namePut = Enum.GetValues(typeof(INDEX_GTP));
                 ClearValues();
                 double valueD;
-
+                //заполнение плана
                 if (planOnMonth.Rows.Count > 0)
                     planInMonth(planOnMonth.Rows[0]["VALUE"].ToString(),
                       Convert.ToDateTime(planOnMonth.Rows[0]["WR_DATETIME"].ToString()), dgvView);
                 else ;
 
-
+                
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
                     DataRow[] dr_CorValues = formingCorrValue(tbOrigin, dgvView.Rows[i].Cells["DATE"].Value.ToString());
                     int count = 0;
-
+                    //заполнение столбцов с корр. знач.
                     if (dr_CorValues[0] != null)
                     {
                         foreach (HDataGridViewColumn col in Columns)
@@ -363,6 +364,7 @@ namespace PluginTaskAutobook
 
                     for (int j = 0; j < tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count; j++)
                     {
+                        //заполнение столбцов ГПТ,ТЭЦ
                         if (dgvView.Rows[i].Cells[0].Value.ToString() ==
                         Convert.ToDateTime(tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["WR_DATETIME"]).ToShortDateString())
                         {
@@ -378,12 +380,12 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            ///Корректировка знач.
             /// </summary>
-            /// <param name="rowValue"></param>
-            /// <param name="namecol"></param>
-            /// <param name="rowcount"></param>
-            /// <param name="dgv"></param>
+            /// <param name="rowValue">значение</param>
+            /// <param name="namecol">имя столбца</param>
+            /// <param name="rowcount">номер строки</param>
+            /// <param name="dgv">тек.представление</param>
             /// <returns></returns>
             private double correctingValues(object rowValue
                 , string namecol
@@ -432,7 +434,7 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            /// Редактирование занчений ввиду новых корр. значений
             /// </summary>
             /// <param name="row">номер строки</param>
             /// <param name="value">значение</param>
@@ -450,7 +452,7 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// Вычисление параметров
+            /// Вычисление параметров нараст.ст.
             /// и заполнение грида
             /// </summary>
             /// <param name="i">номер строки</param>
@@ -475,7 +477,7 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// Вычисление отклонения
+            /// Вычисление отклонения от плана
             /// </summary>
             /// <param name="i">номер строки</param>
             /// <param name="dgvView">отображение</param>
@@ -533,8 +535,7 @@ namespace PluginTaskAutobook
                 , int column
                 , int row)
             {
-                double valueToRes,
-                    corValue = 0;
+                double valueToRes;
 
                 editTable.Rows.Clear();
                 HDataGridViewColumn cols = (HDataGridViewColumn)dgvView.Columns[column];
@@ -548,7 +549,6 @@ namespace PluginTaskAutobook
                             valueToRes = Convert.ToDouble(dgvView.Rows[i].Cells[column].Value) * Math.Pow(10, 6);
                         else
                             valueToRes = -1;
-
 
                     if (valueToRes > -1)
                         editTable.Rows.Add(new object[] 
@@ -625,10 +625,9 @@ namespace PluginTaskAutobook
             /// <summary>
             /// Суммирование значений ТГ
             /// </summary>
-            /// <param name="tb_gtp"></param>
-            /// <param name="i"></param>
-            /// <returns></returns>
-            private float sumTG(DataTable tb_gtp, int i)
+            /// <param name="tb_gtp">таблица с данными</param>
+            /// <returns>отредактированое значение</returns>
+            private float sumTG(DataTable tb_gtp)
             {
                 float value = 0;
                 int pow = 10;
@@ -734,11 +733,11 @@ namespace PluginTaskAutobook
                     switch (i)
                     {
                         case (int)INDEX_GTP.GTP12:
-                            fTG12 = sumTG(tb_gtp[i], i);
+                            fTG12 = sumTG(tb_gtp[i]);
                             value.Add(fTG12.ToString("####"));
                             break;
                         case (int)INDEX_GTP.GTP36:
-                            fTG36 = sumTG(tb_gtp[i], i);
+                            fTG36 = sumTG(tb_gtp[i]);
                             value.Add(fTG36.ToString("####"));
                             break;
                         case (int)INDEX_GTP.TEC:
@@ -1112,7 +1111,7 @@ namespace PluginTaskAutobook
                     else
                         dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value =
                             (value - valueCor) + Convert.ToDouble(dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value);
-
+                    //корректировка значений
                     dgvAB.editCells(e.RowIndex, Convert.ToInt32(dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value)
                             , dgvAB, INDEX_GTP.GTP36.ToString());
                     //сбор корр.значений
@@ -1129,7 +1128,7 @@ namespace PluginTaskAutobook
                     else
                         dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value =
                              (value - valueCor) + Convert.ToDouble(dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value);
-
+                    //корректировка значений
                     dgvAB.editCells(e.RowIndex, Convert.ToInt32(dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value)
                             , dgvAB, INDEX_GTP.GTP12.ToString());
                     //сбор корр.значений
@@ -1169,7 +1168,7 @@ namespace PluginTaskAutobook
         /// создание сессии
         /// </summary>
         /// <param name="arQueryRanges"></param>
-        /// <param name="err"></param>
+        /// <param name="err">номер ошибки</param>
         /// <param name="strErr"></param>
         private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
         {
