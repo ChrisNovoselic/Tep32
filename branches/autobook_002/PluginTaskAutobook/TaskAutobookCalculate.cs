@@ -419,12 +419,13 @@ namespace PluginTaskAutobook
                     ; // при ошибке - не продолжать
             }
         }
+
         /// <summary>
         /// Получение корр. PUT's
         /// </summary>
         /// <param name="type"></param>
         /// <param name="arQueryRanges"></param>
-        /// <param name="idPeriod"></param>
+        /// <param name="idPeriod">период</param>
         /// <param name="err"></param>
         /// <returns></returns>
         public DataTable getInPut(TaskCalculate.TYPE type
@@ -435,7 +436,8 @@ namespace PluginTaskAutobook
 
             for (int i = 0; i < arQueryRanges.Length; i++)
             {
-                strQuery += @"SELECT DISTINCT p.ID, p.ID_ALG"
+                strQuery += @"SELECT DISTINCT v.ID,v.ID_PUT, v.ID_USER, v.ID_SOURCE,v.DATE_TIME, v.ID_TIME"
+                    + ", v.ID_TIMEZONE,v.QUALITY,v.VALUE,v.WR_DATETIME"
                     + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
                     + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
                     + @" ON a.ID = p.ID_ALG"
@@ -463,13 +465,26 @@ namespace PluginTaskAutobook
 
             return tableParameters = Select(strQuery, out err);
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="err"></param>
+        /// <returns></returns>
+        public DataTable OutValues(out int err)
+        {
+            string strQuery;
+            strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
+                + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"]"
+                + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+
+            return Select(strQuery, out err);
+        }
 
         /// <summary>
         /// Формирование таблицы для сохранения значений OUT
         /// </summary>
         /// <param name="tableOrigin">первичная таблица</param>
         /// <param name="tableRes">таблица с параметрами</param>
-        /// <param name="dgvRes">отображение</param>
         /// <param name="err"></param>
         /// <returns>таблицу значений</returns>
         public DataTable saveResOut(DataTable tableOrigin, DataTable tableRes, out int err)
@@ -477,35 +492,34 @@ namespace PluginTaskAutobook
             err = -1;
             DataTable tableEdit = new DataTable();
             string rowSel = null;
-            Array namePut = Enum.GetValues(typeof(PanelTaskAutobookMonthValues.INDEX_GTP));
             tableEdit = tableOrigin.Clone();//копия структуры
 
             if (tableRes != null)
             {
-                foreach (DataGridViewRow r in dgvRes.Rows)
+                //foreach (DataGridViewRow r in dgvRes.Rows)
+                //{
+                for (int i = 0; i < tableRes.Rows.Count; i++)
                 {
-                    for (int i = 0; i < tableRes.Rows.Count; i++)
-                    {
-                        if (r.Cells[namePut.GetValue(i).ToString()].Value != null)
-                        {
-                            rowSel = getOutPut(out err).Rows[i]["ID"].ToString();
+                    //if (r.Cells[namePut.GetValue(i).ToString()].Value != null)
+                    //{
+                    rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
 
-                            tableEdit.Rows.Add(new object[] 
+                    tableEdit.Rows.Add(new object[] 
                                 {
                                     DbTSQLInterface.GetIdNext(tableEdit, out err)
                                     ,rowSel
                                     ,HUsers.Id.ToString()
                                     , 0.ToString()
-                                    ,Convert.ToDateTime(r.Cells["DATE"].Value.ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
+                                    ,Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
                                     , ID_PERIOD.DAY
                                     , ID_TIMEZONE.NSK
                                     , 1.ToString()
-                                    , r.Cells[namePut.GetValue(i).ToString()].Value.ToString()                  
+                                    , tableRes.Rows[i]["VALUE"]               
                                     , DateTime.Now
                                 });
-                        }
-                    }
+                    //}
                 }
+                //}
             }
             else ;
 
@@ -515,38 +529,40 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Формирование таблицы для сохранения значений IN
         /// </summary>
-        /// <param name="tableOrigin"></param>
-        /// <param name="tableRes"></param>
-        /// <param name="dgvRes"></param>
+        /// <param name="tableOrigin">первичная таблица</param>
+        /// <param name="tableRes">таблица с параметрами</param>
         /// <param name="err"></param>
-        /// <returns></returns>
-        public DataTable saveResInval(DataTable tableOrigin, DataTable tableRes, DataGridView dgvRes, out int err)
+        /// <returns>таблицу значений</returns>
+        public DataTable saveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
         {
             err = -1;
             DataTable tableEdit = new DataTable();
             string rowSel = null;
-            //Array namePut = Enum.GetValues(typeof(PanelTaskAutobookMonthValues.INDEX_GTP));
             tableEdit = tableOrigin.Clone();//копия структуры
 
             if (tableRes != null)
             {
-                foreach (DataGridViewRow r in dgvRes.Rows)
+                //foreach (DataGridViewRow r in dgvRes.Rows)
+                //{
+                for (int i = 0; i < tableRes.Rows.Count; i++)
                 {
+                    rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
 
-                    //tableEdit.Rows.Add(new object[] 
-                    //            {
-                    //                DbTSQLInterface.GetIdNext(tableEdit, out err)
-                    //                ,rowSel
-                    //                ,HUsers.Id.ToString()
-                    //                , 0.ToString()
-                    //                ,Convert.ToDateTime(r.Cells["DATE"].Value.ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
-                    //                , ID_PERIOD.DAY
-                    //                , ID_TIMEZONE.NSK
-                    //                , 1.ToString()
-                    //                , r.Cells[namePut.GetValue(i).ToString()].Value.ToString()                  
-                    //                , DateTime.Now
-                    //            });
+                    tableEdit.Rows.Add(new object[] 
+                                {
+                                    DbTSQLInterface.GetIdNext(tableEdit, out err)
+                                    , rowSel
+                                    , HUsers.Id.ToString()
+                                    , 0.ToString()
+                                    , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).ToString(CultureInfo.InvariantCulture)
+                                    , ID_PERIOD.DAY
+                                    , ID_TIMEZONE.NSK
+                                    , 1.ToString()
+                                    , tableRes.Rows[i]["VALUE"]            
+                                    , DateTime.Now
+                                });
                 }
+                //}
             }
             return tableEdit;
         }
