@@ -643,9 +643,6 @@ namespace PluginTaskAutobook
             }
             dgvYear.CellEndEdit += dgvYear_CellEndEdit;
 
-            this.Controls.Add(PanelManagement, 0, posRow);
-            this.SetColumnSpan(PanelManagement, posColdgvTEPValues);
-            this.SetRowSpan(PanelManagement, posRow = posRow + 5);//this.RowCount);
             //
             Label lblyearDGV = new System.Windows.Forms.Label();
             lblyearDGV.Dock = DockStyle.Top;
@@ -663,8 +660,12 @@ namespace PluginTaskAutobook
             tlpYear.Controls.Add(lblyearDGV, 0, 0);
             tlpYear.Controls.Add(lblTEC, 0, 1);
             tlpYear.Controls.Add(dgvYear, 0, 2);
-            this.Controls.Add(tlpYear, 0, posRow = posRow + 1);
-            this.SetColumnSpan(tlpYear, 4); this.SetRowSpan(tlpYear, 7);
+            this.Controls.Add(tlpYear, 1, posRow );
+            this.SetColumnSpan(tlpYear, 5); this.SetRowSpan(tlpYear, 7);
+            //
+            this.Controls.Add(PanelManagement, 0, posRow);
+            this.SetColumnSpan(PanelManagement, posColdgvTEPValues);
+            this.SetRowSpan(PanelManagement, posRow = posRow + 6);//this.RowCount);
 
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString());
 

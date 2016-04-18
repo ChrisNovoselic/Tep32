@@ -332,6 +332,7 @@ namespace PluginTaskAutobook
             {
                 Array namePut = Enum.GetValues(typeof(INDEX_GTP));
                 ClearValues();
+                bool bflg = false;
                 double valueD;
                 //заполнение плана
                 if (planOnMonth.Rows.Count > 0)
@@ -339,7 +340,7 @@ namespace PluginTaskAutobook
                       Convert.ToDateTime(planOnMonth.Rows[0]["WR_DATETIME"].ToString()), dgvView);
                 else ;
 
-                
+
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
                     DataRow[] dr_CorValues = formingCorrValue(tbOrigin, dgvView.Rows[i].Cells["DATE"].Value.ToString());
@@ -365,12 +366,12 @@ namespace PluginTaskAutobook
                     for (int j = 0; j < tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count; j++)
                     {
                         //заполнение столбцов ГПТ,ТЭЦ
-                        if (dgvView.Rows[i].Cells[0].Value.ToString() ==
+                        if (dgvView.Rows[i].Cells["DATE"].Value.ToString() ==
                         Convert.ToDateTime(tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["WR_DATETIME"]).ToShortDateString())
                         {
                             dgvView.Rows[i].Cells[namePut.GetValue(count).ToString()].Value =
                                 correctingValues(tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["VALUE"]
-                                , namePut.GetValue(count).ToString(), i, dgvView);
+                                , namePut.GetValue(count).ToString(),ref bflg ,i, dgvView);
                             count++;
 
                         }
@@ -389,6 +390,7 @@ namespace PluginTaskAutobook
             /// <returns></returns>
             private double correctingValues(object rowValue
                 , string namecol
+                , ref bool bflg 
                 , int rowcount
                 , DataGridView dgv)
             {
@@ -398,12 +400,21 @@ namespace PluginTaskAutobook
                 {
                     case "GTP12":
                         valRes = Convert.ToDouble(dgv.Rows[rowcount].Cells["CorGTP12"].Value) + (double)rowValue;
+                        bflg = true;
                         break;
                     case "GTP36":
                         valRes = Convert.ToDouble(dgv.Rows[rowcount].Cells["CorGTP36"].Value) + (double)rowValue;
+                        bflg = true;
                         break;
                     case "TEC":
-                        valRes = (double)rowValue;
+                        if (bflg)
+                        {
+                            valRes = Convert.ToDouble(dgv.Rows[rowcount].Cells["GTP12"].Value) +
+                               Convert.ToDouble(dgv.Rows[rowcount].Cells["GTP36"].Value);
+                            bflg = false;
+                        }
+                        else
+                            valRes = (double)rowValue;
                         break;
                     default:
                         break;
@@ -536,30 +547,44 @@ namespace PluginTaskAutobook
                 , int row)
             {
                 double valueToRes;
-
+                int idComp = 0;
                 editTable.Rows.Clear();
                 HDataGridViewColumn cols = (HDataGridViewColumn)dgvView.Columns[column];
 
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
-                    if (dgvView.Rows[i].Cells["Date"].Value == dgvView.Rows[row].Cells["Date"].Value)
-                        valueToRes = Convert.ToDouble(value) * Math.Pow(10, 6);
-                    else
-                        if (dgvView.Rows[i].Cells[column].Value != null)
-                            valueToRes = Convert.ToDouble(dgvView.Rows[i].Cells[column].Value) * Math.Pow(10, 6);
-                        else
-                            valueToRes = -1;
-
-                    if (valueToRes > -1)
-                        editTable.Rows.Add(new object[] 
+                    foreach (HDataGridViewColumn col in Columns)
                     {
-                        cols.m_iIdComp
-                        , -1
-                        , 1.ToString()
-                        , valueToRes                
-                        , Convert.ToDateTime(dgvView.Rows[i].Cells["Date"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
-                        , i
-                    });
+                        if (col.m_iIdComp > 0)
+                        {
+                            if (cols.m_iIdComp == col.m_iIdComp &&
+                                dgvView.Rows[i].Cells["Date"].Value == dgvView.Rows[row].Cells["Date"].Value)
+                            {
+                                valueToRes = Convert.ToDouble(value) * Math.Pow(10, 6);
+                                idComp = cols.m_iIdComp;
+                            }
+                            else
+                                if (dgvView.Rows[i].Cells[col.Index].Value != null)
+                                {
+                                    valueToRes = Convert.ToDouble(dgvView.Rows[i].Cells[col.Index].Value) * Math.Pow(10, 6);
+                                    idComp = col.m_iIdComp;
+                                }
+                                else
+                                    valueToRes = -1;
+
+                            //-1 не нужно записывать значение в таблицу
+                            if (valueToRes > -1)
+                                editTable.Rows.Add(new object[] 
+                                {
+                                    idComp
+                                    , -1
+                                    , 1.ToString()
+                                    , valueToRes                
+                                    , Convert.ToDateTime(dgvView.Rows[i].Cells["Date"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
+                                    , i
+                                });
+                        }
+                    }
                 }
                 return editTable;
             }
@@ -792,7 +817,7 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Панель элементов
         /// </summary>
         protected class PanelManagementAutobook : HPanelCommon
         {
@@ -948,7 +973,7 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            /// Установка периода
             /// </summary>
             /// <param name="idPeriod"></param>
             public void SetPeriod(ID_PERIOD idPeriod)
@@ -1043,7 +1068,7 @@ namespace PluginTaskAutobook
             dgvAB.AddColumn("Блоки 3-6", true, INDEX_GTP.GTP36.ToString());
             dgvAB.AddColumn("Станция,сутки", true, INDEX_GTP.TEC.ToString());
             dgvAB.AddColumn("Станция,нараст.", true, "StSwen");
-            dgvAB.AddColumn("План нараст.", false, "PlanSwen");
+            dgvAB.AddColumn("План нараст.", true, "PlanSwen");
             dgvAB.AddColumn("Отклонение от плана", true, "DevOfPlan");
             this.Controls.Add(dgvAB, 4, posRow);
             this.SetColumnSpan(dgvAB, 9); this.SetRowSpan(dgvAB, 10);
@@ -1350,6 +1375,7 @@ namespace PluginTaskAutobook
             m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
 
             onButtonLoadClick();
+
         }
         /// <summary>
         /// 
@@ -1358,6 +1384,7 @@ namespace PluginTaskAutobook
         {
             get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
+
         protected System.Data.DataTable m_TableEdit
         {
             get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
@@ -1763,7 +1790,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Получение имени таблицы вых.зн. в БД
         /// </summary>
-        /// <param name="dtInsert"></param>
+        /// <param name="dtInsert">дата</param>
         /// <returns>имя таблицы</returns>
         public string GetNameTableOut(DateTime dtInsert)
         {
