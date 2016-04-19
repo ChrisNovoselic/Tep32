@@ -7,8 +7,10 @@ using System.Windows.Forms;
 using System.Data;
 using System.Drawing;
 using System.Data.Common;
+using GemBox.Spreadsheet;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using Outlook = Microsoft.Office.Interop.Outlook;
 
 using HClassLibrary;
 using TepCommon;
@@ -125,6 +127,10 @@ namespace PluginTaskAutobook
         /// Отображение значений в табличном представлении(значения)
         /// </summary>
         protected DGVAutoBook dgvAB;
+        /// <summary>
+        /// 
+        /// </summary>
+        protected ReportsToNSS rptsNSS = new ReportsToNSS();
         /// <summary>
         /// 
         /// </summary>
@@ -829,6 +835,146 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
+        public class ReportsToNSS
+        {
+            CreateMessage m_crtMsg;
+
+            public ReportsToNSS()
+            {
+                m_crtMsg = new CreateMessage();
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            private class CreateExcelFile
+            {
+                /// <summary>
+                /// 
+                /// </summary>
+                ExcelFile efNSS = new ExcelFile();
+
+                public void CreateExcel()
+                {
+
+                }
+            }
+            /// <summary>
+            /// 
+            /// </summary>
+            private class CreateMessage
+            {
+                /// <summary>
+                /// 
+                /// </summary>
+                Outlook.Application oApp;
+                /// <summary>
+                /// 
+                /// </summary>
+                public CreateMessage()
+                {
+                    oApp = new Outlook.Application();
+                }
+
+                /// <summary>
+                /// 
+                /// </summary>
+                /// <param name="subject">тема письма</param>
+                /// <param name="body">тело сообщения</param>
+                /// <param name="to">кому/куда</param>
+                public void FormingMessage(string subject, string body, string to)
+                {
+                    Outlook.MailItem newMail = (Outlook.MailItem)oApp.CreateItem(Outlook.OlItemType.olMailItem);
+                    newMail.To = to;
+                    newMail.Subject = subject;
+                    newMail.Body = body;
+                    newMail.Importance = Outlook.OlImportance.olImportanceLow;
+                    newMail.Display(false);
+                }
+
+                /// <summary>
+                /// 
+                /// </summary>
+                /// <param name="mail"></param>
+                private void sendMail(Outlook.MailItem mail)
+                {
+                    //отправка
+                    ((Outlook._MailItem)mail).Send();
+                }
+
+                private void AddAttachment(Outlook.MailItem mail)
+                {
+                    mail.Subject = "An attachment for you!";
+
+                    OpenFileDialog attachment = new OpenFileDialog();
+
+                    attachment.Title = "Select a file to send";
+                    attachment.ShowDialog();
+
+                    if (attachment.FileName.Length > 0)
+                    {
+                        mail.Attachments.Add(
+                            attachment.FileName,
+                            Outlook.OlAttachmentType.olByValue,
+                            1,
+                            attachment.FileName);
+                        mail.Recipients.Add("Armando Pinto ");
+                        //((Outlook._MailItem)mail).Send();
+                    }
+
+                }
+            }
+
+            /// <summary>
+            /// Содание тела сообщения
+            /// </summary>
+            /// <param name="sourceTable">таблица с данными</param>
+            /// <param name="dtRange">выбранный промежуток</param>
+            private void CreateBodyToSend(ref string bodyMsg
+                , ref string sbjct
+                , DataTable sourceTable
+                , DateTimeRange[] dtRange)
+            {
+                DataRow[] drReportDay;
+
+                for (int i = 0; i < dtRange.Length; i++)
+                {
+                    drReportDay =
+                        sourceTable.Select(@"WR_DATETIME = '" + dtRange[i].Begin + "'");
+                        //(String.Format(sourceTable.Locale, @"WR_DATETIME = '{0:o}'", dtRange[i].Begin.ToShortDateString()));
+
+                    bodyMsg = @"Дата " + dtRange[i].Begin.ToShortDateString()
+                        + @"Станция, сутки: " + drReportDay[(int)INDEX_GTP.TEC]
+                        + @"Блоки 1-2, сутки: " + drReportDay[(int)INDEX_GTP.GTP12]
+                        + @"Блоки 3-6, сутки: " + drReportDay[(int)INDEX_GTP.GTP36];
+
+                    sbjct = "@Отчет о выработке электроэнергии НТЭЦ-5 за " + dtRange[i].Begin.ToShortDateString();
+                }
+
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="sourceTable">таблица с данными</param>
+            /// <param name="dtRange">выбранный промежуток</param>
+            /// /// <param name="to">получатель</param>
+            public void SendMailToNSS(DataTable sourceTable, DateTimeRange[] dtRange, string to)
+            {
+                string bodyMsg = string.Empty
+                 , sbjct = string.Empty
+                 , sendTo = string.Empty;
+
+                CreateBodyToSend(ref sbjct, ref bodyMsg, sourceTable, dtRange);
+                //sendTo = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
+                //m_crtMsg.FormingMessage(sbjct,bodyMsg,);
+
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="iFunc"></param>
         public PanelTaskAutobookMonthValues(IPlugIn iFunc)
             : base(iFunc)
@@ -867,6 +1013,8 @@ namespace PluginTaskAutobook
                 UNKNOWN = -1
                     , BUTTON_SEND, BUTTON_SAVE,
                 BUTTON_LOAD
+                    ,
+                TXTBX_EMAIL
                 , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN,
                 HDTP_END
                                 , MENUITEM_UPDATE,
@@ -975,12 +1123,17 @@ namespace PluginTaskAutobook
                 ctrlBSend.Name = INDEX_CONTROL_BASE.BUTTON_SEND.ToString();
                 ctrlBSend.Text = @"Отправить";
                 ctrlBSend.Dock = DockStyle.Top;
-                ctrlBSend.Enabled = false;
+                //ctrlBSend.Enabled = false;
                 //Кнопка - сохранить
                 Button ctrlBsave = new Button();
                 ctrlBsave.Name = INDEX_CONTROL_BASE.BUTTON_SAVE.ToString();
                 ctrlBsave.Text = @"Сохранить";
                 ctrlBsave.Dock = DockStyle.Top;
+                //Поле с почтой
+                TextBox ctrlTxt = new TextBox();
+                ctrlTxt.Name = INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString();
+                ctrlTxt.Text = @"Pasternak_AS@sibeco.su";
+                ctrlTxt.Dock = DockStyle.Top;
 
                 TableLayoutPanel tlpButton = new TableLayoutPanel();
                 tlpButton.Dock = DockStyle.Fill;
@@ -991,6 +1144,7 @@ namespace PluginTaskAutobook
                 tlpButton.Controls.Add(ctrl, 0, 0);
                 tlpButton.Controls.Add(ctrlBSend, 1, 0);
                 tlpButton.Controls.Add(ctrlBsave, 0, 1);
+                tlpButton.Controls.Add(ctrlTxt, 1, 1);
                 this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
                 this.SetColumnSpan(tlpButton, 4); this.SetRowSpan(tlpButton, 2);
 
@@ -1141,9 +1295,26 @@ namespace PluginTaskAutobook
             (btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(HPanelAutobook_btnHistory_Click);
             (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
+            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SEND.ToString(), true)[0] as Button).Click += new EventHandler(PanelTaskAutobookMonthValue_btnsend_Click);
 
             dgvAB.CellParsing += dgvAB_CellParsing;
             dgvAB.CellEndEdit += dgvAB_CellEndEdit;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void PanelTaskAutobookMonthValue_btnsend_Click(object sender, EventArgs e)
+        {
+            int err = -1;
+            string toSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
+
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.getOutPut(out err));
+            rptsNSS.SendMailToNSS(m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+            , HandlerDb.GetDateTimeRangeValuesVar(),toSend);
         }
 
         /// <summary>

@@ -377,7 +377,8 @@ namespace PluginTaskAutobook
             {
                 UNKNOWN = -1
                     , BUTTON_SEND, BUTTON_SAVE,
-                BUTTON_LOAD
+                BUTTON_LOAD,
+                TXTBX_EMAIL
                 , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN,
                 HDTP_END
                                 , MENUITEM_UPDATE,
@@ -490,8 +491,8 @@ namespace PluginTaskAutobook
                 Button ctrlBsave = new Button();
                 ctrlBsave.Name = INDEX_CONTROL_BASE.BUTTON_SAVE.ToString();
                 ctrlBsave.Text = @"Сохранить";
-                ctrlBsave.Dock = DockStyle.Top;
-
+                ctrlBsave.Dock = DockStyle.Top;          
+                //
                 TableLayoutPanel tlpButton = new TableLayoutPanel();
                 tlpButton.Dock = DockStyle.Fill;
                 tlpButton.AutoSize = true;
@@ -501,6 +502,7 @@ namespace PluginTaskAutobook
                 tlpButton.Controls.Add(ctrl, 0, 0);
                 tlpButton.Controls.Add(ctrlBSend, 1, 0);
                 tlpButton.Controls.Add(ctrlBsave, 0, 1);
+                //tlpButton.Controls.Add(ctrlTxt, 1, 1);
                 this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
                 this.SetColumnSpan(tlpButton, 4); this.SetRowSpan(tlpButton, 2);
 
