@@ -332,11 +332,10 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            /// Формирвоание значений
             /// </summary>
-            /// <param name="editTable"></param>
-            /// <param name="dgvView"></param>
-            /// <returns></returns>
+            /// <param name="editTable">таблица</param>
+            /// <param name="dgvView">отображение</param>
             public void FillTableEdit(ref DataTable editTable, DataGridView dgvView, int idSession)
             {
                 int err = -1;
@@ -660,7 +659,7 @@ namespace PluginTaskAutobook
             tlpYear.Controls.Add(lblyearDGV, 0, 0);
             tlpYear.Controls.Add(lblTEC, 0, 1);
             tlpYear.Controls.Add(dgvYear, 0, 2);
-            this.Controls.Add(tlpYear, 1, posRow );
+            this.Controls.Add(tlpYear, 1, posRow);
             this.SetColumnSpan(tlpYear, 5); this.SetRowSpan(tlpYear, 7);
             //
             this.Controls.Add(PanelManagement, 0, posRow);
@@ -902,8 +901,8 @@ namespace PluginTaskAutobook
         /// создание сессии
         /// </summary>
         /// <param name="arQueryRanges"></param>
-        /// <param name="err"></param>
-        /// <param name="strErr"></param>
+        /// <param name="err">номер ошибки</param>
+        /// <param name="strErr">текст ошибки</param>
         private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
         {
             err = 0;
@@ -950,8 +949,8 @@ namespace PluginTaskAutobook
         {
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
                      m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
-          m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-              m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
         }
         /// <summary>
         /// формирование запросов 
@@ -1070,6 +1069,7 @@ namespace PluginTaskAutobook
             Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
                 , (int)m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -1087,6 +1087,7 @@ namespace PluginTaskAutobook
             else
                 throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
+
         /// <summary>
         /// Обработчик события - изменение интервала (диапазона между нач. и оконч. датой/временем) расчета
         /// </summary>
@@ -1101,6 +1102,7 @@ namespace PluginTaskAutobook
             changeDateInGrid(dtBegin);
             Session.SetRangeDatetime(dtBegin, dtEnd);
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -1183,7 +1185,7 @@ namespace PluginTaskAutobook
                         s_dtDefaultAU = dtrPer[i].Begin;
                         base.HPanelTepCommon_btnSave_Click(obj, ev);
                     }
-                    else 
+                    else
                         break;
                 }
                 else
@@ -1193,8 +1195,9 @@ namespace PluginTaskAutobook
 
         /// <summary>
         /// получает структуру таблицы 
-        /// INVAL_XXXXXX
+        /// INVAL_XXXXXX???
         /// </summary>
+        /// <param name="arQueryRanges">временной промежуток</param>
         /// <param name="err"></param>
         /// <returns>таблица</returns>
         private DataTable getStructurInval(DateTimeRange arQueryRanges, out int err)
@@ -1221,7 +1224,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Получение имени таблицы вх.зн. в БД
         /// </summary>
-        /// <param name="dtInsert"></param>
+        /// <param name="dtInsert">дата</param>
         /// <returns>имя таблицы</returns>
         public string GetNameTableIn(DateTime dtInsert)
         {
@@ -1273,7 +1276,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Изменение года)
         /// </summary>
-        /// <param name="dtBegin"></param>
+        /// <param name="dtBegin">дата</param>
         private void changeDateInGrid(DateTime dtBegin)
         {
             (Controls.Find(INDEX_CONTROL.LABEL_YEARPLAN.ToString(), true)[0] as Label).Text =

@@ -371,7 +371,7 @@ namespace PluginTaskAutobook
                         {
                             dgvView.Rows[i].Cells[namePut.GetValue(count).ToString()].Value =
                                 correctingValues(tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["VALUE"]
-                                , namePut.GetValue(count).ToString(),ref bflg ,i, dgvView);
+                                , namePut.GetValue(count).ToString(), ref bflg, i, dgvView);
                             count++;
 
                         }
@@ -390,7 +390,7 @@ namespace PluginTaskAutobook
             /// <returns></returns>
             private double correctingValues(object rowValue
                 , string namecol
-                , ref bool bflg 
+                , ref bool bflg
                 , int rowcount
                 , DataGridView dgv)
             {
@@ -590,12 +590,50 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
+            /// Формирование таблицы корр. значений
+            /// </summary>
+            /// <param name="editTable">таблица</param>
+            /// <param name="dgvView">отображение</param>
+            /// <returns>таблица значений</returns>
+            public DataTable FillTableCorValue(DataTable editTable, DataGridView dgvView)
+            {
+                double valueToRes;
+                editTable.Rows.Clear();
+
+                for (int i = 0; i < dgvView.Rows.Count; i++)
+                {
+                    foreach (HDataGridViewColumn col in Columns)
+                    {
+                        if (col.m_iIdComp > 0)
+                        {
+                            if (dgvView.Rows[i].Cells[col.Index].Value != null)
+                                valueToRes = Convert.ToDouble(dgvView.Rows[i].Cells[col.Index].Value) * Math.Pow(10, 6);
+                            else
+                                valueToRes = -1;
+
+                            if (valueToRes > -1)
+                                editTable.Rows.Add(new object[] 
+                                {
+                                    col.m_iIdComp
+                                    , -1
+                                    , 1.ToString()
+                                    , valueToRes                
+                                    , Convert.ToDateTime(dgvView.Rows[i].Cells["Date"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
+                                    , i
+                                });
+                        }
+                    }
+                }
+                return editTable;
+            }
+
+            /// <summary>
             /// Формирование таблицы вых. значений
             /// </summary>
             /// <param name="editTable">таблица</param>
             /// <param name="dgvView">отображение</param>
             /// <param name="dtOut">таблица с вых.зн.</param>
-            public DataTable FillValueDay(DataTable editTable, DataGridView dgvView, DataTable dtOut)
+            public DataTable FillTableValueDay(DataTable editTable, DataGridView dgvView, DataTable dtOut)
             {
                 Array namePut = Enum.GetValues(typeof(INDEX_GTP));
                 string put;
@@ -604,20 +642,23 @@ namespace PluginTaskAutobook
 
                 foreach (DataGridViewRow row in dgvView.Rows)
                 {
-                    for (int i = (int)INDEX_GTP.GTP12; i < (int)INDEX_GTP.CorGTP12; i++)
+                    if (Convert.ToDateTime(row.Cells["Date"].Value) < DateTime.Now.Date)
                     {
-                        put = dtOut.Rows[i]["ID"].ToString();
-                        valueToRes = Convert.ToDouble(row.Cells[namePut.GetValue(i).ToString()].Value) * Math.Pow(10, 6);
-
-                        editTable.Rows.Add(new object[] 
+                        for (int i = (int)INDEX_GTP.GTP12; i < (int)INDEX_GTP.CorGTP12; i++)
                         {
-                            put
-                            , -1
-                            , 1.ToString()
-                            , valueToRes                
-                            , Convert.ToDateTime(row.Cells["Date"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
-                            , i
-                        });
+                            put = dtOut.Rows[i]["ID"].ToString();
+                            valueToRes = Convert.ToDouble(row.Cells[namePut.GetValue(i).ToString()].Value) * Math.Pow(10, 6);
+
+                            editTable.Rows.Add(new object[] 
+                            {
+                                put
+                                , -1
+                                , 1.ToString()
+                                , valueToRes                
+                                , Convert.ToDateTime(row.Cells["Date"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
+                                , i
+                            });
+                        }
                     }
                 }
                 return editTable;
@@ -1144,7 +1185,7 @@ namespace PluginTaskAutobook
                         dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), dgvAB, value, e.ColumnIndex, e.RowIndex);
                     //сбор значений
                     m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                        dgvAB.FillValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.getOutPut(out err));
+                        dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.getOutPut(out err));
                     break;
                 case "CorGTP36":
                     if (value == 0)
@@ -1161,7 +1202,7 @@ namespace PluginTaskAutobook
                         dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), dgvAB, value, e.ColumnIndex, e.RowIndex);
                     //сбор значений
                     m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                        dgvAB.FillValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.getOutPut(out err));
+                        dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.getOutPut(out err));
                     break;
                 default:
                     break;
@@ -1298,9 +1339,12 @@ namespace PluginTaskAutobook
                             , out err));
                         //сохранить вых. знач. в DataTable
                         m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                            dgvAB.FillValueDay(HandlerDb.OutValues(out err)
+                            dgvAB.FillTableValueDay(HandlerDb.OutValues(out err)
                                , dgvAB
                                , HandlerDb.getOutPut(out err));
+                        //сохранить вых.корр. знач. в DataTable
+                        m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
+                            dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), dgvAB);
                     }
                     else ;
                 }
@@ -1311,7 +1355,7 @@ namespace PluginTaskAutobook
                     throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
                 }
                 //удалить сессию
-                deleteSession();
+                //deleteSession();
             }
             else
                 ;
