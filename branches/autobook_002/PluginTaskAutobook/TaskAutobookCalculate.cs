@@ -572,7 +572,23 @@ namespace PluginTaskAutobook
             }
             return tableEdit;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="IdTab"></param>
+        /// <returns></returns>
+        public DataTable GetProfilesContext(int IdTab)
+        {
+            string query = string.Empty;
+            int err = -1;
 
+            query = @"SELECT VALUE,ID_CONTEXT"
+                + @" FROM [TEP_NTEC_5].[dbo].[profiles]"
+                + @" WHERE ID_TAB = " + IdTab
+                + " AND ID_EXT = " +  HUsers.Id;
+
+            return Select(query, out err);
+        }
     }
 
     /// <summary>
@@ -642,7 +658,7 @@ namespace PluginTaskAutobook
                             //+ @", GETDATE () as [WR_DATETIME]"
                             + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
                                 + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
-                                + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " 
+                                + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = "
                                 + (int)IdTask + whereParameters
                                 + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                             + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod

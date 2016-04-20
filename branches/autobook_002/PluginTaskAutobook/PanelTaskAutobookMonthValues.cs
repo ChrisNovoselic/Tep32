@@ -32,6 +32,14 @@ namespace PluginTaskAutobook
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
         /// <summary>
+        /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
+        /// </summary>
+        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.DAY : Session.m_currIdPeriod; } }
+        /// <summary>
+        /// Признак отображаемых на текущий момент значений
+        /// </summary>
+        protected INDEX_VIEW_VALUES m_ViewValues;
+        /// <summary>
         /// 
         /// </summary>
         protected TaskAutobookCalculate AutoBookCalc;
@@ -47,14 +55,6 @@ namespace PluginTaskAutobook
             RATIO
                 , COUNT
         }
-        /// <summary>
-        /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
-        /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.DAY : Session.m_currIdPeriod; } }
-        /// <summary>
-        /// Признак отображаемых на текущий момент значений
-        /// </summary>
-        protected INDEX_VIEW_VALUES m_ViewValues;
         /// <summary>
         /// 
         /// </summary>
@@ -108,6 +108,13 @@ namespace PluginTaskAutobook
                 , COUNT
         }
         /// <summary>
+        /// 
+        /// </summary>
+        protected enum INDEX_CONTEXT
+        {
+            ID_CON = 10
+        }
+        /// <summary>
         /// Значения параметров сессии
         /// </summary>
         protected TepCommon.HandlerDbTaskCalculate.SESSION Session { get { return HandlerDb._Session; } }
@@ -124,14 +131,6 @@ namespace PluginTaskAutobook
         /// </summary>
         protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         /// <summary>
-        /// Отображение значений в табличном представлении(значения)
-        /// </summary>
-        protected DGVAutoBook dgvAB;
-        /// <summary>
-        /// 
-        /// </summary>
-        protected ReportsToNSS rptsNSS = new ReportsToNSS();
-        /// <summary>
         /// 
         /// </summary>
         public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
@@ -147,6 +146,14 @@ namespace PluginTaskAutobook
         {
             return new PanelManagementAutobook();
         }
+        /// <summary>
+        /// Отображение значений в табличном представлении(значения)
+        /// </summary>
+        protected DGVAutoBook dgvAB;
+        /// <summary>
+        /// 
+        /// </summary>
+        protected ReportsToNSS rptsNSS = new ReportsToNSS();
 
         private PanelManagementAutobook _panelManagement;
         /// <summary>
@@ -833,7 +840,8 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Класс по работе с формированием 
+        /// и отправкой отчета NSS
         /// </summary>
         public class ReportsToNSS
         {
@@ -845,7 +853,7 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            /// Класс формирования отчета Excel 
             /// </summary>
             private class CreateExcelFile
             {
@@ -859,8 +867,9 @@ namespace PluginTaskAutobook
 
                 }
             }
+
             /// <summary>
-            /// 
+            /// Класс создания письма
             /// </summary>
             private class CreateMessage
             {
@@ -869,7 +878,7 @@ namespace PluginTaskAutobook
                 /// </summary>
                 Outlook.Application oApp;
                 /// <summary>
-                /// 
+                /// конструктор(основной)
                 /// </summary>
                 public CreateMessage()
                 {
@@ -877,7 +886,7 @@ namespace PluginTaskAutobook
                 }
 
                 /// <summary>
-                /// 
+                /// Формирование письма
                 /// </summary>
                 /// <param name="subject">тема письма</param>
                 /// <param name="body">тело сообщения</param>
@@ -888,8 +897,9 @@ namespace PluginTaskAutobook
                     newMail.To = to;
                     newMail.Subject = subject;
                     newMail.Body = body;
-                    newMail.Importance = Outlook.OlImportance.olImportanceLow;
+                    newMail.Importance = Outlook.OlImportance.olImportanceNormal;
                     newMail.Display(false);
+                    sendMail(newMail);
                 }
 
                 /// <summary>
@@ -902,10 +912,12 @@ namespace PluginTaskAutobook
                     ((Outlook._MailItem)mail).Send();
                 }
 
+                /// <summary>
+                /// Прикрепление файла к письму
+                /// </summary>
+                /// <param name="mail"></param>
                 private void AddAttachment(Outlook.MailItem mail)
                 {
-                    mail.Subject = "An attachment for you!";
-
                     OpenFileDialog attachment = new OpenFileDialog();
 
                     attachment.Title = "Select a file to send";
@@ -918,10 +930,7 @@ namespace PluginTaskAutobook
                             Outlook.OlAttachmentType.olByValue,
                             1,
                             attachment.FileName);
-                        mail.Recipients.Add("Armando Pinto ");
-                        //((Outlook._MailItem)mail).Send();
                     }
-
                 }
             }
 
@@ -930,31 +939,50 @@ namespace PluginTaskAutobook
             /// </summary>
             /// <param name="sourceTable">таблица с данными</param>
             /// <param name="dtRange">выбранный промежуток</param>
-            private void CreateBodyToSend(ref string bodyMsg
-                , ref string sbjct
+            private void CreateBodyToSend(ref string sbjct
+                , ref string bodyMsg
                 , DataTable sourceTable
                 , DateTimeRange[] dtRange)
             {
                 DataRow[] drReportDay;
+                DateTime reportDate;
 
                 for (int i = 0; i < dtRange.Length; i++)
                 {
+                    reportDate = dtRange[i].Begin.AddHours(6).Date;
                     drReportDay =
-                        sourceTable.Select(@"WR_DATETIME = '" + dtRange[i].Begin + "'");
-                        //(String.Format(sourceTable.Locale, @"WR_DATETIME = '{0:o}'", dtRange[i].Begin.ToShortDateString()));
+                        sourceTable.Select(String.Format(sourceTable.Locale, @"WR_DATETIME = '{0:o}'", reportDate));
 
-                    bodyMsg = @"Дата " + dtRange[i].Begin.ToShortDateString()
-                        + @"Станция, сутки: " + drReportDay[(int)INDEX_GTP.TEC]
-                        + @"Блоки 1-2, сутки: " + drReportDay[(int)INDEX_GTP.GTP12]
-                        + @"Блоки 3-6, сутки: " + drReportDay[(int)INDEX_GTP.GTP36];
+                    if ((double)drReportDay.Length != 0)
+                    {
+                        bodyMsg = @"BEGIN " + "\r\n"
+                            + @"(DATE):" + reportDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) + "\r\n"
+                            + @"(01): " + FewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ":\r\n"
+                            + @"(02): " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ":\r\n"
+                            + @"(03): " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]) + ":\r\n"
+                            + @"END ";
+                        /*bodyMsg = @"Дата " + reportDate.ToShortDateString() + ".\r\n"
+                            + @"Станция, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ";\r\n"
+                            + @"Блоки 1-2, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ";\r\n"
+                            + @"Блоки 3-6, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]);*/
 
-                    sbjct = "@Отчет о выработке электроэнергии НТЭЦ-5 за " + dtRange[i].Begin.ToShortDateString();
+                        sbjct = @"Отчет о выработке электроэнергии НТЭЦ-5 за " + reportDate.ToShortDateString();
+                    }
                 }
-
             }
 
             /// <summary>
-            /// 
+            /// Редактирование знчения
+            /// </summary>
+            /// <param name="val">значение</param>
+            /// <returns>измененное знач.</returns>
+            private string FewerValue(double val)
+            {
+                return Convert.ToString(val / Math.Pow(10, 6)).ToString();
+            }
+
+            /// <summary>
+            /// Создание. Подготвока. Отправка письма.
             /// </summary>
             /// <param name="sourceTable">таблица с данными</param>
             /// <param name="dtRange">выбранный промежуток</param>
@@ -962,12 +990,14 @@ namespace PluginTaskAutobook
             public void SendMailToNSS(DataTable sourceTable, DateTimeRange[] dtRange, string to)
             {
                 string bodyMsg = string.Empty
-                 , sbjct = string.Empty
-                 , sendTo = string.Empty;
+                 , sbjct = string.Empty;
 
                 CreateBodyToSend(ref sbjct, ref bodyMsg, sourceTable, dtRange);
-                //sendTo = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
-                //m_crtMsg.FormingMessage(sbjct,bodyMsg,);
+
+                if (sbjct != "")
+                    m_crtMsg.FormingMessage(sbjct, bodyMsg, to);
+                else ;
+           
 
             }
         }
@@ -1131,8 +1161,8 @@ namespace PluginTaskAutobook
                 ctrlBsave.Dock = DockStyle.Top;
                 //Поле с почтой
                 TextBox ctrlTxt = new TextBox();
-                ctrlTxt.Name = INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString();
-                ctrlTxt.Text = @"Pasternak_AS@sibeco.su";
+                ctrlTxt.Name = INDEX_CONTEXT.ID_CON.ToString();
+                //ctrlTxt.Text = @"Pasternak_AS@sibeco.su";
                 ctrlTxt.Dock = DockStyle.Top;
 
                 TableLayoutPanel tlpButton = new TableLayoutPanel();
@@ -1309,12 +1339,12 @@ namespace PluginTaskAutobook
         void PanelTaskAutobookMonthValue_btnsend_Click(object sender, EventArgs e)
         {
             int err = -1;
-            string toSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
+            string toSend = (Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0] as TextBox).Text;
 
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                 dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.getOutPut(out err));
             rptsNSS.SendMailToNSS(m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-            , HandlerDb.GetDateTimeRangeValuesVar(),toSend);
+            , HandlerDb.GetDateTimeRangeValuesVar(), toSend);
         }
 
         /// <summary>
@@ -1705,8 +1735,14 @@ namespace PluginTaskAutobook
                     (PanelManagement as PanelManagementAutobook).SetPeriod(Session.m_currIdPeriod);
                     (ctrl as ComboBox).Enabled = false;
 
-                    ////// отобразить значения
-                    //updateDataValues();
+                    ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
+                    DataTable tb = HandlerDb.GetProfilesContext(FindMyID());
+                    for (int j = 0; j < tb.Rows.Count; j++)
+                    {
+                        ctrl.Text = tb.Rows[j]["VALUE"].ToString().TrimEnd();
+                    }
+
+
                 }
                 catch (Exception e)
                 {
@@ -2089,6 +2125,22 @@ namespace PluginTaskAutobook
         {
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>key</returns>
+        private int FindMyID()
+        {
+            int Res = 0;
+            Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
+
+            foreach (var item in dictRegId)
+                if (item.Value == this.GetType())
+                    Res = item.Key;
+
+            return Res;
         }
     }
 }
