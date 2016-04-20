@@ -266,10 +266,10 @@ namespace PluginProject
             //    table_TEC.Rows.Add(row);
             //}
 
-            HTepUsers.GetUsers(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.User], out err);
+            User.GetUsers(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.User], out err);
             m_arr_origTable[(int)ID_Table.User].DefaultView.Sort = "ID";
 
-            HTepUsers.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
+            User.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
 
             m_arr_origTable[(int)ID_Table.Profiles] = User.GetTableAllProfile(connConfigDB).Copy();
@@ -534,7 +534,6 @@ namespace PluginProject
                 //MessageBox.Show(warning[0] + warning[1] + warning[2] + warning[3], "Внимание!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
-
 
         protected void dgvProp_CellEndEdit(object sender,DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventArgs e)
         {
@@ -1010,8 +1009,11 @@ namespace PluginProject
                 cbItems.Text = string.Empty;
                 dgvContext.Rows.Clear();
                 cbItems.SelectedIndexChanged += cbItems_SelectedIndexChanged;
-                cbItems.SelectedIndex = -1;
-                cbItems.SelectedIndex = 0;
+                if (cbItems.Items.Count > 0)
+                {
+                    cbItems.SelectedIndex = -1;
+                    cbItems.SelectedIndex = 0;
+                }
                 dgvContext.RowsAdded += dgvContext_RowsAdded;
             }
         }
@@ -1597,5 +1599,117 @@ namespace PluginProject
 
             return dictPrifileItem;
         }
+
+
+        /// <summary>
+        /// Функция получения строки запроса пользователя
+        ///  /// <returns>Строка строку запроса</returns>
+        /// </summary>
+        private static string getUsersRequest(string where, string orderby)
+        {
+            string strQuery = string.Empty;
+            //strQuer//strQuery =  "SELECT * FROM users WHERE DOMAIN_NAME='" + Environment.UserDomainName + "\\" + Environment.UserName + "'";
+            //strQuery =  "SELECT * FROM users WHERE DOMAIN_NAME='NE\\ChrjapinAN'";
+            strQuery = "SELECT * FROM users";
+            if ((!(where == null)) && (where.Length > 0))
+                strQuery += " WHERE " + where;
+            else
+                ;
+
+            if ((!(orderby == null)) && (orderby.Length > 0))
+                strQuery += " ORDER BY " + orderby;
+            else
+                ;
+
+            return strQuery;
+        }
+
+        /// <summary>
+        /// Функция запроса для поиска пользователя
+        /// </summary>
+        public static void GetUsers(ref DbConnection conn, string where, string orderby, out DataTable users, out int err)
+        {
+            err = 0;
+            users = null;
+
+            if (!(conn == null))
+            {
+                users = new DataTable();
+                Logging.Logg().Debug(@"HUsers::GetUsers () - запрос для поиска пользователей = [" + getUsersRequest(where, orderby) + @"]", Logging.INDEX_MESSAGE.NOT_SET);
+                users = DbTSQLInterface.Select(ref conn, getUsersRequest(where, orderby), null, null, out err);
+            }
+            else
+            {
+                err = -1;
+            }
+        }
+
+        /// <summary>
+        /// Функция взятия ролей из БД
+        /// </summary>
+        public static void GetRoles(ref DbConnection conn, string where, string orderby, out DataTable roles, out int err)
+        {
+            err = 0;
+            roles = null;
+            string query = string.Empty;
+
+            if (!(conn == null))
+            {
+                roles = new DataTable();
+                query = @"SELECT * FROM ROLES_UNIT";
+
+                if ((where.Equals(null) == true) || (where.Equals(string.Empty) == true))
+                    query += @" WHERE ID < 500";
+                else
+                    query += @" WHERE " + where;
+
+                roles = DbTSQLInterface.Select(ref conn, query, null, null, out err);
+            }
+            else
+            {
+                err = -1;
+            }
+        }
+
+        public static DataTable GetRolesPanels(DbConnection conn, out int err)
+        {
+            err = 0;
+            DataTable roles = null;
+            string query = string.Empty;
+
+            if (!(conn == null))
+            {
+                roles = new DataTable();
+                query = @"SELECT ID, DESCRIPTION, ID_UNIT=8 FROM dbo.fpanels ORDER BY ID";
+
+                roles = DbTSQLInterface.Select(ref conn, query, null, null, out err);
+            }
+            else
+            {
+                err = -1;
+            }
+            return roles;
+        }
+
+        public static DataTable GetProfiles(DbConnection conn, out int err)
+        {
+            err = 0;
+            DataTable profiles = null;
+            string query = string.Empty;
+
+            if (!(conn == null))
+            {
+                profiles = new DataTable();
+                query = "SELECT dbo.roles.ID_EXT, dbo.roles.IS_ROLE, dbo.roles.ID_FPANEL, dbo.roles.IsUse AS VALUE FROM dbo.roles ORDER BY dbo.roles.ID_FPANEL";
+                profiles = DbTSQLInterface.Select(ref conn, query, null, null, out err);
+            }
+            else
+            {
+                err = -1;
+            }
+            return profiles;
+        }
+
+    
     }
 }

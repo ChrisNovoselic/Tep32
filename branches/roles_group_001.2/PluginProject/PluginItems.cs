@@ -17,9 +17,9 @@ namespace PluginProject
             _Id = 5;
 
             register(5, typeof(PanelPrjRolesUnit), @"Проект", @"Роли(группы) пользователей");
-            register(7, typeof(PanelPrjRolesFPanels), @"Проект", @"Права доступа к элементам интерфейса");
+            register(7, typeof(PanelPrjRolesFPanels), @"Проект\Права доступа", @"Элементы интерфейса");
             register(9, typeof(PanelPrjTask), @"Проект", @"Список задач ИРС");
-            //register(11, typeof(PanelPrjRolesProfiles), @"Проект\Права доступа", @"Элементы интерфейса");
+            register(11, typeof(PanelPrjRolesAccess), @"Проект\Права доступа", @"Панели");
             register(14, typeof(PanelPrjSourceGroup), @"Проект", @"Группы источников данных");
             register(15, typeof(PanelPrjSources), @"Проект", @"Список источников данных");
         }

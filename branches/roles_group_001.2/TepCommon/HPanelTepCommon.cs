@@ -31,7 +31,7 @@ namespace TepCommon
 
         #region Apelgans
 
-
+        int m_id_panel;
         public enum ID_DT_DESC { TABLE, PROP };
         public DataTable[] Descriptions = new DataTable[] { new DataTable(), new DataTable() };
 
@@ -79,6 +79,8 @@ namespace TepCommon
             InitializeComponent();
 
             m_handlerDb = createHandlerDb ();
+
+            m_id_panel = FindMyID();
         }
 
         private void InitializeComponent()
@@ -102,6 +104,24 @@ namespace TepCommon
             return new HandlerDbValues (); 
         }
 
+        private int FindMyID()
+        {
+            int Res = -1;
+
+            Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
+
+            foreach (var item in dictRegId)
+            {
+                if (item.Value == this.GetType())
+                {
+                    Res = item.Key;
+                }
+            }
+
+            return Res;
+        }
+
+
         protected void initializeDescPanel()
         {
             int err = -1;
@@ -111,7 +131,7 @@ namespace TepCommon
                 , name = string.Empty;
             string[] ar_name = null;
             DataRow[] rows = null;
-
+            
             if (m_name_panel_desc != string.Empty)
             {
                 try
@@ -128,26 +148,27 @@ namespace TepCommon
                         }
                         else
                             ;
-
+                    
                     //Описание вкладки
-                    string query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    string query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + m_id_panel;
                     DataTable dt = m_handlerDb.Select(query, out err);
                     if (dt.Rows.Count != 0)
                     {
                         desc = dt.Rows[0][0].ToString();
-                        ((HPanelDesc)ctrl).SetLblTab = new string[] { ((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id), desc };
+                        ((HPanelDesc)ctrl).SetLblTab = new string[] { /*((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id)*/
+                    this.Parent.Text, desc };
                     }
 
                     //Описания таблиц
-                    query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + m_id_panel;
                     Descriptions[(int)ID_DT_DESC.TABLE] = m_handlerDb.Select(query, out err);
 
                     //Описания параметров
-                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_id_panel;
                     Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
 
                     //Описания параметров
-                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_id_panel;
                     Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
 
                     if (err != 0)
@@ -316,7 +337,7 @@ namespace TepCommon
         /// <param name="id">Идентификатор</param>
         /// <param name="posCol">Позиция-столбец для размещения области описания</param>
         /// <param name="posRow">Позиция-строка для размещения области описания</param>
-        protected void addLabelDesc(string id, int posCol = 5, int posRow = 10)
+        protected virtual void addLabelDesc(string id, int posCol = 5, int posRow = 10)
         {
             GroupBox gbDesc = new GroupBox();
             gbDesc.Text = @"Описание";

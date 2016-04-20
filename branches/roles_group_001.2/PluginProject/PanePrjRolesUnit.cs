@@ -234,10 +234,10 @@ namespace PluginProject
             //    table_TEC.Rows.Add(row);
             //}
 
-            HTepUsers.GetUsers(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.User], out err);
+            User.GetUsers(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.User], out err);
             m_arr_origTable[(int)ID_Table.User].DefaultView.Sort = "ID";
 
-            HTepUsers.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
+            User.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
 
             m_AllUnits = HUsers.GetTableProfileUnits.Copy();
