@@ -82,10 +82,8 @@ namespace PluginTaskAutobook
         /// </summary>
         protected enum INDEX_CONTROL
         {
-            UNKNOWN = -1
-                ,
-            DGV_DATA
-              ,
+            UNKNOWN = -1,
+            DGV_DATA,
             DGV_PLANEYAR
                 , LABEL_DESC
         }
@@ -94,8 +92,7 @@ namespace PluginTaskAutobook
         /// </summary>
         protected enum INDEX_ID
         {
-            UNKNOWN = -1
-            ,
+            UNKNOWN = -1,
             PERIOD // идентификаторы периодов расчетов, использующихся на форме
                 ,
             TIMEZONE // идентификаторы (целочисленные, из БД системы) часовых поясов
@@ -154,6 +151,10 @@ namespace PluginTaskAutobook
         /// 
         /// </summary>
         protected ReportsToNSS rptsNSS = new ReportsToNSS();
+        /// <summary>
+        /// 
+        /// </summary>
+        protected ReportExcel rptExcel = new ReportExcel();
 
         private PanelManagementAutobook _panelManagement;
         /// <summary>
@@ -853,22 +854,6 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// Класс формирования отчета Excel 
-            /// </summary>
-            private class CreateExcelFile
-            {
-                /// <summary>
-                /// 
-                /// </summary>
-                ExcelFile efNSS = new ExcelFile();
-
-                public void CreateExcel()
-                {
-
-                }
-            }
-
-            /// <summary>
             /// Класс создания письма
             /// </summary>
             private class CreateMessage
@@ -905,9 +890,9 @@ namespace PluginTaskAutobook
                     }
                     catch (Exception)
                     {
-                        
+
                     }
-                 
+
                 }
 
                 /// <summary>
@@ -1009,6 +994,101 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
+        /// Класс формирования отчета Excel 
+        /// </summary>
+        public class ReportExcel
+        {
+            /// <summary>
+            /// Экземпляр класса
+            /// </summary>
+            ExcelFile efNSS;
+            /// <summary>
+            /// 
+            /// </summary>
+            protected enum INDEX_DIVISION : int
+            {
+                UNKNOW = -1,
+                SEPARATE_CELL,
+                ADJACENT_CELL  
+            }
+            /// <summary>
+            /// конструктор(основной)
+            /// </summary>
+            public ReportExcel()
+            {
+                efNSS = new ExcelFile();
+            }
+
+            public void CreateExcel(DataGridView dgView)
+            {
+                efNSS.LoadXls(@"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls");
+                ExcelWorksheet wrkSheets = efNSS.Worksheets["Autobook"];
+
+                for (int i = 0; i < wrkSheets.Columns.Count; i++)
+                {
+                    int indxRow = 0;
+                    bool bflag = false;
+
+                    foreach (ExcelCell cell in wrkSheets.Columns[i].Cells)
+                    {
+                        for (int j = 0; j < dgView.Columns.Count; j++)
+                        {
+                            if (Convert.ToString(cell.Value) == splitString(dgView.Columns[j].HeaderText))
+                            {
+                                fillSheetExcel(wrkSheets, dgView, j, indxRow, i);
+                                bflag = true;
+                                break;
+                            }
+                            else
+                                ;
+                        }
+                        indxRow++;
+                        if (bflag == true)
+                            break;
+                    }
+                }
+                //wrkSheets.
+                //efNSS.SaveXls("");
+                //efNSS.
+                // Select active worksheet.
+                //efNSS = wrkSheets.Worksheets.ActiveWorksheet;
+                //efNSS.Worksheets.ActiveWorksheet;
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="headerTxt"></param>
+            /// <returns></returns>
+            private string splitString(string headerTxt)
+            {
+                string[] spltHeader = headerTxt.Split(',');
+
+                if (spltHeader.Length > (int)INDEX_DIVISION.ADJACENT_CELL)
+                    return spltHeader[(int)INDEX_DIVISION.ADJACENT_CELL];
+                else
+                    return spltHeader[(int)INDEX_DIVISION.SEPARATE_CELL];
+            }
+
+            private void fillSheetExcel(ExcelWorksheet wrkSheet
+                , DataGridView dgv
+                , int indxColDgv
+                , int indxRowExcel
+                , int indxColExcel)
+            {
+                CellRange cellRange = wrkSheet.Columns[indxColExcel].Cells;
+
+                for (int i = 0; i < dgv.Rows.Count; i++)
+                {
+                    for (int j = indxRowExcel + 2; j < wrkSheet.Rows.Count; j++)
+                    {
+                        cellRange[j].Value = dgv.Rows[i].Cells[indxColDgv].Value;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="iFunc"></param>
@@ -1048,10 +1128,11 @@ namespace PluginTaskAutobook
             {
                 UNKNOWN = -1
                     , BUTTON_SEND, BUTTON_SAVE,
-                BUTTON_LOAD
+                BUTTON_LOAD,
+                BUTTON_EXPORT
                     ,
                 TXTBX_EMAIL
-                , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN,
+                    , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN,
                 HDTP_END
                                 , MENUITEM_UPDATE,
                 MENUITEM_HISTORY
@@ -1165,6 +1246,11 @@ namespace PluginTaskAutobook
                 ctrlBsave.Name = INDEX_CONTROL_BASE.BUTTON_SAVE.ToString();
                 ctrlBsave.Text = @"Сохранить";
                 ctrlBsave.Dock = DockStyle.Top;
+                //
+                Button ctrlExp = new Button();
+                ctrlExp.Name = INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString();
+                ctrlExp.Text = @"Экспорт";
+                ctrlExp.Dock = DockStyle.Top;
                 //Поле с почтой
                 TextBox ctrlTxt = new TextBox();
                 ctrlTxt.Name = INDEX_CONTEXT.ID_CON.ToString();
@@ -1181,8 +1267,9 @@ namespace PluginTaskAutobook
                 tlpButton.Controls.Add(ctrlBSend, 1, 0);
                 tlpButton.Controls.Add(ctrlBsave, 0, 1);
                 tlpButton.Controls.Add(ctrlTxt, 1, 1);
+                tlpButton.Controls.Add(ctrlExp, 0, 2);
                 this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
-                this.SetColumnSpan(tlpButton, 4); this.SetRowSpan(tlpButton, 2);
+                this.SetColumnSpan(tlpButton, 4); this.SetRowSpan(tlpButton, 3);
 
                 ResumeLayout(false);
                 PerformLayout();
@@ -1293,8 +1380,8 @@ namespace PluginTaskAutobook
             dgvAB.AllowUserToResizeRows = false;
             dgvAB.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvAB.AddColumn("Дата", true, "Date");
-            dgvAB.AddColumn("Корректировка ПТО блоки 1-2", false, "CorGTP12", 23226);
-            dgvAB.AddColumn("Корректировка ПТО блоки 3-6", false, "CorGTP36", 23227);
+            dgvAB.AddColumn("Корректировка ПТО, Блоки 1-2", false, "CorGTP12", 23226);
+            dgvAB.AddColumn("Корректировка ПТО, Блоки 3-6", false, "CorGTP36", 23227);
             dgvAB.AddColumn("Блоки 1-2", true, INDEX_GTP.GTP12.ToString());
             dgvAB.AddColumn("Блоки 3-6", true, INDEX_GTP.GTP36.ToString());
             dgvAB.AddColumn("Станция,сутки", true, INDEX_GTP.TEC.ToString());
@@ -1306,7 +1393,7 @@ namespace PluginTaskAutobook
             //
             this.Controls.Add(PanelManagement, 0, posRow);
             this.SetColumnSpan(PanelManagement, posColdgvTEPValues);
-            this.SetRowSpan(PanelManagement, posRow = posRow + 5);//this.RowCount);            
+            this.SetRowSpan(PanelManagement, posRow = posRow + 6);//this.RowCount);            
             ////
             //TableLayoutPanel tlpYear = new TableLayoutPanel();
             //tlpYear.Dock = DockStyle.Fill;
@@ -1330,8 +1417,13 @@ namespace PluginTaskAutobook
                 new EventHandler(HPanelTepCommon_btnUpdate_Click);
             (btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(HPanelAutobook_btnHistory_Click);
-            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
-            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SEND.ToString(), true)[0] as Button).Click += new EventHandler(PanelTaskAutobookMonthValue_btnsend_Click);
+            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
+                new EventHandler(HPanelTepCommon_btnSave_Click);
+            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SEND.ToString(), true)[0] as Button).Click +=
+                new EventHandler(PanelTaskAutobookMonthValue_btnsend_Click);
+            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
+                 new EventHandler(PanelTaskAutobookMonthValues_btnexport_Click);
+
 
             dgvAB.CellParsing += dgvAB_CellParsing;
             dgvAB.CellEndEdit += dgvAB_CellEndEdit;
@@ -1339,6 +1431,16 @@ namespace PluginTaskAutobook
 
         /// <summary>
         /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void PanelTaskAutobookMonthValues_btnexport_Click(object sender, EventArgs e)
+        {
+            rptExcel.CreateExcel(dgvAB);
+        }
+
+        /// <summary>
+        /// Оброботчик события клика кнопки отправить
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
