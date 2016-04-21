@@ -893,13 +893,21 @@ namespace PluginTaskAutobook
                 /// <param name="to">кому/куда</param>
                 public void FormingMessage(string subject, string body, string to)
                 {
-                    Outlook.MailItem newMail = (Outlook.MailItem)oApp.CreateItem(Outlook.OlItemType.olMailItem);
-                    newMail.To = to;
-                    newMail.Subject = subject;
-                    newMail.Body = body;
-                    newMail.Importance = Outlook.OlImportance.olImportanceNormal;
-                    newMail.Display(false);
-                    sendMail(newMail);
+                    try
+                    {
+                        Outlook.MailItem newMail = (Outlook.MailItem)oApp.CreateItem(Outlook.OlItemType.olMailItem);
+                        newMail.To = to;
+                        newMail.Subject = subject;
+                        newMail.Body = body;
+                        newMail.Importance = Outlook.OlImportance.olImportanceNormal;
+                        newMail.Display(false);
+                        sendMail(newMail);
+                    }
+                    catch (Exception)
+                    {
+                        
+                    }
+                 
                 }
 
                 /// <summary>
@@ -939,7 +947,7 @@ namespace PluginTaskAutobook
             /// </summary>
             /// <param name="sourceTable">таблица с данными</param>
             /// <param name="dtRange">выбранный промежуток</param>
-            private void CreateBodyToSend(ref string sbjct
+            private void createBodyToSend(ref string sbjct
                 , ref string bodyMsg
                 , DataTable sourceTable
                 , DateTimeRange[] dtRange)
@@ -957,9 +965,9 @@ namespace PluginTaskAutobook
                     {
                         bodyMsg = @"BEGIN " + "\r\n"
                             + @"(DATE):" + reportDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) + "\r\n"
-                            + @"(01): " + FewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ":\r\n"
-                            + @"(02): " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ":\r\n"
-                            + @"(03): " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]) + ":\r\n"
+                            + @"(01): " + fewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ":\r\n"
+                            + @"(02): " + fewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ":\r\n"
+                            + @"(03): " + fewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]) + ":\r\n"
                             + @"END ";
                         /*bodyMsg = @"Дата " + reportDate.ToShortDateString() + ".\r\n"
                             + @"Станция, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ";\r\n"
@@ -976,7 +984,7 @@ namespace PluginTaskAutobook
             /// </summary>
             /// <param name="val">значение</param>
             /// <returns>измененное знач.</returns>
-            private string FewerValue(double val)
+            private string fewerValue(double val)
             {
                 return Convert.ToString(val / Math.Pow(10, 6)).ToString();
             }
@@ -992,13 +1000,11 @@ namespace PluginTaskAutobook
                 string bodyMsg = string.Empty
                  , sbjct = string.Empty;
 
-                CreateBodyToSend(ref sbjct, ref bodyMsg, sourceTable, dtRange);
+                createBodyToSend(ref sbjct, ref bodyMsg, sourceTable, dtRange);
 
                 if (sbjct != "")
                     m_crtMsg.FormingMessage(sbjct, bodyMsg, to);
                 else ;
-           
-
             }
         }
 
@@ -1025,7 +1031,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="numMonth">номер месяца</param>
         /// <returns>кол-во дней</returns>
-        public int dayIsMonth
+        public int DayIsMonth
         {
             get
             {
@@ -1449,7 +1455,7 @@ namespace PluginTaskAutobook
                     , arQueryRanges[1].End.AddDays(-(arQueryRanges[1].End.Day - 2)));
             else
                 arQueryRanges[0] = new DateTimeRange(arQueryRanges[0].Begin.AddDays(-(arQueryRanges[0].Begin.Day - 1))
-                    , arQueryRanges[0].End.AddDays(dayIsMonth - arQueryRanges[0].End.Day));
+                    , arQueryRanges[0].End.AddDays(DayIsMonth - arQueryRanges[0].End.Day));
             //Запрос для получения архивных данных
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
             //Запрос для получения автоматически собираемых данных
@@ -1736,13 +1742,11 @@ namespace PluginTaskAutobook
                     (ctrl as ComboBox).Enabled = false;
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
-                    DataTable tb = HandlerDb.GetProfilesContext(FindMyID());
+                    DataTable tb = HandlerDb.GetProfilesContext(findMyID());
+                    //из profiles
                     for (int j = 0; j < tb.Rows.Count; j++)
-                    {
-                        ctrl.Text = tb.Rows[j]["VALUE"].ToString().TrimEnd();
-                    }
-
-
+                        if (Convert.ToInt32(tb.Rows[j]["ID_CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
+                            ctrl.Text = tb.Rows[j]["VALUE"].ToString().TrimEnd();
                 }
                 catch (Exception e)
                 {
@@ -1817,7 +1821,7 @@ namespace PluginTaskAutobook
             DateTime dt = new DateTime(date.Year, date.Month, 1);
             dgvAB.ClearRows();
 
-            for (int i = 0; i < dayIsMonth; i++)
+            for (int i = 0; i < DayIsMonth; i++)
             {
                 dgvAB.AddRow();
                 dgvAB.Rows[i].Cells[0].Value = dt.AddDays(i).ToShortDateString();
@@ -2131,7 +2135,7 @@ namespace PluginTaskAutobook
         /// 
         /// </summary>
         /// <returns>key</returns>
-        private int FindMyID()
+        private int findMyID()
         {
             int Res = 0;
             Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
