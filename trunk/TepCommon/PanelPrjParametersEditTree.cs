@@ -1456,9 +1456,9 @@ namespace TepCommon
             try
             {
                 if (((DataGridView)obj).SelectedRows.Count > 0)
-                    if (!(Descriptions[(int)ID_DT_DESC.PROP].Columns.IndexOf(@"ID_TABLE=") < 0))
-                    {
-                        name = ((DataGridView)obj).SelectedRows[0].Cells[0].Value.ToString();
+                {
+                    name = ((DataGridView)obj).SelectedRows[0].Cells[0].Value.ToString();
+                    if(Descriptions[(int)ID_DT_DESC.PROP].Rows.Count>0)
                         foreach (DataRow r in Descriptions[(int)ID_DT_DESC.PROP].Select("ID_TABLE=" + (int)m_Level))
                         {
                             if (name == r["PARAM_NAME"].ToString())
@@ -1466,18 +1466,13 @@ namespace TepCommon
                                 desc = r["DESCRIPTION"].ToString();
                             }
                         }
-                    }
-                    else
-                        Logging.Logg().Error(@"PanelPrjParametersEditTree::HPanelEdit_dgvPropSelectionChanged () - не найдено поле [ID_TABLE] в [" + Descriptions[(int)ID_DT_DESC.PROP].TableName + @"] ..."
-                            , Logging.INDEX_MESSAGE.NOT_SET);
-                else
-                    ;
+                }
                 else
                     ;
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, @"PanelPrjParametersEditTree::HPanelEdit_dgvPropSelectionChanged () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                MessageBox.Show(e.Message);
             }
             SetDescSelRow(desc, name);
         }

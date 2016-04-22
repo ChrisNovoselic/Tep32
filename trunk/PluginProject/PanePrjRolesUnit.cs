@@ -3,13 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using System.ComponentModel;
+
+using System.Windows.Forms;
+using System.Collections;
+using System.Data;
+using System.Data.Common;
+
+
 using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
 namespace PluginProject
 {
-    public class PanelPrjRolesUnit : HPanelEditList
+    public class PanelPrjRolesUnit : HPanelEditTree
     {
         #region Переменные
 
@@ -27,7 +35,6 @@ namespace PluginProject
                 , ROLE /*Роль*/, USER /*Пользователь*/
         };
 
-        DataTable m_AllUnits;
         /// <summary>
         /// Текущий(выбранный) уровень "дерева"
         /// </summary>
@@ -84,7 +91,7 @@ namespace PluginProject
         /// <summary>
         /// Идентификаторы типов таблиц
         /// </summary>
-        public enum ID_Table : int { Unknown = -1, Role, User, Profiles, Count }
+        public enum ID_Table : int { Unknown = -1, Role, User, Count }
         
         /// <summary>
         /// Возвратить наименование компонента 
@@ -93,7 +100,7 @@ namespace PluginProject
         /// <returns>Строка - наименование</returns>
         protected static string getNameMode(ID_Table id)
         {
-            string[] nameModes = { "roles_unit", "users", "profiles" };
+            string[] nameModes = { "roles_unit", "users" };
 
             return nameModes[(int)id];
         }
@@ -105,15 +112,24 @@ namespace PluginProject
         /// </summary>
         /// <param name="iFunc">Плагин</param>
         public PanelPrjRolesUnit(IPlugIn iFunc)
-            : base(iFunc, @"roles_unit", @"ID", @"DESCRIPTION")
+            : base(iFunc)
         {
             InitializeComponent();
 
-            //m_handlerDb = createHandlerDb();
-
             m_arr_origTable = new DataTable[(int)ID_Table.Count];
             m_arr_editTable = new DataTable[(int)ID_Table.Count];
-                        
+
+            fillDataTable();
+            resetDataTable();
+
+            Control ctrl = new Control();
+            ctrl = this.Controls.Find(INDEX_CONTROL.TREE_DICT_ITEM.ToString(), true)[0];
+            ((TreeView_Users)ctrl).Update_tree(m_arr_editTable[(int)ID_Table.User], m_arr_editTable[(int)ID_Table.Role]);
+
+            ((TreeView_Users)ctrl).GetID += new TreeView_Users.intGetID(this.GetNextID);
+            ((TreeView_Users)ctrl).EditNode += new TreeView_Users.EditNodeEventHandler(this.get_operation_tree);
+            ((TreeView_Users)ctrl).Report += new TreeView_Users.ReportEventHandler(this.tree_report);
+            
         }
 
         public override bool Activate(bool active)
@@ -134,10 +150,49 @@ namespace PluginProject
 
         private void InitializeComponent()
         {
+            this.SuspendLayout();
+
+            //Добавить кнопки
+            INDEX_CONTROL i = INDEX_CONTROL.BUTTON_SAVE;
+            for (i = INDEX_CONTROL.BUTTON_SAVE; i < (INDEX_CONTROL.BUTTON_BREAK + 1); i++)
+                addButton(i.ToString(), (int)i, m_arButtonText[(int)i]);
+
+            ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0])).Enabled = false;
+            //btnOK.Enabled = true;
+            ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0])).Enabled = false;
+            //btnBreak.Enabled = true;
+
+            Control ctrl = new Control();
+
+            //treeView
+            ctrl = new TreeView_Users();
+
+            ctrl.Name = INDEX_CONTROL.TREE_DICT_ITEM.ToString();
+            this.Controls.Add(ctrl, 1, 0);
+            this.SetColumnSpan(ctrl, 4); this.SetRowSpan(ctrl, 13);
+
+            //dgv1
+            ctrl = new DataGridView_Prop_ComboBoxCell();
+            ctrl.Name = INDEX_CONTROL.DGV_DICT_PROP.ToString();
+            ctrl.Dock = DockStyle.Fill;
+            ((DataGridView_Prop_ComboBoxCell)ctrl).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            this.Controls.Add(ctrl, 5, 0);
+            
+            this.SetColumnSpan(ctrl, 8); this.SetRowSpan(ctrl, 10);
+
+            addLabelDesc(INDEX_CONTROL.PUNEL_PROP_DESC.ToString());
+
+            this.ResumeLayout();
+
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(this.buttonSAVE_click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0]).Click += new System.EventHandler(this.buttonBreak_click);
+            ((DataGridView_Prop_ComboBoxCell)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(this.dgvProp_EndCellEdit);
+            ((DataGridView_Prop_ComboBoxCell)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).SelectionChanged += new EventHandler(this.HPanelEdit_dgvPropSelectionChanged);
+
         }
 
         #region Наследуемые
-        
+
         protected override void recUpdateInsertDelete(out int err)
         {
             err = 0;
@@ -161,12 +216,13 @@ namespace PluginProject
         /// </summary>
         private void fillDataTable()
         {
+            int idListener;
             DbConnection connConfigDB;
 
             int err = -1;
-            m_handlerDb.RegisterDbConnection(out err);
-            connConfigDB = m_handlerDb.DbConnection;
 
+            idListener = register_idListenerConfDB(out err);
+            connConfigDB = DbSources.Sources().GetConnection(idListener, out err);
             if (m_table_TEC.Columns.Count == 0)
             {
                 DataColumn[] columns = { new DataColumn("ID"), new DataColumn("DESCRIPTION") };
@@ -175,7 +231,6 @@ namespace PluginProject
 
             //m_list_TEC = new InitTEC_200(idListener, true, new int[] { 0, (int)TECComponent.ID.GTP }, false).tec;
             m_table_TEC.Rows.Clear();
-            m_table_TEC.Rows.Add(new object[] {"5","ТЭЦ-5" });
 
             //foreach (TEC t in m_list_TEC)
             //{
@@ -184,21 +239,13 @@ namespace PluginProject
             //    table_TEC.Rows.Add(row);
             //}
 
-            User.GetUsers(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.User], out err);
+            HTepUsers.GetUsers(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.User], out err);
             m_arr_origTable[(int)ID_Table.User].DefaultView.Sort = "ID";
 
-            User.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
+            HTepUsers.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
 
-            m_AllUnits = HUsers.GetTableProfileUnits.Copy();
-            foreach (DataRow r in m_AllUnits.Select("ID>3"))
-            {
-                m_AllUnits.Rows.Remove(r);
-            }
-
-            m_arr_origTable[(int)ID_Table.Profiles] = User.GetTableAllProfile(connConfigDB).Copy();
-
-            m_handlerDb.UnRegisterDbConnection();
+            unregister_idListenerConfDB(idListener);
         }
 
         /// <summary>
@@ -208,6 +255,32 @@ namespace PluginProject
         {
             for (ID_Table i = ID_Table.Unknown + 1; i < ID_Table.Count; i++)
                 m_arr_editTable[(int)i] = m_arr_origTable[(int)i].Copy();
+        }
+
+
+        /// <summary>
+        /// Регистрация ID
+        /// </summary>
+        /// <param name="err">Ошибка в процессе регистрации</param>
+        /// <returns>Возвращает ID</returns>
+        protected int register_idListenerConfDB(out int err)
+        {
+            err = -1;
+            int idListener = -1;
+
+            ConnectionSettings connSett = FormMainBaseWithStatusStrip.s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
+            idListener = DbSources.Sources().Register(connSett, false, CONN_SETT_TYPE.MAIN_DB.ToString());
+
+            return idListener;
+        }
+
+        /// <summary>
+        /// Отмена регистрации ID
+        /// </summary>
+        /// <param name="idListener">ID</param>
+        protected void unregister_idListenerConfDB(int idListener)
+        {
+            DbSources.Sources().UnRegister(idListener);
         }
 
         /// <summary>
@@ -333,20 +406,13 @@ namespace PluginProject
             if (list_id.id_user.Equals(-1) == false)
             {
                 m_arr_editTable[(int)ID_Table.User].Rows.Remove(m_arr_editTable[(int)ID_Table.User].Select("ID=" + list_id.id_user)[0]);
-                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_user + " and IS_ROLE=0 and ID_TAB=0 and ID_ITEM=0 and ID_CONTEXT=0"))
-                {
-                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Remove(r);
-                }
                 iRes = 1;
             }
 
             if (list_id.id_user.Equals(-1) == true & list_id.id_role.Equals(-1) == false)
             {
                 m_arr_editTable[(int)ID_Table.Role].Rows.Remove(m_arr_editTable[(int)ID_Table.Role].Select("ID=" + list_id.id_role)[0]);
-                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_role + " and IS_ROLE=1 and ID_TAB=0 and ID_ITEM=0 and ID_CONTEXT=0"))
-                {
-                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Remove(r);
-                }
+                
                 iRes = 1;
             }
 
@@ -423,10 +489,6 @@ namespace PluginProject
                 }
 
                 m_arr_editTable[(int)ID_Table.User].Rows.Add(obj);
-                foreach (DataRow r in m_AllUnits.Rows)
-                {
-                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { obj [0],0,r["ID"],"0","0","0","0"});
-                }
                 iRes = 1;
             }
 
@@ -448,10 +510,6 @@ namespace PluginProject
                 }
 
                 m_arr_editTable[(int)ID_Table.Role].Rows.Add(obj_role);
-                foreach (DataRow r in m_AllUnits.Rows)
-                {
-                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { obj_role[0], 1, r["ID"], "0", "0", "0", "0" });
-                }
                 
                 iRes = 1;
             }
@@ -558,14 +616,17 @@ namespace PluginProject
                         case ID_Table.User:
                             keys = @"ID";
                             break;
-                        case ID_Table.Profiles:
-                            keys = @"ID_EXT,IS_ROLE,ID_TAB,ID_ITEM,ID_CONTEXT,ID_UNIT";
-                            break;
                         default:
                             break;
                     }
 
-                    m_handlerDb.RecUpdateInsertDelete(getNameMode(i), keys, m_arr_origTable[(int)i], m_arr_editTable[(int)i], out err);
+                    int idListener = register_idListenerConfDB(out err);
+
+                    DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
+
+                    DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, getNameMode(i), keys, m_arr_origTable[(int)i], m_arr_editTable[(int)i], out err);
+
+                    unregister_idListenerConfDB(idListener);
                 }
 
                 fillDataTable();
@@ -886,7 +947,7 @@ namespace PluginProject
         /// Идентификаторы для типов объектов
         /// </summary>
         public enum ID_OBJ : int { Role = 0, User };
-        private bool m_b_visible_context_menu;
+
         string m_warningReport;
 
         public struct ID_Comp
@@ -948,7 +1009,6 @@ namespace PluginProject
             this.contextMenu_TreeView.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             добавитьРольToolStripMenuItem});
             this.contextMenu_TreeView.Name = "contextMenu_TreeView";
-            this.contextMenu_TreeView.Visible = m_b_visible_context_menu;
             // 
             // добавитьТЭЦToolStripMenuItem
             // 
@@ -959,11 +1019,9 @@ namespace PluginProject
             this.HideSelection = false;
         }
 
-        public TreeView_Users(bool context_visible=true)
+        public TreeView_Users()
             : base()
         {
-            m_b_visible_context_menu = context_visible;
-
             InitializeComponent();
 
             this.NodeMouseClick += new TreeNodeMouseClickEventHandler(this.tree_NodeClick);
@@ -1063,8 +1121,7 @@ namespace PluginProject
                     Nodes[num_node].Nodes[Nodes[num_node].Nodes.Count - 1].Name = Nodes[num_node].Name + ":" + r_u["ID"].ToString();
                 }
             }
-            this.SelectedNode = this.Nodes[1];
-            this.SelectedNode = this.Nodes[0];
+
             checked_node(this.Nodes, 0, true);
 
             //foreach (TreeNode n in this.Nodes)
