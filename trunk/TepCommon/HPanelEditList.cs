@@ -39,8 +39,7 @@ namespace TepCommon
 
         protected override void recUpdateInsertDelete(out int err)
         {
-            err = -1;
-            //m_handlerDb.RecUpdateInsertDelete(m_nameTable, m_strKeyFields, m_tblOrigin, m_tblEdit, out err);
+            m_handlerDb.RecUpdateInsertDelete(m_nameTable, m_strKeyFields, string.Empty, m_tblOrigin, m_tblEdit, out err);
         }
 
         protected override void successRecUpdateInsertDelete()

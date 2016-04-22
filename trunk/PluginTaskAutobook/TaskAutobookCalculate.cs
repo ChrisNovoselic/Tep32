@@ -585,7 +585,7 @@ namespace PluginTaskAutobook
             query = @"SELECT VALUE,ID_CONTEXT"
                 + @" FROM [TEP_NTEC_5].[dbo].[profiles]"
                 + @" WHERE ID_TAB = " + IdTab
-                + " AND ID_EXT = " +  HUsers.Id;
+                + " AND ID_EXT = " + HUsers.Id;
 
             return Select(query, out err);
         }

@@ -92,11 +92,14 @@ namespace Tep64
 
             foreach (string strId in arIds)
             {
-                id = Convert.ToInt32(strId);
+                int key = -1;
 
-                if (s_plugIns.ContainsKey(id) == true)
+                id = Convert.ToInt32(strId);
+                key = s_plugIns.GetKeyOfIdFPanel(id);
+
+                if (!(key < 0))
                 {
-                    plugIn = s_plugIns[Convert.ToInt32(id)] as PlugInMenuItem;
+                    plugIn = s_plugIns[key] as PlugInMenuItem;
                     if (plugIn == null)
                         continue;
                     else

@@ -1009,7 +1009,7 @@ namespace PluginTaskAutobook
             {
                 UNKNOW = -1,
                 SEPARATE_CELL,
-                ADJACENT_CELL  
+                ADJACENT_CELL
             }
             /// <summary>
             /// конструктор(основной)
@@ -1376,6 +1376,7 @@ namespace PluginTaskAutobook
             posRow = 0;
 
             dgvAB = new DGVAutoBook(INDEX_CONTROL.DGV_DATA.ToString());
+            dgvAB.Dock = DockStyle.Fill;
             dgvAB.Name = INDEX_CONTROL.DGV_DATA.ToString();
             dgvAB.AllowUserToResizeRows = false;
             dgvAB.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -1405,7 +1406,7 @@ namespace PluginTaskAutobook
             //this.Controls.Add(tlpYear, 0, posRow = posRow + 1);
             //this.SetColumnSpan(tlpYear, 4); this.SetRowSpan(tlpYear, 7);
 
-            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString());
+            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 
             ResumeLayout(false);
             PerformLayout();

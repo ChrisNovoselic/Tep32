@@ -988,7 +988,7 @@ namespace TepCommon
                 DbTSQLInterface.RecUpdateInsertDelete(ref dbConn
                                             , m_arNameTables[(int)i]
                                             , @"ID"
-                                            , @""
+                                            , string.Empty
                                             , m_arTableOrigin[(int)i]
                                             , m_arTableEdit[(int)i]
                                             , out err);
@@ -1468,8 +1468,6 @@ namespace TepCommon
                             }
                         }
                 }
-                else
-                    ;
             }
             catch (Exception e)
             {
