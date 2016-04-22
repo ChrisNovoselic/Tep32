@@ -988,6 +988,7 @@ namespace TepCommon
                 DbTSQLInterface.RecUpdateInsertDelete(ref dbConn
                                             , m_arNameTables[(int)i]
                                             , @"ID"
+                                            , @""
                                             , m_arTableOrigin[(int)i]
                                             , m_arTableEdit[(int)i]
                                             , out err);

@@ -13,6 +13,9 @@ using TepCommon;
 
 namespace PluginTaskAutobook
 {
+    /// <summary>
+    /// DayAutoBook
+    /// </summary>
     public class HandlerDbTaskAutobookMonthValuesCalculate : HandlerDbTaskCalculate
     {
         /// <summary>
@@ -77,7 +80,7 @@ namespace PluginTaskAutobook
                             + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
                             + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
                             + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                        + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
+                        + @" WHERE v.[ID_TIME] = " + (int)idPeriod + " AND ID_SOURCE > 0 " //???ID_PERIOD.HOUR //??? _currIdPeriod
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
@@ -88,7 +91,7 @@ namespace PluginTaskAutobook
 
                     if (bEquDatetime == false)
                         strRes += @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                      + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+                      + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddDays(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'";
 
                     if (bLastItem == false)
                         strRes += @" UNION ALL ";
@@ -110,6 +113,77 @@ namespace PluginTaskAutobook
                 Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::getQueryValuesVar () - неизветстный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return strRes;
+        }
+
+        /// <summary>
+        /// Получение корр. входных значений
+        /// из INVAL
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="arQueryRanges"></param>
+        /// <param name="idPeriod">тек. период</param>
+        /// <param name="err"></param>
+        /// <returns>таблица занчений</returns>
+        public DataTable getCorInPut(TaskCalculate.TYPE type
+            , DateTimeRange[] arQueryRanges
+            , ID_PERIOD idPeriod
+            , out int err)
+        {
+            string strQuery = string.Empty;
+
+            for (int i = 0; i < arQueryRanges.Length; i++)
+            {
+                strQuery = "SELECT  p.ID as ID_PUT"
+                    + @", " + _Session.m_Id + @" as [ID_SESSION]"
+                    + @", v.QUALITY as QUALITY, v.VALUE as VALUE"
+                    + @",v.DATE_TIME as WR_DATETIME,  ROW_NUMBER() OVER(ORDER BY p.ID) as [EXTENDED_DEFINITION] "
+                    + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
+                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
+                    + @" ON a.ID = p.ID_ALG"
+                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                    + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
+                    + @" ON v.ID_PUT = p.ID"
+                    + @" WHERE  ID_TASK = " + (int)IdTask
+                    + @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.AddHours(-arQueryRanges[i].Begin.Hour).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddHours(-arQueryRanges[i].Begin.Hour).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0";
+            }
+            return Select(strQuery, out err);
+        }
+
+        /// <summary>
+        /// Получение плановых значений
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="arQueryRanges">отрезок времени</param>
+        /// <param name="idPeriod">период времени</param>
+        /// <param name="err"></param>
+        /// <returns>таблица значений</returns>
+        public DataTable getPlanOnMonth(TaskCalculate.TYPE type
+            , DateTimeRange[] arQueryRanges
+            , ID_PERIOD idPeriod, out int err)
+        {
+            string strQuery = string.Empty;
+
+            for (int i = 0; i < arQueryRanges.Length; i++)
+            {
+                strQuery = "SELECT  p.ID as ID_PUT"
+                        + @", " + _Session.m_Id + @" as [ID_SESSION]"
+                        + @", v.QUALITY as QUALITY, v.VALUE as VALUE"
+                          + @",v.DATE_TIME as WR_DATETIME,  ROW_NUMBER() OVER(ORDER BY p.ID) as [EXTENDED_DEFINITION] "
+                          + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
+                           + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
+                          + @" ON a.ID = p.ID_ALG"
+                           + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                           + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
+                          + @" ON v.ID_PUT = p.ID"
+                          + @" WHERE  ID_TASK = " + (int)IdTask
+                          + @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                          + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddMonths(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND v.ID_TIME = 24";
+            }
+
+            return Select(strQuery, out err);
         }
 
         /// <summary>
@@ -155,9 +229,6 @@ namespace PluginTaskAutobook
                 insertIdSession(cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
                 insertInValues(arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
-
-                //Вставить строки в таблицу БД со выходными значениями для расчета
-                //insertOutValues(out err, arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]);
 
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
                 arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
@@ -355,10 +426,43 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Получение корр. PUT's
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="arQueryRanges"></param>
+        /// <param name="idPeriod">период</param>
         /// <param name="err"></param>
-        /// <returns>таблица параметров</returns>
-        public DataTable getOutValues(out int err)
+        /// <returns></returns>
+        public DataTable getInPut(TaskCalculate.TYPE type
+            , DateTimeRange[] arQueryRanges
+            , ID_PERIOD idPeriod
+            , out int err)
+        {
+            string strQuery = string.Empty;
+
+            for (int i = 0; i < arQueryRanges.Length; i++)
+            {
+                strQuery += @"SELECT DISTINCT v.ID,v.ID_PUT, v.ID_USER, v.ID_SOURCE,v.DATE_TIME, v.ID_TIME"
+                    + ", v.ID_TIMEZONE,v.QUALITY,v.VALUE,v.WR_DATETIME"
+                    + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
+                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
+                    + @" ON a.ID = p.ID_ALG"
+                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                    + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
+                    + @" ON v.ID_PUT = p.ID"
+                    + @" WHERE  ID_TASK = " + (int)IdTask
+                    + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0"
+                    + @" ORDER BY ID";
+            }
+            return Select(strQuery, out err);
+        }
+
+        /// <summary>
+        /// Вых. PUT's
+        /// </summary>
+        /// <param name="err"></param>
+        /// <returns>таблица значений</returns>
+        public DataTable getOutPut(out int err)
         {
             DataTable tableParameters = null;
             string strQuery = string.Empty;
@@ -367,57 +471,128 @@ namespace PluginTaskAutobook
 
             return tableParameters = Select(strQuery, out err);
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="err"></param>
+        /// <returns></returns>
+        public DataTable OutValues(out int err)
+        {
+            string strQuery;
+            strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
+                + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"]"
+                + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+
+            return Select(strQuery, out err);
+        }
 
         /// <summary>
-        /// Сохранить изменения
+        /// Формирование таблицы для сохранения значений OUT
         /// </summary>
         /// <param name="tableOrigin">первичная таблица</param>
-        /// <param name="tableRes">таблица результирующая</param>
-        /// <param name="err">признак ошибки</param>
-        public DataTable saveRes(DataTable tableOrigin, DataTable tableRes, out int err, DataGridView dgvRes)
+        /// <param name="tableRes">таблица с параметрами</param>
+        /// <param name="err"></param>
+        /// <returns>таблицу значений</returns>
+        public DataTable saveResOut(DataTable tableOrigin, DataTable tableRes, out int err)
         {
             err = -1;
-
             DataTable tableEdit = new DataTable();
             string rowSel = null;
-            Array namePut = Enum.GetValues(typeof(PanelTaskAutobookMonthValues.INDEX_GTP));
             tableEdit = tableOrigin.Clone();//копия структуры
 
             if (tableRes != null)
             {
-                foreach (DataGridViewRow r in dgvRes.Rows)
+                //foreach (DataGridViewRow r in dgvRes.Rows)
+                //{
+                for (int i = 0; i < tableRes.Rows.Count; i++)
                 {
-                    for (int i = 0; i < tableRes.Rows.Count; i++)
-                    {
-                        if (r.Cells[namePut.GetValue(i).ToString()].Value != null)
-                        {
-                            rowSel = tableRes.Rows[i][0].ToString();
+                    //if (r.Cells[namePut.GetValue(i).ToString()].Value != null)
+                    //{
+                    rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
 
-                            tableEdit.Rows.Add(new object[] 
+                    tableEdit.Rows.Add(new object[] 
                                 {
                                     DbTSQLInterface.GetIdNext(tableEdit, out err)
                                     ,rowSel
                                     ,HUsers.Id.ToString()
                                     , 0.ToString()
-                                    ,Convert.ToDateTime(r.Cells["DATE"].Value.ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
+                                    ,Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
                                     , ID_PERIOD.DAY
                                     , ID_TIMEZONE.NSK
                                     , 1.ToString()
-                                    , r.Cells[namePut.GetValue(i).ToString()].Value.ToString()                  
+                                    , tableRes.Rows[i]["VALUE"]               
                                     , DateTime.Now
                                 });
-                        }
-                    }
+                    //}
                 }
+                //}
             }
             else ;
 
             return tableEdit;
         }
+
+        /// <summary>
+        /// Формирование таблицы для сохранения значений IN
+        /// </summary>
+        /// <param name="tableOrigin">первичная таблица</param>
+        /// <param name="tableRes">таблица с параметрами</param>
+        /// <param name="err"></param>
+        /// <returns>таблицу значений</returns>
+        public DataTable saveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
+        {
+            err = -1;
+            DataTable tableEdit = new DataTable();
+            string rowSel = null;
+            tableEdit = tableOrigin.Clone();//копия структуры
+
+            if (tableRes != null)
+            {
+                //foreach (DataGridViewRow r in dgvRes.Rows)
+                //{
+                for (int i = 0; i < tableRes.Rows.Count; i++)
+                {
+                    rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
+
+                    tableEdit.Rows.Add(new object[] 
+                                {
+                                    DbTSQLInterface.GetIdNext(tableEdit, out err)
+                                    , rowSel
+                                    , HUsers.Id.ToString()
+                                    , 0.ToString()
+                                    , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).ToString(CultureInfo.InvariantCulture)
+                                    , ID_PERIOD.DAY
+                                    , ID_TIMEZONE.NSK
+                                    , 1.ToString()
+                                    , tableRes.Rows[i]["VALUE"]            
+                                    , DateTime.Now
+                                });
+                }
+                //}
+            }
+            return tableEdit;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="IdTab"></param>
+        /// <returns></returns>
+        public DataTable GetProfilesContext(int IdTab)
+        {
+            string query = string.Empty;
+            int err = -1;
+
+            query = @"SELECT VALUE,ID_CONTEXT"
+                + @" FROM [TEP_NTEC_5].[dbo].[profiles]"
+                + @" WHERE ID_TAB = " + IdTab
+                + " AND ID_EXT = " +  HUsers.Id;
+
+            return Select(query, out err);
+        }
     }
 
     /// <summary>
-    /// 
+    /// PlanAutoBook
     /// </summary>
     public class HandlerDbTaskAutobookYarlyPlanCalculate : TepCommon.HandlerDbTaskCalculate
     {
@@ -444,12 +619,14 @@ namespace PluginTaskAutobook
         ///  , структура таблицы совместима с [inval], [outval]
         /// </summary>
         /// <param name="type"></param>
-        /// <param name="idPeriod">период</param>
-        /// <param name="cntBasePeriod"></param>
+        /// <param name="idPeriod">ид периода</param>
+        /// <param name="cntBasePeriod">период</param>
         /// <param name="arQueryRanges">диапазон времени запроса</param>
         /// <returns></returns>
-        public override string getQueryValuesVar(TaskCalculate.TYPE type, ID_PERIOD idPeriod
-            , int cntBasePeriod, DateTimeRange[] arQueryRanges)
+        public override string getQueryValuesVar(TaskCalculate.TYPE type
+            , ID_PERIOD idPeriod
+            , int cntBasePeriod
+            , DateTimeRange[] arQueryRanges)
         {
             string strRes = string.Empty
             , whereParameters = string.Empty;
@@ -481,7 +658,8 @@ namespace PluginTaskAutobook
                             //+ @", GETDATE () as [WR_DATETIME]"
                             + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
                                 + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
-                                + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
+                                + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = "
+                                + (int)IdTask + whereParameters
                                 + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                             + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
                             ;
@@ -552,9 +730,6 @@ namespace PluginTaskAutobook
                 insertIdSession(cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
                 insertInValues(arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
-
-                //Вставить строки в таблицу БД со выходными значениями для расчета
-                insertOutValues(out err, arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]);
 
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
                 arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
@@ -765,8 +940,9 @@ namespace PluginTaskAutobook
 
             return s_NameDbTables[(int)indx];
         }
+
         /// <summary>
-        /// 
+        /// Формирование списка отрезков времени
         /// </summary>
         /// <returns></returns>
         public override DateTimeRange[] GetDateTimeRangeValuesVar()
@@ -818,6 +994,106 @@ namespace PluginTaskAutobook
                     ;
 
             return arRangesRes;
+        }
+
+        /// <summary>
+        /// Формирование списка значений 
+        /// для сохранения в БД
+        /// </summary>
+        /// <param name="tableOrigin"></param>
+        /// <param name="tableRes"></param>
+        /// <param name="dgvRes"></param>
+        /// <param name="err"></param>
+        /// <returns>таблица значений</returns>
+        public DataTable savePlanValue(DataTable tableOrigin, DataRow rowRes, out int err)
+        {
+            err = -1;
+            double ResValue;
+            DataTable tableEdit = new DataTable();
+            string rowSel = null;
+            tableEdit = tableOrigin.Clone();//копия структуры
+
+            //if (tableRes != null)
+            //{
+            //for (int i = 0; i < tableRes.Rows.Count; i++)
+            //{
+            //foreach (DataGridViewRow r in dgvRes.Rows)
+            //{
+            //    if (r.Cells["DateTime"].Value.ToString() ==
+            //        Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"]).ToShortDateString())
+            //    {
+            rowSel = rowRes["ID_PUT"].ToString();
+            ResValue = Convert.ToDouble(rowRes["VALUE"]);
+
+            tableEdit.Rows.Add(new object[] 
+            {
+                DbTSQLInterface.GetIdNext(tableOrigin, out err)
+                ,rowSel
+                ,HUsers.Id.ToString()
+                , 0.ToString()
+                ,Convert.ToDateTime(rowRes["WR_DATETIME"].ToString()).AddMonths(1).ToString(CultureInfo.InvariantCulture)
+                , ID_PERIOD.MONTH
+                , ID_TIMEZONE.NSK
+                , 1.ToString()
+                , ResValue         
+                , DateTime.Now
+            });
+            //break;
+            //}
+            //}
+            //}
+            //}
+            return tableEdit;
+        }
+
+        /// <summary>
+        /// Получение ID_PUT
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="arQueryRanges">отрезок времени</param>
+        /// <param name="idPeriod">период времени</param>
+        /// <param name="err"></param>
+        /// <returns>таблица с put'ами</returns>
+        public DataTable getPlan(TaskCalculate.TYPE type
+            , DateTime arQueryDatetime
+            , ID_PERIOD idPeriod, out int err)
+        {
+            string strQuery = string.Empty;
+            int i = 0;
+
+            strQuery = @"SELECT ID_PUT, ID_TIME,DATE_TIME"
+              + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
+              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
+              + @" ON a.ID = p.ID_ALG"
+              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                         + arQueryDatetime.ToString(@"yyyyMM") + @"] v "
+                         + @" ON p.ID = v.ID_PUT"
+                         + @" WHERE  ID_TASK = " + (int)IdTask
+                         + @" AND v.ID_TIME = " + (int)idPeriod;
+
+            return Select(strQuery, out err);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="idPeriod"></param>
+        /// <param name="err"></param>
+        /// <returns></returns>
+        public DataTable getAllInval(TaskCalculate.TYPE type
+            , ID_PERIOD idPeriod, out int err)
+        {
+            string strQuery = string.Empty;
+            int i = 0;
+
+            strQuery = @"SELECT ID_PUT, ID_TIME,DATE_TIME"
+              + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
+              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
+              + @" ON a.ID = p.ID_ALG"
+              + @" WHERE  ID_TASK = " + (int)IdTask;
+
+            return Select(strQuery, out err);
         }
     }
 }

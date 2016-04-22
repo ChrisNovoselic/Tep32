@@ -190,7 +190,8 @@ namespace TepCommon
             return GetDataTable(s_NameDbTables[(int)indxTable], out err);
         }
 
-        public void RecUpdateInsertDelete(string nameTable, string strKeyFields, DataTable tblOrigin, DataTable tblEdit, out int err)
+        public void RecUpdateInsertDelete(string nameTable, string strKeyFields, string unchangeableColumn 
+            , DataTable tblOrigin, DataTable tblEdit, out int err)
         {
             err = -1;
 
@@ -200,7 +201,7 @@ namespace TepCommon
 
             if (!(iRegDbConn < 0))
             {
-                DbTSQLInterface.RecUpdateInsertDelete(ref _dbConnection, nameTable, strKeyFields, tblOrigin, tblEdit, out err);
+                DbTSQLInterface.RecUpdateInsertDelete(ref _dbConnection, nameTable, strKeyFields, unchangeableColumn, tblOrigin, tblEdit, out err);
             }
             else
                 ;

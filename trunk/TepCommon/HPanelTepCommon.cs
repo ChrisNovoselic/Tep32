@@ -78,7 +78,7 @@ namespace TepCommon
 
             InitializeComponent();
 
-            m_handlerDb = createHandlerDb ();
+            m_handlerDb = createHandlerDb();
 
             m_id_panel = FindMyID();
         }

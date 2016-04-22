@@ -467,7 +467,12 @@ namespace TepCommon
         {
             err = -1;
 
-            RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID, ID_SESSION", tableOriginValues, tableEditValues, out err);
+            RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable]
+                , @"ID, ID_SESSION"
+                , @""
+                , tableOriginValues
+                , tableEditValues
+                , out err);
         }
 
         /// <summary>
@@ -731,10 +736,13 @@ namespace TepCommon
                     strRes += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
                             + @", " + _Session.m_Id + @" as [ID_SESSION]"
                             + @", m.[AVG]"
+                            + @", ROW_NUMBER() OVER(ORDER BY v.ID_PUT) as [EXTENDED_DEFINITION] "
                         //+ @", GETDATE () as [WR_DATETIME]"
-                        + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+                        + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" 
+                        + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
                             + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
-                            + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)_iIdTask + whereParameters
+                            + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " 
+                            + (int)_iIdTask + whereParameters
                             + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                         + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
                         ;
@@ -746,7 +754,7 @@ namespace TepCommon
                         ;
 
                     if (bEquDatetime == false)
-                        strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                        strRes += @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                             + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
                     else
                         strRes += @" AND [DATE_TIME] = '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
@@ -770,9 +778,10 @@ namespace TepCommon
                                 + @" ELSE MIN (v.[VALUE])"
                             + @" END as [VALUE]"
                         + @", GETDATE () as [WR_DATETIME]"
+                           + @",[EXTENDED_DEFINITION]"
                     + @" FROM (" + strRes + @") as v"
                     + @" GROUP BY v.ID_PUT"
-                        + @", v.[AVG]"
+                        + @", v.[AVG], v.[EXTENDED_DEFINITION]"
                     ;
             }
             else
@@ -1026,7 +1035,7 @@ namespace TepCommon
                     ; //??? ошибка
             }
 
-            RecUpdateInsertDelete(s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES], @"ID_PUT", tableOrigin, tableEdit, out err);
+            RecUpdateInsertDelete(s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES], @"ID_PUT", @"",tableOrigin, tableEdit, out err);
         }
     }
 }
