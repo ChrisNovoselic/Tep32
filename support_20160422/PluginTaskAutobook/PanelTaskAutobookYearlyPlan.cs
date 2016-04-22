@@ -628,6 +628,7 @@ namespace PluginTaskAutobook
             posRow = 0;
 
             dgvYear = new DGVAutoBook(INDEX_CONTROL.DGV_PLANEYAR.ToString());
+            dgvYear.Dock = DockStyle.Fill;
             dgvYear.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvYear.AllowUserToResizeRows = false;
             dgvYear.AddColumn("Месяц", true, "Month");
@@ -662,13 +663,13 @@ namespace PluginTaskAutobook
             tlpYear.Controls.Add(lblTEC, 0, 1);
             tlpYear.Controls.Add(dgvYear, 0, 2);
             this.Controls.Add(tlpYear, 1, posRow);
-            this.SetColumnSpan(tlpYear, 5); this.SetRowSpan(tlpYear, 7);
+            this.SetColumnSpan(tlpYear, 9); this.SetRowSpan(tlpYear, 10);
             //
             this.Controls.Add(PanelManagement, 0, posRow);
             this.SetColumnSpan(PanelManagement, posColdgvTEPValues);
             this.SetRowSpan(PanelManagement, posRow = posRow + 6);//this.RowCount);
 
-            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString());
+            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4, 10);
 
             ResumeLayout(false);
             PerformLayout();

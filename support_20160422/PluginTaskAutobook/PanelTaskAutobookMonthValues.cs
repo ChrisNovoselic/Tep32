@@ -1376,6 +1376,7 @@ namespace PluginTaskAutobook
             posRow = 0;
 
             dgvAB = new DGVAutoBook(INDEX_CONTROL.DGV_DATA.ToString());
+            dgvAB.Dock = DockStyle.Fill;
             dgvAB.Name = INDEX_CONTROL.DGV_DATA.ToString();
             dgvAB.AllowUserToResizeRows = false;
             dgvAB.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -1405,7 +1406,7 @@ namespace PluginTaskAutobook
             //this.Controls.Add(tlpYear, 0, posRow = posRow + 1);
             //this.SetColumnSpan(tlpYear, 4); this.SetRowSpan(tlpYear, 7);
 
-            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString());
+            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 
             ResumeLayout(false);
             PerformLayout();
@@ -1423,7 +1424,6 @@ namespace PluginTaskAutobook
                 new EventHandler(PanelTaskAutobookMonthValue_btnsend_Click);
             (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
                  new EventHandler(PanelTaskAutobookMonthValues_btnexport_Click);
-
 
             dgvAB.CellParsing += dgvAB_CellParsing;
             dgvAB.CellEndEdit += dgvAB_CellEndEdit;
