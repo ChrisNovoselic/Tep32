@@ -182,9 +182,6 @@ namespace TepCommon
                     {
                         ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                         ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
-                        else
-                            Logging.Logg().Error(@"HPanelTepCommon::initializeDescPanel () - в таблице [" + Descriptions[(int)ID_DT_DESC.TABLE].TableName + @"] не найдено поле [ID_TABLE]"
-                                , Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
                 else
