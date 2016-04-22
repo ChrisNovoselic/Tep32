@@ -47,9 +47,6 @@
     <Compile Include="PanelPrjRolesFPanels.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="PanelPrjRolesProfiles.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="PanelPrjSourceGroup.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -12,30 +12,101 @@ using TepCommon;
 
 namespace PluginProject
 {
-    public abstract class PanelPrjRolesAccess : HPanelEditListCommon
+    public class PanelPrjRolesAccess : HPanelEditTree
     {
-        string m_query;
-        string m_nameTableAccessUnit;
-        DataTable m_tblItem;
-        protected DataTable m_tblAccessUnit;
-        string m_strNameFieldValue;
+        DataTable m_table_TEC = new DataTable();
 
+        /// <summary>
+        /// Текущий выбранный компонент
+        /// </summary>
+        int m_sel_comp;
+
+        TreeView_Users.ID_Comp m_list_id;
+
+        /// <summary>
+        /// Перечисление для индексироания уровней "дерева" параметров алгоритма
+        /// </summary>
+        protected enum ID_LEVEL
+        {
+            UNKNOWN = -1
+                , ROLE /*Роль*/, USER /*Пользователь*/
+        };
+
+        
+        /// <summary>
+        /// Текущий(выбранный) уровень "дерева"
+        /// </summary>
+        private ID_LEVEL _Level;
+        protected ID_LEVEL m_Level
+        {
+            get { return _Level; }
+
+            set { _Level = value; }
+        }
+
+        /// <summary>
+        /// Тип выбраной ноды
+        /// </summary>
+        TreeView_Users.Type_Comp m_type_sel_node;
+
+        /// <summary>
+        /// Идентификаторы объектов формы
+        /// </summary>
         protected enum INDEX_CONTROL
         {
-            BUTTON_SAVE, BUTTON_UPDATE
-            , DGV_PRJ_ITEM, DGV_PRJ_ACCESS
-            , LABEL_ACCESS_DESC
-            , INDEX_CONTROL_COUNT,
+            BUTTON_SAVE,
+            BUTTON_BREAK
+                , TREE_DICT_ITEM,
+            DGV_DICT_PROP
+                , INDEX_CONTROL_COUNT,
         };
+
+        /// <summary>
+        /// Идентификаторы типов таблиц
+        /// </summary>
+        public enum ID_Table : int { Unknown = -1, Role, User, Panels, Count }
+
+        /// <summary>
+        /// Возвратить наименование компонента 
+        /// </summary>
+        /// <param name="indx">Индекс </param>
+        /// <returns>Строка - наименование</returns>
+        protected static string getNameMode(ID_Table id)
+        {
+            string[] nameModes = { "roles", "users", "profiles" };
+
+            return nameModes[(int)id];
+        }
+
+
+        protected DataTable m_tblAccessUnit;
+        DataTable m_tblEdit, 
+            m_tblOrigin, 
+            m_tblItem;
+
+        /// <summary>
+        /// Массив оригинальных таблиц
+        /// </summary>
+        DataTable[] m_arr_UserRolesTable;
+
         protected static string[] m_arButtonText = { @"Сохранить", @"Обновить" };
 
-        public PanelPrjRolesAccess(IPlugIn iFunc, string nameTableTarget, string idFields, string nameTableAccessUnit, string strNameFieldValue)
-            : base(iFunc, nameTableTarget, idFields)
+        public PanelPrjRolesAccess(IPlugIn iFunc)
+            : base(iFunc)
         {
-            m_nameTableAccessUnit = nameTableAccessUnit;
-            m_strNameFieldValue = strNameFieldValue;
-
             InitializeComponent();
+            m_handlerDb = createHandlerDb();
+            m_arr_UserRolesTable = new DataTable[3];
+        }
+
+        protected override void successRecUpdateInsertDelete()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void recUpdateInsertDelete(out int err)
+        {
+            throw new NotImplementedException();
         }
 
         private void InitializeComponent()
@@ -46,210 +117,291 @@ namespace PluginProject
 
             //Добавить кропки
             INDEX_CONTROL i = INDEX_CONTROL.BUTTON_SAVE;
-            for (i = INDEX_CONTROL.BUTTON_SAVE; i < (INDEX_CONTROL.BUTTON_UPDATE + 1); i++)
+            for (i = INDEX_CONTROL.BUTTON_SAVE; i < (INDEX_CONTROL.BUTTON_BREAK + 1); i++)
                 addButton(i.ToString(), (int)i, m_arButtonText[(int)i]);
 
-            //Добавить "список" словарных величин
-            ctrl = new DataGridView();
-            ctrl.Name = INDEX_CONTROL.DGV_PRJ_ITEM.ToString();
-            DataGridView dgv = ctrl as DataGridView;
-            dgv.Dock = DockStyle.Fill;
-            //Разместить эл-т упр-я
-            this.Controls.Add(dgv, 1, 0);
-            this.SetColumnSpan(dgv, 4); this.SetRowSpan(dgv, 13);
-            //Добавить столбец
-            dgv.Columns.AddRange(new DataGridViewColumn[] {
-                new DataGridViewTextBoxColumn ()
-                });            
-            //Запретить выделение "много" строк
-            dgv.MultiSelect = false;
-            //Установить режим выделения - "полная" строка
-            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            //Установить режим "невидимые" заголовки столбцов
-            dgv.ColumnHeadersVisible = false;            
-            //Отменить возможность добавления строк
-            dgv.AllowUserToAddRows = false;
-            //Отменить возможность удаления строк
-            dgv.AllowUserToDeleteRows = false;
-            //Отменить возможность изменения порядка следования столбцов строк
-            dgv.AllowUserToOrderColumns = false;
-            //Не отображать заголовки строк
-            dgv.RowHeadersVisible = false;
-            //Не отображать заголовки столбцов
-            dgv.ColumnHeadersVisible = false;
-            //1-ый столбец (только "для чтения")
-            dgv.Columns[0].ReadOnly = true;
-            //Ширина столбца по ширине род./элемента управления
-            dgv.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            //Обработчик события "Выбор строки"
-            dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjItemSelectionChanged);
+            ctrl = new TreeView_Users(false);
+            ctrl.Name = INDEX_CONTROL.TREE_DICT_ITEM.ToString();
+            ctrl.Dock = DockStyle.Fill;
+            this.Controls.Add(ctrl, 1, 0);
+            this.SetColumnSpan(ctrl, 6); this.SetRowSpan(ctrl, 13);
 
-            //Добавить "список" свойств словарной величины
-            ctrl = new DataGridView();
-            ctrl.Name = INDEX_CONTROL.DGV_PRJ_ACCESS.ToString ();
-            dgv = ctrl as DataGridView;
-            dgv.Dock = DockStyle.Fill;
-            //Разместить эл-т упр-я
-            this.Controls.Add(dgv, 5, 0);
-            this.SetColumnSpan(dgv, 8); this.SetRowSpan(dgv, 10);
-            //Добавить столбцы
-            (dgv).Columns.AddRange(new DataGridViewColumn[] {
-                    new DataGridViewTextBoxColumn ()
-                    , new DataGridViewCheckBoxColumn ()
-                });
-            //Отменить возможность добавления строк
-            dgv.AllowUserToAddRows = false;
-            //Отменить возможность удаления строк
-            dgv.AllowUserToDeleteRows = false;
-            //Отменить возможность изменения порядка следования столбцов строк
-            dgv.AllowUserToOrderColumns = false;
-            //Не отображать заголовки строк
-            dgv.RowHeadersVisible = false;
-            //1-ый столбец (только "для чтения")
-            dgv.Columns[0].HeaderText = @"Свойство"; dgv.Columns[0].ReadOnly = true;
-            //Ширина столбца по ширине род./элемента управления
-            dgv.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            //2-ой столбец
-            dgv.Columns[1].HeaderText = @"Доступ";
-            //Установить режим выделения - "полная" строка
-            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            //Ширина столбца по ширине род./элемента управления
-            dgv.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            //Обработчик события "Выбор строки"
-            dgv.SelectionChanged += new EventHandler(HPanelEditTree_dgvPrjAccessSelectionChanged);
-            //Обработчик события "Редактирование свойства"
-            //dgv.CellEndEdit += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellEndEdit);
-            dgv.CellValueChanged += new DataGridViewCellEventHandler(HPanelEditTree_dgvPrjAccessCellValueChanged);
-
-            addLabelDesc(INDEX_CONTROL.LABEL_ACCESS_DESC.ToString ());
-
+            ctrl = new DataGridView_Prop_Text_Check();
+            ctrl.Name = INDEX_CONTROL.DGV_DICT_PROP.ToString();
+            ctrl.Dock = DockStyle.Fill;
+            this.Controls.Add(ctrl, 7, 0);
+            this.SetColumnSpan(ctrl, 6); this.SetRowSpan(ctrl, 10);
+            addLabelDesc("PANEL_DESC");
             this.ResumeLayout();
 
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Enabled = false;
+
             //Обработчика нажатия кнопок
-            ((Button)Controls.Find (INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
-            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
+            ((Button)Controls.Find (INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(this.btnSave_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0]).Click += new System.EventHandler(this.btnBreak_Click);
+
+            ((DataGridView_Prop_Text_Check)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).EventCellValueChanged += new DataGridView_Prop.DataGridView_Prop_ValuesCellValueChangedEventHandler(this.dgvProp_CellEndEdit);
         }
 
         protected override void initialize(out int err, out string strErr)
         {
             err = 0;
             strErr = string.Empty;
-            
-            int i = -1;
 
-            m_tblEdit = m_handlerDb.GetDataTable(m_nameTable, out err);
-            m_tblItem = m_handlerDb.GetDataTable(@"roles_unit", out err);
+            fillDataTable();
 
-            selectAccessUnit(out err);
-            m_tblOrigin = m_tblEdit.Copy();
+        }
 
-            if (err == 0)
+        protected void fillDataTable()
+        {
+            int err = -1;
+            TreeNode node = null;
+            TreeNode par_node = null;
+            TreeView_Users tree = ((TreeView_Users)Controls.Find(INDEX_CONTROL.TREE_DICT_ITEM.ToString(), true)[0]);
+            if (tree.SelectedNode != null)
             {
-                Logging.Logg().Debug(@"PanelPrjRolesAccess::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
+                node = tree.SelectedNode;
+                par_node = tree.SelectedNode.Parent;
+            }
+            m_handlerDb.RegisterDbConnection(out err);
+            m_tblOrigin = null;
+            m_tblOrigin = User.GetProfiles(m_handlerDb.DbConnection, out err);
+            m_arr_UserRolesTable[(int)ID_Table.Role] = m_handlerDb.GetDataTable(@"roles_unit", out err);
+            m_arr_UserRolesTable[(int)ID_Table.User] = m_handlerDb.GetDataTable(@"users", out err);
+            m_arr_UserRolesTable[(int)ID_Table.Panels] = User.GetRolesPanels(m_handlerDb.DbConnection, out err);
 
-                DataGridView dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString (), true)[0] as DataGridView;
-                if (m_tblAccessUnit.Rows.Count > 0)
-                    for (i = 0; i < m_tblAccessUnit.Rows.Count; i++)
-                        dgv.Rows.Add(new object[] { m_tblAccessUnit.Rows[i][@"DESCRIPTION"], false });
-                else
-                    //Только "для чтения", если строк нет
-                    dgv.ReadOnly = true;
+            if (m_table_TEC.Columns.Count == 0)
+            {
+                DataColumn[] columns = { new DataColumn("ID"), new DataColumn("DESCRIPTION") };
+                m_table_TEC.Columns.AddRange(columns);
+            }
 
-                dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ITEM.ToString(), true)[0] as DataGridView;
-                if (m_tblItem.Rows.Count > 0)
+            //m_list_TEC = new InitTEC_200(idListener, true, new int[] { 0, (int)TECComponent.ID.GTP }, false).tec;
+            m_table_TEC.Rows.Clear();
+            m_table_TEC.Rows.Add(new object[] { "5", "ТЭЦ-5" });
+
+            Control ctrl = this.Controls.Find(INDEX_CONTROL.TREE_DICT_ITEM.ToString(), true)[0];
+            ((TreeView_Users)ctrl).Update_tree(m_arr_UserRolesTable[(int)ID_Table.User], m_arr_UserRolesTable[(int)ID_Table.Role]);
+            ((TreeView_Users)ctrl).GetID += new TreeView_Users.intGetID(this.GetNextID);
+            ((TreeView_Users)ctrl).EditNode += new TreeView_Users.EditNodeEventHandler(this.get_operation_tree);
+            ((TreeView_Users)ctrl).Report += new TreeView_Users.ReportEventHandler(this.tree_report);
+
+            ((DataGridView_Prop_Text_Check)this.Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).create_dgv(m_arr_UserRolesTable[(int)ID_Table.Panels]);
+            
+            m_handlerDb.UnRegisterDbConnection();
+            resetDataTable();
+
+
+            if (node == null)
+            {
+                tree.SelectedNode = tree.Nodes[1];
+                tree.SelectedNode = tree.Nodes[0];
+            }
+            else
+            {
+                tree.SelectedNode = tree.Nodes[0];
+                tree.SelectedNode = tree.Nodes[1];
+                if (par_node != null)
                 {
-                    for (i = 0; i < m_tblItem.Rows.Count; i++)
-                        dgv.Rows.Add(new object[] { m_tblItem.Rows[i][@"DESCRIPTION"] });
-
-                    setPrjAccessValues(0);
+                    tree.SelectedNode = tree.Nodes[par_node.Index].Nodes[node.Index];
                 }
                 else
-                    //Только "для чтения", если строк нет
-                    dgv.ReadOnly = true;
-
-                dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0] as DataGridView;
-                if (m_tblAccessUnit.Rows.Count > 0)
-                {                    
+                {
+                    tree.SelectedNode = tree.Nodes[node.Index];
                 }
-                else
-                    ;
             }
-
-            else
-                ;
         }
 
-        public override bool Activate(bool activate)
+        protected void resetDataTable()
         {
-            bool bRes = base.Activate(activate);
-
-            return bRes;
+            m_tblEdit = null;
+            m_tblEdit = m_tblOrigin.Copy();
         }
 
-        protected override void reinit()
+        protected override void addLabelDesc(string id, int posCol = 7, int posRow = 10)
         {
-            ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_PRJ_ITEM.ToString(), true)[0]).Rows.Clear();
-            ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0]).Rows.Clear();
-
-            base.reinit();
+            base.addLabelDesc(id, posCol, posRow);
         }
 
-        protected virtual void selectAccessUnit(out int err)
+        /// <summary>
+        /// Обработчик для получения следующего идентификатора
+        /// </summary>
+        /// <returns>Возвращает идентификатор</returns>
+        private int GetNextID(object sender, TreeView_Users.GetIDEventArgs e)
         {
-            m_tblAccessUnit = m_handlerDb.GetDataTable (m_nameTableAccessUnit, out err);
-        }
+            int ID = 0;
+            int err = 0;
 
-        private void HPanelEditTree_dgvPrjItemSelectionChanged(object obj, EventArgs ev)
-        {
-            DataGridView dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0] as DataGridView;
-            dgv.CellValueChanged -= HPanelEditTree_dgvPrjAccessCellValueChanged;
-            
-            if (((DataGridView)obj).SelectedRows.Count == 1)
-                setPrjAccessValues(((DataGridView)obj).SelectedRows[0].Index);
-            else
-                ;
-
-            dgv.CellValueChanged += HPanelEditTree_dgvPrjAccessCellValueChanged;
-        }
-
-        private void HPanelEditTree_dgvPrjAccessSelectionChanged(object obj, EventArgs ev)
-        {
-        }
-
-        //private void HPanelEditTree_dgvPrjAccessCellEndEdit(object obj, DataGridViewCellEventArgs ev)
-
-        private void HPanelEditTree_dgvPrjAccessCellValueChanged(object obj, DataGridViewCellEventArgs ev)
-        {
-            DataGridView dgvItem = Controls.Find(INDEX_CONTROL.DGV_PRJ_ITEM.ToString(), true)[0] as DataGridView
-                , dgvAccess = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0] as DataGridView;
-            DataRow [] rowsUnit = m_tblAccessUnit.Select (@"DESCRIPTION='" + dgvAccess.SelectedRows[0].Cells[0].Value + @"'")
-                , rowsAccess = m_tblEdit.Select(m_strKeyFields.Split(',')[0] + @"=" + m_tblItem.Rows[dgvItem.SelectedRows[0].Index][@"ID"]
-                                    + @" AND IS_ROLE=1 AND "
-                                    + m_strKeyFields.Split(',')[1] + @"="
-                                        //+ m_tblAccessUnit.Rows [dgvAccess.SelectedRows[0].Index][@"ID"]);
-                                        + rowsUnit[0][@"ID"]);
-
-            if (rowsAccess.Length == 1)
+            if (e.IdComp == (int)ID_Table.Role)
             {
-                rowsAccess[0][m_strNameFieldValue] = (((DataGridViewCheckBoxCell)dgvAccess.Rows[ev.RowIndex].Cells[ev.ColumnIndex]).Value.ToString() == true.ToString ()) ? 1 : 0;
+                ID = DbTSQLInterface.GetIdNext(m_arr_UserRolesTable[(int)ID_Table.Role], out err);
             }
-            else
-                //??? Ошибка...
-                throw new Exception(@"HPanelTepPrjRolesaccess::HPanelEditTree_dgvPrjAccessCellValueChanged () - дублирование(отсутствие) параметра...");
+            if (e.IdComp == (int)ID_Table.User)
+            {
+                ID = DbTSQLInterface.GetIdNext(m_arr_UserRolesTable[(int)ID_Table.User], out err);
+            }
+
+            return ID;
         }
 
-        private void setPrjAccessValues(int indx)
+        /// <summary>
+        /// Обработчик события получения сообщения от TreeView
+        /// </summary>
+        private void tree_report(object sender, TreeView_Users.ReportEventArgs e)
         {
-            DataRow[] rowsAccessUnit = m_tblEdit.Select(m_strKeyFields.Split(',')[0] + @"=" + m_tblItem.Rows[indx][@"ID"]
-                + @" AND IS_ROLE=1");
+            //if (e.Action != string.Empty)
+            //    delegateActionReport(e.Action);
+            //if (e.Warning != string.Empty)
+            //    delegateWarningReport(e.Warning);
+            //if (e.Error != string.Empty)
+            //    delegateErrorReport(e.Error);
+            //if (e.Clear != false)
+            //    delegateReportClear(e.Clear);
+        }
 
-            DataGridView dgv = Controls.Find(INDEX_CONTROL.DGV_PRJ_ACCESS.ToString(), true)[0] as DataGridView;
+        /// <summary>
+        /// Внесени изменений в измененную таблицу со списком компонентов
+        /// </summary>
+        /// <param name="id_comp">ID компонента</param>
+        /// <param name="header">Заголовок изменяемой ячейки</param>
+        /// <param name="value">Новое значение изменяемой ячейки</param>
+        /// <param name="table_edit">Таблицу в которую поместить изменения</param>
+        private void edit_table(int id_comp, string header, string value, DataTable table_edit, TreeView_Users.ID_Comp list_id)
+        {
+            for (int i = 0; i < table_edit.Rows.Count; i++)
+            {
+                if (Convert.ToInt32(table_edit.Rows[i]["ID"]) == id_comp)
+                {
+                    for (int b = 0; b < table_edit.Columns.Count; b++)
+                    {
+                        if (table_edit.Columns[b].ColumnName.ToString() == header)
+                        {
+                            if (table_edit.Rows[i][b].ToString() != value)
+                            {
+                                table_edit.Rows[i][b] = value;
 
-            if (rowsAccessUnit.Length == dgv.Rows.Count)
-                for (int i = 0; i < dgv.Rows.Count; i++)
-                    ((DataGridViewCheckBoxCell)dgv.Rows[i].Cells[1]).Value = Int16.Parse(rowsAccessUnit[i][m_strNameFieldValue].ToString()) == 1;
+                                if (header == "DESCRIPTION")
+                                {
+                                    ((TreeView_Users)this.Controls.Find(INDEX_CONTROL.TREE_DICT_ITEM.ToString(), true)[0]).Rename_Node(list_id, value);
+                                }
+                                ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0])).Enabled = true;
+                                //btnOK.Enabled = true;
+                                ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0])).Enabled = true;
+                                //btnBreak.Enabled = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Обработчик получения данных от TreeView
+        /// </summary>
+        private void get_operation_tree(object sender, TreeView_Users.EditNodeEventArgs e)
+        {
+            if (e.Operation == TreeView_Users.ID_Operation.Select)
+            {
+                select(e.PathComp, e.IdComp);
+            }
+        }
+
+        /// <summary>
+        /// Обработчик события выбора элемента в TreeView
+        /// </summary>
+        private void select(TreeView_Users.ID_Comp list_id, int IdComp)
+        {
+            DataTable[] massTable = new DataTable[1];
+            
+            DataRow[] profiles;
+            m_sel_comp = IdComp;
+            m_list_id = list_id;
+            m_type_sel_node = list_id.type;
+            if (m_list_id.id_user != -1)
+            {
+                profiles = m_tblEdit.Select("ID_EXT=" + m_list_id.id_user + " and IS_ROLE=0");
+            }
             else
-                throw new Exception(@"PanelPrjRolesAccess::setPrjAccessValues () - кол-во строк в БД и элементе упр-я НЕ совпадает...");
+                profiles = m_tblEdit.Select("ID_EXT=" + m_list_id.id_role + " and IS_ROLE=1");
+
+            massTable[0] = m_tblEdit.Clone();
+            massTable[0].DefaultView.Sort = "ID_FPANEL";
+            
+            foreach (DataRow r in profiles)
+            {
+                massTable[0].Rows.Add(r.ItemArray);
+            }
+
+            foreach (DataRow r in m_arr_UserRolesTable[(int)ID_Table.Panels].Rows)
+            {
+                DataRow[] row_sel = massTable[0].Select("ID_FPANEL=" + r["ID"]);
+                if (row_sel.Length == 0)
+                {
+                    massTable[0].Rows.Add(new object[] {null,null, r["ID"] ,0});
+                }
+            }
+            massTable[0]=massTable[0].DefaultView.ToTable();
+            
+            ((DataGridView_Prop_Text_Check)this.Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(),true)[0]).Update_dgv(IdComp, massTable);
+            
+        }
+
+        protected void dgvProp_CellEndEdit(object sender, DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventArgs e)
+        {
+            string id = m_arr_UserRolesTable[(int)ID_Table.Panels].Select(@"DESCRIPTION='" + e.m_Header_name + @"'")[0]["ID"].ToString();
+            object[] obj = new object[2];
+            if (m_type_sel_node == TreeView_Users.Type_Comp.Role)
+            {
+                obj[0] = 1;
+            }
+            if (m_type_sel_node == TreeView_Users.Type_Comp.User)
+            {
+                obj[0] = 0;
+            }
+
+            if (e.m_Value == "True")
+                obj[1] = 1;
+            else
+                if (e.m_Value == "False")
+                    obj[1] = 0;
+                else
+                    obj[1] = e.m_Value;
+
+            DataRow[] rows = m_tblEdit.Select("ID_EXT=" + m_sel_comp + " and IS_ROLE=" + obj[0] + " and ID_FPANEL=" + id);
+            if (rows.Length == 0)
+                m_tblEdit.Rows.Add(new object[] { m_sel_comp, obj[0], id, obj[1]});
+            else
+                rows[0]["VALUE"] = obj[1];
+            activate_btn(true);
+        }
+
+        protected void activate_btn(bool active)
+        {
+            this.Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0].Enabled = active;
+            //this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0].Enabled = active;
+        }
+
+        protected void btnBreak_Click(object sender, EventArgs e)
+        {
+            fillDataTable();
+            activate_btn(false);
+        }
+
+        protected void btnSave_Click(object sender, EventArgs e)
+        {
+            int err = -1;
+            string keys = string.Empty;
+            m_tblOrigin.Columns["VALUE"].ColumnName = m_tblEdit.Columns["VALUE"].ColumnName = "IsUse";
+            m_handlerDb.RegisterDbConnection(out err);
+            m_handlerDb.RecUpdateInsertDelete(getNameMode(ID_Table.Role), "ID_EXT,IS_ROLE,ID_FPANEL", m_tblOrigin, m_tblEdit, out err);
+            m_handlerDb.UnRegisterDbConnection();
+            m_tblOrigin.Columns["IsUse"].ColumnName = m_tblEdit.Columns["IsUse"].ColumnName = "VALUE";
+            fillDataTable();
+            resetDataTable();
+
+            //((TreeView_Users)this.Controls.Find(INDEX_CONTROL.TREE_DICT_ITEM.ToString(), true)[0]).Update_tree(m_arr_editTable[(int)ID_Table.User], m_arr_editTable[(int)ID_Table.Role]);
+
+            activate_btn(false);
         }
     }
 }
