@@ -31,15 +31,16 @@ namespace TepCommon
 
         #region Apelgans
 
-
+        int m_id_panel;
         public enum ID_DT_DESC { TABLE, PROP };
         public DataTable[] Descriptions = new DataTable[] { new DataTable(), new DataTable() };
 
         public enum ID_TABLE
         {
             MAIN = 1//Главная
-            ,PROP = 2//Свойства
-            ,DESC = 3
+            ,
+            PROP = 2//Свойства
+                , DESC = 3
         };
 
         /// <summary>
@@ -51,7 +52,7 @@ namespace TepCommon
         /// Строки для описания групп вкладок
         /// </summary>
         string[] m_description_group = new string[] { "Группа для настроек", "Группа для проектов", "Группа для задач" };
-        
+
         public string m_name_panel_desc = string.Empty;
 
         #endregion
@@ -69,7 +70,8 @@ namespace TepCommon
             base.Dispose(disposing);
         }
 
-        public HPanelTepCommon(IPlugIn plugIn) : base (13, 13)
+        public HPanelTepCommon(IPlugIn plugIn)
+            : base(13, 13)
         {
             this._iFuncPlugin = plugIn;
 
@@ -78,7 +80,9 @@ namespace TepCommon
 
             InitializeComponent();
 
-            m_handlerDb = createHandlerDb ();
+            m_handlerDb = createHandlerDb();
+
+            m_id_panel = FindMyID();
         }
 
         private void InitializeComponent()
@@ -91,16 +95,34 @@ namespace TepCommon
         protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
         {
             initializeLayoutStyleEvenly(cols, rows);
-        }        
+        }
         /// <summary>
         /// Объект для обмена данными с БД
         /// </summary>
         protected HandlerDbValues m_handlerDb;
 
-        protected virtual HandlerDbValues createHandlerDb () 
+        protected virtual HandlerDbValues createHandlerDb()
         {
-            return new HandlerDbValues (); 
+            return new HandlerDbValues();
         }
+
+        private int FindMyID()
+        {
+            int Res = -1;
+
+            Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
+
+            foreach (var item in dictRegId)
+            {
+                if (item.Value == this.GetType())
+                {
+                    Res = item.Key;
+                }
+            }
+
+            return Res;
+        }
+
 
         protected void initializeDescPanel()
         {
@@ -110,6 +132,7 @@ namespace TepCommon
             string desc = string.Empty
                 , name = string.Empty;
             string[] ar_name = null;
+            DataRow[] rows = null;
 
             if (m_name_panel_desc != string.Empty)
             {
@@ -129,20 +152,25 @@ namespace TepCommon
                             ;
 
                     //Описание вкладки
-                    string query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    string query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + m_id_panel;
                     DataTable dt = m_handlerDb.Select(query, out err);
                     if (dt.Rows.Count != 0)
                     {
                         desc = dt.Rows[0][0].ToString();
-                        ((HPanelDesc)ctrl).SetLblTab = new string[] { ((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id), desc };
+                        ((HPanelDesc)ctrl).SetLblTab = new string[] { /*((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id)*/
+                    this.Parent.Text, desc };
                     }
 
                     //Описания таблиц
-                    query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + m_id_panel;
                     Descriptions[(int)ID_DT_DESC.TABLE] = m_handlerDb.Select(query, out err);
 
                     //Описания параметров
-                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + ((HFuncDbEdit)_iFuncPlugin)._Id;
+                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_id_panel;
+                    Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
+
+                    //Описания параметров
+                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_id_panel;
                     Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
 
                     if (err != 0)
@@ -150,31 +178,40 @@ namespace TepCommon
                         Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
                     }
 
-                    DataRow[] rows = null;
-                    if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0))
+                    if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE") < 0))
                     {
                         rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
                         if (rows.Length == 1)
                         {
-                            ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                            Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
                         }
 
-                        rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.PROP);
-                        if (rows.Length == 1)
+                        //DataRow[] rows = null;
+                        if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0))
                         {
-                            ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
-                        }
+                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
+                            if (rows.Length == 1)
+                            {
+                                ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                            }
 
-                        rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.DESC);
-                        if (rows.Length == 1)
-                        {
-                            ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
-                            ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
+                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.PROP);
+                            if (rows.Length == 1)
+                            {
+                                ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                            }
+
+                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.DESC);
+                            if (rows.Length == 1)
+                            {
+                                ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
+                                ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
+                            }
                         }
+                        else
+                            Logging.Logg().Error(@"HPanelTepCommon::initializeDescPanel () - в таблице [" + Descriptions[(int)ID_DT_DESC.TABLE].TableName + @"] не найдено поле [ID_TABLE]"
+                                , Logging.INDEX_MESSAGE.NOT_SET);
                     }
-                    else
-                        Logging.Logg().Error(@"HPanelTepCommon::initializeDescPanel () - в таблице [" + Descriptions[(int)ID_DT_DESC.TABLE].TableName + @"] не найдено поле [ID_TABLE]"
-                            , Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 catch (Exception e)
                 {
@@ -302,13 +339,13 @@ namespace TepCommon
         /// <param name="id">Идентификатор</param>
         /// <param name="posCol">Позиция-столбец для размещения области описания</param>
         /// <param name="posRow">Позиция-строка для размещения области описания</param>
-        protected void addLabelDesc(string id, int posCol = 5, int posRow = 10)
+        protected virtual void addLabelDesc(string id, int posCol = 5, int posRow = 10)
         {
             GroupBox gbDesc = new GroupBox();
             gbDesc.Text = @"Описание";
             gbDesc.Dock = DockStyle.Fill;
             this.Controls.Add(gbDesc, posCol, posRow);
-            this.SetColumnSpan(gbDesc, this.ColumnCount - posCol); 
+            this.SetColumnSpan(gbDesc, this.ColumnCount - posCol);
             this.SetRowSpan(gbDesc, this.RowCount - posRow);
 
             HPanelDesc ctrl = new HPanelDesc();
@@ -327,7 +364,7 @@ namespace TepCommon
             string name = string.Empty;
             try
             {
-                if (((DataGridView)obj).SelectedRows.Count>0)
+                if (((DataGridView)obj).SelectedRows.Count > 0)
                 {
                     name = ((DataGridView)obj).SelectedRows[0].Cells[0].Value.ToString();
                     foreach (DataRow r in Descriptions[(int)ID_DT_DESC.PROP].Rows)
@@ -345,7 +382,7 @@ namespace TepCommon
             }
             SetDescSelRow(desc, name);
 
-            
+
         }
 
         protected void SetDescSelRow(string desc, string name)
@@ -357,7 +394,7 @@ namespace TepCommon
         protected void addButton(Button ctrl, string id, int posCol, string text)
         {
             ctrl.Name = id;
-            
+
             ctrl.Location = new System.Drawing.Point(1, 1);
             ctrl.Dock = DockStyle.Fill;
             ctrl.Text = text;
@@ -374,7 +411,7 @@ namespace TepCommon
         protected void addButton(string id, int posCol, string text)
         {
             Button ctrl = new Button();
-            
+
             addButton(ctrl, id, posCol, text);
         }
 
@@ -390,14 +427,14 @@ namespace TepCommon
                 errMsg = @"HPanelEdit::HPanelEdit_btnSave_Click () - DbTSQLInterface.RecUpdateInsertDelete () - ...";
             }
             else
-            {                    
+            {
                 successRecUpdateInsertDelete();
 
                 if (!(delegateSaveAdding == null))
                     delegateSaveAdding();
                 else
                     ;
-            }            
+            }
 
             if (!(err == 0))
             {
@@ -419,9 +456,9 @@ namespace TepCommon
 
     public class HPanelDesc : TableLayoutPanel
     {
-        enum ID_LBL {lblGroup, lblTab, lblDGV1, lblDGV2, lblDGV3, selRow };
+        enum ID_LBL { lblGroup, lblTab, lblDGV1, lblDGV2, lblDGV3, selRow };
 
-        string[] m_desc_lbl = new string[] {"lblGroupDesc", "lblTabDesc", "lblDGV1Desc", "lblDGV2Desc", "lblDGV3Desc", "selRowDesc" };
+        string[] m_desc_lbl = new string[] { "lblGroupDesc", "lblTabDesc", "lblDGV1Desc", "lblDGV2Desc", "lblDGV3Desc", "selRowDesc" };
         string[] m_name_lbl = new string[] { "lblGroupName", "lblTabName", "lblDGV1Name", "lblDGV2Name", "lblDGV3Name", "selRowName" };
         string[] m_name_lbl_text = new string[] { "Группа вкладок: ", "Вкладка: ", "Таблица: ", "Таблица: ", "Таблица: ", "Выбранная строка: " };
 
