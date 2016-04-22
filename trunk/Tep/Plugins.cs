@@ -8,6 +8,8 @@ using System.Windows.Forms;
 using System.Data.Common; //DbConnection
 using System.Data; //DataTable
 
+//using System.Security.Policy.Evidence;
+
 using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
@@ -21,8 +23,24 @@ namespace Tep64
         {
             public DelegateObjectFunc delegateOnClickMenuPluginItem;
 
+            protected AppDomain m_appDomain;
+
             public HPlugIns(DelegateObjectFunc fClickMenuItem)
             {
+                //// Set up the AppDomainSetup
+                //AppDomainSetup setup = new AppDomainSetup();
+                //setup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
+                ////setup.ConfigurationFile = ".config";
+
+                //// Set up the Evidence
+                //System.Security.Policy.Evidence baseEvidence = AppDomain.CurrentDomain.Evidence;
+                //System.Security.Policy.Evidence evidence = new System.Security.Policy.Evidence(baseEvidence);
+                ////evidence.AddAssembly("(some assembly)");
+                ////evidence.AddHost("(some host)");
+
+                //// Create the AppDomain      
+                //m_appDomain = AppDomain.CreateDomain("newDomain", evidence, setup);
+
                 //_dictPlugins = new Dictionary<int, IPlugIn>();
                 delegateOnClickMenuPluginItem = fClickMenuItem;
             }
@@ -35,6 +53,11 @@ namespace Tep64
             {
                 //??? важная функция для взимного обмена сообщенями
                 return 0;
+            }
+
+            public void Unload()
+            {
+                //AppDomain.Unload(m_appDomain);
             }
             /// <summary>
             /// Загрузить плюгИн с указанным наименованием
@@ -51,7 +74,11 @@ namespace Tep64
                 try
                 {
                     Assembly ass = null;
-                    ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name + @".dll");
+                    ass =
+                        Assembly.LoadFrom
+                        //m_appDomain.Load
+                            (Environment.CurrentDirectory + @"\" + name + @".dll");
+
                     if (!(ass == null))
                     {
                         objType = ass.GetType(name + ".PlugIn");

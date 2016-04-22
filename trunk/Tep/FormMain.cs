@@ -32,8 +32,6 @@ namespace Tep64
         /// Объект со списком загруженных библиотек
         /// </summary>
         private static HPlugIns s_plugIns;
-
-        //private event PlugInMenuItem.PlugInMenuItemEventHandler EventPlugInMenuItemClick;
         /// <summary>
         /// Конструктор - основной (без параметров)
         public FormMain() : base ()
@@ -278,10 +276,21 @@ namespace Tep64
             Stop ();
         }
 
-        protected override void Stop()
+        private void stopTabPages()
         {
             foreach (TabPage page in m_TabCtrl.TabPages)
                 FindMainMenuItemOfText(page.Text.Trim()).PerformClick();
+        }
+
+        private void removePluginMenuItem()
+        {
+        }
+
+        protected override void Stop()
+        {
+            stopTabPages();
+
+            //s_plugIns.Unload();
             
             base.Stop();
         }
@@ -443,7 +452,7 @@ namespace Tep64
                 }
             } else {
                 if (iRes == 0) iRes = -1; else ;
-                strErr = @"Не удалось сформировать правила для роли пользователя";
+                strErr = @"Ошибка при загрузке библиотек - см. лог-файл...";
             }            
 
             DbSources.Sources().UnRegister(idListener);
@@ -570,11 +579,13 @@ namespace Tep64
             result = s_listFormConnectionSettings[(int)type].ShowDialog(this);
             if (result == DialogResult.Yes)
             {
-                //Остановить все вкладки
-                //StopTabPages ();
-
-                //Остановить таймер (если есть)
+                // удалить все вкладки, остановить таймер (если есть)
                 Stop ();
+
+                //Удалить все пункты меню
+                removePluginMenuItem();
+
+                //Очистить/выгрузить список плюгИнов
 
                 iRes = s_listFormConnectionSettings[(int)type].Ready;
 
