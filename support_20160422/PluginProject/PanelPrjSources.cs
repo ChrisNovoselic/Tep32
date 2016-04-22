@@ -263,7 +263,7 @@ namespace PluginProject
             foreach (DataRow r in m_tblEditPswd.Rows)
                 r["HASH"] = Crypt.Crypting().Encrypt(r["HASH"].ToString().Trim(), Crypt.KEY);
 
-            m_handlerDb.RecUpdateInsertDelete(@"passwords", @"ID_EXT, ID_ROLE", m_tblOriginPswd, m_tblEditPswd, out err);
+            m_handlerDb.RecUpdateInsertDelete(@"passwords", @"ID_EXT, ID_ROLE", string.Empty, m_tblOriginPswd, m_tblEditPswd, out err);
 
             if (err == 0)
                 base.recUpdateInsertDelete(out err);

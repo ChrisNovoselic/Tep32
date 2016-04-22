@@ -393,7 +393,7 @@ namespace PluginProject
             string keys = string.Empty;
             m_tblOrigin.Columns["VALUE"].ColumnName = m_tblEdit.Columns["VALUE"].ColumnName = "IsUse";
             m_handlerDb.RegisterDbConnection(out err);
-            m_handlerDb.RecUpdateInsertDelete(getNameMode(ID_Table.Role), "ID_EXT,IS_ROLE,ID_FPANEL", m_tblOrigin, m_tblEdit, out err);
+            m_handlerDb.RecUpdateInsertDelete(getNameMode(ID_Table.Role), "ID_EXT,IS_ROLE,ID_FPANEL", string.Empty, m_tblOrigin, m_tblEdit, out err);
             m_handlerDb.UnRegisterDbConnection();
             m_tblOrigin.Columns["IsUse"].ColumnName = m_tblEdit.Columns["IsUse"].ColumnName = "VALUE";
             fillDataTable();

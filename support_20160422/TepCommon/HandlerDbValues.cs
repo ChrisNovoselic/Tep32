@@ -190,7 +190,8 @@ namespace TepCommon
             return GetDataTable(s_NameDbTables[(int)indxTable], out err);
         }
 
-        public void RecUpdateInsertDelete(string nameTable, string strKeyFields, DataTable tblOrigin, DataTable tblEdit, out int err)
+        public void RecUpdateInsertDelete(string nameTable, string strKeyFields, string unchangeableColumn
+            , DataTable tblOrigin, DataTable tblEdit, out int err)
         {
             err = -1;
 

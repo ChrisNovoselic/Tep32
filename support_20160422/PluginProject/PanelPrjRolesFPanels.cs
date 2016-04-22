@@ -519,7 +519,7 @@ namespace PluginProject
             if (validate_saving(m_arr_editTable[(int)ID_Table.Profiles], out warning) == false)
             {
                 m_handlerDb.RegisterDbConnection(out err);
-                m_handlerDb.RecUpdateInsertDelete(getNameMode(ID_Table.Profiles), "ID_EXT,IS_ROLE,ID_TAB,ID_ITEM,ID_CONTEXT,ID_UNIT", m_arr_origTable[(int)ID_Table.Profiles], m_arr_editTable[(int)ID_Table.Profiles], out err);
+                m_handlerDb.RecUpdateInsertDelete(getNameMode(ID_Table.Profiles), "ID_EXT,IS_ROLE,ID_TAB,ID_ITEM,ID_CONTEXT,ID_UNIT", string.Empty, m_arr_origTable[(int)ID_Table.Profiles], m_arr_editTable[(int)ID_Table.Profiles], out err);
                 m_handlerDb.UnRegisterDbConnection();
                 fillDataTable();
                 resetDataTable();

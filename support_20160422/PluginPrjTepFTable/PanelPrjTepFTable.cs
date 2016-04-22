@@ -312,7 +312,7 @@ namespace PluginPrjTepFTable
         /// <param name="err">Признак ошибки при выполнении метода</param>
         protected override void recUpdateInsertDelete(out int err)
         {
-            m_handlerDb.RecUpdateInsertDelete(@"ftable", @"ID", m_tblOrigin, m_tblEdit, out err);
+            m_handlerDb.RecUpdateInsertDelete(@"ftable", @"ID", string.Empty, m_tblOrigin, m_tblEdit, out err);
         }
 
         /// <summary>
