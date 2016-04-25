@@ -11,6 +11,7 @@ using GemBox.Spreadsheet;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 using Outlook = Microsoft.Office.Interop.Outlook;
+using Excel = Microsoft.Office.Interop.Excel;
 
 using HClassLibrary;
 using TepCommon;
@@ -1021,7 +1022,7 @@ namespace PluginTaskAutobook
 
             public void CreateExcel(DataGridView dgView)
             {
-                efNSS.LoadXls(@"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls");
+                efNSS.LoadXls(@"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls",XlsOptions.PreserveAll);
                 ExcelWorksheet wrkSheets = efNSS.Worksheets["Autobook"];
 
                 for (int i = 0; i < wrkSheets.Columns.Count; i++)
@@ -1051,6 +1052,10 @@ namespace PluginTaskAutobook
                 //efNSS.SaveXls("");
                 //efNSS.
                 // Select active worksheet.
+                var worksheet = efNSS.Worksheets.ActiveWorksheet;
+                
+                //worksheet.
+                //ExcelWorksheet
                 //efNSS = wrkSheets.Worksheets.ActiveWorksheet;
                 //efNSS.Worksheets.ActiveWorksheet;
             }
@@ -1069,7 +1074,14 @@ namespace PluginTaskAutobook
                 else
                     return spltHeader[(int)INDEX_DIVISION.SEPARATE_CELL];
             }
-
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="wrkSheet"></param>
+            /// <param name="dgv"></param>
+            /// <param name="indxColDgv"></param>
+            /// <param name="indxRowExcel"></param>
+            /// <param name="indxColExcel"></param>
             private void fillSheetExcel(ExcelWorksheet wrkSheet
                 , DataGridView dgv
                 , int indxColDgv
@@ -1109,7 +1121,6 @@ namespace PluginTaskAutobook
         /// <summary>
         /// кол-во дней в текущем месяце
         /// </summary>
-        /// <param name="numMonth">номер месяца</param>
         /// <returns>кол-во дней</returns>
         public int DayIsMonth
         {
@@ -1431,7 +1442,7 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// обработка ЭКСПОРТА(временно)
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
