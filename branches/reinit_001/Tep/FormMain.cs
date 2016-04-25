@@ -48,11 +48,7 @@ namespace Tep64
 
             if (! (idListener < 0))
             {
-                try {
-                    using (HTepUsers users = new HTepUsers(idListener)) { ; }
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, @"FormMain::FormMain() - new HTepUsers (iListenerId=" + idListener + @") ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
+                initProfiles(idListener);
 
                 ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
                 s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
@@ -63,6 +59,18 @@ namespace Tep64
             DbSources.Sources().UnRegister(idListener);
 
             m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
+        }
+
+        private void initProfiles(int iListenerId)
+        {
+            try
+            {
+                using (HTepUsers users = new HTepUsers(iListenerId)) { ; }
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, @"FormMain::initProfiles(iListenerId=" + iListenerId + @") - new HTepUsers () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
         /// <summary>
         /// ??? Обязательное переопределение от 'FormMainBaseWithStatusStrip'
@@ -284,13 +292,27 @@ namespace Tep64
 
         private void removePluginMenuItem()
         {
+            List <string> listPluginMenuItem = null;
+
+            listPluginMenuItem = s_plugIns.GetListNameMenuItems();
+
+            foreach (string item in listPluginMenuItem)
+                RemoveMainMenuItemOfText(item);
+        }
+
+        private void stop()
+        {
+            // удалить все вкладки, остановить таймер (если есть)
+            stopTabPages();
+            //Удалить все пункты меню
+            removePluginMenuItem();
+            //Выгрузить библиотеки
+            s_plugIns.Unload();
         }
 
         protected override void Stop()
         {
-            stopTabPages();
-
-            //s_plugIns.Unload();
+            stop();
             
             base.Stop();
         }
@@ -579,11 +601,7 @@ namespace Tep64
             result = s_listFormConnectionSettings[(int)type].ShowDialog(this);
             if (result == DialogResult.Yes)
             {
-                // удалить все вкладки, остановить таймер (если есть)
-                Stop ();
-
-                //Удалить все пункты меню
-                removePluginMenuItem();
+                stop();
 
                 //Очистить/выгрузить список плюгИнов
 

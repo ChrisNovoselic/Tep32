@@ -22,24 +22,35 @@ namespace Tep64
             //, IEnumerable <IPlugIn>
         {
             public DelegateObjectFunc delegateOnClickMenuPluginItem;
+            //http://stackoverflow.com/questions/658498/how-to-load-an-assembly-to-appdomain-with-all-references-recursively
+            //http://lsd.luminis.eu/load-and-unload-assembly-in-appdomains/
+            //http://www.codeproject.com/Articles/453778/Loading-Assemblies-from-Anywhere-into-a-New-AppDom
+            private class ProxyAppDomain : MarshalByRefObject
+            {
+                public Assembly GetAssembly(string AssemblyPath)
+                {
+                    try
+                    {
+                        return Assembly.LoadFrom(AssemblyPath);
+                        //If you want to do anything further to that assembly, you need to do it here.
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException(ex.Message, ex);
+                    }
+                }
+            }
 
-            protected AppDomain m_appDomain;
+            private AppDomain m_appDomain;
+            private ProxyAppDomain m_proxyAppDomain;
+            private static System.Security.Policy.Evidence s_domEvidence = AppDomain.CurrentDomain.Evidence;
+            private static AppDomainSetup s_domSetup = new AppDomainSetup();
 
             public HPlugIns(DelegateObjectFunc fClickMenuItem)
             {
-                //// Set up the AppDomainSetup
-                //AppDomainSetup setup = new AppDomainSetup();
-                //setup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
-                ////setup.ConfigurationFile = ".config";
-
-                //// Set up the Evidence
-                //System.Security.Policy.Evidence baseEvidence = AppDomain.CurrentDomain.Evidence;
-                //System.Security.Policy.Evidence evidence = new System.Security.Policy.Evidence(baseEvidence);
-                ////evidence.AddAssembly("(some assembly)");
-                ////evidence.AddHost("(some host)");
-
-                //// Create the AppDomain      
-                //m_appDomain = AppDomain.CreateDomain("newDomain", evidence, setup);
+                s_domSetup = new AppDomainSetup();
+                s_domSetup.ApplicationBase = System.Environment.CurrentDirectory;
+                s_domEvidence = AppDomain.CurrentDomain.Evidence;
 
                 //_dictPlugins = new Dictionary<int, IPlugIn>();
                 delegateOnClickMenuPluginItem = fClickMenuItem;
@@ -55,9 +66,29 @@ namespace Tep64
                 return 0;
             }
 
+            private bool isInitPluginAppDomain { get { return (!(m_appDomain == null)) && (!(m_proxyAppDomain == null)); } }
+
+            private void initPluginDomain()
+            {
+                m_appDomain = AppDomain.CreateDomain("pluginDomain", s_domEvidence, s_domSetup);
+
+                Type type = typeof(ProxyAppDomain);
+                m_proxyAppDomain = (ProxyAppDomain)m_appDomain.CreateInstanceAndUnwrap(type.Assembly.FullName, type.FullName);
+            }
+
             public void Unload()
             {
-                //AppDomain.Unload(m_appDomain);
+                if (isInitPluginAppDomain == true)
+                {
+                    AppDomain.Unload(m_appDomain);
+
+                    m_appDomain = null;
+                    m_proxyAppDomain = null;
+                }
+                else
+                    ;
+
+                Clear();
             }
             /// <summary>
             /// Загрузить плюгИн с указанным наименованием
@@ -73,9 +104,15 @@ namespace Tep64
                 Type objType = null;
                 try
                 {
+                    if (isInitPluginAppDomain == false)
+                        initPluginDomain();
+                    else
+                        ;
+
                     Assembly ass = null;
                     ass =
-                        Assembly.LoadFrom
+                        m_proxyAppDomain.GetAssembly
+                        //Assembly.LoadFrom
                         //m_appDomain.Load
                             (Environment.CurrentDirectory + @"\" + name + @".dll");
 
@@ -252,6 +289,16 @@ namespace Tep64
                         ;
 
                 return iRes;
+            }
+
+            public List<string> GetListNameMenuItems()
+            {
+                List<string> listRes = new List<string> ();
+
+                foreach (KeyValuePair<int, PlugInMenuItem> pair in this)
+                    listRes.AddRange (pair.Value.GetNameMenuItems());
+
+                return listRes;
             }
         }
     }

@@ -36,7 +36,7 @@ namespace TepCommon
         /// <summary>
         /// Перечисление - индексы в массиве - аргументе функции 'GetParameterVisualSettings'
         /// </summary>
-        public enum INDEX_VISUALSETTINGS_PARAMS { TASK, PLUGIN, TAB, ITEM
+        public enum INDEX_VISUALSETTINGS_PARAMS { /*TASK, PLUGIN, */TAB, ITEM
             , COUNT }
         /// <summary>
         /// Конструктор основной - с  параметром
@@ -281,8 +281,8 @@ namespace TepCommon
                                     + @")"
                                 + @" AND ((ID_EXT=" + Id + @" AND " + @"IS_ROLE=0)"
                                     + @" OR (ID_EXT=" + Role + @" AND " + @"IS_ROLE=1))"
-                                + @" AND ID_TASK=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TASK]
-                                + @" AND ID_PLUGIN=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.PLUGIN]
+                                //+ @" AND ID_TASK=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TASK]
+                                //+ @" AND ID_PLUGIN=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.PLUGIN]
                                 + @" AND ID_TAB=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]
                                 + @" AND ID_ITEM=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM]
                                 //+ @" AND ID_CONTEXT=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.CONTEXT]

@@ -31,7 +31,7 @@ namespace TepCommon
 
         #region Apelgans
 
-        int m_id_panel;
+        protected int m_id_panel;
         public enum ID_DT_DESC { TABLE, PROP };
         public DataTable[] Descriptions = new DataTable[] { new DataTable(), new DataTable() };
 
