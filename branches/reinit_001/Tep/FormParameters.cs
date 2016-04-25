@@ -139,10 +139,10 @@ namespace Tep64
         private ConnectionSettings m_connSett;
         private DbConnection m_dbConn;
 
-        //public FormParameters_DB(int idListener)
-        //    : base()
-        //{
-        //}
+        public FormParameters_DB(int idListener)
+            : base()
+        {
+        }
 
         public FormParameters_DB(ConnectionSettings connSett) : base ()
         {

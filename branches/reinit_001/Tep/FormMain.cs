@@ -299,7 +299,9 @@ namespace Tep64
             foreach (string item in listPluginMenuItem)
                 RemoveMainMenuItemOfText(item);
         }
-
+        /// <summary>
+        /// Закрыть/удалить текущие вкладки, п. меню, загруженные библиотеки
+        /// </summary>
         private void stop()
         {
             // удалить все вкладки, остановить таймер (если есть)
@@ -371,7 +373,7 @@ namespace Tep64
             string strUserDomainName = string.Empty;
             string []arIdFPanels = null;
 
-            idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, @"MAIN_DB");
+            idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString ());
 
             initializeLogging ();
 
@@ -595,22 +597,28 @@ namespace Tep64
         /// <param name="type">Индекс параметров соединения с БД</param>
         /// <returns>Результат выполнения функции</returns>
         private int connectionSettings (CONN_SETT_TYPE type) {
-            int iRes = -1;
+            int iRes = -1
+                , idListener = -1;
             DialogResult result;
             //Отобразить окно с параметрами соединения
             result = s_listFormConnectionSettings[(int)type].ShowDialog(this);
             if (result == DialogResult.Yes)
             {
-                stop();
-
-                //Очистить/выгрузить список плюгИнов
+                //Очистить/выгрузить список плюгИнов, пункты меню
+                stop();                
 
                 iRes = s_listFormConnectionSettings[(int)type].Ready;
 
                 string msg = string.Empty;
                 if (iRes == 0)
                 {
-                    iRes = Initialize(out msg);
+                    // персонализация в новой БД - аналог в конструкторе формы
+                    idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString ());
+                    initProfiles(idListener);
+                    // закрыть соединение с новой БД
+                    DbSources.Sources().UnRegister(idListener);
+
+                    iRes = Initialize(out msg);                    
                 }
                 else
                 {
