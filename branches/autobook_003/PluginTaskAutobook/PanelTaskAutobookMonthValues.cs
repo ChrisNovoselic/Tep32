@@ -999,6 +999,7 @@ namespace PluginTaskAutobook
         /// </summary>
         public class ReportExcel
         {
+            Excel.Application excApp;
             /// <summary>
             /// Экземпляр класса
             /// </summary>
@@ -1018,46 +1019,43 @@ namespace PluginTaskAutobook
             public ReportExcel()
             {
                 efNSS = new ExcelFile();
+                excApp = new Excel.Application();
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="dgView"></param>
             public void CreateExcel(DataGridView dgView)
             {
-                efNSS.LoadXls(@"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls",XlsOptions.PreserveAll);
-                ExcelWorksheet wrkSheets = efNSS.Worksheets["Autobook"];
+                excApp.Visible = false;
+                excApp.Workbooks.Open(@"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls");
+                Excel.Worksheet wrkSheet = (Excel.Worksheet)excApp.ActiveSheet;
+                //string fileName = System.Windows.Forms.Application.StartupPath;
+                //efNSS.LoadXls(@"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls", XlsOptions.PreserveAll);
+                //ExcelWorksheet wrkSheets = efNSS.Worksheets["Autobook"];
 
-                for (int i = 0; i < wrkSheets.Columns.Count; i++)
+                for (int i = 0; i < dgView.Columns.Count; i++)
                 {
                     int indxRow = 0;
-                    bool bflag = false;
+                    bool bflag = false;  
 
-                    foreach (ExcelCell cell in wrkSheets.Columns[i].Cells)
+                    foreach (Excel.Range cell in wrkSheet.Cells)
                     {
-                        for (int j = 0; j < dgView.Columns.Count; j++)
-                        {
-                            if (Convert.ToString(cell.Value) == splitString(dgView.Columns[j].HeaderText))
+                            if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
                             {
-                                fillSheetExcel(wrkSheets, dgView, j, indxRow, i);
+                                fillSheetExcel(wrkSheet, dgView, cell.Column, cell.Row, i);
                                 bflag = true;
                                 break;
                             }
-                            else
-                                ;
-                        }
                         indxRow++;
                         if (bflag == true)
                             break;
                     }
                 }
-                //wrkSheets.
-                //efNSS.SaveXls("");
-                //efNSS.
-                // Select active worksheet.
-                var worksheet = efNSS.Worksheets.ActiveWorksheet;
-                
-                //worksheet.
-                //ExcelWorksheet
-                //efNSS = wrkSheets.Worksheets.ActiveWorksheet;
-                //efNSS.Worksheets.ActiveWorksheet;
+                excApp.Visible = true;
+                string path = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\OutputPower.xls";
+                //efNSS.SaveXls(path);
             }
 
             /// <summary>
@@ -1070,10 +1068,11 @@ namespace PluginTaskAutobook
                 string[] spltHeader = headerTxt.Split(',');
 
                 if (spltHeader.Length > (int)INDEX_DIVISION.ADJACENT_CELL)
-                    return spltHeader[(int)INDEX_DIVISION.ADJACENT_CELL];
+                    return spltHeader[(int)INDEX_DIVISION.SEPARATE_CELL].TrimStart();
                 else
                     return spltHeader[(int)INDEX_DIVISION.SEPARATE_CELL];
             }
+
             /// <summary>
             /// 
             /// </summary>
@@ -1082,20 +1081,26 @@ namespace PluginTaskAutobook
             /// <param name="indxColDgv"></param>
             /// <param name="indxRowExcel"></param>
             /// <param name="indxColExcel"></param>
-            private void fillSheetExcel(ExcelWorksheet wrkSheet
+            private void fillSheetExcel(Excel.Worksheet wrkSheet
                 , DataGridView dgv
                 , int indxColDgv
                 , int indxRowExcel
                 , int indxColExcel)
             {
-                CellRange cellRange = wrkSheet.Columns[indxColExcel].Cells;
+                Excel.Range cellRange = wrkSheet.Cells;
+                int rw = 0;
 
-                for (int i = 0; i < dgv.Rows.Count; i++)
-                {
-                    for (int j = indxRowExcel + 2; j < wrkSheet.Rows.Count; j++)
+                for (int i = indxRowExcel; i < wrkSheet.Rows.Count; i++)
+                    if (wrkSheet.Rows[i, indxColExcel] == null)
                     {
-                        cellRange[j].Value = dgv.Rows[i].Cells[indxColDgv].Value;
+                        rw = i;
+                        break;
                     }
+
+                for (int j = 0; j < dgv.Rows.Count; j++)
+                {
+                    wrkSheet.Cells[rw,indxColExcel] = dgv.Rows[j].Cells[indxColDgv].Value;
+                    rw++;
                 }
             }
         }
@@ -1740,7 +1745,6 @@ namespace PluginTaskAutobook
             m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
 
             onButtonLoadClick();
-
         }
         /// <summary>
         /// 
