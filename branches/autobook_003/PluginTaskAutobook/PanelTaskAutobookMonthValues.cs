@@ -12,6 +12,8 @@ using System.Text.RegularExpressions;
 using System.Diagnostics;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Excel = Microsoft.Office.Interop.Excel;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
 using HClassLibrary;
 using TepCommon;
@@ -151,11 +153,11 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        protected ReportsToNSS rptsNSS = new ReportsToNSS();
+        protected ReportsToNSS rptsNSS;
         /// <summary>
         /// 
         /// </summary>
-        protected ReportExcel rptExcel = new ReportExcel();
+        protected ReportExcel rptExcel;
 
         private PanelManagementAutobook _panelManagement;
         /// <summary>
@@ -863,6 +865,7 @@ namespace PluginTaskAutobook
                 /// 
                 /// </summary>
                 Outlook.Application oApp;
+
                 /// <summary>
                 /// конструктор(основной)
                 /// </summary>
@@ -925,6 +928,16 @@ namespace PluginTaskAutobook
                             1,
                             attachment.FileName);
                     }
+                }
+
+                /// <summary>
+                /// 
+                /// </summary>
+                private void closeOutlook()
+                {
+                    ((Outlook.Application)oApp).Quit();
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(oApp);
+                    System.GC.Collect();
                 }
             }
 
@@ -999,11 +1012,15 @@ namespace PluginTaskAutobook
         /// </summary>
         public class ReportExcel
         {
-            Excel.Application excApp;
+            private Excel.Application excApp;
+            private Excel.Workbook workBook;
+            private Excel.Worksheet wrkSheet;
+            private object _missingObj = System.Reflection.Missing.Value;
+
             /// <summary>
             /// Экземпляр класса
             /// </summary>
-            ExcelFile efNSS;
+            //ExcelFile efNSS;
             /// <summary>
             /// 
             /// </summary>
@@ -1018,8 +1035,10 @@ namespace PluginTaskAutobook
             /// </summary>
             public ReportExcel()
             {
-                efNSS = new ExcelFile();
+                //efNSS = new ExcelFile();
                 excApp = new Excel.Application();
+                excApp.Visible = false;
+               
             }
 
             /// <summary>
@@ -1028,33 +1047,42 @@ namespace PluginTaskAutobook
             /// <param name="dgView"></param>
             public void CreateExcel(DataGridView dgView)
             {
-                excApp.Visible = false;
-                excApp.Workbooks.Open(@"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls");
-                Excel.Worksheet wrkSheet = (Excel.Worksheet)excApp.ActiveSheet;
                 //string fileName = System.Windows.Forms.Application.StartupPath;
                 //efNSS.LoadXls(@"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls", XlsOptions.PreserveAll);
                 //ExcelWorksheet wrkSheets = efNSS.Worksheets["Autobook"];
-
-                for (int i = 0; i < dgView.Columns.Count; i++)
+                string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls";
+                object pathToTemplateObj = pathToTemplate;
+                workBook = excApp.Workbooks.Open(pathToTemplate);
+                Excel.Worksheet wrkSheet = (Excel.Worksheet)workBook.Worksheets.get_Item("Autobook");
+                try
                 {
-                    int indxRow = 0;
-                    bool bflag = false;  
-
-                    foreach (Excel.Range cell in wrkSheet.Cells)
+                    for (int i = 0; i < dgView.Columns.Count; i++)
                     {
+                        int indxRow = 0;
+                        bool bflag = false;
+                        Excel.Range colRange = (Excel.Range)wrkSheet.Columns[i+1];
+
+                        foreach (Excel.Range cell in colRange.Cells)
+                        {
                             if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
                             {
-                                fillSheetExcel(wrkSheet, dgView, cell.Column, cell.Row, i);
+                                fillSheetExcel(colRange, dgView, i, cell.Row, cell.Column);
                                 bflag = true;
                                 break;
                             }
-                        indxRow++;
-                        if (bflag == true)
-                            break;
+                            indxRow++;
+                            //if (bflag == true)
+                            //    break;
+                        }
                     }
+                    excApp.Visible = true;
                 }
-                excApp.Visible = true;
-                string path = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\OutputPower.xls";
+                catch (Exception)
+                {
+                    CloseExcel();
+                }
+               
+                //string path = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\OutputPower.xls";
                 //efNSS.SaveXls(path);
             }
 
@@ -1081,17 +1109,17 @@ namespace PluginTaskAutobook
             /// <param name="indxColDgv"></param>
             /// <param name="indxRowExcel"></param>
             /// <param name="indxColExcel"></param>
-            private void fillSheetExcel(Excel.Worksheet wrkSheet
+            private void fillSheetExcel(Excel.Range cellRange
                 , DataGridView dgv
                 , int indxColDgv
                 , int indxRowExcel
                 , int indxColExcel)
             {
-                Excel.Range cellRange = wrkSheet.Cells;
+                //Excel.Range cellRange = (Excel.Range)wrkSheet.Columns[indxColExcel];
                 int rw = 0;
 
-                for (int i = indxRowExcel; i < wrkSheet.Rows.Count; i++)
-                    if (wrkSheet.Rows[i, indxColExcel] == null)
+                for (int i = indxRowExcel; i < cellRange.Rows.Count; i++)
+                    if (((Excel.Range)cellRange.Cells[i]).Value == null)
                     {
                         rw = i;
                         break;
@@ -1099,9 +1127,27 @@ namespace PluginTaskAutobook
 
                 for (int j = 0; j < dgv.Rows.Count; j++)
                 {
-                    wrkSheet.Cells[rw,indxColExcel] = dgv.Rows[j].Cells[indxColDgv].Value;
+                    cellRange.Cells[rw] = dgv.Rows[j].Cells[indxColDgv].Value;
                     rw++;
                 }
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public void CloseExcel()
+            {
+                workBook.Close(false, _missingObj, _missingObj);
+                excApp.Quit();
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(excApp);
+
+                excApp = null;
+                workBook = null;
+                wrkSheet = null;
+                System.GC.Collect();
+
+                //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
+                //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
             }
         }
 
@@ -1453,6 +1499,7 @@ namespace PluginTaskAutobook
         /// <param name="e"></param>
         void PanelTaskAutobookMonthValues_btnexport_Click(object sender, EventArgs e)
         {
+            rptExcel = new ReportExcel();
             rptExcel.CreateExcel(dgvAB);
         }
 
@@ -1463,6 +1510,7 @@ namespace PluginTaskAutobook
         /// <param name="e"></param>
         void PanelTaskAutobookMonthValue_btnsend_Click(object sender, EventArgs e)
         {
+            rptsNSS = new ReportsToNSS();
             int err = -1;
             string toSend = (Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0] as TextBox).Text;
 
@@ -1569,12 +1617,12 @@ namespace PluginTaskAutobook
             //Создание сессии
             Session.New();
             //изменение начальной даты
-            if (arQueryRanges.Count() > 1)
-                arQueryRanges[1] = new DateTimeRange(arQueryRanges[1].Begin.AddDays(-(arQueryRanges[1].Begin.Day - 1))
-                    , arQueryRanges[1].End.AddDays(-(arQueryRanges[1].End.Day - 2)));
-            else
-                arQueryRanges[0] = new DateTimeRange(arQueryRanges[0].Begin.AddDays(-(arQueryRanges[0].Begin.Day - 1))
-                    , arQueryRanges[0].End.AddDays(DayIsMonth - arQueryRanges[0].End.Day));
+            //if (arQueryRanges.Count() > 1)
+            //    arQueryRanges[1] = new DateTimeRange(arQueryRanges[1].Begin.AddDays(-(arQueryRanges[1].Begin.Day - 1))
+            //        , arQueryRanges[1].End.AddDays(-(arQueryRanges[1].End.Day - 2)));
+            //else
+            //    arQueryRanges[0] = new DateTimeRange(arQueryRanges[0].Begin.AddDays(-(arQueryRanges[0].Begin.Day - 1))
+            //        , arQueryRanges[0].End.AddDays(DayIsMonth - arQueryRanges[0].End.Day));
             //Запрос для получения архивных данных
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
             //Запрос для получения автоматически собираемых данных
