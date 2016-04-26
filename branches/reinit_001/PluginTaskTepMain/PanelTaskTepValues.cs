@@ -533,16 +533,23 @@ namespace PluginTaskTepMain
         protected void m_dgvValues_SelectionChanged(object sender, EventArgs ev)
         {
             DataTable inalg = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER];
-            if(inalg!=null)
+            if (inalg != null)
                 foreach (DataRow r in inalg.Rows)
-                {
-                    if (m_dgvValues.Rows[m_dgvValues.SelectedCells[0].RowIndex].HeaderCell.Value != null)
-
-                        if (r["n_ALG"].ToString().Trim() == m_dgvValues.Rows[m_dgvValues.SelectedCells[0].RowIndex].HeaderCell.Value.ToString())
-                        {
-                            SetDescSelRow(r["DESCRIPTION"].ToString(), r["NAME_SHR"].ToString());
-                        }
-                }
+                    if ((m_dgvValues.SelectedCells.Count == 1)
+                        && (m_dgvValues.SelectedCells[0].RowIndex < m_dgvValues.Rows.Count))
+                        if (m_dgvValues.Rows[m_dgvValues.SelectedCells[0].RowIndex].HeaderCell.Value != null)
+                            if (r["n_ALG"].ToString().Trim() == m_dgvValues.Rows[m_dgvValues.SelectedCells[0].RowIndex].HeaderCell.Value.ToString())
+                            {
+                                SetDescSelRow(r["DESCRIPTION"].ToString(), r["NAME_SHR"].ToString());
+                            }
+                            else
+                                ; // идентификатор параметра в алгоритме расчета НЕ срвпадает со значением заголовка строки
+                        else
+                            ; // значение заголовка строки НЕ= 0
+                    else
+                        ; // кол-во выделенных ячеек НЕ= 1 ИЛИ индекс выделенной ячейки-строки БОЛЬШЕ= кол-ву строк в 'm_dgvValues'
+            else
+                ; // табл. с параметрами не инициализирована
         }
 
         /// <summary>

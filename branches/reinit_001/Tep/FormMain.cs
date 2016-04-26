@@ -50,8 +50,8 @@ namespace Tep64
             {
                 initProfiles(idListener);
 
-                ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
-                s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
+                //ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
+                //s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
             }
             else
                 ;
@@ -288,6 +288,7 @@ namespace Tep64
         {
             foreach (TabPage page in m_TabCtrl.TabPages)
                 FindMainMenuItemOfText(page.Text.Trim()).PerformClick();
+                //FindMainMenuItemOfTag(m_TabCtrl.GetTabPageId(m_TabCtrl.TabPages.IndexOf(page))).PerformClick();
         }
 
         private void removePluginMenuItem()
@@ -613,7 +614,7 @@ namespace Tep64
                 if (iRes == 0)
                 {
                     // персонализация в новой БД - аналог в конструкторе формы
-                    idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString ());
+                    idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)type].getConnSett(), false, type.ToString());
                     initProfiles(idListener);
                     // закрыть соединение с новой БД
                     DbSources.Sources().UnRegister(idListener);

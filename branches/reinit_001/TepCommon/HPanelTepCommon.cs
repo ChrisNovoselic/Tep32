@@ -158,7 +158,8 @@ namespace TepCommon
                     {
                         desc = dt.Rows[0][0].ToString();
                         ((HPanelDesc)ctrl).SetLblTab = new string[] { /*((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id)*/
-                    this.Parent.Text, desc };
+                            this.Parent.Text, desc
+                        };
                     }
 
                     //Описания таблиц

@@ -196,6 +196,7 @@ namespace TepCommon
                             , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT //QUALITY
                             , (iAVG == 0) ? cntBasePeriod * (double)rValDef[@"VALUE"] : (double)rValDef[@"VALUE"] //VALUE
                             , HDateTime.ToMoscowTimeZone() //??? GETADTE()
+                            , 0 //EXTENSION_DEFAULT
                         }
                     );
                 }
@@ -276,13 +277,14 @@ namespace TepCommon
         {
             err = -1;
 
-            string strQuery = string.Empty
+            string strQuery = string.Empty, strBaseQuery = string.Empty
                 , strNameColumn = string.Empty;
             string[] arNameColumns = null;
             Type[] arTypeColumns = null;
+            int iCntToInsert = -1; // кол-во строк обработанных для вставки
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+            strBaseQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];
@@ -294,26 +296,41 @@ namespace TepCommon
                 else
                     strNameColumn = c.ColumnName;
                 arNameColumns[c.Ordinal] = strNameColumn;
-                strQuery += strNameColumn + @",";
+                strBaseQuery += strNameColumn + @",";
             }
             // исключить лишнюю запятую
-            strQuery = strQuery.Substring(0, strQuery.Length - 1);
+            strBaseQuery = strBaseQuery.Substring(0, strBaseQuery.Length - 1);
 
-            strQuery += @") VALUES ";
+            strBaseQuery += @") VALUES ";
 
+            iCntToInsert = 0;
+            strQuery = strBaseQuery;
             foreach (DataRow r in tableInValues.Rows)
             {
                 strQuery += @"(";
-
+                // вставить значения в запрос
                 foreach (DataColumn c in tableInValues.Columns)
-                {
-                        strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
-                }
+                    strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
 
                 // исключить лишнюю запятую
                 strQuery = strQuery.Substring(0, strQuery.Length - 1);
 
                 strQuery += @"),";
+
+                iCntToInsert++;
+
+                if (iCntToInsert > MAX_ROWCOUNT_TO_INSERT)
+                {
+                    // исключить лишнюю запятую
+                    strQuery = strQuery.Substring(0, strQuery.Length - 1);
+                    //Вставить во временную таблицу в БД входные для расчета значения
+                    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+                    // обнулить счетчик строк, основной запрос
+                    iCntToInsert = 0;
+                    strQuery = strBaseQuery;
+                }
+                else
+                    ;
             }
             // исключить лишнюю запятую
             strQuery = strQuery.Substring(0, strQuery.Length - 1);
@@ -392,7 +409,8 @@ namespace TepCommon
                     + rPar[@"ID"] + @"," //ID_PUT
                     + 0.ToString() + @"," //QUALITY
                     + 0.ToString() + @"," //VALUE
-                    + @"GETDATE()"
+                    + @"GETDATE()" + @","
+                    + 0.ToString() //EXTENSION_DEFENITION
                     ;
 
                 strQuery += @"),";
@@ -731,8 +749,8 @@ namespace TepCommon
                     strRes += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
                             + @", " + _Session.m_Id + @" as [ID_SESSION]"
                             + @", m.[AVG]"
-                            + @", ROW_NUMBER() OVER(ORDER BY v.ID_PUT) as [EXTENDED_DEFINITION] "
-                        //+ @", GETDATE () as [WR_DATETIME]"
+                            + @", 0" /*+ @", ROW_NUMBER() OVER(ORDER BY v.ID_PUT)+*/ + @" as [EXTENDED_DEFINITION]"
+                            //+ @", GETDATE () as [WR_DATETIME]"
                         + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_" 
                         + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
                             + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
@@ -749,7 +767,7 @@ namespace TepCommon
                         ;
 
                     if (bEquDatetime == false)
-                        strRes += @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                        strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                             + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
                     else
                         strRes += @" AND [DATE_TIME] = '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
@@ -773,7 +791,7 @@ namespace TepCommon
                                 + @" ELSE MIN (v.[VALUE])"
                             + @" END as [VALUE]"
                         + @", GETDATE () as [WR_DATETIME]"
-                           + @",[EXTENDED_DEFINITION]"
+                           + @", [EXTENDED_DEFINITION]"
                     + @" FROM (" + strRes + @") as v"
                     + @" GROUP BY v.ID_PUT"
                         + @", v.[AVG], v.[EXTENDED_DEFINITION]"
