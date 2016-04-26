@@ -88,7 +88,7 @@ namespace Tep64
         {
             PlugInMenuItem plugIn;
             string ids = HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS)
-                , strNameOwnerMenuItem = string.Empty, strNameMenuItem = string.Empty;
+                /*/*, strNameOwnerMenuItem = string.Empty, strNameMenuItem = string.Empty*/;
             string[] arIds = ids.Split(new char [] {','}, StringSplitOptions.RemoveEmptyEntries);
             ////Вариант №1
             //ToolStripItem[] menuItems;
@@ -110,14 +110,16 @@ namespace Tep64
                         continue;
                     else
                         ;
-                    strNameOwnerMenuItem = plugIn.GetNameOwnerMenuItem (id);
-                    strNameMenuItem = plugIn.GetNameMenuItem (id);
+                    ////strNameOwnerMenuItem = plugIn.GetNameOwnerMenuItem (id);
+                    //strNameMenuItem = plugIn.GetNameMenuItem (id);
 
                     ////Вариант №1
                     //menuItems = this.MainMenuStrip.Items.Find(strNameMenuItem, true);
                     //menuItem = menuItems[0];
-                    //Вариант №2
-                    menuItem = FindMainMenuItemOfText(strNameMenuItem);
+                    ////Вариант №2
+                    //menuItem = FindMainMenuItemOfText(strNameMenuItem);
+                    //Вариант №3
+                    menuItem = findMainMenuItemOfTag(id);
 
                     if ((menuItem as ToolStripMenuItem).Checked == false)
                     {
@@ -130,6 +132,58 @@ namespace Tep64
                 else
                     Logging.Logg().Warning(@"FormMain::loadProfile () - не удалось загрузить plugIn.Id=" + id + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
+        }
+
+        private ToolStripMenuItem findMainMenuItemOfTag(ToolStripMenuItem miParent, object tag)
+        {
+            //Результат 
+            ToolStripMenuItem itemRes = null;
+
+            //Цикл по всем элементам пункта меню
+            foreach (ToolStripItem mi in miParent.DropDownItems)
+                if (mi is ToolStripMenuItem)
+                    // т.к. объект 'tag' - идентификатор панели
+                    if ((! (mi.Tag == null))
+                        && ((int)mi.Tag == (int)tag))
+                    {
+                        itemRes = mi as ToolStripMenuItem;
+                        break;
+                    }
+                    else
+                        //Проверить наличие подменю
+                        if (((ToolStripMenuItem)mi).DropDownItems.Count > 0)
+                        {
+                            //Искать элемент в подменю
+                            itemRes = findMainMenuItemOfTag(mi as ToolStripMenuItem, tag);
+
+                            if (!(itemRes == null))
+                                break;
+                            else
+                                ;
+                        }
+                        else
+                            ;
+                else
+                    ;
+
+            return itemRes;
+        }
+
+        private ToolStripMenuItem findMainMenuItemOfTag(object tag)
+        {
+            ToolStripMenuItem itemRes = null;
+
+            foreach (ToolStripMenuItem mi in MainMenuStrip.Items)
+            {
+                itemRes = findMainMenuItemOfTag(mi, tag);
+
+                if (!(itemRes == null))
+                    break;
+                else
+                    ;
+            }
+
+            return itemRes;
         }
         /// <summary>
         /// Обработчик события - выбор п. меню 'Файл - Профиль - Загрузить'
@@ -287,8 +341,8 @@ namespace Tep64
         private void stopTabPages()
         {
             foreach (TabPage page in m_TabCtrl.TabPages)
-                FindMainMenuItemOfText(page.Text.Trim()).PerformClick();
-                //FindMainMenuItemOfTag(m_TabCtrl.GetTabPageId(m_TabCtrl.TabPages.IndexOf(page))).PerformClick();
+                //FindMainMenuItemOfText(page.Text.Trim()).PerformClick();
+                findMainMenuItemOfTag(m_TabCtrl.GetTabPageId(m_TabCtrl.TabPages.IndexOf(page))).PerformClick();
         }
 
         private void removePluginMenuItem()
@@ -549,8 +603,11 @@ namespace Tep64
             //FindMainMenuItemOfText (e.TabHeaderText).Checked = false;
             //m_TabCtrl.TabPages.RemoveAt (e.TabIndex);
 
-            //Вариант №2
-            FindMainMenuItemOfText (e.TabHeaderText).PerformClick ();
+            ////Вариант №2
+            //FindMainMenuItemOfText (e.TabHeaderText).PerformClick ();
+
+            //Вариант №3
+            findMainMenuItemOfTag(e.Id).PerformClick();
         }
         /// <summary>
         /// Дополнительная инициализация компонентов формы
