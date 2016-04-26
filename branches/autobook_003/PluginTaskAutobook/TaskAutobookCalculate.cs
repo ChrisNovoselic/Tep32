@@ -125,7 +125,7 @@ namespace PluginTaskAutobook
                             + @", " + _Session.m_Id + @" as [ID_SESSION]"
                             + @",[DATE_TIME]"
                             + @", m.[AVG]"
-                             + @", ROW_NUMBER() OVER(ORDER BY v.ID_PUT) as [EXTENDED_DEFINITION] "
+                             + @",convert(varchar, [DATE_TIME], 112) as [EXTENDED_DEFINITION] "
                         //+ @", GETDATE () as [WR_DATETIME]"
                         + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
                         + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
