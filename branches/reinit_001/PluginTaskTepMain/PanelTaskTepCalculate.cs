@@ -834,12 +834,4 @@ namespace PluginTaskTepMain
             }
         }
     }
-
-    public class PlugInTepTaskCalculate : HFuncDbEdit
-    {
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            base.OnEvtDataRecievedHost(obj);
-        }
-    }
 }

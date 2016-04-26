@@ -485,7 +485,7 @@ namespace TepCommon
         {
             err = -1;
 
-            RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID, ID_SESSION", string.Empty, tableOriginValues, tableEditValues, out err);
+            RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID_PUT, ID_SESSION", string.Empty, tableOriginValues, tableEditValues, out err);
         }
 
         /// <summary>

@@ -593,7 +593,7 @@ namespace PluginTaskTepMain
                                 Norm[nAlg][ID_COMP[i]].value = 0F;
                             else
                             {
-                                switch (_modeDev[ID_COMP[i]])
+                                switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1:
                                         nameFTable = @"2.8";
