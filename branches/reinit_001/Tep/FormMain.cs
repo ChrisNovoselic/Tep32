@@ -699,7 +699,8 @@ namespace Tep64
         {
             //'Activate(false)' и 'Stop' вызываются в 'PlugIn'-е
             //activatePlugIn (m_TabCtrl.GetTabPageId(iPrevSelectedindex), false);
-            activateFPanel (m_TabCtrl.GetTabPageId(), true);            
+            activateFPanel(m_TabCtrl.GetTabPageId(iPrevSelectedindex), false);
+            activateFPanel (m_TabCtrl.GetTabPageId(), true);
         }
 
         private void activateFPanel(int id_fpanel, bool bActivate)

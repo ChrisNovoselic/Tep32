@@ -86,14 +86,14 @@ namespace PluginTaskTepMain
                                     if (In[@"47"][ID_COMP[i]].value / In[@"1"][ID_COMP[i]].value < 0.7F)
                                         Norm[nAlg][ID_COMP[i]].value = 0F;
                                     else
-                                        Norm[nAlg][ID_COMP[i]].value = In[@"47"][ID_COMP[i]].value * In[@"48"][ID_COMP[i]].value - In[@"49"][ID_COMP[i]].value;
+                                        Norm[nAlg][ID_COMP[i]].value = In[@"47"][ID_COMP[i]].value * (In[@"48"][ID_COMP[i]].value - In[@"49"][ID_COMP[i]].value);
 
                                     fRes += Norm[nAlg][ID_COMP[i]].value;
                                 }
                             else
                                 for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                                 {
-                                    Norm[nAlg][ID_COMP[i]].value = In[@"47"][ID_COMP[i]].value * In[@"48"][ID_COMP[i]].value - In[@"49"][ID_COMP[i]].value;
+                                    Norm[nAlg][ID_COMP[i]].value = In[@"47"][ID_COMP[i]].value * (In[@"48"][ID_COMP[i]].value - In[@"49"][ID_COMP[i]].value);
                                     fRes += Norm[nAlg][ID_COMP[i]].value;
                                 }
                             break;
@@ -1347,17 +1347,19 @@ namespace PluginTaskTepMain
                         case "62":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1:
                                         //???1 / 0;
                                         break;
                                     case MODE_DEV.ELEKTRO1_2a:
-                                        Norm[nAlg][id_comp].value = fTable.F2("2.83а:2", Norm[@"50"][ID_COMP[i]].value, In[@"38"][ID_COMP[i]].value);
+                                        Norm[nAlg][id_comp].value = fTable.F2("2.83а:2", Norm[@"50"][id_comp].value, In[@"38"][id_comp].value);
                                         break;
                                     case MODE_DEV.ELEKTRO2_2:
                                     case MODE_DEV.TEPLO_3:
-                                        Norm[nAlg][id_comp].value = fTable.F2("2.83:2", Norm[@"50"][ID_COMP[i]].value, Norm[@"10.1"][ID_COMP[i]].value);
+                                        Norm[nAlg][id_comp].value = fTable.F2("2.83:2", Norm[@"50"][id_comp].value, Norm[@"10.1"][id_comp].value);
                                         break;
                                     default:
                                         break;

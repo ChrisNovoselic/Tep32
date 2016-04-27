@@ -83,8 +83,7 @@ namespace PluginTaskTepMain
             deleteSession();
 
             base.Stop();
-        }  
-      
+        }
         /// <summary>
         /// Установить значения таблиц для редактирования
         /// </summary>

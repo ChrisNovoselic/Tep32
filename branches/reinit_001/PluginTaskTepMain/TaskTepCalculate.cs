@@ -23,6 +23,13 @@ namespace PluginTaskTepMain
 
             m_taskCalculate = new HandlerDbTaskCalculate.TaskTepCalculate();
         }
+        /// <summary>
+        /// Корректировка входных (сырых) значений - аналог 'import.prg'
+        /// </summary>
+        public void CorrectValues(ref DataTable tableSesion, ref DataTable tableProject)
+        {
+            (m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CorrectValues(ref tableSesion, ref tableProject);
+        }
 
         protected override void calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, out int err)
         {
@@ -240,7 +247,47 @@ namespace PluginTaskTepMain
 
                 return iRes;
             }
+            /// <summary>
+            /// Корректировка входных (сырых) значений - аналог 'import.prg'
+            /// </summary>
+            public void CorrectValues(ref DataTable tableData, ref DataTable tablePrjParameter)
+            {
+                DataRow[] rowsPar = null;
+                int id_put = -1;
+                double[] arValues = new double [ID_COMP.Length];
+                double dblVal = -1F;
 
+                //Электро - 10.3
+                rowsPar = tablePrjParameter.Select(@"N_ALG=" + @"10.3");
+                dblVal = 0F;
+                //??? проверить на кол-во строк (строк д.б. не больше ID_COMP.Length)
+                for (int i = 0; i < rowsPar.Length; i ++)
+                    switch ((int)rowsPar[i][@"ID_COMP"])
+                    {
+                        case BL1:
+                        case BL2:
+                        case BL3:
+                        case BL4:
+                        case BL5:
+                            dblVal += (double)tableData.Select(@"ID_PUT=" + (int)rowsPar[i][@"ID"])[0][@"VALUE"];
+                            break;
+                        case ST:
+                            id_put = (int)rowsPar[i][@"ID"];
+                            break;
+                        default:
+                            break;
+                    }
+                    
+                rowsPar = tablePrjParameter.Select(@"N_ALG=" + @"10.3" + @" AND ID_COMP=" + (int)ST);
+                tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] = dblVal;
+                //Электро - 12
+
+                //Тепло - 37
+
+                //Тепло - 38
+
+                //Тепло - 46
+            }
             /// <summary>
             /// Расчитать выходные-нормативные значения
             /// </summary>

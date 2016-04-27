@@ -128,7 +128,7 @@ namespace Tep64
             this.ClientSize = new System.Drawing.Size(982, 765);
             this.Controls.Add(this.MainMenuStrip);
             //this.MainMenuStrip = this.menuStrip1;
-            this.MinimizeBox = false;
+            this.MinimizeBox = true;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "ИРС ЭТАП";
