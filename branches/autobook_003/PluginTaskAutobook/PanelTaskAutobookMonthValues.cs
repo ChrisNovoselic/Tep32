@@ -1049,38 +1049,45 @@ namespace PluginTaskAutobook
                 //ExcelWorksheet wrkSheets = efNSS.Worksheets["Autobook"];
                 string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls";
                 object pathToTemplateObj = pathToTemplate;
-                workBook = excApp.Workbooks.Open(pathToTemplate);
+                workBook = excApp.Workbooks.Add(pathToTemplate);
+                //
+                workBook.AfterSave += workBook_AfterSave;
+                //workBook.
                 Excel.Worksheet wrkSheet = (Excel.Worksheet)workBook.Worksheets.get_Item("Autobook");
                 try
                 {
                     for (int i = 0; i < dgView.Columns.Count; i++)
                     {
                         int indxRow = 0;
-                        bool bflag = false;
                         Excel.Range colRange = (Excel.Range)wrkSheet.Columns[i + 1];
 
                         foreach (Excel.Range cell in colRange.Cells)
-                        {
                             if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
                             {
                                 fillSheetExcel(colRange, dgView, i, cell.Row, cell.Column);
-                                bflag = true;
                                 break;
                             }
                             indxRow++;
-                            //if (bflag == true)
-                            //    break;
-                        }
                     }
                     excApp.Visible = true;
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(excApp);
                 }
                 catch (Exception)
                 {
                     CloseExcel();
                 }
-
                 //string path = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\OutputPower.xls";
                 //efNSS.SaveXls(path);
+            }
+
+            void workBook_AfterSave(bool Success)
+            {
+                CloseExcel();
+            }
+
+            private void setPlanMonth()
+            {
+
             }
 
             /// <summary>
@@ -1093,7 +1100,7 @@ namespace PluginTaskAutobook
                 string[] spltHeader = headerTxt.Split(',');
 
                 if (spltHeader.Length > (int)INDEX_DIVISION.ADJACENT_CELL)
-                    return spltHeader[(int)INDEX_DIVISION.SEPARATE_CELL].TrimStart();
+                    return spltHeader[(int)INDEX_DIVISION.ADJACENT_CELL].TrimStart();
                 else
                     return spltHeader[(int)INDEX_DIVISION.SEPARATE_CELL];
             }
@@ -1112,11 +1119,14 @@ namespace PluginTaskAutobook
                 , int indxRowExcel
                 , int indxColExcel)
             {
-                //Excel.Range cellRange = (Excel.Range)wrkSheet.Columns[indxColExcel];
+                
                 int rw = 0;
 
+                string rE = ((Excel.Range)cellRange.Cells[9]).MergeCells.ToString();
+
                 for (int i = indxRowExcel; i < cellRange.Rows.Count; i++)
-                    if (((Excel.Range)cellRange.Cells[i]).Value == null)
+                    if (((Excel.Range)cellRange.Cells[i]).Value == null &&
+                        ((Excel.Range)cellRange.Cells[i]).MergeCells.ToString() != "True")
                     {
                         rw = i;
                         break;
@@ -1124,7 +1134,7 @@ namespace PluginTaskAutobook
 
                 for (int j = 0; j < dgv.Rows.Count; j++)
                 {
-                    cellRange.Cells[rw] = dgv.Rows[j].Cells[indxColDgv].Value;
+                    cellRange.Cells[rw] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
                     rw++;
                 }
             }
@@ -1134,7 +1144,10 @@ namespace PluginTaskAutobook
             /// </summary>
             public void CloseExcel()
             {
-                workBook.Close(false, _missingObj, _missingObj);
+                //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
+                workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
+
+                //workBook.Close(false, _missingObj, _missingObj);
                 excApp.Quit();
                 System.Runtime.InteropServices.Marshal.ReleaseComObject(excApp);
 
@@ -1142,9 +1155,6 @@ namespace PluginTaskAutobook
                 workBook = null;
                 wrkSheet = null;
                 System.GC.Collect();
-
-                //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
-                //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
             }
         }
 
