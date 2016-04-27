@@ -345,7 +345,7 @@ namespace PluginTaskAutobook
             /// <param name="tbOrigin">таблица значений</param>
             /// <param name="dgvView">контрол</param>
             /// <param name="parametrs">параметры</param>
-            public void ShowValues(DataTable[] tbOrigin, DataGridView dgvView, DataTable planOnMonth)
+            public void ShowValues(DataTable[] tbOrigin, DataGridView dgvView, int curOffSet, DataTable planOnMonth)
             {
                 Array namePut = Enum.GetValues(typeof(INDEX_GTP));
                 ClearValues();
@@ -382,9 +382,9 @@ namespace PluginTaskAutobook
 
                     for (int j = 0; j < tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count; j++)
                     {
-                        //заполнение столбцов ГПТ,ТЭЦ
+                        //заполнение столбцов ГТП,ТЭЦ
                         if (dgvView.Rows[i].Cells["DATE"].Value.ToString() ==
-                        Convert.ToDateTime(tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["WR_DATETIME"]).ToShortDateString())
+                        Convert.ToDateTime(tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["WR_DATETIME"]).AddMinutes(curOffSet).ToShortDateString())
                         {
                             dgvView.Rows[i].Cells[namePut.GetValue(count).ToString()].Value =
                                 correctingValues(tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["VALUE"]
@@ -945,36 +945,33 @@ namespace PluginTaskAutobook
             /// Содание тела сообщения
             /// </summary>
             /// <param name="sourceTable">таблица с данными</param>
-            /// <param name="dtRange">выбранный промежуток</param>
+            /// <param name="dtRange">дата</param>
             private void createBodyToSend(ref string sbjct
                 , ref string bodyMsg
                 , DataTable sourceTable
-                , DateTimeRange[] dtRange)
+                , DateTimeRange dtRange)
             {
                 DataRow[] drReportDay;
                 DateTime reportDate;
 
-                for (int i = 0; i < dtRange.Length; i++)
+                reportDate = dtRange.Begin.AddHours(6).Date;
+                drReportDay =
+                    sourceTable.Select(String.Format(sourceTable.Locale, @"WR_DATETIME = '{0:o}'", reportDate));
+
+                if ((double)drReportDay.Length != 0)
                 {
-                    reportDate = dtRange[i].Begin.AddHours(6).Date;
-                    drReportDay =
-                        sourceTable.Select(String.Format(sourceTable.Locale, @"WR_DATETIME = '{0:o}'", reportDate));
+                    bodyMsg = @"BEGIN " + "\r\n"
+                        + @"(DATE):" + reportDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) + "\r\n"
+                        + @"(01): " + fewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ":\r\n"
+                        + @"(02): " + fewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ":\r\n"
+                        + @"(03): " + fewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]) + ":\r\n"
+                        + @"END ";
+                    /*bodyMsg = @"Дата " + reportDate.ToShortDateString() + ".\r\n"
+                        + @"Станция, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ";\r\n"
+                        + @"Блоки 1-2, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ";\r\n"
+                        + @"Блоки 3-6, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]);*/
 
-                    if ((double)drReportDay.Length != 0)
-                    {
-                        bodyMsg = @"BEGIN " + "\r\n"
-                            + @"(DATE):" + reportDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) + "\r\n"
-                            + @"(01): " + fewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ":\r\n"
-                            + @"(02): " + fewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ":\r\n"
-                            + @"(03): " + fewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]) + ":\r\n"
-                            + @"END ";
-                        /*bodyMsg = @"Дата " + reportDate.ToShortDateString() + ".\r\n"
-                            + @"Станция, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ";\r\n"
-                            + @"Блоки 1-2, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ";\r\n"
-                            + @"Блоки 3-6, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]);*/
-
-                        sbjct = @"Отчет о выработке электроэнергии НТЭЦ-5 за " + reportDate.ToShortDateString();
-                    }
+                    sbjct = @"Отчет о выработке электроэнергии НТЭЦ-5 за " + reportDate.ToShortDateString();
                 }
             }
 
@@ -994,7 +991,7 @@ namespace PluginTaskAutobook
             /// <param name="sourceTable">таблица с данными</param>
             /// <param name="dtRange">выбранный промежуток</param>
             /// /// <param name="to">получатель</param>
-            public void SendMailToNSS(DataTable sourceTable, DateTimeRange[] dtRange, string to)
+            public void SendMailToNSS(DataTable sourceTable, DateTimeRange dtRange, string to)
             {
                 string bodyMsg = string.Empty
                  , sbjct = string.Empty;
@@ -1038,7 +1035,7 @@ namespace PluginTaskAutobook
                 //efNSS = new ExcelFile();
                 excApp = new Excel.Application();
                 excApp.Visible = false;
-               
+
             }
 
             /// <summary>
@@ -1060,7 +1057,7 @@ namespace PluginTaskAutobook
                     {
                         int indxRow = 0;
                         bool bflag = false;
-                        Excel.Range colRange = (Excel.Range)wrkSheet.Columns[i+1];
+                        Excel.Range colRange = (Excel.Range)wrkSheet.Columns[i + 1];
 
                         foreach (Excel.Range cell in colRange.Cells)
                         {
@@ -1081,7 +1078,7 @@ namespace PluginTaskAutobook
                 {
                     CloseExcel();
                 }
-               
+
                 //string path = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\OutputPower.xls";
                 //efNSS.SaveXls(path);
             }
@@ -1515,9 +1512,9 @@ namespace PluginTaskAutobook
             string toSend = (Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0] as TextBox).Text;
 
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.getOutPut(out err));
+            dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.getOutPut(out err));
             rptsNSS.SendMailToNSS(m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-            , HandlerDb.GetDateTimeRangeValuesVar(), toSend);
+            , Session.m_rangeDatetime, toSend);
         }
 
         /// <summary>
@@ -1706,19 +1703,14 @@ namespace PluginTaskAutobook
                         HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
                         // отобразить значения
                         dgvAB.ShowValues(m_arTableOrigin
-                            , dgvAB, HandlerDb.getPlanOnMonth(
+                            , dgvAB, Session.m_curOffsetUTC
+                            , HandlerDb.getPlanOnMonth(
                             Type
                             , HandlerDb.GetDateTimeRangeValuesVar()
                             , ActualIdPeriod
                             , out err));
-                        //сохранить вых. знач. в DataTable
-                        m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                            dgvAB.FillTableValueDay(HandlerDb.OutValues(out err)
-                               , dgvAB
-                               , HandlerDb.getOutPut(out err));
-                        //сохранить вых.корр. знач. в DataTable
-                        m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                            dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), dgvAB);
+
+                        valueFence(out err);
                     }
                     else ;
                 }
@@ -1738,6 +1730,22 @@ namespace PluginTaskAutobook
                 m_handlerDb.UnRegisterDbConnection();
             else
                 ;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="err"></param>
+        private void valueFence(out int err)
+        {
+            //сохранить вых. знач. в DataTable
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                dgvAB.FillTableValueDay(HandlerDb.OutValues(out err)
+                   , dgvAB
+                   , HandlerDb.getOutPut(out err));
+            //сохранить вх.корр. знач. в DataTable
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
+                dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), dgvAB);
         }
 
         /// <summary>
@@ -1893,7 +1901,7 @@ namespace PluginTaskAutobook
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = 2; //??? требуется прочитать из [profile]
+                    (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
@@ -2181,6 +2189,8 @@ namespace PluginTaskAutobook
         {
             int err = -1;
             string errMsg = string.Empty;
+            //сбор значений
+            valueFence(out err);
 
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(out err);
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
