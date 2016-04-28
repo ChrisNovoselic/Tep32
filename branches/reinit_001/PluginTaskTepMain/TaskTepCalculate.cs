@@ -26,7 +26,7 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Корректировка входных (сырых) значений - аналог 'import.prg'
         /// </summary>
-        public void CorrectValues(ref DataTable tableSesion, ref DataTable tableProject)
+        protected override void correctValues(ref DataTable tableSesion, ref DataTable tableProject)
         {
             (m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CorrectValues(ref tableSesion, ref tableProject);
         }
@@ -252,13 +252,133 @@ namespace PluginTaskTepMain
             /// </summary>
             public void CorrectValues(ref DataTable tableData, ref DataTable tablePrjParameter)
             {
+                string nAlg = string.Empty;
                 DataRow[] rowsPar = null;
-                int id_put = -1;
+                int id_put = -1
+                    , id_comp = -1;
                 double[] arValues = new double [ID_COMP.Length];
-                double dblVal = -1F;
+                double dblVal = -1F
+                    , _2b_d_2st = -1F;
 
-                //Электро - 10.3
-                rowsPar = tablePrjParameter.Select(@"N_ALG=" + @"10.3");
+                #region Электро - оперативный расчет
+                if (isRealTime == true)
+                {// только при оперативном расчете                    
+                    switch (m_indxCompRealTime)
+                    {
+                        case INDX_COMP.iBL1:
+                            id_comp = BL1;
+                            break;
+                        case INDX_COMP.iBL2:
+                            id_comp = BL2;
+                            break;
+                        case INDX_COMP.iBL3:
+                            id_comp = BL3;
+                            break;
+                        case INDX_COMP.iBL4:
+                            id_comp = BL4;
+                            break;
+                        case INDX_COMP.iBL5:
+                            id_comp = BL5;
+                            break;                        
+                        case INDX_COMP.iBL6:
+                            id_comp = BL6;
+                            break;
+                        default:
+                            break;
+                    }
+                    // определить коэффициент по 2-му параметру
+                    nAlg = @"'2'";
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg + @" AND ID_COMP=" + (int)ST);
+                    id_put = (int)rowsPar[0][@"ID_PUT"];
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg + @" AND ID_COMP=" + id_comp);
+                    _2b_d_2st = (double)tableData.Select(@"ID_PUT=" + (int)rowsPar[0][@"ID"])[0][@"VALUE"]
+                        / (double)tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"];
+                    // "взвешивание" 4-го параметра
+                    nAlg = @"'4'";
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg + @" AND ID_COMP=" + (int)ST);
+                    id_put = (int)rowsPar[0][@"ID_PUT"];
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg);
+                    dblVal = 0F;
+                    for (int i = 0; i < rowsPar.Length; i++)
+                        switch ((int)rowsPar[i][@"ID_COMP"])
+                        {
+                            case BL1:
+                            case BL2:
+                            case BL3:
+                            case BL4:
+                            case BL5:
+                            case BL6:
+                                dblVal += (double)tableData.Select(@"ID_PUT=" + (int)rowsPar[i][@"ID"])[0][@"VALUE"];
+                                break;
+                            case ST:
+                            default:
+                                break;
+                        }
+                    tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] = ((double)tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] - dblVal) * _2b_d_2st;
+                    // "взвешивание" 7-го параметра
+                    nAlg = @"'7'";
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg + @" AND ID_COMP=" + (int)ST);
+                    id_put = (int)rowsPar[0][@"ID_PUT"];
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg);
+                    dblVal = 0F;
+                    for (int i = 0; i < rowsPar.Length; i++)
+                        switch ((int)rowsPar[i][@"ID_COMP"])
+                        {
+                            case BL1:
+                            case BL2:
+                            case BL3:
+                            case BL4:
+                            case BL5:
+                            case BL6:
+                                dblVal += (double)tableData.Select(@"ID_PUT=" + (int)rowsPar[i][@"ID"])[0][@"VALUE"];
+                                break;
+                            case ST:
+                            default:
+                                break;
+                        }
+                    tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] = ((double)tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] - dblVal) * _2b_d_2st;
+                    // "взвешивание" 10-го параметра
+                    nAlg = @"'10'";
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg + @" AND ID_COMP=" + (int)ST);
+                    id_put = (int)rowsPar[0][@"ID_PUT"];
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg);
+                    dblVal = 0F;
+                    for (int i = 0; i < rowsPar.Length; i++)
+                        switch ((int)rowsPar[i][@"ID_COMP"])
+                        {
+                            case BL1:
+                            case BL2:
+                            case BL3:
+                            case BL4:
+                            case BL5:
+                            case BL6:
+                                dblVal += (double)tableData.Select(@"ID_PUT=" + (int)rowsPar[i][@"ID"])[0][@"VALUE"];
+                                break;
+                            case ST:
+                            default:
+                                break;
+                        }
+                    tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] = ((double)tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] - dblVal) * _2b_d_2st;
+                    // замена 2-го парметра
+                    nAlg = @"'2'";
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg + @" AND ID_COMP=" + (int)ST);
+                    id_put = (int)rowsPar[0][@"ID_PUT"];
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg + @" AND ID_COMP=" + id_comp);
+                    tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] = tableData.Select(@"ID_PUT=" + (int)rowsPar[0][@"ID"])[0][@"VALUE"];
+                    // замена 3-го парметра
+                    nAlg = @"'3'";
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg + @" AND ID_COMP=" + (int)ST);
+                    id_put = (int)rowsPar[0][@"ID_PUT"];
+                    rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg + @" AND ID_COMP=" + id_comp);
+                    tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] = tableData.Select(@"ID_PUT=" + (int)rowsPar[0][@"ID"])[0][@"VALUE"];
+                }
+                else
+                    ;
+                #endregion
+
+                #region Электро - станция - 10.3
+                nAlg = @"'10.3'";
+                rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg);
                 dblVal = 0F;
                 //??? проверить на кол-во строк (строк д.б. не больше ID_COMP.Length)
                 for (int i = 0; i < rowsPar.Length; i ++)
@@ -274,19 +394,73 @@ namespace PluginTaskTepMain
                         case ST:
                             id_put = (int)rowsPar[i][@"ID"];
                             break;
+                        case BL6:
                         default:
                             break;
                     }
-                    
-                rowsPar = tablePrjParameter.Select(@"N_ALG=" + @"10.3" + @" AND ID_COMP=" + (int)ST);
+
                 tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] = dblVal;
-                //Электро - 12
+                #endregion
 
-                //Тепло - 37
+                #region Электро - 12
+                // если 0, то 0
+                #endregion
 
-                //Тепло - 38
+                #region Тепло - 37
+                nAlg = @"'37'";
+                rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg);
+                //??? проверить на кол-во строк (строк д.б. не больше ID_COMP.Length)
+                for (int i = 0; i < rowsPar.Length; i++)
+                    switch ((int)rowsPar[i][@"ID_COMP"])
+                    {
+                        case BL1:
+                        case BL2:
+                        case BL3:
+                        case BL4:
+                        case BL5:
+                            id_put = (int)rowsPar[i][@"ID"];
+                            tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] = (double)tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] + 1F;
+                            break;
+                        case BL6:
+                        case ST:
+                        default:
+                            break;
+                    }
+                #endregion
 
-                //Тепло - 46
+                #region Тепло - 38
+                nAlg = @"'38'";
+                rowsPar = tablePrjParameter.Select(@"N_ALG=" + nAlg);
+                //??? проверить на кол-во строк (строк д.б. не больше ID_COMP.Length)
+                for (int i = 0; i < rowsPar.Length; i++)
+                    switch ((int)rowsPar[i][@"ID_COMP"])
+                    {
+                        case BL1:
+                        case BL2:
+                        case BL3:
+                        case BL4:
+                        case BL5:
+                            id_put = (int)rowsPar[i][@"ID"];
+                            tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] = (double)tableData.Select(@"ID_PUT=" + id_put)[0][@"VALUE"] + 1F;
+                            break;                        
+                        case BL6:
+                        case ST:
+                        default:
+                            break;
+                    }
+                #endregion
+
+                #region Тепло - 46
+                nAlg = @"'46'";
+                #endregion
+
+                #region Тепло - станция 80
+                nAlg = @"'80'";
+                #endregion
+
+                #region Тепло - станция 81
+                nAlg = @"'81'";
+                #endregion
             }
             /// <summary>
             /// Расчитать выходные-нормативные значения

@@ -204,6 +204,9 @@ namespace TepCommon
                     ; // по идентификатору найден не единственный параметр расчета
             }
 
+            correctValues(ref arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                , ref tablePars);
+
             if ((arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
                 && (arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
             {
@@ -267,7 +270,6 @@ namespace TepCommon
             //Вставить в таблицу БД строку с идентификтором новой сессии
             DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
         }
-
         /// <summary>
         /// Вставить значения в таблицу для временных входных значений
         /// </summary>
@@ -428,7 +430,6 @@ namespace TepCommon
             else
                 ; // при ошибке - не продолжать
         }
-
         /// <summary>
         /// Удалить запись о параметрах сессии расчета (по триггеру - все входные и выходные значения)
         /// </summary>
@@ -470,7 +471,6 @@ namespace TepCommon
             else
                 ;
         }
-
         /// <summary>
         /// Обновить значения во временой таблице
         /// </summary>
@@ -487,7 +487,6 @@ namespace TepCommon
 
             RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID_PUT, ID_SESSION", string.Empty, tableOriginValues, tableEditValues, out err);
         }
-
         /// <summary>
         /// Возвратить строку запроса для получения текущего идентификатора сессии расчета
         /// </summary>
@@ -528,12 +527,11 @@ namespace TepCommon
 
             return strRes;
         }
-
         /// <summary>
-        /// 
+        /// Возвратить диапазон идентификаторов (для WHERE на T-SQL) параметров в алгоритме расчета
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
+        /// <param name="type">Тип расчета</param>
+        /// <returns>Строка для WHERE с диапазоном идентификаторов</returns>
         private string getRangeAlg(TaskCalculate.TYPE type)
         {
             string strRes = string.Empty;
@@ -562,7 +560,6 @@ namespace TepCommon
 
             return strRes;
         }
-
         /// <summary>
         /// Строка - условие для TSQL-запроса для указания диапазона идентификаторов
         ///  выходных параметров алгоритма расчета
@@ -585,12 +582,11 @@ namespace TepCommon
 
             return strRes;
         }
-
         /// <summary>
-        /// 
+        /// Возвратить строку запроса к БД для получения параметров по алгоритму расчета
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
+        /// <param name="type">Тип расчета</param>
+        /// <returns>Строка запроса</returns>
         public virtual string GetQueryParameters(TaskCalculate.TYPE type/* = TaskCalculate.TYPE.UNKNOWN*/)
         {
             string strRes = string.Empty
@@ -637,7 +633,6 @@ namespace TepCommon
 
             return s_NameDbTables[(int)indx];
         }
-
         ///// <summary>
         ///// Возвратить наименование таблицы 
         ///// </summary>
@@ -700,7 +695,6 @@ namespace TepCommon
 
             return arRangesRes;
         }
-
         /// <summary>
         /// Запрос для получения значений "по умолчанию"
         /// </summary>
@@ -716,7 +710,6 @@ namespace TepCommon
 
             return strRes;
         }
-
         /// <summary>
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
         ///  , структура таблицы совместима с [inval], [outval]
@@ -818,7 +811,6 @@ namespace TepCommon
 
             return tableRes;
         }
-
         /// <summary>
         /// Возвратить объект-таблицу со значениями из таблицы с временными для расчета
         /// </summary>
@@ -974,6 +966,8 @@ namespace TepCommon
 
             return listRes;
         }
+
+        protected virtual void correctValues(ref DataTable tableValues, ref DataTable tablePars) { }
 
         protected abstract void calculate(TaskCalculate.TYPE type, out int err);
         /// <summary>
