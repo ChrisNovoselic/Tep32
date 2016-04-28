@@ -1035,25 +1035,28 @@ namespace PluginTaskAutobook
                 //efNSS = new ExcelFile();
                 excApp = new Excel.Application();
                 excApp.Visible = false;
-
             }
+
 
             /// <summary>
             /// 
             /// </summary>
             /// <param name="dgView"></param>
-            public void CreateExcel(DataGridView dgView)
+            /// <param name="dtRange"></param>
+            public void CreateExcel(DataGridView dgView, DateTimeRange dtRange)
             {
                 //string fileName = System.Windows.Forms.Application.StartupPath;
                 //efNSS.LoadXls(@"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls", XlsOptions.PreserveAll);
                 //ExcelWorksheet wrkSheets = efNSS.Worksheets["Autobook"];
-                string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls";
+                string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xlsx";
                 object pathToTemplateObj = pathToTemplate;
                 workBook = excApp.Workbooks.Add(pathToTemplate);
                 //
                 workBook.AfterSave += workBook_AfterSave;
-                //workBook.
+                workBook.BeforeClose += workBook_BeforeClose;
+
                 Excel.Worksheet wrkSheet = (Excel.Worksheet)workBook.Worksheets.get_Item("Autobook");
+
                 try
                 {
                     for (int i = 0; i < dgView.Columns.Count; i++)
@@ -1064,15 +1067,16 @@ namespace PluginTaskAutobook
                         foreach (Excel.Range cell in colRange.Cells)
                             if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
                             {
-                                fillSheetExcel(colRange, dgView, i, cell.Row, cell.Column);
+                                fillSheetExcel(colRange, dgView, i, cell.Row);
                                 break;
                             }
                             indxRow++;
                     }
+                    setPlanMonth(wrkSheet, dgView, dtRange);
                     excApp.Visible = true;
                     System.Runtime.InteropServices.Marshal.ReleaseComObject(excApp);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     CloseExcel();
                 }
@@ -1080,21 +1084,38 @@ namespace PluginTaskAutobook
                 //efNSS.SaveXls(path);
             }
 
+            void workBook_BeforeClose(ref bool Cancel)
+            {
+                CloseExcel();
+            }
+
+            /// <summary>
+            /// обработка события сохранения книги
+            /// </summary>
+            /// <param name="Success"></param>
             void workBook_AfterSave(bool Success)
             {
                 CloseExcel();
             }
 
-            private void setPlanMonth()
-            {
-
-            }
-
             /// <summary>
             /// 
             /// </summary>
-            /// <param name="headerTxt"></param>
-            /// <returns></returns>
+            /// <param name="exclWrksht"></param>
+            /// <param name="dgv"></param>
+            private void setPlanMonth(Excel.Worksheet exclWrksht, DataGridView dgv, DateTimeRange dtRange)
+            {
+                Excel.Range exclRPL = exclWrksht.get_Range("C5");
+                Excel.Range exclRMonth = exclWrksht.get_Range("A4");
+                exclRPL.Value2 = dgv.Rows[dgv.Rows.Count - 1].Cells[@"PlanSwen"].Value;
+                exclRMonth.Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " "+ dtRange.Begin.Year;
+            }
+
+            /// <summary>
+            /// Деление 
+            /// </summary>
+            /// <param name="headerTxt">строка</param>
+            /// <returns>часть строки</returns>
             private string splitString(string headerTxt)
             {
                 string[] spltHeader = headerTxt.Split(',');
@@ -1106,23 +1127,18 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            /// Заполнение выбранного стоблца в шаблоне
             /// </summary>
-            /// <param name="wrkSheet"></param>
-            /// <param name="dgv"></param>
-            /// <param name="indxColDgv"></param>
-            /// <param name="indxRowExcel"></param>
-            /// <param name="indxColExcel"></param>
+            /// <param name="cellRange">столбец в excel</param>
+            /// <param name="dgv">отображение</param>
+            /// <param name="indxColDgv">индекс столбца</param>
+            /// <param name="indxRowExcel">индекс строки в excel</param>
             private void fillSheetExcel(Excel.Range cellRange
                 , DataGridView dgv
                 , int indxColDgv
-                , int indxRowExcel
-                , int indxColExcel)
+                , int indxRowExcel)
             {
-                
                 int rw = 0;
-
-                string rE = ((Excel.Range)cellRange.Cells[9]).MergeCells.ToString();
 
                 for (int i = indxRowExcel; i < cellRange.Rows.Count; i++)
                     if (((Excel.Range)cellRange.Cells[i]).Value == null &&
@@ -1140,15 +1156,15 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            /// вызов закрытия Excel
             /// </summary>
             public void CloseExcel()
             {
                 //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
-                workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
+                //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
 
                 //workBook.Close(false, _missingObj, _missingObj);
-                excApp.Quit();
+                //excApp.Quit();
                 System.Runtime.InteropServices.Marshal.ReleaseComObject(excApp);
 
                 excApp = null;
@@ -1507,7 +1523,7 @@ namespace PluginTaskAutobook
         void PanelTaskAutobookMonthValues_btnexport_Click(object sender, EventArgs e)
         {
             rptExcel = new ReportExcel();
-            rptExcel.CreateExcel(dgvAB);
+            rptExcel.CreateExcel(dgvAB,Session.m_rangeDatetime);
         }
 
         /// <summary>
