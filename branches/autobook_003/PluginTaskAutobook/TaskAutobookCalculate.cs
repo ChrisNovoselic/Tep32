@@ -59,8 +59,11 @@ namespace PluginTaskAutobook
                     // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
                     for (i = 0; i < arRangesRes.Length; i++)
                         if (i == 0)
+                        {
                             // предыдущих значений нет
-                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                            //arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                            arRangesRes[i] = new DateTimeRange(dtBegin,dtBegin.AddDays(1));
+                        }
                         else
                             if (i == arRangesRes.Length - 1)
                                 // крайний элемент массива
@@ -128,7 +131,7 @@ namespace PluginTaskAutobook
                             + @", CONVERT(varchar, [DATE_TIME], 112) as [EXTENDED_DEFINITION] "
                         //+ @", GETDATE () as [WR_DATETIME]"
                         + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                        + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+                        + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v"
                             + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
                             + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
                             + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
@@ -183,23 +186,31 @@ namespace PluginTaskAutobook
             , out int err)
         {
             string strQuery = string.Empty;
+            bool bLastItem = false;
 
             for (int i = 0; i < arQueryRanges.Length; i++)
             {
-                strQuery = "SELECT  p.ID as ID_PUT"
+                bLastItem = !(i < (arQueryRanges.Length - 1));
+
+                strQuery += "SELECT  p.ID as ID_PUT"
                     + @", " + _Session.m_Id + @" as [ID_SESSION]"
                     + @", v.QUALITY as QUALITY, v.VALUE as VALUE"
-                    + @",v.DATE_TIME as WR_DATETIME,  ROW_NUMBER() OVER(ORDER BY p.ID) as [EXTENDED_DEFINITION] "
+                    + @", v.DATE_TIME as WR_DATETIME, ROW_NUMBER() OVER(ORDER BY p.ID) as [EXTENDED_DEFINITION]"
                     + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
                     + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
                     + @" ON a.ID = p.ID_ALG"
                     + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                    + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
+                    + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v"
                     + @" ON v.ID_PUT = p.ID"
                     + @" WHERE  ID_TASK = " + (int)IdTask
-                    + @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.AddHours(-arQueryRanges[i].Begin.Hour).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddHours(-arQueryRanges[i].Begin.Hour).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0";
+
+                   if (bLastItem == false)
+                       strQuery += @" UNION ALL ";
+                    else
+                        ;
             }
             return Select(strQuery, out err);
         }
@@ -228,11 +239,11 @@ namespace PluginTaskAutobook
                         + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
                         + @" ON a.ID = p.ID_ALG"
                         + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                        + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
+                        + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                         + @" ON v.ID_PUT = p.ID"
                         + @" WHERE  ID_TASK = " + (int)IdTask
-                        + @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                        + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddMonths(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                        + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                        + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.AddMonths(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                         + @" AND v.ID_TIME = 24";
             }
 
@@ -487,11 +498,14 @@ namespace PluginTaskAutobook
             , out int err)
         {
             string strQuery = string.Empty;
+            bool bLastItem = false;
 
             for (int i = 0; i < arQueryRanges.Length; i++)
             {
-                strQuery += @"SELECT DISTINCT v.ID,v.ID_PUT, v.ID_USER, v.ID_SOURCE,v.DATE_TIME, v.ID_TIME"
-                    + ", v.ID_TIMEZONE,v.QUALITY,v.VALUE,v.WR_DATETIME"
+                bLastItem = !(i < (arQueryRanges.Length - 1));
+
+                strQuery += @"SELECT DISTINCT v.ID, v.ID_PUT, v.ID_USER, v.ID_SOURCE, v.DATE_TIME, v.ID_TIME"
+                    + ", v.ID_TIMEZONE, v.QUALITY, v.VALUE, v.WR_DATETIME"
                     + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
                     + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
                     + @" ON a.ID = p.ID_ALG"
@@ -499,9 +513,15 @@ namespace PluginTaskAutobook
                     + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
                     + @" ON v.ID_PUT = p.ID"
                     + @" WHERE  ID_TASK = " + (int)IdTask
-                    + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0"
-                    + @" ORDER BY ID";
+                    + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0";
+
+                if (bLastItem == false)
+                    strQuery += @" UNION ALL ";
+                else
+                    ;
             }
+            strQuery += @" ORDER BY ID ";
+
             return Select(strQuery, out err);
         }
 
@@ -592,16 +612,16 @@ namespace PluginTaskAutobook
         {
             err = -1;
             DataTable tableEdit = new DataTable();
+            DateTime dtRes;
             string rowSel = null;
             tableEdit = tableOrigin.Clone();//копия структуры
 
             if (tableRes != null)
             {
-                //foreach (DataGridViewRow r in dgvRes.Rows)
-                //{
                 for (int i = 0; i < tableRes.Rows.Count; i++)
                 {
                     rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
+                    dtRes = Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString());
 
                     tableEdit.Rows.Add(new object[] 
                     {
@@ -609,15 +629,14 @@ namespace PluginTaskAutobook
                         , rowSel
                         , HUsers.Id.ToString()
                         , 0.ToString()
-                        , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).ToString(CultureInfo.InvariantCulture)
+                        , dtRes.ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , ID_TIMEZONE.NSK
+                        , ID_TIMEZONE.UTC
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]            
-                        , DateTime.Now
+                        , DateTime.Now.ToString(CultureInfo.InvariantCulture)
                     });
                 }
-                //}
             }
             return tableEdit;
         }
@@ -989,11 +1008,14 @@ namespace PluginTaskAutobook
         {
             DateTimeRange[] arRangesRes = null;
             int i = -1,
-            startMont = _Session.m_rangeDatetime.Begin.Month - 1;
+            startMonth = _Session.m_rangeDatetime.Begin.Month - 1;
+
+            if (startMonth == 0)
+                startMonth = 1;
 
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMonths(-startMont)
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMonths(-startMonth)
                 , dtEnd = _Session.m_rangeDatetime.End.AddDays(1).AddMonths(-1);
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
 

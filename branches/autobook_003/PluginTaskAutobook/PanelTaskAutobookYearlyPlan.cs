@@ -340,6 +340,7 @@ namespace PluginTaskAutobook
             {
                 int err = -1;
                 double valueToRes;
+                editTable.Rows.Clear();
 
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
@@ -593,6 +594,7 @@ namespace PluginTaskAutobook
                 }
             }
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -886,12 +888,11 @@ namespace PluginTaskAutobook
                     deleteSession();
                     throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
                 }
-                //удалить сессию
-                deleteSession();
-                //}
             }
             else
-                ;
+                               //удалить сессию
+                deleteSession();
+                //}
 
             if (!(iRegDbConn > 0))
                 m_handlerDb.UnRegisterDbConnection();
@@ -1173,9 +1174,9 @@ namespace PluginTaskAutobook
             string errMsg = string.Empty;
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
 
-            for (int i = 0; i < dtrPer.Length; i++)
+            for (int i = 0; i < m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count; i++)
             {
-                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i], out err);
+                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i],out err);
 
                 if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] != null)
                 {
@@ -1207,19 +1208,9 @@ namespace PluginTaskAutobook
         {
             string strRes = string.Empty;
 
-            //for (int i = 0; i < arQueryRanges.Length; i++)
-            //{
             strRes += "SELECT * FROM "
                 + GetNameTableIn(arQueryRanges.Begin)
                 + " WHERE ID_TIME = " + (int)ActualIdPeriod;
-
-            //  strRes += @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-            //+ @" AND [DATE_TIME] < '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
-
-            //  strRes += @" UNION ALL ";
-            //}
-
-            //strRes = strRes.Substring(0, strRes.Length - (" UNION ALL ".Length - 1));
 
             return HandlerDb.Select(strRes, out err);
         }
