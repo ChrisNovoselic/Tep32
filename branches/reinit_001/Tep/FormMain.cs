@@ -31,14 +31,14 @@ namespace Tep64
         /// <summary>
         /// Объект со списком загруженных библиотек
         /// </summary>
-        private static HPlugIns s_plugIns;
+        private static PlugIns s_plugIns;
         /// <summary>
         /// Конструктор - основной (без параметров)
         public FormMain() : base ()
         {
             InitializeComponent();
 
-            s_plugIns = new HPlugIns(FormMain_EvtDataAskedHost);
+            s_plugIns = new PlugIns(FormMain_EvtDataAskedHost);
 
             s_fileConnSett = new FIleConnSett(@"connsett.ini", FIleConnSett.MODE.FILE);
             s_listFormConnectionSettings = new List<FormConnectionSettings> ();
@@ -60,7 +60,10 @@ namespace Tep64
 
             m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
         }
-
+        /// <summary>
+        /// Инициализация пользовательских настроек
+        /// </summary>
+        /// <param name="iListenerId">Идентификатор установленного соединения с БД</param>
         private void initProfiles(int iListenerId)
         {
             try
@@ -133,7 +136,12 @@ namespace Tep64
                     Logging.Logg().Warning(@"FormMain::loadProfile () - не удалось загрузить plugIn.Id=" + id + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
-
+        /// <summary>
+        /// Найти рекурсивно элемент (пункт) меню по "прикрепленному" к элементу меню объекту
+        /// </summary>
+        /// <param name="miParent"></param>
+        /// <param name="tag"></param>
+        /// <returns></returns>
         private ToolStripMenuItem findMainMenuItemOfTag(ToolStripMenuItem miParent, object tag)
         {
             //Результат 
@@ -168,7 +176,11 @@ namespace Tep64
 
             return itemRes;
         }
-
+        /// <summary>
+        /// Найти элемент (пункт) главного меню по "прикрепленному" к элементу меню объекту
+        /// </summary>
+        /// <param name="tag">Шаблон объекта для поиска</param>
+        /// <returns>Элемент (пункт) меню</returns>
         private ToolStripMenuItem findMainMenuItemOfTag(object tag)
         {
             ToolStripMenuItem itemRes = null;

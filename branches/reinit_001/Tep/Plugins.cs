@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Reflection; //Assembly
 using System.Windows.Forms;
 
 using System.Data.Common; //DbConnection
@@ -17,133 +16,21 @@ using InterfacePlugIn;
 namespace Tep64
 {
     public partial class FormMain
-    {        
-        class HPlugIns : Dictionary <int, PlugInMenuItem>, IPlugInHost
-            //, IEnumerable <IPlugIn>
+    {
+        class PlugIns : HPlugIns
         {
+            /// <summary>
+            /// Делегат обработки события - выбор п. меню
+            /// </summary>
             public DelegateObjectFunc delegateOnClickMenuPluginItem;
-            //http://stackoverflow.com/questions/658498/how-to-load-an-assembly-to-appdomain-with-all-references-recursively
-            //http://lsd.luminis.eu/load-and-unload-assembly-in-appdomains/
-            //http://www.codeproject.com/Articles/453778/Loading-Assemblies-from-Anywhere-into-a-New-AppDom
-            private class ProxyAppDomain : MarshalByRefObject
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="fClickMenuItem">Делегат обработки события - ваыбор п. меню</param>
+            public PlugIns(DelegateObjectFunc fClickMenuItem) : base ()
             {
-                public Assembly GetAssembly(string AssemblyPath)
-                {
-                    try
-                    {
-                        return Assembly.LoadFrom(AssemblyPath);
-                        //If you want to do anything further to that assembly, you need to do it here.
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidOperationException(ex.Message, ex);
-                    }
-                }
-            }
-
-            private AppDomain m_appDomain;
-            private ProxyAppDomain m_proxyAppDomain;
-            private static System.Security.Policy.Evidence s_domEvidence = AppDomain.CurrentDomain.Evidence;
-            private static AppDomainSetup s_domSetup = new AppDomainSetup();
-
-            public HPlugIns(DelegateObjectFunc fClickMenuItem)
-            {
-                s_domSetup = new AppDomainSetup();
-                s_domSetup.ApplicationBase = System.Environment.CurrentDirectory;
-                s_domEvidence = AppDomain.CurrentDomain.Evidence;
-
                 //_dictPlugins = new Dictionary<int, IPlugIn>();
                 delegateOnClickMenuPluginItem = fClickMenuItem;
-            }
-            /// <summary>
-            /// Установить взамосвязь
-            /// </summary>
-            /// <param name="plug">Загружаемый плюгИн</param>
-            /// <returns>Признак успешности загрузки</returns>
-            public int Register(IPlugIn plug)
-            {
-                //??? важная функция для взимного обмена сообщенями
-                return 0;
-            }
-
-            private bool isInitPluginAppDomain { get { return (!(m_appDomain == null)) && (!(m_proxyAppDomain == null)); } }
-
-            private void initPluginDomain()
-            {
-                m_appDomain = AppDomain.CreateDomain("pluginDomain", s_domEvidence, s_domSetup);
-
-                Type type = typeof(ProxyAppDomain);
-                m_proxyAppDomain = (ProxyAppDomain)m_appDomain.CreateInstanceAndUnwrap(type.Assembly.FullName, type.FullName);
-            }
-
-            public void Unload()
-            {
-                if (isInitPluginAppDomain == true)
-                {
-                    AppDomain.Unload(m_appDomain);
-
-                    m_appDomain = null;
-                    m_proxyAppDomain = null;
-                }
-                else
-                    ;
-
-                Clear();
-            }
-            /// <summary>
-            /// Загрузить плюгИн с указанным наименованием
-            /// </summary>
-            /// <param name="name">Наименование плюгИна</param>
-            /// <param name="iRes">Результат загрузки (код ошибки)</param>
-            /// <returns>Загруженный плюгИн</returns>
-            private PlugInMenuItem load(string name, out int iRes)
-            {
-                PlugInMenuItem plugInRes = null;
-                iRes = -1;
-
-                Type objType = null;
-                try
-                {
-                    if (isInitPluginAppDomain == false)
-                        initPluginDomain();
-                    else
-                        ;
-
-                    Assembly ass = null;
-                    ass =
-                        m_proxyAppDomain.GetAssembly
-                        //Assembly.LoadFrom
-                        //m_appDomain.Load
-                            (Environment.CurrentDirectory + @"\" + name + @".dll");
-
-                    if (!(ass == null))
-                    {
-                        objType = ass.GetType(name + ".PlugIn");
-                    }
-                    else
-                        ;
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-                }
-
-                if (!(objType == null))
-                    try
-                    {
-                        plugInRes = ((PlugInMenuItem)Activator.CreateInstance(objType));
-                        plugInRes.Host = (IPlugInHost)this; //Вызов 'Register'
-
-                        iRes = 0;
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.Logg().Exception(e, @"FormMain::loadPlugin () ... CreateInstance ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-                    }
-                else
-                    Logging.Logg().Error(@"FormMain::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-
-                return plugInRes;
             }
             /// <summary>
             /// Обработчик запросов от загруженных плюгИнов
@@ -273,12 +160,17 @@ namespace Tep64
                     Logging.Logg().Error(@"HPlugIns::Load () - входная таблица = NULL...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
-
+            /// <summary>
+            /// Возвратить идентификатор плюгИна по идентификатору реализованной в нем панели
+            /// </summary>
+            /// <param name="idFPanel">Идентификатор панели, реализованной в плюгИне</param>
+            /// <returns>Идентификатор плюгИна</returns>
             public int GetKeyOfIdFPanel(int idFPanel)
             {
                 int iRes = -1;
-
+                // цикл по всем загруженным плюгИнам
                 foreach (KeyValuePair<int, PlugInMenuItem> pair in this)
+                    // проверить регистрацию панели в плюгИне
                     if (pair.Value.IsRegistred(idFPanel) == true)
                     {
                         iRes = pair.Key;
@@ -290,7 +182,10 @@ namespace Tep64
 
                 return iRes;
             }
-
+            /// <summary>
+            /// Возвратить список п.п. меню для всех загруженных плюгИнов
+            /// </summary>
+            /// <returns>Список п.п. меню</returns>
             public List<string> GetListNameMenuItems()
             {
                 List<string> listRes = new List<string> ();
