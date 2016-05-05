@@ -461,7 +461,7 @@ namespace Tep64
                         iKeyPlugIn = s_plugIns.GetKeyOfIdFPanel(iKeyFPanel);
                         if (!(iKeyPlugIn < 0))
                         {
-                            arHierarchyOwnerMenuItems = s_plugIns[iKeyPlugIn].GetNameOwnerMenuItem(iKeyFPanel).Split(new char[] { '\\' }, StringSplitOptions.None);
+                            arHierarchyOwnerMenuItems = (s_plugIns[iKeyPlugIn] as PlugInMenuItem).GetNameOwnerMenuItem(iKeyFPanel).Split(new char[] { '\\' }, StringSplitOptions.None);
                             //Поиск пункта "родительского" пункта меню для плюг'ина
                             miOwner = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[0]);
                             //Проверка найден ли "родительский" пункт меню для плюг'ина
@@ -498,10 +498,10 @@ namespace Tep64
                                 miOwner = miItem;
                             }
                             //Добавить пункт меню для плюг'ина
-                            miItem = miOwner.DropDownItems.Add(s_plugIns[iKeyPlugIn].GetNameMenuItem(iKeyFPanel)) as ToolStripMenuItem;
+                            miItem = miOwner.DropDownItems.Add((s_plugIns[iKeyPlugIn] as PlugInMenuItem).GetNameMenuItem(iKeyFPanel)) as ToolStripMenuItem;
                             miItem.Tag = iKeyFPanel;
                             //Обработку выбора пункта меню предоставить плюг'ину
-                            miItem.Click += s_plugIns[iKeyPlugIn].OnClickMenuItem; //postOnClickMenuItem;
+                            miItem.Click += (s_plugIns[iKeyPlugIn] as PlugInMenuItem).OnClickMenuItem; //postOnClickMenuItem;
                             //Добавить обработчик запросов для плюг'ина от главной формы
                             // только ОДИН раз
                             if ((s_plugIns[iKeyPlugIn] as PlugInBase).IsEvtDataAskedHostHandled == false)
@@ -562,7 +562,7 @@ namespace Tep64
         private void postOnClickMenuItem (object obj) {
             int idPlugIn = (int)((EventArgsDataHost)obj).id_main
                 , idFPanel = (int)((EventArgsDataHost)obj).id_detail;
-            PlugInMenuItem plugIn = s_plugIns[idPlugIn];
+            PlugInMenuItem plugIn = s_plugIns[idPlugIn] as PlugInMenuItem;
             bool bMenuItemChecked =
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked =
                 ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;

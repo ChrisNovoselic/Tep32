@@ -135,7 +135,7 @@ namespace Tep64
 
                         if (ContainsKey(idPlugIn) == false)
                         {
-                            plugIn = load(tableFPanels.Rows[i][@"NAME_PLUGIN"].ToString().Trim(), out err);
+                            plugIn = load(tableFPanels.Rows[i][@"NAME_PLUGIN"].ToString().Trim(), out err) as PlugInMenuItem;
 
                             if (err == 0)
                             {
@@ -169,7 +169,7 @@ namespace Tep64
             {
                 int iRes = -1;
                 // цикл по всем загруженным плюгИнам
-                foreach (KeyValuePair<int, PlugInMenuItem> pair in this)
+                foreach (KeyValuePair<int, PlugInBase> pair in this)
                     // проверить регистрацию панели в плюгИне
                     if (pair.Value.IsRegistred(idFPanel) == true)
                     {
@@ -190,8 +190,8 @@ namespace Tep64
             {
                 List<string> listRes = new List<string> ();
 
-                foreach (KeyValuePair<int, PlugInMenuItem> pair in this)
-                    listRes.AddRange (pair.Value.GetNameMenuItems());
+                foreach (KeyValuePair<int, PlugInBase> pair in this)
+                    listRes.AddRange ((pair.Value as PlugInMenuItem).GetNameMenuItems());
 
                 return listRes;
             }
