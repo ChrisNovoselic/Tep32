@@ -300,7 +300,7 @@ namespace PluginTaskAutobook
             /// </summary>
             /// <param name="tbOrigin">таблица значений</param>
             /// <param name="dgvView">контрол</param>
-            public void ShowValues(ref DataTable tbOrigin, DataGridView dgvView)
+            public void ShowValues(DataTable tbOrigin, DataGridView dgvView)
             {
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
@@ -340,7 +340,21 @@ namespace PluginTaskAutobook
             {
                 int err = -1;
                 double valueToRes;
-                editTable.Rows.Clear();
+
+                if (editTable == null)
+                {
+                    editTable = new DataTable();
+                    editTable.Columns.AddRange(new DataColumn[] {
+                        new DataColumn (@"ID_PUT", typeof (int))
+                        , new DataColumn (@"ID_SESSION", typeof (long))
+                        , new DataColumn (@"QUALITY", typeof (int))
+                        , new DataColumn (@"VALUE", typeof (float))
+                        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
+                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
+                    });
+                }
+                else
+                    editTable.Rows.Clear();
 
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
@@ -354,7 +368,7 @@ namespace PluginTaskAutobook
                                 editTable.Rows.Add(new object[] 
                                 {
                                     col.m_iIdComp
-                                    ,  idSession
+                                    , idSession
                                     , 1.ToString()
                                     , valueToRes                 
                                     , Convert.ToDateTime(dgvView.Rows[i].Cells["DateTime"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
@@ -863,7 +877,9 @@ namespace PluginTaskAutobook
                 , iRegDbConn = -1;
             string errMsg = string.Empty;
 
+            
             m_handlerDb.RegisterDbConnection(out iRegDbConn);
+            clear();
 
             if (!(iRegDbConn < 0))
             {
@@ -877,7 +893,7 @@ namespace PluginTaskAutobook
                         // создать копии для возможности сохранения изменений
                         setValues();
 
-                        dgvYear.ShowValues(ref m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                        dgvYear.ShowValues(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                             , dgvYear);
                     }
                     else ;
@@ -890,9 +906,9 @@ namespace PluginTaskAutobook
                 }
             }
             else
-                               //удалить сессию
+                //удалить сессию
                 deleteSession();
-                //}
+            //}
 
             if (!(iRegDbConn > 0))
                 m_handlerDb.UnRegisterDbConnection();
@@ -946,6 +962,7 @@ namespace PluginTaskAutobook
                 strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
                     + @" по " + Session.m_rangeDatetime.End.ToString();
         }
+
         /// <summary>
         /// copy
         /// </summary>
@@ -1174,27 +1191,26 @@ namespace PluginTaskAutobook
             string errMsg = string.Empty;
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
 
-            for (int i = 0; i < m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count; i++)
+            if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] != null)
             {
-                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i],out err);
-
-                if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] != null)
+                for (int i = 0; i < m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count; i++)
                 {
+                    m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i], out err);
+
                     if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count > 0)
                     {
                         m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                             HandlerDb.savePlanValue(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                             , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows[i], out err);
 
-                        s_dtDefaultAU = dtrPer[i].Begin;
+                        s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
                         base.HPanelTepCommon_btnSave_Click(obj, ev);
                     }
                     else
                         break;
                 }
-                else
-                    break;
             }
+            else ;
         }
 
         /// <summary>
@@ -1209,7 +1225,7 @@ namespace PluginTaskAutobook
             string strRes = string.Empty;
 
             strRes += "SELECT * FROM "
-                + GetNameTableIn(arQueryRanges.Begin)
+                + GetNameTableIn(arQueryRanges.End)
                 + " WHERE ID_TIME = " + (int)ActualIdPeriod;
 
             return HandlerDb.Select(strRes, out err);

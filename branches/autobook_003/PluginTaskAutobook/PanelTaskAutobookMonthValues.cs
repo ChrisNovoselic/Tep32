@@ -1696,6 +1696,22 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dtRange"></param>
+        /// <returns></returns>
+        private bool rangeCheking(DateTimeRange[] dtRange)
+        {
+            bool bflag = false;
+
+            for (int i = 0; i < dtRange.Length; i++)
+                if (dtRange[i].End.Month > DateTime.Now.Month)
+                    bflag = true;
+
+            return bflag;
+        }
+
+        /// <summary>
         /// загрузка/обновление данных
         /// </summary>
         private void updateDataValues()
@@ -1705,55 +1721,64 @@ namespace PluginTaskAutobook
                 , iAVG = -1
                 , iRegDbConn = -1;
             string errMsg = string.Empty;
+            DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
-            m_handlerDb.RegisterDbConnection(out iRegDbConn);
-
-            if (!(iRegDbConn < 0))
+            if (rangeCheking(dtrGet))
             {
-                // установить значения в таблицах для расчета, создать новую сессию
-                setValues(HandlerDb.GetDateTimeRangeValuesVar(), out err, out errMsg);
-
-                if (err == 0)
-                {
-                    if (m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
-                    {
-                        // создать копии для возможности сохранения изменений
-                        setValues();
-                        //вычисление значений
-                        AutoBookCalc.getTable(m_arTableOrigin, HandlerDb.getOutPut(out err));
-                        //
-                        m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                            AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
-                        //запись выходных значений во временную таблицу
-                        HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
-                        // отобразить значения
-                        dgvAB.ShowValues(m_arTableOrigin
-                            , dgvAB
-                            , HandlerDb.getPlanOnMonth(
-                            Type
-                            , HandlerDb.GetDateTimeRangeValuesVar()
-                            , ActualIdPeriod
-                            , out err));
-                        //формирование таблиц на основе грида
-                        valuesFence(out err);
-                    }
-                    else
-                        deleteSession();
-                }
-                else
-                {
-                    // в случае ошибки "обнулить" идентификатор сессии
-                    deleteSession();
-                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-                }
+                MessageBox.Show("Выбранный диапазон месяцев неверен");
             }
             else
-                deleteSession();
+            {
+                clear();
+                m_handlerDb.RegisterDbConnection(out iRegDbConn);
 
-            if (!(iRegDbConn > 0))
-                m_handlerDb.UnRegisterDbConnection();
-            else
-                ;
+                if (!(iRegDbConn < 0))
+                {
+                    // установить значения в таблицах для расчета, создать новую сессию
+                    setValues(dtrGet, out err, out errMsg);
+
+                    if (err == 0)
+                    {
+                        if (m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
+                        {
+                            // создать копии для возможности сохранения изменений
+                            setValues();
+                            //вычисление значений
+                            AutoBookCalc.getTable(m_arTableOrigin, HandlerDb.getOutPut(out err));
+                            //
+                            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                                AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
+                            //запись выходных значений во временную таблицу
+                            HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
+                            // отобразить значения
+                            dgvAB.ShowValues(m_arTableOrigin
+                                , dgvAB
+                                , HandlerDb.getPlanOnMonth(
+                                Type
+                                , dtrGet
+                                , ActualIdPeriod
+                                , out err));
+                            //формирование таблиц на основе грида
+                            valuesFence(out err);
+                        }
+                        else
+                            deleteSession();
+                    }
+                    else
+                    {
+                        // в случае ошибки "обнулить" идентификатор сессии
+                        deleteSession();
+                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                    }
+                }
+                else
+                    deleteSession();
+
+                if (!(iRegDbConn > 0))
+                    m_handlerDb.UnRegisterDbConnection();
+                else
+                    ;
+            }
         }
 
         /// <summary>
@@ -2316,7 +2341,7 @@ namespace PluginTaskAutobook
             , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], out err);
 
             m_handlerDb.RecUpdateInsertDelete(GetNameTableIn((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
-                     , true)[0] as HDateTimePicker).Value)
+                     , true)[0] as HDateTimePicker).Value)//?? запись крайних значений неверна
                      , @"ID_PUT, DATE_TIME"
                      , @"ID"
                      , m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
