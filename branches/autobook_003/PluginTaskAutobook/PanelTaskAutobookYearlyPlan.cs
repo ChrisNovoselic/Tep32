@@ -30,7 +30,7 @@ namespace PluginTaskAutobook
         { 
             "Январь", "Февраль", "Март", "Апрель", 
             "Май", "Июнь", "Июль", "Август", "Сентябрь", 
-            "Октябрь", "Ноябрь", "Декабрь","Январь сл. года"
+            "Октябрь", "Ноябрь", "Декабрь", "Январь сл. года"
         };
         /// <summary>
         /// Значения параметров сессии
@@ -700,6 +700,7 @@ namespace PluginTaskAutobook
             (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
 
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -877,7 +878,7 @@ namespace PluginTaskAutobook
                 , iRegDbConn = -1;
             string errMsg = string.Empty;
 
-            
+
             m_handlerDb.RegisterDbConnection(out iRegDbConn);
             clear();
 
@@ -893,7 +894,8 @@ namespace PluginTaskAutobook
                         // создать копии для возможности сохранения изменений
                         setValues();
 
-                        dgvYear.ShowValues(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                        dgvYear.ShowValues(
+                            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                             , dgvYear);
                     }
                     else ;

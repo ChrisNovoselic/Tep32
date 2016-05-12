@@ -37,6 +37,62 @@ namespace PluginTaskAutobook
         private const int MAX_ROWCOUNT_TO_INSERT = 666;
 
         /// <summary>
+        /// получение временного диапазона 
+        /// для крайних значений
+        /// </summary>
+        /// <returns>временные диапазоны</returns>
+        private DateTimeRange[] getDateTimeRangeExtremeVal()
+        {
+            DateTimeRange[] arRangesRes = null;
+            int i = -1;
+            bool bEndMonthBoudary = false;
+
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.AddDays(-1).Day)
+                , dtEnd = _Session.m_rangeDatetime.End.AddDays(0);
+            arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
+
+             if (bEndMonthBoudary == false)
+                if (arRangesRes.Length == 1)
+                    // самый простой вариант - один элемент в массиве - одна таблица
+                    arRangesRes[0] = new DateTimeRange(dtBegin, dtEnd);
+                else
+                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
+                    for (i = 0; i < arRangesRes.Length; i++)
+                        if (i == 1)
+                        {
+                            // предыдущих значений нет
+                            //arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                            arRangesRes[i] = new DateTimeRange(dtEnd, dtEnd.AddDays(1));
+                        }
+                        else
+                            if (i == arRangesRes.Length - 1)
+                                // крайний элемент массива
+                                arRangesRes[i] = new DateTimeRange(dtBegin, dtBegin);
+                            else
+                                // для элементов в "середине" массива
+                                arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin).AddDays(-1));
+            else
+                if (bEndMonthBoudary == true)
+                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                    // + использование следующей за 'dtEnd' таблицы
+                    for (i = 0; i < arRangesRes.Length; i++)
+                        if (i == 1)
+                            // предыдущих значений нет
+                            arRangesRes[i] = new DateTimeRange(dtEnd, HDateTime.ToNextMonthBoundary(dtEnd));
+                        else
+                            if (i == arRangesRes.Length - 1)
+                                // крайний элемент массива
+                                arRangesRes[i] = new DateTimeRange(dtBegin, dtBegin);
+                            else
+                                // для элементов в "середине" массива
+                                arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                else
+                    ;
+
+            return arRangesRes;
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <returns></returns>
@@ -156,11 +212,11 @@ namespace PluginTaskAutobook
                 }
 
                 strRes = " " + @"SELECT v.ID_PUT" // as [ID]"
-                        + @", " + _Session.m_Id + @" as [ID_SESSION]"
-                        + @", [QUALITY]"
-                        + ",[VALUE]"
-                         + ",[DATE_TIME] as [WR_DATETIME]"
-                          + @",[EXTENDED_DEFINITION]"
+                    + @", " + _Session.m_Id + @" as [ID_SESSION]"
+                    + @", [QUALITY]"
+                    + ",[VALUE]"
+                    + ",[DATE_TIME] as [WR_DATETIME]"
+                    + @",[EXTENDED_DEFINITION]"
                     + @" FROM (" + strRes + @") as v"
                     + @" ORDER BY  v.ID_PUT,v.DATE_TIME"
                     ;
@@ -180,7 +236,7 @@ namespace PluginTaskAutobook
         /// <param name="idPeriod">тек. период</param>
         /// <param name="err"></param>
         /// <returns>таблица занчений</returns>
-        public DataTable getCorInPut(TaskCalculate.TYPE type
+        public DataTable GetCorInPut(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
             , ID_PERIOD idPeriod
             , out int err)
@@ -216,6 +272,34 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="arQueryRanges"></param>
+        /// <param name="err"></param>
+        /// <returns></returns>
+        public DataTable GetDataOutval(out int err)
+        {
+            string strQuery = string.Empty;
+            bool bLastItem = false;
+            DateTimeRange[] dtRange = getDateTimeRangeExtremeVal();
+
+            for (int i = 0; i < dtRange.Length; i++)
+            {
+                bLastItem = !(i < (dtRange.Length - 1));
+
+                strQuery += @"SELECT * "
+                    + @" FROM [dbo].[outval_" + dtRange[i].Begin.ToString(@"yyyyMM") + @"]"
+                    + @" WHERE [DATE_TIME] > '" + dtRange[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND [DATE_TIME] <= '" + dtRange[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+
+                if (bLastItem == false)
+                    strQuery += @" UNION ALL ";
+            }
+
+            return Select(strQuery, out err);
+        }
+
+        /// <summary>
         /// Получение плановых значений
         /// </summary>
         /// <param name="type"></param>
@@ -223,7 +307,7 @@ namespace PluginTaskAutobook
         /// <param name="idPeriod">период времени</param>
         /// <param name="err"></param>
         /// <returns>таблица значений</returns>
-        public DataTable getPlanOnMonth(TaskCalculate.TYPE type
+        public DataTable GetPlanOnMonth(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
             , ID_PERIOD idPeriod, out int err)
         {
@@ -249,10 +333,10 @@ namespace PluginTaskAutobook
                         + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.AddMonths(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                         + @" AND v.ID_TIME = 24";
 
-                    //  if (bLastItem == false)
-                    //      strQuery += @" UNION ALL ";
-                    //else
-                    //    ;
+                //  if (bLastItem == false)
+                //      strQuery += @" UNION ALL ";
+                //else
+                //    ;
             }
 
             return Select(strQuery, out err);
@@ -500,7 +584,7 @@ namespace PluginTaskAutobook
         /// <param name="idPeriod">период</param>
         /// <param name="err"></param>
         /// <returns></returns>
-        public DataTable getInPut(TaskCalculate.TYPE type
+        public DataTable getInPutID(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
             , ID_PERIOD idPeriod
             , out int err)
@@ -579,12 +663,8 @@ namespace PluginTaskAutobook
 
             if (tableRes != null)
             {
-                //foreach (DataGridViewRow r in dgvRes.Rows)
-                //{
                 for (int i = 0; i < tableRes.Rows.Count; i++)
                 {
-                    //if (r.Cells[namePut.GetValue(i).ToString()].Value != null)
-                    //{
                     rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
 
                     tableEdit.Rows.Add(new object[] 
@@ -600,9 +680,7 @@ namespace PluginTaskAutobook
                         , tableRes.Rows[i]["VALUE"]               
                         , DateTime.Now
                     });
-                    //}
                 }
-                //}
             }
             else ;
 

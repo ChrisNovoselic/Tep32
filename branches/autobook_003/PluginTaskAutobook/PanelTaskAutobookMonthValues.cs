@@ -155,11 +155,11 @@ namespace PluginTaskAutobook
         /// </summary>
         protected DGVAutoBook dgvAB;
         /// <summary>
-        /// 
+        /// to Outlook
         /// </summary>
         protected ReportsToNSS rptsNSS;
         /// <summary>
-        /// 
+        /// to Excel
         /// </summary>
         protected ReportExcel rptExcel;
 
@@ -668,13 +668,14 @@ namespace PluginTaskAutobook
 
                 foreach (DataGridViewRow row in dgvView.Rows)
                 {
-                    if (Convert.ToDateTime(row.Cells["Date"].Value) < DateTime.Now.Date)
+                    if (Convert.ToDateTime(row.Cells["Date"].Value) <= DateTime.Now.Date)
                     {
+                        if (row.Cells["TEC"].Value != null)
                         for (int i = (int)INDEX_GTP.GTP12; i < (int)INDEX_GTP.CorGTP12; i++)
                         {
                             put = dtOut.Rows[i]["ID"].ToString();
                             valueToRes = Convert.ToDouble(row.Cells[namePut.GetValue(i).ToString()].Value) * Math.Pow(10, 6);
-
+                       
                             editTable.Rows.Add(new object[] 
                             {
                                 put
@@ -898,12 +899,12 @@ namespace PluginTaskAutobook
                         newMail.Subject = subject;
                         newMail.Body = body;
                         newMail.Importance = Outlook.OlImportance.olImportanceNormal;
-                        newMail.Display(false);
+                        newMail.Display();
                         sendMail(newMail);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-
+                        MessageBox.Show(ex.Message);
                     }
 
                 }
@@ -1658,7 +1659,7 @@ namespace PluginTaskAutobook
                 );
             //Получение значений корр. input
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                HandlerDb.getCorInPut(Type
+                HandlerDb.GetCorInPut(Type
                 , arQueryRanges
                 , ActualIdPeriod
                 , out err);
@@ -1696,9 +1697,9 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Проверка выбранного диапазона
         /// </summary>
-        /// <param name="dtRange"></param>
+        /// <param name="dtRange">диапазон дат</param>
         /// <returns></returns>
         private bool rangeCheking(DateTimeRange[] dtRange)
         {
@@ -1706,7 +1707,8 @@ namespace PluginTaskAutobook
 
             for (int i = 0; i < dtRange.Length; i++)
                 if (dtRange[i].End.Month > DateTime.Now.Month)
-                    bflag = true;
+                    if (dtRange[i].End.Year >= DateTime.Now.Year)
+                        bflag = true;
 
             return bflag;
         }
@@ -1724,9 +1726,7 @@ namespace PluginTaskAutobook
             DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
             if (rangeCheking(dtrGet))
-            {
                 MessageBox.Show("Выбранный диапазон месяцев неверен");
-            }
             else
             {
                 clear();
@@ -1739,7 +1739,7 @@ namespace PluginTaskAutobook
 
                     if (err == 0)
                     {
-                        if (m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
+                        if (m_TableOrigin.Rows.Count > 0)
                         {
                             // создать копии для возможности сохранения изменений
                             setValues();
@@ -1753,8 +1753,7 @@ namespace PluginTaskAutobook
                             // отобразить значения
                             dgvAB.ShowValues(m_arTableOrigin
                                 , dgvAB
-                                , HandlerDb.getPlanOnMonth(
-                                Type
+                                , HandlerDb.GetPlanOnMonth(Type
                                 , dtrGet
                                 , ActualIdPeriod
                                 , out err));
@@ -1827,7 +1826,6 @@ namespace PluginTaskAutobook
         private void HPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
         {
             m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
-
             onButtonLoadClick();
         }
 
@@ -1848,9 +1846,9 @@ namespace PluginTaskAutobook
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
             m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
-
             onButtonLoadClick();
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -2056,7 +2054,7 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// очистка грида
         /// </summary>
         /// <param name="iCtrl"></param>
         /// <param name="bClose"></param>
@@ -2243,13 +2241,15 @@ namespace PluginTaskAutobook
             //сбор значений
             valuesFence(out err);
 
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(out err);
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(
+                GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value), out err);
+
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            HandlerDb.saveResOut(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-            , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
+            HandlerDb.saveResOut(m_TableOrigin
+            , m_TableEdit, out err);
 
             base.HPanelTepCommon_btnSave_Click(obj, ev);
-
+            //save вх. значений
             saveInvalValue(out err);
         }
 
@@ -2259,12 +2259,11 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="err"></param>
         /// <returns>таблица</returns>
-        private DataTable getStructurOutval(out int err)
+        private DataTable getStructurOutval(string nameTable, out int err)
         {
             string strRes = string.Empty;
 
-            strRes = "SELECT * FROM "
-                + GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value);
+            strRes = "SELECT * FROM " + nameTable;
 
             return HandlerDb.Select(strRes, out err);
         }
@@ -2314,14 +2313,80 @@ namespace PluginTaskAutobook
         protected override void recUpdateInsertDelete(out int err)
         {
             err = -1;
+            //
+            sortingDataToTable(out err);
+        }
 
-            m_handlerDb.RecUpdateInsertDelete(GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
-           , true)[0] as HDateTimePicker).Value)
-           , @"ID_PUT, DATE_TIME"
-           , @""
-           , m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-           , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-           , out err);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="nameTable">имя таблицы</param>
+        /// <param name="m_origin">оригинальная таблица</param>
+        /// <param name="m_edit">таблица с данными</param>
+        /// <param name="err"></param>
+        private void updateInsert(string nameTable, DataTable m_origin, DataTable m_edit, out int err)
+        {
+            err = -1;
+
+            m_handlerDb.RecUpdateInsertDelete(nameTable
+                    , @"ID_PUT, DATE_TIME"
+                    , @""
+                    , m_origin
+                    , m_edit
+                    , out err);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="err"></param>
+        private void sortingDataToTable(out int err)
+        {
+            string nameTableExtrmRow = string.Empty
+                          , m_nameTable = string.Empty;
+            DataTable m_edit = new DataTable()
+                , m_origin = new DataTable();
+
+            m_edit = m_TableEdit.Clone();
+            m_origin = HandlerDb.GetDataOutval(out err);
+            m_nameTable = GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
+           , true)[0] as HDateTimePicker).Value);
+
+            foreach (DataRow row in m_TableEdit.Rows)
+            {
+                nameTableExtrmRow = extremeRow(row["DATE_TIME"].ToString(), m_nameTable);
+
+                if (nameTableExtrmRow != m_nameTable)
+                {
+                    foreach (DataRow rowOrigin in m_origin.Rows)
+                        if (rowOrigin["DATE_TIME"].Equals(row["DATE_TIME"]))
+                            m_origin.Rows.Remove(rowOrigin);
+
+                    updateInsert(m_nameTable, m_origin, m_edit, out err);
+
+                    m_nameTable = nameTableExtrmRow;
+                    m_edit.Rows.Clear();
+                    m_edit.Rows.Add(row.ItemArray);
+                }
+                else
+                    m_edit.Rows.Add(row.ItemArray);
+            }
+            updateInsert(m_nameTable, m_origin, m_edit, out err);
+        }
+
+        /// <summary>
+        /// Нахождение имени таблицы для крайних строк
+        /// </summary>
+        /// <param name="strDate"></param>
+        /// <param name="nameTable"></param>
+        /// <returns>имя таблицы</returns>
+        private static string extremeRow(string strDate, string nameTable)
+        {
+            DateTime dtStr = Convert.ToDateTime(strDate);
+            string m_nametable = dtStr.Year.ToString() + dtStr.Month.ToString(@"00");
+            string[] pref = nameTable.Split('_');
+
+            return pref[0] + "_" + m_nametable;
         }
 
         /// <summary>
@@ -2334,7 +2399,7 @@ namespace PluginTaskAutobook
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
 
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                HandlerDb.getInPut(Type, dtrPer, ActualIdPeriod, out err);
+                HandlerDb.getInPutID(Type, dtrPer, ActualIdPeriod, out err);
 
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
             HandlerDb.saveResInval(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
