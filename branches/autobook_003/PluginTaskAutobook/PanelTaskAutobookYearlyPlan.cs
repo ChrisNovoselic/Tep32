@@ -873,8 +873,7 @@ namespace PluginTaskAutobook
         private void updateDataValues()
         {
             int err = -1
-                , cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
-                , iAVG = -1
+                , cnt = CountBasePeriod
                 , iRegDbConn = -1;
             string errMsg = string.Empty;
 

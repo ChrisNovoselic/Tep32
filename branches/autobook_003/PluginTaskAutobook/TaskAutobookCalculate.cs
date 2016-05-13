@@ -41,7 +41,7 @@ namespace PluginTaskAutobook
         /// для крайних значений
         /// </summary>
         /// <returns>временные диапазоны</returns>
-        private DateTimeRange[] getDateTimeRangeExtremeVal()
+        public DateTimeRange[] getDateTimeRangeExtremeVal()
         {
             DateTimeRange[] arRangesRes = null;
             int i = -1;
@@ -277,11 +277,11 @@ namespace PluginTaskAutobook
         /// <param name="arQueryRanges"></param>
         /// <param name="err"></param>
         /// <returns></returns>
-        public DataTable GetDataOutval(out int err)
+        public DataTable GetDataOutval(DateTimeRange[] dtRange ,out int err)
         {
             string strQuery = string.Empty;
             bool bLastItem = false;
-            DateTimeRange[] dtRange = getDateTimeRangeExtremeVal();
+            //DateTimeRange[] dtRange = getDateTimeRangeExtremeVal();
 
             for (int i = 0; i < dtRange.Length; i++)
             {
@@ -596,15 +596,17 @@ namespace PluginTaskAutobook
             {
                 bLastItem = !(i < (arQueryRanges.Length - 1));
 
-                strQuery += @"SELECT DISTINCT v.ID, v.ID_PUT, v.ID_USER, v.ID_SOURCE, v.DATE_TIME, v.ID_TIME"
+                strQuery += @"SELECT v.ID, v.ID_PUT, v.ID_USER, v.ID_SOURCE, v.DATE_TIME, v.ID_TIME"
                     + ", v.ID_TIMEZONE, v.QUALITY, v.VALUE, v.WR_DATETIME"
                     + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
                     + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
                     + @" ON a.ID = p.ID_ALG"
                     + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                    + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
+                    + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v"
                     + @" ON v.ID_PUT = p.ID"
                     + @" WHERE  ID_TASK = " + (int)IdTask
+                    + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.AddDays(-1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0";
 
                 if (bLastItem == false)
@@ -612,7 +614,6 @@ namespace PluginTaskAutobook
                 else
                     ;
             }
-            strQuery += @" ORDER BY ID ";
 
             return Select(strQuery, out err);
         }
@@ -1036,8 +1037,6 @@ namespace PluginTaskAutobook
                         if (!(err == 0))
                             // при ошибке - не продолжать
                             break;
-                        else
-                            ;
 
                         strQuery = strBaseQuery;
                         iRowCounterToInsert = 0;
@@ -1195,7 +1194,6 @@ namespace PluginTaskAutobook
             , ID_PERIOD idPeriod, out int err)
         {
             string strQuery = string.Empty;
-            int i = 0;
 
             strQuery = @"SELECT ID_PUT, ID_TIME,DATE_TIME"
               + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
