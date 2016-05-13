@@ -93,9 +93,10 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// получение временного диапазона 
+        /// для всех значений
         /// </summary>
-        /// <returns></returns>
+        /// <returns>диапазон дат</returns>
         public override DateTimeRange[] GetDateTimeRangeValuesVar()
         {
             DateTimeRange[] arRangesRes = null;
@@ -231,10 +232,10 @@ namespace PluginTaskAutobook
         /// Получение корр. входных значений
         /// из INVAL
         /// </summary>
-        /// <param name="type"></param>
+        /// <param name="type">тип задачи</param>
         /// <param name="arQueryRanges"></param>
         /// <param name="idPeriod">тек. период</param>
-        /// <param name="err"></param>
+        /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица занчений</returns>
         public DataTable GetCorInPut(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
@@ -272,16 +273,15 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Получение вых.знач.
         /// </summary>
-        /// <param name="arQueryRanges"></param>
-        /// <param name="err"></param>
-        /// <returns></returns>
+        /// <param name="dtRange">диапазон временной</param>
+        /// <param name="err">Индентификатор ошибки</param>
+        /// <returns>табилца данных</returns>
         public DataTable GetDataOutval(DateTimeRange[] dtRange ,out int err)
         {
             string strQuery = string.Empty;
             bool bLastItem = false;
-            //DateTimeRange[] dtRange = getDateTimeRangeExtremeVal();
 
             for (int i = 0; i < dtRange.Length; i++)
             {
@@ -302,10 +302,10 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Получение плановых значений
         /// </summary>
-        /// <param name="type"></param>
+        /// <param name="type">тип задачи</param>
         /// <param name="arQueryRanges">отрезок времени</param>
         /// <param name="idPeriod">период времени</param>
-        /// <param name="err"></param>
+        /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица значений</returns>
         public DataTable GetPlanOnMonth(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
@@ -579,10 +579,10 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Получение корр. PUT's
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="arQueryRanges"></param>
+        /// <param name="type">тип задачи</param>
+        /// <param name="arQueryRanges">временной диапазон</param>
         /// <param name="idPeriod">период</param>
-        /// <param name="err"></param>
+        /// <param name="err">номер ошибки</param>
         /// <returns></returns>
         public DataTable getInPutID(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
@@ -636,8 +636,8 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="err"></param>
-        /// <returns></returns>
+        /// <param name="err">Индентификатор ошибки</param>
+        /// <returns>таблица значений</returns>
         public DataTable OutValues(out int err)
         {
             string strQuery;
@@ -653,7 +653,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="tableOrigin">первичная таблица</param>
         /// <param name="tableRes">таблица с параметрами</param>
-        /// <param name="err"></param>
+        /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
         public DataTable saveResOut(DataTable tableOrigin, DataTable tableRes, out int err)
         {
@@ -693,7 +693,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="tableOrigin">первичная таблица</param>
         /// <param name="tableRes">таблица с параметрами</param>
-        /// <param name="err"></param>
+        /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
         public DataTable saveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
         {
@@ -731,8 +731,8 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="IdTab"></param>
-        /// <returns></returns>
+        /// <param name="IdTab">Ид панели</param>
+        /// <returns>таблица данных</returns>
         public DataTable GetProfilesContext(int IdTab)
         {
             string query = string.Empty;
@@ -762,7 +762,11 @@ namespace PluginTaskAutobook
 
             //??? m_taskCalculate = new TaskAutobookCalculate();
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type">тип задачи</param>
+        /// <param name="err">Индентификатор ошибки</param>
         protected override void calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, out int err)
         {
             err = 0;
@@ -774,11 +778,11 @@ namespace PluginTaskAutobook
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
         ///  , структура таблицы совместима с [inval], [outval]
         /// </summary>
-        /// <param name="type"></param>
+        /// <param name="type">тип задачи</param>
         /// <param name="idPeriod">ид периода</param>
         /// <param name="cntBasePeriod">период</param>
         /// <param name="arQueryRanges">диапазон времени запроса</param>
-        /// <returns></returns>
+        /// <returns>строка запроса</returns>
         public override string getQueryValuesVar(TaskCalculate.TYPE type
             , ID_PERIOD idPeriod
             , int cntBasePeriod
@@ -1088,7 +1092,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Формирование списка отрезков времени
         /// </summary>
-        /// <returns></returns>
+        /// <returns>диапазон дат</returns>
         public override DateTimeRange[] GetDateTimeRangeValuesVar()
         {
             DateTimeRange[] arRangesRes = null;
@@ -1149,7 +1153,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="tableOrigin">таблица значений</param>
         /// <param name="rowRes">строка значений</param>
-        /// <param name="err"></param>
+        /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица значений</returns>
         public DataTable savePlanValue(DataTable tableOrigin, DataRow rowRes, out int err)
         {
@@ -1187,7 +1191,7 @@ namespace PluginTaskAutobook
         /// <param name="type"></param>
         /// <param name="arQueryRanges">отрезок времени</param>
         /// <param name="idPeriod">период времени</param>
-        /// <param name="err"></param>
+        /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица с put'ами</returns>
         public DataTable getPlan(TaskCalculate.TYPE type
             , DateTime arQueryDatetime
@@ -1207,27 +1211,5 @@ namespace PluginTaskAutobook
 
             return Select(strQuery, out err);
         }
-
-        ///// <summary>
-        ///// Получение вх.зн.
-        ///// </summary>
-        ///// <param name="type"></param>
-        ///// <param name="idPeriod"></param>
-        ///// <param name="err"></param>
-        ///// <returns>таблица значений</returns>
-        //public DataTable getAllInval(TaskCalculate.TYPE type
-        //    , ID_PERIOD idPeriod, out int err)
-        //{
-        //    string strQuery = string.Empty;
-        //    int i = 0;
-
-        //    strQuery = @"SELECT ID_PUT, ID_TIME,DATE_TIME"
-        //      + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
-        //      + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
-        //      + @" ON a.ID = p.ID_ALG"
-        //      + @" WHERE  ID_TASK = " + (int)IdTask;
-
-        //    return Select(strQuery, out err);
-        //}
     }
 }

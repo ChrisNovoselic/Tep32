@@ -167,10 +167,12 @@ namespace PluginTaskAutobook
         /// to Excel
         /// </summary>
         protected ReportExcel rptExcel;
-
-        private PanelManagementAutobook _panelManagement;
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
+        /// </summary>
+        private PanelManagementAutobook _panelManagement;
+        /// <summary>
+        /// Создание панели управления
         /// </summary>
         protected PanelManagementAutobook PanelManagement
         {
@@ -1187,7 +1189,7 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Конструктор
         /// </summary>
         /// <param name="iFunc"></param>
         public PanelTaskAutobookMonthValues(IPlugIn iFunc)
@@ -2156,10 +2158,6 @@ namespace PluginTaskAutobook
 
             // очистить содержание представления
             clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
         }
 
         /// <summary>
@@ -2343,14 +2341,14 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Обновить/Вставить/Удалить
         /// </summary>
         /// <param name="nameTable">имя таблицы</param>
         /// <param name="m_origin">оригинальная таблица</param>
         /// <param name="m_edit">таблица с данными</param>
         /// <param name="unCol">столбец, неучаствующий в InsetUpdate</param>
         /// <param name="err">номер ошибки</param>
-        private void updateInsert(string nameTable, DataTable m_origin, DataTable m_edit, string unCol, out int err)
+        private void updateInsertDel(string nameTable, DataTable m_origin, DataTable m_edit, string unCol, out int err)
         {
             err = -1;
 
