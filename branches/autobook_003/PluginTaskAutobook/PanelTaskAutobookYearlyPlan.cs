@@ -149,6 +149,7 @@ namespace PluginTaskAutobook
         {
             return new HandlerDbTaskAutobookYarlyPlanCalculate();
         }
+
         /// <summary>
         /// Панель отображения значений 
         /// и их обработки
@@ -821,6 +822,7 @@ namespace PluginTaskAutobook
                         break;
                 }
         }
+
         /// <summary>
         /// Обработчик события при успешном сохранении изменений в редактируемых на вкладке таблицах
         /// </summary>
@@ -829,6 +831,7 @@ namespace PluginTaskAutobook
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
               m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
         }
+
         /// <summary>
         ///  Сохранить изменения в редактируемых таблицах
         /// </summary>
@@ -877,7 +880,6 @@ namespace PluginTaskAutobook
                 , iRegDbConn = -1;
             string errMsg = string.Empty;
 
-
             m_handlerDb.RegisterDbConnection(out iRegDbConn);
             clear();
 
@@ -909,7 +911,6 @@ namespace PluginTaskAutobook
             else
                 //удалить сессию
                 deleteSession();
-            //}
 
             if (!(iRegDbConn > 0))
                 m_handlerDb.UnRegisterDbConnection();
@@ -974,6 +975,7 @@ namespace PluginTaskAutobook
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                 m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
         }
+
         /// <summary>
         /// формирование запросов 
         /// для справочных данных
@@ -1219,7 +1221,7 @@ namespace PluginTaskAutobook
         /// INVAL_XXXXXX???
         /// </summary>
         /// <param name="arQueryRanges">временной промежуток</param>
-        /// <param name="err"></param>
+        /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица</returns>
         private DataTable getStructurInval(DateTimeRange arQueryRanges, out int err)
         {

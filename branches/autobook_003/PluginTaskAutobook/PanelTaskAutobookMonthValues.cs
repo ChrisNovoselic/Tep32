@@ -2396,7 +2396,7 @@ namespace PluginTaskAutobook
                     //if (m_edit.Rows.Count < 1)
                     //    m_edit.Rows.Add(row.ItemArray);
 
-                    updateInsert(m_nameTable, m_origin, m_edit, unCol, out err);
+                    updateInsertDel(m_nameTable, m_origin, m_edit, unCol, out err);
 
                     m_nameTable = nameTableExtrmRow;
                     m_edit.Rows.Clear();
@@ -2413,7 +2413,7 @@ namespace PluginTaskAutobook
                     if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month == Convert.ToDateTime(m_edit.Rows[0]["DATE_TIME"]).Month)
                         m_origin.Rows.Add(rowOrigin.ItemArray);
 
-                updateInsert(m_nameTable, m_origin, m_edit, unCol, out err);
+                updateInsertDel(m_nameTable, m_origin, m_edit, unCol, out err);
             }
         }
 
