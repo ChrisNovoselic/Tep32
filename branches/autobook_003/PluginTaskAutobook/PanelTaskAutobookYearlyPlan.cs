@@ -23,6 +23,7 @@ namespace PluginTaskAutobook
         /// </summary>
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
+
         /// <summary>
         /// 
         /// </summary>
@@ -697,7 +698,7 @@ namespace PluginTaskAutobook
             (btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(HPanelTepCommon_btnUpdate_Click);
             (btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(HPanelAutobook_btnHistory_Click);
+                new EventHandler(hPanelAutobook_btnHistory_Click);
             (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
 
         }
@@ -1203,7 +1204,7 @@ namespace PluginTaskAutobook
                     if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count > 0)
                     {
                         m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                            HandlerDb.savePlanValue(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                            HandlerDb.SavePlanValue(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                             , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows[i], out err);
 
                         s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
@@ -1258,7 +1259,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="ev"></param>
-        private void HPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
+        private void hPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
         {
             m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
 

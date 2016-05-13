@@ -162,7 +162,7 @@ namespace PluginTaskAutobook
         /// <param name="cntBasePeriod">период(день,месяц,год)</param>
         /// <param name="arQueryRanges">диапазон времени запроса</param>
         /// <returns>строка запроса</returns>
-        public override string getQueryValuesVar(TaskCalculate.TYPE type, ID_PERIOD idPeriod
+        public override string GetQueryValuesVar(TaskCalculate.TYPE type, ID_PERIOD idPeriod
             , int cntBasePeriod, DateTimeRange[] arQueryRanges)
         {
             string strRes = string.Empty
@@ -588,7 +588,7 @@ namespace PluginTaskAutobook
         /// <param name="idPeriod">период</param>
         /// <param name="err">номер ошибки</param>
         /// <returns>таблица с данными</returns>
-        public DataTable getInPutID(TaskCalculate.TYPE type
+        public DataTable GetInPutID(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
             , ID_PERIOD idPeriod
             , out int err)
@@ -627,7 +627,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица значений</returns>
-        public DataTable getOutPut(out int err)
+        public DataTable GetOutPut(out int err)
         {
             DataTable tableParameters = null;
             string strQuery = string.Empty;
@@ -659,7 +659,7 @@ namespace PluginTaskAutobook
         /// <param name="tableRes">таблица с параметрами</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
-        public DataTable saveResOut(DataTable tableOrigin, DataTable tableRes, out int err)
+        public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes, out int err)
         {
             err = -1;
             DataTable tableEdit = new DataTable();
@@ -699,7 +699,7 @@ namespace PluginTaskAutobook
         /// <param name="tableRes">таблица с параметрами</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
-        public DataTable saveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
+        public DataTable SaveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
         {
             err = -1;
             DataTable tableEdit = new DataTable();
@@ -766,6 +766,7 @@ namespace PluginTaskAutobook
 
             //??? m_taskCalculate = new TaskAutobookCalculate();
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -787,7 +788,7 @@ namespace PluginTaskAutobook
         /// <param name="cntBasePeriod">период</param>
         /// <param name="arQueryRanges">диапазон времени запроса</param>
         /// <returns>строка запроса</returns>
-        public override string getQueryValuesVar(TaskCalculate.TYPE type
+        public override string GetQueryValuesVar(TaskCalculate.TYPE type
             , ID_PERIOD idPeriod
             , int cntBasePeriod
             , DateTimeRange[] arQueryRanges)
@@ -998,7 +999,7 @@ namespace PluginTaskAutobook
         /// Вставить значения в таблицу для временных выходных значений сессии расчета
         /// </summary>
         /// <param name="err">Идентификатор ошибки при выполнении функции</param>
-        public void insertOutValues(out int err, DataTable tableRes)
+        public void InsertOutValues(out int err, DataTable tableRes)
         {
             err = -1;
 
@@ -1159,7 +1160,7 @@ namespace PluginTaskAutobook
         /// <param name="rowRes">строка значений</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица значений</returns>
-        public DataTable savePlanValue(DataTable tableOrigin, DataRow rowRes, out int err)
+        public DataTable SavePlanValue(DataTable tableOrigin, DataRow rowRes, out int err)
         {
             err = -1;
             double ResValue;
@@ -1197,7 +1198,7 @@ namespace PluginTaskAutobook
         /// <param name="idPeriod">период времени</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица с put'ами</returns>
-        public DataTable getPlan(TaskCalculate.TYPE type
+        public DataTable GetPlan(TaskCalculate.TYPE type
             , DateTime arQueryDatetime
             , ID_PERIOD idPeriod, out int err)
         {
