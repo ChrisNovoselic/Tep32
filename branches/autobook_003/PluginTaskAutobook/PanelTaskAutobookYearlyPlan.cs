@@ -880,43 +880,66 @@ namespace PluginTaskAutobook
                 , cnt = CountBasePeriod
                 , iRegDbConn = -1;
             string errMsg = string.Empty;
+            DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
-            m_handlerDb.RegisterDbConnection(out iRegDbConn);
-            clear();
-
-            if (!(iRegDbConn < 0))
+            if (rangeCheking(dtrGet))
+                MessageBox.Show("Выбранный диапазон месяцев неверен");
+            else
             {
-                // установить значения в таблицах для расчета, создать новую сессию
-                setValues(HandlerDb.GetDateTimeRangeValuesVar(), out err, out errMsg);
+                m_handlerDb.RegisterDbConnection(out iRegDbConn);
+                clear();
 
-                if (err == 0)
+                if (!(iRegDbConn < 0))
                 {
-                    if (m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
-                    {
-                        // создать копии для возможности сохранения изменений
-                        setValues();
+                    // установить значения в таблицах для расчета, создать новую сессию
+                    setValues(dtrGet, out err, out errMsg);
 
-                        dgvYear.ShowValues(
-                            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                            , dgvYear);
+                    if (err == 0)
+                    {
+                        if (m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
+                        {
+                            // создать копии для возможности сохранения изменений
+                            setValues();
+
+                            dgvYear.ShowValues(
+                                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                                , dgvYear);
+                        }
+                        else ;
                     }
-                    else ;
+                    else
+                    {
+                        // в случае ошибки "обнулить" идентификатор сессии
+                        deleteSession();
+                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                    }
                 }
                 else
-                {
-                    // в случае ошибки "обнулить" идентификатор сессии
+                    //удалить сессию
                     deleteSession();
-                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-                }
-            }
-            else
-                //удалить сессию
-                deleteSession();
 
-            if (!(iRegDbConn > 0))
-                m_handlerDb.UnRegisterDbConnection();
-            else
-                ;
+                if (!(iRegDbConn > 0))
+                    m_handlerDb.UnRegisterDbConnection();
+                else
+                    ;
+            }
+        }
+
+        /// <summary>
+        /// Проверка выбранного диапазона
+        /// </summary>
+        /// <param name="dtRange">диапазон дат</param>
+        /// <returns></returns>
+        private bool rangeCheking(DateTimeRange[] dtRange)
+        {
+            bool bflag = false;
+
+            for (int i = 0; i < dtRange.Length; i++)
+                if (dtRange[i].End.Month > DateTime.Now.Month)
+                    if (dtRange[i].End.Year >= DateTime.Now.Year)
+                        bflag = true;
+
+            return bflag;
         }
 
         /// <summary>

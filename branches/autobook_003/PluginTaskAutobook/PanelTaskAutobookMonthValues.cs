@@ -139,7 +139,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
+        public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.AddDays(-1).Day);
         /// <summary>
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
@@ -2392,9 +2392,6 @@ namespace PluginTaskAutobook
                     foreach (DataRow rowOrigin in origin.Rows)
                         if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month != Convert.ToDateTime(row["DATE_TIME"]).Month)
                             originTemporary.Rows.Add(rowOrigin.ItemArray);
-
-                    //if (m_edit.Rows.Count < 1)
-                    //    m_edit.Rows.Add(row.ItemArray);
 
                     updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
 
