@@ -489,21 +489,22 @@ namespace PluginTaskAutobook
                 this.SetColumnSpan(tlpValue, 4); this.SetRowSpan(tlpValue, 1);
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
-                ctrl = new DropDownButton();
+                ctrl = new Button();
                 ctrl.Name = INDEX_CONTROL_BASE.BUTTON_LOAD.ToString();
-                ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
-                indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
-                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString();
-                indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
-                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString();
+                //ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
+                //indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
+                //ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString();
+                //indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
+                //ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
                 ctrl.Dock = DockStyle.Top;
-                //Кнопка - импортировать
+                //Кнопка 
                 Button ctrlBSend = new Button();
                 ctrlBSend.Name = INDEX_CONTROL_BASE.BUTTON_SEND.ToString();
                 ctrlBSend.Text = @"Отправить";
                 ctrlBSend.Dock = DockStyle.Top;
                 ctrlBSend.Enabled = false;
+                ctrlBSend.Visible = false;
                 //Кнопка - сохранить
                 Button ctrlBsave = new Button();
                 ctrlBsave.Name = INDEX_CONTROL_BASE.BUTTON_SAVE.ToString();
@@ -517,8 +518,8 @@ namespace PluginTaskAutobook
                 tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
                 tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
                 tlpButton.Controls.Add(ctrl, 0, 0);
-                tlpButton.Controls.Add(ctrlBSend, 1, 0);
-                tlpButton.Controls.Add(ctrlBsave, 0, 1);
+                tlpButton.Controls.Add(ctrlBsave, 1, 0);
+                tlpButton.Controls.Add(ctrlBSend, 0, 1);
                 //tlpButton.Controls.Add(ctrlTxt, 1, 1);
                 this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
                 this.SetColumnSpan(tlpButton, 4); this.SetRowSpan(tlpButton, 2);
@@ -653,6 +654,8 @@ namespace PluginTaskAutobook
             dgvYear.AddColumn("Выработка, тыс. кВтч", false, "Output", 23218);
             dgvYear.AddColumn("Дата", true, "DateTime");
             dgvYear.Columns["DateTime"].Visible = false;
+            foreach (DataGridViewColumn column in dgvYear.Columns)
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
             DateTime dtNew = new DateTime(s_dtDefaultAU.Year, 1, 1);
             for (int i = 0; i < GetMonth.Length; i++)
             {
@@ -693,12 +696,11 @@ namespace PluginTaskAutobook
             PerformLayout();
 
             Button btn = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_LOAD.ToString(), true)[0] as Button);
-            btn.Click += // действие по умолчанию
-                new EventHandler(HPanelTepCommon_btnUpdate_Click);
-            (btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(HPanelTepCommon_btnUpdate_Click);
-            (btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(hPanelAutobook_btnHistory_Click);
+            btn.Click += new EventHandler(HPanelTepCommon_btnUpdate_Click);
+            //(btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
+            //    new EventHandler(HPanelTepCommon_btnUpdate_Click);
+            //(btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
+            //    new EventHandler(hPanelAutobook_btnHistory_Click);
             (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
 
         }

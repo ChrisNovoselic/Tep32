@@ -29,6 +29,9 @@ namespace PluginTaskAutobook
         /// <param name="i"></param>
         /// <param name="dgvView">отображение</param>
         delegate void delDeviation(int i, DataGridView dgvView);
+        /// <summary>
+        /// флаг очистки отображения
+        /// </summary>
         bool m_bflgClear = true;
         //public event DelegateBoolFunc EvtChangeRow;
         /// <summary>
@@ -881,14 +884,14 @@ namespace PluginTaskAutobook
                 /// <summary>
                 /// 
                 /// </summary>
-                Outlook.Application oApp;
+                Outlook.Application m_oApp;
 
                 /// <summary>
                 /// конструктор(основной)
                 /// </summary>
                 public CreateMessage()
                 {
-                    oApp = new Outlook.Application();
+                    m_oApp = new Outlook.Application();
                 }
 
                 /// <summary>
@@ -901,7 +904,7 @@ namespace PluginTaskAutobook
                 {
                     try
                     {
-                        Outlook.MailItem newMail = (Outlook.MailItem)oApp.CreateItem(Outlook.OlItemType.olMailItem);
+                        Outlook.MailItem newMail = (Outlook.MailItem)m_oApp.CreateItem(Outlook.OlItemType.olMailItem);
                         newMail.To = to;
                         newMail.Subject = subject;
                         newMail.Body = body;
@@ -952,8 +955,8 @@ namespace PluginTaskAutobook
                 /// </summary>
                 private void closeOutlook()
                 {
-                    ((Outlook.Application)oApp).Quit();
-                    System.Runtime.InteropServices.Marshal.ReleaseComObject(oApp);
+                    ((Outlook.Application)m_oApp).Quit();
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(m_oApp);
                     System.GC.Collect();
                 }
             }
@@ -971,10 +974,10 @@ namespace PluginTaskAutobook
                 DataRow[] drReportDay;
                 DateTime reportDate;
 
-                reportDate = dtRange.Begin.AddHours(6).Date;
+                reportDate = dtRange.Begin.AddHours(6).Date;//??
                 drReportDay =
                     sourceTable.Select(String.Format(sourceTable.Locale, @"WR_DATETIME = '{0:o}'", reportDate));
-
+                
                 if ((double)drReportDay.Length != 0)
                 {
                     bodyMsg = @"BEGIN " + "\r\n"
@@ -1054,46 +1057,67 @@ namespace PluginTaskAutobook
                 m_excApp.Visible = false;
             }
 
-
             /// <summary>
             /// Подключение шаблона листа экселя и его заполнение
             /// </summary>
-            /// <param name="dgView"></param>
-            /// <param name="dtRange"></param>
+            /// <param name="dgView">отрбражение данных</param>
+            /// <param name="dtRange">дата</param>
             public void CreateExcel(DataGridView dgView, DateTimeRange dtRange)
+            {
+                if (addWorkBooks())
+                {
+                    m_workBook.AfterSave += workBook_AfterSave;
+                    m_workBook.BeforeClose += workBook_BeforeClose;
+                    m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("Autobook");
+
+                    try
+                    {
+                        for (int i = 0; i < dgView.Columns.Count; i++)
+                        {
+                            int indxRow = 0;
+                            Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[i + 1];
+
+                            foreach (Excel.Range cell in colRange.Cells)
+                                if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
+                                {
+                                    fillSheetExcel(colRange, dgView, i, cell.Row);
+                                    break;
+                                }
+                            indxRow++;
+                        }
+                        //
+                        setPlanMonth(m_wrkSheet, dgView, dtRange);
+                        m_excApp.Visible = true;
+                        System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+                    }
+                    catch (Exception e)
+                    {
+                        CloseExcel();
+                        MessageBox.Show("Ошибка экспорта данных!");
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Подключение шаблона
+            /// </summary>
+            /// <returns>признак ошибки</returns>
+            private bool addWorkBooks()
             {
                 string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xlsx";
                 object pathToTemplateObj = pathToTemplate;
-                m_workBook = m_excApp.Workbooks.Add(pathToTemplate);
-                //
-                m_workBook.AfterSave += workBook_AfterSave;
-                m_workBook.BeforeClose += workBook_BeforeClose;
-                m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("Autobook");
-
+                bool bflag = true;
                 try
                 {
-                    for (int i = 0; i < dgView.Columns.Count; i++)
-                    {
-                        int indxRow = 0;
-                        Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[i + 1];
-
-                        foreach (Excel.Range cell in colRange.Cells)
-                            if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
-                            {
-                                fillSheetExcel(colRange, dgView, i, cell.Row);
-                                break;
-                            }
-                        indxRow++;
-                    }
-                    //
-                    setPlanMonth(m_wrkSheet, dgView, dtRange);
-                    m_excApp.Visible = true;
-                    System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+                    m_workBook = m_excApp.Workbooks.Add(pathToTemplate);
                 }
-                catch (Exception e)
+                catch (Exception exp)
                 {
                     CloseExcel();
+                    bflag = false;
+                    MessageBox.Show("Отсутствует шаблон для отчета Excel");
                 }
+                return bflag;
             }
 
             /// <summary>
