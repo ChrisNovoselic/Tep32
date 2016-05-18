@@ -142,7 +142,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.AddDays(-1).Day);
+        public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
         /// <summary>
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
@@ -371,7 +371,6 @@ namespace PluginTaskAutobook
                       Convert.ToDateTime(planOnMonth.Rows[0]["WR_DATETIME"].ToString()), dgvView);
                 else ;
 
-
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
                     DataRow[] dr_CorValues = formingCorValue(tbOrigin, dgvView.Rows[i].Cells["DATE"].Value.ToString(), m_currentOffSet);
@@ -389,7 +388,6 @@ namespace PluginTaskAutobook
                                 }
                                 else ;
                     }
-
 
                     for (int j = 0; j < tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count; j++)
                     {
@@ -977,7 +975,7 @@ namespace PluginTaskAutobook
                 reportDate = dtRange.Begin.AddHours(6).Date;//??
                 drReportDay =
                     sourceTable.Select(String.Format(sourceTable.Locale, @"WR_DATETIME = '{0:o}'", reportDate));
-                
+
                 if ((double)drReportDay.Length != 0)
                 {
                     bodyMsg = @"BEGIN " + "\r\n"
@@ -1985,7 +1983,7 @@ namespace PluginTaskAutobook
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = 2; //??? требуется прочитать из [profile]
+                    (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
@@ -2050,10 +2048,6 @@ namespace PluginTaskAutobook
             // очистить содержание представления
             clear();
             m_currentOffSet = Session.m_curOffsetUTC;
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
         }
 
         /// <summary>

@@ -333,8 +333,6 @@ namespace PluginTaskAutobook
                         + arQueryRanges[i].End.AddMonths(1).ToString(@"yyyyMM") + @"] v "
                         + @" ON v.ID_PUT = p.ID"
                         + @" WHERE  ID_TASK = " + (int)IdTask
-                        + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                        + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.AddMonths(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                         + @" AND v.ID_TIME = 24";
 
                 //  if (bLastItem == false)
@@ -748,6 +746,33 @@ namespace PluginTaskAutobook
                 + " AND ID_EXT = " + HUsers.Id;
 
             return Select(query, out err);
+        }
+
+        /// <summary>
+        /// Получение ID_PUT
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="arQueryRanges">отрезок времени</param>
+        /// <param name="idPeriod">период времени</param>
+        /// <param name="err">Индентификатор ошибки</param>
+        /// <returns>таблица с put'ами</returns>
+        public DataTable GetPlan(TaskCalculate.TYPE type
+            , DateTime arQueryDatetime
+            , ID_PERIOD idPeriod, out int err)
+        {
+            string strQuery = string.Empty;
+
+            strQuery = @"SELECT ID_PUT, ID_TIME,DATE_TIME"
+              + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
+              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
+              + @" ON a.ID = p.ID_ALG"
+              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                         + arQueryDatetime.ToString(@"yyyyMM") + @"] v "
+                         + @" ON p.ID = v.ID_PUT"
+                         + @" WHERE  ID_TASK = " + (int)IdTask
+                         + @" AND v.ID_TIME = " + (int)idPeriod;
+
+            return Select(strQuery, out err);
         }
     }
 
@@ -1191,31 +1216,5 @@ namespace PluginTaskAutobook
             return tableEdit;
         }
 
-        /// <summary>
-        /// Получение ID_PUT
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="arQueryRanges">отрезок времени</param>
-        /// <param name="idPeriod">период времени</param>
-        /// <param name="err">Индентификатор ошибки</param>
-        /// <returns>таблица с put'ами</returns>
-        public DataTable GetPlan(TaskCalculate.TYPE type
-            , DateTime arQueryDatetime
-            , ID_PERIOD idPeriod, out int err)
-        {
-            string strQuery = string.Empty;
-
-            strQuery = @"SELECT ID_PUT, ID_TIME,DATE_TIME"
-              + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
-              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
-              + @" ON a.ID = p.ID_ALG"
-              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                         + arQueryDatetime.ToString(@"yyyyMM") + @"] v "
-                         + @" ON p.ID = v.ID_PUT"
-                         + @" WHERE  ID_TASK = " + (int)IdTask
-                         + @" AND v.ID_TIME = " + (int)idPeriod;
-
-            return Select(strQuery, out err);
-        }
     }
 }
