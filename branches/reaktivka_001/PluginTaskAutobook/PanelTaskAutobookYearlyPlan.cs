@@ -651,7 +651,7 @@ namespace PluginTaskAutobook
             dgvYear.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvYear.AllowUserToResizeRows = false;
             dgvYear.AddColumn("Месяц", true, "Month");
-            dgvYear.AddColumn("Выработка, тыс. кВтч", false, "Output", 23218);
+            dgvYear.AddColumn("Выработка, тыс. кВтч", false, "Output", 23219);
             dgvYear.AddColumn("Дата", true, "DateTime");
             dgvYear.Columns["DateTime"].Visible = false;
             foreach (DataGridViewColumn column in dgvYear.Columns)
