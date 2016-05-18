@@ -31,7 +31,7 @@ namespace TepCommon
 
         #region Apelgans
 
-        int m_id_panel;
+        protected int m_id_panel;
         public enum ID_DT_DESC { TABLE, PROP };
         public DataTable[] Descriptions = new DataTable[] { new DataTable(), new DataTable() };
 
@@ -158,7 +158,8 @@ namespace TepCommon
                     {
                         desc = dt.Rows[0][0].ToString();
                         ((HPanelDesc)ctrl).SetLblTab = new string[] { /*((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id)*/
-                    this.Parent.Text, desc };
+                            this.Parent.Text, desc
+                        };
                     }
 
                     //Описания таблиц

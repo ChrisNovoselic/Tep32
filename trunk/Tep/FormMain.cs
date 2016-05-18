@@ -31,14 +31,14 @@ namespace Tep64
         /// <summary>
         /// Объект со списком загруженных библиотек
         /// </summary>
-        private static HPlugIns s_plugIns;
+        private static PlugIns s_plugIns;
         /// <summary>
         /// Конструктор - основной (без параметров)
         public FormMain() : base ()
         {
             InitializeComponent();
 
-            s_plugIns = new HPlugIns(FormMain_EvtDataAskedHost);
+            s_plugIns = new PlugIns(FormMain_EvtDataAskedHost);
 
             s_fileConnSett = new FIleConnSett(@"connsett.ini", FIleConnSett.MODE.FILE);
             s_listFormConnectionSettings = new List<FormConnectionSettings> ();
@@ -48,14 +48,10 @@ namespace Tep64
 
             if (! (idListener < 0))
             {
-                try {
-                    using (HTepUsers users = new HTepUsers(idListener)) { ; }
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, @"FormMain::FormMain() - new HTepUsers (iListenerId=" + idListener + @") ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
+                initProfiles(idListener);
 
-                ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
-                s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
+                //ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
+                //s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
             }
             else
                 ;
@@ -63,6 +59,21 @@ namespace Tep64
             DbSources.Sources().UnRegister(idListener);
 
             m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
+        }
+        /// <summary>
+        /// Инициализация пользовательских настроек
+        /// </summary>
+        /// <param name="iListenerId">Идентификатор установленного соединения с БД</param>
+        private void initProfiles(int iListenerId)
+        {
+            try
+            {
+                using (HTepUsers users = new HTepUsers(iListenerId)) { ; }
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, @"FormMain::initProfiles(iListenerId=" + iListenerId + @") - new HTepUsers () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
         /// <summary>
         /// ??? Обязательное переопределение от 'FormMainBaseWithStatusStrip'
@@ -80,7 +91,7 @@ namespace Tep64
         {
             PlugInMenuItem plugIn;
             string ids = HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS)
-                , strNameOwnerMenuItem = string.Empty, strNameMenuItem = string.Empty;
+                /*/*, strNameOwnerMenuItem = string.Empty, strNameMenuItem = string.Empty*/;
             string[] arIds = ids.Split(new char [] {','}, StringSplitOptions.RemoveEmptyEntries);
             ////Вариант №1
             //ToolStripItem[] menuItems;
@@ -102,14 +113,16 @@ namespace Tep64
                         continue;
                     else
                         ;
-                    strNameOwnerMenuItem = plugIn.GetNameOwnerMenuItem (id);
-                    strNameMenuItem = plugIn.GetNameMenuItem (id);
+                    ////strNameOwnerMenuItem = plugIn.GetNameOwnerMenuItem (id);
+                    //strNameMenuItem = plugIn.GetNameMenuItem (id);
 
                     ////Вариант №1
                     //menuItems = this.MainMenuStrip.Items.Find(strNameMenuItem, true);
                     //menuItem = menuItems[0];
-                    //Вариант №2
-                    menuItem = FindMainMenuItemOfText(strNameMenuItem);
+                    ////Вариант №2
+                    //menuItem = FindMainMenuItemOfText(strNameMenuItem);
+                    //Вариант №3
+                    menuItem = findMainMenuItemOfTag(id);
 
                     if ((menuItem as ToolStripMenuItem).Checked == false)
                     {
@@ -122,6 +135,67 @@ namespace Tep64
                 else
                     Logging.Logg().Warning(@"FormMain::loadProfile () - не удалось загрузить plugIn.Id=" + id + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
+        }
+        /// <summary>
+        /// Найти рекурсивно элемент (пункт) меню по "прикрепленному" к элементу меню объекту
+        /// </summary>
+        /// <param name="miParent"></param>
+        /// <param name="tag"></param>
+        /// <returns></returns>
+        private ToolStripMenuItem findMainMenuItemOfTag(ToolStripMenuItem miParent, object tag)
+        {
+            //Результат 
+            ToolStripMenuItem itemRes = null;
+
+            //Цикл по всем элементам пункта меню
+            foreach (ToolStripItem mi in miParent.DropDownItems)
+                if (mi is ToolStripMenuItem)
+                    // т.к. объект 'tag' - идентификатор панели
+                    if ((! (mi.Tag == null))
+                        && ((int)mi.Tag == (int)tag))
+                    {
+                        itemRes = mi as ToolStripMenuItem;
+                        break;
+                    }
+                    else
+                        //Проверить наличие подменю
+                        if (((ToolStripMenuItem)mi).DropDownItems.Count > 0)
+                        {
+                            //Искать элемент в подменю
+                            itemRes = findMainMenuItemOfTag(mi as ToolStripMenuItem, tag);
+
+                            if (!(itemRes == null))
+                                break;
+                            else
+                                ;
+                        }
+                        else
+                            ;
+                else
+                    ;
+
+            return itemRes;
+        }
+        /// <summary>
+        /// Найти элемент (пункт) главного меню по "прикрепленному" к элементу меню объекту
+        /// </summary>
+        /// <param name="tag">Шаблон объекта для поиска</param>
+        /// <returns>Элемент (пункт) меню</returns>
+        private ToolStripMenuItem findMainMenuItemOfTag(object tag)
+        {
+            ToolStripMenuItem itemRes = null;
+
+            foreach (ToolStripMenuItem mi in MainMenuStrip.Items)
+            {
+                itemRes = findMainMenuItemOfTag(mi, tag);
+
+                if (!(itemRes == null))
+                    break;
+                else
+                    ;
+            }
+
+            return itemRes;
         }
         /// <summary>
         /// Обработчик события - выбор п. меню 'Файл - Профиль - Загрузить'
@@ -279,18 +353,35 @@ namespace Tep64
         private void stopTabPages()
         {
             foreach (TabPage page in m_TabCtrl.TabPages)
-                FindMainMenuItemOfText(page.Text.Trim()).PerformClick();
+                //FindMainMenuItemOfText(page.Text.Trim()).PerformClick();
+                findMainMenuItemOfTag(m_TabCtrl.GetTabPageId(m_TabCtrl.TabPages.IndexOf(page))).PerformClick();
         }
 
         private void removePluginMenuItem()
         {
+            List <string> listPluginMenuItem = null;
+
+            listPluginMenuItem = s_plugIns.GetListNameMenuItems();
+
+            foreach (string item in listPluginMenuItem)
+                RemoveMainMenuItemOfText(item);
+        }
+        /// <summary>
+        /// Закрыть/удалить текущие вкладки, п. меню, загруженные библиотеки
+        /// </summary>
+        private void stop()
+        {
+            // удалить все вкладки, остановить таймер (если есть)
+            stopTabPages();
+            //Удалить все пункты меню
+            removePluginMenuItem();
+            //Выгрузить библиотеки
+            s_plugIns.Unload();
         }
 
         protected override void Stop()
         {
-            stopTabPages();
-
-            //s_plugIns.Unload();
+            stop();
             
             base.Stop();
         }
@@ -349,7 +440,7 @@ namespace Tep64
             string strUserDomainName = string.Empty;
             string []arIdFPanels = null;
 
-            idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, @"MAIN_DB");
+            idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString ());
 
             initializeLogging ();
 
@@ -370,7 +461,7 @@ namespace Tep64
                         iKeyPlugIn = s_plugIns.GetKeyOfIdFPanel(iKeyFPanel);
                         if (!(iKeyPlugIn < 0))
                         {
-                            arHierarchyOwnerMenuItems = s_plugIns[iKeyPlugIn].GetNameOwnerMenuItem(iKeyFPanel).Split(new char[] { '\\' }, StringSplitOptions.None);
+                            arHierarchyOwnerMenuItems = (s_plugIns[iKeyPlugIn] as PlugInMenuItem).GetNameOwnerMenuItem(iKeyFPanel).Split(new char[] { '\\' }, StringSplitOptions.None);
                             //Поиск пункта "родительского" пункта меню для плюг'ина
                             miOwner = FindMainMenuItemOfText(arHierarchyOwnerMenuItems[0]);
                             //Проверка найден ли "родительский" пункт меню для плюг'ина
@@ -407,10 +498,10 @@ namespace Tep64
                                 miOwner = miItem;
                             }
                             //Добавить пункт меню для плюг'ина
-                            miItem = miOwner.DropDownItems.Add(s_plugIns[iKeyPlugIn].GetNameMenuItem(iKeyFPanel)) as ToolStripMenuItem;
+                            miItem = miOwner.DropDownItems.Add((s_plugIns[iKeyPlugIn] as PlugInMenuItem).GetNameMenuItem(iKeyFPanel)) as ToolStripMenuItem;
                             miItem.Tag = iKeyFPanel;
                             //Обработку выбора пункта меню предоставить плюг'ину
-                            miItem.Click += s_plugIns[iKeyPlugIn].OnClickMenuItem; //postOnClickMenuItem;
+                            miItem.Click += (s_plugIns[iKeyPlugIn] as PlugInMenuItem).OnClickMenuItem; //postOnClickMenuItem;
                             //Добавить обработчик запросов для плюг'ина от главной формы
                             // только ОДИН раз
                             if ((s_plugIns[iKeyPlugIn] as PlugInBase).IsEvtDataAskedHostHandled == false)
@@ -471,7 +562,7 @@ namespace Tep64
         private void postOnClickMenuItem (object obj) {
             int idPlugIn = (int)((EventArgsDataHost)obj).id_main
                 , idFPanel = (int)((EventArgsDataHost)obj).id_detail;
-            PlugInMenuItem plugIn = s_plugIns[idPlugIn];
+            PlugInMenuItem plugIn = s_plugIns[idPlugIn] as PlugInMenuItem;
             bool bMenuItemChecked =
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked =
                 ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
@@ -524,8 +615,11 @@ namespace Tep64
             //FindMainMenuItemOfText (e.TabHeaderText).Checked = false;
             //m_TabCtrl.TabPages.RemoveAt (e.TabIndex);
 
-            //Вариант №2
-            FindMainMenuItemOfText (e.TabHeaderText).PerformClick ();
+            ////Вариант №2
+            //FindMainMenuItemOfText (e.TabHeaderText).PerformClick ();
+
+            //Вариант №3
+            findMainMenuItemOfTag(e.Id).PerformClick();
         }
         /// <summary>
         /// Дополнительная инициализация компонентов формы
@@ -573,26 +667,28 @@ namespace Tep64
         /// <param name="type">Индекс параметров соединения с БД</param>
         /// <returns>Результат выполнения функции</returns>
         private int connectionSettings (CONN_SETT_TYPE type) {
-            int iRes = -1;
+            int iRes = -1
+                , idListener = -1;
             DialogResult result;
             //Отобразить окно с параметрами соединения
             result = s_listFormConnectionSettings[(int)type].ShowDialog(this);
             if (result == DialogResult.Yes)
             {
-                // удалить все вкладки, остановить таймер (если есть)
-                Stop ();
-
-                //Удалить все пункты меню
-                removePluginMenuItem();
-
-                //Очистить/выгрузить список плюгИнов
+                //Очистить/выгрузить список плюгИнов, пункты меню
+                stop();                
 
                 iRes = s_listFormConnectionSettings[(int)type].Ready;
 
                 string msg = string.Empty;
                 if (iRes == 0)
                 {
-                    iRes = Initialize(out msg);
+                    // персонализация в новой БД - аналог в конструкторе формы
+                    idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)type].getConnSett(), false, type.ToString());
+                    initProfiles(idListener);
+                    // закрыть соединение с новой БД
+                    DbSources.Sources().UnRegister(idListener);
+
+                    iRes = Initialize(out msg);                    
                 }
                 else
                 {
@@ -615,7 +711,8 @@ namespace Tep64
         {
             //'Activate(false)' и 'Stop' вызываются в 'PlugIn'-е
             //activatePlugIn (m_TabCtrl.GetTabPageId(iPrevSelectedindex), false);
-            activateFPanel (m_TabCtrl.GetTabPageId(), true);            
+            activateFPanel(m_TabCtrl.GetTabPageId(iPrevSelectedindex), false);
+            activateFPanel (m_TabCtrl.GetTabPageId(), true);
         }
 
         private void activateFPanel(int id_fpanel, bool bActivate)
