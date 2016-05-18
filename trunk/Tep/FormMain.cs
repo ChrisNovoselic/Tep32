@@ -376,7 +376,7 @@ namespace Tep64
             //Удалить все пункты меню
             removePluginMenuItem();
             //Выгрузить библиотеки
-            s_plugIns.Unload();
+            s_plugIns.UnloadPlugIn ();
         }
 
         protected override void Stop()
