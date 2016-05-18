@@ -714,7 +714,7 @@ namespace TepCommon
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
         ///  , структура таблицы совместима с [inval], [outval]
         /// </summary>
-        public virtual string getQueryValuesVar(TaskCalculate.TYPE type
+        public virtual string GetQueryValuesVar(TaskCalculate.TYPE type
             , ID_PERIOD idPeriod
             , int cntBasePeriod
             , DateTimeRange[] arQueryRanges)
@@ -849,7 +849,7 @@ namespace TepCommon
             err = -1;
 
             tableRes = DbTSQLInterface.Select(ref _dbConnection
-                , getQueryValuesVar(type
+                , GetQueryValuesVar(type
                     , idPeriod
                     , cntBasePeriod
                     , arQueryRanges)

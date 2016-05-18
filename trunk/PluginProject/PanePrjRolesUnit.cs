@@ -615,7 +615,7 @@ namespace PluginProject
                             break;
                     }
 
-                    m_handlerDb.RecUpdateInsertDelete(getNameMode(i), keys, string.Empty, m_arr_origTable[(int)i], m_arr_editTable[(int)i], out err);
+                    m_handlerDb.RecUpdateInsertDelete(getNameMode(i), keys, "",m_arr_origTable[(int)i], m_arr_editTable[(int)i], out err);
                 }
 
                 fillDataTable();

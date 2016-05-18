@@ -201,7 +201,7 @@ namespace TepCommon
 
             if (!(iRegDbConn < 0))
             {
-                DbTSQLInterface.RecUpdateInsertDelete(ref _dbConnection, nameTable, strKeyFields, string.Empty, tblOrigin, tblEdit, out err);
+                DbTSQLInterface.RecUpdateInsertDelete(ref _dbConnection, nameTable, strKeyFields, unchangeableColumn, tblOrigin, tblEdit, out err);
             }
             else
                 ;

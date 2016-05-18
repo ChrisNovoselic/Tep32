@@ -281,18 +281,23 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         private void cbxDay_onSelectedIndexChanged(object obj, EventArgs ev)
         {
-            
-            _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
-            _value[(int)INDEX_VALUE.CURRENT] = new DateTime(
-                _value[(int)INDEX_VALUE.CURRENT].Year
-                , _value[(int)INDEX_VALUE.CURRENT].Month
-                , (obj as ComboBox).SelectedIndex + 1
-                , _value[(int)INDEX_VALUE.CURRENT].Hour
-                , 0
-                , 0
-            );
+            if (true)
+            {
+                _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
+                _value[(int)INDEX_VALUE.CURRENT] = new DateTime(
+                    _value[(int)INDEX_VALUE.CURRENT].Year
+                    , _value[(int)INDEX_VALUE.CURRENT].Month
+                    , (obj as ComboBox).SelectedIndex + 1
+                    , _value[(int)INDEX_VALUE.CURRENT].Hour
+                    , 0
+                    , 0
+                );//??
 
-            onSelectedIndexChanged();
+                onSelectedIndexChanged();
+            }
+            else
+                MessageBox.Show("");
+
         }
 
         /// <summary>

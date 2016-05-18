@@ -16,7 +16,7 @@ namespace PluginTaskAutobook
         {
             _Id = 23;
 
-            register(23, typeof(PanelTaskAutobookMonthValues), @"Задача\Учет активной э/э", @"По-месячно");
+            register(23, typeof(PanelTaskAutobookMonthValues), @"Задача\Учет активной э/э", @"Помесячно");
             register(29, typeof(PanelTaskAutobookYearlyPlan), @"Задача\Учет активной э/э", @"Годовой план");            
         }
 
