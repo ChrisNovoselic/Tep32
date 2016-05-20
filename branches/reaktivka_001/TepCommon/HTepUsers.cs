@@ -371,7 +371,6 @@ namespace TepCommon
             return strQuery;
         }
 
-
         /// <summary>
         /// Функция запроса для поиска пользователя
         /// </summary>

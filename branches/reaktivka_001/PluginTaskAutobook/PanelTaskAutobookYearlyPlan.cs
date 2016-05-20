@@ -290,7 +290,7 @@ namespace PluginTaskAutobook
             public void ClearValues()
             {
                 foreach (HDataGridViewColumn c in Columns)
-                    if (c.m_iIdComp == 23218)
+                    if (c.m_iIdComp == 23219)
                         foreach (DataGridViewRow row in Rows)
                             row.Cells[c.Index].Value = null;
 
@@ -304,6 +304,7 @@ namespace PluginTaskAutobook
             /// <param name="dgvView">контрол</param>
             public void ShowValues(DataTable tbOrigin, DataGridView dgvView)
             {
+                ClearValues();
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
                     for (int j = 0; j < tbOrigin.Rows.Count; j++)
@@ -398,8 +399,6 @@ namespace PluginTaskAutobook
                 TXTBX_EMAIL
                 , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN,
                 HDTP_END
-                                , MENUITEM_UPDATE,
-                MENUITEM_HISTORY
                     , COUNT
             }
 
@@ -620,7 +619,6 @@ namespace PluginTaskAutobook
             : base(iFunc)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
-            //AutoBookCalc = new TaskAutobookCalculate();
 
             m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
@@ -884,10 +882,10 @@ namespace PluginTaskAutobook
             string errMsg = string.Empty;
             DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
-            if (rangeCheking(dtrGet))
-                MessageBox.Show("Выбранный диапазон месяцев неверен");
-            else
-            {
+            //if (rangeCheking(dtrGet))
+            //    MessageBox.Show("Выбранный диапазон месяцев неверен");
+            //else
+            //{
                 m_handlerDb.RegisterDbConnection(out iRegDbConn);
                 clear();
 
@@ -924,7 +922,7 @@ namespace PluginTaskAutobook
                     m_handlerDb.UnRegisterDbConnection();
                 else
                     ;
-            }
+            //}
         }
 
         /// <summary>
@@ -1108,6 +1106,7 @@ namespace PluginTaskAutobook
             //    updateDataValues();
             //else ;
         }
+
         /// <summary>
         /// Установить новое значение для текущего периода
         /// </summary>
@@ -1279,17 +1278,6 @@ namespace PluginTaskAutobook
             return strRes;
         }
 
-        /// <summary>
-        /// обработчик кнопки-архивные значения
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
-        private void hPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
-        {
-            m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
-
-            onButtonLoadClick();
-        }
 
         /// <summary>
         /// оброботчик события кнопки

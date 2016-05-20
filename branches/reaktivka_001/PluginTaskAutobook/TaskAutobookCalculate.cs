@@ -556,7 +556,7 @@ namespace PluginTaskAutobook
                       + rowSel[@"ID_PUT"] + @"," //ID_PUT
                       + rowSel[@"QUALITY"] + @"," //QUALITY
                       + rowSel[@"VALUE"] + @"," + //VALUE
-                    "'" + rowSel[@"WR_DATETIME"] + "',"
+                    "'" + Convert.ToDateTime(rowSel[@"WR_DATETIME"]).ToString(CultureInfo.InvariantCulture) + "',"
                       + rowSel[@"EXTENDED_DEFINITION"]
                       ;
 
@@ -655,9 +655,10 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="tableOrigin">первичная таблица</param>
         /// <param name="tableRes">таблица с параметрами</param>
+        /// <param name="tableRes">timezone</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
-        public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes, out int err)
+        public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes, int idTZ , out int err)
         {
             err = -1;
             DataTable tableEdit = new DataTable();
@@ -676,9 +677,9 @@ namespace PluginTaskAutobook
                         , rowSel
                         , HUsers.Id.ToString()
                         , 0.ToString()
-                        , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
+                        , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).AddHours(_Session.m_curOffsetUTC).ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , ID_TIMEZONE.NSK
+                        , idTZ
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]               
                         , DateTime.Now
@@ -735,44 +736,34 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="IdTab">Ид панели</param>
         /// <returns>таблица данных</returns>
-        public DataTable GetProfilesContext(int IdTab)
+        public DataTable GetProfilesContext()
         {
             string query = string.Empty;
             int err = -1;
 
-            query = @"SELECT VALUE,ID_CONTEXT"
-                + @" FROM [TEP_NTEC_5].[dbo].[profiles]"
-                + @" WHERE ID_TAB = " + IdTab
-                + " AND ID_EXT = " + HUsers.Id;
+            query = @"SELECT * "
+                + @"FROM [TEP_NTEC_5].[dbo].[profiles] "
+                + @"WHERE ID_EXT = " + HTepUsers.Role;
 
             return Select(query, out err);
         }
 
         /// <summary>
-        /// Получение ID_PUT
+        /// 
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="arQueryRanges">отрезок времени</param>
-        /// <param name="idPeriod">период времени</param>
-        /// <param name="err">Индентификатор ошибки</param>
-        /// <returns>таблица с put'ами</returns>
-        public DataTable GetPlan(TaskCalculate.TYPE type
-            , DateTime arQueryDatetime
-            , ID_PERIOD idPeriod, out int err)
+        /// <returns></returns>
+        public DataTable GetCompoent(out int err)
         {
             string strQuery = string.Empty;
+            err = -1;
 
-            strQuery = @"SELECT ID_PUT, ID_TIME,DATE_TIME"
-              + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
-              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
-              + @" ON a.ID = p.ID_ALG"
-              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                         + arQueryDatetime.ToString(@"yyyyMM") + @"] v "
-                         + @" ON p.ID = v.ID_PUT"
-                         + @" WHERE  ID_TASK = " + (int)IdTask
-                         + @" AND v.ID_TIME = " + (int)idPeriod;
+            strQuery = "SELECT p.[ID], p.[ID_COMP] "
+                + "FROM [dbo].[inalg] a "
+                + "LEFT JOIN [dbo].[input] p "
+                + @"ON a.ID = p.ID_ALG "
+                + @"WHERE  ID_TASK = 6 AND ID_COMP BETWEEN 100 AND 1000";
 
-            return Select(strQuery, out err);
+            return Select(strQuery, out err); ;
         }
     }
 
