@@ -478,6 +478,7 @@ namespace PluginTaskTepMain
             // очистить содержание представления
                 m_dgvValues.ClearValues();
         }
+
         /// <summary>
         /// Обработчик события - нажатие кнопки "Результирующее действие - К макету"
         /// </summary>
