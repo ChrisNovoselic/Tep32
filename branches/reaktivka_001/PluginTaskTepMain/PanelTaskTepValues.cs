@@ -145,6 +145,7 @@ namespace PluginTaskTepMain
 
             m_dgvValues.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
         }
+
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
         /// </summary>
@@ -763,6 +764,7 @@ namespace PluginTaskTepMain
                     Logging.Logg().Exception(e, @"DataGridViewTEPValues::AddColumn (id_comp=" + id_comp + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
+
             /// <summary>
             /// Добавить строку в таблицу
             /// </summary>
@@ -796,6 +798,7 @@ namespace PluginTaskTepMain
                 // установить значение для всплывающей подсказки
                 Rows[i].HeaderCell.ToolTipText = rowProp.m_strToolTipText;
             }
+
             /// <summary>
             /// Возвратить цвет ячейки по номеру столбца, строки
             /// </summary>
@@ -843,6 +846,7 @@ namespace PluginTaskTepMain
 
                 return bRes;
             }
+
             /// <summary>
             /// Возвратить цвет ячейки по номеру столбца, строки
             /// </summary>
@@ -889,6 +893,7 @@ namespace PluginTaskTepMain
 
                 return bRes;
             }
+
             /// <summary>
             /// Возвратить цвет ячейки по номеру столбца, строки
             /// </summary>
@@ -923,6 +928,7 @@ namespace PluginTaskTepMain
 
                 return bRes;
             }
+
             /// <summary>
             /// Обновить структуру таблицы
             /// </summary>
@@ -1017,6 +1023,7 @@ namespace PluginTaskTepMain
                 else
                     ; // нет элемента для изменения стиля
             }
+
             /// <summary>
             /// Отобразить значения
             /// </summary>
@@ -1096,6 +1103,7 @@ namespace PluginTaskTepMain
 
                 CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
             }
+
             /// <summary>
             /// Очистить содержание представления (например, перед )
             /// </summary>
@@ -1491,6 +1499,7 @@ namespace PluginTaskTepMain
 
                 return ctrlRes;
             }
+
             /// <summary>
             /// Найти элемент управления на панели идентификатору
             /// </summary>
@@ -1504,6 +1513,7 @@ namespace PluginTaskTepMain
 
                 return ctrlRes;
             }
+
             /// <summary>
             /// Возвратить идентификатор элемента управления по идентификатору
             ///  , используемого для его заполнения
@@ -1600,6 +1610,7 @@ namespace PluginTaskTepMain
                 else
                     ;
             }
+
             /// <summary>
             /// Добавить элемент компонент станции в списки
             ///  , в соответствии с 'arIndexIdToAdd'
@@ -1735,6 +1746,7 @@ namespace PluginTaskTepMain
                 /// </summary>
                 void ClearItems();
             }
+
             /// <summary>
             /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
             /// </summary>
@@ -1750,10 +1762,12 @@ namespace PluginTaskTepMain
                 {
                     m_listId = new List<int>();
                 }
+
                 /// <summary>
                 /// Идентификатор выбранного элемента списка
                 /// </summary>
                 public int SelectedId { get { return m_listId[SelectedIndex]; } }
+
                 /// <summary>
                 /// Добавить элемент в список
                 /// </summary>
@@ -1765,6 +1779,7 @@ namespace PluginTaskTepMain
                     Items.Add(text, bChecked);
                     m_listId.Add(id);
                 }
+
                 /// <summary>
                 /// Удалить все элементы в списке
                 /// </summary>

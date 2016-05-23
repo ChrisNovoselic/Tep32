@@ -153,21 +153,18 @@ namespace PluginTaskAutobook
         {
             return new PanelManagementAutobook();
         }
-
         /// <summary>
         /// Отображение значений в табличном представлении(значения)
         /// </summary>
-        protected DGVAutoBook dgvAB;
-
+        protected DGVAutoBook m_dgvAB;
         /// <summary>
         /// to Outlook
         /// </summary>
-        protected ReportsToNSS rptsNSS;
-
+        protected ReportsToNSS m_rptsNSS;
         /// <summary>
         /// to Excel
         /// </summary>
-        protected ReportExcel rptExcel;
+        protected ReportExcel m_rptExcel;
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
@@ -1491,22 +1488,22 @@ namespace PluginTaskAutobook
             SuspendLayout();
 
             posRow = 0;
-            dgvAB = new DGVAutoBook(INDEX_CONTROL.DGV_DATA.ToString());
-            dgvAB.Dock = DockStyle.Fill;
-            dgvAB.Name = INDEX_CONTROL.DGV_DATA.ToString();
-            dgvAB.AllowUserToResizeRows = false;
-            dgvAB.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvAB.AddColumn("Дата", true, "Date");
-            dgvAB.AddColumn("Корректировка ПТО, Блоки 1-2", false, "CorGTP12", 23226);
-            dgvAB.AddColumn("Корректировка ПТО, Блоки 3-6", false, "CorGTP36", 23227);
-            dgvAB.AddColumn("Блоки 1-2", true, INDEX_GTP.GTP12.ToString());
-            dgvAB.AddColumn("Блоки 3-6", true, INDEX_GTP.GTP36.ToString());
-            dgvAB.AddColumn("Станция,\r\nсутки", true, INDEX_GTP.TEC.ToString());
-            dgvAB.AddColumn("Станция,\r\nнараст.", true, "StSwen");
-            dgvAB.AddColumn("План нараст.", true, "PlanSwen");
-            dgvAB.AddColumn("Отклонение от плана", true, "DevOfPlan");
-            this.Controls.Add(dgvAB, 4, posRow);
-            this.SetColumnSpan(dgvAB, 9); this.SetRowSpan(dgvAB, 10);
+            m_dgvAB = new DGVAutoBook(INDEX_CONTROL.DGV_DATA.ToString());
+            m_dgvAB.Dock = DockStyle.Fill;
+            m_dgvAB.Name = INDEX_CONTROL.DGV_DATA.ToString();
+            m_dgvAB.AllowUserToResizeRows = false;
+            m_dgvAB.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            m_dgvAB.AddColumn("Дата", true, "Date");
+            m_dgvAB.AddColumn("Корректировка ПТО, Блоки 1-2", false, "CorGTP12", 23226);
+            m_dgvAB.AddColumn("Корректировка ПТО, Блоки 3-6", false, "CorGTP36", 23227);
+            m_dgvAB.AddColumn("Блоки 1-2", true, INDEX_GTP.GTP12.ToString());
+            m_dgvAB.AddColumn("Блоки 3-6", true, INDEX_GTP.GTP36.ToString());
+            m_dgvAB.AddColumn("Станция,\r\nсутки", true, INDEX_GTP.TEC.ToString());
+            m_dgvAB.AddColumn("Станция,\r\nнараст.", true, "StSwen");
+            m_dgvAB.AddColumn("План нараст.", true, "PlanSwen");
+            m_dgvAB.AddColumn("Отклонение от плана", true, "DevOfPlan");
+            this.Controls.Add(m_dgvAB, 4, posRow);
+            this.SetColumnSpan(m_dgvAB, 9); this.SetRowSpan(m_dgvAB, 10);
             //
             this.Controls.Add(PanelManagementAB, 0, posRow);
             this.SetColumnSpan(PanelManagementAB, posColdgvTEPValues);
@@ -1531,8 +1528,8 @@ namespace PluginTaskAutobook
             (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
                  new EventHandler(PanelTaskAutobookMonthValues_btnexport_Click);
 
-            dgvAB.CellParsing += dgvAB_CellParsing;
-            dgvAB.SelectionChanged += dgvAB_SelectionChanged;
+            m_dgvAB.CellParsing += dgvAB_CellParsing;
+            m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
         }
 
         /// <summary>
@@ -1570,8 +1567,8 @@ namespace PluginTaskAutobook
         /// <param name="e"></param>
         void PanelTaskAutobookMonthValues_btnexport_Click(object sender, EventArgs e)
         {
-            rptExcel = new ReportExcel();//
-            rptExcel.CreateExcel(dgvAB, Session.m_rangeDatetime);
+            m_rptExcel = new ReportExcel();//
+            m_rptExcel.CreateExcel(m_dgvAB, Session.m_rangeDatetime);
         }
 
         /// <summary>
@@ -1581,13 +1578,13 @@ namespace PluginTaskAutobook
         /// <param name="e"></param>
         void PanelTaskAutobookMonthValue_btnsend_Click(object sender, EventArgs e)
         {
-            rptsNSS = new ReportsToNSS();
+            m_rptsNSS = new ReportsToNSS();
             int err = -1;
             string toSend = (Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0] as TextBox).Text;
 
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.GetOutPut(out err));
-            rptsNSS.SendMailToNSS(m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+            m_dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), m_dgvAB, HandlerDb.GetOutPut(out err));
+            m_rptsNSS.SendMailToNSS(m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
             , Session.m_rangeDatetime, toSend);
         }
 
@@ -1604,50 +1601,50 @@ namespace PluginTaskAutobook
                 valueCor;
             int err = -1;
             int numMonth = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month
-                , day = dgvAB.Rows.Count;
+                , day = m_dgvAB.Rows.Count;
 
             if (e.Value.ToString() == string.Empty)
                 value = 0;
             else
                 value = Convert.ToDouble(e.Value);// *Math.Pow(10, 6);
 
-            valueCor = Convert.ToDouble(dgvAB.Rows[e.RowIndex].Cells[dgvAB.Columns[e.ColumnIndex].Name].Value);// *Math.Pow(10, 6);
+            valueCor = Convert.ToDouble(m_dgvAB.Rows[e.RowIndex].Cells[m_dgvAB.Columns[e.ColumnIndex].Name].Value);// *Math.Pow(10, 6);
 
-            switch (dgvAB.Columns[e.ColumnIndex].Name)
+            switch (m_dgvAB.Columns[e.ColumnIndex].Name)
             {
                 case "CorGTP12":
                     if (value == 0)
-                        dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value =
-                            Convert.ToDouble(dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value) - valueCor;
+                        m_dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value =
+                            Convert.ToDouble(m_dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value) - valueCor;
                     else
-                        dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value =
-                            (value - valueCor) + Convert.ToDouble(dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value);
+                        m_dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value =
+                            (value - valueCor) + Convert.ToDouble(m_dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value);
                     //корректировка значений
-                    dgvAB.editCells(e.RowIndex, Convert.ToInt32(dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value)
-                            , dgvAB, INDEX_GTP.GTP36.ToString());
+                    m_dgvAB.editCells(e.RowIndex, Convert.ToInt32(m_dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value)
+                            , m_dgvAB, INDEX_GTP.GTP36.ToString());
                     //сбор корр.значений
                     m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                        dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), dgvAB, Session.m_curOffsetUTC, value, e.ColumnIndex, e.RowIndex);
+                        m_dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), m_dgvAB, Session.m_curOffsetUTC, value, e.ColumnIndex, e.RowIndex);
                     //сбор значений
                     m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                        dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.GetOutPut(out err));
+                        m_dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), m_dgvAB, HandlerDb.GetOutPut(out err));
                     break;
                 case "CorGTP36":
                     if (value == 0)
-                        dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value =
-                            Convert.ToDouble(dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value) - valueCor;
+                        m_dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value =
+                            Convert.ToDouble(m_dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value) - valueCor;
                     else
-                        dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value =
-                             (value - valueCor) + Convert.ToDouble(dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value);
+                        m_dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value =
+                             (value - valueCor) + Convert.ToDouble(m_dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value);
                     //корректировка значений
-                    dgvAB.editCells(e.RowIndex, Convert.ToInt32(dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value)
-                            , dgvAB, INDEX_GTP.GTP12.ToString());
+                    m_dgvAB.editCells(e.RowIndex, Convert.ToInt32(m_dgvAB.Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value)
+                            , m_dgvAB, INDEX_GTP.GTP12.ToString());
                     //сбор корр.значений
                     m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                        dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), dgvAB, Session.m_curOffsetUTC, value, e.ColumnIndex, e.RowIndex);
+                        m_dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), m_dgvAB, Session.m_curOffsetUTC, value, e.ColumnIndex, e.RowIndex);
                     //сбор значений
                     m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                        dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), dgvAB, HandlerDb.GetOutPut(out err));
+                        m_dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), m_dgvAB, HandlerDb.GetOutPut(out err));
                     break;
                 default:
                     break;
@@ -1781,8 +1778,8 @@ namespace PluginTaskAutobook
                             //запись выходных значений во временную таблицу
                             HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
                             // отобразить значения
-                            dgvAB.ShowValues(m_arTableOrigin
-                                , dgvAB
+                            m_dgvAB.ShowValues(m_arTableOrigin
+                                , m_dgvAB
                                 , HandlerDb.GetPlanOnMonth(Type
                                 , dtrGet
                                 , ActualIdPeriod
@@ -1818,12 +1815,12 @@ namespace PluginTaskAutobook
         {
             //сохранить вых. знач. в DataTable
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                dgvAB.FillTableValueDay(HandlerDb.OutValues(out err)
-                   , dgvAB
+                m_dgvAB.FillTableValueDay(HandlerDb.OutValues(out err)
+                   , m_dgvAB
                    , HandlerDb.GetOutPut(out err));
             //сохранить вх.корр. знач. в DataTable
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), dgvAB, Session.m_curOffsetUTC);
+                m_dgvAB.FillTableCorValue(HandlerDb.OutValues(out err), m_dgvAB, Session.m_curOffsetUTC);
         }
 
         /// <summary>
@@ -2074,16 +2071,16 @@ namespace PluginTaskAutobook
         private void fillDaysGrid(DateTime date, int numMonth)
         {
             DateTime dt = new DateTime(date.Year, date.Month, 1);
-            dgvAB.SelectionChanged -= dgvAB_SelectionChanged;
-            dgvAB.ClearRows();
+            m_dgvAB.SelectionChanged -= dgvAB_SelectionChanged;
+            m_dgvAB.ClearRows();
 
             for (int i = 0; i < DayIsMonth; i++)
             {
-                dgvAB.AddRow();
-                dgvAB.Rows[i].Cells[0].Value = dt.AddDays(i).ToShortDateString();
+                m_dgvAB.AddRow();
+                m_dgvAB.Rows[i].Cells[0].Value = dt.AddDays(i).ToShortDateString();
             }
-            dgvAB.Rows[date.Day - 1].Selected = true;
-            dgvAB.SelectionChanged += dgvAB_SelectionChanged;
+            m_dgvAB.Rows[date.Day - 1].Selected = true;
+            m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
         }
 
         /// <summary>
@@ -2122,12 +2119,12 @@ namespace PluginTaskAutobook
                 cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
                 cbx.Items.Clear();
 
-                dgvAB.ClearRows();
+                m_dgvAB.ClearRows();
                 //dgvAB.ClearColumns();
             }
             else
                 // очистить содержание представления
-                dgvAB.ClearValues()
+                m_dgvAB.ClearValues()
                 ;
         }
 

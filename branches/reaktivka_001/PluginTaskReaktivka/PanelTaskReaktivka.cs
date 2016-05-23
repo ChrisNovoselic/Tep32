@@ -19,8 +19,7 @@ namespace PluginTaskReaktivka
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1,
-            DGV_DATA
-                , LABEL_DESC
+            DGV_DATA, LABEL_DESC
         }
         /// <summary>
         /// Индексы массива списков идентификаторов
@@ -28,18 +27,20 @@ namespace PluginTaskReaktivka
         protected enum INDEX_ID
         {
             UNKNOWN = -1,
-            PERIOD // идентификаторы периодов расчетов, использующихся на форме
-                ,
-            TIMEZONE // идентификаторы (целочисленные, из БД системы) часовых поясов
-                    ,
-            ALL_COMPONENT
-                //ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
-                //    , DENY_COMP_CALCULATED,
-                //DENY_PARAMETER_CALCULATED // запрещенных для расчета
-                //    , DENY_COMP_VISIBLED,
-                //DENY_PARAMETER_VISIBLED // запрещенных для отображения
-                , COUNT
+            PERIOD, // идентификаторы периодов расчетов, использующихся на форме
+            TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов
+            ALL_COMPONENT,
+            //ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
+            //DENY_COMP_CALCULATED, 
+            DENY_COMP_VISIBLED,
+            //DENY_PARAMETER_CALCULATED, // запрещенных для расчета
+            //DENY_PARAMETER_VISIBLED // запрещенных для отображения
+            COUNT
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         /// <summary>
         /// Перечисление - индексы таблиц со словарными величинами и проектными данными
         /// </summary>
@@ -47,11 +48,9 @@ namespace PluginTaskReaktivka
         {
             UNKNOWN = -1
             , PERIOD, TIMEZONE,
-            COMPONENT
-                ,
-            PARAMETER //_IN, PARAMETER_OUT
-                //, MODE_DEV/*, MEASURE*/,
-                ,
+            COMPONENT,
+            PARAMETER, //_IN, PARAMETER_OUT
+            //, MODE_DEV/*, MEASURE*/,
             RATIO
                , COUNT
         }
@@ -137,7 +136,10 @@ namespace PluginTaskReaktivka
         public PanelTaskReaktivka(IPlugIn iFunc)
             : base(iFunc)
         {
+            HandlerDb.IdTask = ID_TASK.REAKTIVKA;
+
             InitializeComponent();
+            Session.SetRangeDatetime(PanelManagmentReaktivka.s_dtDefaultAU, PanelManagmentReaktivka.s_dtDefaultAU.AddDays(1));
         }
 
         private void InitializeComponent()
@@ -147,24 +149,47 @@ namespace PluginTaskReaktivka
             string strPartLabelButtonDropDownMenuItem = string.Empty;
             int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
                 , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
-            int posColdgvTEPValues = 6;
+
+            SuspendLayout();
 
             this.Controls.Add(PanelManagementReak, 0, posRow);
             this.SetColumnSpan(PanelManagementReak, 4);
             this.SetRowSpan(PanelManagementReak, 9);
 
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
+
+            ResumeLayout(false);
+            PerformLayout();
+
+            Button btn = (Controls.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.BUTTON_LOAD.ToString(), true)[0] as Button);
+            btn.Click += // действие по умолчанию
+                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+            (btn.ContextMenuStrip.Items.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
+                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+            //(btn.ContextMenuStrip.Items.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
+            //    new EventHandler(HPanelTepCommon_btnHistory_Click);
+            (Controls.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
         }
 
         protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
+            string strItem = string.Empty;
+            int i = -1
+                , id_comp = -1;
+            Control ctrl = null;
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
             m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
             int role = (int)HTepUsers.Role;
+
+            INDEX_ID[] arIndxIdToAdd = new INDEX_ID[] {
+                        //INDEX_ID.DENY_COMP_CALCULATED,
+                        INDEX_ID.DENY_COMP_VISIBLED
+                    };
+            bool[] arChecked = new bool[arIndxIdToAdd.Length];
 
             DataRow[] drTZ =
                 HandlerDb.GetProfilesContext().Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + (int)HTepUsers.Role);
@@ -187,20 +212,41 @@ namespace PluginTaskReaktivka
                         break;
                 }
 
-            Control ctrl = null;
-            string strItem = string.Empty;
-            int i = -1;
             //Заполнить таблицы со словарными, проектными величинами
             string[] arQueryDictPrj = getQueryDictPrj();
+            //Заполнить элементы управления с компонентами станции
             for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
             {
                 m_arTableDictPrjs[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
 
                 if (!(err == 0))
                     break;
-                else
-                    ;
             }
+
+            foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
+            {
+                id_comp = (Int32)r[@"ID"];
+                m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
+                strItem = ((string)r[@"DESCRIPTION"]).Trim();
+                // установить признак участия в расчете компонента станции
+                //arChecked[0] = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
+                // установить признак отображения компонента станции
+                arChecked[0] = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
+                (PanelManagementReak as PanelManagmentReaktivka).AddComponent(id_comp
+                    , strItem
+                    , arIndxIdToAdd
+                    , arChecked);
+
+                //dgvReak.AddColumn(id_comp, strItem, arChecked[0]);
+            }
+
+            //Установить обработчик события - добавить параметр
+            //eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
+            // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
+            // компонента станции для элементов управления
+            (PanelManagementReak as PanelManagmentReaktivka).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED });
+
+            //m_dgvValues.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
             if (err == 0)
             {
@@ -265,6 +311,7 @@ namespace PluginTaskReaktivka
                         break;
                 }
         }
+
         /// <summary>
         /// Обработчик события - изменение часового пояса
         /// </summary>
@@ -345,7 +392,7 @@ namespace PluginTaskReaktivka
                 //TIMEZONE
                 , HandlerDb.GetQueryTimezones(m_strIdTimezones)
                 // список компонентов
-                , HandlerDb.GetQueryCompList()
+                , HandlerDb.GetQueryComp(Type)
                 // параметры расчета
                 //, HandlerDb.GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
                 //// настройки визуального отображения значений
@@ -366,7 +413,7 @@ namespace PluginTaskReaktivka
         /// </summary>
         /// <param name="iCtrl"></param>
         /// <param name="bClose"></param>
-        protected void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
+        protected virtual void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
         {
             ComboBox cbx = null;
             INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
@@ -375,6 +422,8 @@ namespace PluginTaskReaktivka
             //??? повторная проверка
             if (bClose == true)
             {
+                (PanelManagementReak as PanelManagmentReaktivka).Clear();
+
                 if (!(m_arTableDictPrjs == null))
                     for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
                     {
@@ -398,7 +447,7 @@ namespace PluginTaskReaktivka
                 cbx.Items.Clear();
 
                 dgvReak.ClearRows();
-                //dgvAB.ClearColumns();
+                //dgvReak.ClearColumns();
             }
             else
                 // очистить содержание представления
@@ -541,6 +590,26 @@ namespace PluginTaskReaktivka
             //dgvAB.SelectionChanged += dgvAB_SelectionChanged;
         }
 
+        // <summary>
+        // Очистить объекты, элементы управления от текущих данных
+        // </summary>
+        // <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
+        //  для возвращения предыдущего значения, при отказе пользователя от очистки</param>
+        // <param name="bClose">Признак полной/частичной очистки</param>
+        //protected override void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
+        //{
+        //    INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
+        //     в базовом классе 'indxCtrl' все равно не известен
+        //    base.clear(iCtrl, bClose);
+
+        //    if (bClose == true)
+        //    {
+        //        (PanelManagementReak as PanelManagmentReaktivka).Clear();
+        //    }
+        //    else
+        //        ;
+        //}
+
         /// <summary>
         /// 
         /// </summary>
@@ -551,23 +620,57 @@ namespace PluginTaskReaktivka
             /// </summary>
             public enum INDEX_CONTROL_BASE
             {
-                UNKNOWN = -1
-                    , BUTTON_SEND, BUTTON_SAVE,
-                BUTTON_LOAD,
-                BUTTON_EXPORT
-                    ,
-                TXTBX_EMAIL
-                    , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN,
-                HDTP_END
-                                , MENUITEM_UPDATE,
-                MENUITEM_HISTORY
-                    ,CLBX_COMP_VISIBLED
-                    , COUN
+                UNKNOWN = -1, 
+                BUTTON_SEND, BUTTON_SAVE,BUTTON_LOAD, BUTTON_EXPORT,
+                TXTBX_EMAIL,
+                CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END,
+                MENUITEM_UPDATE,MENUITEM_HISTORY,
+                CLBX_COMP_VISIBLED, CLBX_COMP_CALCULATED,
+                COUNT
             }
 
             public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
+            /// <summary>
+            /// Класс аргумента для события - изменение выбора запрет/разрешение
+            ///  для компонента/параметра при участии_в_расчете/отображении
+            /// </summary>
+            public class ItemCheckedParametersEventArgs : EventArgs
+            {
+                /// <summary>
+                /// Индекс в списке идентификаторов
+                ///  для получения ключа в словаре со значениями
+                /// </summary>
+                public INDEX_ID m_indxIdDeny;
+                /// <summary>
+                /// Идентификатор в алгоритме расчета
+                /// </summary>
+                public int m_idItem;
+                /// <summary>
+                /// Состояние элемента, связанного с компонентом/параметром_расчета
+                /// </summary>
+                public CheckState m_newCheckState;
+
+                public ItemCheckedParametersEventArgs(int idItem, INDEX_ID indxIdDeny, CheckState newCheckState)
+                    : base()
+                {
+                    m_idItem = idItem;
+                    m_indxIdDeny = indxIdDeny;
+                    m_newCheckState = newCheckState;
+                }
+            }
 
             public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
+            /// <summary>
+            /// Тип обработчика события - изменение выбора запрет/разрешение
+            ///  для компонента/параметра при участии_в_расчете/отображении
+            /// </summary>
+            /// <param name="ev">Аргумент события</param>
+            public delegate void ItemCheckedParametersEventHandler(ItemCheckedParametersEventArgs ev);
+            /// <summary>
+            /// Событие - изменение выбора запрет/разрешение
+            ///  для компонента/параметра при участии_в_расчете/отображении
+            /// </summary>
+            public event ItemCheckedParametersEventHandler ItemCheck;
 
             /// <summary>
             /// 
@@ -580,10 +683,10 @@ namespace PluginTaskReaktivka
             }
 
             public PanelManagmentReaktivka()
-                : base(3, 3)
+                : base(4, 3)
             {
                 InitializeComponents();
-                //(Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
+                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
             }
 
             private void InitializeComponents()
@@ -696,8 +799,8 @@ namespace PluginTaskReaktivka
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as System.Windows.Forms.Label).Text = @"Включить/исключить для отображения";
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
-                ctrl = new CheckedListBoxTaskTepValues();
+                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                ctrl = new CheckedListBoxTaskReaktivka();
                 ctrl.Name = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
@@ -793,14 +896,14 @@ namespace PluginTaskReaktivka
             /// <summary>
             /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
             /// </summary>
-            protected class CheckedListBoxTaskTepValues : CheckedListBox, IControl
+            protected class CheckedListBoxTaskReaktivka : CheckedListBox, IControl
             {
                 /// <summary>
                 /// Список для хранения идентификаторов переменных
                 /// </summary>
                 private List<int> m_listId;
 
-                public CheckedListBoxTaskTepValues()
+                public CheckedListBoxTaskReaktivka()
                     : base()
                 {
                     m_listId = new List<int>();
@@ -809,6 +912,7 @@ namespace PluginTaskReaktivka
                 /// Идентификатор выбранного элемента списка
                 /// </summary>
                 public int SelectedId { get { return m_listId[SelectedIndex]; } }
+
                 /// <summary>
                 /// Добавить элемент в список
                 /// </summary>
@@ -820,6 +924,7 @@ namespace PluginTaskReaktivka
                     Items.Add(text, bChecked);
                     m_listId.Add(id);
                 }
+
                 /// <summary>
                 /// Удалить все элементы в списке
                 /// </summary>
@@ -859,6 +964,208 @@ namespace PluginTaskReaktivka
                 /// Удалить все элементы в списке
                 /// </summary>
                 void ClearItems();
+            }
+
+            /// <summary>
+            /// Добавить элемент компонент станции в списки
+            ///  , в соответствии с 'arIndexIdToAdd'
+            /// </summary>
+            /// <param name="id">Идентификатор компонента</param>
+            /// <param name="text">Текст подписи к компоненту</param>
+            /// <param name="arIndexIdToAdd">Массив индексов в списке </param>
+            /// <param name="arChecked">Массив признаков состояния для элементов</param>
+            public void AddComponent(int id_comp, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
+            {
+                Control ctrl = null;
+
+                for (int i = 0; i < arIndexIdToAdd.Length; i++)
+                {
+                    ctrl = find(arIndexIdToAdd[i]);
+
+                    if (!(ctrl == null))
+                        (ctrl as CheckedListBoxTaskReaktivka).AddItem(id_comp, text, arChecked[i]);
+                    else
+                        Logging.Logg().Error(@"PanelManagmentReaktivka::AddComponent () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
+                }
+            }
+
+            /// <summary>
+            /// Найти элемент управления на панели по индексу идентификатора
+            /// </summary>
+            /// <param name="id">Индекс идентификатора, используемого для заполнения элемента управления</param>
+            /// <returns>Дочерний элемент управления</returns>
+            protected Control find(INDEX_ID id)
+            {
+                Control ctrlRes = null;
+
+                ctrlRes = find(getIndexControlOfIndexID(id));
+
+                return ctrlRes;
+            }
+
+            /// <summary>
+            /// Возвратить идентификатор элемента управления по идентификатору
+            ///  , используемого для его заполнения
+            /// </summary>
+            /// <param name="indxId"></param>
+            /// <returns></returns>
+            protected INDEX_CONTROL_BASE getIndexControlOfIndexID(INDEX_ID indxId)
+            {
+                INDEX_CONTROL_BASE indxRes = INDEX_CONTROL_BASE.UNKNOWN;
+
+                switch (indxId)
+                {
+                    //case INDEX_ID.DENY_COMP_CALCULATED:
+                    //    indxRes = INDEX_CONTROL_BASE.CLBX_COMP_CALCULATED;
+                    //    break;
+                    case INDEX_ID.DENY_COMP_VISIBLED:
+                        indxRes = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED;
+                        break;
+                    default:
+                        break;
+                }
+
+                return indxRes;
+            }
+
+            protected INDEX_ID getIndexIdOfControl(Control ctrl)
+            {
+                INDEX_CONTROL_BASE id = INDEX_CONTROL_BASE.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
+                INDEX_ID indxRes = INDEX_ID.UNKNOWN;
+
+                try
+                {
+                    //Определить идентификатор
+                    id = getIndexControl(ctrl);
+                    // , соответствующий изменившему состояние элементу 'CheckedListBox'
+                    switch (id)
+                    {
+                        //case INDEX_CONTROL.CLBX_COMP_CALCULATED:
+                        case INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED:
+                            indxRes = id == INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+
+                return indxRes;
+            }
+
+            /// <summary>
+            /// Найти элемент управления на панели идентификатору
+            /// </summary>
+            /// <param name="indxCtrl">Идентификатор элемента управления</param>
+            /// <returns></returns>
+            protected Control find(INDEX_CONTROL_BASE indxCtrl)
+            {
+                Control ctrlRes = null;
+
+                ctrlRes = Controls.Find(indxCtrl.ToString(), true)[0];
+
+                return ctrlRes;
+            }
+
+            public void ActivateCheckedHandler(bool bActive, INDEX_ID[] arIdToActivate)
+            {
+                for (int i = 0; i < arIdToActivate.Length; i++)
+                    activateCheckedHandler(bActive, arIdToActivate[i]);
+            }
+
+            protected virtual void activateCheckedHandler(bool bActive, INDEX_ID idToActivate)
+            {
+                INDEX_CONTROL_BASE indxCtrl = INDEX_CONTROL_BASE.UNKNOWN;
+                CheckedListBox clbx = null;
+
+                indxCtrl = getIndexControlOfIndexID(idToActivate);
+
+                if (!(indxCtrl == INDEX_CONTROL_BASE.UNKNOWN))
+                {
+                    clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
+
+                    if (bActive == true)
+                    {
+                        //clbx.SelectedIndexChanged += new EventHandler (onSelectedIndexChanged);
+                        clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
+                    }
+                    else
+                    {
+                        //clbx.SelectedIndexChanged -= onSelectedIndexChanged;
+                        clbx.ItemCheck -= onItemCheck;
+                    }
+                }
+                else
+                    ;
+            }
+
+            /// <summary>
+            /// Очистить
+            /// </summary>
+            public void Clear()
+            {
+                INDEX_ID[] arIndxIdToClear = new INDEX_ID[] {INDEX_ID.DENY_COMP_VISIBLED };
+
+                ActivateCheckedHandler(false, arIndxIdToClear);
+
+                Clear(arIndxIdToClear);
+            }
+
+            public void Clear(INDEX_ID[] arIdToClear)
+            {
+                for (int i = 0; i < arIdToClear.Length; i++)
+                    clear(arIdToClear[i]);
+            }
+
+            private void clear(INDEX_ID idToClear)
+            {
+                (find(idToClear) as IControl).ClearItems();
+            }
+
+            /// <summary>
+            /// Обработчик события - изменение состояния элемента списка
+            /// </summary>
+            /// <param name="obj">Объект, инициировавший событие (список)</param>
+            /// <param name="ev">Аргумент события</param>
+            protected void onItemCheck(object obj, ItemCheckEventArgs ev)
+            {
+                itemCheck((obj as IControl).SelectedId, getIndexIdOfControl(obj as Control), ev.NewValue);
+            }
+
+            protected INDEX_CONTROL_BASE getIndexControl(Control ctrl)
+            {
+                INDEX_CONTROL_BASE indxRes = INDEX_CONTROL_BASE.UNKNOWN;
+
+                string strId = (ctrl as Control).Name;
+
+                //if (strId.Equals(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString()) == true)
+                //    indxRes = INDEX_CONTROL.CLBX_COMP_CALCULATED;
+                //else
+                //    if (strId.Equals(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString()) == true)
+                //        indxRes = INDEX_CONTROL.CLBX_PARAMETER_CALCULATED;
+                //    else
+                        if (strId.Equals(INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED.ToString()) == true)
+                            indxRes = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED;
+                        //else
+                        //    if (strId.Equals(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString()) == true)
+                        //        indxRes = INDEX_CONTROL.CLBX_PARAMETER_VISIBLED;
+                            else
+                                throw new Exception(@"PanelTaskTepValues::getIndexControl () - не найден объект 'CheckedListBox'...");
+
+                return indxRes;
+            }
+
+            /// <summary>
+            /// Инициировать событие - изменение признака элемента
+            /// </summary>
+            /// <param name="address">Адрес элемента</param>
+            /// <param name="checkState">Значение признака элемента</param>
+            protected void itemCheck(int idItem, INDEX_ID indxIdDeny, CheckState checkState)
+            {
+                ItemCheck(new ItemCheckedParametersEventArgs(idItem, indxIdDeny, checkState));
             }
         }
 
