@@ -1125,6 +1125,7 @@ namespace PluginTaskTepMain
 
                 CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
             }
+
             /// <summary>
             /// обработчик события - изменение значения в ячейке
             /// </summary>

@@ -14,6 +14,10 @@ namespace PluginTaskReaktivka
     public class PanelTaskReaktivka : HPanelTepCommon
     {
         /// <summary>
+        /// флаг очистки отображения
+        /// </summary>
+        bool m_bflgClear = true;
+        /// <summary>
         /// Набор элементов
         /// </summary>
         protected enum INDEX_CONTROL
@@ -95,11 +99,11 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
-        private PanelManagmentReaktivka _panelManagement;
+        private PanelManagementReaktivka _panelManagement;
         /// <summary>
         /// Создание панели управления
         /// </summary>
-        protected PanelManagmentReaktivka PanelManagementReak
+        protected PanelManagementReaktivka PanelManagementReak
         {
             get
             {
@@ -115,9 +119,9 @@ namespace PluginTaskReaktivka
         /// Метод для создания панели с активными объектами управления
         /// </summary>
         /// <returns>Панель управления</returns>
-        private PanelManagmentReaktivka createPanelManagement()
+        private PanelManagementReaktivka createPanelManagement()
         {
-            return new PanelManagmentReaktivka();
+            return new PanelManagementReaktivka();
         }
 
         protected override HandlerDbValues createHandlerDb()
@@ -125,9 +129,9 @@ namespace PluginTaskReaktivka
             return new HandlerDbTaskReaktivkaCalculate();
         }
         /// <summary>
-        /// 
+        /// Экземпляр класса отображения данных
         /// </summary>
-        DGVReaktivka dgvReak;
+        DGVReaktivka m_dgvReak;
 
         /// <summary>
         /// 
@@ -138,12 +142,19 @@ namespace PluginTaskReaktivka
         {
             HandlerDb.IdTask = ID_TASK.REAKTIVKA;
 
+            m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+
             InitializeComponent();
-            Session.SetRangeDatetime(PanelManagmentReaktivka.s_dtDefaultAU, PanelManagmentReaktivka.s_dtDefaultAU.AddDays(1));
+            Session.SetRangeDatetime(PanelManagementReaktivka.s_dtDefaultAU, PanelManagementReaktivka.s_dtDefaultAU.AddDays(1));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         private void InitializeComponent()
         {
+            m_dgvReak = new DGVReaktivka(INDEX_CONTROL.DGV_DATA.ToString());
             Control ctrl = new Control(); ;
             // переменные для инициализации кнопок "Добавить", "Удалить"
             string strPartLabelButtonDropDownMenuItem = string.Empty;
@@ -156,21 +167,33 @@ namespace PluginTaskReaktivka
             this.SetColumnSpan(PanelManagementReak, 4);
             this.SetRowSpan(PanelManagementReak, 9);
 
+            this.Controls.Add(m_dgvReak, 5, posRow);
+            this.SetColumnSpan(m_dgvReak, 9);
+            this.SetRowSpan(m_dgvReak, 10);
+
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 
             ResumeLayout(false);
             PerformLayout();
 
-            Button btn = (Controls.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.BUTTON_LOAD.ToString(), true)[0] as Button);
+            Button btn = (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_LOAD.ToString(), true)[0] as Button);
             btn.Click += // действие по умолчанию
                 new EventHandler(HPanelTepCommon_btnUpdate_Click);
-            (btn.ContextMenuStrip.Items.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
+            (btn.ContextMenuStrip.Items.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(HPanelTepCommon_btnUpdate_Click);
             //(btn.ContextMenuStrip.Items.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
             //    new EventHandler(HPanelTepCommon_btnHistory_Click);
-            (Controls.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
+            (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
+
+            (PanelManagementReak as PanelManagementReaktivka).ItemCheck += new PanelManagementReaktivka.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
+
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="err"></param>
+        /// <param name="errMsg"></param>
         protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
@@ -222,7 +245,7 @@ namespace PluginTaskReaktivka
                 if (!(err == 0))
                     break;
             }
-
+            (PanelManagementReak as PanelManagementReaktivka).Clear();
             foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
             {
                 id_comp = (Int32)r[@"ID"];
@@ -232,19 +255,21 @@ namespace PluginTaskReaktivka
                 //arChecked[0] = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
                 // установить признак отображения компонента станции
                 arChecked[0] = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
-                (PanelManagementReak as PanelManagmentReaktivka).AddComponent(id_comp
+                (PanelManagementReak as PanelManagementReaktivka).AddComponent(id_comp
                     , strItem
                     , arIndxIdToAdd
                     , arChecked);
 
-                //dgvReak.AddColumn(id_comp, strItem, arChecked[0]);
+                if (m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count + 1 > m_dgvReak.Columns.Count)
+                    m_dgvReak.AddColumn(id_comp, strItem, strItem, false, arChecked[0]);
+
             }
 
             //Установить обработчик события - добавить параметр
             //eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
             // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
             // компонента станции для элементов управления
-            (PanelManagementReak as PanelManagmentReaktivka).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED });
+            (PanelManagementReak as PanelManagementReaktivka).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED });
 
             //m_dgvValues.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
@@ -253,7 +278,7 @@ namespace PluginTaskReaktivka
                 try
                 {
                     //Заполнить элемент управления с часовыми поясами
-                    ctrl = Controls.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
+                    ctrl = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
@@ -262,14 +287,14 @@ namespace PluginTaskReaktivka
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
-                    ctrl = Controls.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
+                    ctrl = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
                     (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
                     Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][1]);//??
-                    (PanelManagementReak as PanelManagmentReaktivka).SetPeriod(Session.m_currIdPeriod);
+                    (PanelManagementReak as PanelManagementReaktivka).SetPeriod(Session.m_currIdPeriod);
                     (ctrl as ComboBox).Enabled = false;
 
                     //ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
@@ -346,7 +371,7 @@ namespace PluginTaskReaktivka
         {
             if (!(PanelManagementReak == null))
                 if (active == true)
-                    PanelManagementReak.DateTimeRangeValue_Changed += new PanelManagmentReaktivka.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
+                    PanelManagementReak.DateTimeRangeValue_Changed += new PanelManagementReaktivka.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
                 else
                     if (active == false)
                         PanelManagementReak.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
@@ -364,11 +389,11 @@ namespace PluginTaskReaktivka
         protected virtual void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
         {
             //Установить новое значение для текущего периода
-            Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][(Controls.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox).SelectedIndex]);
+            Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][(Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox).SelectedIndex]);
             //Отменить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(false);
             //Установить новые режимы для "календарей"
-            (PanelManagementReak as PanelManagmentReaktivka).SetPeriod(Session.m_currIdPeriod);
+            (PanelManagementReak as PanelManagementReaktivka).SetPeriod(Session.m_currIdPeriod);
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
 
@@ -422,7 +447,7 @@ namespace PluginTaskReaktivka
             //??? повторная проверка
             if (bClose == true)
             {
-                (PanelManagementReak as PanelManagmentReaktivka).Clear();
+                //(PanelManagementReak as PanelManagmentReaktivka).Clear();
 
                 if (!(m_arTableDictPrjs == null))
                     for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
@@ -438,20 +463,20 @@ namespace PluginTaskReaktivka
                 else
                     ;
 
-                cbx = Controls.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
+                cbx = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
                 cbx.Items.Clear();
 
-                cbx = Controls.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
+                cbx = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
                 cbx.Items.Clear();
 
-                dgvReak.ClearRows();
+                m_dgvReak.ClearRows();
                 //dgvReak.ClearColumns();
             }
             else
                 // очистить содержание представления
-                dgvReak.ClearValues()
+                m_dgvReak.ClearValues()
                 ;
         }
 
@@ -473,16 +498,59 @@ namespace PluginTaskReaktivka
         /// <param name="ev">Аргумент события</param>
         private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
         {
+            int err = -1
+             , id_alg = -1
+             , ratio = -1
+             , round = -1;
+            Dictionary<int, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<int, HTepUsers.VISUAL_SETTING>();
+            DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
+
             Session.SetRangeDatetime(dtBegin, dtEnd);
-            clear();
-            // очистить содержание представления
-            //if (m_bflgClear)
-            //{
-            //    clear();
-            //    //заполнение представления
-            //    fillDaysGrid(dtBegin, dtBegin.Month);
-            //}
-            ////
+
+            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
+              , new int[] {
+                    m_id_panel
+                    , (int)Session.m_currIdPeriod }
+              , out err);
+
+            // получить значения для настройки визуального отображения
+            if (dictVisualSettings.ContainsKey(id_alg) == true)
+            {// установленные в проекте
+                ratio = dictVisualSettings[id_alg].m_ratio;
+                round = dictVisualSettings[id_alg].m_round;
+            }
+            else
+            {// по умолчанию
+                ratio = HTepUsers.s_iRatioDefault;
+                round = HTepUsers.s_iRoundDefault;
+            }
+            m_dgvReak.ClearRows();
+            for (int i = 0; i < DayIsMonth + 1; i++)
+            {
+                if (m_dgvReak.Rows.Count != DayIsMonth)
+                    m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
+                            {
+                                //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                                //,
+                                m_Value = dt.AddDays(i).ToShortDateString()
+                                ,
+                                m_vsRatio = ratio
+                                ,
+                                m_vsRound = round
+                            });
+                else
+                    m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
+                    {
+                        //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                        //,
+                        m_Value = "ИТОГО"
+                        ,
+                        m_vsRatio = ratio
+                        ,
+                        m_vsRound = round
+                    });
+            }
+            m_dgvReak.Rows[dtBegin.Day - 1].Selected = true;
             //m_currentOffSet = Session.m_curOffsetUTC;
             //m_bflgClear = true;
         }
@@ -555,7 +623,16 @@ namespace PluginTaskReaktivka
         /// <param name="ev"></param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            base.HPanelTepCommon_btnUpdate_Click(obj, ev);
+            onButtonLoadClick();
+        }
+
+        /// <summary>
+        /// оброботчик события кнопки
+        /// </summary>
+        protected virtual void onButtonLoadClick()
+        {
+            // ... - загрузить/отобразить значения из БД
+            updateDataValues();
         }
 
         /// <summary>
@@ -568,26 +645,6 @@ namespace PluginTaskReaktivka
             {
                 return DateTime.DaysInMonth(Session.m_rangeDatetime.Begin.Year, Session.m_rangeDatetime.Begin.Month);
             }
-        }
-
-        /// <summary>
-        /// заполнение грида датами
-        /// </summary>
-        /// <param name="date">тек.дата</param>
-        /// <param name="numMonth">номер месяца</param>
-        private void fillDaysGrid(DateTime date)
-        {
-            DateTime dt = new DateTime(date.Year, date.Month, 1);
-            //dgvAB.SelectionChanged -= dgvAB_SelectionChanged;
-            dgvReak.ClearRows();
-
-            for (int i = 0; i < DayIsMonth; i++)
-            {
-                dgvReak.AddRow();
-                dgvReak.Rows[i].Cells[0].Value = dt.AddDays(i).ToShortDateString();
-            }
-            dgvReak.Rows[date.Day - 1].Selected = true;
-            //dgvAB.SelectionChanged += dgvAB_SelectionChanged;
         }
 
         // <summary>
@@ -613,18 +670,18 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// 
         /// </summary>
-        protected class PanelManagmentReaktivka : HPanelCommon
+        protected class PanelManagementReaktivka : HPanelCommon
         {
             /// <summary>
             /// 
             /// </summary>
             public enum INDEX_CONTROL_BASE
             {
-                UNKNOWN = -1, 
-                BUTTON_SEND, BUTTON_SAVE,BUTTON_LOAD, BUTTON_EXPORT,
+                UNKNOWN = -1,
+                BUTTON_SEND, BUTTON_SAVE, BUTTON_LOAD, BUTTON_EXPORT,
                 TXTBX_EMAIL,
                 CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END,
-                MENUITEM_UPDATE,MENUITEM_HISTORY,
+                MENUITEM_UPDATE, MENUITEM_HISTORY,
                 CLBX_COMP_VISIBLED, CLBX_COMP_CALCULATED,
                 COUNT
             }
@@ -682,7 +739,7 @@ namespace PluginTaskReaktivka
                 initializeLayoutStyleEvenly();
             }
 
-            public PanelManagmentReaktivka()
+            public PanelManagementReaktivka()
                 : base(4, 3)
             {
                 InitializeComponents();
@@ -802,9 +859,10 @@ namespace PluginTaskReaktivka
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
                 ctrl = new CheckedListBoxTaskReaktivka();
                 ctrl.Name = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED.ToString();
-                ctrl.Dock = DockStyle.Fill;
+                ctrl.Dock = DockStyle.Top;
+                (ctrl as CheckedListBoxTaskReaktivka).CheckOnClick = true;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 3); SetRowSpan(ctrl, 2);
+                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 2);
 
                 ResumeLayout(false);
                 PerformLayout();
@@ -832,7 +890,7 @@ namespace PluginTaskReaktivka
             public void SetPeriod(ID_PERIOD idPeriod)
             {
                 HDateTimePicker hdtpBtimePer = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                , hdtpEndtimePer = Controls.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
+                , hdtpEndtimePer = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
                 //Выполнить запрос на получение значений для заполнения 'DataGridView'
                 switch (idPeriod)
                 {
@@ -908,6 +966,7 @@ namespace PluginTaskReaktivka
                 {
                     m_listId = new List<int>();
                 }
+
                 /// <summary>
                 /// Идентификатор выбранного элемента списка
                 /// </summary>
@@ -934,6 +993,11 @@ namespace PluginTaskReaktivka
                     m_listId.Clear();
                 }
 
+                /// <summary>
+                /// 
+                /// </summary>
+                /// <param name="id"></param>
+                /// <returns></returns>
                 public string GetNameItem(int id)
                 {
                     string strRes = string.Empty;
@@ -985,7 +1049,7 @@ namespace PluginTaskReaktivka
                     if (!(ctrl == null))
                         (ctrl as CheckedListBoxTaskReaktivka).AddItem(id_comp, text, arChecked[i]);
                     else
-                        Logging.Logg().Error(@"PanelManagmentReaktivka::AddComponent () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Error(@"PanelManagementTaskTepValues::AddComponent () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
@@ -1004,20 +1068,31 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
+            /// Найти элемент управления на панели идентификатору
+            /// </summary>
+            /// <param name="indxCtrl">Идентификатор элемента управления</param>
+            /// <returns>элемент панели</returns>
+            protected Control find(INDEX_CONTROL_BASE indxCtrl)
+            {
+                Control ctrlRes = null;
+
+                ctrlRes = Controls.Find(indxCtrl.ToString(), true)[0];
+
+                return ctrlRes;
+            }
+
+            /// <summary>
             /// Возвратить идентификатор элемента управления по идентификатору
             ///  , используемого для его заполнения
             /// </summary>
             /// <param name="indxId"></param>
-            /// <returns></returns>
+            /// <returns>индекс элемента панели</returns>
             protected INDEX_CONTROL_BASE getIndexControlOfIndexID(INDEX_ID indxId)
             {
                 INDEX_CONTROL_BASE indxRes = INDEX_CONTROL_BASE.UNKNOWN;
 
                 switch (indxId)
                 {
-                    //case INDEX_ID.DENY_COMP_CALCULATED:
-                    //    indxRes = INDEX_CONTROL_BASE.CLBX_COMP_CALCULATED;
-                    //    break;
                     case INDEX_ID.DENY_COMP_VISIBLED:
                         indxRes = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED;
                         break;
@@ -1028,6 +1103,88 @@ namespace PluginTaskReaktivka
                 return indxRes;
             }
 
+            /// <summary>
+            /// Очистить
+            /// </summary>
+            public void Clear()
+            {
+                INDEX_ID[] arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED };
+
+                ActivateCheckedHandler(false, arIndxIdToClear);
+
+                Clear(arIndxIdToClear);
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="arIdToClear"></param>
+            public void Clear(INDEX_ID[] arIdToClear)
+            {
+                for (int i = 0; i < arIdToClear.Length; i++)
+                    clear(arIdToClear[i]);
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="idToClear"></param>
+            private void clear(INDEX_ID idToClear)
+            {
+                (find(idToClear) as IControl).ClearItems();
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="bActive"></param>
+            /// <param name="arIdToActivate"></param>
+            public void ActivateCheckedHandler(bool bActive, INDEX_ID[] arIdToActivate)
+            {
+                for (int i = 0; i < arIdToActivate.Length; i++)
+                    activateCheckedHandler(bActive, arIdToActivate[i]);
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="bActive"></param>
+            /// <param name="idToActivate"></param>
+            protected virtual void activateCheckedHandler(bool bActive, INDEX_ID idToActivate)
+            {
+                INDEX_CONTROL_BASE indxCtrl = INDEX_CONTROL_BASE.UNKNOWN;
+                CheckedListBox clbx = null;
+
+                indxCtrl = getIndexControlOfIndexID(idToActivate);
+
+                if (!(indxCtrl == INDEX_CONTROL_BASE.UNKNOWN))
+                {
+                    clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
+
+                    if (bActive == true)
+                        clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
+                    else
+                        clbx.ItemCheck -= onItemCheck;
+                }
+                else
+                    ;
+            }
+
+            /// <summary>
+            /// Обработчик события - изменение состояния элемента списка
+            /// </summary>
+            /// <param name="obj">Объект, инициировавший событие (список)</param>
+            /// <param name="ev">Аргумент события</param>
+            protected void onItemCheck(object obj, ItemCheckEventArgs ev)
+            {
+                itemCheck((obj as IControl).SelectedId, getIndexIdOfControl(obj as Control), ev.NewValue);
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="ctrl"></param>
+            /// <returns></returns>
             protected INDEX_ID getIndexIdOfControl(Control ctrl)
             {
                 INDEX_CONTROL_BASE id = INDEX_CONTROL_BASE.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
@@ -1040,7 +1197,6 @@ namespace PluginTaskReaktivka
                     // , соответствующий изменившему состояние элементу 'CheckedListBox'
                     switch (id)
                     {
-                        //case INDEX_CONTROL.CLBX_COMP_CALCULATED:
                         case INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED:
                             indxRes = id == INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
                             break;
@@ -1057,103 +1213,20 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// Найти элемент управления на панели идентификатору
+            /// 
             /// </summary>
-            /// <param name="indxCtrl">Идентификатор элемента управления</param>
+            /// <param name="ctrl"></param>
             /// <returns></returns>
-            protected Control find(INDEX_CONTROL_BASE indxCtrl)
-            {
-                Control ctrlRes = null;
-
-                ctrlRes = Controls.Find(indxCtrl.ToString(), true)[0];
-
-                return ctrlRes;
-            }
-
-            public void ActivateCheckedHandler(bool bActive, INDEX_ID[] arIdToActivate)
-            {
-                for (int i = 0; i < arIdToActivate.Length; i++)
-                    activateCheckedHandler(bActive, arIdToActivate[i]);
-            }
-
-            protected virtual void activateCheckedHandler(bool bActive, INDEX_ID idToActivate)
-            {
-                INDEX_CONTROL_BASE indxCtrl = INDEX_CONTROL_BASE.UNKNOWN;
-                CheckedListBox clbx = null;
-
-                indxCtrl = getIndexControlOfIndexID(idToActivate);
-
-                if (!(indxCtrl == INDEX_CONTROL_BASE.UNKNOWN))
-                {
-                    clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
-
-                    if (bActive == true)
-                    {
-                        //clbx.SelectedIndexChanged += new EventHandler (onSelectedIndexChanged);
-                        clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
-                    }
-                    else
-                    {
-                        //clbx.SelectedIndexChanged -= onSelectedIndexChanged;
-                        clbx.ItemCheck -= onItemCheck;
-                    }
-                }
-                else
-                    ;
-            }
-
-            /// <summary>
-            /// Очистить
-            /// </summary>
-            public void Clear()
-            {
-                INDEX_ID[] arIndxIdToClear = new INDEX_ID[] {INDEX_ID.DENY_COMP_VISIBLED };
-
-                ActivateCheckedHandler(false, arIndxIdToClear);
-
-                Clear(arIndxIdToClear);
-            }
-
-            public void Clear(INDEX_ID[] arIdToClear)
-            {
-                for (int i = 0; i < arIdToClear.Length; i++)
-                    clear(arIdToClear[i]);
-            }
-
-            private void clear(INDEX_ID idToClear)
-            {
-                (find(idToClear) as IControl).ClearItems();
-            }
-
-            /// <summary>
-            /// Обработчик события - изменение состояния элемента списка
-            /// </summary>
-            /// <param name="obj">Объект, инициировавший событие (список)</param>
-            /// <param name="ev">Аргумент события</param>
-            protected void onItemCheck(object obj, ItemCheckEventArgs ev)
-            {
-                itemCheck((obj as IControl).SelectedId, getIndexIdOfControl(obj as Control), ev.NewValue);
-            }
-
             protected INDEX_CONTROL_BASE getIndexControl(Control ctrl)
             {
                 INDEX_CONTROL_BASE indxRes = INDEX_CONTROL_BASE.UNKNOWN;
 
                 string strId = (ctrl as Control).Name;
 
-                //if (strId.Equals(INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString()) == true)
-                //    indxRes = INDEX_CONTROL.CLBX_COMP_CALCULATED;
-                //else
-                //    if (strId.Equals(INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString()) == true)
-                //        indxRes = INDEX_CONTROL.CLBX_PARAMETER_CALCULATED;
-                //    else
-                        if (strId.Equals(INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED.ToString()) == true)
-                            indxRes = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED;
-                        //else
-                        //    if (strId.Equals(INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString()) == true)
-                        //        indxRes = INDEX_CONTROL.CLBX_PARAMETER_VISIBLED;
-                            else
-                                throw new Exception(@"PanelTaskTepValues::getIndexControl () - не найден объект 'CheckedListBox'...");
+                if (strId.Equals(INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED.ToString()) == true)
+                    indxRes = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED;
+                else
+                    throw new Exception(@"PanelTaskTepValues::getIndexControl () - не найден объект 'CheckedListBox'...");
 
                 return indxRes;
             }
@@ -1167,6 +1240,58 @@ namespace PluginTaskReaktivka
             {
                 ItemCheck(new ItemCheckedParametersEventArgs(idItem, indxIdDeny, checkState));
             }
+
+            /// <summary>
+            /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
+            /// </summary>
+            protected class CheckedListBoxTaskTepValues : CheckedListBox, IControl
+            {
+                /// <summary>
+                /// Список для хранения идентификаторов переменных
+                /// </summary>
+                private List<int> m_listId;
+
+                public CheckedListBoxTaskTepValues()
+                    : base()
+                {
+                    m_listId = new List<int>();
+                }
+
+                /// <summary>
+                /// Идентификатор выбранного элемента списка
+                /// </summary>
+                public int SelectedId { get { return m_listId[SelectedIndex]; } }
+
+                /// <summary>
+                /// Добавить элемент в список
+                /// </summary>
+                /// <param name="text">Текст подписи элемента</param>
+                /// <param name="id">Идентификатор элемента</param>
+                /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
+                public void AddItem(int id, string text, bool bChecked)
+                {
+                    Items.Add(text, bChecked);
+                    m_listId.Add(id);
+                }
+
+                /// <summary>
+                /// Удалить все элементы в списке
+                /// </summary>
+                public void ClearItems()
+                {
+                    Items.Clear();
+                    m_listId.Clear();
+                }
+
+                public string GetNameItem(int id)
+                {
+                    string strRes = string.Empty;
+
+                    strRes = (string)Items[m_listId.IndexOf(id)];
+
+                    return strRes;
+                }
+            }
         }
 
         /// <summary>
@@ -1177,7 +1302,7 @@ namespace PluginTaskReaktivka
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
             /// </summary>
-            protected enum INDEX_SERVICE_COLUMN : uint { ID_ALG, SYMBOL, COUNT }
+            protected enum INDEX_SERVICE_COLUMN : uint { DATE, COUNT }
 
             public DGVReaktivka(string nameDGV)
             {
@@ -1205,6 +1330,8 @@ namespace PluginTaskReaktivka
                 //Ширина столбцов под видимую область
                 //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                 ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+
+                AddColumn(-1, "Дата", "Date", true, true);
             }
 
             /// <summary>
@@ -1232,11 +1359,7 @@ namespace PluginTaskReaktivka
                 /// </summary>
                 public struct HDataGridViewCell //: DataGridViewCell
                 {
-                    public enum INDEX_CELL_PROPERTY : uint { CALC_DENY, IS_NAN }
-                    /// <summary>
-                    /// Признак запрета расчета
-                    /// </summary>
-                    public bool m_bCalcDeny;
+                    public enum INDEX_CELL_PROPERTY : uint { IS_NAN }
                     /// <summary>
                     /// Признак отсутствия значения
                     /// </summary>
@@ -1246,31 +1369,19 @@ namespace PluginTaskReaktivka
                     /// </summary>
                     public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
 
-                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, bool bCalcDeny)
+                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
                     {
                         m_IdParameter = idParameter;
                         m_iQuality = iQuality;
-                        m_bCalcDeny = bCalcDeny;
                     }
 
                     public bool IsNaN { get { return m_IdParameter < 0; } }
                 }
                 /// <summary>
-                /// Идентификатор параметра в алгоритме расчета
-                /// </summary>
-                public int m_idAlg;
-                /// <summary>
                 /// Пояснения к параметру в алгоритме расчета
                 /// </summary>
-                public string m_strHeaderText
-                    , m_strToolTipText
-                    , m_strMeasure
-                    , m_strSymbol;
-
-                ///// <summary>
-                ///// Признак отображения строки
-                ///// </summary>
-                //public bool m_bVisibled;
+                public string m_strMeasure
+                    , m_Value;
 
                 /// <summary>
                 /// Идентификатор множителя при отображении (визуальные установки) значений в строке
@@ -1283,42 +1394,86 @@ namespace PluginTaskReaktivka
 
                 public HDataGridViewCell[] m_arPropertiesCells;
 
+                /// <summary>
+                /// 
+                /// </summary>
+                /// <param name="cntCols"></param>
                 public void InitCells(int cntCols)
                 {
                     m_arPropertiesCells = new HDataGridViewCell[cntCols];
                     for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT, false);
+                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
                 }
             }
 
             /// <summary>
-            /// Добавить столбец
+            /// 
             /// </summary>
-            /// <param name="text">Текст для заголовка столбца</param>
-            /// <param name="bRead">флаг изменения пользователем ячейки</param>
+            /// <param name="id_comp">номер компонента</param>
+            /// <param name="txtHeader">заголовок столбца</param>
             /// <param name="nameCol">имя столбца</param>
-            public void AddColumn(string txtHeader, bool bRead, string nameCol)
+            /// <param name="bRead">"только чтение"</param>
+            /// <param name="bVisibled">видимость столбца</param>
+            public void AddColumn(int id_comp, string txtHeader, string nameCol, bool bRead, bool bVisibled)
             {
+                int indxCol = -1; // индекс столбца при вставке
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
                 try
                 {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false };
+                    // найти индекс нового столбца
+                    // столбец для станции - всегда крайний
+                    foreach (HDataGridViewColumn col in Columns)
+                        if ((col.m_iIdComp > 0)
+                            && (col.m_iIdComp < 1000))
+                        {
+                            indxCol = Columns.IndexOf(col);
+
+                            break;
+                        }
+                        else
+                            ;
+
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp, m_bCalcDeny = false };
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
-                    //column.Frozen = true;
-                    column.ReadOnly = bRead;
-                    column.Name = nameCol;
+
+                    if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
+                        ; // оставить значения по умолчанию
+                    else
+                    {// для добавлямых столбцов
+                        if (id_comp < 0)
+                        {// для служебных столбцов
+                            if (bVisibled == true)
+                            {// только для столбца с [SYMBOL]
+                                alignText = DataGridViewContentAlignment.MiddleLeft;
+                                autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
+                            }
+                            else
+                                ;
+
+                            column.Frozen = true;
+                            column.ReadOnly = true;
+                        }
+                        else
+                            ;
+                    }
+
                     column.HeaderText = txtHeader;
+                    column.Name = nameCol;
                     column.DefaultCellStyle.Alignment = alignText;
                     column.AutoSizeMode = autoSzColMode;
-                    Columns.Add(column as DataGridViewTextBoxColumn);
+                    column.Visible = bVisibled;
+
+                    if (!(indxCol < 0))
+                        Columns.Insert(indxCol, column as DataGridViewTextBoxColumn);
+                    else
+                        Columns.Add(column as DataGridViewTextBoxColumn);
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Exception(e, @"DataGridViewTEPValues::AddColumn (id_comp=" + id_comp + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
@@ -1329,7 +1484,7 @@ namespace PluginTaskReaktivka
             /// <param name="bRead">флаг изменения пользователем ячейки</param>
             /// <param name="nameCol">имя столбца</param>
             /// <param name="idPut">индентификатор источника</param>
-            public void AddColumn(string txtHeader, bool bRead, string nameCol, int idPut)
+            public void AddColumn(string txtHeader, string nameCol, bool bRead, bool bVisibled)
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
@@ -1337,10 +1492,10 @@ namespace PluginTaskReaktivka
 
                 try
                 {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_iIdComp = idPut };
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false };
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
-                    //column.Frozen = true;
+                    column.Frozen = true;
                     column.ReadOnly = bRead;
                     column.Name = nameCol;
                     column.HeaderText = txtHeader;
@@ -1375,31 +1530,307 @@ namespace PluginTaskReaktivka
                 foreach (DataGridViewRow r in Rows)
                     foreach (DataGridViewCell c in r.Cells)
                         if (r.Cells.IndexOf(c) > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) // нельзя удалять идентификатор параметра
-                        {
                             c.Value = string.Empty;
-                            //c.Style.BackColor = s_arCellColors[(int)INDEX_COLOR.EMPTY];
-                        }
                         else
                             ;
                 //??? если установить 'true' - редактирование невозможно
-                ReadOnly = false;
+                //ReadOnly = false;
 
                 //CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
-
-                //CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
-
             }
 
             /// <summary>
             /// Добавить строку в таблицу
             /// </summary>
-            public void AddRow()
+            public void AddRow(ROW_PROPERTY rowProp)
             {
                 int i = -1;
                 // создать строку
                 DataGridViewRow row = new DataGridViewRow();
+                //if (m_dictPropertiesRows == null)
+                //    m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
+                //else
+                //    ;
+                //m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
+                // добавить строку
                 i = Rows.Add(row);
+                // установить значения в ячейках для служебной информации
+                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
+                // инициализировать значения в служебных ячейках
+                //m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
             }
+
+            /// <summary>
+            /// Обновить структуру таблицы
+            /// </summary>
+            /// <param name="indxDeny">Индекс элемента в массиве списков с отмененными для расчета/отображения компонентами ТЭЦ/параметрами алгоритма расчета</param>
+            /// <param name="id">Идентификатор элемента (компонента/параметра)</param>
+            /// <param name="bCheckedItem">Признак участия в расчете/отображения</param>
+            public void UpdateStructure(PanelManagementReaktivka.ItemCheckedParametersEventArgs item)
+            {
+                Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
+                int indx = -1
+                    , cIndx = -1
+                    , rKey = -1;
+                bool bItemChecked = item.m_newCheckState == CheckState.Checked ? true :
+                    item.m_newCheckState == CheckState.Unchecked ? false :
+                        false;
+
+                //Поиск индекса элемента отображения
+                switch (item.m_indxIdDeny)
+                {
+                    case INDEX_ID.DENY_COMP_VISIBLED:
+                        // найти индекс столбца (компонента) - по идентификатору
+                        foreach (HDataGridViewColumn c in Columns)
+                            if (c.m_iIdComp == item.m_idItem)
+                            {
+                                indx = Columns.IndexOf(c);
+                                break;
+                            }
+                            else
+                                ;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (!(indx < 0))
+                {
+                    switch (item.m_indxIdDeny)
+                    {
+                        case INDEX_ID.DENY_COMP_VISIBLED:
+                            cIndx = indx;
+                            // для всех ячеек в столбце
+                            Columns[cIndx].Visible = bItemChecked;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else
+                    ; // нет элемента для изменения стиля
+            }
+
+            public void ShowValues(DataTable parametr)
+            {
+                int idAlg = -1
+                   , idParameter = -1
+                   , iQuality = -1
+                   , iCol = 0, iRow = 0
+                   , ratioValue = -1, vsRatioValue = -1;
+                double dblVal = -1F;
+                DataRow[] cellRows = null
+                    , parameterRows = null;
+
+                foreach (var item in collection)
+                {
+                    
+                }
+                parameterRows = parametr.Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + idAlg);
+            }
+        }
+
+        /// <summary>
+        /// Обработчик события - изменение состояния элемента 'CheckedListBox'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
+        private void panelManagement_ItemCheck(PanelManagementReaktivka.ItemCheckedParametersEventArgs ev)
+        {
+            int idItem = -1;
+
+            //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
+            if (ev.m_newCheckState == CheckState.Unchecked)
+                if (m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0)
+                    m_arListIds[(int)ev.m_indxIdDeny].Add(idItem);
+                else
+                    ; //throw new Exception (@"");
+            else
+                if (ev.m_newCheckState == CheckState.Checked)
+                    if (!(m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0))
+                        m_arListIds[(int)ev.m_indxIdDeny].Remove(idItem);
+                    else
+                        ; //throw new Exception (@"");
+                else
+                    ;
+            //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
+            // или в этом же плюгИне измененить/сохраннить индивидуальные настройки
+            ;
+            //Изменить структуру 'DataGridView'
+            //m_dgvValues.UpdateStructure ();            
+            (m_dgvReak as DGVReaktivka).UpdateStructure(ev);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        protected System.Data.DataTable m_TableOrigin
+        {
+            get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+        }
+
+        protected System.Data.DataTable m_TableEdit
+        {
+            get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+        }
+
+        /// <summary>
+        /// загрузка/обновление данных
+        /// </summary>
+        private void updateDataValues()
+        {
+            int err = -1
+                , cnt = CountBasePeriod
+                , iRegDbConn = -1;
+            string errMsg = string.Empty;
+            DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
+
+            if (rangeCheking(dtrGet))
+                MessageBox.Show("Выбранный диапазон месяцев неверен");
+            else
+            {
+                clear();
+                m_handlerDb.RegisterDbConnection(out iRegDbConn);
+
+                if (!(iRegDbConn < 0))
+                {
+                    // установить значения в таблицах для расчета, создать новую сессию
+                    setValues(dtrGet, out err, out errMsg);
+
+                    if (err == 0)
+                    {
+                        if (m_TableOrigin.Rows.Count > 0)
+                        {
+                            // создать копии для возможности сохранения изменений
+                            setValues();
+
+                            // отобразить значения
+                            m_dgvReak.ShowValues(m_arTableOrigin);
+                            //формирование таблиц на основе грида
+                            valuesFence(out err);
+                        }
+                        else
+                            deleteSession();
+                    }
+                    else
+                    {
+                        // в случае ошибки "обнулить" идентификатор сессии
+                        deleteSession();
+                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                    }
+                }
+                else
+                    deleteSession();
+
+                if (!(iRegDbConn > 0))
+                    m_handlerDb.UnRegisterDbConnection();
+                else
+                    ;
+            }
+        }
+
+        /// <summary>
+        /// Проверка выбранного диапазона
+        /// </summary>
+        /// <param name="dtRange">диапазон дат</param>
+        /// <returns></returns>
+        private bool rangeCheking(DateTimeRange[] dtRange)
+        {
+            bool bflag = false;
+
+            for (int i = 0; i < dtRange.Length; i++)
+                if (dtRange[i].End.Month > DateTime.Now.Month)
+                    if (dtRange[i].End.Year >= DateTime.Now.Year)
+                        bflag = true;
+
+            return bflag;
+        }
+
+        /// <summary>
+        /// Количество базовых периодов
+        /// </summary>
+        protected int CountBasePeriod
+        {
+            get
+            {
+                int iRes = -1;
+                ID_PERIOD idPeriod = ActualIdPeriod;
+
+                iRes =
+                    idPeriod == ID_PERIOD.HOUR ?
+                        (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalHours - 0 :
+                        idPeriod == ID_PERIOD.DAY ?
+                            (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalDays - 0 :
+                            24
+                            ;
+
+                return iRes;
+            }
+        }
+
+        /// <summary>
+        /// получение значений
+        /// создание сессии
+        /// </summary>
+        /// <param name="arQueryRanges"></param>
+        /// <param name="err">номер ошибки</param>
+        /// <param name="strErr"></param>
+        private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
+        {
+            err = 0;
+            strErr = string.Empty;
+            //Создание сессии
+            Session.New();
+            //Запрос для получения архивных данных
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            //Запрос для получения автоматически собираемых данных
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+                (
+                Type
+                , ActualIdPeriod
+                , CountBasePeriod
+                , arQueryRanges
+               , out err
+                );
+            //Проверить признак выполнения запроса
+            if (err == 0)
+            {
+                //Проверить признак выполнения запроса
+                if (err == 0)
+                    //Начать новую сессию расчета
+                    //, получить входные для расчета значения для возможности редактирования
+                    HandlerDb.CreateSession(
+                        CountBasePeriod
+                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                        , ref m_arTableOrigin
+                        , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
+                        , out err, out strErr);
+                else
+                    strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
+                        + @" по " + Session.m_rangeDatetime.End.ToString();
+            }
+            else
+                strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
+                    + @" по " + Session.m_rangeDatetime.End.ToString();
+        }
+
+        private void setValues()
+        {
+ 
+        }
+
+        /// <summary>
+        /// формирование таблиц данных
+        /// </summary>
+        /// <param name="err"></param>
+        private void valuesFence(out int err)
+        {
+            err = -1;
+            //сохранить вых. знач. в DataTable
+            //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+            //    m_dgvAB.FillTableValueDay(HandlerDb.OutValues(out err)
+            //       , m_dgvAB
+            //       , HandlerDb.GetOutPut(out err));
         }
     }
 }

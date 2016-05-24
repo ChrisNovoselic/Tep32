@@ -1101,10 +1101,7 @@ namespace PluginTaskAutobook
             setCurrentTimeZone(obj as ComboBox);
             // очистить содержание представления
             clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
+  
         }
 
         /// <summary>
@@ -1234,8 +1231,7 @@ namespace PluginTaskAutobook
                         s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
                         base.HPanelTepCommon_btnSave_Click(obj, ev);
                     }
-                    else
-                        break;
+                    else;
                 }
             }
             else ;
