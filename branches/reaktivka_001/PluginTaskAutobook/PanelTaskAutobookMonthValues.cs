@@ -451,7 +451,7 @@ namespace PluginTaskAutobook
             private void planInMonth(string value, DateTime date, DataGridView dgvAB)
             {
                 float planDay = (Convert.ToSingle(value)
-                    / DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month)) / (float)Math.Pow(10, 6);
+                    / DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month)) / (float)Math.Pow(10F, 6);
                 int increment = 0;
                 planDay = Convert.ToInt32(planDay.ToString("####"));
 
@@ -461,7 +461,7 @@ namespace PluginTaskAutobook
                     dgvAB.Rows[i].Cells["PlanSwen"].Value = increment.ToString("####");
                 }
                 dgvAB.Rows[DateTime.DaysInMonth(date.Year, date.Month - 1) - 1].Cells["PlanSwen"].Value =
-                    (Convert.ToSingle(value) / Math.Pow(10, 6)).ToString("####");
+                    (Convert.ToSingle(value) / Math.Pow(10F, 6)).ToString("####");
             }
 
             /// <summary>
@@ -585,7 +585,7 @@ namespace PluginTaskAutobook
                             if (cols.m_iIdComp == col.m_iIdComp &&
                                 dgvView.Rows[i].Cells["Date"].Value == dgvView.Rows[row].Cells["Date"].Value)
                             {
-                                valueToRes = Convert.ToDouble(value) * Math.Pow(10, 6);
+                                valueToRes = Convert.ToDouble(value) * Math.Pow(10F, 6);
                                 idComp = cols.m_iIdComp;
                             }
                             else
@@ -677,7 +677,7 @@ namespace PluginTaskAutobook
                             for (int i = (int)INDEX_GTP.GTP12; i < (int)INDEX_GTP.CorGTP12; i++)
                             {
                                 put = dtOut.Rows[i]["ID"].ToString();
-                                valueToRes = Convert.ToDouble(row.Cells[namePut.GetValue(i).ToString()].Value) * Math.Pow(10, 6);
+                                valueToRes = Convert.ToDouble(row.Cells[namePut.GetValue(i).ToString()].Value) * Math.Pow(10F, 6);
 
                                 editTable.Rows.Add(new object[] 
                             {
@@ -1224,7 +1224,7 @@ namespace PluginTaskAutobook
         /// кол-во дней в текущем месяце
         /// </summary>
         /// <returns>кол-во дней</returns>
-        public int DayIsMonth
+        public int DaysInMonth
         {
             get
             {
@@ -2074,7 +2074,7 @@ namespace PluginTaskAutobook
             m_dgvAB.SelectionChanged -= dgvAB_SelectionChanged;
             m_dgvAB.ClearRows();
 
-            for (int i = 0; i < DayIsMonth; i++)
+            for (int i = 0; i < DaysInMonth; i++)
             {
                 m_dgvAB.AddRow();
                 m_dgvAB.Rows[i].Cells[0].Value = dt.AddDays(i).ToShortDateString();

@@ -18,6 +18,10 @@ namespace PluginTaskReaktivka
         /// </summary>
         bool m_bflgClear = true;
         /// <summary>
+        /// Часовой пояс(часовой сдвиг)
+        /// </summary>
+        protected static int m_currentOffSet;
+        /// <summary>
         /// Набор элементов
         /// </summary>
         protected enum INDEX_CONTROL
@@ -33,8 +37,7 @@ namespace PluginTaskReaktivka
             UNKNOWN = -1,
             PERIOD, // идентификаторы периодов расчетов, использующихся на форме
             TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов
-            ALL_COMPONENT,
-            //ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
+            ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров
             //DENY_COMP_CALCULATED, 
             DENY_COMP_VISIBLED,
             //DENY_PARAMETER_CALCULATED, // запрещенных для расчета
@@ -419,7 +422,7 @@ namespace PluginTaskReaktivka
                 // список компонентов
                 , HandlerDb.GetQueryComp(Type)
                 // параметры расчета
-                //, HandlerDb.GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+                , HandlerDb.GetQueryParameters(Type)
                 //// настройки визуального отображения значений
                 //, @""
                 // режимы работы
@@ -513,6 +516,17 @@ namespace PluginTaskReaktivka
                     , (int)Session.m_currIdPeriod }
               , out err);
 
+            IEnumerable<DataRow> listParameter = ListParameter.Select(x => x);
+
+            foreach (DataRow r in listParameter)
+            {
+                id_alg = (int)r[@"ID_ALG"];
+                // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
+                if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
+                    // добавить в список идентификатор параметра алгоритма расчета
+                    m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
+            }
+
             // получить значения для настройки визуального отображения
             if (dictVisualSettings.ContainsKey(id_alg) == true)
             {// установленные в проекте
@@ -524,12 +538,16 @@ namespace PluginTaskReaktivka
                 ratio = HTepUsers.s_iRatioDefault;
                 round = HTepUsers.s_iRoundDefault;
             }
+
             m_dgvReak.ClearRows();
-            for (int i = 0; i < DayIsMonth + 1; i++)
+
+            for (int i = 0; i < DaysInMonth + 1; i++)
             {
-                if (m_dgvReak.Rows.Count != DayIsMonth)
+                if (m_dgvReak.Rows.Count != DaysInMonth)
                     m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
                             {
+                                m_idAlg = id_alg
+                                ,
                                 //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
                                 //,
                                 m_Value = dt.AddDays(i).ToShortDateString()
@@ -541,6 +559,8 @@ namespace PluginTaskReaktivka
                 else
                     m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
                     {
+                        m_idAlg = id_alg
+                        ,
                         //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
                         //,
                         m_Value = "ИТОГО"
@@ -548,11 +568,27 @@ namespace PluginTaskReaktivka
                         m_vsRatio = ratio
                         ,
                         m_vsRound = round
-                    });
+                    }
+                    , DaysInMonth);
             }
             m_dgvReak.Rows[dtBegin.Day - 1].Selected = true;
-            //m_currentOffSet = Session.m_curOffsetUTC;
+            m_currentOffSet = Session.m_curOffsetUTC;
             //m_bflgClear = true;
+        }
+
+        /// <summary>
+        /// Список строк с параметрами алгоритма расчета для текущего периода расчета
+        /// </summary>
+        private List<DataRow> ListParameter
+        {
+            get
+            {
+                List<DataRow> listRes;
+
+                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select().ToList<DataRow>();
+
+                return listRes;
+            }
         }
 
         /// <summary>
@@ -639,7 +675,7 @@ namespace PluginTaskReaktivka
         /// кол-во дней в текущем месяце
         /// </summary>
         /// <returns>кол-во дней</returns>
-        public int DayIsMonth
+        public int DaysInMonth
         {
             get
             {
@@ -1303,6 +1339,7 @@ namespace PluginTaskReaktivka
             /// Перечисление для индексации столбцов со служебной информацией
             /// </summary>
             protected enum INDEX_SERVICE_COLUMN : uint { DATE, COUNT }
+            private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
 
             public DGVReaktivka(string nameDGV)
             {
@@ -1382,7 +1419,10 @@ namespace PluginTaskReaktivka
                 /// </summary>
                 public string m_strMeasure
                     , m_Value;
-
+                /// <summary>
+                /// Идентификатор параметра в алгоритме расчета
+                /// </summary>
+                public int m_idAlg;
                 /// <summary>
                 /// Идентификатор множителя при отображении (визуальные установки) значений в строке
                 /// </summary>
@@ -1547,17 +1587,84 @@ namespace PluginTaskReaktivka
                 int i = -1;
                 // создать строку
                 DataGridViewRow row = new DataGridViewRow();
-                //if (m_dictPropertiesRows == null)
-                //    m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-                //else
-                //    ;
-                //m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
+                if (m_dictPropertiesRows == null)
+                    m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
+                else
+                    ;
+                if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
+                    m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
+
                 // добавить строку
                 i = Rows.Add(row);
                 // установить значения в ячейках для служебной информации
                 Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
                 // инициализировать значения в служебных ячейках
                 //m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
+            }
+
+            /// <summary>
+            /// Добавить строку в таблицу
+            /// </summary>
+            public void AddRow(ROW_PROPERTY rowProp, int DaysInMonth)
+            {
+                int i = -1;
+                // создать строку
+                DataGridViewRow row = new DataGridViewRow();
+                if (m_dictPropertiesRows == null)
+                    m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
+                else
+                    ;
+                if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
+                    m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
+
+                // добавить строку
+                i = Rows.Add(row);
+                // установить значения в ячейках для служебной информации
+                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
+                // инициализировать значения в служебных ячейках
+                //m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
+
+                if (i == DaysInMonth)
+                    foreach (HDataGridViewColumn col in Columns)
+                        Rows[i].Cells[col.Index].ReadOnly = true;
+            }
+            /// <summary>
+            /// 
+            /// </summary>
+            protected struct RATIO
+            {
+                public int m_id;
+
+                public int m_value;
+
+                public string m_nameRU
+                    , m_nameEN
+                    , m_strDesc;
+            }
+
+            protected Dictionary<int, RATIO> m_dictRatio;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="tblRatio"></param>
+            public void SetRatio(DataTable tblRatio)
+            {
+                m_dictRatio = new Dictionary<int, RATIO>();
+
+                foreach (DataRow r in tblRatio.Rows)
+                    m_dictRatio.Add((int)r[@"ID"], new RATIO()
+                    {
+                        m_id = (int)r[@"ID"]
+                        ,
+                        m_value = (int)r[@"VALUE"]
+                        ,
+                        m_nameRU = (string)r[@"NAME_RU"]
+                        ,
+                        m_nameEN = (string)r[@"NAME_RU"]
+                        ,
+                        m_strDesc = (string)r[@"DESCRIPTION"]
+                    });
             }
 
             /// <summary>
@@ -1611,22 +1718,81 @@ namespace PluginTaskReaktivka
                     ; // нет элемента для изменения стиля
             }
 
-            public void ShowValues(DataTable parametr)
+            public void ShowValues(DataTable source)
             {
                 int idAlg = -1
                    , idParameter = -1
                    , iQuality = -1
                    , iCol = 0, iRow = 0
                    , ratioValue = -1, vsRatioValue = -1;
-                double dblVal = -1F;
+                double dblVal = -1F,
+                    dbSumVal = 0;
                 DataRow[] cellRows = null
                     , parameterRows = null;
 
-                foreach (var item in collection)
+                foreach (HDataGridViewColumn col in Columns)
                 {
-                    
+                    if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
+                        foreach (DataGridViewRow row in Rows)
+                        {
+                            if (row.Index != row.DataGridView.RowCount-1)
+                            {
+                                idAlg = (int)row.Cells[0].Value;//??
+                                parameterRows = 
+                                    //source.Select("ID_PUT = " + col.m_iIdComp + " AND WR_DATETIME = '" + Convert.ToDateTime(row.Cells[0].Value).AddMinutes(-m_currentOffSet) + "'");
+                                source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp + " AND WR_DATETIME = '{0:o}'"
+                                    , Convert.ToDateTime(row.Cells[0].Value).AddMinutes(-m_currentOffSet)));
+
+                                if (parameterRows.Length == 1)
+                                {
+                                    idParameter = (int)parameterRows[0][@"ID_PUT"];
+                                    dblVal = ((double)parameterRows[0][@"VALUE"]);
+                                    iQuality = (int)parameterRows[0][@"QUALITY"];
+                                }
+
+                                iRow = Rows.IndexOf(row);
+                                row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
+
+                                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                ratioValue = m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
+                                    ;
+                                if (!(ratioValue == vsRatioValue))
+                                {
+                                    //    row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol
+                                    //        + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
+                                    //    dblVal *= Math.Pow(10F, ratioValue > vsRatioValue ? vsRatioValue : -1 * vsRatioValue);
+                                }
+                                else
+                                    ;
+                                row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                    System.Globalization.CultureInfo.InvariantCulture);
+                                dbSumVal += dblVal;
+                            }
+                            else
+                                row.Cells[iCol].Value = dbSumVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                    System.Globalization.CultureInfo.InvariantCulture);
+                        }
+                    iCol++;
                 }
-                parameterRows = parametr.Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + idAlg);
+            }
+
+            public void FillTableValue()
+            {
+
+            }
+
+            private void sumRow()
+            {
+                foreach (HDataGridViewColumn col in Columns)
+                {
+                    foreach (DataGridViewRow row in Rows)
+                    {
+                        if (true)
+                        {
+
+                        }
+                    }
+                }
             }
         }
 
@@ -1705,7 +1871,7 @@ namespace PluginTaskReaktivka
                             setValues();
 
                             // отобразить значения
-                            m_dgvReak.ShowValues(m_arTableOrigin);
+                            m_dgvReak.ShowValues(m_TableOrigin);
                             //формирование таблиц на основе грида
                             valuesFence(out err);
                         }
@@ -1816,7 +1982,7 @@ namespace PluginTaskReaktivka
 
         private void setValues()
         {
- 
+
         }
 
         /// <summary>
@@ -1826,11 +1992,9 @@ namespace PluginTaskReaktivka
         private void valuesFence(out int err)
         {
             err = -1;
-            //сохранить вых. знач. в DataTable
+            //сохранить вх. знач. в DataTable
             //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            //    m_dgvAB.FillTableValueDay(HandlerDb.OutValues(out err)
-            //       , m_dgvAB
-            //       , HandlerDb.GetOutPut(out err));
+            //    m_dgvReak.FillTableValue();
         }
     }
 }

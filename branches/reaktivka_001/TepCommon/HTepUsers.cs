@@ -296,7 +296,7 @@ namespace TepCommon
                 {
                     foreach (DataRow r in tblRes.Rows)
                     {
-                        id_alg = (Int32)r[@"ID"];
+                        id_alg = (Int16)r[@"ID"];
 
                         ratio = s_iRatioDefault;
                         round = s_iRoundDefault;

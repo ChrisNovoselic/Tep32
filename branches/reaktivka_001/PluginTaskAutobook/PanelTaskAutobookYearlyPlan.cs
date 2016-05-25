@@ -157,6 +157,15 @@ namespace PluginTaskAutobook
         /// </summary>
         protected class DGVAutoBook : DataGridView
         {
+            /// <summary>
+            /// основание степени
+            /// </summary>
+            int m_basisDegree = 10;
+
+            /// <summary>
+            /// основной конструктор
+            /// </summary>
+            /// <param name="nameDGV"></param>
             public DGVAutoBook(string nameDGV)
             {
                 InitializeComponents(nameDGV);
@@ -381,7 +390,7 @@ namespace PluginTaskAutobook
                         }
                     }
                     else
-                        break;
+                        ;
                 }
             }
         }
