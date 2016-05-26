@@ -5,6 +5,7 @@ using System.Text;
 using System.Data;
 using System.Windows.Forms;
 using System.Drawing;
+using Excel = Microsoft.Office.Interop.Excel;
 using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
@@ -56,7 +57,7 @@ namespace PluginTaskReaktivka
             UNKNOWN = -1
             , PERIOD, TIMEZONE,
             COMPONENT,
-            PARAMETER, //_IN, PARAMETER_OUT
+            //PARAMETER, 
             //, MODE_DEV/*, MEASURE*/,
             RATIO
                , COUNT
@@ -78,6 +79,10 @@ namespace PluginTaskReaktivka
         /// Массив списков параметров
         /// </summary>
         protected List<int>[] m_arListIds;
+        /// <summary>
+        /// 
+        /// </summary>
+        protected ReportExcel m_rptExcel;
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
@@ -187,9 +192,20 @@ namespace PluginTaskReaktivka
             //(btn.ContextMenuStrip.Items.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
             //    new EventHandler(HPanelTepCommon_btnHistory_Click);
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
-
+            (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskReaktivka_Click;
             (PanelManagementReak as PanelManagementReaktivka).ItemCheck += new PanelManagementReaktivka.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
 
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void PanelTaskReaktivka_Click(object sender, EventArgs e)
+        {
+            m_rptExcel = new ReportExcel();//
+            m_rptExcel.CreateExcel(m_dgvReak, Session.m_rangeDatetime);
         }
 
         /// <summary>
@@ -263,18 +279,16 @@ namespace PluginTaskReaktivka
                     , arIndxIdToAdd
                     , arChecked);
 
-                if (m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count + 1 > m_dgvReak.Columns.Count)
+                if (m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count+2 > m_dgvReak.Columns.Count)
                     m_dgvReak.AddColumn(id_comp, strItem, strItem, false, arChecked[0]);
-
             }
-
             //Установить обработчик события - добавить параметр
             //eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
             // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
             // компонента станции для элементов управления
             (PanelManagementReak as PanelManagementReaktivka).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED });
 
-            //m_dgvValues.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+            m_dgvReak.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
             if (err == 0)
             {
@@ -325,9 +339,9 @@ namespace PluginTaskReaktivka
                     case INDEX_TABLE_DICTPRJ.COMPONENT:
                         errMsg = @"Получение списка компонентов станции";
                         break;
-                    case INDEX_TABLE_DICTPRJ.PARAMETER:
-                        errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
-                        break;
+                    //case INDEX_TABLE_DICTPRJ.PARAMETER:
+                    //    errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
+                    //    break;
                     //case INDEX_TABLE_DICTPRJ.MODE_DEV:
                     //    errMsg = @"Получение идентификаторов режимов работы оборудования";
                     //    break;
@@ -422,13 +436,13 @@ namespace PluginTaskReaktivka
                 // список компонентов
                 , HandlerDb.GetQueryComp(Type)
                 // параметры расчета
-                , HandlerDb.GetQueryParameters(Type)
+                //, HandlerDb.GetQueryParameters(Type)
                 //// настройки визуального отображения значений
                 //, @""
                 // режимы работы
                 //, HandlerDb.GetQueryModeDev()
                 //// единицы измерения
-                , m_handlerDb.GetQueryMeasures()
+                //, m_handlerDb.GetQueryMeasures()
                 // коэффициенты для единиц измерения
                 , HandlerDb.GetQueryRatio()
             };
@@ -585,7 +599,7 @@ namespace PluginTaskReaktivka
             {
                 List<DataRow> listRes;
 
-                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select().ToList<DataRow>();
+                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Select().ToList<DataRow>();
 
                 return listRes;
             }
@@ -1338,7 +1352,7 @@ namespace PluginTaskReaktivka
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
             /// </summary>
-            protected enum INDEX_SERVICE_COLUMN : uint { DATE, COUNT }
+            protected enum INDEX_SERVICE_COLUMN : uint { ALG, DATE, COUNT }
             private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
 
             public DGVReaktivka(string nameDGV)
@@ -1368,6 +1382,7 @@ namespace PluginTaskReaktivka
                 //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                 ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
+                AddColumn(-2, string.Empty, "ALG", true, false);
                 AddColumn(-1, "Дата", "Date", true, true);
             }
 
@@ -1589,8 +1604,8 @@ namespace PluginTaskReaktivka
                 DataGridViewRow row = new DataGridViewRow();
                 if (m_dictPropertiesRows == null)
                     m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-                else
-                    ;
+                else ;
+
                 if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
                     m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
 
@@ -1598,8 +1613,9 @@ namespace PluginTaskReaktivka
                 i = Rows.Add(row);
                 // установить значения в ячейках для служебной информации
                 Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
+                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
                 // инициализировать значения в служебных ячейках
-                //m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
+               m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
             }
 
             /// <summary>
@@ -1717,7 +1733,10 @@ namespace PluginTaskReaktivka
                 else
                     ; // нет элемента для изменения стиля
             }
-
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="source"></param>
             public void ShowValues(DataTable source)
             {
                 int idAlg = -1
@@ -1741,7 +1760,7 @@ namespace PluginTaskReaktivka
                                 parameterRows = 
                                     //source.Select("ID_PUT = " + col.m_iIdComp + " AND WR_DATETIME = '" + Convert.ToDateTime(row.Cells[0].Value).AddMinutes(-m_currentOffSet) + "'");
                                 source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp + " AND WR_DATETIME = '{0:o}'"
-                                    , Convert.ToDateTime(row.Cells[0].Value).AddMinutes(-m_currentOffSet)));
+                                    , Convert.ToDateTime(row.Cells["Date"].Value).AddMinutes(-m_currentOffSet)));
 
                                 if (parameterRows.Length == 1)
                                 {
@@ -1754,16 +1773,16 @@ namespace PluginTaskReaktivka
                                 row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
 
                                 vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                ratioValue = m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
+                                //ratioValue = m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
                                     ;
-                                if (!(ratioValue == vsRatioValue))
-                                {
-                                    //    row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol
-                                    //        + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
-                                    //    dblVal *= Math.Pow(10F, ratioValue > vsRatioValue ? vsRatioValue : -1 * vsRatioValue);
-                                }
-                                else
-                                    ;
+                                //if (!(ratioValue == vsRatioValue))
+                                //{
+                                    //row.Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = m_dictPropertiesRows[idAlg].m_strSymbol
+                                    //    + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
+                                    dblVal *= Math.Pow(10F, -1*vsRatioValue);
+                                //}
+                                //else
+                                //    ;
                                 row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                     System.Globalization.CultureInfo.InvariantCulture);
                                 dbSumVal += dblVal;
@@ -1773,6 +1792,7 @@ namespace PluginTaskReaktivka
                                     System.Globalization.CultureInfo.InvariantCulture);
                         }
                     iCol++;
+                    dbSumVal = 0;
                 }
             }
 
@@ -1793,6 +1813,190 @@ namespace PluginTaskReaktivka
                         }
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Класс формирования отчета Excel 
+        /// </summary>
+        public class ReportExcel
+        {
+            private Excel.Application m_excApp;
+            private Excel.Workbook m_workBook;
+            private Excel.Worksheet m_wrkSheet;
+            private object _missingObj = System.Reflection.Missing.Value;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            protected enum INDEX_DIVISION : int
+            {
+                UNKNOW = -1,
+                SEPARATE_CELL,
+                ADJACENT_CELL
+            }
+
+            /// <summary>
+            /// конструктор(основной)
+            /// </summary>
+            public ReportExcel()
+            {
+                m_excApp = new Excel.Application();
+                m_excApp.Visible = false;
+            }
+
+            /// <summary>
+            /// Подключение шаблона листа экселя и его заполнение
+            /// </summary>
+            /// <param name="dgView">отрбражение данных</param>
+            /// <param name="dtRange">дата</param>
+            public void CreateExcel(DataGridView dgView, DateTimeRange dtRange)
+            {
+                if (addWorkBooks())
+                {
+                    m_workBook.AfterSave += workBook_AfterSave;
+                    m_workBook.BeforeClose += workBook_BeforeClose;
+                    m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("MontName");
+
+                    try
+                    {
+                        for (int i = 0; i < dgView.Columns.Count; i++)
+                        {
+                            int indxRow = 0;
+                            Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[i + 1];
+
+                            foreach (Excel.Range cell in colRange.Cells)
+                                if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
+                                {
+                                    fillSheetExcel(colRange, dgView, i, cell.Row);
+                                    break;
+                                }
+                            indxRow++;
+                        }
+                        //
+                        //setPlanMonth(m_wrkSheet, dgView, dtRange);
+                        m_excApp.Visible = true;
+                        System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+                    }
+                    catch (Exception e)
+                    {
+                        CloseExcel();
+                        MessageBox.Show("Ошибка экспорта данных!");
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Подключение шаблона
+            /// </summary>
+            /// <returns>признак ошибки</returns>
+            private bool addWorkBooks()
+            {
+                string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateReaktivka.xlsx";
+                object pathToTemplateObj = pathToTemplate;
+                bool bflag = true;
+                try
+                {
+                    m_workBook = m_excApp.Workbooks.Add(pathToTemplate);
+                }
+                catch (Exception exp)
+                {
+                    CloseExcel();
+                    bflag = false;
+                    MessageBox.Show("Отсутствует шаблон для отчета Excel");
+                }
+                return bflag;
+            }
+
+            /// <summary>
+            /// Обработка события - закрытие экселя
+            /// </summary>
+            /// <param name="Cancel"></param>
+            void workBook_BeforeClose(ref bool Cancel)
+            {
+                CloseExcel();
+            }
+
+            /// <summary>
+            /// обработка события сохранения книги
+            /// </summary>
+            /// <param name="Success"></param>
+            void workBook_AfterSave(bool Success)
+            {
+                CloseExcel();
+            }
+
+            /// <summary>
+            /// Добавление плана и месяца
+            /// </summary>
+            /// <param name="exclWrksht">лист экселя</param>
+            /// <param name="dgv">грид</param>
+            /// <param name="dtRange">дата</param>
+            private void setPlanMonth(Excel.Worksheet exclWrksht, DataGridView dgv, DateTimeRange dtRange)
+            {
+                Excel.Range exclRPL = exclWrksht.get_Range("C5");
+                Excel.Range exclRMonth = exclWrksht.get_Range("A4");
+                exclRPL.Value2 = dgv.Rows[dgv.Rows.Count - 1].Cells[@"PlanSwen"].Value;
+                exclRMonth.Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
+            }
+
+            /// <summary>
+            /// Деление 
+            /// </summary>
+            /// <param name="headerTxt">строка</param>
+            /// <returns>часть строки</returns>
+            private string splitString(string headerTxt)
+            {
+                string[] spltHeader = headerTxt.Split(',');
+
+                if (spltHeader.Length > (int)INDEX_DIVISION.ADJACENT_CELL)
+                    return spltHeader[(int)INDEX_DIVISION.ADJACENT_CELL].TrimStart();
+                else
+                    return spltHeader[(int)INDEX_DIVISION.SEPARATE_CELL];
+            }
+
+            /// <summary>
+            /// Заполнение выбранного стоблца в шаблоне
+            /// </summary>
+            /// <param name="cellRange">столбец в excel</param>
+            /// <param name="dgv">отображение</param>
+            /// <param name="indxColDgv">индекс столбца</param>
+            /// <param name="indxRowExcel">индекс строки в excel</param>
+            private void fillSheetExcel(Excel.Range cellRange
+                , DataGridView dgv
+                , int indxColDgv
+                , int indxRowExcel)
+            {
+                int row = 0;
+
+                for (int i = indxRowExcel; i < cellRange.Rows.Count; i++)
+                    if (((Excel.Range)cellRange.Cells[i]).Value == null &&
+                        ((Excel.Range)cellRange.Cells[i]).MergeCells.ToString() != "True")
+                    {
+                        row = i;
+                        break;
+                    }
+
+                for (int j = 0; j < dgv.Rows.Count; j++)
+                {
+                    cellRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
+                    row++;
+                }
+            }
+
+            /// <summary>
+            /// вызов закрытия Excel
+            /// </summary>
+            public void CloseExcel()
+            {
+                //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
+                //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+
+                m_excApp = null;
+                m_workBook = null;
+                m_wrkSheet = null;
+                System.GC.Collect();
             }
         }
 
@@ -1967,7 +2171,7 @@ namespace PluginTaskReaktivka
                     //, получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(
                         CountBasePeriod
-                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                         , out err, out strErr);
