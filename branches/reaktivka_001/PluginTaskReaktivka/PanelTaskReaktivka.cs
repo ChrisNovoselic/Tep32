@@ -279,7 +279,7 @@ namespace PluginTaskReaktivka
                     , arIndxIdToAdd
                     , arChecked);
 
-                if (m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count+2 > m_dgvReak.Columns.Count)
+                if (m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count + 2 > m_dgvReak.Columns.Count)
                     m_dgvReak.AddColumn(id_comp, strItem, strItem, false, arChecked[0]);
             }
             //Установить обработчик события - добавить параметр
@@ -1615,7 +1615,7 @@ namespace PluginTaskReaktivka
                 Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
                 Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
                 // инициализировать значения в служебных ячейках
-               m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
+                m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
             }
 
             /// <summary>
@@ -1733,6 +1733,7 @@ namespace PluginTaskReaktivka
                 else
                     ; // нет элемента для изменения стиля
             }
+
             /// <summary>
             /// 
             /// </summary>
@@ -1743,49 +1744,60 @@ namespace PluginTaskReaktivka
                    , idParameter = -1
                    , iQuality = -1
                    , iCol = 0, iRow = 0
-                   , ratioValue = -1, vsRatioValue = -1;
+                   , vsRatioValue = -1
+                   , rowCount = 0;
                 double dblVal = -1F,
                     dbSumVal = 0;
-                DataRow[] cellRows = null
-                    , parameterRows = null;
+                DataRow[] parameterRows = null;
+
+                var enumTime = (from r in source.AsEnumerable()
+                                   orderby r.Field<DateTime>("WR_DATETIME")
+                                   select new
+                                   {
+                                       WR_DATETIME = r.Field<DateTime>("WR_DATETIME"),
+                                   }).Distinct();
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
                     if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                         foreach (DataGridViewRow row in Rows)
                         {
-                            if (row.Index != row.DataGridView.RowCount-1)
+                            if (row.Index != row.DataGridView.RowCount - 1)
                             {
-                                idAlg = (int)row.Cells[0].Value;//??
-                                parameterRows = 
-                                    //source.Select("ID_PUT = " + col.m_iIdComp + " AND WR_DATETIME = '" + Convert.ToDateTime(row.Cells[0].Value).AddMinutes(-m_currentOffSet) + "'");
-                                source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp + " AND WR_DATETIME = '{0:o}'"
-                                    , Convert.ToDateTime(row.Cells["Date"].Value).AddMinutes(-m_currentOffSet)));
-
-                                if (parameterRows.Length == 1)
+                                if (rowCount < enumTime.Count())
                                 {
-                                    idParameter = (int)parameterRows[0][@"ID_PUT"];
-                                    dblVal = ((double)parameterRows[0][@"VALUE"]);
-                                    iQuality = (int)parameterRows[0][@"QUALITY"];
-                                }
+                                    rowCount++;
+                                    idAlg = (int)row.Cells[0].Value;//??
+                                    parameterRows =
+                                        //source.Select("ID_PUT = " + col.m_iIdComp + " AND WR_DATETIME = '" + Convert.ToDateTime(row.Cells[0].Value).AddMinutes(-m_currentOffSet) + "'");
+                                    source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp + " AND WR_DATETIME = '{0:o}'"
+                                        , Convert.ToDateTime(row.Cells["Date"].Value).AddMinutes(-m_currentOffSet)));
 
-                                iRow = Rows.IndexOf(row);
-                                row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
+                                    if (parameterRows.Length == 1)
+                                    {
+                                        idParameter = (int)parameterRows[0][@"ID_PUT"];
+                                        dblVal = ((double)parameterRows[0][@"VALUE"]);
+                                        iQuality = (int)parameterRows[0][@"QUALITY"];
+                                    }
 
-                                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                //ratioValue = m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
+                                    iRow = Rows.IndexOf(row);
+                                    row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
+
+                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                    //ratioValue = m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
                                     ;
-                                //if (!(ratioValue == vsRatioValue))
-                                //{
+                                    //if (!(ratioValue == vsRatioValue))
+                                    //{
                                     //row.Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = m_dictPropertiesRows[idAlg].m_strSymbol
                                     //    + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
-                                    dblVal *= Math.Pow(10F, -1*vsRatioValue);
-                                //}
-                                //else
-                                //    ;
-                                row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                    System.Globalization.CultureInfo.InvariantCulture);
-                                dbSumVal += dblVal;
+                                    dblVal *= Math.Pow(10F, -1 * vsRatioValue);
+                                    //}
+                                    //else
+                                    //    ;
+                                    row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                        System.Globalization.CultureInfo.InvariantCulture);
+                                    dbSumVal += dblVal;
+                                }
                             }
                             else
                                 row.Cells[iCol].Value = dbSumVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
@@ -1799,20 +1811,6 @@ namespace PluginTaskReaktivka
             public void FillTableValue()
             {
 
-            }
-
-            private void sumRow()
-            {
-                foreach (HDataGridViewColumn col in Columns)
-                {
-                    foreach (DataGridViewRow row in Rows)
-                    {
-                        if (true)
-                        {
-
-                        }
-                    }
-                }
             }
         }
 
@@ -1856,25 +1854,29 @@ namespace PluginTaskReaktivka
                 {
                     m_workBook.AfterSave += workBook_AfterSave;
                     m_workBook.BeforeClose += workBook_BeforeClose;
-                    m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("MontName");
+                    m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("Reaktivka");
+                    int indxCol = 1;
 
                     try
                     {
                         for (int i = 0; i < dgView.Columns.Count; i++)
                         {
-                            int indxRow = 0;
-                            Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[i + 1];
+                            if (dgView.Columns[i].HeaderText != "")
+                            {
+                                Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
 
-                            foreach (Excel.Range cell in colRange.Cells)
-                                if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
-                                {
-                                    fillSheetExcel(colRange, dgView, i, cell.Row);
-                                    break;
-                                }
-                            indxRow++;
+                                foreach (Excel.Range cell in colRange.Cells)
+                                    if (Convert.ToString(cell.Value) != "")
+                                        if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
+                                        {
+                                            fillSheetExcel(colRange, dgView, i, cell.Row);
+                                            break;
+                                        }
+                                indxCol++;
+                            }
                         }
                         //
-                        //setPlanMonth(m_wrkSheet, dgView, dtRange);
+                        setPlanMonth(m_wrkSheet, dgView, dtRange);
                         m_excApp.Visible = true;
                         System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
                     }
@@ -1934,9 +1936,9 @@ namespace PluginTaskReaktivka
             /// <param name="dtRange">дата</param>
             private void setPlanMonth(Excel.Worksheet exclWrksht, DataGridView dgv, DateTimeRange dtRange)
             {
-                Excel.Range exclRPL = exclWrksht.get_Range("C5");
-                Excel.Range exclRMonth = exclWrksht.get_Range("A4");
-                exclRPL.Value2 = dgv.Rows[dgv.Rows.Count - 1].Cells[@"PlanSwen"].Value;
+                Excel.Range exclTEC = exclWrksht.get_Range("B2");
+                Excel.Range exclRMonth = exclWrksht.get_Range("A2");
+                //exclRPL.Value2 = dgv.Rows[dgv.Rows.Count - 1].Cells[@"PlanSwen"].Value;
                 exclRMonth.Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
             }
 
@@ -1979,8 +1981,13 @@ namespace PluginTaskReaktivka
 
                 for (int j = 0; j < dgv.Rows.Count; j++)
                 {
-                    cellRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-                    row++;
+                    if (Convert.ToString(((Excel.Range)cellRange.Cells[row]).Value) == "")
+                    {
+                        cellRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
+                        row++;
+                    }
+                    else
+                        break;
                 }
             }
 
