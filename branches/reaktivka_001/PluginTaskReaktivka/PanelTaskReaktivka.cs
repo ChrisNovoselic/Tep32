@@ -192,8 +192,9 @@ namespace PluginTaskReaktivka
             //(btn.ContextMenuStrip.Items.Find(PanelManagmentReaktivka.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
             //    new EventHandler(HPanelTepCommon_btnHistory_Click);
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
-            (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskReaktivka_Click;
+            (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskReaktivka_ClickExport;
             (PanelManagementReak as PanelManagementReaktivka).ItemCheck += new PanelManagementReaktivka.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
+            m_dgvReak.CellParsing += m_dgvReak_CellParsing;
 
         }
 
@@ -202,7 +203,21 @@ namespace PluginTaskReaktivka
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void PanelTaskReaktivka_Click(object sender, EventArgs e)
+        void m_dgvReak_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
+        {
+            //float value = 0F;
+            //value = Convert.ToSingle(e.Value);
+            //(sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = value.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+            //                        System.Globalization.CultureInfo.InvariantCulture);
+            m_dgvReak.SummValue(e.ColumnIndex, e.RowIndex, e.Value.ToString());
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void PanelTaskReaktivka_ClickExport(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();//
             m_rptExcel.CreateExcel(m_dgvReak, Session.m_rangeDatetime);
@@ -1462,7 +1477,7 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// 
+            /// Добавить столбец
             /// </summary>
             /// <param name="id_comp">номер компонента</param>
             /// <param name="txtHeader">заголовок столбца</param>
@@ -1644,6 +1659,7 @@ namespace PluginTaskReaktivka
                     foreach (HDataGridViewColumn col in Columns)
                         Rows[i].Cells[col.Index].ReadOnly = true;
             }
+
             /// <summary>
             /// 
             /// </summary>
@@ -1658,6 +1674,9 @@ namespace PluginTaskReaktivka
                     , m_strDesc;
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
             protected Dictionary<int, RATIO> m_dictRatio;
 
             /// <summary>
@@ -1751,11 +1770,11 @@ namespace PluginTaskReaktivka
                 DataRow[] parameterRows = null;
 
                 var enumTime = (from r in source.AsEnumerable()
-                                   orderby r.Field<DateTime>("WR_DATETIME")
-                                   select new
-                                   {
-                                       WR_DATETIME = r.Field<DateTime>("WR_DATETIME"),
-                                   }).Distinct();
+                                orderby r.Field<DateTime>("WR_DATETIME")
+                                select new
+                                {
+                                    WR_DATETIME = r.Field<DateTime>("WR_DATETIME"),
+                                }).Distinct();
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
@@ -1805,12 +1824,46 @@ namespace PluginTaskReaktivka
                         }
                     iCol++;
                     dbSumVal = 0;
+                    rowCount = 0;
                 }
             }
 
-            public void FillTableValue()
+            /// <summary>
+            /// Перерасчет суммы по столбцу
+            /// </summary>
+            /// <param name="indxCol">индекс столбца</param>
+            /// <param name="indxRow">индекс строки</param>
+            /// <param name="newValue">новое значение</param>
+            public void SummValue(int indxCol, int indxRow, string newValue)
             {
+                int idAlg = -1;
+                double sumValue = 0F,
+                    value = 0;
 
+                idAlg = (int)Rows[indxRow].Cells[0].Value;
+                Rows[indxRow].Cells[indxCol].Value =
+                    Convert.ToDouble(newValue.ToString().Replace('.', ',')).ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);
+
+                foreach (DataGridViewRow row in Rows)
+                {
+                    if (Rows.Count - 1 != row.Index)
+                        if (row.Cells[indxCol].Value.ToString() != "")
+                            //sumValue = Rows.Cast<DataGridViewRow>().Sum(r => Convert.ToDouble(r.Cells[indxCol].Value.ToString().Replace('.', ',')));
+                            sumValue += Convert.ToDouble(row.Cells[indxCol].Value.ToString().Replace('.', ','));
+                        else ;
+                    else
+                        row.Cells[indxCol].Value = sumValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                    System.Globalization.CultureInfo.InvariantCulture);
+                }
+            }
+
+            public DataTable GetValue()
+            {
+                DataTable dtSource = new DataTable();
+
+                //dtSource.
+
+                return dtSource;
             }
         }
 
@@ -1980,15 +2033,14 @@ namespace PluginTaskReaktivka
                     }
 
                 for (int j = 0; j < dgv.Rows.Count; j++)
-                {
-                    if (Convert.ToString(((Excel.Range)cellRange.Cells[row]).Value) == "")
-                    {
-                        cellRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-                        row++;
-                    }
-                    else
-                        break;
-                }
+                    if (dgv.Rows.Count - 1 != j)
+                        if (Convert.ToString(((Excel.Range)cellRange.Cells[row]).Value) == "")
+                        {
+                            cellRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
+                            row++;
+                        }
+                        else
+                            break;
             }
 
             /// <summary>
@@ -2084,7 +2136,7 @@ namespace PluginTaskReaktivka
                             // отобразить значения
                             m_dgvReak.ShowValues(m_TableOrigin);
                             //формирование таблиц на основе грида
-                            valuesFence(out err);
+                            //valuesFence(,out err);
                         }
                         else
                             deleteSession();
