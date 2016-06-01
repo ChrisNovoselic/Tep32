@@ -790,7 +790,7 @@ namespace TepCommon
         /// <param name="idPeriod">Идентификатор </param>
         /// <param name="err">Признак выполнения функции</param>
         /// <returns>Объект-таблица со значенями по умолчанию</returns>
-        public DataTable GetValuesDef(ID_PERIOD idPeriod, out int err)
+        public virtual DataTable GetValuesDef(ID_PERIOD idPeriod, out int err)
         {
             DataTable tableRes = new DataTable();
 
