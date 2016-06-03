@@ -705,5 +705,14 @@ namespace PluginTaskBalTeplo
 
             return strRes;
         }
+
+        public string GetQueryNAlgOutList()
+        {
+            string strRes = string.Empty;
+
+            strRes = @"SELECT * FROM " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTALG] + " where ID_TASK=2";
+
+            return strRes;
+        }
     }
 }
