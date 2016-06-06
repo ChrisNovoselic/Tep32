@@ -199,7 +199,7 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// 
+        /// Обработчик события изменения значения в ячейке
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -213,7 +213,7 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// 
+        /// Обработчик события - нажатие клавиши ЭКСПОРТ
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -382,7 +382,7 @@ namespace PluginTaskReaktivka
             clear();
             //m_currentOffSet = Session.m_curOffsetUTC;
         }
-
+  
         /// <summary>
         /// Установить новое значение для текущего периода
         /// </summary>
@@ -712,28 +712,8 @@ namespace PluginTaskReaktivka
             }
         }
 
-        // <summary>
-        // Очистить объекты, элементы управления от текущих данных
-        // </summary>
-        // <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
-        //  для возвращения предыдущего значения, при отказе пользователя от очистки</param>
-        // <param name="bClose">Признак полной/частичной очистки</param>
-        //protected override void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
-        //{
-        //    INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
-        //     в базовом классе 'indxCtrl' все равно не известен
-        //    base.clear(iCtrl, bClose);
-
-        //    if (bClose == true)
-        //    {
-        //        (PanelManagementReak as PanelManagmentReaktivka).Clear();
-        //    }
-        //    else
-        //        ;
-        //}
-
         /// <summary>
-        /// 
+        /// Панель элементов управления
         /// </summary>
         protected class PanelManagementReaktivka : HPanelCommon
         {
@@ -750,7 +730,11 @@ namespace PluginTaskReaktivka
                 CLBX_COMP_VISIBLED, CLBX_COMP_CALCULATED,
                 COUNT
             }
-
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="dtBegin"></param>
+            /// <param name="dtEnd"></param>
             public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
             /// <summary>
             /// Класс аргумента для события - изменение выбора запрет/разрешение
@@ -919,7 +903,7 @@ namespace PluginTaskReaktivka
                 //Признак для включения/исключения для отображения компонента
                 ctrl = new System.Windows.Forms.Label();
                 ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Включить/исключить для отображения";
+                (ctrl as System.Windows.Forms.Label).Text = @"Включить/исключить компонент для отображения";
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
                 ctrl = new CheckedListBoxTaskReaktivka();
@@ -1097,7 +1081,7 @@ namespace PluginTaskReaktivka
 
             /// <summary>
             /// Добавить элемент компонент станции в списки
-            ///  , в соответствии с 'arIndexIdToAdd'
+            /// , в соответствии с 'arIndexIdToAdd'
             /// </summary>
             /// <param name="id">Идентификатор компонента</param>
             /// <param name="text">Текст подписи к компоненту</param>
@@ -1246,10 +1230,10 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// 
+            /// Получение ИД контрола
             /// </summary>
-            /// <param name="ctrl"></param>
-            /// <returns></returns>
+            /// <param name="ctrl">контрол</param>
+            /// <returns>индекс</returns>
             protected INDEX_ID getIndexIdOfControl(Control ctrl)
             {
                 INDEX_CONTROL_BASE id = INDEX_CONTROL_BASE.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
@@ -1278,10 +1262,10 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// 
+            /// Получение индекса контрола
             /// </summary>
-            /// <param name="ctrl"></param>
-            /// <returns></returns>
+            /// <param name="ctrl">контрол</param>
+            /// <returns>имя индекса контрола на панели</returns>
             protected INDEX_CONTROL_BASE getIndexControl(Control ctrl)
             {
                 INDEX_CONTROL_BASE indxRes = INDEX_CONTROL_BASE.UNKNOWN;
@@ -1370,6 +1354,10 @@ namespace PluginTaskReaktivka
             protected enum INDEX_SERVICE_COLUMN : uint { ALG, DATE, COUNT }
             private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
 
+            /// <summary>
+            /// Конструктор
+            /// </summary>
+            /// <param name="nameDGV"></param>
             public DGVReaktivka(string nameDGV)
             {
                 InitializeComponents(nameDGV);
@@ -1580,7 +1568,7 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// 
+            /// Удаление набора строк
             /// </summary>
             public void ClearRows()
             {
@@ -1591,7 +1579,7 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// 
+            /// Очищение отображения от значений
             /// </summary>
             public void ClearValues()
             {
@@ -1754,9 +1742,9 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// 
+            /// Отображение значений
             /// </summary>
-            /// <param name="source"></param>
+            /// <param name="source">таблица с даными</param>
             public void ShowValues(DataTable source)
             {
                 int idAlg = -1
@@ -1803,16 +1791,14 @@ namespace PluginTaskReaktivka
                                     row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
 
                                     vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                    //ratioValue = m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
-                                    ;
+                                    //ratioValue = m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value;
                                     //if (!(ratioValue == vsRatioValue))
                                     //{
                                     //row.Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = m_dictPropertiesRows[idAlg].m_strSymbol
                                     //    + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
                                     dblVal *= Math.Pow(10F, -1 * vsRatioValue);
                                     //}
-                                    //else
-                                    //    ;
+                                    //else;
                                     row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                         System.Globalization.CultureInfo.InvariantCulture);
                                     dbSumVal += dblVal;
@@ -1857,6 +1843,10 @@ namespace PluginTaskReaktivka
                 }
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <returns></returns>
             public DataTable GetValue()
             {
                 DataTable dtSource = new DataTable();
@@ -1947,7 +1937,7 @@ namespace PluginTaskReaktivka
             /// <returns>признак ошибки</returns>
             private bool addWorkBooks()
             {
-                string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateReaktivka.xlsx";
+                string pathToTemplate = @"D:\My Project's\C.Net\TEP32\Tep\bin\Debug\Template\TemplateReaktivka.xlsx";
                 object pathToTemplateObj = pathToTemplate;
                 bool bflag = true;
                 try
@@ -2039,8 +2029,9 @@ namespace PluginTaskReaktivka
                             cellRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
                             row++;
                         }
-                        else
-                            break;
+                        else ;
+                    else
+                        cellRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
             }
 
             /// <summary>
@@ -2203,7 +2194,7 @@ namespace PluginTaskReaktivka
         /// </summary>
         /// <param name="arQueryRanges"></param>
         /// <param name="err">номер ошибки</param>
-        /// <param name="strErr"></param>
+        /// <param name="strErr">текст ошибки</param>
         private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
         {
             err = 0;
@@ -2243,6 +2234,9 @@ namespace PluginTaskReaktivka
                     + @" по " + Session.m_rangeDatetime.End.ToString();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         private void setValues()
         {
 

@@ -31,7 +31,7 @@ namespace PluginTaskAutobook
         { 
             "Январь", "Февраль", "Март", "Апрель", 
             "Май", "Июнь", "Июль", "Август", "Сентябрь", 
-            "Октябрь", "Ноябрь", "Декабрь", "Январь сл. года"
+            "Октябрь", "Ноябрь", "Декабрь"//, "Январь сл. года"
         };
         /// <summary>
         /// Значения параметров сессии
@@ -55,22 +55,17 @@ namespace PluginTaskAutobook
         /// </summary>
         protected enum INDEX_CONTROL
         {
-            UNKNOWN = -1
-              ,
-            DGV_PLANEYAR
-                ,
-            LABEL_DESC
-                , LABEL_YEARPLAN
+            UNKNOWN = -1,
+            DGV_PLANEYAR,
+            LABEL_DESC,LABEL_YEARPLAN
         }
         /// <summary>
         /// Индексы массива списков идентификаторов
         /// </summary>
         protected enum INDEX_ID
         {
-            UNKNOWN = -1
-            ,
-            PERIOD // идентификаторы периодов расчетов, использующихся на форме
-                ,
+            UNKNOWN = -1,
+            PERIOD, // идентификаторы периодов расчетов, использующихся на форме
             TIMEZONE // идентификаторы (целочисленные, из БД системы) часовых поясов
                 //    , ALL_COMPONENT,
                 //ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
@@ -78,7 +73,7 @@ namespace PluginTaskAutobook
                 //DENY_PARAMETER_CALCULATED // запрещенных для расчета
                 //    , DENY_COMP_VISIBLED,
                 //DENY_PARAMETER_VISIBLED // запрещенных для отображения
-                , COUNT
+                ,COUNT
         }
         /// <summary>
         /// Перечисление - индексы таблиц со словарными величинами и проектными данными
@@ -115,7 +110,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Отображение значений в табличном представлении(план)
         /// </summary>
-        protected DGVAutoBook dgvYear;
+        protected DGVAutoBook m_dgvYear;
         /// <summary>
         /// 
         /// </summary>
@@ -218,7 +213,7 @@ namespace PluginTaskAutobook
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+                //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
                 try
                 {
@@ -248,7 +243,7 @@ namespace PluginTaskAutobook
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+                //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
                 try
                 {
@@ -335,10 +330,9 @@ namespace PluginTaskAutobook
             /// <param name="value">значение</param>
             public float EditCells(float value)
             {
-                int _base = 10;
                 int pow = 6;
 
-                value = value / (float)Math.Pow(_base, pow);
+                value = value / (float)Math.Pow(m_basisDegree, pow);
 
                 return value;
             }
@@ -370,9 +364,9 @@ namespace PluginTaskAutobook
 
                 for (int i = 0; i < dgvView.Rows.Count; i++)
                 {
-                    valueToRes = Convert.ToDouble(dgvView.Rows[i].Cells["Output"].Value) * Math.Pow(10, 6);
-                    if (valueToRes > 0)
-                    {
+                    valueToRes = Convert.ToDouble(dgvView.Rows[i].Cells["Output"].Value) * Math.Pow(m_basisDegree, 6);
+                    //if (valueToRes > 0)
+                    //{
                         foreach (HDataGridViewColumn col in Columns)
                         {
                             if (col.m_iIdComp > 0)
@@ -388,9 +382,7 @@ namespace PluginTaskAutobook
                                 });
                             }
                         }
-                    }
-                    else
-                        ;
+                    //}
                 }
             }
         }
@@ -547,8 +539,6 @@ namespace PluginTaskAutobook
 
                 if (!(DateTimeRangeValue_Changed == null))
                     DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
-                else
-                    ;
             }
 
             /// <summary>
@@ -653,25 +643,25 @@ namespace PluginTaskAutobook
 
             posRow = 0;
 
-            dgvYear = new DGVAutoBook(INDEX_CONTROL.DGV_PLANEYAR.ToString());
-            dgvYear.Dock = DockStyle.Fill;
-            dgvYear.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvYear.AllowUserToResizeRows = false;
-            dgvYear.AddColumn("Месяц", true, "Month");
-            dgvYear.AddColumn("Выработка, тыс. кВтч", false, "Output", 23219);
-            dgvYear.AddColumn("Дата", true, "DateTime");
-            dgvYear.Columns["DateTime"].Visible = false;
-            foreach (DataGridViewColumn column in dgvYear.Columns)
+            m_dgvYear = new DGVAutoBook(INDEX_CONTROL.DGV_PLANEYAR.ToString());
+            m_dgvYear.Dock = DockStyle.Fill;
+            m_dgvYear.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            m_dgvYear.AllowUserToResizeRows = false;
+            m_dgvYear.AddColumn("Месяц", true, "Month");
+            m_dgvYear.AddColumn("Выработка, тыс. кВтч", false, "Output", 23219);
+            m_dgvYear.AddColumn("Дата", true, "DateTime");
+            m_dgvYear.Columns["DateTime"].Visible = false;
+            foreach (DataGridViewColumn column in m_dgvYear.Columns)
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
             DateTime dtNew = new DateTime(s_dtDefaultAU.Year, 1, 1);
             for (int i = 0; i < GetMonth.Length; i++)
             {
-                dgvYear.AddRow();
-                dgvYear.Rows[i].Cells["DateTime"].Value = dtNew.ToShortDateString();
-                dgvYear.Rows[i].Cells["Month"].Value = GetMonth[i];
+                m_dgvYear.AddRow();
+                m_dgvYear.Rows[i].Cells["DateTime"].Value = dtNew.ToShortDateString();
+                m_dgvYear.Rows[i].Cells["Month"].Value = GetMonth[i];
                 dtNew = dtNew.AddMonths(1);
             }
-            dgvYear.CellEndEdit += dgvYear_CellEndEdit;
+            m_dgvYear.CellEndEdit += dgvYear_CellEndEdit;
 
             //
             Label lblyearDGV = new System.Windows.Forms.Label();
@@ -689,7 +679,7 @@ namespace PluginTaskAutobook
             tlpYear.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
             tlpYear.Controls.Add(lblyearDGV, 0, 0);
             tlpYear.Controls.Add(lblTEC, 0, 1);
-            tlpYear.Controls.Add(dgvYear, 0, 2);
+            tlpYear.Controls.Add(m_dgvYear, 0, 2);
             this.Controls.Add(tlpYear, 1, posRow);
             this.SetColumnSpan(tlpYear, 9); this.SetRowSpan(tlpYear, 10);
             //
@@ -719,8 +709,8 @@ namespace PluginTaskAutobook
         /// <param name="e"></param>
         void dgvYear_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            dgvYear.FillTableEdit(ref m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT],
-                dgvYear, (int)Session.m_Id);
+            m_dgvYear.FillTableEdit(ref m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT],
+                m_dgvYear, (int)Session.m_Id);
         }
 
         /// <summary>
@@ -910,9 +900,9 @@ namespace PluginTaskAutobook
                             // создать копии для возможности сохранения изменений
                             setValues();
 
-                            dgvYear.ShowValues(
+                            m_dgvYear.ShowValues(
                                 m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                                , dgvYear);
+                                , m_dgvYear);
                         }
                         else ;
                     }
@@ -1194,12 +1184,12 @@ namespace PluginTaskAutobook
                 cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
                 cbx.Items.Clear();
 
-                dgvYear.ClearRows();
+                m_dgvYear.ClearRows();
                 //dgvAB.ClearColumns();
             }
             else
                 // очистить содержание представления
-                dgvYear.ClearValues()
+                m_dgvYear.ClearValues()
                 ;
         }
 
@@ -1223,27 +1213,31 @@ namespace PluginTaskAutobook
         {
             int err = -1;
             string errMsg = string.Empty;
-            DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
+            DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeToSave();
 
             if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] != null)
             {
-                for (int i = 0; i < m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count; i++)
+                for (int i = 0; i < m_dgvYear.Rows.Count; i++)
                 {
-                    m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i], out err);
-
-                    if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count > 0)
+                    if (m_dgvYear.Rows[i].Cells["Output"].Value != null)
                     {
-                        m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                            HandlerDb.SavePlanValue(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                            , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows[i], out err);
+                        m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i], out err);
 
-                        s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
-                        base.HPanelTepCommon_btnSave_Click(obj, ev);
+                        if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count > 0)
+                        {
+                            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                                HandlerDb.SavePlanValue(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                                , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows[i], (int)Session.m_currIdTimezone, out err);
+
+                            s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
+                            base.HPanelTepCommon_btnSave_Click(obj, ev);
+                        }
+                        //else ;
                     }
-                    else;
+                    //else ;
                 }
             }
-            else ;
+            //else ;
         }
 
         /// <summary>
@@ -1315,7 +1309,7 @@ namespace PluginTaskAutobook
              @"Плановая выработка электроэнергии на "
                 + dtBegin.Year + " год.";
 
-            dgvYear.Rows[dtBegin.Month - 1].Selected = true;
+            m_dgvYear.Rows[dtBegin.Month - 1].Selected = true;
         }
     }
 }

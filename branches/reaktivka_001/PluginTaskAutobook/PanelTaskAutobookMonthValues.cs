@@ -68,11 +68,9 @@ namespace PluginTaskAutobook
         public enum INDEX_GTP : int
         {
             UNKNOW = -1,
-            GTP12,
-            GTP36,
+            GTP12,GTP36,
             TEC,
-            CorGTP12,
-            CorGTP36,
+            CorGTP12,CorGTP36,
             COUNT
         }
         /// <summary>
@@ -178,8 +176,7 @@ namespace PluginTaskAutobook
             {
                 if (_panelManagement == null)
                     _panelManagement = createPanelManagement();
-                else
-                    ;
+                else;
 
                 return _panelManagement;
             }
@@ -253,7 +250,7 @@ namespace PluginTaskAutobook
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+                //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
                 try
                 {
@@ -285,7 +282,7 @@ namespace PluginTaskAutobook
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+                //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
                 try
                 {
@@ -1551,15 +1548,6 @@ namespace PluginTaskAutobook
             }
         }
 
-        ///// <summary>
-        ///// 
-        ///// </summary>
-        ///// <param name="param"></param>
-        //void PanelTaskAutobookMonthValues_EvtChangeRow(bool param)
-        //{
-
-        //}
-
         /// <summary>
         /// обработка ЭКСПОРТА(временно)
         /// </summary>
@@ -1802,8 +1790,7 @@ namespace PluginTaskAutobook
 
                 if (!(iRegDbConn > 0))
                     m_handlerDb.UnRegisterDbConnection();
-                else
-                    ;
+                else;
             }
         }
 
@@ -1905,11 +1892,9 @@ namespace PluginTaskAutobook
             {
                 if (activate == true)
                     HandlerDb.InitSession(out err);
-                else
-                    ;
+                else;
             }
-            else
-                ;
+            else;
 
             return bRes;
         }
@@ -1917,8 +1902,8 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="err"></param>
-        /// <param name="errMsg"></param>
+        /// <param name="err">номер ошибки</param>
+        /// <param name="errMsg">текст ошибки</param>
         protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
@@ -1961,8 +1946,7 @@ namespace PluginTaskAutobook
 
                 if (!(err == 0))
                     break;
-                else
-                    ;
+                else;
             }
 
             if (err == 0)
@@ -2105,11 +2089,7 @@ namespace PluginTaskAutobook
                             m_arTableDictPrjs[i].Clear();
                             m_arTableDictPrjs[i] = null;
                         }
-                        else
-                            ;
                     }
-                else
-                    ;
 
                 cbx = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
@@ -2124,8 +2104,7 @@ namespace PluginTaskAutobook
             }
             else
                 // очистить содержание представления
-                m_dgvAB.ClearValues()
-                ;
+                m_dgvAB.ClearValues();
         }
 
         /// <summary>
@@ -2321,7 +2300,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Получение имени таблицы вх.зн. в БД
         /// </summary>
-        /// <param name="dtInsert"></param>
+        /// <param name="dtInsert">дата</param>
         /// <returns>имя таблицы</returns>
         public string GetNameTableIn(DateTime dtInsert)
         {
