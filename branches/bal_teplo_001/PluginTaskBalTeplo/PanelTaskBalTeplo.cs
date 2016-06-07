@@ -45,7 +45,7 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// 
         /// </summary>
-        protected TaskAutobookCalculate AutoBookCalc;
+        protected TaskBTCalculate BTCalc;
         /// <summary>
         /// Перечисление - индексы таблиц со словарными величинами и проектными данными
         /// </summary>
@@ -778,7 +778,7 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// калькулятор значений
         /// </summary>
-        public class TaskAutobookCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
+        public class TaskBTCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
             /// <summary>
             /// 
@@ -792,7 +792,7 @@ namespace PluginTaskBalTeplo
             /// <summary>
             /// 
             /// </summary>
-            public TaskAutobookCalculate()
+            public TaskBTCalculate()
             {
                 calcTable = new DataTable[(int)INDEX_CALC.COUNT];
                 value = new List<string>((int)INDEX_CALC.COUNT);
@@ -1140,7 +1140,7 @@ namespace PluginTaskBalTeplo
             : base(iFunc)
         {
             HandlerDb.IdTask = ID_TASK.BAL_TEPLO;
-            AutoBookCalc = new TaskAutobookCalculate();
+            BTCalc = new TaskBTCalculate();
 
             m_arTableOrigin_in = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit_in = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
@@ -1872,13 +1872,7 @@ namespace PluginTaskBalTeplo
                         // создать копии для возможности сохранения изменений
                         setValues();
                         //вычисление значений
-                        AutoBookCalc.getTable(m_arTableOrigin_in, HandlerDb.getOutPut(out err));
-                        //
-                        m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                            AutoBookCalc.calcTable[(int)INDEX_CALC.CALC].Copy();
-                        ////запись выходных значений во временную таблицу
-                        //HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
-                        // отобразить значения
+                        //HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
                         dgvBlock.ShowValues(m_arTableOrigin_in
                             , m_arTableDictPrjs_in);
                         dgvOutput.ShowValues(m_arTableOrigin_in

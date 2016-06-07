@@ -11,9 +11,33 @@ using TepCommon;
 
 namespace PluginTaskBalTeplo
 {
-    public class TaskBalTeploCalculate : HandlerDbTaskCalculate
+    public class TaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate
     {
+        public override string GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        {
+            string strRes = string.Empty
+                , whereParameters = string.Empty;
 
+            //if (type == TaskCalculate.TYPE.UNKNOWN)
+            //    type = m_taskCalculate.Type;
+            //else
+            //    ;
+
+            if (!(type == TaskCalculate.TYPE.UNKNOWN))
+            {
+                strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
+                        + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
+                        + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
+                    + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
+                        + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask
+                        + whereParameters
+                        + @" JOIN [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
+            }
+            else
+                Logging.Logg().Error(@"HandlerDbTaskCalculate::GetQueryParameters () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+
+            return strRes;
+        }
         /// <summary>
         /// Создать объект расчета для типа задачи
         /// </summary>
@@ -22,12 +46,37 @@ namespace PluginTaskBalTeplo
         {
             base.createTaskCalculate();
 
-            //??? m_taskCalculate = new TaskAutobookCalculate();
+             m_taskCalculate = new HandlerDbTaskCalculate.TaskBalTeploCalculate();
         }
 
         protected override void calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, out int err)
         {
-            err = 0;
+            err = -1;
+
+            DataTable tableOrigin = null
+                , tableCalcRes = null;
+
+            TepCommon.HandlerDbTaskCalculate.TaskCalculate.ListDATATABLE listDataTables = null;
+
+            // подготовить таблицы для расчета
+            listDataTables = prepareTepCalculateValues(type, out err);
+            if (err == 0)
+            {
+                // произвести вычисления
+                switch (type)
+                {
+                    case TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES:
+                        tableCalcRes = (m_taskCalculate as HandlerDbTaskCalculate.TaskBalTeploCalculate).CalculateOut(listDataTables);
+                        break;
+                    default:
+                        break;
+                }
+                // сохранить результаты вычисления
+                //saveResult(tableOrigin, tableCalcRes, out err);
+            }
+            else
+                Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при подготовке данных для расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+
         }
 
         private const int MAX_ROWCOUNT_TO_INSERT = 666;
@@ -713,6 +762,257 @@ namespace PluginTaskBalTeplo
             strRes = @"SELECT * FROM " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTALG] + " where ID_TASK=2";
 
             return strRes;
+        }
+    }
+
+    public partial class HandlerDbTaskCalculate : TepCommon.HandlerDbValues
+    {
+        
+        /// <summary>
+        /// Класс для расчета технико-экономических показателей
+        /// </summary>
+        public partial class TaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
+        {
+            /// <summary>
+            /// Признак расчета ТЭП-оперативно
+            /// </summary>
+            protected /*override */bool isRealTime { get { return !(m_indxCompRealTime == INDX_COMP.UNKNOWN); } }
+            //protected virtual bool isRealTime { get { return _type == TYPE.OUT_TEP_REALTIME; } }
+
+            private bool isRealTimeBL1456
+            {
+                get
+                {
+                    return (m_indxCompRealTime == INDX_COMP.iBL1)
+                        || (m_indxCompRealTime == INDX_COMP.iBL4)
+                        || (m_indxCompRealTime == INDX_COMP.iBL5)
+                        || (m_indxCompRealTime == INDX_COMP.iBL6);
+                }
+            }
+            /// <summary>
+            /// ???
+            /// </summary>
+            int n_blokov
+                , n_blokov1;
+            /// <summary>
+            /// Перечисления индексы для массива идентификаторов компонентов оборудования ТЭЦ
+            /// </summary>
+            private enum INDX_COMP : short
+            {
+                UNKNOWN = -1
+                    , iBL1, iBL2, iBL3, iBL4, iBL5, iBL6,
+                iOP1,iOP2,iOP3,iOP4,iOP5,iOP6,
+                iPP1,iPP2,iPP3,iPP4,iPP5,iPP6,iPP7,iPP8,
+                iST
+                    , COUNT
+            };
+            /// <summary>
+            /// Константы - идентификаторы компонентов оборудования ТЭЦ
+            /// </summary>
+            private const int BL1 = 1029
+                , BL2 = 1030
+                , BL3 = 1031
+                , BL4 = 1032
+                , BL5 = 1033
+                , BL6 = 1034
+                , OP1 = 2001
+                , OP2 = 2002
+                , OP3 = 2003
+                , OP4 = 2004
+                , OP5 = 2005
+                , OP6 = 2006
+                , PP1 = 3001
+                , PP2 = 3002
+                , PP3 = 3003
+                , PP4 = 3004
+                , PP5 = 3005
+                , PP6 = 3006
+                , PP7 = 3007
+                , PP8 = 3008
+                    , ST = 5;
+            /// <summary>
+            /// Массив - идентификаторы компонентов оборудования ТЭЦ
+            /// </summary>
+            private readonly int[] ID_COMP =
+            {
+                BL1, BL2, BL3, BL4, BL5, BL6
+                ,OP1,OP2,OP3,OP4,OP5,OP6
+                ,PP1,PP2,PP3,PP4,PP5,PP6,PP7,PP8
+                    , ST
+            };
+            /// <summary>
+            /// Индекс целевого компонента ТЭЦ при расчете ТЭП-оперативно
+            /// </summary>
+            private INDX_COMP m_indxCompRealTime;
+            /// <summary>
+            /// Объект, обеспечивающий вычисление нормативных значений при работе оборудования ТЭЦ
+            /// </summary>
+            private FTable fTable;
+            /// <summary>
+            /// Словарь с расчетными НОРМативными параметрами - ключ - идентификатор в алгоритме расчета
+            /// </summary>
+            private P_ALG Norm;
+            /// <summary>
+            /// Перечисление - режимы работы оборудования
+            /// </summary>
+            private enum MODE_DEV : short
+            {
+                UNKNOWN = -1, COND_1 = 1, ELEKTRO2_2, ELEKTRO1_2a,
+                TEPLO_3
+                    , COUNT
+            }
+            /// <summary>
+            /// Словарь - режимы работы для компонентов станции
+            /// </summary>
+            private Dictionary<int, MODE_DEV> _modeDev;
+            /// <summary>
+            /// Конструктор - основной (без параметров)
+            /// </summary>
+            public TaskBalTeploCalculate()
+                : base()
+            {
+                m_indxCompRealTime = INDX_COMP.UNKNOWN;
+
+                In = new P_ALG();
+                Norm = new P_ALG();
+                Out = new P_ALG();
+
+                fTable = new FTable();
+            }
+
+            protected override int initValues(ListDATATABLE listDataTables)
+            {
+                int iRes = -1;
+
+                // инициализация нормативных значений для оборудования
+                fTable.Set(listDataTables.FindDataTable(INDEX_DATATABLE.FTABLE));
+                // инициализация входных значений
+                iRes = initInValues(listDataTables.FindDataTable(INDEX_DATATABLE.IN_PARAMETER)
+                    , listDataTables.FindDataTable(INDEX_DATATABLE.IN_VALUES));
+
+                return iRes;
+            }
+
+            private int initInValues(DataTable tablePar, DataTable tableVal)
+            {
+                int iRes = 0;
+
+                MODE_DEV mDev = MODE_DEV.UNKNOWN;
+
+                iRes = initValues(In, tablePar, tableVal);
+
+                if (In.ContainsKey(@"74") == true)
+                {
+                    _modeDev = new Dictionary<int, MODE_DEV>();
+
+                    for (int i = (int)INDX_COMP.iBL1; (i < (int)INDX_COMP.COUNT) && (iRes == 0); i++)
+                    {
+                        switch ((int)In[@"74"][ID_COMP[i]].value)
+                        {
+                            case 1: //[MODE_DEV].1 - Конденсационный
+                                mDev = MODE_DEV.COND_1;
+                                break;
+                            case 2: //[MODE_DEV].2 - Электр.граф (2 ст.)
+                                mDev = MODE_DEV.ELEKTRO2_2;
+                                break;
+                            case 3: //[MODE_DEV].2а - Электр.граф (1 ст.)
+                                mDev = MODE_DEV.ELEKTRO1_2a;
+                                break;
+                            case 4: //[MODE_DEV].3 - По тепл. граф.
+                                mDev = MODE_DEV.TEPLO_3;
+                                break;
+                            default:
+                                iRes = -1;
+
+                                //logErrorUnknownModeDev(@"InitInValues", ID_COMP[i]);
+                                break;
+                        }
+
+                        if ((_modeDev.ContainsKey(i) == false)
+                            && (!(mDev == MODE_DEV.UNKNOWN)))
+                            _modeDev.Add(i, mDev);
+                        else
+                            ;
+                    }
+                }
+                else
+                {
+                    iRes = -1;
+
+                    Logging.Logg().Error(@"TaskTepCalculate::initInValues () - во входной таблице не установлен режим оборудования...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+
+                return iRes;
+            }
+
+            private int initOutValues(DataTable tablePar, DataTable tableVal)
+            {
+                int iRes = -1;
+
+                iRes = initValues(Out, tablePar, tableVal);
+
+                return iRes;
+            }
+
+            /// <summary>
+            /// Расчитать выходные значения
+            /// </summary>
+            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
+            /// <returns>Таблица выходных значений, совместимая со структурой выходныъ значений в БД</returns>
+            public DataTable CalculateOut(ListDATATABLE listDataTables)
+            {
+                int iInitValuesRes = -1;
+
+                DataTable tableRes = null;
+
+                iInitValuesRes = initValues(listDataTables);
+
+                if (iInitValuesRes == 0)
+                {
+                    //// расчет
+                    //foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Norm)
+                    //    pAlg.Value[ST].value = calculateNormative(pAlg.Key);
+
+                    //foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Out)
+                    //    pAlg.Value[ST].value = calculateMaket(pAlg.Key);
+
+                    //// преобразование в таблицу
+                    //tableRes = resultToTable(Out);
+                }
+                else
+                    ; // ошибка при инициализации параметров, значений
+
+                return tableRes;
+            }
+
+            private int calculateOut()
+            {
+                int iRes = 0;
+
+                return iRes;
+            }
+
+            private DataTable resultToTable(P_ALG pAlg)
+            {
+                DataTable tableRes = new DataTable();
+
+                tableRes.Columns.AddRange(new DataColumn[] {
+                    new DataColumn (@"ID", typeof(int))
+                    , new DataColumn (@"QUALITY", typeof(short))
+                    , new DataColumn (@"VALUE", typeof(float))                    
+                });
+
+                foreach (P_ALG.P_PUT pPut in pAlg.Values)
+                    foreach (P_ALG.P_PUT.P_VAL val in pPut.Values)
+                        tableRes.Rows.Add(new object[]
+                            {
+                                val.m_iId //ID_PUT
+                                , val.m_sQuality //QUALITY
+                                , val.value //VALUE
+                            });
+
+                return tableRes;
+            }
         }
     }
 }

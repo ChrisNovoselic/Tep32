@@ -976,6 +976,7 @@ namespace TepCommon
                 {
                     case ID_TASK.TEP:
                     case ID_TASK.AUTOBOOK:
+                    case ID_TASK.BAL_TEPLO: //Для работы с балансом тепла 6,06,2016 Апельганс
                         calculate(type, out err);
                         if (!(err == 0))
                             Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - ошибка при выполнеии расчета задачи ID=" + IdTask.ToString () + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
