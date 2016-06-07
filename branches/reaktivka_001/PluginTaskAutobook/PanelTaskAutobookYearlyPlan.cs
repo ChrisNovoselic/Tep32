@@ -57,7 +57,7 @@ namespace PluginTaskAutobook
         {
             UNKNOWN = -1,
             DGV_PLANEYAR,
-            LABEL_DESC,LABEL_YEARPLAN
+            LABEL_DESC, LABEL_YEARPLAN
         }
         /// <summary>
         /// Индексы массива списков идентификаторов
@@ -73,7 +73,7 @@ namespace PluginTaskAutobook
                 //DENY_PARAMETER_CALCULATED // запрещенных для расчета
                 //    , DENY_COMP_VISIBLED,
                 //DENY_PARAMETER_VISIBLED // запрещенных для отображения
-                ,COUNT
+                , COUNT
         }
         /// <summary>
         /// Перечисление - индексы таблиц со словарными величинами и проектными данными
@@ -344,7 +344,8 @@ namespace PluginTaskAutobook
             /// <param name="dgvView">отображение</param>
             public void FillTableEdit(ref DataTable editTable, DataGridView dgvView, int idSession)
             {
-                int err = -1;
+                int err = -1,
+                    i = 0;
                 double valueToRes;
 
                 if (editTable == null)
@@ -362,27 +363,26 @@ namespace PluginTaskAutobook
                 else
                     editTable.Rows.Clear();
 
-                for (int i = 0; i < dgvView.Rows.Count; i++)
+                foreach (HDataGridViewColumn col in Columns)
                 {
-                    valueToRes = Convert.ToDouble(dgvView.Rows[i].Cells["Output"].Value) * Math.Pow(m_basisDegree, 6);
-                    //if (valueToRes > 0)
-                    //{
-                        foreach (HDataGridViewColumn col in Columns)
+                    if (col.m_iIdComp > 0)
+                    {
+                        foreach (DataGridViewRow row in Rows)
                         {
-                            if (col.m_iIdComp > 0)
-                            {
-                                editTable.Rows.Add(new object[] 
-                                {
+                            valueToRes = Convert.ToDouble(row.Cells["Output"].Value) * Math.Pow(m_basisDegree, 6);
+
+                            editTable.Rows.Add(new object[] 
+                                    {
                                     col.m_iIdComp
                                     , idSession
                                     , 1.ToString()
                                     , valueToRes                 
-                                    , Convert.ToDateTime(dgvView.Rows[i].Cells["DateTime"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
+                                    , Convert.ToDateTime(row.Cells["DateTime"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
                                     , i
                                 });
-                            }
+                            i++;
                         }
-                    //}
+                    }
                 }
             }
         }
@@ -413,7 +413,7 @@ namespace PluginTaskAutobook
             }
 
             public PanelManagementAutobook()
-                : base(8, 5)
+                : base(4, 3)
             {
                 InitializeComponents();
                 (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
@@ -885,42 +885,42 @@ namespace PluginTaskAutobook
             //    MessageBox.Show("Выбранный диапазон месяцев неверен");
             //else
             //{
-                m_handlerDb.RegisterDbConnection(out iRegDbConn);
-                clear();
+            m_handlerDb.RegisterDbConnection(out iRegDbConn);
+            clear();
 
-                if (!(iRegDbConn < 0))
+            if (!(iRegDbConn < 0))
+            {
+                // установить значения в таблицах для расчета, создать новую сессию
+                setValues(dtrGet, out err, out errMsg);
+
+                if (err == 0)
                 {
-                    // установить значения в таблицах для расчета, создать новую сессию
-                    setValues(dtrGet, out err, out errMsg);
-
-                    if (err == 0)
+                    if (m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
                     {
-                        if (m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
-                        {
-                            // создать копии для возможности сохранения изменений
-                            setValues();
+                        // создать копии для возможности сохранения изменений
+                        setValues();
 
-                            m_dgvYear.ShowValues(
-                                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                                , m_dgvYear);
-                        }
-                        else ;
+                        m_dgvYear.ShowValues(
+                            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                            , m_dgvYear);
                     }
-                    else
-                    {
-                        // в случае ошибки "обнулить" идентификатор сессии
-                        deleteSession();
-                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-                    }
+                    else ;
                 }
                 else
-                    //удалить сессию
+                {
+                    // в случае ошибки "обнулить" идентификатор сессии
                     deleteSession();
+                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                }
+            }
+            else
+                //удалить сессию
+                deleteSession();
 
-                if (!(iRegDbConn > 0))
-                    m_handlerDb.UnRegisterDbConnection();
-                else
-                    ;
+            if (!(iRegDbConn > 0))
+                m_handlerDb.UnRegisterDbConnection();
+            else
+                ;
             //}
         }
 
@@ -1100,7 +1100,7 @@ namespace PluginTaskAutobook
             setCurrentTimeZone(obj as ComboBox);
             // очистить содержание представления
             clear();
-  
+
         }
 
         /// <summary>

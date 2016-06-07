@@ -197,6 +197,72 @@ namespace PluginTaskAutobook
         /// </summary>
         protected class DGVAutoBook : DataGridView
         {
+            /// <summary>
+            /// Перечисление для индексации столбцов со служебной информацией
+            /// </summary>
+            protected enum INDEX_SERVICE_COLUMN : uint { ALG, DATE, COUNT }
+            private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
+
+            /// <summary>
+            /// Структура для описания добавляемых строк
+            /// </summary>
+            public class ROW_PROPERTY
+            {
+                /// <summary>
+                /// Структура с дополнительными свойствами ячейки отображения
+                /// </summary>
+                public struct HDataGridViewCell //: DataGridViewCell
+                {
+                    public enum INDEX_CELL_PROPERTY : uint { IS_NAN }
+                    /// <summary>
+                    /// Признак отсутствия значения
+                    /// </summary>
+                    public int m_IdParameter;
+                    /// <summary>
+                    /// Признак качества значения в ячейке
+                    /// </summary>
+                    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
+
+                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
+                    {
+                        m_IdParameter = idParameter;
+                        m_iQuality = iQuality;
+                    }
+
+                    public bool IsNaN { get { return m_IdParameter < 0; } }
+                }
+                /// <summary>
+                /// Пояснения к параметру в алгоритме расчета
+                /// </summary>
+                public string m_strMeasure
+                    , m_Value;
+                /// <summary>
+                /// Идентификатор параметра в алгоритме расчета
+                /// </summary>
+                public int m_idAlg;
+                /// <summary>
+                /// Идентификатор множителя при отображении (визуальные установки) значений в строке
+                /// </summary>
+                public int m_vsRatio;
+                /// <summary>
+                /// Количество знаков после запятой при отображении (визуальные установки) значений в строке
+                /// </summary>
+                public int m_vsRound;
+
+                public HDataGridViewCell[] m_arPropertiesCells;
+
+                /// <summary>
+                /// 
+                /// </summary>
+                /// <param name="cntCols"></param>
+                public void InitCells(int cntCols)
+                {
+                    m_arPropertiesCells = new HDataGridViewCell[cntCols];
+                    for (int c = 0; c < m_arPropertiesCells.Length; c++)
+                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
+                }
+            }
+
             public DGVAutoBook(string nameDGV)
             {
                 InitializeComponents(nameDGV);
@@ -238,6 +304,48 @@ namespace PluginTaskAutobook
                 /// Признак запрета участия в расчете
                 /// </summary>
                 public bool m_bCalcDeny;
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            protected struct RATIO
+            {
+                public int m_id;
+
+                public int m_value;
+
+                public string m_nameRU
+                    , m_nameEN
+                    , m_strDesc;
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            protected Dictionary<int, RATIO> m_dictRatio;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="tblRatio"></param>
+            public void SetRatio(DataTable tblRatio)
+            {
+                m_dictRatio = new Dictionary<int, RATIO>();
+
+                foreach (DataRow r in tblRatio.Rows)
+                    m_dictRatio.Add((int)r[@"ID"], new RATIO()
+                    {
+                        m_id = (int)r[@"ID"]
+                        ,
+                        m_value = (int)r[@"VALUE"]
+                        ,
+                        m_nameRU = (string)r[@"NAME_RU"]
+                        ,
+                        m_nameEN = (string)r[@"NAME_RU"]
+                        ,
+                        m_strDesc = (string)r[@"DESCRIPTION"]
+                    });
             }
 
             /// <summary>
@@ -1259,7 +1367,7 @@ namespace PluginTaskAutobook
             }
 
             public PanelManagementAutobook()
-                : base(8, 21)
+                : base(4, 3)
             {
                 InitializeComponents();
                 (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);

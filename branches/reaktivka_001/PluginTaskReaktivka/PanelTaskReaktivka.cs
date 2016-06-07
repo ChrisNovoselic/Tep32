@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -382,7 +383,7 @@ namespace PluginTaskReaktivka
             clear();
             //m_currentOffSet = Session.m_curOffsetUTC;
         }
-  
+
         /// <summary>
         /// Установить новое значение для текущего периода
         /// </summary>
@@ -834,7 +835,7 @@ namespace PluginTaskReaktivka
                 this.SetColumnSpan(tlp, 4); this.SetRowSpan(tlp, 1);
                 //
                 TableLayoutPanel tlpValue = new TableLayoutPanel();
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
                 tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
                 tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
                 tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
@@ -1631,8 +1632,7 @@ namespace PluginTaskReaktivka
                 DataGridViewRow row = new DataGridViewRow();
                 if (m_dictPropertiesRows == null)
                     m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-                else
-                    ;
+
                 if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
                     m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
 
@@ -1645,7 +1645,7 @@ namespace PluginTaskReaktivka
 
                 if (i == DaysInMonth)
                     foreach (HDataGridViewColumn col in Columns)
-                        Rows[i].Cells[col.Index].ReadOnly = true;
+                        Rows[i].Cells[col.Index].ReadOnly = true;//блокировка строк
             }
 
             /// <summary>
@@ -1847,12 +1847,41 @@ namespace PluginTaskReaktivka
             /// 
             /// </summary>
             /// <returns></returns>
-            public DataTable GetValue()
+            public DataTable GetValue(DataTable dtSource, int idSession)
             {
-                DataTable dtSource = new DataTable();
+                int i = 0;
 
-                //dtSource.
+                if (dtSource == null)
+                {
+                    dtSource = new DataTable();
+                    dtSource.Columns.AddRange(new DataColumn[] {
+                        new DataColumn (@"ID_PUT", typeof (int))
+                        , new DataColumn (@"ID_SESSION", typeof (long))
+                        , new DataColumn (@"QUALITY", typeof (int))
+                        , new DataColumn (@"VALUE", typeof (float))
+                        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
+                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
+                    });
+                }
+                else
+                    dtSource.Rows.Clear();
 
+                foreach (HDataGridViewColumn col in Columns)
+                {
+                    foreach (DataGridViewRow row in Rows)
+                    {
+                        dtSource.Rows.Add(new object[] 
+                                {
+                                    col.m_iIdComp
+                                    , idSession
+                                    , 1.ToString()
+                                    //, valueToRes                 
+                                    , Convert.ToDateTime(row.Cells["DateTime"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
+                                    , i
+                                });
+                        i++;
+                    }
+                }
                 return dtSource;
             }
         }
@@ -2003,20 +2032,20 @@ namespace PluginTaskReaktivka
             /// <summary>
             /// Заполнение выбранного стоблца в шаблоне
             /// </summary>
-            /// <param name="cellRange">столбец в excel</param>
+            /// <param name="colRange">столбец в excel</param>
             /// <param name="dgv">отображение</param>
             /// <param name="indxColDgv">индекс столбца</param>
             /// <param name="indxRowExcel">индекс строки в excel</param>
-            private void fillSheetExcel(Excel.Range cellRange
+            private void fillSheetExcel(Excel.Range colRange
                 , DataGridView dgv
                 , int indxColDgv
                 , int indxRowExcel)
             {
                 int row = 0;
 
-                for (int i = indxRowExcel; i < cellRange.Rows.Count; i++)
-                    if (((Excel.Range)cellRange.Cells[i]).Value == null &&
-                        ((Excel.Range)cellRange.Cells[i]).MergeCells.ToString() != "True")
+                for (int i = indxRowExcel; i < colRange.Rows.Count; i++)
+                    if (((Excel.Range)colRange.Cells[i]).Value == null &&
+                        ((Excel.Range)colRange.Cells[i]).MergeCells.ToString() != "True")
                     {
                         row = i;
                         break;
@@ -2024,14 +2053,34 @@ namespace PluginTaskReaktivka
 
                 for (int j = 0; j < dgv.Rows.Count; j++)
                     if (dgv.Rows.Count - 1 != j)
-                        if (Convert.ToString(((Excel.Range)cellRange.Cells[row]).Value) == "")
-                        {
-                            cellRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-                            row++;
-                        }
-                        else ;
+                    {
+                        colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
+                        row++;
+                    }
                     else
-                        cellRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
+                    {
+                        deleteNullRow(colRange, row);
+
+                        if (Convert.ToString(((Excel.Range)colRange.Cells[row]).Value) == "")
+                            colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
+                    }
+
+            }
+
+            /// <summary>
+            /// Удаление пустой строки
+            /// </summary>
+            /// <param name="colRange">столбец в excel</param>
+            /// <param name="row">номер строки</param>
+            private void deleteNullRow(Excel.Range colRange, int row)
+            {
+                Excel.Range rangeCol = (Excel.Range)m_wrkSheet.Columns[1];
+
+                while (Convert.ToString(((Excel.Range)rangeCol.Cells[row]).Value) == "")
+                {
+                    Excel.Range rangeRow = (Excel.Range)m_wrkSheet.Rows[row];
+                    rangeRow.Delete(Excel.XlDeleteShiftDirection.xlShiftUp);
+                }
             }
 
             /// <summary>
@@ -2235,11 +2284,12 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// 
+        /// copy
         /// </summary>
         private void setValues()
         {
-
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
         }
 
         /// <summary>
@@ -2250,8 +2300,27 @@ namespace PluginTaskReaktivka
         {
             err = -1;
             //сохранить вх. знач. в DataTable
-            //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            //    m_dgvReak.FillTableValue();
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                m_dgvReak.GetValue(m_TableEdit, (int)Session.m_Id);
+        }
+
+        /// <summary>
+        /// Получение имени таблицы вх.зн. в БД
+        /// </summary>
+        /// <param name="dtInsert">дата</param>
+        /// <returns>имя таблицы</returns>
+        public string GetNameTableIn(DateTime dtInsert)
+        {
+            string strRes = string.Empty;
+
+            if (dtInsert == null)
+                throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
+            else
+                ;
+
+            strRes = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+
+            return strRes;
         }
     }
 }
