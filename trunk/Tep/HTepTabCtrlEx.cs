@@ -32,11 +32,20 @@ namespace Tep64
         {
             int iRes = -1;
 
-            if ((!(indx < 0))
-                && (TabPages.Count > 0))
-                iRes = m_listPropTabs[indx].id;
+            if (indx == TabPages.Count)
+                if (!(_propTabLastRemoved == null))
+                    iRes = _propTabLastRemoved.Value.id;
+                else
+                    ;
             else
-                ;
+                if ((!(indx < 0))
+                    && (TabPages.Count > 0))
+                    if (indx < TabPages.Count)
+                        iRes = m_listPropTabs[indx].id;
+                    else
+                        ;                        
+                else
+                    ;
 
             return iRes;
         }
