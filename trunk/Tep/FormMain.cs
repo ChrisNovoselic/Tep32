@@ -570,11 +570,13 @@ namespace Tep64
             if (bMenuItemChecked == true)
             {
                 //Отобразить вкладку
-                m_TabCtrl.AddTabPage(plugIn.GetNameMenuItem(idFPanel), idFPanel, HTabCtrlEx.TYPE_TAB.FIXED);
-                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.GetObject(idFPanel));
+                //m_TabCtrl.AddTabPage(plugIn.GetNameMenuItem(idFPanel), idFPanel, HTabCtrlEx.TYPE_TAB.FIXED);
+                //m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.GetObject(idFPanel));
+
+                m_TabCtrl.AddTabPage((Control)plugIn.GetObject(idFPanel), plugIn.GetNameMenuItem(idFPanel), idFPanel, HTabCtrlEx.TYPE_TAB.FIXED);
             } else {
                 //Закрыть вкладку
-                m_TabCtrl.RemoveTabPage(plugIn.GetNameMenuItem(idFPanel));
+                m_TabCtrl.RemoveTabPage(); //plugIn.GetNameMenuItem(idFPanel)
             }
 
             if (m_iAutoActionTabs > 0)
