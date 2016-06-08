@@ -51,8 +51,8 @@ namespace PluginAboutTepProgram
                     this.Icon = (Icon)((EventArgsDataHost)obj).par[0];
                     this.m_pictureBox.Image = this.Icon.ToBitmap ();
                     break;
-                case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                    this.m_lblVersion.Text = (string)((EventArgsDataHost)obj).par[0];
+                case (int)HFunc.ID_DATAASKED_HOST.STR_PRODUCTVERSION:
+                    this.m_lblProductVersion.Text = (string)((EventArgsDataHost)obj).par[0];
                     break;
                 default:
                     break;
@@ -82,9 +82,9 @@ namespace PluginAboutTepProgram
             else
                 ;
 
-            pair = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.STR_VERSION);
-            if (m_dictDataHostCounter.ContainsKey(pair) == false)                
-                DataAskedHost(new object [] {id, (int)ID_DATAASKED_HOST.STR_VERSION});
+            pair = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.STR_PRODUCTVERSION);
+            if (m_dictDataHostCounter.ContainsKey(pair) == false)
+                DataAskedHost(new object[] { id, (int)ID_DATAASKED_HOST.STR_PRODUCTVERSION });
             else
                 ;
 
@@ -103,7 +103,7 @@ namespace PluginAboutTepProgram
 
             switch (((EventArgsDataHost)obj).id_detail) {
                 case (int)ID_DATAASKED_HOST.ICON_MAINFORM:
-                case (int)ID_DATAASKED_HOST.STR_VERSION:
+                case (int)ID_DATAASKED_HOST.STR_PRODUCTVERSION:
                     (_objects[id] as FormAboutTepProgram).UpdateGUI(obj);
                     break;
                 default:

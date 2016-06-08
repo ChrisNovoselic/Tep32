@@ -53,8 +53,10 @@ namespace Tep64
                                 Tep64.Properties.Resources.TepApp
                                 ;
                             break;
-                        case (int)HFunc.ID_DATAASKED_HOST.STR_VERSION:
-                            rec = Application.ProductVersion;
+                        case (int)HFunc.ID_DATAASKED_HOST.STR_PRODUCTVERSION:
+                            rec = Application.ProductVersion
+                                + @", " + Environment.MachineName
+                                + @", " + Environment.UserDomainName + @"\" + Environment.UserName;
                             break;
                         default: // обработка индивидуальных для каждой вкладки запросов
                             switch ((int)((EventArgsDataHost)obj).id_detail)
