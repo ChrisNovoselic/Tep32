@@ -56,11 +56,14 @@ namespace PluginTaskAutobook
         protected enum INDEX_TABLE_DICTPRJ : int
         {
             UNKNOWN = -1
-            , PERIOD, TIMEZONE, COMPONENT
-            , PARAMETER //_IN, PARAMETER_OUT
+            , PERIOD, TIMEZONE,
+            COMPONENT
+                ,
+            PARAMETER //_IN, PARAMETER_OUT
                 //, MODE_DEV/*, MEASURE*/,
-            ,RATIO
-                , COUNT
+                ,
+            RATIO
+               , COUNT
         }
         /// <summary>
         /// 
@@ -68,9 +71,9 @@ namespace PluginTaskAutobook
         public enum INDEX_GTP : int
         {
             UNKNOW = -1,
-            GTP12,GTP36,
+            GTP12, GTP36,
             TEC,
-            CorGTP12,CorGTP36,
+            CorGTP12, CorGTP36,
             COUNT
         }
         /// <summary>
@@ -100,7 +103,8 @@ namespace PluginTaskAutobook
             PERIOD // идентификаторы периодов расчетов, использующихся на форме
                 ,
             TIMEZONE // идентификаторы (целочисленные, из БД системы) часовых поясов
-                    , ALL_COMPONENT
+                    ,
+            ALL_COMPONENT
                 //ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
                 //    , DENY_COMP_CALCULATED,
                 //DENY_PARAMETER_CALCULATED // запрещенных для расчета
@@ -176,7 +180,7 @@ namespace PluginTaskAutobook
             {
                 if (_panelManagement == null)
                     _panelManagement = createPanelManagement();
-                else;
+                else ;
 
                 return _panelManagement;
             }
@@ -1612,7 +1616,7 @@ namespace PluginTaskAutobook
             //
             this.Controls.Add(PanelManagementAB, 0, posRow);
             this.SetColumnSpan(PanelManagementAB, posColdgvTEPValues);
-            this.SetRowSpan(PanelManagementAB, this.RowCount);            
+            this.SetRowSpan(PanelManagementAB, this.RowCount);
 
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 
@@ -1898,14 +1902,14 @@ namespace PluginTaskAutobook
 
                 if (!(iRegDbConn > 0))
                     m_handlerDb.UnRegisterDbConnection();
-                else;
+                else ;
             }
         }
 
         /// <summary>
         /// формирование таблиц данных
         /// </summary>
-        /// <param name="err"></param>
+        /// <param name="err">номер ошибки</param>
         private void valuesFence(out int err)
         {
             //сохранить вых. знач. в DataTable
@@ -2000,9 +2004,9 @@ namespace PluginTaskAutobook
             {
                 if (activate == true)
                     HandlerDb.InitSession(out err);
-                else;
+                else ;
             }
-            else;
+            else ;
 
             return bRes;
         }
@@ -2021,8 +2025,8 @@ namespace PluginTaskAutobook
 
             m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
             int role = (int)HTepUsers.Role;
-           
-            DataRow[] drTZ = 
+
+            DataRow[] drTZ =
                 HandlerDb.GetProfilesContext().Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + (int)HTepUsers.Role);
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
@@ -2054,7 +2058,7 @@ namespace PluginTaskAutobook
 
                 if (!(err == 0))
                     break;
-                else;
+                else ;
             }
 
             if (err == 0)
@@ -2083,7 +2087,7 @@ namespace PluginTaskAutobook
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
                     DataTable tb = HandlerDb.GetProfilesContext();
-                   DataRow[] drProf = tb.Select("ID_TAB = " + findMyID());
+                    DataRow[] drProf = tb.Select("ID_TAB = " + findMyID());
                     //из profiles
                     for (int j = 0; j < drProf.Count(); j++)
                         if (Convert.ToInt32(drProf[j]["ID_CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
@@ -2359,8 +2363,8 @@ namespace PluginTaskAutobook
                 GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value), out err);
 
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            HandlerDb.SaveResOut(m_TableOrigin
-            , m_TableEdit,(ctrl as ComboBox).SelectedIndex, out err);
+            HandlerDb.SaveResOut(m_TableOrigin,
+            m_TableEdit, (ctrl as ComboBox).SelectedIndex, out err);
 
             if (m_TableEdit.Rows.Count > 0)
             {
@@ -2410,7 +2414,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="dtInsert">дата</param>
         /// <returns>имя таблицы</returns>
-        public string GetNameTableIn(DateTime dtInsert)
+        private string getNameTableIn(DateTime dtInsert)
         {
             string strRes = string.Empty;
 
@@ -2477,6 +2481,7 @@ namespace PluginTaskAutobook
                           , nameTableNew = string.Empty;
             DataTable editTemporary = new DataTable()
                 , originTemporary = new DataTable();
+
             err = -1;
             editTemporary = edit.Clone();
             originTemporary = origin.Clone();
@@ -2534,7 +2539,7 @@ namespace PluginTaskAutobook
         /// <param name="err"></param>
         private void saveInvalValue(out int err)
         {
-            err = -1;
+            //err = -1;
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
 
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
@@ -2546,7 +2551,7 @@ namespace PluginTaskAutobook
 
             sortingDataToTable(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
                 , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
-                , GetNameTableIn(dtrPer[0].Begin)
+                , getNameTableIn(dtrPer[0].Begin)
                 , @"ID"
                 , out err);
         }

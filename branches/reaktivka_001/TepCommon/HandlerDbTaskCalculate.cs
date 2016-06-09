@@ -795,6 +795,7 @@ namespace TepCommon
 
             return strRes;
         }
+
         /// <summary>
         /// Возвратить объект-таблицу со значенями по умолчанию
         /// </summary>
@@ -811,6 +812,7 @@ namespace TepCommon
 
             return tableRes;
         }
+
         /// <summary>
         /// Возвратить объект-таблицу со значениями из таблицы с временными для расчета
         /// </summary>

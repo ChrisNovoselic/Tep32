@@ -24,8 +24,6 @@ namespace PluginTaskAutobook
         protected override void createTaskCalculate(/*ID_TASK idTask*/)
         {
             base.createTaskCalculate();
-
-            //??? m_taskCalculate = new TaskAutobookCalculate();
         }
         /// <summary>
         /// 
@@ -202,8 +200,6 @@ namespace PluginTaskAutobook
                     // 'Begin' == 'End'
                     if (bLastItem == true)
                         bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
-                    else
-                        ;
 
                     if (bEquDatetime == false)
                         strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
@@ -211,7 +207,6 @@ namespace PluginTaskAutobook
 
                     if (bLastItem == false)
                         strRes += @" UNION ALL ";
-                    else;
                 }
 
                 strRes = " " + @"SELECT v.ID_PUT " // as [ID]"
@@ -412,7 +407,6 @@ namespace PluginTaskAutobook
             err = -1;
 
             string strQuery = string.Empty;
-
             // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
             strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
                 + @"[ID_CALCULATE]"
@@ -559,7 +553,6 @@ namespace PluginTaskAutobook
                     strQuery += @"),";
 
                     iRowCounterToInsert++;
-
                 }
 
                 if (err == 0)
@@ -651,7 +644,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="tableOrigin">первичная таблица</param>
         /// <param name="tableRes">таблица с параметрами</param>
-        /// <param name="tableRes">timezone</param>
+        /// <param name="idTZ">timezone</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
         public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes, int idTZ, out int err)
@@ -717,7 +710,7 @@ namespace PluginTaskAutobook
                         , 0.ToString()
                         , dtRes.ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , ID_TIMEZONE.UTC
+                        , ID_TIMEZONE.MSK
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]            
                         , DateTime.Now.ToString(CultureInfo.InvariantCulture)
@@ -739,7 +732,8 @@ namespace PluginTaskAutobook
 
             query = @"SELECT * "
                 + @"FROM [TEP_NTEC_5].[dbo].[profiles] "
-                + @"WHERE ID_EXT = " + HTepUsers.Role;
+                + @"WHERE ID_EXT = " + HTepUsers. Role
+                + @" AND IS_ROLE = 1";
 
             return Select(query, out err);
         }
@@ -747,7 +741,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        /// <returns></returns>
+        /// <returns>таблицу</returns>
         public DataTable GetCompoent(out int err)
         {
             string strQuery = string.Empty;
