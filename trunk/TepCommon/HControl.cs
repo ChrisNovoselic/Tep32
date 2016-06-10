@@ -284,23 +284,33 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         private void cbxDay_onSelectedIndexChanged(object obj, EventArgs ev)
         {
-            if (true)
+            int cntDaysInMonth = -1;
+
+            _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
+            cntDaysInMonth = DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, _value[(int)INDEX_VALUE.CURRENT].Month);
+
+            if ((obj as ComboBox).SelectedIndex + 1 > cntDaysInMonth)
             {
-                _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
                 _value[(int)INDEX_VALUE.CURRENT] = new DateTime(
                     _value[(int)INDEX_VALUE.CURRENT].Year
                     , _value[(int)INDEX_VALUE.CURRENT].Month
-                    , (obj as ComboBox).SelectedIndex + 1
+                    , cntDaysInMonth
                     , _value[(int)INDEX_VALUE.CURRENT].Hour
                     , 0
                     , 0
-                );//??
-
-                onSelectedIndexChanged(INDEX_CONTROL.DAY);
+                );
             }
             else
-                MessageBox.Show("HDateTimePicker::cbxDay_onSelectedIndexChanged () - сообщение для отладки ...");
+                _value[(int)INDEX_VALUE.CURRENT] = new DateTime(
+                     _value[(int)INDEX_VALUE.CURRENT].Year
+                     , _value[(int)INDEX_VALUE.CURRENT].Month
+                     , (obj as ComboBox).SelectedIndex + 1
+                     , _value[(int)INDEX_VALUE.CURRENT].Hour
+                     , 0
+                     , 0
+                );
 
+            onSelectedIndexChanged(INDEX_CONTROL.DAY);
         }
     
         /// <summary>
@@ -315,13 +325,13 @@ namespace TepCommon
             //ComboBox cbxDay;            
 
             _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
-            cntDaysInMonth = DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, _value[(int)INDEX_VALUE.CURRENT].Month);
+            cntDaysInMonth = DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, (obj as ComboBox).SelectedIndex + 1);
 
-            if (_value[(int)INDEX_VALUE.CURRENT].Day == cntDaysInMonth)
+            if (_value[(int)INDEX_VALUE.CURRENT].Day > cntDaysInMonth)
                 _value[(int)INDEX_VALUE.CURRENT] = new DateTime(
                     _value[(int)INDEX_VALUE.CURRENT].Year
                     , (obj as ComboBox).SelectedIndex + 1
-                    , DateTime.DaysInMonth(_value[(int)INDEX_VALUE.PREVIOUS].Year, (obj as ComboBox).SelectedIndex + 1)
+                    , cntDaysInMonth
                     , _value[(int)INDEX_VALUE.CURRENT].Hour
                     , 0
                     , 0
@@ -336,8 +346,7 @@ namespace TepCommon
                      , 0
                 );
 
-            cntDaysInMonth = DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, _value[(int)INDEX_VALUE.CURRENT].Month);
-            cbxDayMapping(cntDaysInMonth);
+            cbxDayMapping(cntDaysInMonth, true);
 
             //// требуется изменение кол-ва дней в ~ с выбранным месяцем
             //bRegHandler = true; // !(cbxDay.geti == null);
@@ -446,6 +455,8 @@ namespace TepCommon
             iDiffYear = objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
             _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
             _value[(int)INDEX_VALUE.CURRENT] = objLeading.Value + m_tsLeading;
+            //??? учитывать значение в "ведущем" календаре
+            iDiffYear -= objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
 
             cbxYear = Controls.Find(INDEX_CONTROL.YEAR.ToString(), true)[0] as ComboBox;
             cbxMonth = Controls.Find(INDEX_CONTROL.MONTH.ToString(), true)[0] as ComboBox;
@@ -463,7 +474,7 @@ namespace TepCommon
                 cbxMonth.SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Month - 1;
                 cntDayInMonth = DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, _value[(int)INDEX_VALUE.CURRENT].Month);
                 //if ((ev as EventDatePartArgs).m_index == INDEX_CONTROL.MONTH)
-                    cbxDayMapping(cntDayInMonth);
+                    cbxDayMapping(cntDayInMonth, false);
                 //else
                 //    cbxDay.SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Day - 1;
                 cbxHour.SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Hour; // == 0 ? _value[(int)INDEX_VALUE.CURRENT].Hour : _value[(int)INDEX_VALUE.CURRENT].Hour - 1;
@@ -480,11 +491,18 @@ namespace TepCommon
 
             ValueChanged(this, EventArgs.Empty);
         }
-
-        private void cbxDayMapping(int cntDays)
+        /// <summary>
+        /// Изменить кол-во элементов в списке "Номер дня месяца", установить текущий номер дня в месяце
+        /// </summary>
+        /// <param name="cntDays">Кол-во дней в установленном месяце</param>
+        /// <param name="bRegHandler">Признак необходимости отменять регистрацию/регистрировать обработчик события</param>
+        private void cbxDayMapping(int cntDays, bool bRegHandler)
         {
             ComboBox cbx = Controls.Find(INDEX_CONTROL.DAY.ToString(), true)[0] as ComboBox;
-            cbx.SelectedIndexChanged -= m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY];
+            if (bRegHandler == true)
+                cbx.SelectedIndexChanged -= m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY];
+            else
+                ;
 
             ////Вариант №1
             //cbx.Items.Clear();
@@ -507,7 +525,10 @@ namespace TepCommon
                         ;
 
             cbx.SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Day - 1;
-            cbx.SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY];
+            if (bRegHandler == true)
+                cbx.SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY];
+            else
+                ;
         }
     }
 
