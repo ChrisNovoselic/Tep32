@@ -1048,7 +1048,7 @@ namespace PluginProject
                 //cbPanels.SelectedIndex = 1;
                 //cbPanels.SelectedIndex = 0;
                 dgvContext.SelectionChanged += dgvContext_SelectionChanged;
-                dgvContext.Rows[1].Selected = true;
+                //dgvContext.Rows[1].Selected = true;
                 dgvContext.Rows[0].Selected = true;
                 dgvContext.RowsAdded += dgvContext_RowsAdded;
             }

@@ -347,6 +347,140 @@ namespace TepCommon
 
             return dictRes;
         }
+        
+        protected class HTepProfiles : HProfiles
+        {
+            public HTepProfiles(int idListener, int id_role, int id_user)
+                : base(idListener, id_role, id_user)
+            {
+            }
+            
+            /// <summary>
+            /// Функция получения доступа
+            /// </summary>
+            /// <param name="id_tab">ID вкладки</param>
+            /// <returns></returns>
+            public static object GetAllowed(int id_tab)
+            {
+                object objRes = false;
+                bool bValidate = false;
+                int indxRowAllowed = -1;
+                Int16 val = -1
+                   , type = -1;
+                string strVal = string.Empty;
+
+                DataRow[] rowsAllowed = m_tblValues.Select(@"ID_TAB=" + id_tab);
+                switch (rowsAllowed.Length)
+                {
+                    case 1:
+                        indxRowAllowed = 0;
+                        break;
+                    default :
+                        //В табл. с настройками возможность 'id' определена как для "роли", так и для "пользователя"
+                        // требуется выбрать строку с 'IS_ROLE' == 0 (пользователя)
+                        // ...
+                        foreach (DataRow r in rowsAllowed)
+                        {
+                            indxRowAllowed++;
+                            if (Int16.Parse(r[@"IS_ROLE"].ToString()) == 0)
+                                break;
+                            else
+                                ;
+                        }
+                        break;
+                    //default: //Ошибка - исключение
+                    //    throw new Exception(@"HUsers.HProfiles::GetAllowed (id=" + id_tab + @") - не найдено ни одной записи...");
+                }
+
+                // проверка не нужна, т.к. вызывается исключение
+                //if ((!(indxRowAllowed < 0))
+                //    && (indxRowAllowed < rowsAllowed.Length))
+                //{
+                strVal = rowsAllowed[indxRowAllowed][@"VALUE"].ToString().Trim();
+                objRes = m_tblValues.Clone();
+
+                foreach (DataRow r in rowsAllowed)
+                {
+                    (objRes as DataTable).Rows.Add(r.ItemArray);
+                }
+
+                return objRes;
+            }
+
+            /// <summary>
+            /// Функция получения доступа
+            /// </summary>
+            /// <returns></returns>
+            public static object GetAllowed()
+            {
+                object objRes = false;
+                bool bValidate = false;
+                int indxRowAllowed = -1;
+                Int16 val = -1
+                   , type = -1;
+                string strVal = string.Empty;
+
+                DataRow[] rowsAllowed = m_tblValues.Select();
+                switch (rowsAllowed.Length)
+                {
+                    case 1:
+                        indxRowAllowed = 0;
+                        break;
+                    case 2:
+                        //В табл. с настройками возможность 'id' определена как для "роли", так и для "пользователя"
+                        // требуется выбрать строку с 'IS_ROLE' == 0 (пользователя)
+                        // ...
+                        foreach (DataRow r in rowsAllowed)
+                        {
+                            indxRowAllowed++;
+                            if (Int16.Parse(r[@"IS_ROLE"].ToString()) == 0)
+                                break;
+                            else
+                                ;
+                        }
+                        break;
+                    default: //Ошибка - исключение
+                        throw new Exception(@"HUsers.HProfiles::GetAllowed () - не найдено ни одной записи...");
+                }
+
+                // проверка не нужна, т.к. вызывается исключение
+                //if ((!(indxRowAllowed < 0))
+                //    && (indxRowAllowed < rowsAllowed.Length))
+                //{
+                strVal = rowsAllowed[indxRowAllowed][@"VALUE"].ToString().Trim();
+
+                return objRes;
+            }
+        }
+
+        /// <summary>
+        /// Метод для получения Profile для вкладки
+        /// </summary>
+        /// <param name="id_tab"></param>
+        /// <returns></returns>
+        public static DataTable GetProfileUser_Tab(int id_tab)
+        {
+            DataTable m_dt_profileUser = new DataTable();
+
+            m_dt_profileUser = (DataTable)HTepProfiles.GetAllowed(id_tab);
+            
+
+            return m_dt_profileUser;
+        }
+
+        /// <summary>
+        /// Метод для получения Profile пользователя
+        /// </summary>
+        /// <param name="id_tab"></param>
+        /// <returns></returns>
+        public static DataTable GetProfileUser_Tab()
+        {
+            DataTable m_dt_profileUser = new DataTable();
+
+            m_dt_profileUser = (DataTable)HTepProfiles.GetAllowed();
+
+            return m_dt_profileUser;
+        }
 
         /// <summary>
         /// Функция получения строки запроса пользователя

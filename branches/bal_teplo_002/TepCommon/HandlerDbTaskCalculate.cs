@@ -505,7 +505,7 @@ namespace TepCommon
         /// <param name="idSession">Идентификатор сессии</param>
         /// <param name="type">Тип значений (входные, выходные-нормативы - только для ТЭП, выходные)</param>
         /// <returns>Строка - содержание запроса</returns>
-        private string getQueryValuesVar(TaskCalculate.TYPE type)
+        public virtual string GetQueryValuesVar(TaskCalculate.TYPE type)
         {
             string strRes = string.Empty
                 , strJoinValues = string.Empty;
@@ -825,7 +825,7 @@ namespace TepCommon
             err = -1;
 
             tableRes = DbTSQLInterface.Select(ref _dbConnection
-                , getQueryValuesVar(type)
+                , GetQueryValuesVar(type)
                 , null, null
                 , out err);
 
