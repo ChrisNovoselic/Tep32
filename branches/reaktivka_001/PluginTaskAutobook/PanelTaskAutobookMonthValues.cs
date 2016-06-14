@@ -490,7 +490,6 @@ namespace PluginTaskAutobook
                                     valueD = Convert.ToDouble(dr_CorValues[t]["VALUE"]) / Math.Pow(10, 6);
                                     dgvView.Rows[i].Cells[col.Index].Value = valueD;
                                 }
-                                else ;
                     }
 
                     for (int j = 0; j < tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count; j++)
@@ -2497,7 +2496,7 @@ namespace PluginTaskAutobook
                         if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month != Convert.ToDateTime(row["DATE_TIME"]).Month)
                             originTemporary.Rows.Add(rowOrigin.ItemArray);
 
-                    updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
+                    updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);//сохранение данных
 
                     nameTableNew = nameTableExtrmRow;
                     editTemporary.Rows.Clear();
@@ -2514,7 +2513,7 @@ namespace PluginTaskAutobook
                     if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month == Convert.ToDateTime(editTemporary.Rows[0]["DATE_TIME"]).Month)
                         originTemporary.Rows.Add(rowOrigin.ItemArray);
 
-                updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
+                updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);//сохранение данных
             }
         }
 

@@ -666,7 +666,7 @@ namespace PluginTaskAutobook
                         , rowSel
                         , HUsers.Id.ToString()
                         , 0.ToString()
-                        , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).AddHours(_Session.m_curOffsetUTC).ToString(CultureInfo.InvariantCulture)
+                        , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
                         , idTZ
                         , 1.ToString()
@@ -710,7 +710,7 @@ namespace PluginTaskAutobook
                         , 0.ToString()
                         , dtRes.ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , ID_TIMEZONE.MSK
+                        , ID_TIMEZONE.MSK//???
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]            
                         , DateTime.Now.ToString(CultureInfo.InvariantCulture)
