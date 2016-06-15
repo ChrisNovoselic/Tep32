@@ -1815,7 +1815,7 @@ namespace PluginTaskReaktivka
                                 //if (iRowCount < enumTime.Count())
                                 //{
                                 iRowCount++;
-                                idAlg = (int)row.Cells[0].Value;//??
+                                idAlg = (int)row.Cells["ALG"].Value;//??
                                 parameterRows =
                                 source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp
                                     //+ " AND WR_DATETIME = '{0:o}'", Convert.ToDateTime(row.Cells["Date"].Value).AddMinutes(-m_currentOffSet))
@@ -1921,15 +1921,18 @@ namespace PluginTaskReaktivka
                     if (col.m_iIdComp > 0)
                         foreach (DataGridViewRow row in Rows)
                         {
-                            if (row.Cells[col.Index].Value.ToString() != "")
-                            {
-                                idAlg = (int)row.Cells[0].Value;//??
-                                valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
-                                valueToRes *= Math.Pow(10F, vsRatioValue);
-                                dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
-                                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                            if (row.Index != row.DataGridView.RowCount - 1)
+                                if (row.Cells[col.Index].Value.ToString() != "")
+                                {
+                                    idAlg = (int)row.Cells["ALG"].Value;//??
+                                    valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
+                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
 
-                                dtSource.Rows.Add(new object[] 
+                                    valueToRes *= Math.Pow(10F, vsRatioValue);
+                                    dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
+                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+
+                                    dtSource.Rows.Add(new object[] 
                                 {
                                     col.m_iIdComp
                                     , idSession
@@ -1938,17 +1941,17 @@ namespace PluginTaskReaktivka
                                     , dtVal.AddMinutes(-m_currentOffSet).ToString(CultureInfo.InvariantCulture)
                                     , i
                                 });
-                                i++;
-                            }
-                            else
-                                break;
+                                    i++;
+                                }
+                            //break;
                         }
                 }
 
-                DataView dView = dtSource.DefaultView;
-                string sortExpression = string.Format(@"WR_DATETIME");
-                dView.Sort = sortExpression;
-                dtSource = dView.ToTable();
+                dtSource = sortTable(dtSource, "WR_DATETIME");
+                //DataView dView = dtSource.DefaultView;
+                //string sortExpression = string.Format(@"WR_DATETIME");
+                //dView.Sort = sortExpression;
+                //dtSource = dView.ToTable();
 
                 return dtSource;
             }
@@ -1974,15 +1977,28 @@ namespace PluginTaskReaktivka
                                     dblVal = Convert.ToDouble(row.Cells[iCol].Value.ToString().Replace('.', ','));
                                     idAlg = (int)row.Cells["ALG"].Value;//??
                                     vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                    //dblVal *= Math.Pow(10F, -1 * vsRatioValue);
                                     row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                                 System.Globalization.CultureInfo.InvariantCulture);
                                 }
-                                else ;
-                            //break;
                         }
                     iCol++;
                 }
+            }
+
+            /// <summary>
+            /// соритровка таблицы по столбцу
+            /// </summary>
+            /// <param name="table">таблица для сортировки</param>
+            /// <param name="sortStr">имя столбца для сортировки</param>
+            /// <returns></returns>
+            private DataTable sortTable(DataTable table, string colSort)
+            {
+                DataView dView = table.DefaultView;
+                string sortExpression = string.Format(colSort);
+                dView.Sort = sortExpression;
+                table = dView.ToTable();
+
+                return table;
             }
         }
 
@@ -2427,9 +2443,10 @@ namespace PluginTaskReaktivka
         private void saveInvalValue(out int err)
         {
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = diffRowsInTables(m_TableOrigin, m_TableEdit);
 
-            sortingDataToTable(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+            sortingDataToTable(m_TableOrigin
+                , m_TableEdit
                 , getNameTableIn(dtrPer[0].Begin)
                 , @"ID"
                 , out err);
@@ -2484,6 +2501,7 @@ namespace PluginTaskReaktivka
             , string unCol
             , out int err)
         {
+            int counter = 0;
             string nameTableExtrmRow = string.Empty
                           , nameTableNew = string.Empty;
             DataTable editTemporary = new DataTable()
@@ -2517,11 +2535,26 @@ namespace PluginTaskReaktivka
             if (editTemporary.Rows.Count > 0)
             {
                 foreach (DataRow rowOrigin in origin.Rows)
-                    if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month == Convert.ToDateTime(editTemporary.Rows[0]["DATE_TIME"]).Month)
-                        originTemporary.Rows.Add(rowOrigin.ItemArray);
+                    foreach (DataRow rowEdit in editTemporary.Rows)
+                        if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month.Equals(Convert.ToDateTime(rowEdit["DATE_TIME"]).Month)
+                            && rowOrigin["ID_PUT"].Equals(rowEdit["ID_PUT"]))
+                        {
+                            originTemporary.Rows.Add(rowOrigin.ItemArray);
+                        }
 
                 updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
             }
+        }
+
+        private DataTable diffRowsInTables(DataTable origin, DataTable edit)
+        {
+            for (int i = 0; i < origin.Rows.Count; i++)
+                for (int j = 0; j < edit.Rows.Count; j++)
+                    if (origin.Rows[i]["Value"].Equals(edit.Rows[j]["Value"]))
+                        edit.Rows.RemoveAt(j);
+                    else ; //break;
+
+            return edit;
         }
     }
 }
