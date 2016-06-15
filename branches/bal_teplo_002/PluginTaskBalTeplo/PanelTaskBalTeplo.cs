@@ -1198,21 +1198,21 @@ namespace PluginTaskBalTeplo
             m_type_dgv = ((PanelManagementBalTeplo.RadioButton_BalTask)(sender)).Type;
             if (m_type_dgv == PanelManagementBalTeplo.TypeRadioBtn.Block.ToString())
             {
-                dgvTeploBL.Visible = false;
+                dgvOutput.Visible = false;
                 dgvTeploOP.Visible = false;
                 dgvParam.Visible = false;
                 dgvPromPlozsh.Visible = false;
                 dgvBlock.Visible = true;
-                dgvOutput.Visible = true;
+                dgvTeploBL.Visible = true;
             }
             if (m_type_dgv == PanelManagementBalTeplo.TypeRadioBtn.Teplo.ToString())
             {
                 dgvBlock.Visible = false;
-                dgvOutput.Visible = false;
+                dgvTeploBL.Visible = false;
                 dgvParam.Visible = false;
                 dgvPromPlozsh.Visible = false;
-                dgvTeploBL.Visible = true;
                 dgvTeploOP.Visible = true;
+                dgvOutput.Visible = true;
             }
             if (m_type_dgv == PanelManagementBalTeplo.TypeRadioBtn.PromPlozsh.ToString())
             {
@@ -1410,7 +1410,7 @@ namespace PluginTaskBalTeplo
                 //
                 RadioButton_BalTask ctrlRadioTeplo = new RadioButton_BalTask();
                 ctrlRadioTeplo.Name = INDEX_CONTROL_BASE.RADIO_TEPLO.ToString();
-                ctrlRadioTeplo.Text = @"Тепло";
+                ctrlRadioTeplo.Text = @"По выводам";
                 ctrlRadioTeplo.Type = TypeRadioBtn.Teplo.ToString();
                 ctrlRadioTeplo.Dock = DockStyle.Top;
                 //
@@ -1605,15 +1605,6 @@ namespace PluginTaskBalTeplo
             dgvBlock.AllowUserToResizeRows = false;
             dgvBlock.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvBlock.Visible = true;
-            //dgvAB.AddColumn("Дата", true, "Date");
-            //dgvAB.AddColumn("Корректировка ПТО, Блоки 1-2", false, "CorGTP12", 23226);
-            //dgvAB.AddColumn("Корректировка ПТО, Блоки 3-6", false, "CorGTP36", 23227);
-            //dgvAB.AddColumn("Блоки 1-2", true, INDEX_GTP.GTP12.ToString());
-            //dgvAB.AddColumn("Блоки 3-6", true, INDEX_GTP.GTP36.ToString());
-            //dgvAB.AddColumn("Станция,сутки", true, INDEX_GTP.TEC.ToString());
-            //dgvAB.AddColumn("Станция,нараст.", true, "StSwen");
-            //dgvAB.AddColumn("План нараст.", true, "PlanSwen");
-            //dgvAB.AddColumn("Отклонение от плана", true, "DevOfPlan");
             this.Controls.Add(dgvBlock, 4, posRow);
             this.SetColumnSpan(dgvBlock, 9); this.SetRowSpan(dgvBlock, 5);
             //
@@ -1623,8 +1614,8 @@ namespace PluginTaskBalTeplo
             dgvOutput.AllowUserToResizeRows = false;
             dgvOutput.Type_DGV = DGVAutoBook.INDEX_TYPE_DGV.Output;
             dgvOutput.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvOutput.Visible = true;
-            this.Controls.Add(dgvOutput, 4, posRow+5);
+            dgvOutput.Visible = false;
+            this.Controls.Add(dgvOutput, 4, posRow);
             this.SetColumnSpan(dgvOutput, 9); this.SetRowSpan(dgvOutput, 5);
             //
             dgvTeploBL = new DGVAutoBook(INDEX_CONTROL.DGV_TeploBL.ToString());
@@ -1633,8 +1624,8 @@ namespace PluginTaskBalTeplo
             dgvTeploBL.Type_DGV = DGVAutoBook.INDEX_TYPE_DGV.TeploBL;
             dgvTeploBL.AllowUserToResizeRows = false;
             dgvTeploBL.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvTeploBL.Visible = false;
-            this.Controls.Add(dgvTeploBL, 4, posRow);
+            dgvTeploBL.Visible = true;
+            this.Controls.Add(dgvTeploBL, 4, posRow+5);
             this.SetColumnSpan(dgvTeploBL, 9); this.SetRowSpan(dgvTeploBL, 5);
             //
             dgvTeploOP = new DGVAutoBook(INDEX_CONTROL.DGV_TeploOP.ToString());
@@ -1895,9 +1886,13 @@ namespace PluginTaskBalTeplo
         private void setValues()
         {
             m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Clone();
+                m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Copy();
             m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                = m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
+                = m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
+            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
+                m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Copy();
+            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                = m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
         }
 
         /// <summary>
@@ -1923,7 +1918,7 @@ namespace PluginTaskBalTeplo
                     if (m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
                     {
                         // создать копии для возможности сохранения изменений
-                        setValues();
+                        //setValues();
                         //вычисление значений
                         HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
                         m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
@@ -1931,7 +1926,7 @@ namespace PluginTaskBalTeplo
                             TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES,
                             out err
                             );
-                        
+                        setValues();
 
                         dgvBlock.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
                             , m_arTableDictPrjs_in);
@@ -2322,12 +2317,23 @@ namespace PluginTaskBalTeplo
                 cbx.Items.Clear();
 
                 dgvBlock.ClearRows();
+                dgvOutput.ClearRows();
+                dgvTeploBL.ClearRows();
+                dgvTeploOP.ClearRows();
+                dgvParam.ClearRows();
+                dgvPromPlozsh.ClearRows();
                 //dgvAB.ClearColumns();
             }
             else
+            {
                 // очистить содержание представления
-                dgvBlock.ClearValues()
-                ;
+                dgvBlock.ClearValues();
+                dgvOutput.ClearValues();
+                dgvTeploBL.ClearValues();
+                dgvTeploOP.ClearValues();
+                dgvParam.ClearValues();
+                dgvPromPlozsh.ClearValues();
+            }
         }
 
         /// <summary>
@@ -2476,13 +2482,20 @@ namespace PluginTaskBalTeplo
             string errMsg = string.Empty;
 
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(out err);
+            
             m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            HandlerDb.saveResOut(m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+            HandlerDb.saveResInval(m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
             , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
+
+            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(out err);
+            
+            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+            HandlerDb.saveResOut(m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+            , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
 
             base.HPanelTepCommon_btnSave_Click(obj, ev);
 
-            saveInvalValue(out err);
+            //saveInvalValue(out err);
         }
 
         /// <summary>
@@ -2494,11 +2507,14 @@ namespace PluginTaskBalTeplo
         private DataTable getStructurOutval(out int err)
         {
             string strRes = string.Empty;
+            DataTable res = new DataTable();
 
             strRes = "SELECT * FROM "
                 + GetNameTableOut((Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value);
 
-            return HandlerDb.Select(strRes, out err);
+            res = HandlerDb.Select(strRes, out err).Clone();
+            res.Columns.Remove("ID");
+            return res;
         }
 
         /// <summary>
@@ -2547,12 +2563,20 @@ namespace PluginTaskBalTeplo
         {
             err = -1;
 
-            m_handlerDb.RecUpdateInsertDelete(GetNameTableOut((Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
+            m_handlerDb.RecUpdateInsertDelete(GetNameTableIn((Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
            , true)[0] as HDateTimePicker).Value)
            , @"ID_PUT, DATE_TIME"
            , @""
            , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
            , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+           , out err);
+
+            m_handlerDb.RecUpdateInsertDelete(GetNameTableOut((Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
+           , true)[0] as HDateTimePicker).Value)
+           , @"ID_PUT, DATE_TIME"
+           , @""
+           , m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+           , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
            , out err);
         }
 
@@ -2588,6 +2612,8 @@ namespace PluginTaskBalTeplo
         {
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
+            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+               m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
         }
 
         /// <summary>
