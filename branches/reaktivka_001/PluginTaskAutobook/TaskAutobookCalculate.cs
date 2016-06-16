@@ -687,7 +687,7 @@ namespace PluginTaskAutobook
         /// <param name="tableRes">таблица с параметрами</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
-        public DataTable SaveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
+        public DataTable SaveResInval(DataTable tableOrigin, DataTable tableRes, int timezone, out int err)
         {
             err = -1;
             DataTable tableEdit = new DataTable();
@@ -710,7 +710,7 @@ namespace PluginTaskAutobook
                         , 0.ToString()
                         , dtRes.ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , ID_TIMEZONE.MSK//???
+                        , timezone
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]            
                         , DateTime.Now.ToString(CultureInfo.InvariantCulture)

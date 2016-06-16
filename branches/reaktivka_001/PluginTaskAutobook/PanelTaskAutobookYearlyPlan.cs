@@ -1164,17 +1164,11 @@ namespace PluginTaskAutobook
             {
                 if (!(m_arTableDictPrjs == null))
                     for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-                    {
                         if (!(m_arTableDictPrjs[i] == null))
                         {
                             m_arTableDictPrjs[i].Clear();
                             m_arTableDictPrjs[i] = null;
                         }
-                        else
-                            ;
-                    }
-                else
-                    ;
 
                 cbx = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
@@ -1189,8 +1183,7 @@ namespace PluginTaskAutobook
             }
             else
                 // очистить содержание представления
-                m_dgvYear.ClearValues()
-                ;
+                m_dgvYear.ClearValues();
         }
 
         /// <summary>
@@ -1310,6 +1303,16 @@ namespace PluginTaskAutobook
                 + dtBegin.Year + " год.";
 
             m_dgvYear.Rows[dtBegin.Month - 1].Selected = true;
+        }
+
+        /// <summary>
+        /// Освободить (при закрытии), связанные с функционалом ресурсы
+        /// </summary>
+        public override void Stop()
+        {
+            deleteSession();
+
+            base.Stop();
         }
     }
 }

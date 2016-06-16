@@ -271,6 +271,11 @@ namespace PluginTaskTepMain
             onButtonLoadClick();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="ev"></param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
             m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;

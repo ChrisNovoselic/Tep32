@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
@@ -1202,7 +1203,8 @@ namespace PluginTaskAutobook
             /// <returns>признак ошибки</returns>
             private bool addWorkBooks()
             {
-                string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xlsx";
+                //string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xlsx";
+                string pathToTemplate = Path.GetFullPath(@"Template\TemplateAutobook.xlsx");
                 object pathToTemplateObj = pathToTemplate;
                 bool bflag = true;
                 try
@@ -1332,7 +1334,7 @@ namespace PluginTaskAutobook
         /// кол-во дней в текущем месяце
         /// </summary>
         /// <returns>кол-во дней</returns>
-        public int DaysInMonth
+        protected int DaysInMonth
         {
             get
             {
@@ -2369,7 +2371,7 @@ namespace PluginTaskAutobook
             {
                 base.HPanelTepCommon_btnSave_Click(obj, ev);
                 //save вх. значений
-                saveInvalValue(out err);
+                saveInvalValue((ctrl as ComboBox).SelectedIndex, out err);
             }
 
         }
@@ -2510,7 +2512,7 @@ namespace PluginTaskAutobook
             if (editTemporary.Rows.Count > 0)
             {
                 foreach (DataRow rowOrigin in origin.Rows)
-                    if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month == Convert.ToDateTime(editTemporary.Rows[0]["DATE_TIME"]).Month)
+                    if (extremeRow(Convert.ToDateTime(rowOrigin["DATE_TIME"]).ToString(), nameTableNew) == nameTableNew)
                         originTemporary.Rows.Add(rowOrigin.ItemArray);
 
                 updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);//сохранение данных
@@ -2536,7 +2538,7 @@ namespace PluginTaskAutobook
         /// Сохранение входных знчений(корр. величины)
         /// </summary>
         /// <param name="err"></param>
-        private void saveInvalValue(out int err)
+        private void saveInvalValue(int timeZone,out int err)
         {
             //err = -1;
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
@@ -2546,7 +2548,7 @@ namespace PluginTaskAutobook
 
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
             HandlerDb.SaveResInval(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
-            , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], out err);
+            , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], timeZone, out err);
 
             sortingDataToTable(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
                 , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
