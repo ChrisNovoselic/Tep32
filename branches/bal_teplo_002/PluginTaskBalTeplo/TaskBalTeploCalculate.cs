@@ -13,6 +13,27 @@ namespace PluginTaskBalTeplo
 {
     public class TaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate
     {
+        /// <summary>
+        /// Перечисление - признак типа загруженных из БД значений
+        ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
+        /// </summary>
+        public enum INDEX_VIEW_VALUES : short
+        {
+            UNKNOWN = -1, SOURCE,
+            ARCHIVE, COUNT
+        }
+
+        /// <summary>
+        /// Признак отображаемых на текущий момент значений
+        /// </summary>
+        public INDEX_VIEW_VALUES m_ViewValues;
+
+        /// <summary>
+        /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
+        /// </summary>
+        public ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.DAY : _Session.m_currIdPeriod; } }
+
+
         public override string GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
         {
             string strRes = string.Empty
@@ -78,14 +99,14 @@ namespace PluginTaskBalTeplo
             err = -1;
 
             DataTable tableOrigin = null
-                , tableCalcRes = null;
+                , tableOriginIn = null
+                , tableCalcRes = null
+                , tableCalcResIn = null;
 
             TepCommon.HandlerDbTaskCalculate.TaskCalculate.ListDATATABLE listDataTables = null;
 
             // подготовить таблицы для расчета
             listDataTables = prepareTepCalculateValues(type, out err);
-
-            
 
             if (err == 0)
             {
@@ -94,17 +115,59 @@ namespace PluginTaskBalTeplo
                 {
                     case TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES:
                         tableOrigin = listDataTables.FindDataTable(TepCommon.HandlerDbTaskCalculate.TaskCalculate.INDEX_DATATABLE.OUT_VALUES);
-                        tableCalcRes = (m_taskCalculate as HandlerDbTaskCalculate.TaskBalTeploCalculate).CalculateOut(listDataTables);
+                        tableOriginIn = listDataTables.FindDataTable(TepCommon.HandlerDbTaskCalculate.TaskCalculate.INDEX_DATATABLE.IN_VALUES);
+                        DataTable[] tableRes = (m_taskCalculate as HandlerDbTaskCalculate.TaskBalTeploCalculate).CalculateOut(listDataTables);
+                        tableCalcRes = tableRes[1];
+                        tableCalcResIn = tableRes[0];
                         break;
                     default:
                         break;
                 }
                 // сохранить результаты вычисления
                 saveResult(tableOrigin, tableCalcRes, out err);
+                saveResultIn(tableOriginIn, tableCalcResIn, out err);
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при подготовке данных для расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
+        }
+
+        /// <summary>
+        /// Сохранить результаты вычислений в таблице для временных значений
+        /// </summary>
+        /// <param name="tableOrigin">??? Таблица с оригинальными значениями</param>
+        /// <param name="tableRes">??? Таблица с оригинальными значениями</param>
+        /// <param name="err">Признак выполнения операции сохранения</param>
+        protected void saveResultIn(DataTable tableOrigin, DataTable tableRes, out int err)
+        {
+            err = -1;
+
+            DataTable tableEdit = new DataTable();
+            DataRow[] rowSel = null;
+
+            tableEdit = tableOrigin.Clone();
+
+            foreach (DataRow r in tableOrigin.Rows)
+            {
+                rowSel = tableRes.Select(@"ID=" + r[@"ID_PUT"]);
+
+                if (rowSel.Length == 1)
+                {
+                    tableEdit.Rows.Add(new object[] {
+                        //r[@"ID"],
+                        r[@"ID_SESSION"]
+                        , r[@"ID_PUT"]
+                        , rowSel[0][@"QUALITY"]
+                        , rowSel[0][@"VALUE"]                        
+                        , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
+                        , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
+                    });
+                }
+                else
+                    ; //??? ошибка
+            }
+
+            RecUpdateInsertDelete(s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES], @"ID_PUT, ID_SESSION", string.Empty, tableOrigin, tableEdit, out err);
         }
 
         private const int MAX_ROWCOUNT_TO_INSERT = 666;
@@ -211,6 +274,21 @@ namespace PluginTaskBalTeplo
             tableRes = DbTSQLInterface.Select(ref _dbConnection, query, null, null, out err);
 
             return tableRes;
+        }
+
+        public DataTable GetValuesArch(INDEX_DBTABLE_NAME type, out int err)
+        {
+            string strRes = string.Empty;
+            DataTable res = new DataTable();
+            string from = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)type] + @"_" + _Session.m_rangeDatetime.Begin.Year.ToString() + _Session.m_rangeDatetime.Begin.Month.ToString(@"00");
+            HClassLibrary.DateTimeRange[] dt_range = GetDateTimeRangeValuesVar();
+            strRes = "SELECT * FROM "
+                + from
+                + " WHERE DATE_TIME>='" + dt_range[0].Begin.ToString() + "' AND DATE_TIME<= '" + dt_range[0].End.ToString() + "' AND ID_USER=" + HUsers.Id.ToString();
+
+            res = Select(strRes, out err).Copy();
+            res.Columns.Remove("ID");
+            return res;
         }
 
         /// <summary>
@@ -321,7 +399,87 @@ namespace PluginTaskBalTeplo
             strErr = string.Empty;
             string strQuery = string.Empty;
 
-            
+            if(m_ViewValues == INDEX_VIEW_VALUES.SOURCE)
+                CS_Source(cntBasePeriod
+                , tablePars
+                , ref arTableValuesIn
+                , ref  arTableValuesOut
+                , dtRange, out err
+                , out strErr);
+            if (m_ViewValues == INDEX_VIEW_VALUES.ARCHIVE)
+                CS_Archive(cntBasePeriod
+                , tablePars
+                , ref arTableValuesIn
+                , ref  arTableValuesOut
+                , dtRange, out err
+                , out strErr);
+        }
+
+        private void CS_Archive(int cntBasePeriod
+            , DataTable tablePars
+            , ref DataTable[] arTableValuesIn
+            , ref DataTable[] arTableValuesOut
+            , DateTimeRange dtRange, out int err
+            , out string strErr)
+        {
+            err = 0;
+            strErr = string.Empty;
+            string strQuery = string.Empty;
+
+            if ((arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE].Columns.Count > 0)
+                && (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE].Rows.Count > 0))
+            {
+                //Вставить строку с идентификатором новой сессии
+                insertIdSession(cntBasePeriod, out err);
+                //Вставить строки в таблицу БД со входными значениями для расчета
+                insertInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE], out err);
+
+                // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                // получить входные для расчета значения для возможности редактирования
+                strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
+                    + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
+                    + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+
+                if ((arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE].Columns.Count > 0)
+                    && (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE].Rows.Count > 0))
+                {
+                    //Вставить строки в таблицу БД со входными значениями для расчета
+                    insertOutValues(out err, arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]);
+
+                    // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                    // получить входные для расчета значения для возможности редактирования
+                    strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
+                        + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"]"
+                        + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                }
+            }
+            else
+            {
+                CS_Source(cntBasePeriod
+                , tablePars
+                , ref arTableValuesIn
+                , ref  arTableValuesOut
+                , dtRange, out err
+                , out strErr);
+            }
+        }
+
+        private void CS_Source(int cntBasePeriod
+            , DataTable tablePars
+            , ref DataTable[] arTableValuesIn
+            , ref DataTable[] arTableValuesOut
+            , DateTimeRange dtRange, out int err
+            , out string strErr)
+        {
+            err = 0;
+            strErr = string.Empty;
+            string strQuery = string.Empty;
+
+
             if ((arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
                 && (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
             {
@@ -362,8 +520,6 @@ namespace PluginTaskBalTeplo
             if ((arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
                 && (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
             {
-                //Вставить строку с идентификатором новой сессии
-                insertIdSession(cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
                 insertOutValues(out err, arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]);
 
@@ -379,8 +535,6 @@ namespace PluginTaskBalTeplo
             {
                 if (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count > 0)
                 {
-                    //Вставить строку с идентификатором новой сессии
-                    insertIdSession(cntBasePeriod, out err);
                     //Вставить строки в таблицу БД со входными значениями для расчета
                     insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], out err);
 
@@ -405,7 +559,7 @@ namespace PluginTaskBalTeplo
                         DataTable param = Select(strRes, out err);
                         foreach (DataRow r in param.Rows)
                         {
-                            arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Add(new object[] { r["ID"], "19", "0", "0", DateTime.Now});
+                            arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Add(new object[] { r["ID"], "19", "0", "0", DateTime.Now });
                         }
                         insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], out err);
 
@@ -461,7 +615,7 @@ namespace PluginTaskBalTeplo
         /// </summary>
         /// <param name="tableInValues">Таблица со значениями для вставки</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        private void insertInValues(DataTable tableInValues, out int err)
+        public void insertInValues(DataTable tableInValues, out int err)
         {
             err = -1;
 
@@ -469,21 +623,21 @@ namespace PluginTaskBalTeplo
                 , strNameColumn = string.Empty;
             string[] arNameColumns = null;
             Type[] arTypeColumns = null;
+            string[] col_names = { "ID_SESSION"
+      ,"ID_PUT"
+      ,"QUALITY"
+      ,"VALUE"
+      ,"WR_DATETIME"
+      ,"EXTENDED_DEFINITION"};
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
             strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];
-            foreach (DataColumn c in tableInValues.Columns)
+            foreach (string c in col_names)
             {
-                arTypeColumns[c.Ordinal] = c.DataType;
-                if (c.ColumnName.Equals(@"ID") == true)
-                    strNameColumn = @"ID_PUT";
-                else
-                    strNameColumn = c.ColumnName;
-                arNameColumns[c.Ordinal] = strNameColumn;
-                strQuery += strNameColumn + @",";
+                strQuery += c + @",";
             }
             // исключить лишнюю запятую
             strQuery = strQuery.Substring(0, strQuery.Length - 1);
@@ -493,10 +647,26 @@ namespace PluginTaskBalTeplo
             foreach (DataRow r in tableInValues.Rows)
             {
                 strQuery += @"(";
-
-                foreach (DataColumn c in tableInValues.Columns)
+                int i_col = 0;
+                strQuery += _Session.m_Id + @",";
+                i_col++;
+                
+                foreach (string str in col_names)
                 {
-                    strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
+                    foreach (DataColumn c in tableInValues.Columns)
+                    {
+                        if (c.ColumnName == str & c.ColumnName!="ID_SESSION")
+                        {
+                            strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], c.GetType()) + @",";
+                            i_col++;
+                        }
+                        
+                    }
+                    
+                }
+                if (col_names.Length - i_col == 1)
+                {
+                    strQuery += "'"+DateTime.Now.ToString() + @"',";
                 }
 
                 // исключить лишнюю запятую
@@ -583,8 +753,8 @@ namespace PluginTaskBalTeplo
         {
             err = -1;
 
-            if (IdTask == ID_TASK.AUTOBOOK)
-                insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err, tableRes);
+            if (IdTask == ID_TASK.BAL_TEPLO)
+                insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err, tableRes);
             else
                 ;
             //if (err == 0)
@@ -639,12 +809,11 @@ namespace PluginTaskBalTeplo
                     strQuery += idSession + @"," //ID_SEESION
                       + rowSel[@"ID_PUT"] + @"," //ID_PUT
                       + rowSel[@"QUALITY"] + @"," //QUALITY
-                      + rowSel[@"VALUE"] + @"," + //VALUE
-                    "'" + rowSel[@"WR_DATETIME"] + "',"
-                      + rowSel[@"EXTENDED_DEFINITION"]
+                      + rowSel[@"VALUE"].ToString().Replace(',','.') + @"," + //VALUE
+                    "'" + rowSel[@"WR_DATETIME"]
                       ;
-
-                    strQuery += @"),";
+                    
+                    strQuery += @"'),";
 
                     iRowCounterToInsert++;
 
@@ -854,7 +1023,7 @@ namespace PluginTaskBalTeplo
                                 rowSel
                                 , HUsers.Id.ToString()
                                 , 0.ToString()
-                                , Convert.ToDateTime(_Session.m_rangeDatetime.Begin.ToString()).ToString(CultureInfo.InvariantCulture)
+                                , Convert.ToDateTime(_Session.m_rangeDatetime.Begin.ToUniversalTime().ToString()).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
                                 , ID_TIMEZONE.NSK
                                 , 1.ToString()
@@ -896,7 +1065,7 @@ namespace PluginTaskBalTeplo
                                 rowSel
                                 , HUsers.Id.ToString()
                                 , 0.ToString()
-                                , Convert.ToDateTime(_Session.m_rangeDatetime.Begin.ToString()).ToString(CultureInfo.InvariantCulture)
+                                , Convert.ToDateTime(_Session.m_rangeDatetime.Begin.ToUniversalTime().ToString()).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
                                 , ID_TIMEZONE.NSK
                                 , 1.ToString()
@@ -1079,16 +1248,27 @@ namespace PluginTaskBalTeplo
             /// </summary>
             /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
             /// <returns>Таблица выходных значений, совместимая со структурой выходныъ значений в БД</returns>
-            public DataTable CalculateOut(ListDATATABLE listDataTables)
+            public DataTable[] CalculateOut(ListDATATABLE listDataTables)
             {
                 int iInitValuesRes = -1;
 
                 DataTable tableRes = null;
+                DataTable tableResIn = null;
 
                 iInitValuesRes = initValues(listDataTables);
 
                 if (iInitValuesRes == 0)
                 {
+
+                    // расчет
+                    foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in In)
+                    {
+                        //pAlg.Value[ID_COMP[ST]].value = calculateOut(pAlg.Key);
+                        calculateIn(pAlg.Key);
+                    }
+                    // преобразование в таблицу
+                    tableResIn = resultToTable(In);
+
                     // расчет
                     foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Out)
                     {
@@ -1100,7 +1280,7 @@ namespace PluginTaskBalTeplo
                 }
                 else
                     ; // ошибка при инициализации параметров, значений
-                return tableRes;
+                return new DataTable[] {tableResIn,tableRes};
             }
 
             private float calculateOut(string nAlg)
@@ -1126,6 +1306,7 @@ namespace PluginTaskBalTeplo
                             
                             Out[nAlg][ID_COMP[i]].value = (float)str * 10000;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
                         }
                         break;
                     #endregion
@@ -1138,6 +1319,8 @@ namespace PluginTaskBalTeplo
                             
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes;
+
                         }
                         break;
                     #endregion
@@ -1157,6 +1340,8 @@ namespace PluginTaskBalTeplo
                             
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
+
                         }
                         break;
                     #endregion
@@ -1176,6 +1361,8 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = 0/*(float)str*/;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
+
                         }
                         break;
                     #endregion
@@ -1188,6 +1375,8 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value =(float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes;
+
                         }
                         break;
                     #endregion
@@ -1207,6 +1396,8 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+
                         }
                         break;
                     #endregion
@@ -1226,6 +1417,8 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+
                         }
                         break;
                     #endregion
@@ -1238,6 +1431,8 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes;
+
                         }
                         break;
                     #endregion
@@ -1250,6 +1445,8 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes;
+
                         }
                         break;
                     #endregion
@@ -1384,6 +1581,8 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes;
+
                         }
                         break;
                     #endregion
@@ -1397,6 +1596,8 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes;
+
                         }
                         break;
                     #endregion
@@ -1409,6 +1610,8 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iST - (int)INDX_COMP.iPP1);
+
                         }
                         break;
                     #endregion
@@ -1421,15 +1624,241 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iST - (int)INDX_COMP.iPP1);
+
                         }
                         break;
                     #endregion
+
                     default:
                         Logging.Logg().Error(@"TaskTepCalculate::calculateMaket (N_ALG=" + nAlg + @") - неизвестный параметр...", Logging.INDEX_MESSAGE.NOT_SET);
                         break;
                 }
                 return fRes;
             }
+
+            private float calculateIn(string nAlg)
+            {
+                float fRes = 0F,
+                     fTmp = -1F;//промежуточная велечина
+                float sum = 0,
+                    sum1 = 0;
+                int i = -1;
+                double str = 0;
+                switch (nAlg)
+                {
+                    #region 1.1
+                    case @"1.1": //Удельный объем
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
+                        {
+                            str = str + In["1.1"][ID_COMP[i]].value;
+                        }
+
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In["1.1"][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 1.2
+                    case @"1.2": //Расход сетевой воды с поправкой
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
+                        {
+                            str = str + In["1.2"][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                            fRes += In["1.2"][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 1.3
+                    case @"1.3": //Энтальпия пр
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
+                        {
+                            str = str + In["1.3"][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                            fRes += In["1.3"][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 1.4
+                    case @"1.4": //Энтальпия обр
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
+                        {
+                            str = str + In["1.4"][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                            fRes += In["1.4"][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 1.5
+                    case @"1.5": //Тепло по блокам
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
+                        {
+                            str = str + In["1.5"][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                            fRes += In["1.5"][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 2.1
+                    case @"2.1": //Энтальпия пр вывод
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 2.2
+                    case @"2.2": //Энтальпия обр вывод
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                        break;
+                    #endregion
+
+                    #region 2.3
+                    case @"2.3": //Q БД вывод
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 2.4
+                    case @"2.4": //Q расч вывод
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 2.5
+                    case @"2.5": //Q расч вывод
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 2.6
+                    case @"2.6": //Q расч вывод
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 6.1
+                    case @"6.1": //Энтальпия пр вывод
+                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 6.2
+                    case @"6.2": //Энтальпия обр вывод
+                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                        break;
+                    #endregion
+
+                    #region 6.3
+                    case @"6.3": //Q БД вывод
+                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 6.4
+                    case @"6.4": //Q расч вывод
+                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 6.5
+                    case @"6.5": //Q расч вывод
+                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 6.6
+                    case @"6.6": //Q расч вывод
+                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        {
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    default:
+                        break;
+                }
+                return fRes;
+            }
+
 
             private DataTable resultToTable(P_ALG pAlg)
             {

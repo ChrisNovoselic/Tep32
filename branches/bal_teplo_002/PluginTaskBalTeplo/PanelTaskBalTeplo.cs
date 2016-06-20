@@ -36,14 +36,7 @@ namespace PluginTaskBalTeplo
         /// </summary>
         protected DataTable[] m_arTableOrigin_out
             , m_arTableEdit_out;
-        /// <summary>
-        /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
-        /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.DAY : Session.m_currIdPeriod; } }
-        /// <summary>
-        /// Признак отображаемых на текущий момент значений
-        /// </summary>
-        protected INDEX_VIEW_VALUES m_ViewValues;
+        
         /// <summary>
         /// 
         /// </summary>
@@ -54,16 +47,25 @@ namespace PluginTaskBalTeplo
         protected enum INDEX_TABLE_DICTPRJ : int
         {
             UNKNOWN = -1
-            ,PERIOD
-            ,TIMEZONE
-            ,COMPONENT
-            ,PARAMETER //_IN
-            ,PARAMETER_OUT
-            ,MODE_DEV/*, MEASURE*/
-            ,RATIO
-            ,N_ALG
-            ,N_ALG_OUT
-            ,COUNT
+            ,
+            PERIOD
+                ,
+            TIMEZONE
+                ,
+            COMPONENT
+                ,
+            PARAMETER //_IN
+                ,
+            PARAMETER_OUT
+                ,
+            MODE_DEV/*, MEASURE*/
+                ,
+            RATIO
+                ,
+            N_ALG
+                ,
+            N_ALG_OUT
+                , COUNT
         }
         /// <summary>
         /// 
@@ -75,15 +77,7 @@ namespace PluginTaskBalTeplo
             CorCALC,
             COUNT
         }
-        /// <summary>
-        /// Перечисление - признак типа загруженных из БД значений
-        ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
-        /// </summary>
-        protected enum INDEX_VIEW_VALUES : short
-        {
-            UNKNOWN = -1, SOURCE,
-            ARCHIVE, COUNT
-        }
+        
         /// <summary>
         /// Набор элементов
         /// </summary>
@@ -210,17 +204,17 @@ namespace PluginTaskBalTeplo
         protected class DGVAutoBook : DataGridView
         {
             private int m_id_dgv;
-            public enum INDEX_TYPE_DGV {Block=2001, Output=2002, TeploBL=2003, TeploOP=2004, Param=2005, PromPlozsh=2006};
+            public enum INDEX_TYPE_DGV { Block = 2001, Output = 2002, TeploBL = 2003, TeploOP = 2004, Param = 2005, PromPlozsh = 2006 };
 
             private INDEX_TYPE_DGV m_type_dgv;
 
             public INDEX_TYPE_DGV Type_DGV
             {
-                get 
+                get
                 {
                     return m_type_dgv;
                 }
-                set 
+                set
                 {
                     m_type_dgv = value;
                 }
@@ -253,11 +247,11 @@ namespace PluginTaskBalTeplo
                 //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                 ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             }
-            
+
             /// <summary>
             /// Класс для описания дополнительных свойств столбца в отображении (таблице)
             /// </summary>
-            private class HDataGridViewColumn : DataGridViewTextBoxColumn
+            public class HDataGridViewColumn : DataGridViewTextBoxColumn
             {
                 /// <summary>
                 /// Идентификатор компонента
@@ -267,6 +261,7 @@ namespace PluginTaskBalTeplo
                 /// Признак запрета участия в расчете
                 /// </summary>
                 public bool m_bCalcDeny;
+                public bool m_bInPut;
             }
 
             /// <summary>
@@ -307,7 +302,7 @@ namespace PluginTaskBalTeplo
             /// <param name="bRead">флаг изменения пользователем ячейки</param>
             /// <param name="nameCol">имя столбца</param>
             /// <param name="idPut">индентификатор источника</param>
-            public void AddColumn(string txtHeader, bool bRead, string nameCol, int idPut)
+            public void AddColumn(string txtHeader, bool bRead, string nameCol, int idPut, bool bInPut)
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
@@ -315,7 +310,7 @@ namespace PluginTaskBalTeplo
 
                 try
                 {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_iIdComp = idPut };
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_iIdComp = idPut, m_bInPut = bInPut };
                     alignText = DataGridViewContentAlignment.MiddleLeft;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
                     //column.Frozen = true;
@@ -382,82 +377,50 @@ namespace PluginTaskBalTeplo
             /// <param name="parametrs">параметры</param>
             public void ShowValues(DataTable[] tbOrigin_in, DataTable[] tbOrigin_out, DataTable[] arr_tb_param_in)
             {
-                //Array namePut = Enum.GetValues(typeof(INDEX_GTP));
-                //ClearValues();
-                //bool bflg = false;
-                //double valueD;
-                ////заполнение плана
-                //if (planOnMonth.Rows.Count > 0)
-                //    planInMonth(planOnMonth.Rows[0]["VALUE"].ToString(),
-                //      Convert.ToDateTime(planOnMonth.Rows[0]["WR_DATETIME"].ToString()), dgvView);
-                //else ;
 
+                double[] agr = new double[Columns.Count];
 
-                //for (int i = 0; i < dgvView.Rows.Count; i++)
-                //{
-                //    DataRow[] dr_CorValues = formingCorrValue(tbOrigin, dgvView.Rows[i].Cells["DATE"].Value.ToString());
-                //    int count = 0;
-                //    //заполнение столбцов с корр. знач.
-                //    if (dr_CorValues[0] != null)
-                //    {
-                //        foreach (HDataGridViewColumn col in Columns)
-                //        {
-                //            for (int t = 0; t < dr_CorValues.Count(); t++)
-                //            {
-                //                if (col.m_iIdComp ==
-                //                    Convert.ToInt32(dr_CorValues[t]["ID_PUT"]))
-                //                {
-                //                    valueD = Convert.ToDouble(dr_CorValues[t]["VALUE"]) / Math.Pow(10, 6);
-                //                    dgvView.Rows[i].Cells[col.Index].Value = valueD;
-                //                }
-                //                else ;
-                //            }
-                //        }
-                //    }
-
-                //    for (int j = 0; j < tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count; j++)
-                //    {
-                //        //заполнение столбцов ГПТ,ТЭЦ
-                //        if (dgvView.Rows[i].Cells["DATE"].Value.ToString() ==
-                //        Convert.ToDateTime(tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["WR_DATETIME"]).ToShortDateString())
-                //        {
-                //            dgvView.Rows[i].Cells[namePut.GetValue(count).ToString()].Value =
-                //                correctingValues(tbOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["VALUE"]
-                //                , namePut.GetValue(count).ToString(), ref bflg, i, dgvView);
-                //            count++;
-
-                //        }
-                //    }
-                //    fillCells(i, this);
-                //}
                 foreach (HDataGridViewColumn col in Columns)
                 {
-                    if(col.Index!=0)
-                        foreach(DataGridViewRow row in Rows)
+                    if (col.Index != 0)
+                        foreach (DataGridViewRow row in Rows)
                         {
-                            DataRow[] row_comp = arr_tb_param_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_ALG=" 
-                                + col.m_iIdComp.ToString() 
-                                + " and ID_COMP=" + row.HeaderCell.Value.ToString());
-                            if(row_comp.Length>0)
-                            {
-                            DataRow[] row_val = (tbOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT="
-                                + row_comp[0]["ID"].ToString()));
-                            if(row_val.Length>0)
-                                row.Cells[col.Index].Value = row_val[0]["VALUE"].ToString().Trim();
-                            row.Cells[col.Index].ReadOnly = false;
-                            }
-
-                            row_comp = arr_tb_param_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("ID_ALG="
+                            DataRow[] row_comp = arr_tb_param_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_ALG="
                                 + col.m_iIdComp.ToString()
                                 + " and ID_COMP=" + row.HeaderCell.Value.ToString());
-                            if (row_comp.Length > 0)
+
+                            if (col.m_bInPut == true)
                             {
-                                DataRow[] row_val = (tbOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT="
-                                    + row_comp[0]["ID"].ToString()));
-                                if (row_val.Length > 0)
-                                    row.Cells[col.Index].Value = row_val[0]["VALUE"].ToString().Trim();
+                                if (row_comp.Length > 0)
+                                {
+                                    DataRow[] row_val = (tbOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT="
+                                        + row_comp[0]["ID"].ToString()));
+                                    if (row_val.Length > 0)
+                                        row.Cells[col.Index].Value = row_val[0]["VALUE"].ToString().Trim();
+                                    row.Cells[col.Index].ReadOnly = false;
+                                }
+                            }
+                            else
+                            {
+                                row_comp = arr_tb_param_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("ID_ALG="
+                                    + col.m_iIdComp.ToString()
+                                    + " and ID_COMP=" + row.HeaderCell.Value.ToString());
+                                if (row_comp.Length > 0)
+                                {
+                                    DataRow[] row_val = (tbOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT="
+                                        + row_comp[0]["ID"].ToString()));
+                                    if (row_val.Length > 0)
+                                        row.Cells[col.Index].Value = row_val[0]["VALUE"].ToString().Trim();
+                                }
                             }
                         }
+                    if (Rows.Count > 1)
+                    {
+                        if (Convert.ToInt32(Rows[Rows.Count - 1].HeaderCell.Value) == 5)
+                        {
+                            Rows[Rows.Count - 1].Cells[0].Value = "Итого";
+                        }
+                    }
                 }
             }
 
@@ -534,7 +497,7 @@ namespace PluginTaskBalTeplo
             /// <param name="col">имя столбца</param>
             public void editCells(int row, int value, DataGridView view, string col)
             {
-                
+
             }
 
             /// <summary>
@@ -545,7 +508,7 @@ namespace PluginTaskBalTeplo
             /// <param name="dgvView">отображение</param>
             private void fillCells(int i, DataGridView dgvView)
             {
-                
+
             }
 
             /// <summary>
@@ -725,7 +688,7 @@ namespace PluginTaskBalTeplo
                 return editTable;
             }
 
-            public void InitializeStruct(DataTable nAlgTable, DataTable nAlgOutTable, DataTable compTable, Dictionary<int,object[]> dict_profile)
+            public void InitializeStruct(DataTable nAlgTable, DataTable nAlgOutTable, DataTable compTable, Dictionary<int, object[]> dict_profile)
             {
                 this.Rows.Clear();
                 this.Columns.Clear();
@@ -734,16 +697,16 @@ namespace PluginTaskBalTeplo
                 DataRow[] rows;
                 List<DataRow> col_in = new List<DataRow>();
                 List<DataRow> col_out = new List<DataRow>();
-                switch(m_type_dgv)
+                switch (m_type_dgv)
                 {
                     case INDEX_TYPE_DGV.Block:
-                        
-                        rows = compTable.Select("ID_COMP=1000");
+
+                        rows = compTable.Select("ID_COMP=1000 or ID_COMP=1");
                         break;
                     case INDEX_TYPE_DGV.Output:
                         //colums_in = nAlgTable.Select("N_ALG='2'");
                         //colums_out = nAlgOutTable.Select("N_ALG='2'");
-                        rows = compTable.Select("ID_COMP=2000");
+                        rows = compTable.Select("ID_COMP=2000 or ID_COMP=1");
                         break;
                     case INDEX_TYPE_DGV.TeploBL:
                         //colums_in = nAlgTable.Select("N_ALG='3'");
@@ -763,7 +726,7 @@ namespace PluginTaskBalTeplo
                     case INDEX_TYPE_DGV.PromPlozsh:
                         //colums_in = nAlgTable.Select("N_ALG='6'");
                         //colums_out = nAlgOutTable.Select("N_ALG='6'");
-                        rows = compTable.Select("ID_COMP=3000");
+                        rows = compTable.Select("ID_COMP=3000 or ID_COMP=1");
                         break;
                     default:
                         //colums_in = nAlgTable.Select();
@@ -793,24 +756,33 @@ namespace PluginTaskBalTeplo
                 colums_in = col_in.ToArray();
                 colums_out = col_out.ToArray();
 
-                this.AddColumn("Компонент", true,"Comp");
+                this.AddColumn("Компонент", true, "Comp");
                 foreach (DataRow c in colums_in)
                 {
-                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), Convert.ToInt32(c["ID"]));
+                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), Convert.ToInt32(c["ID"]), true);
                 }
 
                 foreach (DataRow c in colums_out)
                 {
-                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), Convert.ToInt32(c["ID"]));
+                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), Convert.ToInt32(c["ID"]), false);
                 }
 
                 foreach (DataRow r in rows)
                 {
-                    this.Rows.Add(new object[this.ColumnCount]);
-                    this.Rows[Rows.Count - 1].Cells[0].Value = r["DESCRIPTION"].ToString().Trim();
-                    this.Rows[Rows.Count - 1].HeaderCell.Value = r["ID"];
+                        this.Rows.Add(new object[this.ColumnCount]);
+                        this.Rows[Rows.Count - 1].Cells[0].Value = r["DESCRIPTION"].ToString().Trim();
+                        this.Rows[Rows.Count - 1].HeaderCell.Value = r["ID"];
+                }
+                if (Rows.Count > 1)
+                {
+                    Rows.RemoveAt(0);
+                    this.Rows.Add();
+                    this.Rows[Rows.Count - 1].Cells[0].Value = "Итого";
+                    this.Rows[Rows.Count - 1].HeaderCell.Value = rows[0]["ID"].ToString().Trim();
                 }
             }
+
+
         }
 
         /// <summary>
@@ -909,7 +881,7 @@ namespace PluginTaskBalTeplo
             /// <param name="tb_gtp">таблица с данными</param>
             private void calculate(DataTable[] tb_gtp)
             {
-               
+
             }
 
             /// <summary>
@@ -1369,6 +1341,7 @@ namespace PluginTaskBalTeplo
                 ctrlBSend.Name = INDEX_CONTROL_BASE.BUTTON_SEND.ToString();
                 ctrlBSend.Text = @"Отправить";
                 ctrlBSend.Dock = DockStyle.Top;
+                ctrlBSend.Visible = false;
                 //ctrlBSend.Enabled = false;
                 //Кнопка - сохранить
                 Button ctrlBsave = new Button();
@@ -1380,11 +1353,13 @@ namespace PluginTaskBalTeplo
                 ctrlExp.Name = INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString();
                 ctrlExp.Text = @"Экспорт";
                 ctrlExp.Dock = DockStyle.Top;
+                ctrlExp.Visible = false;
                 //Поле с почтой
                 TextBox ctrlTxt = new TextBox();
                 ctrlTxt.Name = INDEX_CONTEXT.ID_CON.ToString();
                 //ctrlTxt.Text = @"Pasternak_AS@sibeco.su";
                 ctrlTxt.Dock = DockStyle.Top;
+                ctrlTxt.Visible = false;
 
                 TableLayoutPanel tlpButton = new TableLayoutPanel();
                 tlpButton.Dock = DockStyle.Fill;
@@ -1625,7 +1600,7 @@ namespace PluginTaskBalTeplo
             dgvTeploBL.AllowUserToResizeRows = false;
             dgvTeploBL.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvTeploBL.Visible = true;
-            this.Controls.Add(dgvTeploBL, 4, posRow+5);
+            this.Controls.Add(dgvTeploBL, 4, posRow + 5);
             this.SetColumnSpan(dgvTeploBL, 9); this.SetRowSpan(dgvTeploBL, 5);
             //
             dgvTeploOP = new DGVAutoBook(INDEX_CONTROL.DGV_TeploOP.ToString());
@@ -1694,8 +1669,12 @@ namespace PluginTaskBalTeplo
                  new EventHandler(PanelTaskAutobookMonthValues_btnexport_Click);
 
 
-            dgvBlock.CellParsing += dgvAB_CellParsing;
-            dgvBlock.CellEndEdit += dgvAB_CellEndEdit;
+            dgvBlock.CellParsing += dgvCellParsing;
+            dgvOutput.CellParsing += dgvCellParsing;
+            dgvParam.CellParsing += dgvCellParsing;
+            dgvPromPlozsh.CellParsing += dgvCellParsing;
+            dgvTeploBL.CellParsing += dgvCellParsing;
+            dgvTeploOP.CellParsing += dgvCellParsing;
         }
 
         /// <summary>
@@ -1731,60 +1710,50 @@ namespace PluginTaskBalTeplo
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void dgvAB_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
+        void dgvCellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
-            double value,
-                valueCor;
             int err = -1;
-            int numMonth = (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month
-                , day = dgvBlock.Rows.Count;
+            int id_put = -1;
+            int id_alg = (((DGVAutoBook)sender).Columns[e.ColumnIndex] as DGVAutoBook.HDataGridViewColumn).m_iIdComp;
+            int id_comp = Convert.ToInt32(((DGVAutoBook)sender).Rows[e.RowIndex].HeaderCell.Value);
 
-            if (e.Value.ToString() == string.Empty)
-                value = 0;
+            if ((((DGVAutoBook)sender).Columns[e.ColumnIndex] as DGVAutoBook.HDataGridViewColumn).m_bInPut == true)
+            {
+                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_ALG=" + id_alg + " and ID_COMP=" + id_comp);
+                if (rows.Length == 1)
+                    id_put = Convert.ToInt32(rows[0]["ID"]);
+                m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
+            }
             else
-                value = Convert.ToDouble(e.Value);// *Math.Pow(10, 6);
-
-            valueCor = Convert.ToDouble(dgvBlock.Rows[e.RowIndex].Cells[dgvBlock.Columns[e.ColumnIndex].Name].Value);// *Math.Pow(10, 6);
-
-            //switch (dgvBlock.Columns[e.ColumnIndex].Name)
-            //{
-            //    case "CorGTP12":
-            //        if (value == 0)
-            //            dgvBlock.Rows[e.RowIndex].Cells[INDEX_CALC.GTP12.ToString()].Value =
-            //                Convert.ToDouble(dgvBlock.Rows[e.RowIndex].Cells[INDEX_CALC.GTP12.ToString()].Value) - valueCor;
-            //        else
-            //            dgvBlock.Rows[e.RowIndex].Cells[INDEX_CALC.GTP12.ToString()].Value =
-            //                (value - valueCor) + Convert.ToDouble(dgvBlock.Rows[e.RowIndex].Cells[INDEX_CALC.GTP12.ToString()].Value);
-            //        //корректировка значений
-            //        dgvBlock.editCells(e.RowIndex, Convert.ToInt32(dgvBlock.Rows[e.RowIndex].Cells[INDEX_CALC.GTP12.ToString()].Value)
-            //                , dgvBlock, INDEX_CALC.GTP36.ToString());
-            //        //сбор корр.значений
-            //        m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-            //            dgvBlock.FillTableCorValue(HandlerDb.OutValues(out err), dgvBlock, value, e.ColumnIndex, e.RowIndex);
-            //        //сбор значений
-            //        m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            //            dgvBlock.FillTableValueDay(HandlerDb.OutValues(out err), dgvBlock, HandlerDb.getOutPut(out err));
-            //        break;
-            //    case "CorGTP36":
-            //        if (value == 0)
-            //            dgvBlock.Rows[e.RowIndex].Cells[INDEX_CALC.GTP36.ToString()].Value =
-            //                Convert.ToDouble(dgvBlock.Rows[e.RowIndex].Cells[INDEX_CALC.GTP36.ToString()].Value) - valueCor;
-            //        else
-            //            dgvBlock.Rows[e.RowIndex].Cells[INDEX_CALC.GTP36.ToString()].Value =
-            //                 (value - valueCor) + Convert.ToDouble(dgvBlock.Rows[e.RowIndex].Cells[INDEX_CALC.GTP36.ToString()].Value);
-            //        //корректировка значений
-            //        dgvBlock.editCells(e.RowIndex, Convert.ToInt32(dgvBlock.Rows[e.RowIndex].Cells[INDEX_CALC.GTP36.ToString()].Value)
-            //                , dgvBlock, INDEX_CALC.GTP12.ToString());
-            //        //сбор корр.значений
-            //        m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-            //            dgvBlock.FillTableCorValue(HandlerDb.OutValues(out err), dgvBlock, value, e.ColumnIndex, e.RowIndex);
-            //        //сбор значений
-            //        m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            //            dgvBlock.FillTableValueDay(HandlerDb.OutValues(out err), dgvBlock, HandlerDb.getOutPut(out err));
-            //        break;
-            //    default:
-            //        break;
-            //}
+            {
+                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("ID_ALG=" + id_alg + " and ID_COMP=" + id_comp);
+                if (rows.Length == 1)
+                    id_put = Convert.ToInt32(rows[0]["ID"]);
+                m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
+            }
+            HandlerDb.RegisterDbConnection(out err);
+            HandlerDb.RecUpdateInsertDelete(
+                TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES]
+                , "ID_PUT"
+                , null
+                , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                , out err
+                );
+            //HandlerDb.insertInValues(m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
+            HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+                (
+                TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES,
+                out err
+                );
+            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+                            (
+                            TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES,
+                            out err
+                            );
+            HandlerDb.UnRegisterDbConnection();
+            ((DGVAutoBook)sender).ShowValues(m_arTableEdit_in, m_arTableEdit_out, m_arTableDictPrjs_in);
         }
 
         /// <summary>
@@ -1820,43 +1789,40 @@ namespace PluginTaskBalTeplo
             strErr = string.Empty;
             //Создание сессии
             Session.New();
-            //изменение начальной даты
-            if (arQueryRanges.Count() > 1)
-                arQueryRanges[1] = new DateTimeRange(arQueryRanges[1].Begin.AddDays(-(arQueryRanges[1].Begin.Day - 1))
-                    , arQueryRanges[1].End.AddDays(-(arQueryRanges[1].End.Day - 2)));
-            else
-                arQueryRanges[0] = new DateTimeRange(arQueryRanges[0].Begin.AddDays(-(arQueryRanges[0].Begin.Day - 1))
-                    , arQueryRanges[0].End.AddDays(DayIsMonth - arQueryRanges[0].End.Day));
+            ////изменение начальной даты
+            //if (arQueryRanges.Count() > 1)
+            //    arQueryRanges[1] = new DateTimeRange(arQueryRanges[1].Begin.AddDays(-(arQueryRanges[1].Begin.Day - 1))
+            //        , arQueryRanges[1].End.AddDays(-(arQueryRanges[1].End.Day - 2)));
+            //else
+            //    arQueryRanges[0] = new DateTimeRange(arQueryRanges[0].Begin.AddDays(-(arQueryRanges[0].Begin.Day - 1))
+            //        , arQueryRanges[0].End.AddDays(DayIsMonth - arQueryRanges[0].End.Day));
+            
             //Запрос для получения архивных данных
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetValuesArch(INDEX_DBTABLE_NAME.INVALUES, out err);
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
                 Type
-                , ActualIdPeriod
+                , HandlerDb.ActualIdPeriod
                 , CountBasePeriod
                 , arQueryRanges
                , out err
                 );
-            //Получение значений корр. input
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY,INDEX_DBTABLE_NAME.INVALUES, out err);
+            //Получение значений по-умолчанию input
+            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, INDEX_DBTABLE_NAME.INVALUES, out err);
 
-            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetValuesArch(INDEX_DBTABLE_NAME.OUTVALUES, out err);
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
                 TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
-                , ActualIdPeriod
+                , HandlerDb.ActualIdPeriod
                 , CountBasePeriod
                 , arQueryRanges
                , out err
                 );
             m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, INDEX_DBTABLE_NAME.OUTVALUES, out err);
 
-            /*HandlerDb.getCorInPut(Type
-            , arQueryRanges
-            , ActualIdPeriod
-            , out err);*/
             //Проверить признак выполнения запроса
             if (err == 0)
             {
@@ -1907,6 +1873,7 @@ namespace PluginTaskBalTeplo
             string errMsg = string.Empty;
 
             m_handlerDb.RegisterDbConnection(out iRegDbConn);
+            clear();
 
             if (!(iRegDbConn < 0))
             {
@@ -1924,6 +1891,11 @@ namespace PluginTaskBalTeplo
                         m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                             (
                             TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES,
+                            out err
+                            );
+                        m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+                            (
+                            TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES,
                             out err
                             );
                         setValues();
@@ -1977,7 +1949,7 @@ namespace PluginTaskBalTeplo
             get
             {
                 int iRes = -1;
-                ID_PERIOD idPeriod = ActualIdPeriod;
+                ID_PERIOD idPeriod = HandlerDb.ActualIdPeriod;
 
                 iRes =
                     idPeriod == ID_PERIOD.HOUR ?
@@ -1998,7 +1970,7 @@ namespace PluginTaskBalTeplo
         /// <param name="ev"></param>
         private void HPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
+            HandlerDb.m_ViewValues = TaskBalTeploCalculate.INDEX_VIEW_VALUES.ARCHIVE;
 
             onButtonLoadClick();
         }
@@ -2019,7 +1991,7 @@ namespace PluginTaskBalTeplo
         /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
+            HandlerDb.m_ViewValues = TaskBalTeploCalculate.INDEX_VIEW_VALUES.SOURCE;
 
             onButtonLoadClick();
 
@@ -2154,6 +2126,9 @@ namespace PluginTaskBalTeplo
                     (PanelManagement as PanelManagementBalTeplo).SetPeriod(Session.m_currIdPeriod);
                     (ctrl as ComboBox).Enabled = false;
 
+                    ctrl = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0];
+                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
+
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
                     //из profiles
                     for (int j = 0; j < m_dt_profile.Rows.Count; j++)
@@ -2224,7 +2199,7 @@ namespace PluginTaskBalTeplo
                     obj.Add(new object[] { ids.ToArray(), type });
                 }
                 dict_profile.Add(id_dgv, obj.ToArray());
-                
+
             }
 
             return dict_profile;
@@ -2482,16 +2457,19 @@ namespace PluginTaskBalTeplo
             string errMsg = string.Empty;
 
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(out err);
-            
+
             m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
             HandlerDb.saveResInval(m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
             , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
 
             m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(out err);
-            
+
             m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
             HandlerDb.saveResOut(m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
             , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
+
+            //m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetArchTable(INDEX_DBTABLE_NAME.OUTVALUES, out err);
+            //m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetArchTable(INDEX_DBTABLE_NAME.INVALUES, out err);
 
             base.HPanelTepCommon_btnSave_Click(obj, ev);
 
@@ -2565,17 +2543,17 @@ namespace PluginTaskBalTeplo
 
             m_handlerDb.RecUpdateInsertDelete(GetNameTableIn((Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
            , true)[0] as HDateTimePicker).Value)
-           , @"ID_PUT, DATE_TIME"
+           , @"ID_PUT, DATE_TIME, ID_USER, ID_SOURCE"
            , @""
-           , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+           , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
            , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
            , out err);
 
             m_handlerDb.RecUpdateInsertDelete(GetNameTableOut((Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
            , true)[0] as HDateTimePicker).Value)
-           , @"ID_PUT, DATE_TIME"
+           , @"ID_PUT, DATE_TIME, ID_USER, ID_SOURCE"
            , @""
-           , m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+           , m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
            , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
            , out err);
         }
@@ -2590,7 +2568,7 @@ namespace PluginTaskBalTeplo
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
 
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                HandlerDb.getInPut(Type, dtrPer, ActualIdPeriod, out err);
+                HandlerDb.getInPut(Type, dtrPer, HandlerDb.ActualIdPeriod, out err);
 
             m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
             HandlerDb.saveResInval(m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
