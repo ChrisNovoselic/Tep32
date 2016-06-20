@@ -1685,6 +1685,7 @@ namespace PluginTaskAutobook
 
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
             m_dgvAB.FillTableValueDay(HandlerDb.OutValues(out err), m_dgvAB, HandlerDb.GetOutPut(out err));
+            //
             m_rptsNSS.SendMailToNSS(m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
             , Session.m_rangeDatetime, toSend);
         }
