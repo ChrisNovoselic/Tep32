@@ -16,8 +16,8 @@ namespace PluginTaskAutobook
         {
             _Id = 23;
 
-            register(23, typeof(PanelTaskAutobookMonthValues), @"Задача\Учет активной э/э", @"Помесячно");
-            register(29, typeof(PanelTaskAutobookYearlyPlan), @"Задача\Учет активной э/э", @"Годовой план");            
+            register(23, typeof(PanelTaskAutobookMonthValues), @"Задача\Учет активной э/э", @"Значения по-суточно");
+            register(29, typeof(PanelTaskAutobookYearlyPlan), @"Задача\Учет активной э/э", @"План по-месячно");            
         }
 
         public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)

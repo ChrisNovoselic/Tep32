@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Globalization;
-using System.Collections.Generic;
+//using System.Collections.Generic;
 using System.Linq;
 using System.Data;
 using System.Data.Common;
-using System.Text;
-using System.Windows.Forms; //???
+//using System.Text;
 
 using HClassLibrary;
 using InterfacePlugIn;
@@ -25,8 +24,6 @@ namespace PluginTaskAutobook
         protected override void createTaskCalculate(/*ID_TASK idTask*/)
         {
             base.createTaskCalculate();
-
-            //??? m_taskCalculate = new TaskAutobookCalculate();
         }
         /// <summary>
         /// 
@@ -203,8 +200,6 @@ namespace PluginTaskAutobook
                     // 'Begin' == 'End'
                     if (bLastItem == true)
                         bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
-                    else
-                        ;
 
                     if (bEquDatetime == false)
                         strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
@@ -212,8 +207,6 @@ namespace PluginTaskAutobook
 
                     if (bLastItem == false)
                         strRes += @" UNION ALL ";
-                    else
-                        ;
                 }
 
                 strRes = " " + @"SELECT v.ID_PUT " // as [ID]"
@@ -333,8 +326,6 @@ namespace PluginTaskAutobook
                         + arQueryRanges[i].End.AddMonths(1).ToString(@"yyyyMM") + @"] v "
                         + @" ON v.ID_PUT = p.ID"
                         + @" WHERE  ID_TASK = " + (int)IdTask
-                        + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                        + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.AddMonths(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                         + @" AND v.ID_TIME = 24";
 
                 //  if (bLastItem == false)
@@ -416,7 +407,6 @@ namespace PluginTaskAutobook
             err = -1;
 
             string strQuery = string.Empty;
-
             // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
             strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
                 + @"[ID_CALCULATE]"
@@ -544,28 +534,25 @@ namespace PluginTaskAutobook
                         if (!(err == 0))
                             // при ошибке - не продолжать
                             break;
-                        else
-                            ;
+                        else;
 
                         strQuery = strBaseQuery;
                         iRowCounterToInsert = 0;
                     }
-                    else
-                        ;
+                    else;
                     strQuery += @"(";
 
                     strQuery += idSession + @"," //ID_SEESION
                       + rowSel[@"ID_PUT"] + @"," //ID_PUT
                       + rowSel[@"QUALITY"] + @"," //QUALITY
                       + rowSel[@"VALUE"] + @"," + //VALUE
-                    "'" + rowSel[@"WR_DATETIME"] + "',"
+                    "'" + Convert.ToDateTime(rowSel[@"WR_DATETIME"]).ToString(CultureInfo.InvariantCulture) + "',"
                       + rowSel[@"EXTENDED_DEFINITION"]
                       ;
 
                     strQuery += @"),";
 
                     iRowCounterToInsert++;
-
                 }
 
                 if (err == 0)
@@ -657,9 +644,10 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="tableOrigin">первичная таблица</param>
         /// <param name="tableRes">таблица с параметрами</param>
+        /// <param name="idTZ">timezone</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
-        public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes, out int err)
+        public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes, int idTZ, out int err)
         {
             err = -1;
             DataTable tableEdit = new DataTable();
@@ -680,7 +668,7 @@ namespace PluginTaskAutobook
                         , 0.ToString()
                         , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , ID_TIMEZONE.NSK
+                        , idTZ
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]               
                         , DateTime.Now
@@ -699,7 +687,7 @@ namespace PluginTaskAutobook
         /// <param name="tableRes">таблица с параметрами</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
-        public DataTable SaveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
+        public DataTable SaveResInval(DataTable tableOrigin, DataTable tableRes, int timezone, out int err)
         {
             err = -1;
             DataTable tableEdit = new DataTable();
@@ -722,7 +710,7 @@ namespace PluginTaskAutobook
                         , 0.ToString()
                         , dtRes.ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , ID_TIMEZONE.UTC
+                        , timezone
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]            
                         , DateTime.Now.ToString(CultureInfo.InvariantCulture)
@@ -737,17 +725,35 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="IdTab">Ид панели</param>
         /// <returns>таблица данных</returns>
-        public DataTable GetProfilesContext(int IdTab)
+        public DataTable GetProfilesContext()
         {
             string query = string.Empty;
             int err = -1;
 
-            query = @"SELECT VALUE,ID_CONTEXT"
-                + @" FROM [TEP_NTEC_5].[dbo].[profiles]"
-                + @" WHERE ID_TAB = " + IdTab
-                + " AND ID_EXT = " + HUsers.Id;
+            query = @"SELECT * "
+                + @"FROM [TEP_NTEC_5].[dbo].[profiles] "
+                + @"WHERE ID_EXT = " + HTepUsers. Role
+                + @" AND IS_ROLE = 1";
 
             return Select(query, out err);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>таблицу</returns>
+        public DataTable GetCompoent(out int err)
+        {
+            string strQuery = string.Empty;
+            err = -1;
+
+            strQuery = "SELECT p.[ID], p.[ID_COMP] "
+                + "FROM [dbo].[inalg] a "
+                + "LEFT JOIN [dbo].[input] p "
+                + @"ON a.ID = p.ID_ALG "
+                + @"WHERE  ID_TASK = 6 AND ID_COMP BETWEEN 100 AND 1000";
+
+            return Select(strQuery, out err); ;
         }
     }
 
@@ -811,47 +817,43 @@ namespace PluginTaskAutobook
 
                 for (i = 0; i < arQueryRanges.Length; i++)
                 {
-                    if (arQueryRanges[i].Begin < DateTime.Now)
-                    {
-                        bLastItem = !(i < (arQueryRanges.Length - 1));
+                    //if (arQueryRanges[i].Begin < DateTime.Now)
+                    //{
+                    bLastItem = !(i < (arQueryRanges.Length - 1));
 
-                        strRes += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE] "
-                                + @", " + _Session.m_Id + @" as [ID_SESSION] "
-                                + @", [DATE_TIME]"
-                                + @", [EXTENDED_DEFINITION] = " + i + " "
-                                + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
-                                + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
-                                + @"ON a.ID = p.ID_ALG "
-                                + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                                + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
-                                + @"ON v.ID_PUT = p.ID "
-                                + @"WHERE  ID_TASK = " + (int)IdTask + " "
-                                + @"AND v.[ID_TIME] = " + (int)idPeriod
-                            //+ " AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone//???ID_PERIOD.HOUR //??? _currIdPeriod
-                            ;
-                        // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
-                        // 'Begin' == 'End'
-                        if (bLastItem == true)
-                            bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
-                        else
-                            ;
-
-                        if (bEquDatetime == false)
-                            strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"' "
-                          + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"' ";
-
-                        if (bLastItem == false)
-                            strRes += @" UNION ALL ";
-                        else
-                            ;
-                    }
+                    strRes += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE] "
+                            + @", " + _Session.m_Id + @" as [ID_SESSION] "
+                            + @", [DATE_TIME]"
+                            + @", [EXTENDED_DEFINITION] = " + i + " "
+                            + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
+                            + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
+                            + @"ON a.ID = p.ID_ALG "
+                            + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                            + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
+                            + @"ON v.ID_PUT = p.ID "
+                            + @"WHERE  ID_TASK = " + (int)IdTask + " "
+                            + @"AND v.[ID_TIME] = " + (int)idPeriod
+                        //+ " AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone//???ID_PERIOD.HOUR //??? _currIdPeriod
+                        ;
+                    // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
+                    // 'Begin' == 'End'
+                    if (bLastItem == true)
+                        bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
                     else
-                    {
-                        // исключить лишнюю запятую
-                        strRes = strRes.Substring(0, strRes.Length - (" UNION ALL ".Length - 1));
-                        break;
-                    }
+                        ;
+
+                    if (bEquDatetime == false)
+                        strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                      + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+
+                    if (bLastItem == false)
+                        strRes += @" UNION ALL ";
+                    else;
                 }
+
+                // исключить лишнюю запятую
+                //strRes = strRes.Substring(0, strRes.Length - (" UNION ALL ".Length - 2));
+                //break;
 
                 strRes = " " + @" SELECT v.ID_PUT "
                     + @", " + _Session.m_Id + @" as [ID_SESSION] "
@@ -1006,8 +1008,7 @@ namespace PluginTaskAutobook
 
             if (IdTask == ID_TASK.AUTOBOOK)
                 insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err, tableRes);
-            else
-                ;
+            else;
             //if (err == 0)
             //    insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err);
             //else
@@ -1051,8 +1052,7 @@ namespace PluginTaskAutobook
                         strQuery = strBaseQuery;
                         iRowCounterToInsert = 0;
                     }
-                    else
-                        ;
+                    else;
                     strQuery += @"(";
 
                     strQuery += idSession + @"," //ID_SEESION
@@ -1076,8 +1076,7 @@ namespace PluginTaskAutobook
                     // вставить строки в таблицу
                     DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
                 }
-                else
-                    ; // при ошибке - не продолжать
+                else; // при ошибке - не продолжать
             }
         }
 
@@ -1097,6 +1096,7 @@ namespace PluginTaskAutobook
 
         /// <summary>
         /// Формирование списка отрезков времени
+        /// для загрузки данных
         /// </summary>
         /// <returns>диапазон дат</returns>
         public override DateTimeRange[] GetDateTimeRangeValuesVar()
@@ -1104,9 +1104,7 @@ namespace PluginTaskAutobook
             DateTimeRange[] arRangesRes = null;
             int i = -1,
             startMonth = _Session.m_rangeDatetime.Begin.Month - 1;
-
-            //if (startMonth == 0)
-            //    startMonth = 1;
+            //endMonth = 12 - _Session.m_rangeDatetime.Begin.Month; 
 
             bool bEndMonthBoudary = false;
 
@@ -1143,12 +1141,67 @@ namespace PluginTaskAutobook
                         else
                             if (i == arRangesRes.Length - 1)
                                 // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd.AddMonths(1));
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd.AddDays(1));
                             else
                                 // для элементов в "середине" массива
                                 arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                else;
+
+            return arRangesRes;
+        }
+
+        /// <summary>
+        /// Формирование списка отрезков времени
+        /// для сохранения данных в БД
+        /// </summary>
+        /// <returns>диапазон дат</returns>
+        public DateTimeRange[] GetDateTimeRangeToSave()
+        {
+            DateTimeRange[] arRangesRes = null;
+            int i = -1,
+            startMonth = _Session.m_rangeDatetime.Begin.Month - 1,
+            endMonth = 12 - _Session.m_rangeDatetime.Begin.Month;
+
+            bool bEndMonthBoudary = false;
+
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMonths(-startMonth)
+                , dtEnd = _Session.m_rangeDatetime.End.AddMonths(endMonth);
+            arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
+
+            bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
+            if (bEndMonthBoudary == false)
+                if (arRangesRes.Length == 1)
+                    // самый простой вариант - один элемент в массиве - одна таблица
+                    arRangesRes[0] = new DateTimeRange(dtBegin, dtEnd);
                 else
-                    ;
+                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
+                    for (i = 0; i < arRangesRes.Length; i++)
+                        if (i == 0)
+                            // предыдущих значений нет
+                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin).AddDays(1));
+                        else
+                            if (i == arRangesRes.Length - 1)
+                                // крайний элемент массива
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                            else
+                                // для элементов в "середине" массива
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End).AddDays(1));
+            else
+                if (bEndMonthBoudary == true)
+                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                    // + использование следующей за 'dtEnd' таблицы
+                    for (i = 0; i < arRangesRes.Length; i++)
+                        if (i == 0)
+                            // предыдущих значений нет
+                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                        else
+                            if (i == arRangesRes.Length - 1)
+                                // крайний элемент массива
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd.AddDays(1));
+                            else
+                                // для элементов в "середине" массива
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                else ;
 
             return arRangesRes;
         }
@@ -1161,7 +1214,7 @@ namespace PluginTaskAutobook
         /// <param name="rowRes">строка значений</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица значений</returns>
-        public DataTable SavePlanValue(DataTable tableOrigin, DataRow rowRes, out int err)
+        public DataTable SavePlanValue(DataTable tableOrigin, DataRow rowRes, int timezone, out int err)
         {
             err = -1;
             double ResValue;
@@ -1182,7 +1235,7 @@ namespace PluginTaskAutobook
                 , 0.ToString()
                 , dtRes.ToString(CultureInfo.InvariantCulture)
                 , ID_PERIOD.MONTH
-                , ID_TIMEZONE.NSK
+                , timezone
                 , 1.ToString()
                 , ResValue         
                 , DateTime.Now
@@ -1191,31 +1244,5 @@ namespace PluginTaskAutobook
             return tableEdit;
         }
 
-        /// <summary>
-        /// Получение ID_PUT
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="arQueryRanges">отрезок времени</param>
-        /// <param name="idPeriod">период времени</param>
-        /// <param name="err">Индентификатор ошибки</param>
-        /// <returns>таблица с put'ами</returns>
-        public DataTable GetPlan(TaskCalculate.TYPE type
-            , DateTime arQueryDatetime
-            , ID_PERIOD idPeriod, out int err)
-        {
-            string strQuery = string.Empty;
-
-            strQuery = @"SELECT ID_PUT, ID_TIME,DATE_TIME"
-              + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
-              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
-              + @" ON a.ID = p.ID_ALG"
-              + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                         + arQueryDatetime.ToString(@"yyyyMM") + @"] v "
-                         + @" ON p.ID = v.ID_PUT"
-                         + @" WHERE  ID_TASK = " + (int)IdTask
-                         + @" AND v.ID_TIME = " + (int)idPeriod;
-
-            return Select(strQuery, out err);
-        }
     }
 }

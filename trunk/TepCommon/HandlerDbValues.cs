@@ -190,6 +190,15 @@ namespace TepCommon
             return GetDataTable(s_NameDbTables[(int)indxTable], out err);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="nameTable">имя таблицы в бд</param>
+        /// <param name="strKeyFields">ключевые поля для вставки</param>
+        /// <param name="unchangeableColumn">столбцы, не учавствующие в запросе</param>
+        /// <param name="tblOrigin">оригинальная таблица</param>
+        /// <param name="tblEdit">отредактированная таблица</param>
+        /// <param name="err">номер ошибки</param>
         public void RecUpdateInsertDelete(string nameTable, string strKeyFields, string unchangeableColumn
             , DataTable tblOrigin, DataTable tblEdit, out int err)
         {
