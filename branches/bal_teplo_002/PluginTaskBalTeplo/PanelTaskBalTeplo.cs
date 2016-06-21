@@ -1734,7 +1734,7 @@ namespace PluginTaskBalTeplo
             HandlerDb.RegisterDbConnection(out err);
             HandlerDb.RecUpdateInsertDelete(
                 TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES]
-                , "ID_PUT"
+                , "ID_PUT,ID_SESSION"
                 , null
                 , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                 , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
@@ -1752,8 +1752,25 @@ namespace PluginTaskBalTeplo
                             TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES,
                             out err
                             );
+            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] 
+                = m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
+            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] 
+                = m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
             HandlerDb.UnRegisterDbConnection();
-            ((DGVAutoBook)sender).ShowValues(m_arTableEdit_in, m_arTableEdit_out, m_arTableDictPrjs_in);
+
+            dgvBlock.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+                            , m_arTableDictPrjs_in);
+            dgvOutput.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+                , m_arTableDictPrjs_in);
+            dgvTeploBL.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+                , m_arTableDictPrjs_in);
+            dgvTeploOP.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+                , m_arTableDictPrjs_in);
+            dgvParam.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+                , m_arTableDictPrjs_in);
+            dgvPromPlozsh.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+                , m_arTableDictPrjs_in);
+            ((DGVAutoBook)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = e.Value;
         }
 
         /// <summary>
@@ -1808,6 +1825,15 @@ namespace PluginTaskBalTeplo
                 , arQueryRanges
                , out err
                 );
+            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Merge(HandlerDb.GetValuesDayVar
+                (
+                Type
+                , HandlerDb.ActualIdPeriod
+                , CountBasePeriod
+                , arQueryRanges
+               , out err
+                ));
+
             //Получение значений по-умолчанию input
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, INDEX_DBTABLE_NAME.INVALUES, out err);
 
@@ -2456,24 +2482,16 @@ namespace PluginTaskBalTeplo
             int err = -1;
             string errMsg = string.Empty;
 
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(out err);
-
             m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            HandlerDb.saveResInval(m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+            HandlerDb.saveResInval(getStructurOutval(out err)
             , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
 
-            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(out err);
-
             m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            HandlerDb.saveResOut(m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+            HandlerDb.saveResOut(getStructurOutval(out err)
             , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
-
-            //m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetArchTable(INDEX_DBTABLE_NAME.OUTVALUES, out err);
-            //m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetArchTable(INDEX_DBTABLE_NAME.INVALUES, out err);
 
             base.HPanelTepCommon_btnSave_Click(obj, ev);
 
-            //saveInvalValue(out err);
         }
 
         /// <summary>
