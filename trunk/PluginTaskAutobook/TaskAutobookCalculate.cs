@@ -185,14 +185,13 @@ namespace PluginTaskAutobook
                     strRes += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE] "
                             + @", " + _Session.m_Id + @" as [ID_SESSION] "
                             + @", [DATE_TIME]"
-                            + @", m.[AVG]"
                             + @", CONVERT(varchar, [DATE_TIME], 127) as [EXTENDED_DEFINITION] "
-                            + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                            + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a "
+                            + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p "
+                            + @"ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + " "
+                            + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
                             + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
-                            + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT "
-                            + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
-                            + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
-                            + @"LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID "
+                            + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)idPeriod + " AND [ID_SOURCE] > 0 "
                         //+ "AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
                         ;
@@ -214,7 +213,7 @@ namespace PluginTaskAutobook
                     + @", [QUALITY]"
                     + @", [VALUE]"
                     + @", [DATE_TIME] as [WR_DATETIME] "
-                    + @", [EXTENDED_DEFINITION]"
+                    + @", [EXTENDED_DEFINITION] "
                     + @"FROM (" + strRes + @") as v "
                     + @"ORDER BY  v.ID_PUT,v.DATE_TIME"
                     ;

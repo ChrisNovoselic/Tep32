@@ -838,7 +838,7 @@ namespace PluginTaskAutobook
                 int pow = 10;
 
                 foreach (DataRow item in tb_gtp.Rows)
-                    value = value + Convert.ToSingle(item[@"VALUE"].ToString());
+                    value += Convert.ToSingle(item[@"VALUE"].ToString());
 
                 value = value / (float)Math.Pow(pow, 6);
 
