@@ -346,14 +346,6 @@ namespace PluginTaskReaktivka
                     Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][1]);//??
                     (PanelManagementReak as PanelManagementReaktivka).SetPeriod(Session.m_currIdPeriod);
                     (ctrl as ComboBox).Enabled = false;
-
-                    //ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
-                    //DataTable tb = HandlerDb.GetProfilesContext();
-                    //DataRow[] drProf = tb.Select("ID_TAB = " + findMyID());
-                    ////из profiles
-                    //for (int j = 0; j < drProf.Count(); j++)
-                    //    if (Convert.ToInt32(drProf[j]["ID_CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
-                    //        ctrl.Text = drProf[j]["VALUE"].ToString().TrimEnd();
                 }
                 catch (Exception e)
                 {
@@ -553,6 +545,7 @@ namespace PluginTaskReaktivka
              , round = -1;
             Dictionary<int, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<int, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
+
             clear();
             Session.SetRangeDatetime(dtBegin, dtEnd);
 
@@ -984,8 +977,6 @@ namespace PluginTaskReaktivka
 
                 if (!(DateTimeRangeValue_Changed == null))
                     DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
-                else
-                    ;
             }
 
             /// <summary>
@@ -1438,6 +1429,8 @@ namespace PluginTaskReaktivka
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 //Установить режим "невидимые" заголовки столбцов
                 ColumnHeadersVisible = true;
+                //Запрет изменения размера строк
+                AllowUserToResizeRows = false;
                 //Отменить возможность добавления строк
                 AllowUserToAddRows = false;
                 //Отменить возможность удаления строк
@@ -1651,8 +1644,7 @@ namespace PluginTaskReaktivka
                     foreach (DataGridViewCell c in r.Cells)
                         if (r.Cells.IndexOf(c) > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) // нельзя удалять идентификатор параметра
                             c.Value = string.Empty;
-                        else
-                            ;
+
                 //??? если установить 'true' - редактирование невозможно
                 //ReadOnly = false;
 
@@ -1669,7 +1661,6 @@ namespace PluginTaskReaktivka
                 DataGridViewRow row = new DataGridViewRow();
                 if (m_dictPropertiesRows == null)
                     m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-                else ;
 
                 if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
                     m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
@@ -1827,13 +1818,10 @@ namespace PluginTaskReaktivka
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
-                                //if (iRowCount < enumTime.Count())
-                                //{
                                 iRowCount++;
-                                idAlg = (int)row.Cells["ALG"].Value;//??
+                                idAlg = (int)row.Cells["ALG"].Value;
                                 parameterRows =
                                 source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp
-                                    //+ " AND WR_DATETIME = '{0:o}'", Convert.ToDateTime(row.Cells["Date"].Value).AddMinutes(-m_currentOffSet))
                                     ));
 
                                 for (int i = 0; i < parameterRows.Count(); i++)
@@ -1854,7 +1842,6 @@ namespace PluginTaskReaktivka
                                             System.Globalization.CultureInfo.InvariantCulture);
                                         dbSumVal += dblVal;
                                     }
-                                    //}
                                 }
                             }
                             else
@@ -1930,18 +1917,19 @@ namespace PluginTaskReaktivka
                         foreach (DataGridViewRow row in Rows)
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
-                                if (row.Cells[col.Index].Value.ToString() != "")
-                                {
-                                    idAlg = (int)row.Cells["ALG"].Value;//??
-                                    valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
-                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                if (row.Cells[col.Index].Value != null)
+                                    if (row.Cells[col.Index].Value.ToString() != "")
+                                    {
+                                        idAlg = (int)row.Cells["ALG"].Value;//??
+                                        valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
+                                        vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
 
-                                    valueToRes *= Math.Pow(10F, vsRatioValue);
-                                    dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
+                                        valueToRes *= Math.Pow(10F, vsRatioValue);
+                                        dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
 
-                                    quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
+                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
 
-                                    dtSourceEdit.Rows.Add(new object[] 
+                                        dtSourceEdit.Rows.Add(new object[] 
                                     {
                                         col.m_iIdComp
                                         , idSession
@@ -1950,8 +1938,8 @@ namespace PluginTaskReaktivka
                                         , dtVal.AddMinutes(-m_currentOffSet).ToString(CultureInfo.InvariantCulture)
                                         , i
                                     });
-                                    i++;
-                                }
+                                        i++;
+                                    }
                         }
                 }
 
@@ -1980,7 +1968,7 @@ namespace PluginTaskReaktivka
                                     if (row.Cells[iCol].Value.ToString() != "")
                                     {
                                         dblVal = Convert.ToDouble(row.Cells[iCol].Value.ToString().Replace('.', ','));
-                                        idAlg = (int)row.Cells["ALG"].Value;//??
+                                        idAlg = (int)row.Cells["ALG"].Value;
                                         vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
                                         row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                                     System.Globalization.CultureInfo.InvariantCulture);

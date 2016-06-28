@@ -296,6 +296,33 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public string GetQueryComp(TaskCalculate.TYPE type)
+        {
+            string strRes = string.Empty;
+
+            strRes = @"SELECT a.[ID] as ID_ALG, p.[ID], p.[ID_COMP] "
+                + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
+                + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
+                + @"ON a.ID = p.ID_ALG "
+                + @"WHERE a.ID_TASK  = " + (int)IdTask
+                + @" AND  p.ID_COMP BETWEEN 100 AND 1000 ";
+
+            strRes += @" UNION ALL ";
+
+           strRes +=  @"SELECT a.[ID] as ID_ALG, p.[ID], p.[ID_COMP] "
+                + @"FROM [dbo].[" + getNameDbTable(TaskCalculate.TYPE.OUT_VALUES, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
+                + @"LEFT JOIN [dbo].[" + getNameDbTable(TaskCalculate.TYPE.OUT_VALUES, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
+                + @"ON a.ID = p.ID_ALG "
+                + @"WHERE a.ID_TASK  = " + (int)IdTask
+                + @" ORDER BY ID";
+
+            return strRes;
+        }
+
+        /// <summary>
         /// Получение плановых значений
         /// </summary>
         /// <param name="type">тип задачи</param>
@@ -533,12 +560,12 @@ namespace PluginTaskAutobook
                         if (!(err == 0))
                             // при ошибке - не продолжать
                             break;
-                        else;
+                        else ;
 
                         strQuery = strBaseQuery;
                         iRowCounterToInsert = 0;
                     }
-                    else;
+                    else ;
                     strQuery += @"(";
 
                     strQuery += idSession + @"," //ID_SEESION
@@ -601,8 +628,6 @@ namespace PluginTaskAutobook
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";
-                else
-                    ;
             }
 
             return Select(strQuery, out err);
@@ -674,7 +699,6 @@ namespace PluginTaskAutobook
                     });
                 }
             }
-            else ;
 
             return tableEdit;
         }
@@ -716,6 +740,7 @@ namespace PluginTaskAutobook
                     });
                 }
             }
+
             return tableEdit;
         }
 
@@ -731,7 +756,7 @@ namespace PluginTaskAutobook
 
             query = @"SELECT * "
                 + @"FROM [TEP_NTEC_5].[dbo].[profiles] "
-                + @"WHERE ID_EXT = " + HTepUsers. Role
+                + @"WHERE ID_EXT = " + HTepUsers.Role
                 + @" AND IS_ROLE = 1";
 
             return Select(query, out err);
@@ -741,16 +766,16 @@ namespace PluginTaskAutobook
         /// 
         /// </summary>
         /// <returns>таблицу</returns>
-        public DataTable GetCompoent(out int err)
+        public DataTable GetCompoentInput(out int err)
         {
             string strQuery = string.Empty;
             err = -1;
 
-            strQuery = "SELECT p.[ID], p.[ID_COMP] "
-                + "FROM [dbo].[inalg] a "
-                + "LEFT JOIN [dbo].[input] p "
+            strQuery = @"SELECT p.[ID], p.[ID_COMP] "
+                + @"FROM [dbo].[inalg] a "
+                + @"LEFT JOIN [dbo].[input] p "
                 + @"ON a.ID = p.ID_ALG "
-                + @"WHERE  ID_TASK = 6 AND ID_COMP BETWEEN 100 AND 1000";
+                + @"WHERE ID_TASK = 6 AND ID_COMP BETWEEN 100 AND 1000";
 
             return Select(strQuery, out err); ;
         }
@@ -847,7 +872,7 @@ namespace PluginTaskAutobook
 
                     if (bLastItem == false)
                         strRes += @" UNION ALL ";
-                    else;
+                    else ;
                 }
 
                 // исключить лишнюю запятую
@@ -1007,7 +1032,7 @@ namespace PluginTaskAutobook
 
             if (IdTask == ID_TASK.AUTOBOOK)
                 insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err, tableRes);
-            else;
+            else ;
             //if (err == 0)
             //    insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err);
             //else
@@ -1051,7 +1076,7 @@ namespace PluginTaskAutobook
                         strQuery = strBaseQuery;
                         iRowCounterToInsert = 0;
                     }
-                    else;
+                    else ;
                     strQuery += @"(";
 
                     strQuery += idSession + @"," //ID_SEESION
@@ -1075,7 +1100,7 @@ namespace PluginTaskAutobook
                     // вставить строки в таблицу
                     DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
                 }
-                else; // при ошибке - не продолжать
+                else ; // при ошибке - не продолжать
             }
         }
 
@@ -1144,7 +1169,7 @@ namespace PluginTaskAutobook
                             else
                                 // для элементов в "середине" массива
                                 arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-                else;
+                else ;
 
             return arRangesRes;
         }
