@@ -2092,7 +2092,7 @@ namespace PluginTaskAutobook
                     DataRow[] drProf = tb.Select("ID_TAB = " + findMyID());
                     //из profiles
                     for (int j = 0; j < drProf.Count(); j++)
-                        if (Convert.ToInt32(drProf[j]["ID_CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
+                        if (Convert.ToInt32(drProf[j]["CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
                             ctrl.Text = drProf[j]["VALUE"].ToString().TrimEnd();
                 }
                 catch (Exception e)
