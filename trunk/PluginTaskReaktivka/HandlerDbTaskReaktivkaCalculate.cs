@@ -32,7 +32,7 @@ namespace PluginTaskReaktivka
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT a.[ID] as ID_ALG, p.[ID], p.[ID_COMP], cl.[DESCRIPTION] "
+            strRes = @"SELECT a.[ID] as ID_ALG, p.[ID], p.[ID_COMP], cl.[DESCRIPTION], a.[N_ALG] "
             + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
             + @"ON a.ID = p.ID_ALG "

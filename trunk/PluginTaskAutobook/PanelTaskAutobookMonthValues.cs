@@ -488,7 +488,7 @@ namespace PluginTaskAutobook
                                 if (col.m_iIdComp ==
                                     Convert.ToInt32(dr_CorValues[t]["ID_PUT"]))
                                 {
-                                    valueD = Convert.ToDouble(dr_CorValues[t]["VALUE"]) / Math.Pow(10, 6);
+                                    valueD = Convert.ToDouble(dr_CorValues[t]["VALUE"]) / Math.Pow(10, 6);//?? 
                                     dgvView.Rows[i].Cells[col.Index].Value = valueD;
                                 }
                     }
