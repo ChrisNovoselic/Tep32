@@ -105,7 +105,7 @@ namespace PluginTaskAutobook
             bool bEndMonthBoudary = false;
 
             DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(-1);
+                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(1);
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
@@ -262,8 +262,6 @@ namespace PluginTaskAutobook
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";
-                else
-                    ;
             }
             return Select(strQuery, out err);
         }
