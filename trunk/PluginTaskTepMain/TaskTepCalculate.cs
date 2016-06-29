@@ -28,7 +28,7 @@ namespace PluginTaskTepMain
         /// </summary>
         protected override void correctValues(ref DataTable tableSesion, ref DataTable tableProject)
         {
-            (m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CorrectValues(ref tableSesion, ref tableProject);
+            //(m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CorrectValues(ref tableSesion, ref tableProject);
         }
 
         protected override void calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, out int err)

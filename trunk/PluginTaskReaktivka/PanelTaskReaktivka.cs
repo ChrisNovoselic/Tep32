@@ -352,7 +352,7 @@ namespace PluginTaskReaktivka
                     //DataRow[] drProf = tb.Select("ID_TAB = " + findMyID());
                     ////из profiles
                     //for (int j = 0; j < drProf.Count(); j++)
-                    //    if (Convert.ToInt32(drProf[j]["ID_CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
+                    //    if (Convert.ToInt32(drProf[j]["CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
                     //        ctrl.Text = drProf[j]["VALUE"].ToString().TrimEnd();
                 }
                 catch (Exception e)
@@ -551,7 +551,8 @@ namespace PluginTaskReaktivka
              , id_alg = -1
              , ratio = -1
              , round = -1;
-            Dictionary<int, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<int, HTepUsers.VISUAL_SETTING>();
+            string n_alg = string.Empty;
+            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
             clear();
             Session.SetRangeDatetime(dtBegin, dtEnd);
@@ -567,6 +568,7 @@ namespace PluginTaskReaktivka
             foreach (DataRow r in listParameter)
             {
                 id_alg = (int)r[@"ID_ALG"];
+                n_alg = r[@"N_ALG"].ToString().Trim();
                 // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
                 if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
                     // добавить в список идентификатор параметра алгоритма расчета
@@ -574,10 +576,10 @@ namespace PluginTaskReaktivka
             }
 
             // получить значения для настройки визуального отображения
-            if (dictVisualSettings.ContainsKey(id_alg) == true)
+            if (dictVisualSettings.ContainsKey(n_alg) == true)
             {// установленные в проекте
-                ratio = dictVisualSettings[id_alg].m_ratio;
-                round = dictVisualSettings[id_alg].m_round;
+                ratio = dictVisualSettings[n_alg].m_ratio;
+                round = dictVisualSettings[n_alg].m_round;
             }
             else
             {// по умолчанию

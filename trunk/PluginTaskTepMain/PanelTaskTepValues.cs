@@ -373,8 +373,9 @@ namespace PluginTaskTepMain
                 , ratio = -1
                 , round = -1;
             string strItem = string.Empty;
+            string n_alg = string.Empty;
             INDEX_ID[] arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED };
-            Dictionary<int, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<int, HTepUsers.VISUAL_SETTING>();
+            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             //Установить новое значение для текущего периода
             Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex]);
             //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
@@ -402,6 +403,7 @@ namespace PluginTaskTepMain
             foreach (DataRow r in listParameter)
             {
                 id_alg = (int)r[@"ID_ALG"];
+                n_alg = r[@"N_ALG"].ToString().Trim();
                 // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
                 if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
                 {
@@ -427,10 +429,10 @@ namespace PluginTaskTepMain
                             }
                     });
                     // получить значения для настройки визуального отображения
-                    if (dictVisualSettings.ContainsKey(id_alg) == true)
+                    if (dictVisualSettings.ContainsKey(n_alg) == true)
                     {// установленные в проекте
-                        ratio = dictVisualSettings[id_alg].m_ratio;
-                        round = dictVisualSettings[id_alg].m_round;
+                        ratio = dictVisualSettings[n_alg].m_ratio;
+                        round = dictVisualSettings[n_alg].m_round;
                     }
                     else
                     {// по умолчанию

@@ -210,11 +210,11 @@ namespace TepCommon
         /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
         /// <param name="err">Результат выполнения функции</param>
         /// <returns>Таблица с установками для отображения значений</returns>
-        public static Dictionary<int, VISUAL_SETTING> GetParameterVisualSettings(ConnectionSettings connSett, int[] fields, out int err)
+        public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(ConnectionSettings connSett, int[] fields, out int err)
         {
             err = -1; //Обшая ошибка
             int idListener = -1;
-            Dictionary<int, VISUAL_SETTING> dictRes;
+            Dictionary<string, VISUAL_SETTING> dictRes;
 
             idListener = DbSources.Sources().Register(connSett, false, @"MAIN_DB");
 
@@ -231,11 +231,11 @@ namespace TepCommon
         /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
         /// <param name="err">Результат выполнения функции</param>
         /// <returns>Таблица с установками для отображения значений</returns>
-        public static Dictionary<int, VISUAL_SETTING> GetParameterVisualSettings(int idListener, int[] fields, out int err)
+        public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(int idListener, int[] fields, out int err)
         {
             err = -1; //Обшая ошибка
             DbConnection dbConn = null;
-            Dictionary<int, VISUAL_SETTING> dictRes = new Dictionary<int,VISUAL_SETTING> ();
+            Dictionary<string, VISUAL_SETTING> dictRes = new Dictionary<string, VISUAL_SETTING>();
 
             dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
@@ -253,18 +253,18 @@ namespace TepCommon
         /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
         /// <param name="err">Результат выполнения функции</param>
         /// <returns>Таблица с установками для отображения значений</returns>
-        public static Dictionary<int, VISUAL_SETTING> GetParameterVisualSettings(ref DbConnection dbConn, int[] fields, out int err)
+        public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(ref DbConnection dbConn, int[] fields, out int err)
         {
             err = -1; //Обшая ошибка
             string strQuery = string.Empty;
-            int id_alg = -1 // идентификатор параметра в алгоритме расчета
-                , id_unit = -1 // идентификатор параметра настроек при отображении значения [profiles_unit]
+            int id_unit = -1 // идентификатор параметра настроек при отображении значения [profiles_unit]
                 , ratio = -1 // коэффициент
                 , round = -1 // кол-во знаков при округлении
                 , checkSum = (int)ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND
                     + (int)ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO
                 , curSum = -1;
-            Dictionary<int, VISUAL_SETTING> dictRes = new Dictionary<int, VISUAL_SETTING>();
+            string n_alg = string.Empty;
+            Dictionary<string, VISUAL_SETTING> dictRes = new Dictionary<string, VISUAL_SETTING>();
             DataTable tblRes = new DataTable()
                 //, tblRatio
                 ;
@@ -272,7 +272,7 @@ namespace TepCommon
 
             if (fields.Length == (int)INDEX_VISUALSETTINGS_PARAMS.COUNT)
             {
-                strQuery = @"SELECT ID_CONTEXT as [ID], [ID_UNIT], [IS_ROLE], [VALUE]"
+                strQuery = @"SELECT CONTEXT as [ID], [ID_UNIT], [IS_ROLE], [VALUE]"
                             + @" FROM [dbo].[profiles]"
                             + @" WHERE"
                                 + @" ID_UNIT IN ("
@@ -285,7 +285,7 @@ namespace TepCommon
                                 //+ @" AND ID_PLUGIN=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.PLUGIN]
                                 + @" AND ID_TAB=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]
                                 + @" AND ID_ITEM=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM]
-                                //+ @" AND ID_CONTEXT=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.CONTEXT]
+                                //+ @" AND CONTEXT=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.CONTEXT]
                             + @" ORDER BY [ID_UNIT], [ID]"
                                 ;
 
@@ -296,14 +296,13 @@ namespace TepCommon
                 {
                     foreach (DataRow r in tblRes.Rows)
                     {
-                        id_alg = (Int16)r[@"ID"];
-
+                        n_alg = r[@"ID"].ToString();
                         ratio = s_iRatioDefault;
                         round = s_iRoundDefault;
 
-                        if (dictRes.ContainsKey(id_alg) == false)
+                        if (dictRes.ContainsKey(n_alg.Trim()) == false)
                         {
-                            rowsAlg = tblRes.Select(@"ID=" + id_alg, @"ID_UNIT, IS_ROLE"); // приоритет значений для [IS_ROLE] = 0                            
+                            rowsAlg = tblRes.Select(@"ID='" + n_alg+"'", @"ID_UNIT, IS_ROLE"); // приоритет значений для [IS_ROLE] = 0                            
 
                             curSum = 0;
                             foreach (DataRow rAlg in rowsAlg)
@@ -331,7 +330,7 @@ namespace TepCommon
                                     ;
                             }
 
-                            dictRes.Add(id_alg, new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
+                            dictRes.Add(n_alg.Trim(), new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
                         }
                         else
                             ; // continue, этот параметр уже обработан
