@@ -210,11 +210,11 @@ namespace TepCommon
         /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
         /// <param name="err">Результат выполнения функции</param>
         /// <returns>Таблица с установками для отображения значений</returns>
-        public static Dictionary<int, VISUAL_SETTING> GetParameterVisualSettings(ConnectionSettings connSett, int[] fields, out int err)
+        public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(ConnectionSettings connSett, int[] fields, out int err)
         {
             err = -1; //Обшая ошибка
             int idListener = -1;
-            Dictionary<int, VISUAL_SETTING> dictRes;
+            Dictionary<string, VISUAL_SETTING> dictRes;
 
             idListener = DbSources.Sources().Register(connSett, false, @"MAIN_DB");
 
@@ -231,11 +231,11 @@ namespace TepCommon
         /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
         /// <param name="err">Результат выполнения функции</param>
         /// <returns>Таблица с установками для отображения значений</returns>
-        public static Dictionary<int, VISUAL_SETTING> GetParameterVisualSettings(int idListener, int[] fields, out int err)
+        public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(int idListener, int[] fields, out int err)
         {
             err = -1; //Обшая ошибка
             DbConnection dbConn = null;
-            Dictionary<int, VISUAL_SETTING> dictRes = new Dictionary<int,VISUAL_SETTING> ();
+            Dictionary<string, VISUAL_SETTING> dictRes = new Dictionary<string, VISUAL_SETTING>();
 
             dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
@@ -253,7 +253,7 @@ namespace TepCommon
         /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
         /// <param name="err">Результат выполнения функции</param>
         /// <returns>Таблица с установками для отображения значений</returns>
-        public static Dictionary<int, VISUAL_SETTING> GetParameterVisualSettings(ref DbConnection dbConn, int[] fields, out int err)
+        public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(ref DbConnection dbConn, int[] fields, out int err)
         {
             err = -1; //Обшая ошибка
             string strQuery = string.Empty;
@@ -264,7 +264,8 @@ namespace TepCommon
                 , checkSum = (int)ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND
                     + (int)ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO
                 , curSum = -1;
-            Dictionary<int, VISUAL_SETTING> dictRes = new Dictionary<int, VISUAL_SETTING>();
+            string n_alg = string.Empty;
+            Dictionary<string, VISUAL_SETTING> dictRes = new Dictionary<string, VISUAL_SETTING>();
             DataTable tblRes = new DataTable()
                 //, tblRatio
                 ;
@@ -297,11 +298,11 @@ namespace TepCommon
                     foreach (DataRow r in tblRes.Rows)
                     {
                         id_alg = (Int16)r[@"ID"];
-
+                        n_alg = r[@"N_ALG"].ToString().Trim();
                         ratio = s_iRatioDefault;
                         round = s_iRoundDefault;
 
-                        if (dictRes.ContainsKey(id_alg) == false)
+                        if (dictRes.ContainsKey(n_alg) == false)
                         {
                             rowsAlg = tblRes.Select(@"ID=" + id_alg, @"ID_UNIT, IS_ROLE"); // приоритет значений для [IS_ROLE] = 0                            
 
@@ -331,7 +332,7 @@ namespace TepCommon
                                     ;
                             }
 
-                            dictRes.Add(id_alg, new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
+                            dictRes.Add(n_alg, new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
                         }
                         else
                             ; // continue, этот параметр уже обработан
