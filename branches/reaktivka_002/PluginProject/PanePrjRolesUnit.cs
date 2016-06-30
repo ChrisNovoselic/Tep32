@@ -383,7 +383,7 @@ namespace PluginProject
             if (list_id.id_user.Equals(-1) == false)
             {
                 m_arr_editTable[(int)ID_Table.User].Rows.Remove(m_arr_editTable[(int)ID_Table.User].Select("ID=" + list_id.id_user)[0]);
-                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_user + " and IS_ROLE=0 and ID_TAB=0 and ID_ITEM=0 and ID_CONTEXT=0"))
+                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_user + " and IS_ROLE=0 and ID_TAB=0 and ID_ITEM=0 and CONTEXT=0"))
                 {
                     m_arr_editTable[(int)ID_Table.Profiles].Rows.Remove(r);
                 }
@@ -393,7 +393,7 @@ namespace PluginProject
             if (list_id.id_user.Equals(-1) == true & list_id.id_role.Equals(-1) == false)
             {
                 m_arr_editTable[(int)ID_Table.Role].Rows.Remove(m_arr_editTable[(int)ID_Table.Role].Select("ID=" + list_id.id_role)[0]);
-                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_role + " and IS_ROLE=1 and ID_TAB=0 and ID_ITEM=0 and ID_CONTEXT=0"))
+                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_role + " and IS_ROLE=1 and ID_TAB=0 and ID_ITEM=0 and CONTEXT=0"))
                 {
                     m_arr_editTable[(int)ID_Table.Profiles].Rows.Remove(r);
                 }
@@ -609,7 +609,7 @@ namespace PluginProject
                             keys = @"ID";
                             break;
                         case ID_Table.Profiles:
-                            keys = @"ID_EXT,IS_ROLE,ID_TAB,ID_ITEM,ID_CONTEXT,ID_UNIT";
+                            keys = @"ID_EXT,IS_ROLE,ID_TAB,ID_ITEM,CONTEXT,ID_UNIT";
                             break;
                         default:
                             break;

@@ -221,12 +221,6 @@ namespace PluginTaskReaktivka
         /// <param name="e"></param>
         void m_dgvReak_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
-            int err = -1;
-            //float value = 0F;
-            //value = Convert.ToSingle(e.Value);
-            //(sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = value.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-            //                        System.Globalization.CultureInfo.InvariantCulture);
-            //m_dgvReak.SummValue(e.ColumnIndex, e.RowIndex, e.Value.ToString());
 
         }
 
@@ -417,8 +411,6 @@ namespace PluginTaskReaktivka
                 else
                     if (active == false)
                         PanelManagementReak.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-                    else
-                        ;
             else
                 throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
@@ -543,7 +535,8 @@ namespace PluginTaskReaktivka
              , id_alg = -1
              , ratio = -1
              , round = -1;
-            Dictionary<int, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<int, HTepUsers.VISUAL_SETTING>();
+            string n_alg = string.Empty;
+            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
 
             clear();
@@ -560,6 +553,7 @@ namespace PluginTaskReaktivka
             foreach (DataRow r in listParameter)
             {
                 id_alg = (int)r[@"ID_ALG"];
+                n_alg = r[@"N_ALG"].ToString();
                 // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
                 if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
                     // добавить в список идентификатор параметра алгоритма расчета
@@ -567,10 +561,10 @@ namespace PluginTaskReaktivka
             }
 
             // получить значения для настройки визуального отображения
-            if (dictVisualSettings.ContainsKey(id_alg) == true)
+            if (dictVisualSettings.ContainsKey(n_alg.Trim()) == true)
             {// установленные в проекте
-                ratio = dictVisualSettings[id_alg].m_ratio;
-                round = dictVisualSettings[id_alg].m_round;
+                ratio = dictVisualSettings[n_alg.Trim()].m_ratio;
+                round = dictVisualSettings[n_alg.Trim()].m_round;
             }
             else
             {// по умолчанию
@@ -713,7 +707,6 @@ namespace PluginTaskReaktivka
                 HandlerDb.SaveValues(m_TableOrigin, valuesFence, (int)Session.m_currIdTimezone, out err);
 
             saveInvalValue(out err);
-            //base.HPanelTepCommon_btnSave_Click(obj, ev);
         }
 
         /// <summary>
@@ -1821,8 +1814,7 @@ namespace PluginTaskReaktivka
                                 iRowCount++;
                                 idAlg = (int)row.Cells["ALG"].Value;
                                 parameterRows =
-                                source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp
-                                    ));
+                                source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
 
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
@@ -2332,7 +2324,7 @@ namespace PluginTaskReaktivka
             bool bflag = false;
 
             for (int i = 0; i < dtRange.Length; i++)
-                if (dtRange[i].End.Month > DateTime.Now.Month)
+                if (dtRange[i].Begin.Month > DateTime.Now.Month)
                     if (dtRange[i].End.Year >= DateTime.Now.Year)
                         bflag = true;
 
@@ -2561,9 +2553,7 @@ namespace PluginTaskReaktivka
             for (int i = 0; i < origin.Rows.Count; i++)
                 for (int j = 0; j < edit.Rows.Count; j++)
                     if (origin.Rows[i]["Value"].Equals(edit.Rows[j]["Value"]))
-                    {
                         edit.Rows.RemoveAt(j);
-                    }
 
             return edit;
         }

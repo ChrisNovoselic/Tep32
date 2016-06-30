@@ -32,7 +32,7 @@ namespace PluginTaskReaktivka
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT a.[ID] as ID_ALG, p.[ID], p.[ID_COMP], cl.[DESCRIPTION] "
+            strRes = @"SELECT a.[ID] as ID_ALG, p.[ID], p.[ID_COMP], cl.[DESCRIPTION], a.[N_ALG] "
             + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
             + @"ON a.ID = p.ID_ALG "
@@ -115,7 +115,7 @@ namespace PluginTaskReaktivka
                             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p "
                             + @"ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + " "
                             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                            + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
+                            + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)idPeriod //+ " AND [ID_SOURCE] > 0 "
                         ;
@@ -123,8 +123,6 @@ namespace PluginTaskReaktivka
                     // 'Begin' == 'End'
                     if (bLastItem == true)
                         bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
-                    else
-                        ;
 
                     if (bEquDatetime == false)
                         strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
@@ -132,8 +130,6 @@ namespace PluginTaskReaktivka
 
                     if (bLastItem == false)
                         strRes += @" UNION ALL ";
-                    else
-                        ;
                 }
 
                 strRes = "" + @"SELECT v.ID_PUT"

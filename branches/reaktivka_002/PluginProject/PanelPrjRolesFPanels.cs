@@ -388,8 +388,8 @@ namespace PluginProject
                 + context_row["ID_TAB"]
                 + " AND ID_ITEM="
                 + context_row["ID_ITEM"]
-                + " AND ID_CONTEXT="
-                + context_row["ID_CONTEXT"]))
+                + " AND CONTEXT="
+                + context_row["CONTEXT"]))
             {
                 profile_context.Rows.Add(r.ItemArray);
             }
@@ -418,7 +418,7 @@ namespace PluginProject
                 + new_context["ID_TAB"] 
                 + " AND ID_ITEM="
                 + new_context["ID_ITEM"] 
-                + " AND ID_CONTEXT=-1");
+                + " AND CONTEXT=-1");
             if (rows.Length == 0)
             {
                 foreach (DataRow r in m_context_Unit.Rows)
@@ -433,7 +433,7 @@ namespace PluginProject
             {
                 if (rows.Length == 1)
                 {
-                    rows[0]["ID_CONTEXT"] = new_context["ID_CONTEXT"];
+                    rows[0]["CONTEXT"] = new_context["CONTEXT"];
                     rows[0]["ID_UNIT"] = m_context_Unit.Rows[0]["ID"]; ;
                     rows[0]["VALUE"] = "-1";
                     for (int i = 1; i < m_context_Unit.Rows.Count;i++ )
@@ -461,8 +461,8 @@ namespace PluginProject
                 + context_row["ID_TAB"]
                 + " AND ID_ITEM="
                 + context_row["ID_ITEM"]
-                + " AND ID_CONTEXT="
-                + context_row["ID_CONTEXT"]))
+                + " AND CONTEXT="
+                + context_row["CONTEXT"]))
             {
                 if(r["VALUE"].ToString().Trim()!="-1")
                     profile_panel.Rows.Add(r.ItemArray);
@@ -487,7 +487,7 @@ namespace PluginProject
 
         protected void panelProfiles_GetDelContext(object sender, PanelProfiles.GetDelContextEventArgs e)
         {
-            DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + e.rowDelContext[0] + " and IS_ROLE=" + e.rowDelContext[1] + " and ID_TAB=" + e.rowDelContext[2] + " and ID_ITEM=" + e.rowDelContext[3] + " and ID_CONTEXT=" + e.rowDelContext[4]);
+            DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + e.rowDelContext[0] + " and IS_ROLE=" + e.rowDelContext[1] + " and ID_TAB=" + e.rowDelContext[2] + " and ID_ITEM=" + e.rowDelContext[3] + " and CONTEXT=" + e.rowDelContext[4]);
             if (rows.Length == 2)
             {
                 foreach (DataRow r in rows)
@@ -519,7 +519,7 @@ namespace PluginProject
             if (validate_saving(m_arr_editTable[(int)ID_Table.Profiles], out warning) == false)
             {
                 m_handlerDb.RegisterDbConnection(out err);
-                m_handlerDb.RecUpdateInsertDelete(getNameMode(ID_Table.Profiles), "ID_EXT,IS_ROLE,ID_TAB,ID_ITEM,ID_CONTEXT,ID_UNIT", string.Empty, m_arr_origTable[(int)ID_Table.Profiles], m_arr_editTable[(int)ID_Table.Profiles], out err);
+                m_handlerDb.RecUpdateInsertDelete(getNameMode(ID_Table.Profiles), "ID_EXT,IS_ROLE,ID_TAB,ID_ITEM,CONTEXT,ID_UNIT", string.Empty, m_arr_origTable[(int)ID_Table.Profiles], m_arr_editTable[(int)ID_Table.Profiles], out err);
                 m_handlerDb.UnRegisterDbConnection();
                 fillDataTable();
                 resetDataTable();
@@ -587,7 +587,7 @@ namespace PluginProject
                 else
                     obj[1] = e.m_Value;
 
-            DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + query[0] + " and IS_ROLE=" + query[1] + " and ID_UNIT=" + id + " AND ID_TAB=" + query[2] + " and ID_ITEM=" + query[3] + " AND ID_CONTEXT=" + query[4]);
+            DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + query[0] + " and IS_ROLE=" + query[1] + " and ID_UNIT=" + id + " AND ID_TAB=" + query[2] + " and ID_ITEM=" + query[3] + " AND CONTEXT=" + query[4]);
             if (rows.Length == 0)
                 m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { m_sel_comp, obj[0], id, obj[1], query[2], query[3], query[4] });
             else
@@ -618,7 +618,7 @@ namespace PluginProject
                 else
                     obj[1] = e.m_Value;
 
-            DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + query[0] + " and IS_ROLE=" + query[1] + " and ID_UNIT=" + id + " AND ID_TAB=" + query[2] + " and ID_ITEM=0 AND ID_CONTEXT=0");
+            DataRow[] rows = m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + query[0] + " and IS_ROLE=" + query[1] + " and ID_UNIT=" + id + " AND ID_TAB=" + query[2] + " and ID_ITEM=0 AND CONTEXT=0");
             if (rows.Length == 0)
                 m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { m_sel_comp, obj[0], id, obj[1], query[2], 0, 0 });
             else
@@ -978,7 +978,7 @@ namespace PluginProject
                 dgvContext.RowsAdded -= dgvContext_RowsAdded;
                 cbItems.SelectedIndexChanged -= cbItems_SelectedIndexChanged;
                 arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows.Clear();
-                foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("ID_CONTEXT<>'0' and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString()))
+                foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("CONTEXT<>'0' and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString()))
                 {
                     arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Rows.Add(row.ItemArray);
                 }
@@ -1030,10 +1030,10 @@ namespace PluginProject
                 items.Rows.Clear();
                 foreach (DataRow row in arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Select("ID_ITEM=" + cbItems.SelectedValue.ToString()))
                 {
-                    if (items.Select("ID=" + row["ID_CONTEXT"].ToString().Trim()).Length == 0)
+                    if (items.Select("ID=" + row["CONTEXT"].ToString().Trim()).Length == 0)
                     {
-                        if (Convert.ToInt32(row["ID_CONTEXT"]) != -1)
-                            items.Rows.Add(new object[] { row["ID_CONTEXT"].ToString().Trim() });
+                        if (Convert.ToInt32(row["CONTEXT"]) != -1)
+                            items.Rows.Add(new object[] { row["CONTEXT"].ToString().Trim() });
                     }
                 }
                 items.DefaultView.Sort = "ID";
@@ -1064,7 +1064,7 @@ namespace PluginProject
             if(dgvContext.SelectedRows.Count!=0)
                 if (dgvContext.SelectedRows[0].Cells[0].Value != null)
                 {
-                    foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("ID_CONTEXT=" + dgvContext.SelectedRows[0].Cells[0].Value.ToString() + " and ID_ITEM=" + cbItems.SelectedValue.ToString() + " and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString()))
+                    foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("CONTEXT=" + dgvContext.SelectedRows[0].Cells[0].Value.ToString() + " and ID_ITEM=" + cbItems.SelectedValue.ToString() + " and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString()))
                     {
                         items.Rows.Add(row.ItemArray);
                     }
@@ -1120,26 +1120,26 @@ namespace PluginProject
                     DataTable newItemTable = arr_Tables_edit[(int)INDEX_COMBOBOX.PROFILES].Clone();
                     if (cbItems.SelectedValue != null)
                     {
-                        DataRow[] rows = arr_Tables_edit[(int)INDEX_COMBOBOX.PROFILES].Select("ID_CONTEXT=-1 and ID_ITEM=" + cbItems.SelectedValue.ToString() + " and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString());
+                        DataRow[] rows = arr_Tables_edit[(int)INDEX_COMBOBOX.PROFILES].Select("CONTEXT=-1 and ID_ITEM=" + cbItems.SelectedValue.ToString() + " and ID_TAB=" + cbPanels.SelectedValue.ToString() + " and ID_EXT =" + m_id_obj + " and IS_ROLE=" + m_b_role.ToString());
                         if (rows.Length == 1)
                         {
-                            arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("ID_CONTEXT=-1 and ID_ITEM="
+                            arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select("CONTEXT=-1 and ID_ITEM="
                                 + cbItems.SelectedValue.ToString() + " and ID_TAB="
                                 + cbPanels.SelectedValue.ToString() + " and ID_EXT ="
                                 + m_id_obj + " and IS_ROLE="
-                                + m_b_role.ToString())[0]["ID_CONTEXT"] = dgvContext.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
+                                + m_b_role.ToString())[0]["CONTEXT"] = dgvContext.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
 
-                            arr_Tables_edit[(int)INDEX_COMBOBOX.PROFILES].Select("ID_CONTEXT=-1 and ID_ITEM="
+                            arr_Tables_edit[(int)INDEX_COMBOBOX.PROFILES].Select("CONTEXT=-1 and ID_ITEM="
                                 + cbItems.SelectedValue.ToString() + " and ID_TAB="
                                 + cbPanels.SelectedValue.ToString() + " and ID_EXT ="
                                 + m_id_obj + " and IS_ROLE="
-                                + m_b_role.ToString())[0]["ID_CONTEXT"] = dgvContext.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
+                                + m_b_role.ToString())[0]["CONTEXT"] = dgvContext.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
 
-                            arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Select("ID_CONTEXT=-1 and ID_ITEM="
+                            arr_Tables_edit[(int)INDEX_COMBOBOX.ITEMS].Select("CONTEXT=-1 and ID_ITEM="
                                 + cbItems.SelectedValue.ToString() + " and ID_TAB="
                                 + cbPanels.SelectedValue.ToString() + " and ID_EXT ="
                                 + m_id_obj + " and IS_ROLE="
-                                + m_b_role.ToString())[0]["ID_CONTEXT"] = dgvContext.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
+                                + m_b_role.ToString())[0]["CONTEXT"] = dgvContext.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
                             
                             if (GetContext != null)
                                 GetContext(this, new GetContextEventArgs(rows[0]));

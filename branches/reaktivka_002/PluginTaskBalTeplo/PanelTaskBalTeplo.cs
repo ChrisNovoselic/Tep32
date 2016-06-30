@@ -2158,7 +2158,7 @@ namespace PluginTaskBalTeplo
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
                     //из profiles
                     for (int j = 0; j < m_dt_profile.Rows.Count; j++)
-                        if (Convert.ToInt32(m_dt_profile.Rows[j]["ID_CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
+                        if (Convert.ToInt32(m_dt_profile.Rows[j]["CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
                             ctrl.Text = m_dt_profile.Rows[j]["VALUE"].ToString().TrimEnd();
                 }
                 catch (Exception e)
@@ -2214,11 +2214,11 @@ namespace PluginTaskBalTeplo
                             ids.Add(Convert.ToDouble(str.Replace('.', ',')));
                         }
                     }
-                    if (Convert.ToInt32(r["ID_CONTEXT"].ToString().Trim()) == 33)
+                    if (Convert.ToInt32(r["CONTEXT"].ToString().Trim()) == 33)
                     {
                         type = "in";
                     }
-                    if (Convert.ToInt32(r["ID_CONTEXT"].ToString().Trim()) == 34)
+                    if (Convert.ToInt32(r["CONTEXT"].ToString().Trim()) == 34)
                     {
                         type = "out";
                     }
