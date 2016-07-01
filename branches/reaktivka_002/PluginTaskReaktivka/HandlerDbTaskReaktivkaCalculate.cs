@@ -115,7 +115,7 @@ namespace PluginTaskReaktivka
                             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p "
                             + @"ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + " "
                             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                            + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
+                            + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)idPeriod //+ " AND [ID_SOURCE] > 0 "
                         ;
@@ -292,7 +292,7 @@ namespace PluginTaskReaktivka
             bool bEndMonthBoudary = false;
 
             DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(1);
+                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(-1);
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
@@ -315,7 +315,9 @@ namespace PluginTaskReaktivka
                                 arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
                             else
                                 // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End,
+                                   new DateTime(arRangesRes[i - 1].End.Year,arRangesRes[i - 1].End.AddMonths(1).Month,DateTime.DaysInMonth(arRangesRes[i - 1].End.Year,arRangesRes[i - 1].End.AddMonths(1).Month)));
+                                    //HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
             else
                 if (bEndMonthBoudary == true)
                     // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)

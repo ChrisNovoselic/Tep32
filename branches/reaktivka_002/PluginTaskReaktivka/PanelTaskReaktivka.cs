@@ -1856,18 +1856,17 @@ namespace PluginTaskReaktivka
             public void SumValue(int indxCol, int indxRow)
             {
                 int idAlg = -1;
-                double sumValue = 0F;
+                double sumValue = 0F
+                    ,value;
 
                 idAlg = (int)Rows[indxRow].Cells[0].Value;
 
                 foreach (DataGridViewRow row in Rows)
                     if (Rows.Count - 1 != row.Index)
-                        if (row.Cells[indxCol].Value != null)
-                            if (row.Cells[indxCol].Value.ToString() != "")
+                        if (double.TryParse(row.Cells[indxCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
                                 //sumValue = Rows.Cast<DataGridViewRow>().Sum(r => Convert.ToDouble(r.Cells[indxCol].Value.ToString().Replace('.', ',')));
-                                sumValue += Convert.ToDouble(row.Cells[indxCol].Value.ToString().Replace('.', ','));
+                                sumValue += value;
                             else ;
-                        else ;
                     else
                         row.Cells[indxCol].Value = sumValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                     System.Globalization.CultureInfo.InvariantCulture);
@@ -1876,10 +1875,10 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// Сохранение знчений отображения в табилцу
+            /// Сохранение значений отображения в табилцу
             /// </summary>
             /// <returns>таблица с данными</returns>
-            public DataTable GetValue(DataTable dtSourceOrg, DataTable dtSourceEdit, int idSession)
+            public DataTable GetValue(DataTable dtSourceOrg, int idSession)
             {
                 int i = 0,
                     idAlg = -1,
@@ -1888,9 +1887,7 @@ namespace PluginTaskReaktivka
                 double valueToRes = 0;
                 DateTime dtVal;
 
-                if (dtSourceEdit == null)
-                {
-                    dtSourceEdit = new DataTable();
+                DataTable dtSourceEdit = new DataTable();
                     dtSourceEdit.Columns.AddRange(new DataColumn[] {
                         new DataColumn (@"ID_PUT", typeof (int))
                         , new DataColumn (@"ID_SESSION", typeof (long))
@@ -1899,9 +1896,6 @@ namespace PluginTaskReaktivka
                         , new DataColumn (@"WR_DATETIME", typeof (DateTime))
                         , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
                     });
-                }
-                else
-                    dtSourceEdit.Rows.Clear();
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
@@ -1927,7 +1921,7 @@ namespace PluginTaskReaktivka
                                         , idSession
                                         , quality
                                         , valueToRes                 
-                                        , dtVal.AddMinutes(-m_currentOffSet).ToString(CultureInfo.InvariantCulture)
+                                        , dtVal.AddMinutes(-m_currentOffSet).ToString("F",dtSourceEdit.Locale)
                                         , i
                                     });
                                         i++;
@@ -1956,10 +1950,9 @@ namespace PluginTaskReaktivka
                         foreach (DataGridViewRow row in Rows)
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
-                                if (row.Cells[iCol].Value != null)
-                                    if (row.Cells[iCol].Value.ToString() != "")
+                                if (double.TryParse(row.Cells[iCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dblVal))
                                     {
-                                        dblVal = Convert.ToDouble(row.Cells[iCol].Value.ToString().Replace('.', ','));
+                                        //dblVal = double.Parse(row.Cells[iCol].Value.ToString(), System.Globalization.CultureInfo.InvariantCulture);
                                         idAlg = (int)row.Cells["ALG"].Value;
                                         vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
                                         row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
@@ -2414,7 +2407,7 @@ namespace PluginTaskReaktivka
         {
             get
             { //сохранить вх. знач. в DataTable
-                return m_dgvReak.GetValue(m_TableOrigin, m_TableEdit, (int)Session.m_Id);
+                return m_dgvReak.GetValue(m_TableOrigin, (int)Session.m_Id);
             }
         }
 
