@@ -30,6 +30,10 @@ namespace PluginTaskAutobook
         /// <param name="dgvView">отображение</param>
         delegate void delDeviation(int i, DataGridView dgvView);
         /// <summary>
+        /// 
+        /// </summary>
+        public static int vsRatio;
+        /// <summary>
         /// флаг очистки отображения
         /// </summary>
         bool m_bflgClear = true;
@@ -148,7 +152,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Отображение значений в табличном представлении(значения)
         /// </summary>
-        protected DGVAutoBook m_dgvAB;
+        public DGVAutoBook m_dgvAB;
         /// <summary>
         /// to Outlook
         /// </summary>
@@ -188,7 +192,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Класс для грида
         /// </summary>
-        protected class DGVAutoBook : DataGridView
+        public class DGVAutoBook : DataGridView
         {
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
@@ -771,7 +775,7 @@ namespace PluginTaskAutobook
                 {
                     foreach (HDataGridViewColumn col in Columns)
                     {
-                        if (col.Index > (int)INDEX_GTP.TEC & col.Index < (int)INDEX_GTP.CorGTP36)
+                        if (col.Index > (int)INDEX_GTP.GTP36 & col.Index < (int)INDEX_GTP.CorGTP36)
                         {
                             idAlg = (int)dgvView.Rows[0].Cells["ALG"].Value;
                             vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
@@ -828,20 +832,20 @@ namespace PluginTaskAutobook
                         , new DataColumn (@"QUALITY", typeof (int))
                         , new DataColumn (@"VALUE", typeof (float))
                         , new DataColumn (@"WR_DATETIME", typeof (DateTime))
-                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
+                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (string))
                     });
 
-                for (int i = 0; i < dgvView.Rows.Count; i++)
+                foreach (DataGridViewRow row in Rows)
                 {
                     foreach (HDataGridViewColumn col in Columns)
                     {
-                        if (col.Index > (int)INDEX_GTP.TEC & col.Index < (int)INDEX_GTP.CorGTP36)
+                        if (col.Index > (int)INDEX_GTP.GTP36 & col.Index < (int)INDEX_GTP.CorGTP36)
                         {
-                            idAlg = (int)dgvView.Rows[0].Cells["ALG"].Value;
+                            idAlg = (int)row.Cells["ALG"].Value;
                             vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                            dtRes = Convert.ToDateTime(dgvView.Rows[i].Cells["Date"].Value.ToString());
+                            dtRes = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
 
-                            if (double.TryParse(dgvView.Rows[i].Cells[col.Index].Value.ToString(), out valueToRes))
+                            if (double.TryParse(row.Cells[col.Index].Value.ToString(), out valueToRes))
                                 valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
                             else
                                 valueToRes = -1;
@@ -854,7 +858,7 @@ namespace PluginTaskAutobook
                                     , 1.ToString()
                                     , valueToRes                
                                     , dtRes.AddMinutes(-offset).ToString("F",dtSourceEdit.Locale)
-                                    , i
+                                    , row.Cells["Date"].Value.ToString()
                                 });
                         }
                     }
@@ -886,30 +890,28 @@ namespace PluginTaskAutobook
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
-                    if (col.Index > (int)INDEX_GTP.CorGTP12 & col.Index < (int)INDEX_GTP.COUNT)
+                    if (col.Index > (int)INDEX_GTP.CorGTP12 & col.Index <= (int)INDEX_GTP.COUNT + 1)
                         foreach (DataGridViewRow row in dgvView.Rows)
                         {
                             if (Convert.ToDateTime(row.Cells["Date"].Value) <= DateTime.Now.Date)
                             {
-                                if (row.Cells["TEC"].Value != null)//??
+                                idAlg = (int)row.Cells["ALG"].Value;
+                                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                vsRatio = vsRatioValue;
+
+                                if (double.TryParse(row.Cells[col.Index].Value.ToString(), out valueToRes))
                                 {
-                                    idAlg = (int)dgvView.Rows[0].Cells["ALG"].Value;
-                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                    valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
 
-                                    if (double.TryParse(row.Cells[col.Index].Value.ToString(), out valueToRes))
+                                    dtSourceEdit.Rows.Add(new object[] 
                                     {
-                                        valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
-
-                                        dtSourceEdit.Rows.Add(new object[] 
-                                        {
-                                            col.m_iIdComp
-                                            , -1
-                                            , 1.ToString()
-                                            , valueToRes                
-                                            , Convert.ToDateTime(row.Cells["Date"].Value.ToString()).ToString("F",dtSourceEdit.Locale)
-                                            , row.Cells["Date"].Value.ToString()
-                                        });
-                                    }
+                                        col.m_iIdComp
+                                        , -1
+                                        , 1.ToString()
+                                        , valueToRes                
+                                        , Convert.ToDateTime(row.Cells["Date"].Value.ToString()).ToString("F",dtSourceEdit.Locale)
+                                        , row.Cells["Date"].Value.ToString()
+                                    });
                                 }
                             }
                         }
@@ -1196,9 +1198,9 @@ namespace PluginTaskAutobook
                 {
                     bodyMsg = @"BEGIN " + "\r\n"
                         + @"(DATE):" + reportDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) + "\r\n"
-                        + @"(01): " + fewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ":\r\n"
-                        + @"(02): " + fewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ":\r\n"
-                        + @"(03): " + fewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]) + ":\r\n"
+                        + @"(01): " + fewerValue(double.Parse(drReportDay[(int)INDEX_GTP.TEC]["VALUE"].ToString())) + ":\r\n"
+                        + @"(02): " + fewerValue(double.Parse(drReportDay[(int)INDEX_GTP.GTP12]["VALUE"].ToString())) + ":\r\n"
+                        + @"(03): " + fewerValue(double.Parse(drReportDay[(int)INDEX_GTP.GTP36]["VALUE"].ToString())) + ":\r\n"
                         + @"END ";
                     /*bodyMsg = @"Дата " + reportDate.ToShortDateString() + ".\r\n"
                         + @"Станция, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ";\r\n"
@@ -1210,13 +1212,13 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// Редактирование знчения
+            /// Редактирование значения
             /// </summary>
             /// <param name="val">значение</param>
             /// <returns>измененное знач.</returns>
             private string fewerValue(double val)
             {
-                return Convert.ToString(val / Math.Pow(10, 6)).ToString();
+                return Convert.ToString(val * Math.Pow(10F, -1 * vsRatio));
             }
 
             /// <summary>
@@ -1294,7 +1296,6 @@ namespace PluginTaskAutobook
                                 }
                             indxRow++;
                         }
-                        //
                         setPlanMonth(m_wrkSheet, dgView, dtRange);
                         m_excApp.Visible = true;
                         System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
@@ -1745,7 +1746,7 @@ namespace PluginTaskAutobook
                  new EventHandler(PanelTaskAutobookMonthValues_btnexport_Click);
 
             m_dgvAB.CellParsing += dgvAB_CellParsing;
-            m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
+            //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
         }
 
         /// <summary>
@@ -1763,8 +1764,6 @@ namespace PluginTaskAutobook
                     HDateTimePicker datetimePicker =
                         (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                     m_bflgClear = false;
-                    //EvtChangeRow += PanelTaskAutobookMonthValues_EvtChangeRow;
-                    //EvtChangeRow(true);
                     datetimePicker.Value = dtRow;
                 }
             }
@@ -2335,7 +2334,7 @@ namespace PluginTaskAutobook
                             });
                 }
             }
-            m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
+            //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
             //
             m_currentOffSet = Session.m_curOffsetUTC;
             m_bflgClear = true;
@@ -2543,9 +2542,9 @@ namespace PluginTaskAutobook
 
             if (m_TableEdit.Rows.Count > 0)
             {
-                base.HPanelTepCommon_btnSave_Click(obj, ev);
                 //save вх. значений
                 saveInvalValue((ctrl as ComboBox).SelectedIndex, out err);
+                //base.HPanelTepCommon_btnSave_Click(obj, ev);
             }
 
         }

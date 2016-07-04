@@ -119,8 +119,6 @@ namespace PluginTaskReaktivka
             {
                 if (_panelManagement == null)
                     _panelManagement = createPanelManagement();
-                else
-                    ;
 
                 return _panelManagement;
             }
@@ -490,11 +488,7 @@ namespace PluginTaskReaktivka
                             m_arTableDictPrjs[i].Clear();
                             m_arTableDictPrjs[i] = null;
                         }
-                        else
-                            ;
                     }
-                else
-                    ;
 
                 cbx = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
@@ -1255,8 +1249,6 @@ namespace PluginTaskReaktivka
                     else
                         clbx.ItemCheck -= onItemCheck;
                 }
-                else
-                    ;
             }
 
             /// <summary>
@@ -1328,63 +1320,6 @@ namespace PluginTaskReaktivka
             protected void itemCheck(int idItem, INDEX_ID indxIdDeny, CheckState checkState)
             {
                 ItemCheck(new ItemCheckedParametersEventArgs(idItem, indxIdDeny, checkState));
-            }
-
-            /// <summary>
-            /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
-            /// </summary>
-            protected class CheckedListBoxTaskTepValues : CheckedListBox, IControl
-            {
-                /// <summary>
-                /// Список для хранения идентификаторов переменных
-                /// </summary>
-                private List<int> m_listId;
-
-                public CheckedListBoxTaskTepValues()
-                    : base()
-                {
-                    m_listId = new List<int>();
-                }
-
-                /// <summary>
-                /// Идентификатор выбранного элемента списка
-                /// </summary>
-                public int SelectedId { get { return m_listId[SelectedIndex]; } }
-
-                /// <summary>
-                /// Добавить элемент в список
-                /// </summary>
-                /// <param name="text">Текст подписи элемента</param>
-                /// <param name="id">Идентификатор элемента</param>
-                /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
-                public void AddItem(int id, string text, bool bChecked)
-                {
-                    Items.Add(text, bChecked);
-                    m_listId.Add(id);
-                }
-
-                /// <summary>
-                /// Удалить все элементы в списке
-                /// </summary>
-                public void ClearItems()
-                {
-                    Items.Clear();
-                    m_listId.Clear();
-                }
-
-                /// <summary>
-                /// 
-                /// </summary>
-                /// <param name="id"></param>
-                /// <returns></returns>
-                public string GetNameItem(int id)
-                {
-                    string strRes = string.Empty;
-
-                    strRes = (string)Items[m_listId.IndexOf(id)];
-
-                    return strRes;
-                }
             }
         }
 
@@ -1560,9 +1495,6 @@ namespace PluginTaskReaktivka
                                 alignText = DataGridViewContentAlignment.MiddleLeft;
                                 autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
                             }
-                            else
-                                ;
-
                             column.Frozen = true;
                             column.ReadOnly = true;
                         }
@@ -1743,8 +1675,7 @@ namespace PluginTaskReaktivka
             {
                 Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
                 int indx = -1
-                    , cIndx = -1
-                    , rKey = -1;
+                    , cIndx = -1;
                 bool bItemChecked = item.m_newCheckState == CheckState.Checked ? true :
                     item.m_newCheckState == CheckState.Unchecked ? false :
                         false;
@@ -1778,7 +1709,6 @@ namespace PluginTaskReaktivka
                             break;
                     }
                 }
-                else ; // нет элемента для изменения стиля
             }
 
             /// <summary>
@@ -2422,8 +2352,6 @@ namespace PluginTaskReaktivka
 
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
-            else
-                ;
 
             strRes = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
