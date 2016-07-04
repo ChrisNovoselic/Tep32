@@ -544,7 +544,7 @@ namespace PluginTaskAutobook
                                         if (row.Cells["DATE"].Value.ToString() ==
                                         Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())
                                         {
-                                            dblVal = correctingValues(dr_Values[p]["VALUE"], col.Name, ref bflg, row);
+                                            dblVal = correctingValues(Math.Pow(10F, vsRatioValue), dr_Values[p]["VALUE"], col.Name, ref bflg, row);
                                             vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
                                             dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
@@ -565,7 +565,8 @@ namespace PluginTaskAutobook
             /// <param name="bflg"></param>
             /// <param name="row">тек.строка</param>
             /// <returns></returns>
-            private double correctingValues(object rowValue
+            private double correctingValues(double pow
+                , object rowValue
                 , string namecol
                 , ref bool bflg
                 , DataGridViewRow row)
@@ -577,6 +578,7 @@ namespace PluginTaskAutobook
                     case "GTP12":
                         if (double.TryParse(row.Cells["CorGTP12"].Value.ToString(), out valRes))
                         {
+                            valRes *= pow;
                             valRes += (double)rowValue;
                             bflg = true;
                         }
@@ -587,6 +589,7 @@ namespace PluginTaskAutobook
                     case "GTP36":
                         if (double.TryParse(row.Cells["CorGTP36"].Value.ToString(), out valRes))
                         {
+                            valRes *= pow;
                             valRes += (double)rowValue;
                             bflg = true;
                         }
@@ -597,7 +600,8 @@ namespace PluginTaskAutobook
                     case "TEC":
                         if (bflg)
                         {
-                            valRes = Convert.ToDouble(row.Cells["GTP12"].Value) + Convert.ToDouble(row.Cells["GTP36"].Value);
+                            valRes = Convert.ToDouble(row.Cells["GTP12"].Value) * pow
+                                + Convert.ToDouble(row.Cells["GTP36"].Value) * pow;
                             bflg = false;
                         }
                         else
@@ -606,6 +610,7 @@ namespace PluginTaskAutobook
                     default:
                         break;
                 }
+
 
                 return valRes;
             }
@@ -640,7 +645,7 @@ namespace PluginTaskAutobook
 
                 dbValue = Convert.ToSingle(value) * Math.Pow(10F, -1 * vsRatioValue);
 
-                dgvAB.Rows[DateTime.DaysInMonth(date.Year, date.Month) - 1].Cells["PlanSwen"].Value =
+                dgvAB.Rows[DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month) - 1].Cells["PlanSwen"].Value =
                     dbValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);//??
             }
 
