@@ -546,7 +546,7 @@ namespace PluginTaskAutobook
                                     //заполнение столбцов ГТП,ТЭЦ
                                     for (int p = 0; p < dr_Values.Count(); p++)
                                         if (row.Cells["DATE"].Value.ToString() ==
-                                        Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())
+                                        Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())///???
                                         {
                                             dblVal = correctingValues(Math.Pow(10F, vsRatioValue), dr_Values[p]["VALUE"], col.Name, ref bflg, row);
                                             vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
@@ -678,14 +678,18 @@ namespace PluginTaskAutobook
             /// <param name="row">строка</param>
             private void fillCells(DataGridViewRow row)
             {
-                int value;
+                int value
+                    , swenValue = 0;
 
                 if (Int32.TryParse(row.Cells[INDEX_GTP.TEC.ToString()].Value.ToString(), out value))
                 {
                     if (row.Index == 0)
                         row.Cells["StSwen"].Value = value;
                     else
-                        row.Cells["StSwen"].Value = value + Convert.ToSingle(row.DataGridView.Rows[row.Index - 1].Cells["StSwen"].Value);
+                    {
+                        Int32.TryParse(row.DataGridView.Rows[row.Index - 1].Cells["StSwen"].Value.ToString(), out swenValue);
+                        row.Cells["StSwen"].Value = value + swenValue;
+                    }
 
                     countDeviation(row);
                 }
@@ -1746,7 +1750,7 @@ namespace PluginTaskAutobook
                  new EventHandler(PanelTaskAutobookMonthValues_btnexport_Click);
 
             m_dgvAB.CellParsing += dgvAB_CellParsing;
-            //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
+            m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
         }
 
         /// <summary>
@@ -2142,7 +2146,7 @@ namespace PluginTaskAutobook
             int role = (int)HTepUsers.Role;
 
             DataRow[] drTZ =
-                HandlerDb.GetProfilesContext().Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + (int)HTepUsers.Role);
+                HandlerDb.GetProfilesContext().Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_TAB = " + findMyID());
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
                 switch (id)
@@ -2316,7 +2320,7 @@ namespace PluginTaskAutobook
                 }
 
                 m_dgvAB.ClearRows();
-                m_dgvAB.SelectionChanged -= dgvAB_SelectionChanged;
+                //m_dgvAB.SelectionChanged -= dgvAB_SelectionChanged;
                 //заполнение представления
                 for (int i = 0; i < DaysInMonth; i++)
                 {

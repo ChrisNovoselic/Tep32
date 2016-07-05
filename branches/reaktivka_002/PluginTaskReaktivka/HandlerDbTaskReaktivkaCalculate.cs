@@ -118,6 +118,7 @@ namespace PluginTaskReaktivka
                             + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)idPeriod //+ " AND [ID_SOURCE] > 0 "
+                            + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
@@ -428,7 +429,8 @@ namespace PluginTaskReaktivka
                     + @" WHERE  ID_TASK = " + (int)IdTask
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND v.ID_TIME = " + (int)idPeriod;
+                    + @" AND v.ID_TIME = " + (int)idPeriod
+                    + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";
