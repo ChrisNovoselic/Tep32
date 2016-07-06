@@ -879,7 +879,7 @@ namespace PluginTaskAutobook
                             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
                             + @"ON a.ID = p.ID_ALG "
                             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                            + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
+                            + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON v.ID_PUT = p.ID "
                             + @"WHERE  ID_TASK = " + (int)IdTask + " "
                             + @"AND v.[ID_TIME] = " + (int)idPeriod
@@ -1283,6 +1283,41 @@ namespace PluginTaskAutobook
             });
 
             return tableEdit;
+        }
+
+        /// <summary>
+        /// Получение данныз из profiles
+        /// </summary>
+        /// <param name="IdTab">Ид панели</param>
+        /// <returns>таблица данных</returns>
+        public DataTable GetProfilesContext()
+        {
+            string query = string.Empty;
+            int err = -1;
+
+            query = @"SELECT * "
+                + @"FROM [TEP_NTEC_5].[dbo].[profiles] "
+                + @"WHERE ID_EXT = " + HTepUsers.Role;
+
+            return Select(query, out err);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public string GetQueryComp(TaskCalculate.TYPE type)
+        {
+            string strRes = string.Empty;
+
+            strRes = @"SELECT  a.[ID] as ID_ALG, p.[ID], p.[ID_COMP], a.[N_ALG] "
+                + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
+                + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
+                + @"ON a.ID = p.ID_ALG "
+                + @"WHERE a.ID_TASK  = " + (int)IdTask
+                + @" AND  p.ID_COMP = 5";
+
+            return strRes;
         }
     }
 }
