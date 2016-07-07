@@ -569,8 +569,6 @@ namespace PluginTaskAutobook
 
             if (IdTask == ID_TASK.AUTOBOOK)
                 insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err, tableRes);
-            else
-                ;
             //if (err == 0)
             //    insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err);
             //else
@@ -610,12 +608,11 @@ namespace PluginTaskAutobook
                         if (!(err == 0))
                             // при ошибке - не продолжать
                             break;
-                        else ;
 
                         strQuery = strBaseQuery;
                         iRowCounterToInsert = 0;
                     }
-                    else ;
+
                     strQuery += @"(";
 
                     strQuery += idSession + @"," //ID_SEESION

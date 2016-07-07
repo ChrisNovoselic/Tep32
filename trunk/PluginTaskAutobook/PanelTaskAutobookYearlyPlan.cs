@@ -133,8 +133,6 @@ namespace PluginTaskAutobook
             {
                 if (_panelManagement == null)
                     _panelManagement = createPanelManagement();
-                else
-                    ;
 
                 return _panelManagement;
             }
@@ -471,9 +469,9 @@ namespace PluginTaskAutobook
                     , vsRatioValue = -1;
 
                 ClearValues();
+
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.Index > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
-                    {
                         foreach (DataGridViewRow row in Rows)
                             for (int j = 0; j < tbOrigin.Rows.Count; j++)
                             {
@@ -491,7 +489,6 @@ namespace PluginTaskAutobook
                                     break;
                                 }
                             }
-                    }
             }
 
             /// <summary>
