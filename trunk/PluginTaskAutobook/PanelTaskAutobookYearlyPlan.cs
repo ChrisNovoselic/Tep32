@@ -127,7 +127,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
-        protected PanelManagementAutobook PanelManagement
+        protected PanelManagementAutobook PanelManagementYear
         {
             get
             {
@@ -506,8 +506,8 @@ namespace PluginTaskAutobook
             /// <summary>
             /// Формирвоание значений
             /// </summary>
-            /// <param name="dgvView">отображение</param>
-            public DataTable FillTableEdit(DataGridView dgvView, int idSession)
+            /// <param name="idSession">номер сессии</param>
+            public DataTable FillTableEdit(int idSession)
             {
                 int i = 0
                     , idAlg = -1
@@ -531,15 +531,15 @@ namespace PluginTaskAutobook
                             idAlg = (int)row.Cells["ALG"].Value;
                             vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
 
-                            if (row.Cells["Output"].Value != null)
-                                if (double.TryParse(row.Cells["Output"].Value.ToString(), out valueToRes))
+                            if (row.Cells[col.Index].Value != null)
+                                if (double.TryParse(row.Cells[col.Index].Value.ToString(), out valueToRes))
                                     editTable.Rows.Add(new object[] 
                                     {
                                         col.m_iIdComp
                                         , idSession
                                         , 1.ToString()
                                         , valueToRes *= Math.Pow(10F, 1 * vsRatioValue)            
-                                        , Convert.ToDateTime(row.Cells["DateTime"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
+                                        , Convert.ToDateTime(row.Cells["DATE"].Value.ToString()).ToString("F",editTable.Locale)//??
                                         , i
                                     });
                             i++;
@@ -834,9 +834,9 @@ namespace PluginTaskAutobook
             this.Controls.Add(tlpYear, 1, posRow);
             this.SetColumnSpan(tlpYear, 9); this.SetRowSpan(tlpYear, 10);
             //
-            this.Controls.Add(PanelManagement, 0, posRow);
-            this.SetColumnSpan(PanelManagement, posColdgvTEPValues);
-            this.SetRowSpan(PanelManagement, posRow = posRow + 6);//this.RowCount);
+            this.Controls.Add(PanelManagementYear, 0, posRow);
+            this.SetColumnSpan(PanelManagementYear, posColdgvTEPValues);
+            this.SetRowSpan(PanelManagementYear, posRow = posRow + 6);//this.RowCount);
 
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4, 10);
 
@@ -872,8 +872,8 @@ namespace PluginTaskAutobook
         /// <param name="e"></param>
         void dgvYear_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                m_dgvYear.FillTableEdit(m_dgvYear, (int)Session.m_Id);
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                m_dgvYear.FillTableEdit((int)Session.m_Id);
         }
 
         /// <summary>
@@ -1012,7 +1012,7 @@ namespace PluginTaskAutobook
             err = -1;
 
             m_handlerDb.RecUpdateInsertDelete(GetNameTableIn(s_dtDefaultAU)
-            , @"ID_PUT, DATE_TIME"
+            , @"DATE_TIME"
             , @"ID"
             , m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
             , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
@@ -1159,8 +1159,8 @@ namespace PluginTaskAutobook
         /// </summary>
         private void setValues()
         {
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                     m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
+            //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
+            //         m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                 m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
         }
@@ -1238,7 +1238,7 @@ namespace PluginTaskAutobook
         /// <param name="ev">Аргумент события</param>
         protected virtual void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
         {
-            int err = -1 
+            int err = -1
                 , id_alg = -1
                 , ratio = -1
                 , round = -1;
@@ -1250,7 +1250,7 @@ namespace PluginTaskAutobook
             //Отменить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(false);
             //Установить новые режимы для "календарей"
-            (PanelManagement as PanelManagementAutobook).SetPeriod(Session.m_currIdPeriod);
+            (PanelManagementYear as PanelManagementAutobook).SetPeriod(Session.m_currIdPeriod);
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
             // очистить содержание представления
@@ -1340,12 +1340,12 @@ namespace PluginTaskAutobook
         /// <param name="active"></param>
         protected void activateDateTimeRangeValue_OnChanged(bool active)
         {
-            if (!(PanelManagement == null))
+            if (!(PanelManagementYear == null))
                 if (active == true)
-                    PanelManagement.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
+                    PanelManagementYear.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
                 else
                     if (active == false)
-                        PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+                        PanelManagementYear.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
                     else
                         throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
@@ -1374,9 +1374,7 @@ namespace PluginTaskAutobook
         {
             // очистить содержание представления
             clear();
-
             Session.SetRangeDatetime(dtBegin, dtEnd);
-
             //заполнение представления
             changeDateInGrid(dtBegin);
         }
@@ -1439,27 +1437,33 @@ namespace PluginTaskAutobook
         {
             int err = -1;
             string errMsg = string.Empty;
+            DataRow[] dr_saveValue;
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeToSave();
 
-            if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] != null)
+            for (int i = 0; i < m_dgvYear.Rows.Count; i++)
             {
-                for (int i = 0; i < m_dgvYear.Rows.Count; i++)
+                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i], out err);
+                dr_saveValue = valuesFence.Select(String.Format(m_TableEdit.Locale, "WR_DATETIME = '{0:o}'", m_dgvYear.Rows[i].Cells["DATE"].Value));
+
+                if (dr_saveValue.Count() > 0)
                 {
-                    if (m_dgvYear.Rows[i].Cells["Output"].Value != null)
-                    {
-                        m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i], out err);
+                    m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                        HandlerDb.SavePlanValue(m_TableOrigin,dr_saveValue, (int)Session.m_currIdTimezone, out err);
 
-                        if (m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count > 0)
-                        {
-                            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                                HandlerDb.SavePlanValue(m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                                , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows[i], (int)Session.m_currIdTimezone, out err);
-
-                            s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
-                            base.HPanelTepCommon_btnSave_Click(obj, ev);
-                        }
-                    }
+                    s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
+                    base.HPanelTepCommon_btnSave_Click(obj, ev);
                 }
+            }
+        }
+
+        /// <summary>
+        /// формирование таблицы данных
+        /// </summary>
+        private DataTable valuesFence
+        {
+            get
+            { //сохранить вх. знач. в DataTable
+                return m_dgvYear.FillTableEdit((int)Session.m_Id);
             }
         }
 

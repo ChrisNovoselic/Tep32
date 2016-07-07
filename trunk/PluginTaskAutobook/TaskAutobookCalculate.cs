@@ -1252,18 +1252,21 @@ namespace PluginTaskAutobook
         /// <param name="rowRes">строка значений</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица значений</returns>
-        public DataTable SavePlanValue(DataTable tableOrigin, DataRow rowRes, int timezone, out int err)
+        public DataTable SavePlanValue(DataTable tableOrigin, DataRow[] rowRes, int timezone, out int err)
         {
             err = -1;
-            double ResValue;
+            double ResValue = 0F;
             DataTable tableEdit = new DataTable();
-            DateTime dtRes;
+            DateTime dtRes = new DateTime();
             string rowSel = null;
             tableEdit = tableOrigin.Clone();//копия структуры
 
-            rowSel = rowRes["ID_PUT"].ToString();
-            ResValue = Convert.ToDouble(rowRes["VALUE"]);
-            dtRes = Convert.ToDateTime(rowRes["WR_DATETIME"].ToString()).AddMonths(1);
+            for (int i = 0; i < rowRes.Count(); i++)
+            {
+                rowSel = rowRes[i]["ID_PUT"].ToString();
+                ResValue = Convert.ToDouble(rowRes[i]["VALUE"]);
+                dtRes = Convert.ToDateTime(rowRes[i]["WR_DATETIME"].ToString()).AddMonths(1);
+            }
 
             tableEdit.Rows.Add(new object[] 
             {

@@ -19,7 +19,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// флаг очистки отображения
         /// </summary>
-        //bool m_bflgClear = true;
+        static bool m_bflgClear = false;
         /// <summary>
         /// Часовой пояс(часовой сдвиг)
         /// </summary>
@@ -166,6 +166,10 @@ namespace PluginTaskReaktivka
         private void InitializeComponent()
         {
             m_dgvReak = new DGVReaktivka(INDEX_CONTROL.DGV_DATA.ToString());
+
+            foreach (DataGridViewColumn column in m_dgvReak.Columns)
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+
             Control ctrl = new Control(); ;
             // переменные для инициализации кнопок "Добавить", "Удалить"
             string strPartLabelButtonDropDownMenuItem = string.Empty;
@@ -319,6 +323,10 @@ namespace PluginTaskReaktivka
             {
                 try
                 {
+                    if (m_bflgClear == false)
+                        m_bflgClear = true;
+                    else
+                        m_bflgClear = false;
                     //Заполнить элемент управления с часовыми поясами
                     ctrl = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
@@ -334,18 +342,12 @@ namespace PluginTaskReaktivka
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
+
                     (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
                     Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][1]);//??
                     (PanelManagementReak as PanelManagementReaktivka).SetPeriod(Session.m_currIdPeriod);
                     (ctrl as ComboBox).Enabled = false;
 
-                    //ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
-                    //DataTable tb = HandlerDb.GetProfilesContext();
-                    //DataRow[] drProf = tb.Select("ID_TAB = " + findMyID());
-                    ////из profiles
-                    //for (int j = 0; j < drProf.Count(); j++)
-                    //    if (Convert.ToInt32(drProf[j]["CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
-                    //        ctrl.Text = drProf[j]["VALUE"].ToString().TrimEnd();
                 }
                 catch (Exception e)
                 {
@@ -386,11 +388,13 @@ namespace PluginTaskReaktivka
         /// <param name="ev">Аргумент события</param>
         protected void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
         {
-            //Установить новое значение для текущего периода
-            setCurrentTimeZone(obj as ComboBox);
-            // очистить содержание представления
-            clear();
-            //m_currentOffSet = Session.m_curOffsetUTC;
+            if (m_bflgClear)
+            {
+                //Установить новое значение для текущего периода
+                setCurrentTimeZone(obj as ComboBox);
+                // очистить содержание представления
+                clear();
+            }
         }
 
         /// <summary>
@@ -436,8 +440,9 @@ namespace PluginTaskReaktivka
             (PanelManagementReak as PanelManagementReaktivka).SetPeriod(Session.m_currIdPeriod);
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
-            // очистить содержание представления
-            clear();
+            if (m_bflgClear)
+                // очистить содержание представления
+                clear();
         }
 
         /// <summary>
@@ -511,8 +516,7 @@ namespace PluginTaskReaktivka
             }
             else
                 // очистить содержание представления
-                m_dgvReak.ClearValues()
-                ;
+                m_dgvReak.ClearValues();
         }
 
         /// <summary>
@@ -541,76 +545,76 @@ namespace PluginTaskReaktivka
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
 
-            clear();
             Session.SetRangeDatetime(dtBegin, dtEnd);
 
-            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
-              , new int[] {
+            if (m_bflgClear)
+            {
+                clear();
+                dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
+                  , new int[] {
                     m_id_panel
                     , (int)Session.m_currIdPeriod }
-              , out err);
+                  , out err);
 
-            IEnumerable<DataRow> listParameter = ListParameter.Select(x => x);
+                IEnumerable<DataRow> listParameter = ListParameter.Select(x => x);
 
-            foreach (DataRow r in listParameter)
-            {
-                id_alg = (int)r[@"ID_ALG"];
-                n_alg = r[@"N_ALG"].ToString().Trim();
-                // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
-                if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
-                    // добавить в список идентификатор параметра алгоритма расчета
-                    m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
-            }
+                foreach (DataRow r in listParameter)
+                {
+                    id_alg = (int)r[@"ID_ALG"];
+                    n_alg = r[@"N_ALG"].ToString().Trim();
+                    // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
+                    if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
+                        // добавить в список идентификатор параметра алгоритма расчета
+                        m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
+                }
 
-            // получить значения для настройки визуального отображения
-            if (dictVisualSettings.ContainsKey(n_alg) == true)
-            {// установленные в проекте
-                ratio = dictVisualSettings[n_alg.Trim()].m_ratio;
-                round = dictVisualSettings[n_alg.Trim()].m_round;
-            }
-            else
-            {// по умолчанию
-                ratio = HTepUsers.s_iRatioDefault;
-                round = HTepUsers.s_iRoundDefault;
-            }
-
-            m_dgvReak.ClearRows();
-
-            for (int i = 0; i < DaysInMonth + 1; i++)
-            {
-                if (m_dgvReak.Rows.Count != DaysInMonth)
-                    m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
-                            {
-                                m_idAlg = id_alg
-                                ,
-                                //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                                //,
-                                m_Value = dt.AddDays(i).ToShortDateString()
-                                ,
-                                m_vsRatio = ratio
-                                ,
-                                m_vsRound = round
-                            });
+                // получить значения для настройки визуального отображения
+                if (dictVisualSettings.ContainsKey(n_alg) == true)
+                {// установленные в проекте
+                    ratio = dictVisualSettings[n_alg.Trim()].m_ratio;
+                    round = dictVisualSettings[n_alg.Trim()].m_round;
+                }
                 else
-                    m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
-                    {
-                        m_idAlg = id_alg
-                        ,
-                        //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                        //,
-                        m_Value = "ИТОГО"
-                        ,
-                        m_vsRatio = ratio
-                        ,
-                        m_vsRound = round
-                    }
-                    , DaysInMonth);
+                {// по умолчанию
+                    ratio = HTepUsers.s_iRatioDefault;
+                    round = HTepUsers.s_iRoundDefault;
+                }
+
+                m_dgvReak.ClearRows();
+
+                for (int i = 0; i < DaysInMonth + 1; i++)
+                {
+                    if (m_dgvReak.Rows.Count != DaysInMonth)
+                        m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
+                                {
+                                    m_idAlg = id_alg
+                                    ,
+                                    //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                                    //,
+                                    m_Value = dt.AddDays(i).ToShortDateString()
+                                    ,
+                                    m_vsRatio = ratio
+                                    ,
+                                    m_vsRound = round
+                                });
+                    else
+                        m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
+                        {
+                            m_idAlg = id_alg
+                            ,
+                            //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                            //,
+                            m_Value = "ИТОГО"
+                            ,
+                            m_vsRatio = ratio
+                            ,
+                            m_vsRound = round
+                        }
+                        , DaysInMonth);
+                }
             }
             m_dgvReak.Rows[dtBegin.Day - 1].Selected = true;
             m_currentOffSet = Session.m_curOffsetUTC;
-            //m_bflgClear = true;
-            foreach (DataGridViewColumn column in m_dgvReak.Columns)
-                column.SortMode = DataGridViewColumnSortMode.NotSortable;
         }
 
         /// <summary>
@@ -968,6 +972,7 @@ namespace PluginTaskReaktivka
             /// <param name="ev">Аргумент события</param>
             protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
             {
+                m_bflgClear = true;
                 HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
 
                 if (!(DateTimeRangeValue_Changed == null))
@@ -2173,7 +2178,6 @@ namespace PluginTaskReaktivka
                 else ;
             //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
             // или в этом же плюгИне измененить/сохраннить индивидуальные настройки
-            ;
             //Изменить структуру 'DataGridView'          
             (m_dgvReak as DGVReaktivka).UpdateStructure(ev);
         }
