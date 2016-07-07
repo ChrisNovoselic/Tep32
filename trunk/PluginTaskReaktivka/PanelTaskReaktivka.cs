@@ -119,8 +119,6 @@ namespace PluginTaskReaktivka
             {
                 if (_panelManagement == null)
                     _panelManagement = createPanelManagement();
-                else
-                    ;
 
                 return _panelManagement;
             }
@@ -221,12 +219,6 @@ namespace PluginTaskReaktivka
         /// <param name="e"></param>
         void m_dgvReak_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
-            int err = -1;
-            //float value = 0F;
-            //value = Convert.ToSingle(e.Value);
-            //(sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = value.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-            //                        System.Globalization.CultureInfo.InvariantCulture);
-            //m_dgvReak.SummValue(e.ColumnIndex, e.RowIndex, e.Value.ToString());
 
         }
 
@@ -267,7 +259,7 @@ namespace PluginTaskReaktivka
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
 
             DataRow[] drTZ =
-                HandlerDb.GetProfilesContext().Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + (int)HTepUsers.Role);
+                HandlerDb.GetProfilesContext().Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_TAB = " + findMyIDTab());
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
                 switch (id)
@@ -426,9 +418,7 @@ namespace PluginTaskReaktivka
                     if (active == false)
                         PanelManagementReak.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
                     else
-                        ;
-            else
-                throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
+                        throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
 
         /// <summary>
@@ -506,11 +496,7 @@ namespace PluginTaskReaktivka
                             m_arTableDictPrjs[i].Clear();
                             m_arTableDictPrjs[i] = null;
                         }
-                        else
-                            ;
                     }
-                else
-                    ;
 
                 cbx = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
@@ -554,6 +540,7 @@ namespace PluginTaskReaktivka
             string n_alg = string.Empty;
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
+
             clear();
             Session.SetRangeDatetime(dtBegin, dtEnd);
 
@@ -578,8 +565,8 @@ namespace PluginTaskReaktivka
             // получить значения для настройки визуального отображения
             if (dictVisualSettings.ContainsKey(n_alg) == true)
             {// установленные в проекте
-                ratio = dictVisualSettings[n_alg].m_ratio;
-                round = dictVisualSettings[n_alg].m_round;
+                ratio = dictVisualSettings[n_alg.Trim()].m_ratio;
+                round = dictVisualSettings[n_alg.Trim()].m_round;
             }
             else
             {// по умолчанию
@@ -722,7 +709,6 @@ namespace PluginTaskReaktivka
                 HandlerDb.SaveValues(m_TableOrigin, valuesFence, (int)Session.m_currIdTimezone, out err);
 
             saveInvalValue(out err);
-            //base.HPanelTepCommon_btnSave_Click(obj, ev);
         }
 
         /// <summary>
@@ -986,8 +972,6 @@ namespace PluginTaskReaktivka
 
                 if (!(DateTimeRangeValue_Changed == null))
                     DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
-                else
-                    ;
             }
 
             /// <summary>
@@ -1273,8 +1257,6 @@ namespace PluginTaskReaktivka
                     else
                         clbx.ItemCheck -= onItemCheck;
                 }
-                else
-                    ;
             }
 
             /// <summary>
@@ -1347,63 +1329,6 @@ namespace PluginTaskReaktivka
             {
                 ItemCheck(new ItemCheckedParametersEventArgs(idItem, indxIdDeny, checkState));
             }
-
-            /// <summary>
-            /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
-            /// </summary>
-            protected class CheckedListBoxTaskTepValues : CheckedListBox, IControl
-            {
-                /// <summary>
-                /// Список для хранения идентификаторов переменных
-                /// </summary>
-                private List<int> m_listId;
-
-                public CheckedListBoxTaskTepValues()
-                    : base()
-                {
-                    m_listId = new List<int>();
-                }
-
-                /// <summary>
-                /// Идентификатор выбранного элемента списка
-                /// </summary>
-                public int SelectedId { get { return m_listId[SelectedIndex]; } }
-
-                /// <summary>
-                /// Добавить элемент в список
-                /// </summary>
-                /// <param name="text">Текст подписи элемента</param>
-                /// <param name="id">Идентификатор элемента</param>
-                /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
-                public void AddItem(int id, string text, bool bChecked)
-                {
-                    Items.Add(text, bChecked);
-                    m_listId.Add(id);
-                }
-
-                /// <summary>
-                /// Удалить все элементы в списке
-                /// </summary>
-                public void ClearItems()
-                {
-                    Items.Clear();
-                    m_listId.Clear();
-                }
-
-                /// <summary>
-                /// 
-                /// </summary>
-                /// <param name="id"></param>
-                /// <returns></returns>
-                public string GetNameItem(int id)
-                {
-                    string strRes = string.Empty;
-
-                    strRes = (string)Items[m_listId.IndexOf(id)];
-
-                    return strRes;
-                }
-            }
         }
 
         /// <summary>
@@ -1440,6 +1365,8 @@ namespace PluginTaskReaktivka
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 //Установить режим "невидимые" заголовки столбцов
                 ColumnHeadersVisible = true;
+                //Запрет изменения размера строк
+                AllowUserToResizeRows = false;
                 //Отменить возможность добавления строк
                 AllowUserToAddRows = false;
                 //Отменить возможность удаления строк
@@ -1576,9 +1503,6 @@ namespace PluginTaskReaktivka
                                 alignText = DataGridViewContentAlignment.MiddleLeft;
                                 autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
                             }
-                            else
-                                ;
-
                             column.Frozen = true;
                             column.ReadOnly = true;
                         }
@@ -1653,8 +1577,7 @@ namespace PluginTaskReaktivka
                     foreach (DataGridViewCell c in r.Cells)
                         if (r.Cells.IndexOf(c) > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) // нельзя удалять идентификатор параметра
                             c.Value = string.Empty;
-                        else
-                            ;
+
                 //??? если установить 'true' - редактирование невозможно
                 //ReadOnly = false;
 
@@ -1671,7 +1594,6 @@ namespace PluginTaskReaktivka
                 DataGridViewRow row = new DataGridViewRow();
                 if (m_dictPropertiesRows == null)
                     m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-                else ;
 
                 if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
                     m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
@@ -1761,8 +1683,7 @@ namespace PluginTaskReaktivka
             {
                 Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
                 int indx = -1
-                    , cIndx = -1
-                    , rKey = -1;
+                    , cIndx = -1;
                 bool bItemChecked = item.m_newCheckState == CheckState.Checked ? true :
                     item.m_newCheckState == CheckState.Unchecked ? false :
                         false;
@@ -1796,7 +1717,6 @@ namespace PluginTaskReaktivka
                             break;
                     }
                 }
-                else ; // нет элемента для изменения стиля
             }
 
             /// <summary>
@@ -1829,14 +1749,10 @@ namespace PluginTaskReaktivka
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
-                                //if (iRowCount < enumTime.Count())
-                                //{
                                 iRowCount++;
-                                idAlg = (int)row.Cells["ALG"].Value;//??
+                                idAlg = (int)row.Cells["ALG"].Value;
                                 parameterRows =
-                                source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp
-                                    //+ " AND WR_DATETIME = '{0:o}'", Convert.ToDateTime(row.Cells["Date"].Value).AddMinutes(-m_currentOffSet))
-                                    ));
+                                source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
 
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
@@ -1856,7 +1772,6 @@ namespace PluginTaskReaktivka
                                             System.Globalization.CultureInfo.InvariantCulture);
                                         dbSumVal += dblVal;
                                     }
-                                    //}
                                 }
                             }
                             else
@@ -1879,17 +1794,16 @@ namespace PluginTaskReaktivka
             public void SumValue(int indxCol, int indxRow)
             {
                 int idAlg = -1;
-                double sumValue = 0F;
+                double sumValue = 0F
+                    , value;
 
                 idAlg = (int)Rows[indxRow].Cells[0].Value;
 
                 foreach (DataGridViewRow row in Rows)
                     if (Rows.Count - 1 != row.Index)
-                        if (row.Cells[indxCol].Value != null)
-                            if (row.Cells[indxCol].Value.ToString() != "")
-                                //sumValue = Rows.Cast<DataGridViewRow>().Sum(r => Convert.ToDouble(r.Cells[indxCol].Value.ToString().Replace('.', ',')));
-                                sumValue += Convert.ToDouble(row.Cells[indxCol].Value.ToString().Replace('.', ','));
-                            else ;
+                        if (double.TryParse(row.Cells[indxCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
+                            //sumValue = Rows.Cast<DataGridViewRow>().Sum(r => Convert.ToDouble(r.Cells[indxCol].Value.ToString().Replace('.', ',')));
+                            sumValue += value;
                         else ;
                     else
                         row.Cells[indxCol].Value = sumValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
@@ -1899,10 +1813,10 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// Сохранение знчений отображения в табилцу
+            /// Сохранение значений отображения в табилцу
             /// </summary>
             /// <returns>таблица с данными</returns>
-            public DataTable GetValue(DataTable dtSourceOrg, DataTable dtSourceEdit, int idSession)
+            public DataTable GetValue(DataTable dtSourceOrg, int idSession)
             {
                 int i = 0,
                     idAlg = -1,
@@ -1911,10 +1825,8 @@ namespace PluginTaskReaktivka
                 double valueToRes = 0;
                 DateTime dtVal;
 
-                if (dtSourceEdit == null)
-                {
-                    dtSourceEdit = new DataTable();
-                    dtSourceEdit.Columns.AddRange(new DataColumn[] {
+                DataTable dtSourceEdit = new DataTable();
+                dtSourceEdit.Columns.AddRange(new DataColumn[] {
                         new DataColumn (@"ID_PUT", typeof (int))
                         , new DataColumn (@"ID_SESSION", typeof (long))
                         , new DataColumn (@"QUALITY", typeof (int))
@@ -1922,9 +1834,6 @@ namespace PluginTaskReaktivka
                         , new DataColumn (@"WR_DATETIME", typeof (DateTime))
                         , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
                     });
-                }
-                else
-                    dtSourceEdit.Rows.Clear();
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
@@ -1932,28 +1841,29 @@ namespace PluginTaskReaktivka
                         foreach (DataGridViewRow row in Rows)
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
-                                if (row.Cells[col.Index].Value.ToString() != "")
-                                {
-                                    idAlg = (int)row.Cells["ALG"].Value;//??
-                                    valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
-                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                if (row.Cells[col.Index].Value != null)
+                                    if (row.Cells[col.Index].Value.ToString() != "")
+                                    {
+                                        idAlg = (int)row.Cells["ALG"].Value;//??
+                                        valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
+                                        vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
 
-                                    valueToRes *= Math.Pow(10F, vsRatioValue);
-                                    dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
+                                        valueToRes *= Math.Pow(10F, vsRatioValue);
+                                        dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
 
-                                    quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
+                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
 
-                                    dtSourceEdit.Rows.Add(new object[] 
+                                        dtSourceEdit.Rows.Add(new object[] 
                                     {
                                         col.m_iIdComp
                                         , idSession
                                         , quality
                                         , valueToRes                 
-                                        , dtVal.AddMinutes(-m_currentOffSet).ToString(CultureInfo.InvariantCulture)
+                                        , dtVal.AddMinutes(-m_currentOffSet).ToString("F",dtSourceEdit.Locale)
                                         , i
                                     });
-                                    i++;
-                                }
+                                        i++;
+                                    }
                         }
                 }
 
@@ -1978,15 +1888,14 @@ namespace PluginTaskReaktivka
                         foreach (DataGridViewRow row in Rows)
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
-                                if (row.Cells[iCol].Value != null)
-                                    if (row.Cells[iCol].Value.ToString() != "")
-                                    {
-                                        dblVal = Convert.ToDouble(row.Cells[iCol].Value.ToString().Replace('.', ','));
-                                        idAlg = (int)row.Cells["ALG"].Value;//??
-                                        vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                        row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                                    System.Globalization.CultureInfo.InvariantCulture);
-                                    }
+                                if (double.TryParse(row.Cells[iCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dblVal))
+                                {
+                                    //dblVal = double.Parse(row.Cells[iCol].Value.ToString(), System.Globalization.CultureInfo.InvariantCulture);
+                                    idAlg = (int)row.Cells["ALG"].Value;
+                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                    row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                                System.Globalization.CultureInfo.InvariantCulture);
+                                }
                         }
                     iCol++;
                 }
@@ -2346,7 +2255,7 @@ namespace PluginTaskReaktivka
             bool bflag = false;
 
             for (int i = 0; i < dtRange.Length; i++)
-                if (dtRange[i].End.Month > DateTime.Now.Month)
+                if (dtRange[i].Begin.Month > DateTime.Now.Month)
                     if (dtRange[i].End.Year >= DateTime.Now.Year)
                         bflag = true;
 
@@ -2436,7 +2345,7 @@ namespace PluginTaskReaktivka
         {
             get
             { //сохранить вх. знач. в DataTable
-                return m_dgvReak.GetValue(m_TableOrigin, m_TableEdit, (int)Session.m_Id);
+                return m_dgvReak.GetValue(m_TableOrigin, (int)Session.m_Id);
             }
         }
 
@@ -2451,8 +2360,6 @@ namespace PluginTaskReaktivka
 
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
-            else
-                ;
 
             strRes = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
@@ -2575,9 +2482,7 @@ namespace PluginTaskReaktivka
             for (int i = 0; i < origin.Rows.Count; i++)
                 for (int j = 0; j < edit.Rows.Count; j++)
                     if (origin.Rows[i]["Value"].Equals(edit.Rows[j]["Value"]))
-                    {
                         edit.Rows.RemoveAt(j);
-                    }
 
             return edit;
         }
@@ -2590,6 +2495,22 @@ namespace PluginTaskReaktivka
             deleteSession();
 
             base.Stop();
+        }
+
+        /// <summary>
+        /// Поиск ид панели
+        /// </summary>
+        /// <returns>key</returns>
+        private int findMyIDTab()
+        {
+            int Res = 0;
+            Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
+
+            foreach (var item in dictRegId)
+                if (item.Value == this.GetType())
+                    Res = item.Key;
+
+            return Res;
         }
     }
 }

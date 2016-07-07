@@ -118,13 +118,12 @@ namespace PluginTaskReaktivka
                             + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)idPeriod //+ " AND [ID_SOURCE] > 0 "
+                            + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
                     if (bLastItem == true)
                         bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
-                    else
-                        ;
 
                     if (bEquDatetime == false)
                         strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
@@ -132,8 +131,6 @@ namespace PluginTaskReaktivka
 
                     if (bLastItem == false)
                         strRes += @" UNION ALL ";
-                    else
-                        ;
                 }
 
                 strRes = "" + @"SELECT v.ID_PUT"
@@ -319,7 +316,9 @@ namespace PluginTaskReaktivka
                                 arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
                             else
                                 // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End,
+                                   new DateTime(arRangesRes[i - 1].End.Year,arRangesRes[i - 1].End.AddMonths(1).Month,DateTime.DaysInMonth(arRangesRes[i - 1].End.Year,arRangesRes[i - 1].End.AddMonths(1).Month)));
+                                    //HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
             else
                 if (bEndMonthBoudary == true)
                     // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
@@ -430,7 +429,8 @@ namespace PluginTaskReaktivka
                     + @" WHERE  ID_TASK = " + (int)IdTask
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND v.ID_TIME = " + (int)idPeriod;
+                    + @" AND v.ID_TIME = " + (int)idPeriod
+                    + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";
