@@ -1284,21 +1284,24 @@ namespace PluginTaskAutobook
                     m_workBook.AfterSave += workBook_AfterSave;
                     m_workBook.BeforeClose += workBook_BeforeClose;
                     m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("Autobook");
+                    int indxRow = 1;
 
                     try
                     {
                         for (int i = 0; i < dgView.Columns.Count; i++)
                         {
-                            int indxRow = 0;
-                            Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[i + 1];
+                            if (dgView.Columns[i].HeaderText != "")
+                            {
+                                Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxRow];
 
-                            foreach (Excel.Range cell in colRange.Cells)
-                                if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
-                                {
-                                    fillSheetExcel(colRange, dgView, i, cell.Row);
-                                    break;
-                                }
-                            indxRow++;
+                                foreach (Excel.Range cell in colRange.Cells)
+                                    if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
+                                    {
+                                        fillSheetExcel(colRange, dgView, i, cell.Row);
+                                        break;
+                                    }
+                                indxRow++;
+                            }
                         }
                         setPlanMonth(m_wrkSheet, dgView, dtRange);
                         m_excApp.Visible = true;
