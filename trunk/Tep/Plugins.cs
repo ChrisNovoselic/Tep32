@@ -170,17 +170,27 @@ namespace Tep64
             public int GetKeyOfIdFPanel(int idFPanel)
             {
                 int iRes = -1;
-                // цикл по всем загруженным плюгИнам
-                foreach (KeyValuePair<int, PlugInBase> pair in this)
-                    // проверить регистрацию панели в плюгИне
-                    if (pair.Value.IsRegistred(idFPanel) == true)
-                    {
-                        iRes = pair.Key;
+                KeyValuePair<int, PlugInBase>? pairRes = null;
 
-                        break;
-                    }
-                    else
-                        ;
+                // цикл по всем загруженным плюгИнам - проверить регистрацию панели в плюгИне
+                pairRes = this.FirstOrDefault(item => { return item.Value.IsRegistred(idFPanel) == true; });
+
+                if (!(pairRes == null))
+                    iRes = pairRes.GetValueOrDefault().Key;
+                else
+                    ;
+
+                //// цикл по всем загруженным плюгИнам
+                //foreach (KeyValuePair<int, PlugInBase> pair in this)
+                //    // проверить регистрацию панели в плюгИне
+                //    if (pair.Value.IsRegistred(idFPanel) == true)
+                //    {
+                //        iRes = pair.Key;
+
+                //        break;
+                //    }
+                //    else
+                //        ;
 
                 return iRes;
             }

@@ -82,7 +82,7 @@ namespace TepCommon
 
             m_handlerDb = createHandlerDb();
 
-            m_id_panel = FindMyID();
+            m_id_panel = findMyID();
         }
 
         private void InitializeComponent()
@@ -105,24 +105,41 @@ namespace TepCommon
         {
             return new HandlerDbValues();
         }
-
-        private int FindMyID()
+        /// <summary>
+        /// Найти идентификатор типа текущей панели
+        ///  , зарегистрированного в библиотеке
+        /// </summary>
+        /// <returns>Идентификатор типа панели</returns>
+        private int findMyID()
         {
-            int Res = -1;
+            int iRes = -1;
+            Type myType = Type.Missing as Type;
 
-            Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
+            myType = this.GetType();
 
-            foreach (var item in dictRegId)
-            {
-                if (item.Value == this.GetType())
-                {
-                    Res = item.Key;
-                }
-            }
+            //Вариант №1
+            KeyValuePair<int, Type>? pairRes = null;
 
-            return Res;
+            pairRes = (_iFuncPlugin as PlugInBase).GetRegisterTypes().First(item => { return item.Value == myType; });
+
+            if (!(pairRes == null))
+                iRes = pairRes.GetValueOrDefault().Key;
+            else
+                ;
+
+            ////Вариант №2
+            //Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
+
+            //foreach (var item in dictRegId)
+            //{
+            //    if (item.Value == myType)
+            //    {
+            //        iRes = item.Key;
+            //    }
+            //}
+
+            return iRes;
         }
-
 
         protected void initializeDescPanel()
         {
@@ -382,8 +399,6 @@ namespace TepCommon
                 MessageBox.Show(e.Message);
             }
             SetDescSelRow(desc, name);
-
-
         }
 
         protected void SetDescSelRow(string desc, string name)

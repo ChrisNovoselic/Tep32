@@ -566,6 +566,7 @@ namespace Tep64
             bool bMenuItemChecked =
             ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked =
                 ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
+            bool bTabRemoved = false;
 
             if (bMenuItemChecked == true)
             {
@@ -576,7 +577,11 @@ namespace Tep64
                 m_TabCtrl.AddTabPage((Control)plugIn.GetObject(idFPanel), plugIn.GetNameMenuItem(idFPanel), idFPanel, HTabCtrlEx.TYPE_TAB.FIXED);
             } else {
                 //Закрыть вкладку
-                m_TabCtrl.RemoveTabPage(); //plugIn.GetNameMenuItem(idFPanel)
+                bTabRemoved = m_TabCtrl.RemoveTabPage(m_TabCtrl.IndexOfID(idFPanel)); //plugIn.GetNameMenuItem(idFPanel)
+                if (bTabRemoved == false)
+                    Logging.Logg().Warning(@"FormMain::postOnClickMenuItem (idFPanel = " + idFPanel + @") - вкладка не была закрыта...", Logging.INDEX_MESSAGE.NOT_SET);
+                else
+                    ;
             }
 
             if (m_iAutoActionTabs > 0)
@@ -711,8 +716,7 @@ namespace Tep64
 
         private void TabCtrl_EventPrevSelectedIndexChanged(int iPrevSelectedindex)
         {
-            //'Activate(false)' и 'Stop' вызываются в 'PlugIn'-е
-            //activatePlugIn (m_TabCtrl.GetTabPageId(iPrevSelectedindex), false);
+            //??? 'Activate(false)' и 'Stop' вызываются в 'PlugIn'-е
             activateFPanel(m_TabCtrl.GetTabPageId(iPrevSelectedindex), false);
             activateFPanel (m_TabCtrl.GetTabPageId(), true);
         }
