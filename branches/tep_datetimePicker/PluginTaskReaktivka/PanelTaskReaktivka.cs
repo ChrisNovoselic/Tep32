@@ -261,7 +261,7 @@ namespace PluginTaskReaktivka
                         INDEX_ID.DENY_COMP_VISIBLED
                     };
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
-
+            //
             DataRow[] drTZ =
                 HandlerDb.GetProfilesContext().Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_TAB = " + findMyIDTab());
 
@@ -345,7 +345,7 @@ namespace PluginTaskReaktivka
 
                     (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
                     Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][1]);//??
-                    (PanelManagementReak as PanelManagementReaktivka).SetPeriod(Session.m_currIdPeriod);
+                    (PanelManagementReak as PanelManagementReaktivka).SetPeriod(ID_PERIOD.MONTH);
                     (ctrl as ComboBox).Enabled = false;
 
                 }

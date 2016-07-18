@@ -66,7 +66,11 @@ namespace PluginTaskAutobook
             COUNT
         }
         /// <summary>
-        /// 
+        /// Перечисление - режимы работы вкладки
+        /// </summary>
+        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
+        /// <summary>
+        /// Перечисление - столбцы отображения
         /// </summary>
         public enum INDEX_GTP : int
         {
@@ -88,11 +92,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Набор элементов
         /// </summary>
-        protected enum INDEX_CONTROL
-        {
-            UNKNOWN = -1,
-            DGV_DATA, LABEL_DESC
-        }
+        protected enum INDEX_CONTROL { UNKNOWN = -1, DGV_DATA, LABEL_DESC }
         /// <summary>
         /// Индексы массива списков идентификаторов
         /// </summary>
@@ -109,10 +109,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        protected enum INDEX_CONTEXT
-        {
-            ID_CON = 10
-        }
+        protected enum INDEX_CONTEXT { ID_CON = 10 }
         /// <summary>
         /// Значения параметров сессии
         /// </summary>
@@ -371,10 +368,9 @@ namespace PluginTaskAutobook
                     else
                     {// для добавлямых столбцов
                         if (idPut < 0)
-                        {// для служебных столбцов
-
-                            //column.Frozen = true;
-                        }
+                            // для служебных столбцов
+                            //column.Frozen = true
+                            ;
                     }
 
                     column.ReadOnly = bRead;
@@ -403,12 +399,20 @@ namespace PluginTaskAutobook
             public void AddIdComp(int idPut, string nameCol)
             {
                 foreach (HDataGridViewColumn col in Columns)
-                {
                     if (col.Name == nameCol)
-                    {
                         col.m_iIdComp = idPut;
-                    }
-                }
+            }
+
+            /// <summary>
+            /// Установка возможности редактирования столбцов
+            /// </summary>
+            /// <param name="bRead">true/false</param>
+            /// <param name="nameCol">имя стобца</param>
+            public void AddBRead(bool bRead, string nameCol)
+            {
+                foreach (HDataGridViewColumn col in Columns)
+                    if (col.Name == nameCol)
+                        col.ReadOnly = bRead;
             }
 
             /// <summary>
@@ -480,9 +484,7 @@ namespace PluginTaskAutobook
             public void ClearRows()
             {
                 if (Rows.Count > 0)
-                {
                     Rows.Clear();
-                }
             }
 
             /// <summary>
@@ -1089,8 +1091,14 @@ namespace PluginTaskAutobook
         /// </summary>
         public class ReportsToNSS
         {
+            /// <summary>
+            /// Экземпляр класса
+            /// </summary>
             CreateMessage m_crtMsg;
 
+            /// <summary>
+            /// Конструктор класса
+            /// </summary>
             public ReportsToNSS()
             {
                 m_crtMsg = new CreateMessage();
@@ -1185,16 +1193,16 @@ namespace PluginTaskAutobook
             /// Содание тела сообщения
             /// </summary>
             /// <param name="sourceTable">таблица с данными</param>
-            /// <param name="dtRange">дата</param>
+            /// <param name="dtSend">дата</param>
             private void createBodyToSend(ref string sbjct
                 , ref string bodyMsg
                 , DataTable sourceTable
-                , DateTimeRange dtRange)
+                , DateTime dtSend)
             {
                 DataRow[] drReportDay;
                 DateTime reportDate;
 
-                reportDate = dtRange.Begin.AddHours(6).Date;//??
+                reportDate = dtSend.AddHours(6).Date;//??
                 drReportDay =
                     sourceTable.Select(String.Format(sourceTable.Locale, @"WR_DATETIME = '{0:o}'", reportDate));
 
@@ -1229,14 +1237,14 @@ namespace PluginTaskAutobook
             /// Создание. Подготовка. Отправка письма.
             /// </summary>
             /// <param name="sourceTable">таблица с данными</param>
-            /// <param name="dtRange">выбранный промежуток</param>
+            /// <param name="dtSend">выбранный промежуток</param>
             /// <param name="to">получатель</param>
-            public void SendMailToNSS(DataTable sourceTable, DateTimeRange dtRange, string to)
+            public void SendMailToNSS(DataTable sourceTable, DateTime dtSend, string to)
             {
                 string bodyMsg = string.Empty
                  , sbjct = string.Empty;
 
-                createBodyToSend(ref sbjct, ref bodyMsg, sourceTable, dtRange);
+                createBodyToSend(ref sbjct, ref bodyMsg, sourceTable, dtSend);
 
                 if (sbjct != "")
                     m_crtMsg.FormingMessage(sbjct, bodyMsg, to);
@@ -1248,8 +1256,17 @@ namespace PluginTaskAutobook
         /// </summary>
         public class ReportExcel
         {
+            /// <summary>
+            /// Экземпляп приложения Excel
+            /// </summary>
             private Excel.Application m_excApp;
+            /// <summary>
+            /// Экземпляр книги Excel
+            /// </summary>
             private Excel.Workbook m_workBook;
+            /// <summary>
+            /// Экземпляр листа Excel
+            /// </summary>
             private Excel.Worksheet m_wrkSheet;
             private object _missingObj = System.Reflection.Missing.Value;
 
@@ -1470,7 +1487,7 @@ namespace PluginTaskAutobook
                 UNKNOWN = -1,
                 BUTTON_SEND, BUTTON_SAVE,
                 BUTTON_LOAD, BUTTON_EXPORT,
-                TXTBX_EMAIL,
+                TXTBX_EMAIL, CALENDAR,
                 CBX_PERIOD, CBX_TIMEZONE,
                 HDTP_BEGIN, HDTP_END,
                 MENUITEM_UPDATE, MENUITEM_HISTORY,
@@ -1554,9 +1571,9 @@ namespace PluginTaskAutobook
                 //Дата/время  окончания периода расчета - подпись
                 Label lEndPer = new Label();
                 lEndPer.Dock = DockStyle.Top;
-                lEndPer.Text = @"Дата/время  окончания периода расчета:";
+                lEndPer.Text = @"Дата/время окончания периода расчета:";
                 //Дата/время  окончания периода расчета - значение
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(1)
+                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(-1)
                     , tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
@@ -1576,7 +1593,7 @@ namespace PluginTaskAutobook
                 ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
                 ctrl.Dock = DockStyle.Top;
-                //Кнопка - импортировать
+                //Кнопка - Отправить
                 Button ctrlBSend = new Button();
                 ctrlBSend.Name = INDEX_CONTROL_BASE.BUTTON_SEND.ToString();
                 ctrlBSend.Text = @"Отправить";
@@ -1587,7 +1604,7 @@ namespace PluginTaskAutobook
                 ctrlBsave.Name = INDEX_CONTROL_BASE.BUTTON_SAVE.ToString();
                 ctrlBsave.Text = @"Сохранить";
                 ctrlBsave.Dock = DockStyle.Top;
-                //
+                //Кнопка - Экспорт
                 Button ctrlExp = new Button();
                 ctrlExp.Name = INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString();
                 ctrlExp.Text = @"Экспорт";
@@ -1597,6 +1614,15 @@ namespace PluginTaskAutobook
                 ctrlTxt.Name = INDEX_CONTEXT.ID_CON.ToString();
                 //ctrlTxt.Text = @"Pasternak_AS@sibeco.su";
                 ctrlTxt.Dock = DockStyle.Top;
+                //Календарь
+                DateTimePicker dtPickerCalendar = new DateTimePicker();
+                dtPickerCalendar.Name = INDEX_CONTROL_BASE.CALENDAR.ToString();
+                dtPickerCalendar.Dock = DockStyle.Fill;
+                dtPickerCalendar.DropDownAlign = LeftRightAlignment.Right;
+                dtPickerCalendar.Format = DateTimePickerFormat.Custom;
+                dtPickerCalendar.Width = 125;
+                dtPickerCalendar.CustomFormat = "dd MMM, yyyy";
+                //dtPickerCalendar.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
 
                 TableLayoutPanel tlpButton = new TableLayoutPanel();
                 tlpButton.Dock = DockStyle.Fill;
@@ -1605,10 +1631,11 @@ namespace PluginTaskAutobook
                 tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
                 tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
                 tlpButton.Controls.Add(ctrl, 0, 0);
-                tlpButton.Controls.Add(ctrlBSend, 1, 0);
                 tlpButton.Controls.Add(ctrlBsave, 0, 1);
-                tlpButton.Controls.Add(ctrlTxt, 1, 1);
-                tlpButton.Controls.Add(ctrlExp, 0, 2);
+                tlpButton.Controls.Add(ctrlTxt, 0, 2);
+                tlpButton.Controls.Add(ctrlBSend, 1, 0);
+                tlpButton.Controls.Add(ctrlExp, 1, 1);
+                tlpButton.Controls.Add(dtPickerCalendar, 1, 2);
                 this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
                 this.SetColumnSpan(tlpButton, 4); this.SetRowSpan(tlpButton, 3);
 
@@ -1751,9 +1778,10 @@ namespace PluginTaskAutobook
                 new EventHandler(PanelTaskAutobookMonthValue_btnsend_Click);
             (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
                  new EventHandler(PanelTaskAutobookMonthValues_btnexport_Click);
+            //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CALENDAR.ToString(), true)[0] as Button).
 
             m_dgvAB.CellParsing += dgvAB_CellParsing;
-            m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
+            //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
         }
 
         /// <summary>
@@ -1795,14 +1823,12 @@ namespace PluginTaskAutobook
         void PanelTaskAutobookMonthValue_btnsend_Click(object sender, EventArgs e)
         {
             m_rptsNSS = new ReportsToNSS();
-            int err = -1;
-            string toSend = (Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0] as TextBox).Text;
-            DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            m_dgvAB.FillTableValueDay(m_dgvAB);
+            string toSend = (Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0] as TextBox).Text;
+            DateTime dtSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CALENDAR.ToString(), true)[0] as DateTimePicker).Value;
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = m_dgvAB.FillTableValueDay(m_dgvAB);
             //
-            m_rptsNSS.SendMailToNSS(m_TableEdit, Session.m_rangeDatetime, toSend);//??tableOrign
+            m_rptsNSS.SendMailToNSS(m_TableEdit, dtSend, toSend);
         }
 
         /// <summary>
@@ -2148,8 +2174,10 @@ namespace PluginTaskAutobook
             m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
             int role = (int)HTepUsers.Role;
 
+            DataRow[] drEdtCol =
+                HTepUsers.GetProfileUser_Tab(findMyID()).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.EDIT_COLUMN + " AND ID_EXT = " + HTepUsers.Role);
             DataRow[] drTZ =
-                HandlerDb.GetProfilesContext().Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_TAB = " + findMyID());
+               HTepUsers.GetProfileUser_Tab(findMyID()).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + HTepUsers.Role);
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
                 switch (id)
@@ -2191,6 +2219,19 @@ namespace PluginTaskAutobook
                 tCount++;
             }
 
+            if (drEdtCol.Count() > 0)
+            {
+                if (int.Parse(drEdtCol[0]["VALUE"].ToString()) == (int)MODE_CORRECT.ENABLE)
+                    for (int j = (int)INDEX_GTP.CorGTP12; j < (int)INDEX_GTP.COUNT; j++)
+                        m_dgvAB.AddBRead(true, namePut.GetValue(j).ToString());
+                else
+                    for (int j = (int)INDEX_GTP.CorGTP12; j < (int)INDEX_GTP.COUNT; j++)
+                        m_dgvAB.AddBRead(false, namePut.GetValue(j).ToString());
+            }
+            else
+                for (int j = (int)INDEX_GTP.CorGTP12; j < (int)INDEX_GTP.COUNT; j++)
+                    m_dgvAB.AddBRead(false, namePut.GetValue(j).ToString());
+
             m_dgvAB.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
             if (err == 0)
@@ -2214,7 +2255,7 @@ namespace PluginTaskAutobook
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
                     (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
                     Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][1]);//??
-                    (PanelManagementAB as PanelManagementAutobook).SetPeriod(Session.m_currIdPeriod);
+                    (PanelManagementAB as PanelManagementAutobook).SetPeriod(ID_PERIOD.MONTH);//(Session.m_currIdPeriod);//
                     (ctrl as ComboBox).Enabled = false;
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
@@ -2548,12 +2589,8 @@ namespace PluginTaskAutobook
             m_TableEdit, (ctrl as ComboBox).SelectedIndex, out err);
 
             if (m_TableEdit.Rows.Count > 0)
-            {
                 //save вх. значений
                 saveInvalValue((ctrl as ComboBox).SelectedIndex, out err);
-                //base.HPanelTepCommon_btnSave_Click(obj, ev);
-            }
-
         }
 
         /// <summary>

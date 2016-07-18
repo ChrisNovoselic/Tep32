@@ -24,20 +24,26 @@ namespace TepCommon
         /// </summary>
         public enum ID_ALLOWED
         {
-            UNKNOWN = -1
-            , AUTO_LOADSAVE_USERPROFILE_ACCESS = 1 //Разрешение изменять свойство "Автоматическая загрузка/сохранение ..."
-            , AUTO_LOADSAVE_USERPROFILE_CHECKED //Автоматическая загрузка/сохранение списка идентификаторов вкладок, загружаемых автоматически
-            , USERPROFILE_PLUGINS //Список вкладок, загружаемых автоматически
-            , VISUAL_SETTING_VALUE_ROUND //Отображение значений, количество знаков после запятой
-            , VISUAL_SETTING_VALUE_RATIO //Отображение значений, множитель относительно базовой единицы измерения
-            , QUERY_TIMEZONE //Идентификатор часового пояса при запросе значений
-            ,
+            UNKNOWN = -1,
+            AUTO_LOADSAVE_USERPROFILE_ACCESS = 1, //Разрешение изменять свойство "Автоматическая загрузка/сохранение ..."
+            AUTO_LOADSAVE_USERPROFILE_CHECKED, //Автоматическая загрузка/сохранение списка идентификаторов вкладок, загружаемых автоматически
+            USERPROFILE_PLUGINS, //Список вкладок, загружаемых автоматически
+            VISUAL_SETTING_VALUE_ROUND, //Отображение значений, количество знаков после запятой
+            VISUAL_SETTING_VALUE_RATIO, //Отображение значений, множитель относительно базовой единицы измерения
+            QUERY_TIMEZONE, //Идентификатор часового пояса при запросе значений
+            ADRESS_MAIL_AUTOBOOK, //Адрес_эп_Активной_ээ  
+            PERIOD_IND, //Период_идентификатор  
+            EDIT_COLUMN //Редактирование_столбца                           
         };
         /// <summary>
         /// Перечисление - индексы в массиве - аргументе функции 'GetParameterVisualSettings'
         /// </summary>
-        public enum INDEX_VISUALSETTINGS_PARAMS { /*TASK, PLUGIN, */TAB, ITEM
-            , COUNT }
+        public enum INDEX_VISUALSETTINGS_PARAMS
+        { /*TASK, PLUGIN, */
+            TAB,
+            ITEM
+                , COUNT
+        }
         /// <summary>
         /// Конструктор основной - с  параметром
         /// </summary>
@@ -75,7 +81,7 @@ namespace TepCommon
                 , idFPanel = -1;
             //Сформировать список идентификаторов плюгинов
             DataRow[] rowsIsUse;
-            List <int> listIdParsedFPanel = new List<int> ();
+            List<int> listIdParsedFPanel = new List<int>();
 
             if (!(tableRoles.Columns.IndexOf(@"ID_FPANEL") < 0))
             {
@@ -153,7 +159,7 @@ namespace TepCommon
             DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out iRes);
 
             if (iRes == 0)
-                strRes = GetIdIsUseFPanels (ref dbConn, out iRes);
+                strRes = GetIdIsUseFPanels(ref dbConn, out iRes);
             else
                 ;
 
@@ -181,7 +187,7 @@ namespace TepCommon
                     //Прочитать наименования плюгинов
                     tableRes = DbTSQLInterface.Select(ref dbConn
                         ,
-                            //@"SELECT * FROM plugins WHERE ID IN ("
+                        //@"SELECT * FROM plugins WHERE ID IN ("
                             @"SELECT p.[ID] as [ID_PLUGIN], p.[NAME] as [NAME_PLUGIN] FROM plugins as p WHERE [ID] IN (SELECT [ID_PLUGIN] FROM [fpanels] WHERE [ID] IN ("
                                  + strIdFPanels + @")" + @")"
                         , null, null, out iRes);
@@ -281,11 +287,11 @@ namespace TepCommon
                                     + @")"
                                 + @" AND ((ID_EXT=" + Id + @" AND " + @"IS_ROLE=0)"
                                     + @" OR (ID_EXT=" + Role + @" AND " + @"IS_ROLE=1))"
-                                //+ @" AND ID_TASK=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TASK]
-                                //+ @" AND ID_PLUGIN=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.PLUGIN]
+                    //+ @" AND ID_TASK=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TASK]
+                    //+ @" AND ID_PLUGIN=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.PLUGIN]
                                 + @" AND ID_TAB=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]
                                 + @" AND ID_ITEM=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM]
-                                //+ @" AND CONTEXT=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.CONTEXT]
+                    //+ @" AND CONTEXT=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.CONTEXT]
                             + @" ORDER BY [ID_UNIT], [ID]"
                                 ;
 
@@ -302,7 +308,7 @@ namespace TepCommon
 
                         if (dictRes.ContainsKey(n_alg.Trim()) == false)
                         {
-                            rowsAlg = tblRes.Select(@"ID='" + n_alg+"'", @"ID_UNIT, IS_ROLE"); // приоритет значений для [IS_ROLE] = 0                            
+                            rowsAlg = tblRes.Select(@"ID='" + n_alg + "'", @"ID_UNIT, IS_ROLE"); // приоритет значений для [IS_ROLE] = 0                            
 
                             curSum = 0;
                             foreach (DataRow rAlg in rowsAlg)
@@ -346,14 +352,14 @@ namespace TepCommon
 
             return dictRes;
         }
-        
+
         protected class HTepProfiles : HProfiles
         {
             public HTepProfiles(int idListener, int id_role, int id_user)
                 : base(idListener, id_role, id_user)
             {
             }
-            
+
             /// <summary>
             /// Функция получения доступа
             /// </summary>
@@ -374,7 +380,7 @@ namespace TepCommon
                     case 1:
                         indxRowAllowed = 0;
                         break;
-                    default :
+                    default:
                         //В табл. с настройками возможность 'id' определена как для "роли", так и для "пользователя"
                         // требуется выбрать строку с 'IS_ROLE' == 0 (пользователя)
                         // ...
@@ -462,7 +468,7 @@ namespace TepCommon
             DataTable m_dt_profileUser = new DataTable();
 
             m_dt_profileUser = (DataTable)HTepProfiles.GetAllowed(id_tab);
-            
+
 
             return m_dt_profileUser;
         }
