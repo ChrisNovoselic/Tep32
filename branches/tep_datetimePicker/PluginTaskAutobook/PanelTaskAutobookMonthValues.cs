@@ -1571,13 +1571,6 @@ namespace PluginTaskAutobook
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 tlpValue.Controls.Add(lBeginCalcPer, 0, 0);
                 tlpValue.Controls.Add(ctrl, 0, 1);
-
-                //int cntDays = DateTime.DaysInMonth((tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-                //   (tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
-                //int today = (tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
-
-                //(tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value =
-                //    (tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
                 //Дата/время  окончания периода расчета - подпись
                 Label lEndPer = new Label();
                 lEndPer.Dock = DockStyle.Top;
@@ -1661,7 +1654,7 @@ namespace PluginTaskAutobook
             protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
             {
                 HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
-                
+
                 if (!(DateTimeRangeValue_Changed == null))
                     DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
             }
@@ -2341,6 +2334,7 @@ namespace PluginTaskAutobook
             string n_alg = string.Empty;
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
+            //
             settingDateRange();
             Session.SetRangeDatetime(dtBegin, dtEnd);
             // очистить содержание представления
@@ -2404,9 +2398,9 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Установка длительности периода 
         /// </summary>
-         private void settingDateRange()
+        private void settingDateRange()
         {
             int cntDays,
                 today = 0;
