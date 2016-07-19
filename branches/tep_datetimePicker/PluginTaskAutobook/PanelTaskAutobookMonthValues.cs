@@ -1563,17 +1563,27 @@ namespace PluginTaskAutobook
                 lBeginCalcPer.Dock = DockStyle.Bottom;
                 lBeginCalcPer.Text = @"Дата/время начала периода расчета:";
                 ////Дата/время начала периода расчета - значения
-                ctrl = new HDateTimePicker(s_dtDefaultAU, null);
+                int cntDays = DateTime.DaysInMonth(s_dtDefaultAU.Year, s_dtDefaultAU.Month);
+                int today = s_dtDefaultAU.Day;
+
+                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(-(today - 1)), null);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 tlpValue.Controls.Add(lBeginCalcPer, 0, 0);
                 tlpValue.Controls.Add(ctrl, 0, 1);
+
+                //int cntDays = DateTime.DaysInMonth((tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
+                //   (tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
+                //int today = (tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
+
+                //(tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value =
+                //    (tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
                 //Дата/время  окончания периода расчета - подпись
                 Label lEndPer = new Label();
                 lEndPer.Dock = DockStyle.Top;
                 lEndPer.Text = @"Дата/время окончания периода расчета:";
                 //Дата/время  окончания периода расчета - значение
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(-1)
+                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(cntDays - today)
                     , tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
@@ -1651,7 +1661,7 @@ namespace PluginTaskAutobook
             protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
             {
                 HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
-
+                
                 if (!(DateTimeRangeValue_Changed == null))
                     DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
             }
@@ -1664,6 +1674,11 @@ namespace PluginTaskAutobook
             {
                 HDateTimePicker hdtpBtimePer = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
                 , hdtpEndtimePer = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
+
+                int cntDays = DateTime.DaysInMonth(hdtpBtimePer.Value.Year,
+                   hdtpBtimePer.Value.Month);
+                int today = hdtpBtimePer.Value.Day;
+
                 //Выполнить запрос на получение значений для заполнения 'DataGridView'
                 switch (idPeriod)
                 {
@@ -1702,7 +1717,7 @@ namespace PluginTaskAutobook
                             , 0
                             , 0
                             , 0);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddMonths(1);
+                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddDays(cntDays - 1);
                         hdtpBtimePer.Mode =
                         hdtpEndtimePer.Mode =
                             HDateTimePicker.MODE.MONTH;
@@ -2326,7 +2341,7 @@ namespace PluginTaskAutobook
             string n_alg = string.Empty;
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
-
+            settingDateRange();
             Session.SetRangeDatetime(dtBegin, dtEnd);
             // очистить содержание представления
             if (m_bflgClear)
@@ -2386,6 +2401,34 @@ namespace PluginTaskAutobook
             //
             m_currentOffSet = Session.m_curOffsetUTC;
             m_bflgClear = true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+         private void settingDateRange()
+        {
+            int cntDays,
+                today = 0;
+
+            PanelManagementAB.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+
+            cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
+              (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
+            today = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
+
+            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value =
+                (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
+
+            cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
+  (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
+            today = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
+
+            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
+                (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(cntDays - today);
+
+            PanelManagementAB.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
+
         }
 
         /// <summary>
