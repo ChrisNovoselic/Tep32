@@ -934,7 +934,7 @@ namespace PluginTaskReaktivka
                 //Дата/время  окончания периода расчета - подпись
                 Label lEndPer = new Label();
                 lEndPer.Dock = DockStyle.Top;
-                lEndPer.Text = @"Дата/время  окончания периода расчета:";
+                lEndPer.Text = @"Дата/время окончания периода расчета:";
                 //Дата/время  окончания периода расчета - значение
                 ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(cntDays - today)
                     , tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
@@ -1724,7 +1724,8 @@ namespace PluginTaskReaktivka
             {
                 Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
                 int indx = -1
-                    , cIndx = -1;
+                    , cIndx = -1
+                    , rKey = -1;
                 bool bItemChecked = item.m_newCheckState == CheckState.Checked ? true :
                     item.m_newCheckState == CheckState.Unchecked ? false :
                         false;
@@ -1740,6 +1741,8 @@ namespace PluginTaskReaktivka
                                 indx = Columns.IndexOf(c);
                                 break;
                             }
+                            else
+                                ;
                         break;
                     default:
                         break;
@@ -1749,15 +1752,48 @@ namespace PluginTaskReaktivka
                 {
                     switch (item.m_indxIdDeny)
                     {
+                        //case INDEX_ID.DENY_COMP_CALCULATED:
+                        //    cIndx = indx;
+                        //    // для всех ячеек в столбце
+                        //    foreach (DataGridViewRow r in Rows)
+                        //    {
+                        //        indx = Rows.IndexOf(r);
+                        //        if (getClrCellToComp(cIndx, indx, bItemChecked, out clrCell) == true)
+                        //            r.Cells[cIndx].Style.BackColor = clrCell;
+                        //        else
+                        //            ;
+                        //    }
+                        //    (Columns[cIndx] as HDataGridViewColumn).m_bCalcDeny = !bItemChecked;
+                        //    break;
+                        //case INDEX_ID.DENY_PARAMETER_CALCULATED:
+                        //    rKey = (int)Rows[indx].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
+                        //    // для всех ячеек в строке
+                        //    foreach (DataGridViewCell c in Rows[indx].Cells)
+                        //    {
+                        //        cIndx = Rows[indx].Cells.IndexOf(c);
+                        //        if (getClrCellToParameter(cIndx, indx, bItemChecked, out clrCell) == true)
+                        //            c.Style.BackColor = clrCell;
+                        //        else
+                        //            ;
+
+                        //        m_dictPropertiesRows[rKey].m_arPropertiesCells[cIndx].m_bCalcDeny = !bItemChecked;
+                        //    }
+                        //    break;
                         case INDEX_ID.DENY_COMP_VISIBLED:
                             cIndx = indx;
                             // для всех ячеек в столбце
                             Columns[cIndx].Visible = bItemChecked;
                             break;
-                        default:
-                            break;
+                        //case INDEX_ID.DENY_PARAMETER_VISIBLED:
+                        //    // для всех ячеек в строке
+                        //    Rows[indx].Visible = bItemChecked;
+                        //    break;
+                        //default:
+                        //    break;
                     }
                 }
+                else
+                    ; // нет элемента для изменения стиля
             }
 
             /// <summary>

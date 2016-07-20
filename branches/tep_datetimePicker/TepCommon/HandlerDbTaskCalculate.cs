@@ -879,7 +879,7 @@ namespace TepCommon
             if (!(iRegDbConn < 0))
             {
                 // прочитать параметры сессии для текущего пользователя
-                tableSession = DbTSQLInterface.Select(ref _dbConnection, querySession, null, null, out err);
+                tableSession = DbTSQLInterface.Select(ref _dbConnection, querySession, null, null, out err);//??ID_PANEL
                 // получить количество зарегистрированных сессий для пользователя
                 iCntSession = tableSession.Rows.Count;
 

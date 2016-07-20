@@ -339,11 +339,14 @@ namespace PluginTaskAutobook
             {
                 bLastItem = !(i < (dtRange.Length - 1));
 
-                strQuery += @"SELECT * "
+                strQuery += @"SELECT [ID_PUT], [QUALITY], [VALUE], [DATE_TIME] as [WR_DATETIME]"
+                    + @" , CONVERT(varchar, [DATE_TIME], 127) as [EXTENDED_DEFINITION]"
                     + @" FROM [dbo].[outval_" + dtRange[i].End.ToString(@"yyyyMM") + @"]"
                     + @" WHERE [DATE_TIME] > '" + dtRange[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + dtRange[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @"AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
+                    + @" AND [ID_TIME] = " + (int)_Session.m_currIdPeriod
+                    + @" AND [QUALITY] > 0";
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";
@@ -407,7 +410,7 @@ namespace PluginTaskAutobook
                         + @" ON v.ID_PUT = p.ID"
                         + @" WHERE  ID_TASK = " + (int)IdTask
                         + @" AND v.ID_TIME = 24"
-                        + @"AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
+                        + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
             }
 
             return Select(strQuery, out err);
