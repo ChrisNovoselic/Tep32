@@ -103,37 +103,42 @@ namespace Tep64
             {
                 int key = -1;
 
-                id = Convert.ToInt32(strId);
-                key = s_plugIns.GetKeyOfIdFPanel(id);
-
-                if (!(key < 0))
+                if (Int32.TryParse(strId,out id)==true)
                 {
-                    plugIn = s_plugIns[key] as PlugInMenuItem;
-                    if (plugIn == null)
-                        continue;
-                    else
-                        ;
-                    ////strNameOwnerMenuItem = plugIn.GetNameOwnerMenuItem (id);
-                    //strNameMenuItem = plugIn.GetNameMenuItem (id);
+                    key = s_plugIns.GetKeyOfIdFPanel(id);
 
-                    ////Вариант №1
-                    //menuItems = this.MainMenuStrip.Items.Find(strNameMenuItem, true);
-                    //menuItem = menuItems[0];
-                    ////Вариант №2
-                    //menuItem = FindMainMenuItemOfText(strNameMenuItem);
-                    //Вариант №3
-                    menuItem = findMainMenuItemOfTag(id);
-
-                    if ((menuItem as ToolStripMenuItem).Checked == false)
+                    if (!(key < 0))
                     {
-                        m_iAutoActionTabs++;
-                        menuItem.PerformClick();
+                        plugIn = s_plugIns[key] as PlugInMenuItem;
+                        if (plugIn == null)
+                            continue;
+                        else
+                            ;
+                        ////strNameOwnerMenuItem = plugIn.GetNameOwnerMenuItem (id);
+                        //strNameMenuItem = plugIn.GetNameMenuItem (id);
+
+                        ////Вариант №1
+                        //menuItems = this.MainMenuStrip.Items.Find(strNameMenuItem, true);
+                        //menuItem = menuItems[0];
+                        ////Вариант №2
+                        //menuItem = FindMainMenuItemOfText(strNameMenuItem);
+                        //Вариант №3
+                        menuItem = findMainMenuItemOfTag(id);
+
+                        if ((menuItem as ToolStripMenuItem).Checked == false)
+                        {
+                            m_iAutoActionTabs++;
+                            menuItem.PerformClick();
+                        }
+                        else
+                            ;
                     }
                     else
-                        ;
+                        Logging.Logg().Warning(@"FormMain::loadProfile () - не удалось загрузить plugIn.Id=" + id + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 else
-                    Logging.Logg().Warning(@"FormMain::loadProfile () - не удалось загрузить plugIn.Id=" + id + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Warning(@"FormMain::loadProfile () - идентификатор - пуустая строка ...", Logging.INDEX_MESSAGE.NOT_SET);
+
             }
         }
         /// <summary>

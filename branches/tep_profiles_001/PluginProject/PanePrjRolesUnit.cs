@@ -772,6 +772,11 @@ namespace PluginProject
             }
             else
             {
+                if (EventCellValueChanged != null)
+                    EventCellValueChanged(this, new DataGridView_Prop.DataGridView_Prop_ValuesCellValueChangedEventArgs(n_row//Идентификатор компонента
+                                        , Rows[e.RowIndex].HeaderCell.Value.ToString() //Идентификатор компонента
+                                        , null //Идентификатор параметра с учетом периода расчета
+                                        ));
             }
         }
 
