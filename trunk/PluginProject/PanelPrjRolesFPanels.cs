@@ -17,7 +17,7 @@ namespace PluginProject
 {
     public class PanelPrjRolesFPanels : HPanelEditTree
     {
-        enum INDEX_PARSE_UNIT { USER = 0, CONTEXT = 3, PANEL = 5 };
+        enum INDEX_PARSE_UNIT { USER = 0, PANEL = 100, CONTEXT = 200 };
         TreeView_Users tvUsers = new TreeView_Users(false);
         DataGridView_Prop_Text_Check dgvProp = new DataGridView_Prop_Text_Check();
         DataGridView_Prop_Text_Check dgvProp_Context = new DataGridView_Prop_Text_Check();
@@ -129,15 +129,15 @@ namespace PluginProject
             m_AllUnits = HUsers.GetTableProfileUnits.Copy(); ;
             m_context_Unit = m_AllUnits.Clone();
             m_panel_Unit = m_AllUnits.Clone();
+            foreach (DataRow r in m_AllUnits.Select("ID>" + (int)INDEX_PARSE_UNIT.PANEL + " AND ID<" + (int)INDEX_PARSE_UNIT.CONTEXT))
+            {
+                m_panel_Unit.Rows.Add(r.ItemArray);
+                m_AllUnits.Rows.Remove(r);
+            }
             foreach (DataRow r in m_AllUnits.Select("ID>" + (int)INDEX_PARSE_UNIT.CONTEXT))
             {
                 m_context_Unit.Rows.Add(r.ItemArray);
                 m_AllUnits.Rows.Remove(r);
-            }
-            foreach (DataRow r in m_context_Unit.Select("ID>" + (int)INDEX_PARSE_UNIT.PANEL))
-            {
-                m_panel_Unit.Rows.Add(r.ItemArray);
-                m_context_Unit.Rows.Remove(r);
             }
             dgvProp.create_dgv(m_AllUnits);
             dgvProp_Context.create_dgv(m_context_Unit);
@@ -388,8 +388,8 @@ namespace PluginProject
                 + context_row["ID_TAB"]
                 + " AND ID_ITEM="
                 + context_row["ID_ITEM"]
-                + " AND CONTEXT="
-                + context_row["CONTEXT"]))
+                + " AND CONTEXT='"
+                + context_row["CONTEXT"]+"'"))
             {
                 profile_context.Rows.Add(r.ItemArray);
             }
@@ -476,7 +476,7 @@ namespace PluginProject
                     m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(context_row.ItemArray);
                     profile_panel.Rows.Add(context_row.ItemArray);
                 }
-                activate_btn(true);
+                //activate_btn(true);
             }
 
             if (profile_panel.Rows.Count == m_panel_Unit.Rows.Count)
@@ -1066,9 +1066,13 @@ namespace PluginProject
             if (dgvContext.SelectedRows.Count != 0)
                 if (dgvContext.SelectedRows[0].Cells[0].Value != null)
                 {
-                    foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select(String.Format(System.Globalization.CultureInfo.InvariantCulture,
-                        "CONTEXT= '{0:F}' AND ID_ITEM= '{1:F}' AND ID_TAB= '{2:F}'AND ID_EXT = '{3:F}'  and IS_ROLE= '{4:F}'",
-                        dgvContext.SelectedRows[0].Cells[0].Value.ToString(),cbItems.SelectedValue.ToString(),cbPanels.SelectedValue.ToString(),m_id_obj, m_b_role.ToString())))
+                    foreach (DataRow row in arr_Tables_orig[(int)INDEX_COMBOBOX.PROFILES].Select(
+                        //String.Format(System.Globalization.CultureInfo.InvariantCulture,
+                        //"CONTEXT= '{0:F}' AND ID_ITEM= '{1:F}' AND ID_TAB= '{2:F}'AND ID_EXT = '{3:d}'  and IS_ROLE= '{4:d}'",
+                        //dgvContext.SelectedRows[0].Cells[0].Value.ToString(),cbItems.SelectedValue.ToString(),cbPanels.SelectedValue.ToString(),m_id_obj, m_b_role.ToString())
+                        //)
+                        "CONTEXT= '"+dgvContext.SelectedRows[0].Cells[0].Value.ToString()+"' AND ID_ITEM= "+cbItems.SelectedValue.ToString()+" AND ID_TAB= "+cbPanels.SelectedValue.ToString()+" AND ID_EXT = "+ m_id_obj +"  and IS_ROLE= "+m_b_role.ToString()
+                        ))
                     {
                         items.Rows.Add(row.ItemArray);
                     }
