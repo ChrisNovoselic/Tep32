@@ -317,8 +317,8 @@ namespace PluginTaskReaktivka
                             else
                                 // для элементов в "середине" массива
                                 arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End,
-                                   new DateTime(arRangesRes[i - 1].End.Year,arRangesRes[i - 1].End.AddMonths(1).Month,DateTime.DaysInMonth(arRangesRes[i - 1].End.Year,arRangesRes[i - 1].End.AddMonths(1).Month)));
-                                    //HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                                   new DateTime(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month, DateTime.DaysInMonth(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month)));
+            //HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
             else
                 if (bEndMonthBoudary == true)
                     // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
@@ -398,11 +398,11 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// Получение корр. входных значений
+        /// Получение входных значений
         /// из INVAL
         /// </summary>
         /// <param name="type">тип задачи</param>
-        /// <param name="arQueryRanges"></param>
+        /// <param name="arQueryRanges">диапазон запроса</param>
         /// <param name="idPeriod">тек. период</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица значений</returns>
@@ -437,6 +437,48 @@ namespace PluginTaskReaktivka
             }
             strQuery += @" ORDER BY [DATE_TIME] ";
 
+            return Select(strQuery, out err);
+        }
+
+        /// <summary>
+        /// Получение входных архивных значений
+        /// из INVAL
+        /// </summary>
+        /// <param name="type">тип задачи</param>
+        /// <param name="arQueryRanges">диапазон запроса</param>
+        /// <param name="idPeriod">тек. период</param>
+        /// <param name="err">Индентификатор ошибки</param>
+        /// <returns>таблица значений</returns>
+        public DataTable GetInValArch(TaskCalculate.TYPE type
+       , DateTimeRange[] arQueryRanges
+       , ID_PERIOD idPeriod
+       , out int err)
+        {
+            string strQuery = string.Empty;
+            bool bLastItem = false;
+
+            for (int i = 0; i < arQueryRanges.Length; i++)
+            {
+                bLastItem = !(i < (arQueryRanges.Length - 1));
+
+                strQuery += @"SELECT v.ID, v.ID_PUT, v.ID_USER, v.ID_SOURCE, v.DATE_TIME, v.ID_TIME"
+                    + ", v.ID_TIMEZONE, v.QUALITY, v.VALUE, v.WR_DATETIME"
+                    + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
+                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
+                    + @" ON a.ID = p.ID_ALG"
+                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                    + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v"
+                    + @" ON v.ID_PUT = p.ID"
+                    + @" WHERE  [ID_TASK] = " + (int)IdTask
+                    + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND v.ID_TIME = " + (int)idPeriod
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
+                    + @" AND v.QUALITY > 0";
+
+                if (bLastItem == false)
+                    strQuery += @" UNION ALL ";
+            }
             return Select(strQuery, out err);
         }
     }

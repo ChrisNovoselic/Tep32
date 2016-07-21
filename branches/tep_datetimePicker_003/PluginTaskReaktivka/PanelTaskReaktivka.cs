@@ -88,11 +88,11 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.DAY : Session.m_currIdPeriod; } }
+        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == HandlerDbTaskReaktivkaCalculate.INDEX_TABLE_VALUES.SESSION ? ID_PERIOD.DAY : Session.m_currIdPeriod; } }
         /// <summary>
         /// Признак отображаемых на текущий момент значений
         /// </summary>
-        protected INDEX_VIEW_VALUES m_ViewValues;
+        protected HandlerDbTaskReaktivkaCalculate.INDEX_TABLE_VALUES m_ViewValues;
         /// <summary>
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
@@ -101,7 +101,7 @@ namespace PluginTaskReaktivka
         /// Перечисление - признак типа загруженных из БД значений
         ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
         /// </summary>
-        protected enum INDEX_VIEW_VALUES : short
+        protected enum INDEX_VIEW_VALUES : int
         {
             UNKNOWN = -1, SOURCE,
             ARCHIVE, COUNT
@@ -143,7 +143,6 @@ namespace PluginTaskReaktivka
         /// Экземпляр класса отображения данных
         /// </summary>
         DGVReaktivka m_dgvReak;
-
         /// <summary>
         /// 
         /// </summary>
@@ -213,7 +212,7 @@ namespace PluginTaskReaktivka
         void m_dgvReak_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             m_dgvReak.SumValue(e.ColumnIndex, e.RowIndex);
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
+            m_arTableEdit[(int)m_ViewValues] = valuesFence(m_ViewValues);
         }
 
         /// <summary>
@@ -741,7 +740,7 @@ namespace PluginTaskReaktivka
             , out err);
 
             m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                HandlerDb.SaveValues(m_TableOrigin, valuesFence, (int)Session.m_currIdTimezone, out err);
+                HandlerDb.SaveValues(m_TableOrigin, valuesFence(m_ViewValues), (int)Session.m_currIdTimezone, out err);
 
             saveInvalValue(out err);
         }
@@ -753,7 +752,7 @@ namespace PluginTaskReaktivka
         /// <param name="ev"></param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
+            m_ViewValues = HandlerDbTaskReaktivkaCalculate.INDEX_TABLE_VALUES.SESSION;
 
             onButtonLoadClick();
         }
@@ -765,7 +764,7 @@ namespace PluginTaskReaktivka
         /// <param name="ev"></param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
+            m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE;
 
             onButtonLoadClick();
         }
@@ -1802,7 +1801,7 @@ namespace PluginTaskReaktivka
             /// Отображение значений
             /// </summary>
             /// <param name="source">таблица с даными</param>
-            public void ShowValues(DataTable source)
+            public void ShowValues(DataTable[] source, HandlerDbTaskReaktivkaCalculate.INDEX_TABLE_VALUES typeValues)
             {
                 int idAlg = -1
                    , idParameter = -1
@@ -1814,7 +1813,7 @@ namespace PluginTaskReaktivka
                     dbSumVal = 0;
                 DataRow[] parameterRows = null;
 
-                var enumTime = (from r in source.AsEnumerable()
+                var enumTime = (from r in source[(int)typeValues].AsEnumerable()
                                 orderby r.Field<DateTime>("WR_DATETIME")
                                 select new
                                 {
@@ -1831,7 +1830,7 @@ namespace PluginTaskReaktivka
                                 iRowCount++;
                                 idAlg = (int)row.Cells["ALG"].Value;
                                 parameterRows =
-                                source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
+                                source[(int)typeValues].Select(String.Format(source[(int)typeValues].Locale, "ID_PUT = " + col.m_iIdComp));
 
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
@@ -2301,9 +2300,9 @@ namespace PluginTaskReaktivka
                             // создать копии для возможности сохранения изменений
                             setValues();
                             // отобразить значения
-                            m_dgvReak.ShowValues(m_TableOrigin);
+                            m_dgvReak.ShowValues(m_arTableOrigin, m_ViewValues);
                             //
-                            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
+                            m_arTableEdit[(int)m_ViewValues] = valuesFence(m_ViewValues);
                         }
                         else
                             deleteSession();
@@ -2375,9 +2374,12 @@ namespace PluginTaskReaktivka
             //Создание сессии
             Session.New();
             //Запрос для получения архивных данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetInValArch(Type
+            , arQueryRanges
+            , ActualIdPeriod
+            , out err);
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
                 Type
                 , ActualIdPeriod
@@ -2419,12 +2421,10 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// формирование таблицы данных
         /// </summary>
-        private DataTable valuesFence
+        private DataTable valuesFence(HandlerDbTaskReaktivkaCalculate.INDEX_TABLE_VALUES typeValues)
         {
-            get
-            { //сохранить вх. знач. в DataTable
-                return m_dgvReak.GetValue(m_TableOrigin, (int)Session.m_Id);
-            }
+             //сохранить вх. знач. в DataTable
+                return m_dgvReak.GetValue(m_arTableOrigin[(int)typeValues], (int)Session.m_Id);
         }
 
         /// <summary>

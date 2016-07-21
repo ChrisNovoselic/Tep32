@@ -513,11 +513,10 @@ namespace PluginTaskAutobook
                 , HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
                 int idAlg = -1
-                  , vsRatioValue = -1
-                  , corOffset = 0;
+                  , vsRatioValue = -1;
                 Array namePut = Enum.GetValues(typeof(INDEX_GTP));
-                bool bflg = false;
                 double dblVal = -1F;
+                DataRow[] dr_Values;
                 //
                 ClearValues();
                 //заполнение плана
@@ -546,38 +545,134 @@ namespace PluginTaskAutobook
                                         System.Globalization.CultureInfo.InvariantCulture);
                                 }
 
-                            if ((int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION == (int)typeValues)
-                                corOffset = 1;
+                            switch (typeValues)
+                            {
+                                case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN:
+                                    break;
+                                case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE:
+                                    dr_Values = formingValueArch(tbOrigin[(int)typeValues],
+                                        row.Cells["DATE"].Value.ToString()
+                                        , col.m_iIdComp);
+                                    showArchValues(dr_Values, row, col, idAlg, vsRatioValue);
+                                    break;
+                                case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION:
+                                    dr_Values = formingValue(tbOrigin[(int)typeValues],
+                                        row.Cells["DATE"].Value.ToString()
+                                        , m_currentOffSet
+                                        , col.m_iIdComp);
+                                    showRawValues(dr_Values, row, col, idAlg, vsRatioValue);
+                                    break;
+                                case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT:
+                                    break;
+                                case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT:
+                                    break;
+                                default:
+                                    break;
+                            }
+                            //if (dr_Values != null)
+                            //    if (dr_Values.Count() > 0)
+                            //        //заполнение столбцов ГТП,ТЭЦ
+                            //        for (int p = 0; p < dr_Values.Count(); p++)
+                            //            if (row.Cells["DATE"].Value.ToString() ==
+                            //            Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())
+                            //            {
+                            //                dblVal = correctingValues(Math.Pow(10F, vsRatioValue)
+                            //                    , dr_Values[p]["VALUE"]
+                            //                    , col.Name
+                            //                    , ref bflg
+                            //                    , row
+                            //                    , typeValues);
 
-                            DataRow[] dr_Values = formingValue(tbOrigin[(int)typeValues],
-                                row.Cells["DATE"].Value.ToString()
-                                , (m_currentOffSet * corOffset)
-                                , col.m_iIdComp);
+                            //                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                            //                dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
-                            if (dr_Values != null)
-                                if (dr_Values.Count() > 0)
-                                    //заполнение столбцов ГТП,ТЭЦ
-                                    for (int p = 0; p < dr_Values.Count(); p++)
-                                        if (row.Cells["DATE"].Value.ToString() ==
-                                        Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())
-                                        {
-                                            dblVal = correctingValues(Math.Pow(10F, vsRatioValue)
-                                                , dr_Values[p]["VALUE"]
-                                                , col.Name
-                                                , ref bflg
-                                                , row
-                                                , typeValues);
-
-                                            vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                            dblVal *= Math.Pow(10F, -1 * vsRatioValue);
-
-                                            row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                                System.Globalization.CultureInfo.InvariantCulture);
-                                        }
+                            //                row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                            //                    System.Globalization.CultureInfo.InvariantCulture);
+                            //            }
                         }
                     }
                     fillCells(row);
                 }
+            }
+
+            /// <summary>
+            /// Отображение сырых значений
+            /// </summary>
+            /// <param name="dr_Values">массив с данными</param>
+            /// <param name="row">строка в гриде</param>
+            /// <param name="col">столбец в гриде</param>
+            /// <param name="idAlg">номер алгоритма</param>
+            /// <param name="vsRatioValue">значение множителя</param>
+            private void showRawValues(DataRow[] dr_Values
+                , DataGridViewRow row
+                , HDataGridViewColumn col
+                , int idAlg
+                , int vsRatioValue)
+            {
+                double dblVal = -1F;
+                bool bflg = false;
+                HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION;
+
+                if (dr_Values != null)
+                    if (dr_Values.Count() > 0)
+                        //заполнение столбцов ГТП,ТЭЦ
+                        for (int p = 0; p < dr_Values.Count(); p++)
+                            if (row.Cells["DATE"].Value.ToString() ==
+                            Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())
+                            {
+                                dblVal = correctingValues(Math.Pow(10F, vsRatioValue)
+                                    , dr_Values[p]["VALUE"]
+                                    , col.Name
+                                    , ref bflg
+                                    , row
+                                    , typeValues);
+
+                                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                dblVal *= Math.Pow(10F, -1 * vsRatioValue);
+
+                                row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                    System.Globalization.CultureInfo.InvariantCulture);
+                            }
+            }
+
+            /// <summary>
+            /// Отображение архивных значений
+            /// </summary>
+            /// <param name="dr_Values">массив с данными</param>
+            /// <param name="row">строка в гриде</param>
+            /// <param name="col">столбец в гриде</param>
+            /// <param name="idAlg">номер алгоритма</param>
+            /// <param name="vsRatioValue">значение множителя</param>
+            private void showArchValues(DataRow[] dr_Values
+                , DataGridViewRow row
+                , HDataGridViewColumn col
+                , int idAlg
+                , int vsRatioValue)
+            {
+                double dblVal = -1F;
+                bool bflg = false;
+                HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE;
+
+                if (dr_Values != null)
+                    if (dr_Values.Count() > 0)
+                        //заполнение столбцов ГТП,ТЭЦ
+                        for (int p = 0; p < dr_Values.Count(); p++)
+                            if (row.Cells["DATE"].Value.ToString() ==
+                            Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddDays(-1).ToShortDateString())
+                            {
+                                dblVal = correctingValues(Math.Pow(10F, vsRatioValue)
+                                    , dr_Values[p]["VALUE"]
+                                    , col.Name
+                                    , ref bflg
+                                    , row
+                                    , typeValues);
+
+                                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                dblVal *= Math.Pow(10F, -1 * vsRatioValue);
+
+                                row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                    System.Globalization.CultureInfo.InvariantCulture);
+                            }
             }
 
             /// <summary>
@@ -621,7 +716,11 @@ namespace PluginTaskAutobook
                         if (double.TryParse(row.Cells["CorGTP12"].Value.ToString(), out valRes))
                         {
                             valRes *= pow;
-                            valRes += (double)rowValue * signValues;
+
+                            if (valRes != 0)
+                                valRes += (double)rowValue * signValues;
+                            else
+                                valRes += (double)rowValue;
                             bflg = true;
                         }
                         else
@@ -632,7 +731,11 @@ namespace PluginTaskAutobook
                         if (double.TryParse(row.Cells["CorGTP36"].Value.ToString(), out valRes))
                         {
                             valRes *= pow;
-                            valRes += (double)rowValue * signValues;
+
+                            if (valRes != 0)
+                                valRes += (double)rowValue * signValues;
+                            else
+                                valRes += (double)rowValue;
                             bflg = true;
                         }
                         else
@@ -748,7 +851,6 @@ namespace PluginTaskAutobook
                         row.Cells["DevOfPlan"].Value = Convert.ToSingle(row.Cells["StSwen"].Value) - 0;
             }
 
-
             /// <summary>
             /// Отбор строк по дате и идПуту
             /// </summary>
@@ -756,7 +858,7 @@ namespace PluginTaskAutobook
             /// <param name="date">дата</param>
             /// <param name="idPut">идЭлемента</param>
             /// <returns>набор строк</returns>
-            private DataRow[] formingValue(DataTable dtOrigin, string date, int idPut)
+            private DataRow[] formingValueArch(DataTable dtOrigin, string date, int idPut)
             {
                 DateTime dateOffSet;
                 DataRow[] dr_idCorPut = null;
@@ -770,7 +872,7 @@ namespace PluginTaskAutobook
 
                 for (int i = 0; i < m_enumResIDPUT.Count(); i++)
                 {
-                    dateOffSet = m_enumResIDPUT.ElementAt(i).DATE_TIME;
+                    dateOffSet = m_enumResIDPUT.ElementAt(i).DATE_TIME.AddDays(-1);
 
                     if (date == dateOffSet.ToShortDateString())
                     {
@@ -2070,7 +2172,7 @@ namespace PluginTaskAutobook
         /// Загрузка сырых значений
         /// </summary>
         /// <param name="typeValues">тип загружаемых значений</param>
-        private void updateDataValues(HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
+        private void updateDataValues()
         {
             int err = -1
                 , cnt = CountBasePeriod
@@ -2110,7 +2212,7 @@ namespace PluginTaskAutobook
                                 , HandlerDb.GetDateTimeRangeValuesVarPlanMonth()
                                 , ActualIdPeriod
                                 , out err)
-                                , typeValues);
+                                , m_ViewValues);
                             //формирование таблиц на основе грида
                             valuesFence();
                         }
@@ -2136,13 +2238,12 @@ namespace PluginTaskAutobook
         /// Загрузка архивных значений
         /// </summary>
         /// <param name="typeValues">тип загружаемых значений</param>
-        private void loadArchValues(HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
+        private void loadArchValues()
         {
             int err = -1,
                 cnt = CountBasePeriod,
                 iRegDbConn = -1;
             string errMsg = string.Empty;
-            DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
             clear();
             m_handlerDb.RegisterDbConnection(out iRegDbConn);
@@ -2150,14 +2251,12 @@ namespace PluginTaskAutobook
             if (!(iRegDbConn < 0))
             {
                 // установить значения в таблицах для расчета, создать новую сессию
-                setValues(dtrGet, out err, out errMsg);
+                setValues(HandlerDb.GetDateTimeRangeValuesVarArchive(), out err, out errMsg);
 
                 if (err == 0)
                 {
-                    if (true)
+                    if (m_arTableOrigin[(int)m_ViewValues].Rows.Count > 0)
                     {
-                        //запись выходных значений во временную таблицу
-                        //HandlerDb.insertOutValues(out err, m_arTableOrigin[(int)typeValues]);
                         // отобразить значения
                         m_dgvAB.ShowValues(m_arTableOrigin
                             , m_dgvAB
@@ -2165,7 +2264,7 @@ namespace PluginTaskAutobook
                             , HandlerDb.GetDateTimeRangeValuesVarPlanMonth()
                             , ActualIdPeriod
                             , out err)
-                            , typeValues);
+                            , m_ViewValues);
                         //формирование таблиц на основе грида
                         valuesFence();
                     }
@@ -2227,24 +2326,24 @@ namespace PluginTaskAutobook
         private void HPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
         {
             m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE;
-            onButtonLoadClick(m_ViewValues);
+            onButtonLoadClick();
         }
 
         /// <summary>
         /// оброботчик события кнопки
         /// </summary>
-        protected virtual void onButtonLoadClick(HandlerDbTaskCalculate.INDEX_TABLE_VALUES index)
+        protected virtual void onButtonLoadClick()
         {
             // ... - загрузить/отобразить значения из БД
-            switch (index)
+            switch (m_ViewValues)
             {
                 case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN:
                     break;
                 case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION:
-                    updateDataValues(index);
+                    updateDataValues();
                     break;
                 case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE:
-                    //loadArchValues(index);
+                    loadArchValues();
                     break;
                 case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT:
                     break;
@@ -2261,7 +2360,7 @@ namespace PluginTaskAutobook
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
             m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION;
-            onButtonLoadClick(m_ViewValues);
+            onButtonLoadClick();
         }
 
         /// <summary>
@@ -2404,7 +2503,7 @@ namespace PluginTaskAutobook
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
                     (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
                     Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][1]);//??
-                    (PanelManagementAB as PanelManagementAutobook).SetPeriod(Session.m_currIdPeriod);//
+                    (PanelManagementAB as PanelManagementAutobook).SetPeriod(ID_PERIOD.MONTH);//
                     (ctrl as ComboBox).Enabled = false;
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
@@ -2762,9 +2861,12 @@ namespace PluginTaskAutobook
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(
                 GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value), out err);
 
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            HandlerDb.SaveResOut(m_TableOrigin,
-            m_TableEdit, (ctrl as ComboBox).SelectedIndex, out err);
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.SaveResOut(m_TableOrigin
+                , m_TableEdit
+                , (ctrl as ComboBox).SelectedIndex
+                , out err);
+
+            base.HPanelTepCommon_btnSave_Click(obj, ev);
 
             if (m_TableEdit.Rows.Count > 0)
                 //save вх. значений
@@ -2828,7 +2930,7 @@ namespace PluginTaskAutobook
         {
             err = -1;
             //
-            sortingDataToTable(HandlerDb.GetDataOutval(HandlerDb.getDateTimeRangeExtremeVal(), out err)
+            sortingDataToTable(HandlerDb.GetDataOutvalFull(HandlerDb.getDateTimeRangeExtremeVal(), out err)
                 , m_TableEdit
                 , GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value)
                 , @""
