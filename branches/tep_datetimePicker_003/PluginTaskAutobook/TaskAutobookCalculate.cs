@@ -48,8 +48,8 @@ namespace PluginTaskAutobook
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMonths(-1).AddDays(DateTime.DaysInMonth(_Session.m_rangeDatetime.Begin.Year, _Session.m_rangeDatetime.Begin.Month - 1) - 2)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMonths(-1)//.AddDays(DateTime.DaysInMonth(_Session.m_rangeDatetime.Begin.Year, _Session.m_rangeDatetime.Begin.Month - 1))
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin//.AddMonths(-1).AddDays(DateTime.DaysInMonth(_Session.m_rangeDatetime.Begin.Year, _Session.m_rangeDatetime.Begin.Month - 1) - 2)
+                , dtEnd = _Session.m_rangeDatetime.End.AddDays(1)//.AddDays(DateTime.DaysInMonth(_Session.m_rangeDatetime.Begin.Year, _Session.m_rangeDatetime.Begin.Month - 1))
                 ;
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
 
@@ -798,7 +798,7 @@ namespace PluginTaskAutobook
         public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes, int idTZ, out int err)
         {
             err = -1;
-            int _quality = 0;
+            int _quality = 1;
             DataTable tableEdit = new DataTable();
             string rowSel = null;
             tableEdit = tableOrigin.Clone();//копия структуры
@@ -809,13 +809,27 @@ namespace PluginTaskAutobook
                 {
                     rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
 
-                    if (int.Parse(tableRes.Rows[i]["QUALITY"].ToString()) == 0)
-                        _quality = 1;
-                    else
-                        if (int.Parse(tableRes.Rows[i]["VALUE"].ToString()) == int.Parse(tableOrigin.Rows[i]["VALUE"].ToString()))
-                            _quality = 2;
-                        else
+                    foreach (DataRow row in tableOrigin.AsEnumerable())
+                    {
+                        if (int.Parse(tableRes.Rows[i]["QUALITY"].ToString()) == 0)
+                        {
                             _quality = 1;
+                            break;
+                        }
+                        else
+                            if (int.Parse(tableRes.Rows[i]["ID_PUT"].ToString()) == int.Parse(row["ID_PUT"].ToString()))
+                                if (DateTime.Parse(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1) == DateTime.Parse(row["DATE_TIME"].ToString()))
+                                    if (double.Parse(tableRes.Rows[i]["VALUE"].ToString()) != double.Parse(row["VALUE"].ToString()))
+                                    {
+                                        _quality = 2;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        _quality = 1;
+                                        break;
+                                    }
+                    }
 
                     tableEdit.Rows.Add(new object[] 
                     {
@@ -833,7 +847,25 @@ namespace PluginTaskAutobook
                 }
             }
 
+            tableEdit = sortingTable(tableEdit,"DATE_TIME, ID_PUT");
+
             return tableEdit;
+        }
+
+        /// <summary>
+        /// сортировка таблицы по столбцу
+        /// </summary>
+        /// <param name="table">таблица для сортировки</param>
+        /// <param name="sortStr">имя столбца/ов для сортировки</param>
+        /// <returns></returns>
+        private DataTable sortingTable(DataTable table, string colSort)
+        {
+            DataView dView = table.DefaultView;
+            string sortExpression = string.Format(colSort);
+            dView.Sort = sortExpression;
+            table = dView.ToTable();
+
+            return table;
         }
 
         /// <summary>

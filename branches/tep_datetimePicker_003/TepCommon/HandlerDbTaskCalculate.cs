@@ -743,14 +743,13 @@ namespace TepCommon
                             + @", " + _Session.m_Id + @" as [ID_SESSION]"
                             + @", m.[AVG]"
                             + @", 0" /*+ @", ROW_NUMBER() OVER(ORDER BY v.ID_PUT)+*/ + @" as [EXTENDED_DEFINITION]"
-                        //+ @", GETDATE () as [WR_DATETIME]"
-                        + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                        + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+                            + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+                            + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
                             + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
                             + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = "
                             + (int)_iIdTask + whereParameters
                             + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                        + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
+                            + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'

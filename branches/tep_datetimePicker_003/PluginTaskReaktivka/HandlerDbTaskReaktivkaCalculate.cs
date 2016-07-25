@@ -118,7 +118,8 @@ namespace PluginTaskReaktivka
                             + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)idPeriod //+ " AND [ID_SOURCE] > 0 "
-                            + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone
+                            + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
+                            + @" AND [QUALITY] = 0" 
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
@@ -147,7 +148,6 @@ namespace PluginTaskReaktivka
 
             return strRes;
         }
-
 
         /// <summary>
         ///  Создать новую сессию для расчета
@@ -404,16 +404,18 @@ namespace PluginTaskReaktivka
         /// <param name="type">тип задачи</param>
         /// <param name="arQueryRanges">диапазон запроса</param>
         /// <param name="idPeriod">тек. период</param>
+        /// <param name="typeValues">тип данных</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица значений</returns>
         public DataTable GetInVal(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
             , ID_PERIOD idPeriod
+            , HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues 
             , out int err)
         {
             string strQuery = string.Empty;
             bool bLastItem = false;
-
+            
             for (int i = 0; i < arQueryRanges.Length; i++)
             {
                 bLastItem = !(i < (arQueryRanges.Length - 1));
@@ -430,7 +432,9 @@ namespace PluginTaskReaktivka
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND v.ID_TIME = " + (int)idPeriod
-                    + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
+                    + @" AND [QUALITY] > ";//???
+
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";
@@ -461,8 +465,8 @@ namespace PluginTaskReaktivka
             {
                 bLastItem = !(i < (arQueryRanges.Length - 1));
 
-                strQuery += @"SELECT v.ID, v.ID_PUT, v.ID_USER, v.ID_SOURCE, v.DATE_TIME, v.ID_TIME"
-                    + ", v.ID_TIMEZONE, v.QUALITY, v.VALUE, v.WR_DATETIME"
+                strQuery += @"SELECT v.ID, v.ID_PUT, v.DATE_TIME as WR_DATETIME"
+                    + ", v.QUALITY, v.VALUE"
                     + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
                     + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
                     + @" ON a.ID = p.ID_ALG"

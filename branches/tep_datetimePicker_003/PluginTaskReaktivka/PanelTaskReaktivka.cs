@@ -733,13 +733,14 @@ namespace PluginTaskReaktivka
 
             DateTimeRange[] dtR = HandlerDb.GetDateTimeRangeValuesVar();
 
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+            m_arTableOrigin[(int)m_ViewValues] =
             HandlerDb.GetInVal(Type
             , dtR
             , ActualIdPeriod
+            , m_ViewValues
             , out err);
 
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+            m_arTableEdit[(int)m_ViewValues] =
                 HandlerDb.SaveValues(m_TableOrigin, valuesFence(m_ViewValues), (int)Session.m_currIdTimezone, out err);
 
             saveInvalValue(out err);
@@ -1801,7 +1802,7 @@ namespace PluginTaskReaktivka
             /// Отображение значений
             /// </summary>
             /// <param name="source">таблица с даными</param>
-            public void ShowValues(DataTable[] source, HandlerDbTaskReaktivkaCalculate.INDEX_TABLE_VALUES typeValues)
+            public void ShowValues(DataTable source)
             {
                 int idAlg = -1
                    , idParameter = -1
@@ -1813,7 +1814,7 @@ namespace PluginTaskReaktivka
                     dbSumVal = 0;
                 DataRow[] parameterRows = null;
 
-                var enumTime = (from r in source[(int)typeValues].AsEnumerable()
+                var enumTime = (from r in source.AsEnumerable()
                                 orderby r.Field<DateTime>("WR_DATETIME")
                                 select new
                                 {
@@ -1830,7 +1831,7 @@ namespace PluginTaskReaktivka
                                 iRowCount++;
                                 idAlg = (int)row.Cells["ALG"].Value;
                                 parameterRows =
-                                source[(int)typeValues].Select(String.Format(source[(int)typeValues].Locale, "ID_PUT = " + col.m_iIdComp));
+                                source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
 
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
@@ -1923,7 +1924,8 @@ namespace PluginTaskReaktivka
                                     if (row.Cells[col.Index].Value.ToString() != "")
                                     {
                                         idAlg = (int)row.Cells["ALG"].Value;//??
-                                        valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
+                                        valueToRes = double.Parse(row.Cells[col.Index].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
+                                        //Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
                                         vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
 
                                         valueToRes *= Math.Pow(10F, vsRatioValue);
@@ -1932,14 +1934,14 @@ namespace PluginTaskReaktivka
                                         quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
 
                                         dtSourceEdit.Rows.Add(new object[] 
-                                    {
-                                        col.m_iIdComp
-                                        , idSession
-                                        , quality
-                                        , valueToRes                 
-                                        , dtVal.AddMinutes(-m_currentOffSet).ToString("F",dtSourceEdit.Locale)
-                                        , i
-                                    });
+                                        {
+                                            col.m_iIdComp
+                                            , idSession
+                                            , quality
+                                            , valueToRes                 
+                                            , dtVal.AddMinutes(-m_currentOffSet).ToString("F",dtSourceEdit.Locale)
+                                            , i
+                                        });
                                         i++;
                                     }
                         }
@@ -1980,7 +1982,7 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// соритровка таблицы по столбцу
+            /// сортировка таблицы по столбцу
             /// </summary>
             /// <param name="table">таблица для сортировки</param>
             /// <param name="sortStr">имя столбца/ов для сортировки</param>
@@ -2009,7 +2011,10 @@ namespace PluginTaskReaktivka
                 origin = sortingTable(origin, "WR_DATETIME, ID_PUT");
 
                 if (origin.Rows[i]["Value"].ToString() != editValue.ToString())
-                    quality = 1;
+                    if (int.Parse(origin.Rows[i]["QUALITY"].ToString()) != 1)
+                        quality = 1;
+                    else
+                        quality = 2;
 
                 return quality;
             }
@@ -2300,7 +2305,7 @@ namespace PluginTaskReaktivka
                             // создать копии для возможности сохранения изменений
                             setValues();
                             // отобразить значения
-                            m_dgvReak.ShowValues(m_arTableOrigin, m_ViewValues);
+                            m_dgvReak.ShowValues(m_arTableOrigin[(int)m_ViewValues]);
                             //
                             m_arTableEdit[(int)m_ViewValues] = valuesFence(m_ViewValues);
                         }
@@ -2423,8 +2428,8 @@ namespace PluginTaskReaktivka
         /// </summary>
         private DataTable valuesFence(HandlerDbTaskReaktivkaCalculate.INDEX_TABLE_VALUES typeValues)
         {
-             //сохранить вх. знач. в DataTable
-                return m_dgvReak.GetValue(m_arTableOrigin[(int)typeValues], (int)Session.m_Id);
+            //сохранить вх. знач. в DataTable
+            return m_dgvReak.GetValue(m_arTableOrigin[(int)typeValues], (int)Session.m_Id);
         }
 
         /// <summary>
@@ -2452,8 +2457,8 @@ namespace PluginTaskReaktivka
         {
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
 
-            sortingDataToTable(m_TableOrigin
-                , m_TableEdit
+            sortingDataToTable(m_arTableOrigin[(int)m_ViewValues]
+                , m_arTableEdit[(int)m_ViewValues]
                 , getNameTableIn(dtrPer[0].Begin)
                 , @"ID"
                 , out err);
@@ -2472,7 +2477,7 @@ namespace PluginTaskReaktivka
             err = -1;
 
             m_handlerDb.RecUpdateInsertDelete(nameTable
-                    , @"ID_PUT, DATE_TIME"
+                    , @"ID_PUT, DATE_TIME, QUALITY"
                     , unCol
                     , origin
                     , edit
