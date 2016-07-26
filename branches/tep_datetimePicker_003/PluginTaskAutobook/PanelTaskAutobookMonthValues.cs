@@ -480,7 +480,7 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            /// Очистка строк
             /// </summary>
             public void ClearRows()
             {
@@ -489,7 +489,7 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            /// Очистка значений
             /// </summary>
             public void ClearValues()
             {
@@ -507,6 +507,7 @@ namespace PluginTaskAutobook
             /// <param name="tbOrigin">таблица значений</param>
             /// <param name="dgvView">контрол</param>
             /// <param name="planOnMonth"></param>
+            /// <param name="typeValues">тип данных</param>
             public void ShowValues(DataTable[] tbOrigin
                 , DataGridView dgvView
                 , DataTable planOnMonth
@@ -569,26 +570,6 @@ namespace PluginTaskAutobook
                                 default:
                                     break;
                             }
-                            //if (dr_Values != null)
-                            //    if (dr_Values.Count() > 0)
-                            //        //заполнение столбцов ГТП,ТЭЦ
-                            //        for (int p = 0; p < dr_Values.Count(); p++)
-                            //            if (row.Cells["DATE"].Value.ToString() ==
-                            //            Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())
-                            //            {
-                            //                dblVal = correctingValues(Math.Pow(10F, vsRatioValue)
-                            //                    , dr_Values[p]["VALUE"]
-                            //                    , col.Name
-                            //                    , ref bflg
-                            //                    , row
-                            //                    , typeValues);
-
-                            //                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                            //                dblVal *= Math.Pow(10F, -1 * vsRatioValue);
-
-                            //                row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                            //                    System.Globalization.CultureInfo.InvariantCulture);
-                            //            }
                         }
                     }
                     fillCells(row);
@@ -603,6 +584,7 @@ namespace PluginTaskAutobook
             /// <param name="col">столбец в гриде</param>
             /// <param name="idAlg">номер алгоритма</param>
             /// <param name="vsRatioValue">значение множителя</param>
+            /// <param name="typeValues">тип данных</param>
             private void showRawValues(DataRow[] dr_Values
                 , DataGridViewRow row
                 , HDataGridViewColumn col
@@ -683,6 +665,7 @@ namespace PluginTaskAutobook
             /// <param name="namecol">имя столбца</param>
             /// <param name="bflg">признак корректировки</param>
             /// <param name="row">тек.строка</param>
+            /// <param name="typeValues">тип данных</param>
             /// <returns></returns>
             private double correctingValues(double pow
                 , object rowValue
@@ -822,7 +805,6 @@ namespace PluginTaskAutobook
                     , swenValue = 0;
 
                 if (Int32.TryParse(row.Cells[INDEX_GTP.TEC.ToString()].Value.ToString(), out value))
-                {
                     if (row.Index == 0)
                         row.Cells["StSwen"].Value = value;
                     else
@@ -832,7 +814,6 @@ namespace PluginTaskAutobook
                     }
 
                     countDeviation(row);
-                }
             }
 
             /// <summary>
@@ -925,6 +906,7 @@ namespace PluginTaskAutobook
             /// Формирование таблицы корр. значений
             /// </summary>
             /// <param name="dgvView">отображение</param>
+            ///  <param name="offset">разница поясов</param>
             /// <param name="value">значение</param>
             /// <param name="column">столбец</param>
             /// <param name="row">строка</param>
@@ -946,7 +928,7 @@ namespace PluginTaskAutobook
                         new DataColumn (@"ID_PUT", typeof (int))
                         , new DataColumn (@"ID_SESSION", typeof (long))
                         , new DataColumn (@"QUALITY", typeof (int))
-                        , new DataColumn (@"VALUE", typeof (float))
+                        , new DataColumn (@"VALUE", typeof (double))
                         , new DataColumn (@"WR_DATETIME", typeof (DateTime))
                         , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
                     });
@@ -998,6 +980,7 @@ namespace PluginTaskAutobook
             /// Формирование таблицы корр. значений
             /// </summary>
             /// <param name="dgvView">отображение</param>
+            /// <param name="offset">разница поясов</param>
             /// <returns>таблица значений</returns>
             public DataTable FillTableCorValue(DataGridView dgvView, int offset)
             {
@@ -1011,7 +994,7 @@ namespace PluginTaskAutobook
                         new DataColumn (@"ID_PUT", typeof (int))
                         , new DataColumn (@"ID_SESSION", typeof (long))
                         , new DataColumn (@"QUALITY", typeof (int))
-                        , new DataColumn (@"VALUE", typeof (float))
+                        , new DataColumn (@"VALUE", typeof (double))
                         , new DataColumn (@"WR_DATETIME", typeof (DateTime))
                         , new DataColumn (@"EXTENDED_DEFINITION", typeof (string))
                     });
@@ -1051,7 +1034,7 @@ namespace PluginTaskAutobook
             /// Формирование таблицы вых. значений
             /// </summary>
             /// <param name="dgvView">отображение</param>
-            /// <param name="dtOut">таблица с вых.зн.</param>
+            /// <param name="typeValues">тип данных</param>
             public DataTable FillTableValueDay(DataGridView dgvView, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
                 Array namePut = Enum.GetValues(typeof(INDEX_GTP));
@@ -1065,7 +1048,7 @@ namespace PluginTaskAutobook
                         new DataColumn (@"ID_PUT", typeof (int))
                         , new DataColumn (@"ID_SESSION", typeof (long))
                         , new DataColumn (@"QUALITY", typeof (int))
-                        , new DataColumn (@"VALUE", typeof (float))
+                        , new DataColumn (@"VALUE", typeof (double))
                         , new DataColumn (@"WR_DATETIME", typeof (DateTime))
                         , new DataColumn (@"EXTENDED_DEFINITION", typeof (string))
                     });
@@ -2222,7 +2205,9 @@ namespace PluginTaskAutobook
                             valuesFence();
                         }
                         else
+                        {
                             deleteSession();
+                        }
                     }
                     else
                     {

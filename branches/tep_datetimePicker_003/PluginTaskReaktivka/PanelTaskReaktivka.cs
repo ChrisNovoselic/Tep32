@@ -212,7 +212,7 @@ namespace PluginTaskReaktivka
         void m_dgvReak_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             m_dgvReak.SumValue(e.ColumnIndex, e.RowIndex);
-            m_arTableEdit[(int)m_ViewValues] = valuesFence(m_ViewValues);
+            m_arTableEdit[(int)m_ViewValues] = valuesFence();
         }
 
         /// <summary>
@@ -741,7 +741,7 @@ namespace PluginTaskReaktivka
             , out err);
 
             m_arTableEdit[(int)m_ViewValues] =
-                HandlerDb.SaveValues(m_TableOrigin, valuesFence(m_ViewValues), (int)Session.m_currIdTimezone, out err);
+                HandlerDb.SaveValues(m_arTableOrigin[(int)m_ViewValues], valuesFence(), (int)Session.m_currIdTimezone, out err);
 
             saveInvalValue(out err);
         }
@@ -1895,7 +1895,7 @@ namespace PluginTaskReaktivka
             /// Сохранение значений отображения в табилцу
             /// </summary>
             /// <returns>таблица с данными</returns>
-            public DataTable GetValue(DataTable dtSourceOrg, int idSession)
+            public DataTable GetValue(DataTable dtSourceOrg, int idSession, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
                 int i = 0,
                     idAlg = -1,
@@ -1909,7 +1909,7 @@ namespace PluginTaskReaktivka
                         new DataColumn (@"ID_PUT", typeof (int))
                         , new DataColumn (@"ID_SESSION", typeof (long))
                         , new DataColumn (@"QUALITY", typeof (int))
-                        , new DataColumn (@"VALUE", typeof (float))
+                        , new DataColumn (@"VALUE", typeof (double))
                         , new DataColumn (@"WR_DATETIME", typeof (DateTime))
                         , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
                     });
@@ -1923,15 +1923,14 @@ namespace PluginTaskReaktivka
                                 if (row.Cells[col.Index].Value != null)
                                     if (row.Cells[col.Index].Value.ToString() != "")
                                     {
-                                        idAlg = (int)row.Cells["ALG"].Value;//??
+                                        idAlg = (int)row.Cells["ALG"].Value;
                                         valueToRes = double.Parse(row.Cells[col.Index].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
-                                        //Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
                                         vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
 
                                         valueToRes *= Math.Pow(10F, vsRatioValue);
                                         dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
 
-                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
+                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i, typeValues);
 
                                         dtSourceEdit.Rows.Add(new object[] 
                                         {
@@ -2004,17 +2003,34 @@ namespace PluginTaskReaktivka
             /// <param name="editValue">значение</param>
             /// <param name="i">номер строки</param>
             /// <returns>показатель изменения</returns>
-            private int diffRowsInTables(DataTable origin, double editValue, int i)
+            private int diffRowsInTables(DataTable origin, double editValue, int i, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
-                int quality = 0;
+                int quality = 1;
+                double originValues;
 
                 origin = sortingTable(origin, "WR_DATETIME, ID_PUT");
 
-                if (origin.Rows[i]["Value"].ToString() != editValue.ToString())
-                    if (int.Parse(origin.Rows[i]["QUALITY"].ToString()) != 1)
+                if (origin.Rows.Count - 1 < i)
+                    originValues = 0;
+                else
+                    originValues =
+                        double.Parse(origin.Rows[i]["VALUE"].ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
+
+
+                switch (typeValues)
+                {
+                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE:
+                        if (originValues != editValue)
+                            quality = 2;
+                        break;
+                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION:
                         quality = 1;
-                    else
-                        quality = 2;
+                        break;
+                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT:
+                        break;
+                    default:
+                        break;
+                }
 
                 return quality;
             }
@@ -2307,7 +2323,7 @@ namespace PluginTaskReaktivka
                             // отобразить значения
                             m_dgvReak.ShowValues(m_arTableOrigin[(int)m_ViewValues]);
                             //
-                            m_arTableEdit[(int)m_ViewValues] = valuesFence(m_ViewValues);
+                            m_arTableEdit[(int)m_ViewValues] = valuesFence();
                         }
                         else
                             deleteSession();
@@ -2426,10 +2442,10 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// формирование таблицы данных
         /// </summary>
-        private DataTable valuesFence(HandlerDbTaskReaktivkaCalculate.INDEX_TABLE_VALUES typeValues)
+        private DataTable valuesFence()
         {
             //сохранить вх. знач. в DataTable
-            return m_dgvReak.GetValue(m_arTableOrigin[(int)typeValues], (int)Session.m_Id);
+            return m_dgvReak.GetValue(m_arTableOrigin[(int)m_ViewValues], (int)Session.m_Id, m_ViewValues);
         }
 
         /// <summary>

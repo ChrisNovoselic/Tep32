@@ -119,7 +119,7 @@ namespace PluginTaskReaktivka
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)idPeriod //+ " AND [ID_SOURCE] > 0 "
                             + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
-                            + @" AND [QUALITY] = 0" 
+                            + @" AND [QUALITY] = 0"
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
@@ -364,20 +364,20 @@ namespace PluginTaskReaktivka
                 rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
                 dtRes = Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"]);
 
-                for (int j = 0; j < tableOrigin.Rows.Count; j++)
-                    if (rowSel == tableOrigin.Rows[j]["ID_PUT"].ToString())
-                        if (dtRes == Convert.ToDateTime(tableOrigin.Rows[j]["DATE_TIME"]))
-                            if (tableOrigin.Rows[j]["Value"].ToString() == tableRes.Rows[i]["VALUE"].ToString())
-                            {
-                                idUser = (int)tableOrigin.Rows[j]["ID_USER"];
-                                idSource = (int)tableOrigin.Rows[j]["ID_SOURCE"];
-                                break;
-                            }
-                            else
-                            {
-                                idUser = HUsers.Id;
-                                idSource = 0;
-                            }
+                //for (int j = 0; j < tableOrigin.Rows.Count; j++)
+                //    if (rowSel == tableOrigin.Rows[j]["ID_PUT"].ToString())
+                //        if (dtRes == Convert.ToDateTime(tableOrigin.Rows[j]["DATE_TIME"]))
+                //            if (tableOrigin.Rows[j]["Value"].ToString() == tableRes.Rows[i]["VALUE"].ToString())
+                //            {
+                //                idUser = (int)tableOrigin.Rows[j]["ID_USER"];
+                //                idSource = (int)tableOrigin.Rows[j]["ID_SOURCE"];
+                //                break;
+                //            }
+                //            else
+                //            {
+                               idUser = HUsers.Id;
+                               idSource = 0;
+                //            }
 
                 tableEdit.Rows.Add(new object[] 
                 {
@@ -410,12 +410,24 @@ namespace PluginTaskReaktivka
         public DataTable GetInVal(TaskCalculate.TYPE type
             , DateTimeRange[] arQueryRanges
             , ID_PERIOD idPeriod
-            , HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues 
+            , HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues
             , out int err)
         {
             string strQuery = string.Empty;
             bool bLastItem = false;
-            
+            //int min, max;
+
+            //if (typeValues == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION)
+            //{
+            //    min = -1;
+            //    max = 0;
+            //}
+            //else
+            //{
+            //    min = 0;
+            //    max = 2;
+            //}
+
             for (int i = 0; i < arQueryRanges.Length; i++)
             {
                 bLastItem = !(i < (arQueryRanges.Length - 1));
@@ -433,8 +445,7 @@ namespace PluginTaskReaktivka
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND v.ID_TIME = " + (int)idPeriod
                     + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
-                    + @" AND [QUALITY] > ";//???
-
+                    + @" AND [QUALITY] > 0";
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";
