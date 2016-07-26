@@ -1856,8 +1856,8 @@ namespace PluginTaskBalTeplo
                 if (err == 0)
                     //Начать новую сессию расчета
                     //, получить входные для расчета значения для возможности редактирования
-                    HandlerDb.CreateSession(
-                        CountBasePeriod
+                    HandlerDb.CreateSession(m_id_panel
+                        , CountBasePeriod
                         , m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
                         , ref m_arTableOrigin_in
                         , ref m_arTableOrigin_out

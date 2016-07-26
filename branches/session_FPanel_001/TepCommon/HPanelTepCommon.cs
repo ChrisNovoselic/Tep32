@@ -315,8 +315,9 @@ namespace TepCommon
             try
             {
                 if ((bRes == true)
-                    && (active == true))
-                    initialize(out err, out strErrMsg);
+                    && (active == true)
+                    && (IsFirstActivated == true))
+                        initialize(out err, out strErrMsg);
                 else
                     ;
             }
