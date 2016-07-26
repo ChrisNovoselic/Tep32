@@ -2360,7 +2360,6 @@ namespace PluginTaskAutobook
         {
             get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
-
         protected System.Data.DataTable m_TableEdit
         {
             get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
@@ -3066,4 +3065,3 @@ namespace PluginTaskAutobook
         }
     }
 }
-

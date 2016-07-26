@@ -2595,21 +2595,5 @@ namespace PluginTaskReaktivka
 
             base.Stop();
         }
-
-        /// <summary>
-        /// Поиск ид панели
-        /// </summary>
-        /// <returns>key</returns>
-        private int findMyIDTab()
-        {
-            int Res = 0;
-            Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
-
-            foreach (var item in dictRegId)
-                if (item.Value == this.GetType())
-                    Res = item.Key;
-
-            return Res;
-        }
     }
 }
