@@ -37,6 +37,10 @@ namespace PluginTaskAutobook
         /// флаг очистки отображения
         /// </summary>
         bool m_bflgClear = true;
+        /// <summary>
+        /// флаг setDateRange
+        /// </summary>
+        bool m_bflgDTRange = false;
         //public event DelegateBoolFunc EvtChangeRow;
         /// <summary>
         /// Таблицы со значениями для редактирования
@@ -813,7 +817,7 @@ namespace PluginTaskAutobook
                         row.Cells["StSwen"].Value = value + swenValue;
                     }
 
-                    countDeviation(row);
+                countDeviation(row);
             }
 
             /// <summary>
@@ -824,11 +828,11 @@ namespace PluginTaskAutobook
             {
                 int _number = 0;
 
-                if (row.Cells["StSwen"].Value == null)
+                if (row.Cells["StSwen"].Value == null || row.Cells["StSwen"].Value.ToString() == "")
                     row.Cells["DevOfPlan"].Value = "";
                 else
                     if (Int32.TryParse(row.Cells["PlanSwen"].Value.ToString(), out _number))
-                        row.Cells["DevOfPlan"].Value = Convert.ToSingle(row.Cells["StSwen"].Value) - _number;
+                        row.Cells["DevOfPlan"].Value = double.Parse(row.Cells["StSwen"].Value.ToString()) - _number;//??
                     else
                         row.Cells["DevOfPlan"].Value = Convert.ToSingle(row.Cells["StSwen"].Value) - 0;
             }
@@ -1624,7 +1628,10 @@ namespace PluginTaskAutobook
 
             InitializeComponent();
 
-            Session.SetRangeDatetime(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
+            int cntDays = DateTime.DaysInMonth(s_dtDefaultAU.Year, s_dtDefaultAU.Month),
+             today = s_dtDefaultAU.Day;
+
+            Session.SetRangeDatetime(s_dtDefaultAU.AddDays(-(today - 1)), s_dtDefaultAU.AddDays(cntDays - today));
         }
 
         /// <summary>
@@ -1725,8 +1732,8 @@ namespace PluginTaskAutobook
                 lBeginCalcPer.Dock = DockStyle.Bottom;
                 lBeginCalcPer.Text = @"Дата/время начала периода расчета:";
                 ////Дата/время начала периода расчета - значения
-                int cntDays = DateTime.DaysInMonth(s_dtDefaultAU.Year, s_dtDefaultAU.Month);
-                int today = s_dtDefaultAU.Day;
+                int cntDays = DateTime.DaysInMonth(s_dtDefaultAU.Year, s_dtDefaultAU.Month),
+                 today = s_dtDefaultAU.Day;
 
                 ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(-(today - 1)), null);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
@@ -1872,7 +1879,7 @@ namespace PluginTaskAutobook
                             , 0
                             , 0
                             , 0);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddDays(cntDays - 1);
+                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddMonths(1);//.Value.AddDays(cntDays - 1);
                         hdtpBtimePer.Mode =
                         hdtpEndtimePer.Mode =
                             HDateTimePicker.MODE.MONTH;
@@ -2149,7 +2156,7 @@ namespace PluginTaskAutobook
             bool bflag = false;
 
             for (int i = 0; i < dtRange.Length; i++)
-                if (dtRange[i].Begin.Month > DateTime.Now.Month)
+                if (dtRange[i].End.Month > DateTime.Now.Month)
                     if (dtRange[i].End.Year >= DateTime.Now.Year)
                         bflag = true;
 
@@ -2481,7 +2488,7 @@ namespace PluginTaskAutobook
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = Convert.ToInt32(drTZ[0]["VALUE"].ToString()); //??? требуется прочитать из [profile]
+                    (ctrl as ComboBox).SelectedIndex = Convert.ToInt32(drTZ[0]["VALUE"].ToString());
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
@@ -2491,7 +2498,7 @@ namespace PluginTaskAutobook
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
                     (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
-                    Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][1]);//??
+                    Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][2]);//??
                     (PanelManagementAB as PanelManagementAutobook).SetPeriod(ID_PERIOD.MONTH);//
                     (ctrl as ComboBox).Enabled = false;
 
@@ -2563,9 +2570,12 @@ namespace PluginTaskAutobook
             string n_alg = string.Empty;
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
-            //
-            settingDateRange();
-            Session.SetRangeDatetime(dtBegin, dtEnd);
+            if (m_bflgDTRange)
+                //settingDateRange()
+                ;
+            else
+                m_bflgDTRange = true;
+            Session.SetRangeDatetime(dtBegin, dtEnd.AddYears(-1));
             // очистить содержание представления
             if (m_bflgClear)
             {
@@ -2643,14 +2653,12 @@ namespace PluginTaskAutobook
             (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value =
                 (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
 
-            cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-  (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
-            today = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
-
             (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
                 (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(cntDays - today);
 
             PanelManagementAB.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
+
+            m_bflgDTRange = false;
 
         }
 
@@ -2753,9 +2761,9 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// обработку события - изменение начала/окончания даты/времени
         /// </summary>
-        /// <param name="active"></param>
+        /// <param name="active">параметр активации</param>
         protected void activateDateTimeRangeValue_OnChanged(bool active)
         {
             if (!(PanelManagementAB == null))

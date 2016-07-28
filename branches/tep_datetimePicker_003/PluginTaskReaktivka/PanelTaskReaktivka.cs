@@ -345,7 +345,7 @@ namespace PluginTaskReaktivka
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
 
                     (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
-                    Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][1]);//??
+                    Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][2]);//??
                     (PanelManagementReak as PanelManagementReaktivka).SetPeriod(ID_PERIOD.MONTH);
                     (ctrl as ComboBox).Enabled = false;
 
@@ -433,6 +433,7 @@ namespace PluginTaskReaktivka
         /// <param name="ev">Аргумент события</param>
         protected virtual void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
         {
+
             //Установить новое значение для текущего периода
             Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][(Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox).SelectedIndex]);
             //Отменить обработку события - изменение начала/окончания даты/времени
@@ -444,6 +445,7 @@ namespace PluginTaskReaktivka
             if (m_bflgClear)
                 // очистить содержание представления
                 clear();
+
         }
 
         /// <summary>
@@ -539,23 +541,22 @@ namespace PluginTaskReaktivka
         private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
         {
             int err = -1
-             , id_alg = -1
-             , ratio = -1
-             , round = -1;
+                , id_alg = -1
+                , ratio = -1
+                , round = -1;
             string n_alg = string.Empty;
+            DateTime dt = new DateTime(Session.m_rangeDatetime.Begin.Year, Session.m_rangeDatetime.Begin.Month, 1);
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
-            DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
             settingDateRange();
             Session.SetRangeDatetime(dtBegin, dtEnd);
 
             if (m_bflgClear)
             {
-                clear();
                 dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
-                  , new int[] {
-                    m_id_panel
-                    , (int)Session.m_currIdPeriod }
-                  , out err);
+                    , new int[] {
+                        m_id_panel
+                        , (int)Session.m_currIdPeriod }
+                        , out err);
 
                 IEnumerable<DataRow> listParameter = ListParameter.Select(x => x);
 
@@ -587,17 +588,17 @@ namespace PluginTaskReaktivka
                 {
                     if (m_dgvReak.Rows.Count != DaysInMonth)
                         m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
-                                {
-                                    m_idAlg = id_alg
-                                    ,
-                                    //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                                    //,
-                                    m_Value = dt.AddDays(i).ToShortDateString()
-                                    ,
-                                    m_vsRatio = ratio
-                                    ,
-                                    m_vsRound = round
-                                });
+                        {
+                            m_idAlg = id_alg
+                            ,
+                            //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                            //,
+                            m_Value = dt.AddDays(i).ToShortDateString()
+                            ,
+                            m_vsRatio = ratio
+                            ,
+                            m_vsRound = round
+                        });
                     else
                         m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
                         {
@@ -618,7 +619,6 @@ namespace PluginTaskReaktivka
             m_currentOffSet = Session.m_curOffsetUTC;
         }
 
-
         /// <summary>
         /// Установка длительности периода 
         /// </summary>
@@ -636,15 +636,10 @@ namespace PluginTaskReaktivka
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value =
                 (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
 
-            cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-  (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
-            today = (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
-
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
                 (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(cntDays - today);
 
             PanelManagementReak.DateTimeRangeValue_Changed += new PanelManagementReaktivka.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
-
         }
 
         /// <summary>
@@ -1880,10 +1875,12 @@ namespace PluginTaskReaktivka
 
                 foreach (DataGridViewRow row in Rows)
                     if (Rows.Count - 1 != row.Index)
-                        if (double.TryParse(row.Cells[indxCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
-                            //sumValue = Rows.Cast<DataGridViewRow>().Sum(r => Convert.ToDouble(r.Cells[indxCol].Value.ToString().Replace('.', ',')));
-                            sumValue += value;
-                        else ;
+                        if (row.Cells[indxCol].Value == null)
+                            row.Cells[indxCol].Value = "";
+                        else
+                            if (double.TryParse(row.Cells[indxCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
+                                sumValue += value;
+                            else ;
                     else
                         row.Cells[indxCol].Value = sumValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                     System.Globalization.CultureInfo.InvariantCulture);
@@ -1967,14 +1964,14 @@ namespace PluginTaskReaktivka
                         foreach (DataGridViewRow row in Rows)
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
-                                if (double.TryParse(row.Cells[iCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dblVal))
-                                {
-                                    //dblVal = double.Parse(row.Cells[iCol].Value.ToString(), System.Globalization.CultureInfo.InvariantCulture);
-                                    idAlg = (int)row.Cells["ALG"].Value;
-                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                    row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                                System.Globalization.CultureInfo.InvariantCulture);
-                                }
+                                if (row.Cells[iCol].Value != null)
+                                    if (double.TryParse(row.Cells[iCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dblVal))
+                                    {
+                                        idAlg = (int)row.Cells["ALG"].Value;
+                                        vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                        row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                                    System.Globalization.CultureInfo.InvariantCulture);
+                                    }
                         }
                     iCol++;
                 }

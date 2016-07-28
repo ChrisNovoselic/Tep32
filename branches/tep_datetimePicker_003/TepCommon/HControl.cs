@@ -323,7 +323,7 @@ namespace TepCommon
             int cntDaysInMonth = -1;
             //bool bRegHandler = false;
             //ComboBox cbxDay;            
-
+            m_tsLeading = TimeSpan.FromDays(DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, (obj as ComboBox).SelectedIndex+1));//
             _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
             cntDaysInMonth = DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, (obj as ComboBox).SelectedIndex + 1);
 
@@ -377,6 +377,7 @@ namespace TepCommon
 
             onSelectedIndexChanged(INDEX_CONTROL.MONTH);
         }
+
         /// <summary>
         /// Обработчик события - изменения номера года
         /// </summary>
@@ -396,6 +397,7 @@ namespace TepCommon
 
             onSelectedIndexChanged(INDEX_CONTROL.YEAR);
         }
+
         /// <summary>
         /// Обработчик события - изменения номера часа
         /// </summary>
@@ -454,8 +456,7 @@ namespace TepCommon
             //??? учитывать значение в "ведущем" календаре
             iDiffYear = objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
             _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
-            m_tsLeading = TimeSpan.FromDays(DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, objLeading.Value.Month));//
-            _value[(int)INDEX_VALUE.CURRENT] = objLeading.Value + m_tsLeading;
+            _value[(int)INDEX_VALUE.CURRENT] = objLeading.Value + m_tsLeading;//(obj as HDateTimePicker).m_tsLeading;
             //??? учитывать значение в "ведущем" календаре
             iDiffYear -= objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
 
@@ -473,7 +474,7 @@ namespace TepCommon
             {
                 cbxYear.SelectedIndex += iDiffYear;
                 cbxMonth.SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Month - 1;
-                cntDayInMonth = DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, _value[(int)INDEX_VALUE.CURRENT].Month-1);
+                cntDayInMonth = DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, _value[(int)INDEX_VALUE.CURRENT].Month);
                 //if ((ev as EventDatePartArgs).m_index == INDEX_CONTROL.MONTH)
                 cbxDayMapping(cntDayInMonth, false);
                 //else
