@@ -1628,10 +1628,10 @@ namespace PluginTaskAutobook
 
             InitializeComponent();
 
-            int cntDays = DateTime.DaysInMonth(s_dtDefaultAU.Year, s_dtDefaultAU.Month),
-             today = s_dtDefaultAU.Day;
+            HDateTimePicker ctrlBegin = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker),
+                ctrlEnd = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker);
 
-            Session.SetRangeDatetime(s_dtDefaultAU.AddDays(-(today - 1)), s_dtDefaultAU.AddDays(cntDays - today));
+            Session.SetRangeDatetime(ctrlBegin.Value, ctrlEnd.Value);
         }
 
         /// <summary>
@@ -1879,7 +1879,7 @@ namespace PluginTaskAutobook
                             , 0
                             , 0
                             , 0);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddMonths(1);
+                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddDays(cntDays - 1);
                         hdtpBtimePer.Mode =
                         hdtpEndtimePer.Mode =
                             HDateTimePicker.MODE.MONTH;

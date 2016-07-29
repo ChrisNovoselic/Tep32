@@ -372,6 +372,7 @@ namespace PluginTaskAutobook
                 DataGridViewRow row = new DataGridViewRow();
                 i = Rows.Add(row);
             }
+
             /// <summary>
             /// Добавить строку в таблицу
             /// </summary>

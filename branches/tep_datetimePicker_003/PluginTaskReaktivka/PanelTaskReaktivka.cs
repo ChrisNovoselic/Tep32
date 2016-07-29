@@ -547,7 +547,7 @@ namespace PluginTaskReaktivka
             string n_alg = string.Empty;
             DateTime dt = new DateTime(Session.m_rangeDatetime.Begin.Year, Session.m_rangeDatetime.Begin.Month, 1);
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
-            settingDateRange();
+            //settingDateRange();
             Session.SetRangeDatetime(dtBegin, dtEnd);
 
             if (m_bflgClear)
