@@ -222,7 +222,11 @@ namespace TepCommon
             else
                 ;
         }
-
+        /// <summary>
+        /// Получения списка периодов времени
+        /// </summary>
+        /// <param name="strIds"></param>
+        /// <returns></returns>
         public string GetQueryTimePeriods(string strIds)
         {
             string strRes = string.Empty;
@@ -231,7 +235,11 @@ namespace TepCommon
 
             return strRes;
         }
-
+        /// <summary>
+        /// Получение списка временных зон
+        /// </summary>
+        /// <param name="strIds"></param>
+        /// <returns></returns>
         public string GetQueryTimezones(string strIds)
         {
             string strRes = string.Empty;
@@ -240,7 +248,10 @@ namespace TepCommon
 
             return strRes;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public virtual string GetQueryCompList()
         {
             string strRes = string.Empty;
@@ -251,7 +262,10 @@ namespace TepCommon
 
             return strRes;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public string GetQueryModeDev()
         {
             string strRes = string.Empty;
@@ -260,7 +274,10 @@ namespace TepCommon
 
             return strRes;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public string GetQueryMeasures()
         {
             string strRes = string.Empty;
@@ -269,7 +286,10 @@ namespace TepCommon
 
             return strRes;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public string GetQueryRatio()
         {
             string strRes = string.Empty;

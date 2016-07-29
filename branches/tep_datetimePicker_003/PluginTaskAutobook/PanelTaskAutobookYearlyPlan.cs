@@ -89,7 +89,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.MONTH : Session.m_currIdPeriod; } }
+        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.YEAR : Session.m_currIdPeriod; } }
         /// <summary>
         /// Признак отображаемых на текущий момент значений
         /// </summary>
@@ -635,7 +635,7 @@ namespace PluginTaskAutobook
                 cntDays = DateTime.DaysInMonth(s_dtDefaultAU.Year, s_dtDefaultAU.Month);
                 lBeginCalcPer.Text = @"Дата/время начала периода расчета:";
                 ////Дата/время начала периода расчета - значения
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddMonths(-(13 - mnthToday )).AddDays(-(today - 1)), null);
+                ctrl = new HDateTimePicker(s_dtDefaultAU.AddMonths(-(13 - mnthToday)).AddDays(-(today - 1)), null);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 tlpValue.Controls.Add(lBeginCalcPer, 0, 0);
@@ -660,11 +660,6 @@ namespace PluginTaskAutobook
                 //Кнопка - обновить
                 ctrl = new Button();
                 ctrl.Name = INDEX_CONTROL_BASE.BUTTON_LOAD.ToString();
-                //ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
-                //indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
-                //ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString();
-                //indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
-                //ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
                 ctrl.Dock = DockStyle.Top;
                 //Кнопка 
@@ -770,7 +765,7 @@ namespace PluginTaskAutobook
                             , 1
                             , 0
                             , 0
-                            , 0).AddYears(-1);
+                            , 0);
                         hdtpEndtimePer.Value = hdtpBtimePer.Value.AddMonths(mnth).AddDays(days - 1);
                         hdtpBtimePer.Mode =
                         hdtpEndtimePer.Mode =
@@ -788,14 +783,18 @@ namespace PluginTaskAutobook
         /// <param name="iFunc"></param>
         public PanelTaskAutobookYearlyPlan(IPlugIn iFunc)
             : base(iFunc)
-        {
+        {       
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
 
             m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponent();
-            Session.SetRangeDatetime(s_dtDefaultAU, s_dtDefaultAU.AddMonths(1));//
+
+            HDateTimePicker ctrlBegin = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker),
+        ctrlEnd = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker);
+
+            Session.SetRangeDatetime(ctrlBegin.Value, ctrlEnd.Value);
         }
 
         /// <summary>
@@ -897,13 +896,14 @@ namespace PluginTaskAutobook
             errMsg = string.Empty;
             string strItem = string.Empty;
             int i = -1
-                , id_comp = -1;
+                , id_comp = -1
+                  , role;
             Control ctrl = null;
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
             m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
-            int role = (int)HTepUsers.Role;
+            role = (int)HTepUsers.Role;
 
             DataRow[] drTZ =
                 HandlerDb.GetProfilesContext().Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_TAB = " + findMyID());
@@ -912,7 +912,7 @@ namespace PluginTaskAutobook
                 switch (id)
                 {
                     case INDEX_ID.PERIOD:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
+                        m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH, (int)ID_PERIOD.YEAR };
                         break;
                     case INDEX_ID.TIMEZONE:
                         m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
@@ -965,8 +965,8 @@ namespace PluginTaskAutobook
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = 2; //??? требуется прочитать из [profile]
-                    Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][2]);//??
+                    (ctrl as ComboBox).SelectedIndex = 3; //??? требуется прочитать из [profile]
+                    Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][3]);//??
                     (PanelManagementYear as PanelManagementAutobook).SetPeriod(ID_PERIOD.YEAR);
                     (ctrl as ComboBox).Enabled = false;
                 }
@@ -1021,7 +1021,7 @@ namespace PluginTaskAutobook
 
             //ctrlBegin.Value = ctrlBegin.Value.AddDays(-(today - 1)).AddMonths(-(mnthToday - 1));
 
-            //ctrlEnd.Value = ctrlBegin.Value.AddDays(30).AddMonths(11).AddYears(1);
+            ctrlEnd.Value = ctrlBegin.Value.AddDays(30).AddMonths(11);
 
             PanelManagementYear.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
         }
@@ -1402,8 +1402,8 @@ namespace PluginTaskAutobook
         {
             // очистить содержание представления
             clear();
-            settingDateRange();
-            Session.SetRangeDatetime(dtBegin, dtEnd.AddYears(-1));
+            //settingDateRange();
+            Session.SetRangeDatetime(dtBegin, dtEnd);
             //заполнение представления
             changeDateInGrid(dtBegin);
         }

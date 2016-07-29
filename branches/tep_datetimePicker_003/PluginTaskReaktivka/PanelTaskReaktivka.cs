@@ -88,7 +88,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == HandlerDbTaskReaktivkaCalculate.INDEX_TABLE_VALUES.SESSION ? ID_PERIOD.DAY : Session.m_currIdPeriod; } }
+        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == HandlerDbTaskReaktivkaCalculate.INDEX_TABLE_VALUES.SESSION ? ID_PERIOD.MONTH : Session.m_currIdPeriod; } }
         /// <summary>
         /// Признак отображаемых на текущий момент значений
         /// </summary>
@@ -344,7 +344,7 @@ namespace PluginTaskReaktivka
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
 
-                    (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
+                    (ctrl as ComboBox).SelectedIndex = 2; //??? требуется прочитать из [profile]
                     Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][2]);//??
                     (PanelManagementReak as PanelManagementReaktivka).SetPeriod(ID_PERIOD.MONTH);
                     (ctrl as ComboBox).Enabled = false;

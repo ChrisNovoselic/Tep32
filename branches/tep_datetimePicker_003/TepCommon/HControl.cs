@@ -23,6 +23,13 @@ namespace TepCommon
                 , COUNT
         }
         /// <summary>
+        /// 
+        /// </summary>
+        private enum INDEX_LEAP_YEAR
+        {
+            UNKNOWN = -1, LEAP = 366, NOT_LEAP = 365
+        }
+        /// <summary>
         /// Перечисление для индесов дочерних элементов управления
         /// </summary>
         private enum INDEX_CONTROL
@@ -323,7 +330,7 @@ namespace TepCommon
             int cntDaysInMonth = -1;
             //bool bRegHandler = false;
             //ComboBox cbxDay;            
-            m_tsLeading = TimeSpan.FromDays(DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, (obj as ComboBox).SelectedIndex+1));//
+            m_tsLeading = TimeSpan.FromDays(DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, (obj as ComboBox).SelectedIndex + 1));//
             _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
             cntDaysInMonth = DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, (obj as ComboBox).SelectedIndex + 1);
 
@@ -433,6 +440,23 @@ namespace TepCommon
                 m_tsLeading = _value[(int)INDEX_VALUE.CURRENT] - m_objLeading.Value;
             else
                 ;
+            switch (indx)
+            {
+                case INDEX_CONTROL.DAY:
+                    break;
+                case INDEX_CONTROL.MONTH:
+                    break;
+                case INDEX_CONTROL.YEAR:
+                    if (DateTime.IsLeapYear(_value[(int)INDEX_VALUE.CURRENT].Year))
+                        m_tsLeading = TimeSpan.FromDays((double)INDEX_LEAP_YEAR.LEAP);
+                    else 
+                        m_tsLeading = TimeSpan.FromDays((double)INDEX_LEAP_YEAR.NOT_LEAP);
+                    break;
+                case INDEX_CONTROL.HOUR:
+                    break;
+                default:
+                    break;
+            }
             // вызвать ВНЕШНИЙ обработчик события - изменение значения объекта
             // , но только один и только 1-ый из них
             // два обработчика когда объект ведущий (2-ой обработчик ведомого объекта)
@@ -456,7 +480,7 @@ namespace TepCommon
             //??? учитывать значение в "ведущем" календаре
             iDiffYear = objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
             _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
-            _value[(int)INDEX_VALUE.CURRENT] = objLeading.Value + m_tsLeading;//(obj as HDateTimePicker).m_tsLeading;
+            _value[(int)INDEX_VALUE.CURRENT] = objLeading.Value + m_tsLeading;
             //??? учитывать значение в "ведущем" календаре
             iDiffYear -= objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
 
