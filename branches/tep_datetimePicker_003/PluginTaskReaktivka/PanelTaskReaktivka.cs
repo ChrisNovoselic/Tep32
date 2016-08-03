@@ -869,6 +869,9 @@ namespace PluginTaskReaktivka
                 (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
             private void InitializeComponents()
             {
                 //initializeLayoutStyle();
