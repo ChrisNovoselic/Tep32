@@ -117,7 +117,7 @@ namespace PluginTaskReaktivka
                             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
                             + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
-                            + @"WHERE v.[ID_TIME] = " + (int)idPeriod //+ " AND [ID_SOURCE] > 0 "
+                            + @"WHERE v.[ID_TIME] = " + (int)ID_PERIOD.DAY //+ " AND [ID_SOURCE] > 0 "
                             + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
                             + @" AND [QUALITY] = 0"
                         ;
@@ -415,18 +415,6 @@ namespace PluginTaskReaktivka
         {
             string strQuery = string.Empty;
             bool bLastItem = false;
-            //int min, max;
-
-            //if (typeValues == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION)
-            //{
-            //    min = -1;
-            //    max = 0;
-            //}
-            //else
-            //{
-            //    min = 0;
-            //    max = 2;
-            //}
 
             for (int i = 0; i < arQueryRanges.Length; i++)
             {
@@ -443,7 +431,7 @@ namespace PluginTaskReaktivka
                     + @" WHERE  ID_TASK = " + (int)IdTask
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND v.ID_TIME = " + (int)idPeriod
+                    + @" AND v.ID_TIME = " + (int)ID_PERIOD.DAY
                     + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
                     + @" AND [QUALITY] > 0";
 
@@ -487,7 +475,7 @@ namespace PluginTaskReaktivka
                     + @" WHERE  [ID_TASK] = " + (int)IdTask
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND v.ID_TIME = " + (int)idPeriod
+                    + @" AND v.ID_TIME = " + (int)ID_PERIOD.DAY
                     + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
                     + @" AND v.QUALITY > 0";
 

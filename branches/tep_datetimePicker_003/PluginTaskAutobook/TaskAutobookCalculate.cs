@@ -309,7 +309,7 @@ namespace PluginTaskAutobook
                             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
                             + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
-                            + @"WHERE v.[ID_TIME] = " + (int)idPeriod + " AND [ID_SOURCE] > 0 "
+                            + @"WHERE v.[ID_TIME] = " + (int)ID_PERIOD.DAY + " AND [ID_SOURCE] > 0 "
                             + @"AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
@@ -375,7 +375,7 @@ namespace PluginTaskAutobook
                     + @" WHERE  ID_TASK = " + (int)IdTask
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.AddDays(-1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0"
+                    + @" AND v.ID_TIME = " + (int)ID_PERIOD.DAY + " AND v.ID_SOURCE = 0"
                     + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
 
                 if (bLastItem == false)
@@ -405,7 +405,7 @@ namespace PluginTaskAutobook
                     + @" WHERE [DATE_TIME] > '" + dtRange[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + dtRange[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
-                    + @" AND [ID_TIME] = " + (int)_Session.m_currIdPeriod
+                    + @" AND [ID_TIME] = " + (int)ID_PERIOD.DAY
                     + @" AND [QUALITY] > 0";
 
                 if (bLastItem == false)
@@ -435,7 +435,7 @@ namespace PluginTaskAutobook
                     + @" WHERE [DATE_TIME] > '" + dtRange[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + dtRange[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
-                    + @" AND [ID_TIME] = " + (int)_Session.m_currIdPeriod
+                    + @" AND [ID_TIME] = " + (int)ID_PERIOD.DAY
                     + @" AND [QUALITY] > 0";
 
                 if (bLastItem == false)
@@ -499,7 +499,7 @@ namespace PluginTaskAutobook
                         + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                         + @" ON v.ID_PUT = p.ID"
                         + @" WHERE  ID_TASK = " + (int)IdTask
-                        + @" AND v.ID_TIME = 24"
+                        + @" AND v.ID_TIME = " + (int)ID_PERIOD.MONTH
                         + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
             }
 
@@ -762,7 +762,7 @@ namespace PluginTaskAutobook
                     + @" WHERE  ID_TASK = " + (int)IdTask
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.AddDays(-1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0"
+                    + @" AND v.ID_TIME = " + (int)ID_PERIOD.DAY+ " AND v.ID_SOURCE = 0"
                     + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
 
                 if (bLastItem == false)
@@ -847,7 +847,7 @@ namespace PluginTaskAutobook
                 }
             }
 
-            tableEdit = sortingTable(tableEdit,"DATE_TIME, ID_PUT");
+            tableEdit = sortingTable(tableEdit, "DATE_TIME, ID_PUT");
 
             return tableEdit;
         }
@@ -998,7 +998,7 @@ namespace PluginTaskAutobook
                             + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON v.ID_PUT = p.ID "
                             + @"WHERE  ID_TASK = " + (int)IdTask + " "
-                            + @"AND v.[ID_TIME] = " + (int)idPeriod
+                            + @"AND v.[ID_TIME] = " + (int)ID_PERIOD.MONTH
                             + " AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)

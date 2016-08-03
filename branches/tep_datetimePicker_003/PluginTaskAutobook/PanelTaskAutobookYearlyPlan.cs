@@ -636,7 +636,7 @@ namespace PluginTaskAutobook
                 cntDays = DateTime.DaysInMonth(s_dtDefaultAU.Year, s_dtDefaultAU.Month);
                 lBeginCalcPer.Text = @"Дата/время начала периода расчета:";
                 ////Дата/время начала периода расчета - значения
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddMonths(-(13 - mnthToday)).AddDays(-(today - 1)), null);
+                ctrl = new HDateTimePicker(s_dtDefaultAU.AddMonths(-(mnthToday - 1)).AddDays(-(today - 1)), null);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
                 ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 tlpValue.Controls.Add(lBeginCalcPer, 0, 0);
@@ -784,7 +784,7 @@ namespace PluginTaskAutobook
         /// <param name="iFunc"></param>
         public PanelTaskAutobookYearlyPlan(IPlugIn iFunc)
             : base(iFunc)
-        {       
+        {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
 
             m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];

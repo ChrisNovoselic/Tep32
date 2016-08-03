@@ -23,7 +23,7 @@ namespace TepCommon
                 , COUNT
         }
         /// <summary>
-        /// 
+        /// Перечисление для високосные/не_високосные годы в режиме «ГОД».
         /// </summary>
         private enum INDEX_LEAP_YEAR
         {
@@ -424,11 +424,14 @@ namespace TepCommon
 
             onSelectedIndexChanged(INDEX_CONTROL.HOUR);
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
         private class EventDatePartArgs : EventArgs
         {
             public INDEX_CONTROL m_index;
         }
+
         /// <summary>
         /// Обработчик события - изменение значения любого из компонентов даты/времени
         /// </summary>
@@ -440,23 +443,6 @@ namespace TepCommon
                 m_tsLeading = _value[(int)INDEX_VALUE.CURRENT] - m_objLeading.Value;
             else
                 ;
-            switch (indx)
-            {
-                case INDEX_CONTROL.DAY:
-                    break;
-                case INDEX_CONTROL.MONTH:
-                    break;
-                case INDEX_CONTROL.YEAR:
-                    if (DateTime.IsLeapYear(_value[(int)INDEX_VALUE.CURRENT].Year))
-                        m_tsLeading = TimeSpan.FromDays((double)INDEX_LEAP_YEAR.LEAP);
-                    else 
-                        m_tsLeading = TimeSpan.FromDays((double)INDEX_LEAP_YEAR.NOT_LEAP);
-                    break;
-                case INDEX_CONTROL.HOUR:
-                    break;
-                default:
-                    break;
-            }
             // вызвать ВНЕШНИЙ обработчик события - изменение значения объекта
             // , но только один и только 1-ый из них
             // два обработчика когда объект ведущий (2-ой обработчик ведомого объекта)
@@ -477,11 +463,15 @@ namespace TepCommon
             int iDiffYear = -1
                 , cntDayInMonth = -1;
 
+            INDEX_CONTROL indx = (ev as EventDatePartArgs).m_index;
+
             //??? учитывать значение в "ведущем" календаре
             iDiffYear = objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
             _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
+            cbxYearMapping(indx);
             _value[(int)INDEX_VALUE.CURRENT] = objLeading.Value + m_tsLeading;
             //??? учитывать значение в "ведущем" календаре
+
             iDiffYear -= objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
 
             cbxYear = Controls.Find(INDEX_CONTROL.YEAR.ToString(), true)[0] as ComboBox;
@@ -517,6 +507,32 @@ namespace TepCommon
 
             ValueChanged(this, EventArgs.Empty);
         }
+
+        /// <summary>
+        /// Кол-во дней с учетом високосные/не_високосные годы в режиме «ГОД».
+        /// </summary>
+        /// <param name="indx">индекс контрола</param>
+        private void cbxYearMapping(INDEX_CONTROL indx)
+        {
+            switch (indx)
+            {
+                case INDEX_CONTROL.DAY:
+                    break;
+                case INDEX_CONTROL.MONTH:
+                    break;
+                case INDEX_CONTROL.YEAR:
+                    if (DateTime.IsLeapYear(_value[(int)INDEX_VALUE.CURRENT].Year))
+                        m_tsLeading = TimeSpan.FromDays((double)INDEX_LEAP_YEAR.LEAP) - TimeSpan.FromDays(1);
+                    else
+                        m_tsLeading = TimeSpan.FromDays((double)INDEX_LEAP_YEAR.NOT_LEAP) - TimeSpan.FromDays(1);
+                    break;
+                case INDEX_CONTROL.HOUR:
+                    break;
+                default:
+                    break;
+            }
+        }
+
         /// <summary>
         /// Изменить кол-во элементов в списке "Номер дня месяца", установить текущий номер дня в месяце
         /// </summary>

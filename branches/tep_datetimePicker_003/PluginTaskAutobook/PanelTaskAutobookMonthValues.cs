@@ -758,26 +758,31 @@ namespace PluginTaskAutobook
                      , vsRatioValue = -1;
                 double planDay
                    , dbValue
-                    , increment = 0;
-
-                idAlg = (int)dgvAB.Rows[0].Cells["ALG"].Value;
-                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-
-                planDay = (Convert.ToSingle(value)
-                   / DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month));
-
-                for (int i = 0; i < dgvAB.Rows.Count - 1; i++)
+                    , increment = 0
+                    , dValue;
+                if (double.TryParse(value, out dValue))
                 {
-                    increment = increment + planDay;
-                    dbValue = increment * Math.Pow(10F, -1 * vsRatioValue);
-                    dgvAB.Rows[i].Cells["PlanSwen"].Value = dbValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                             System.Globalization.CultureInfo.InvariantCulture);
+                    idAlg = (int)dgvAB.Rows[0].Cells["ALG"].Value;
+                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+
+                    planDay = (Convert.ToSingle(value)
+                       / DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month));
+
+                    for (int i = 0; i < dgvAB.Rows.Count - 1; i++)
+                    {
+                        increment = increment + planDay;
+                        dbValue = increment * Math.Pow(10F, -1 * vsRatioValue);
+                        dgvAB.Rows[i].Cells["PlanSwen"].Value = dbValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                                 System.Globalization.CultureInfo.InvariantCulture);
+                    }
+
+                    dbValue = double.Parse(value) * Math.Pow(10F, -1 * vsRatioValue);
+
+                    dgvAB.Rows[DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month) - 1].Cells["PlanSwen"].Value =
+                        dbValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);//??
                 }
-
-                dbValue = Convert.ToSingle(value) * Math.Pow(10F, -1 * vsRatioValue);
-
-                dgvAB.Rows[DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month) - 1].Cells["PlanSwen"].Value =
-                    dbValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);//??
+                else 
+                    MessageBox.Show("NotPlanOnMonth");
             }
 
             /// <summary>
@@ -1890,8 +1895,8 @@ namespace PluginTaskAutobook
                             , 1
                             , 0
                             , 0
-                            , 0).AddYears(-1);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddYears(1);
+                            , 0);
+                        hdtpEndtimePer.Value = hdtpBtimePer.Value;
                         hdtpBtimePer.Mode =
                         hdtpEndtimePer.Mode =
                             HDateTimePicker.MODE.YEAR;
@@ -2570,12 +2575,7 @@ namespace PluginTaskAutobook
             string n_alg = string.Empty;
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
-            if (m_bflgDTRange)
-                //settingDateRange()
-                ;
-            else
-                m_bflgDTRange = true;
-            Session.SetRangeDatetime(dtBegin, dtEnd.AddYears(-1));
+            Session.SetRangeDatetime(dtBegin, dtEnd);
             // очистить содержание представления
             if (m_bflgClear)
             {
@@ -2630,8 +2630,6 @@ namespace PluginTaskAutobook
                             });
                 }
             }
-            //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
-            //
             m_currentOffSet = Session.m_curOffsetUTC;
             m_bflgClear = true;
         }
