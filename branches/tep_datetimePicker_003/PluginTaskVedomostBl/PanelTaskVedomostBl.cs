@@ -115,7 +115,7 @@ namespace PluginTaskVedomostBl
             get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
 
-                /// <summary>
+        /// <summary>
         /// Панель элементов управления
         /// </summary>
         protected class PanelManagementVedomost : HPanelCommon
@@ -493,6 +493,136 @@ namespace PluginTaskVedomostBl
                     strRes = (string)Items[m_listId.IndexOf(id)];
 
                     return strRes;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        protected class DGVVedomostBl : DataGridView
+        {
+            /// <summary>
+            /// Перечисление для индексации столбцов со служебной информацией
+            /// </summary>
+            protected enum INDEX_SERVICE_COLUMN : uint { ALG, DATE, COUNT }
+            private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
+
+            
+            /// <summary>
+            /// Конструктор
+            /// </summary>
+            /// <param name="nameDGV"></param>
+            public DGVVedomostBl(string nameDGV)
+            {
+                InitializeComponents(nameDGV);
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="nameDGV"></param>
+            private void InitializeComponents(string nameDGV)
+            {
+                this.Name = nameDGV;
+                Dock = DockStyle.Fill;
+                //Запретить выделение "много" строк
+                MultiSelect = false;
+                //Установить режим выделения - "полная" строка
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                //Установить режим "невидимые" заголовки столбцов
+                ColumnHeadersVisible = true;
+                //Запрет изменения размера строк
+                AllowUserToResizeRows = false;
+                //Отменить возможность добавления строк
+                AllowUserToAddRows = false;
+                //Отменить возможность удаления строк
+                AllowUserToDeleteRows = false;
+                //Отменить возможность изменения порядка следования столбцов строк
+                AllowUserToOrderColumns = false;
+                //Не отображать заголовки строк
+                RowHeadersVisible = false;
+                //Ширина столбцов под видимую область
+                //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+
+                //AddColumn(-2, string.Empty, "ALG", true, false);
+                //AddColumn(-1, "Дата", "Date", true, true);
+            }
+
+            /// <summary>
+            /// Класс для описания дополнительных свойств столбца в отображении (таблице)
+            /// </summary>
+            private class HDataGridViewColumn : DataGridViewTextBoxColumn
+            {
+                /// <summary>
+                /// Идентификатор компонента
+                /// </summary>
+                public int m_iIdComp;
+                /// <summary>
+                /// Признак запрета участия в расчете
+                /// </summary>
+                public bool m_bCalcDeny;
+            }
+
+            /// <summary>
+            /// Структура для описания добавляемых строк
+            /// </summary>
+            public class ROW_PROPERTY
+            {
+                /// <summary>
+                /// Структура с дополнительными свойствами ячейки отображения
+                /// </summary>
+                public struct HDataGridViewCell //: DataGridViewCell
+                {
+                    public enum INDEX_CELL_PROPERTY : uint { IS_NAN }
+                    /// <summary>
+                    /// Признак отсутствия значения
+                    /// </summary>
+                    public int m_IdParameter;
+                    /// <summary>
+                    /// Признак качества значения в ячейке
+                    /// </summary>
+                    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
+
+                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
+                    {
+                        m_IdParameter = idParameter;
+                        m_iQuality = iQuality;
+                    }
+
+                    public bool IsNaN { get { return m_IdParameter < 0; } }
+                }
+
+                /// <summary>
+                /// Пояснения к параметру в алгоритме расчета
+                /// </summary>
+                public string m_strMeasure
+                    , m_Value;
+                /// <summary>
+                /// Идентификатор параметра в алгоритме расчета
+                /// </summary>
+                public int m_idAlg;
+                /// <summary>
+                /// Идентификатор множителя при отображении (визуальные установки) значений в строке
+                /// </summary>
+                public int m_vsRatio;
+                /// <summary>
+                /// Количество знаков после запятой при отображении (визуальные установки) значений в строке
+                /// </summary>
+                public int m_vsRound;
+
+                public HDataGridViewCell[] m_arPropertiesCells;
+
+                /// <summary>
+                /// 
+                /// </summary>
+                /// <param name="cntCols"></param>
+                public void InitCells(int cntCols)
+                {
+                    m_arPropertiesCells = new HDataGridViewCell[cntCols];
+                    for (int c = 0; c < m_arPropertiesCells.Length; c++)
+                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
                 }
             }
         }
