@@ -2198,7 +2198,7 @@ namespace PluginTaskBalTeplo
             Dictionary<int, object[]> dict_profile = new Dictionary<int, object[]>();
             string[] id;
             List<double> ids = new List<double>();
-            DataRow[] rows = m_dt_profile.Select("ID_UNIT= 7 and ID_ITEM='" + id_dgv + "'");
+            DataRow[] rows = m_dt_profile.Select("ID_UNIT= 203 and ID_ITEM='" + id_dgv + "'");
             string type = string.Empty;
             if (rows.Length == 2)
             {
