@@ -296,6 +296,7 @@ namespace PluginTaskReaktivka
                     break;
             }
             (PanelManagementReak as PanelManagementReaktivka).Clear();
+
             foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
             {
                 id_comp = (Int32)r[@"ID"];
@@ -615,6 +616,7 @@ namespace PluginTaskReaktivka
                         , DaysInMonth);
                 }
             }
+
             m_dgvReak.Rows[dtBegin.Day - 1].Selected = true;
             m_currentOffSet = Session.m_curOffsetUTC;
         }
@@ -1881,7 +1883,6 @@ namespace PluginTaskReaktivka
                 foreach (DataGridViewRow row in Rows)
                     if (Rows.Count - 1 != row.Index)
                         if (double.TryParse(row.Cells[indxCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
-                            //sumValue = Rows.Cast<DataGridViewRow>().Sum(r => Convert.ToDouble(r.Cells[indxCol].Value.ToString().Replace('.', ',')));
                             sumValue += value;
                         else ;
                     else
