@@ -56,12 +56,14 @@
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
     <Reference Include="WPFToolkit">
-      <HintPath>C:\Program Files\WPFToolKit\v3.5.50211.1\WPFToolkit.dll</HintPath>
+      <HintPath>..\..\ExternalDLL\WPFToolkit.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="HandlerDbTaskVedomostBlCalculate.cs" />
-    <Compile Include="PanelTaskVedomostBl.cs" />
+    <Compile Include="PanelTaskVedomostBl.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

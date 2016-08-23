@@ -31,7 +31,8 @@ namespace PluginTaskVedomostBl
         /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        public override void CreateSession(int cntBasePeriod
+        public override void CreateSession(int idFPanel
+            , int cntBasePeriod
             , DataTable tablePars
             , ref DataTable[] arTableValues
             , DateTimeRange dtRange, out int err
