@@ -25,6 +25,7 @@ namespace PluginTaskVedomostBl
         ///  Создать новую сессию для расчета
         /// - вставить входные данные во временную таблицу
         /// </summary>
+        /// <param name="idFPanel">Идентификатор панели на замену [ID_TASK]</param>
         /// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
         /// <param name="tablePars">Таблица характеристик входных параметров</param>
         /// <param name="arTableValues"></param>
