@@ -149,6 +149,7 @@ namespace TepCommon
         /// Создать новую сессию для расчета
         ///  - вставить входные данные во временную таблицу
         /// </summary>
+        /// <param name="idFPanel">Идентификатор панели на замену [ID_TASK]</param>
         /// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
         /// <param name="tablePars">Таблица характеристик входных параметров</param>
         /// <param name="tableSessionValues">Таблица значений входных параметров</param>
@@ -156,8 +157,8 @@ namespace TepCommon
         /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        public virtual void CreateSession(
-            int cntBasePeriod
+        public virtual void CreateSession(int idFPanel
+            , int cntBasePeriod
             , DataTable tablePars
             , ref DataTable[] arTableValues
             , DateTimeRange dtRange
@@ -211,7 +212,7 @@ namespace TepCommon
                 && (arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
             {
                 //Вставить строку с идентификатором новой сессии
-                insertIdSession(cntBasePeriod, out err);
+                insertIdSession(idFPanel, cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
                 insertInValues(arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
                 //Вставить строки в таблицу БД со выходными значениями для расчета
@@ -238,8 +239,8 @@ namespace TepCommon
         /// <param name="idTimezone">Идентификатор часового пояса</param>
         /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        private void insertIdSession(
-            int cntBasePeriod
+        protected void insertIdSession(int idFPanel
+            , int cntBasePeriod
             , out int err)
         {
             err = -1;
@@ -249,7 +250,7 @@ namespace TepCommon
             // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
             strQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
                 + @"[ID_CALCULATE]"
-                + @", [ID_TASK]"
+                + @", [ID_FPANEL]"
                 + @", [ID_USER]"
                 + @", [ID_TIME]"
                 + @", [ID_TIMEZONE]"
@@ -258,7 +259,10 @@ namespace TepCommon
                 ;
 
             strQuery += _Session.m_Id;
-            strQuery += @"," + (Int32)IdTask;
+            strQuery += @"," +
+                //(Int32)IdTask
+                idFPanel
+                ;
             strQuery += @"," + HTepUsers.Id;
             strQuery += @"," + (int)_Session.m_currIdPeriod;
             strQuery += @"," + (int)_Session.m_currIdTimezone;
@@ -492,11 +496,13 @@ namespace TepCommon
         /// </summary>
         private string querySession
         {
-            get
-            {
+            get {
                 return @"SELECT s.*, tz.[OFFSET_UTC] FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"] as s"
                     + @" JOIN [timezones] tz ON s.ID_TIMEZONE = tz.ID"
-                    + @" WHERE [ID_USER]=" + HTepUsers.Id;
+                    +
+                        //@" WHERE [ID_USER]=" + HTepUsers.Id
+                        @" WHERE [ID]=" + _Session.m_Id
+                        ;
             }
         }
         /// <summary>

@@ -2021,8 +2021,8 @@ namespace PluginTaskAutobook
                 if (err == 0)
                     //Начать новую сессию расчета
                     //, получить входные для расчета значения для возможности редактирования
-                    HandlerDb.CreateSession(
-                        CountBasePeriod
+                    HandlerDb.CreateSession(m_id_panel
+                        , CountBasePeriod
                         , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)

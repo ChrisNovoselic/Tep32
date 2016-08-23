@@ -263,12 +263,12 @@ namespace TepCommon
 
         }        
 
-        public override bool Activate(bool activate)
-        {
-            bool bRes = base.Activate(activate);
+        //public override bool Activate(bool activate)
+        //{
+        //    bool bRes = base.Activate(activate);
 
-            return bRes;
-        }
+        //    return bRes;
+        //}
 
         protected override void reinit()
         {
