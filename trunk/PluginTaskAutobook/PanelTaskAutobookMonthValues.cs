@@ -515,7 +515,7 @@ namespace PluginTaskAutobook
                 int idAlg = -1
                   , vsRatioValue = -1
                   , corOffset = 0;
-                Array namePut = Enum.GetValues(typeof(INDEX_GTP));
+                //Array namePut = Enum.GetValues(typeof(INDEX_GTP));
                 bool bflg = false;
                 double dblVal = -1F;
                 //

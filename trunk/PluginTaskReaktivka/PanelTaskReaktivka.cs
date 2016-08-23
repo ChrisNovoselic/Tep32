@@ -296,13 +296,12 @@ namespace PluginTaskReaktivka
                     break;
             }
             (PanelManagementReak as PanelManagementReaktivka).Clear();
+            //??
             foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
             {
                 id_comp = (Int32)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
                 strItem = ((string)r[@"DESCRIPTION"]).Trim();
-                // установить признак участия в расчете компонента станции
-                //arChecked[0] = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
                 // установить признак отображения компонента станции
                 arChecked[0] = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
                 (PanelManagementReak as PanelManagementReaktivka).AddComponent(id_comp
@@ -318,7 +317,7 @@ namespace PluginTaskReaktivka
             // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
             // компонента станции для элементов управления
             (PanelManagementReak as PanelManagementReaktivka).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED });
-
+            //
             m_dgvReak.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
             if (err == 0)
@@ -615,6 +614,7 @@ namespace PluginTaskReaktivka
                         , DaysInMonth);
                 }
             }
+
             m_dgvReak.Rows[dtBegin.Day - 1].Selected = true;
             m_currentOffSet = Session.m_curOffsetUTC;
         }
@@ -918,7 +918,7 @@ namespace PluginTaskReaktivka
                 tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
                 tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
                 tlpValue.Dock = DockStyle.Fill;
-                tlpValue.AutoSize = true;
+                //tlpValue.AutoSize = true;
                 //tlpValue.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
                 ////Дата/время начала периода расчета - подпись
                 Label lBeginCalcPer = new Label();
@@ -970,7 +970,7 @@ namespace PluginTaskReaktivka
                 ctrlExp.Dock = DockStyle.Top;
 
                 TableLayoutPanel tlpButton = new TableLayoutPanel();
-                tlpButton.Dock = DockStyle.Fill;
+                tlpButton.Dock = DockStyle.Top;
                 tlpButton.AutoSize = true;
                 tlpButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
                 tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
@@ -1090,6 +1090,7 @@ namespace PluginTaskReaktivka
             /// </summary>
             protected class CheckedListBoxTaskReaktivka : CheckedListBox, IControl
             {
+                int[] arItem;
                 /// <summary>
                 /// Список для хранения идентификаторов переменных
                 /// </summary>
@@ -1743,8 +1744,6 @@ namespace PluginTaskReaktivka
                                 indx = Columns.IndexOf(c);
                                 break;
                             }
-                            else
-                                ;
                         break;
                     default:
                         break;
@@ -1881,7 +1880,6 @@ namespace PluginTaskReaktivka
                 foreach (DataGridViewRow row in Rows)
                     if (Rows.Count - 1 != row.Index)
                         if (double.TryParse(row.Cells[indxCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
-                            //sumValue = Rows.Cast<DataGridViewRow>().Sum(r => Convert.ToDouble(r.Cells[indxCol].Value.ToString().Replace('.', ',')));
                             sumValue += value;
                         else ;
                     else

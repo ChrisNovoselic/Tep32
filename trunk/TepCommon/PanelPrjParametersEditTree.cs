@@ -1267,7 +1267,7 @@ namespace TepCommon
                     if (rowsAlg.Length == 1)
                     {
                         string strNameField = dgv.Rows[ev.RowIndex].Cells[0].Value.ToString().Trim()
-                            , strVal = dgv.Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value.ToString().Trim();
+                            , strVal = dgv.Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value.ToString().Trim();//null error
                         //Сохранить новое значение
                         rowsAlg[0][strNameField] = strVal;
 
