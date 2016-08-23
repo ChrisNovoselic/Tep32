@@ -21,6 +21,10 @@ namespace PluginTaskVedomostBl
         /// </summary>
         static bool m_bflgClear = false;
         /// <summary>
+        /// 
+        /// </summary>
+        Dictionary<int, Dictionary<int, Dictionary<int, string>>> dict;// = new Dictionary<int, Dictionary<int, Dictionary<int, string>>>();
+        /// <summary>
         /// Листы с хидерами грида
         /// </summary>
         public static List<string> m_listGroupSett_1 = new List<string>
@@ -46,7 +50,6 @@ namespace PluginTaskVedomostBl
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1,
-            DGV_HEADER_GRP,
             DGV_DATA_B1, DGV_DATA_B2, DGV_DATA_B3,
             DGV_DATA_B4, DGV_DATA_B5, DGV_DATA_B6,
             RADIOBTN_BLK1, RADIOBTN_BLK2, RADIOBTN_BLK3,
@@ -1095,8 +1098,8 @@ namespace PluginTaskVedomostBl
 
                 if (!bIsHeader)
                 {
-                    AddColumn(-2, string.Empty, "ALG", true, false);
-                    AddColumn(-1, "Дата", "Date", true, true);
+                    AddColumns(-2, string.Empty, "ALG", false);
+                    AddColumns(-1, "Дата", "Date", true );
                 }
             }
 
@@ -1113,6 +1116,10 @@ namespace PluginTaskVedomostBl
                 /// Признак запрета участия в расчете
                 /// </summary>
                 public bool m_bCalcDeny;
+                /// <summary>
+                /// 
+                /// </summary>
+                public string topHeader;
             }
 
             /// <summary>
@@ -1177,14 +1184,47 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// Добавить столбец
+            /// 
             /// </summary>
-            /// <param name="id_comp">номер компонента</param>
-            /// <param name="txtHeader">заголовок столбца</param>
-            /// <param name="nameCol">имя столбца</param>
-            /// <param name="bRead">"только чтение"</param>
-            /// <param name="bVisibled">видимость столбца</param>
-            public void AddColumn(int id_comp, string txtHeader, string nameCol, bool bRead, bool bVisibled)
+            /// <param name="idHeader"></param>
+            /// <param name="headerText"></param>
+            /// <param name="nameCol"></param>
+            /// <param name="bVisible"></param>
+            public void AddColumns(int idHeader, string nameCol, string headerText, bool bVisible)
+            {
+                DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
+                DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
+                //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+
+                try
+                {
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = idHeader, m_bCalcDeny = false };
+                    alignText = DataGridViewContentAlignment.MiddleRight;
+                    column.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+                    //column.Frozen = true;
+                    column.Visible = bVisible;
+                    column.ReadOnly = false;
+                    column.Name = nameCol;
+                    column.HeaderText = headerText;
+                    column.DefaultCellStyle.Alignment = alignText;
+                    column.AutoSizeMode = autoSzColMode;
+                    Columns.Add(column as DataGridViewTextBoxColumn);
+                }
+                catch (Exception e)
+                {
+                    //Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="idHeader"></param>
+            /// <param name="topHeader"></param>
+            /// <param name="headerText"></param>
+            /// <param name="nameCol"></param>
+            /// <param name="bVisible"></param>
+            public void AddColumns(int idHeader, string topHeader, string nameCol, string headerText, bool bVisible)
             {
                 int indxCol = -1; // индекс столбца при вставке
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
@@ -1202,7 +1242,7 @@ namespace PluginTaskVedomostBl
                             break;
                         }
 
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp, m_bCalcDeny = false };
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = idHeader, m_bCalcDeny = false, topHeader = topHeader };
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
 
@@ -1210,9 +1250,9 @@ namespace PluginTaskVedomostBl
                         ; // оставить значения по умолчанию
                     else
                     {// для добавлямых столбцов
-                        if (id_comp < 0)
+                        if (idHeader < 0)
                         {// для служебных столбцов
-                            if (bVisibled == true)
+                            if (bVisible == true)
                             {// только для столбца с [SYMBOL]
                                 alignText = DataGridViewContentAlignment.MiddleLeft;
                                 autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
@@ -1222,11 +1262,11 @@ namespace PluginTaskVedomostBl
                         }
                     }
 
-                    column.HeaderText = txtHeader;
+                    column.HeaderText = headerText;
                     column.Name = nameCol;
                     column.DefaultCellStyle.Alignment = alignText;
                     column.AutoSizeMode = autoSzColMode;
-                    column.Visible = bVisibled;
+                    column.Visible = bVisible;
 
                     if (!(indxCol < 0))
                         Columns.Insert(indxCol, column as DataGridViewTextBoxColumn);
@@ -1235,40 +1275,7 @@ namespace PluginTaskVedomostBl
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, @"DataGridViewTEPValues::AddColumn (id_comp=" + id_comp + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-
-            /// <summary>
-            /// Добавить столбец
-            /// </summary>
-            /// <param name="text">Текст для заголовка столбца</param>
-            /// <param name="bRead">флаг изменения пользователем ячейки</param>
-            /// <param name="nameCol">имя столбца</param>
-            /// <param name="idPut">индентификатор источника</param>
-            public void AddColumn(int id_comp, string txtHeader, string nameCol)
-            {
-                DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
-                DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-
-                try
-                {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp, m_bCalcDeny = false };
-                    alignText = DataGridViewContentAlignment.MiddleRight;
-                    column.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-                    //column.Frozen = true;
-                    column.Visible = true;
-                    column.ReadOnly = false;
-                    column.Name = nameCol;
-                    column.HeaderText = txtHeader;
-                    column.DefaultCellStyle.Alignment = alignText;
-                    column.AutoSizeMode = autoSzColMode;
-                    Columns.Add(column as DataGridViewTextBoxColumn);
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    //Logging.Logg().Exception(e, @"DataGridViewTEPValues::AddColumn (id_comp=" + id_comp + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
@@ -1418,10 +1425,10 @@ namespace PluginTaskVedomostBl
             //создание грида со значениями
             for (int i = (int)INDEX_CONTROL.DGV_DATA_B1; i < (int)INDEX_CONTROL.RADIOBTN_BLK1; i++)
             {
-                //ctrl = new DGVVedomostBl(namePut.GetValue(i).ToString(), false);
-                //ctrl.Name = namePut.GetValue(i).ToString();
-                //ctrl.Enabled = false;
-                //ctrl.Visible = false;
+                ctrl = new DGVVedomostBl(namePut.GetValue(i).ToString(), false);
+                ctrl.Name = namePut.GetValue(i).ToString();
+                ctrl.Enabled = false;
+                ctrl.Visible = false;
 
                 //this.Controls.Add(ctrl, 5, posRow + 1);
                 //this.SetColumnSpan(ctrl, 9); this.SetRowSpan(ctrl, 10);
@@ -1429,48 +1436,16 @@ namespace PluginTaskVedomostBl
 
             this.Controls.Add(PanelManagementVed, 0, posRow);
             this.SetColumnSpan(PanelManagementVed, 4); this.SetRowSpan(PanelManagementVed, 13);
-            //создание гридов с хидерами 
-            ctrl = new DGVVedomostBl(INDEX_CONTROL.DGV_HEADER_GRP.ToString(), true);
-            ctrl.Name = INDEX_CONTROL.DGV_HEADER_GRP.ToString();
-            int cntElemtn = 0;
-            foreach (var list in m_listHeader)
-                cntElemtn += list.Count;
-            tblPanelHGrid.ColumnCount = 16;
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.Dock = DockStyle.Fill;
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6.25F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6.25F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6.25F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6.25F));
-            tblPanelHGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 6.25F));
-            cntElemtn = 0;
 
             for (int i = 0; i < m_listHeader.Count; i++)
             {
                 //добавление столбцов
                 for (int j = 0; j < m_listHeader[i].Count; j++)
                 {
-                    Label txt = new Label();
-                    txt.Dock = DockStyle.Fill;
-                    txt.Text = m_listHeader[i][j];
-                    tblPanelHGrid.Controls.Add(txt, cntElemtn, 0)//(ctrl as DGVVedomostBl).AddColumn(i,m_listHeader[i][j], m_listHeader[i][j])
-                    ;
 
-                    cntElemtn++;
                 }
-
-                //(ctrl as DGVVedomostBl).ScrollBars = ScrollBars.Horizontal;
             }
+
             (tblPanelHGrid as TableLayoutPanel).AutoScroll = true;
             this.Controls.Add(tblPanelHGrid, 5, posRow);
             this.SetColumnSpan(tblPanelHGrid, 9); this.SetRowSpan(tblPanelHGrid, 1);
@@ -1742,6 +1717,23 @@ namespace PluginTaskVedomostBl
                         errMsg = @"Неизвестная ошибка";
                         break;
                 }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dgvBl"></param>
+        protected void filingDictHeader(DataGridView dgvBl)
+        {
+            DataTable dtHtext = HandlerDb.GetHeaderDGV();
+
+            foreach (var item in m_listHeader)
+            {
+                for (int i = 0; i < item.Count; i++)
+                {
+                    //dgvBl.Add
+                }
+            }
         }
 
         /// <summary>

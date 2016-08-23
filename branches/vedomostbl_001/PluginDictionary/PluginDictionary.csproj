@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HClassLibrary, Version=2.0.3.1, Culture=neutral, PublicKeyToken=2f5f95fc94cb3397, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\externaldll\HClassLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Windows.Forms" />
@@ -41,32 +45,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PanelDictFPanels.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="PanelDictMeasure.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="PanelDictMessage.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="PanelDictProfilesUnit.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="PanelDictSourceInterface.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="PanelDictTime.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="PanelDictFPanels.cs" />
+    <Compile Include="PanelDictMeasure.cs" />
+    <Compile Include="PanelDictMessage.cs" />
+    <Compile Include="PanelDictProfilesUnit.cs" />
+    <Compile Include="PanelDictSourceInterface.cs" />
+    <Compile Include="PanelDictTime.cs" />
     <Compile Include="PluginItems.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
-      <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
-      <Name>HClassLibrary</Name>
-    </ProjectReference>
     <ProjectReference Include="..\InterfacePlugIn\InterfacePlugIn.csproj">
       <Project>{25637BE7-4002-46BE-A0D4-4C7EAAAA5148}</Project>
       <Name>InterfacePlugIn</Name>

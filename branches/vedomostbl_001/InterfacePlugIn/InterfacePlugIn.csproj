@@ -37,6 +37,10 @@
     <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HClassLibrary, Version=2.0.3.1, Culture=neutral, PublicKeyToken=2f5f95fc94cb3397, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\externaldll\HClassLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Windows.Forms" />
@@ -49,12 +53,6 @@
     <Compile Include="Source.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Func.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
-      <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
-      <Name>HClassLibrary</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="key.snk" />

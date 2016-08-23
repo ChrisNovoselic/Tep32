@@ -34,6 +34,10 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HClassLibrary, Version=2.0.3.1, Culture=neutral, PublicKeyToken=2f5f95fc94cb3397, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\externaldll\HClassLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <EmbedInteropTypes>True</EmbedInteropTypes>
@@ -57,16 +61,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="HandlerDbTaskVedomostBlCalculate.cs" />
-    <Compile Include="PanelTaskVedomostBl.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="PanelTaskVedomostBl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
-      <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
-      <Name>HClassLibrary</Name>
-    </ProjectReference>
     <ProjectReference Include="..\InterfacePlugIn\InterfacePlugIn.csproj">
       <Project>{25637BE7-4002-46BE-A0D4-4C7EAAAA5148}</Project>
       <Name>InterfacePlugIn</Name>
