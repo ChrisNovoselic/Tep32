@@ -1396,6 +1396,65 @@ namespace PluginTaskVedomostBl
             }
         }
 
+        protected class DataWorkClass : TepCommon.HandlerDbTaskCalculate.TaskCalculate
+        {
+            public static Dictionary<int, Dictionary<int, Dictionary<int, string>>> dict;
+
+            public DataWorkClass() : base()
+            {
+ 
+            }
+
+            /// <summary>
+            /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
+            /// </summary>
+            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
+            protected override int initValues(ListDATATABLE listDataTables)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            private class parsingData
+            {
+                /// <summary>
+                /// 
+                /// </summary>
+                /// <param name="dt"></param>
+                public parsingData(DataTable dt)
+                {
+ 
+                }
+
+                private void compilingDict()
+                {
+
+
+                }
+
+                private void disaggregationToParts(DataTable dtPars)
+                {
+                    Dictionary<int, string> dictLowerLvl = new Dictionary<int, string>();
+                    int cntAr = 0;
+                    List<List<string>> arList = new List<List<string>> { };
+
+                    foreach (DataRow row in dtPars.Rows)
+                    {
+                        arList[cntAr] = row["N_ALG"].ToString().Split('.', ',').ToList();
+                       cntAr++;
+                    }
+                }
+
+                private void createDict()
+                {
+                    dict = new Dictionary<int,Dictionary<int,Dictionary<int,string>>> {};
+                    //dict.Add(,
+                }
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>
