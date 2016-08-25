@@ -1099,7 +1099,7 @@ namespace PluginTaskVedomostBl
                 if (!bIsHeader)
                 {
                     AddColumns(-2, string.Empty, "ALG", false);
-                    AddColumns(-1, "Дата", "Date", true );
+                    AddColumns(-1, "Дата", "Date", true);
                 }
             }
 
@@ -1396,13 +1396,17 @@ namespace PluginTaskVedomostBl
             }
         }
 
-        protected class DataWorkClass : TepCommon.HandlerDbTaskCalculate.TaskCalculate
+        /// <summary>
+        /// 
+        /// </summary>
+        protected class VedomostBlCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
             public static Dictionary<int, Dictionary<int, Dictionary<int, string>>> dict;
 
-            public DataWorkClass() : base()
+            public VedomostBlCalculate()
+                : base()
             {
- 
+
             }
 
             /// <summary>
@@ -1414,6 +1418,11 @@ namespace PluginTaskVedomostBl
                 throw new NotImplementedException();
             }
 
+            private class DataWorkClass
+            {
+
+            }
+
             /// <summary>
             /// 
             /// </summary>
@@ -1422,16 +1431,50 @@ namespace PluginTaskVedomostBl
                 /// <summary>
                 /// 
                 /// </summary>
+                protected enum lvlHeader
+                {
+                    UNKNOW = -1,
+                    TOP, MIDDLE, LOW,
+                    COUNT
+                }
+
+                /// <summary>
+                /// 
+                /// </summary>
                 /// <param name="dt"></param>
                 public parsingData(DataTable dt)
                 {
- 
+                    disaggregationToParts(dt);
                 }
 
-                private void compilingDict()
+                private void compilingDict(int nmbrHeader, List<string> listStr, DataTable dtPars)
                 {
 
+                    var m_enumModes = (from r in dtPars.AsEnumerable()
+                                       orderby r.Field<string>("N_ALG")
+                                       select new
+                                       {
+                                           NAME_SHR = r.Field<string>("NAME_SHR"),
+                                       }).Distinct();
 
+                    int cntHeader = 0;
+                    Dictionary<string, string> lowHeaderDict = new Dictionary<string, string>();
+
+                    if (listStr.Count < 3)
+                    {
+                        //lowHeaderDict.Add(
+                    }
+                    else ;
+
+                    for (int i = 0; i < m_listHeader.Count; i++)
+                    {
+                        for (int j = 0; j < m_listHeader[i].Count; j++)
+                        {
+                            cntHeader++;
+                            if (nmbrHeader == cntHeader)
+                                ;
+                        }
+                    }
                 }
 
                 private void disaggregationToParts(DataTable dtPars)
@@ -1443,14 +1486,19 @@ namespace PluginTaskVedomostBl
                     foreach (DataRow row in dtPars.Rows)
                     {
                         arList[cntAr] = row["N_ALG"].ToString().Split('.', ',').ToList();
-                       cntAr++;
+                        cntAr++;
                     }
+
+                    for (int i = 0; i < arList.Count; i++)
+                    {
+
+                    }
+
                 }
 
                 private void createDict()
                 {
-                    dict = new Dictionary<int,Dictionary<int,Dictionary<int,string>>> {};
-                    //dict.Add(,
+                    //dict = new Dictionary<int, Dictionary<int, Dictionary<int, string>>> { };
                 }
             }
         }
