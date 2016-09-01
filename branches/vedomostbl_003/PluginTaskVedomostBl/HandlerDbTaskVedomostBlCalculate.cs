@@ -296,12 +296,12 @@ namespace PluginTaskVedomostBl
             string query = string.Empty;
             int err = -1;
 
-            query = @"SELECT p.ID ,p.ID_ALG , p.ID_COMP, a.N_ALG, a.NAME_SHR"
-                + @"FROM [input] p"
-                + @"LEFT JOIN  [TEP_NTEC_5].[dbo].[inalg] a"
-                + @"ON a.ID = p.ID_ALG"
-                + @"WHERE a.ID_TASK = " +IdTask
-                + @"ORDER BY a.N_ALG"
+            query = @"SELECT * "
+                + @"FROM [inalg] a "
+                + @"LEFT JOIN [input] p "
+                + @"ON a.ID = p.ID_ALG "
+                + @"WHERE a.ID_TASK = " + (int)ID_TASK.VEDOM_BL
+                + @" ORDER BY a.N_ALG"
                 ;
 
             return Select(query, out err);
@@ -319,7 +319,7 @@ namespace PluginTaskVedomostBl
             + @"FROM  [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] l "
             + @"LEFT JOIN [TEP_NTEC_5].[dbo].[comp] c "
             + @"ON c.ID = l.ID_COMP "
-            + @"WHERE c.ID > 1 AND c.ID < 100";
+            + @"WHERE c.ID >= 1000 AND c.ID < 20000";
 
             return strRes;
         }

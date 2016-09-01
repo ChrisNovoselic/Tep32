@@ -21,9 +21,9 @@ namespace PluginTaskVedomostBl
         /// </summary>
         static bool m_bflgClear = false;
         /// <summary>
-        /// 
+        /// Массив словарей для составления хидеров каждого блока(ТГ)
         /// </summary>
-        Dictionary<int, Dictionary<int, Dictionary<int, string>>> dict;// = new Dictionary<int, Dictionary<int, Dictionary<int, string>>>();
+        static Dictionary<int, List<string[]>>[] m_dict;
         /// <summary>
         /// Листы с хидерами грида
         /// </summary>
@@ -155,6 +155,10 @@ namespace PluginTaskVedomostBl
         /// 
         /// </summary>
         protected DGVVedomostBl m_dgvVedomst;
+        /// <summary>
+        /// 
+        /// </summary>
+        protected VedomostBlCalculate m_VedCalculate;
 
         /// <summary>
         /// 
@@ -569,6 +573,7 @@ namespace PluginTaskVedomostBl
                 /// </summary>
                 void ClearItems();
             }
+
             /// <summary>
             /// Класс для размещения элементов (блоков) выбора отображения значений
             /// </summary>
@@ -799,7 +804,8 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
+            /// Формирование текста всплывающей подсказки 
+            /// для групп
             /// </summary>
             /// <param name="listText"></param>
             /// <returns></returns>
@@ -1047,6 +1053,35 @@ namespace PluginTaskVedomostBl
         /// </summary>
         protected class DGVVedomostBl : DataGridView
         {
+            int m_drwH,
+            m_drwW = 0,
+            untdCol = 0,
+            CntParentHeader = 0;
+            /// <summary>
+            /// 
+            /// </summary>
+            Rectangle recParentCol;
+            /// <summary>
+            /// 
+            /// </summary>
+            static string[] headerText = { "Острый пар", "Горячий промперегрев", "ХПП", "Питательная вода", "Продувка" },
+                headerCol = { "Расход  пара, тн", "P пер.п.в кол-ре", "Р в СУ", "P перед СКВД", "t пер.п.в кол-ре ВД", 
+                                "t после СУ", "t перед турбиной", "P ГПП СК СД","t втор.п.в к-ре НД",
+                                "t втор.п. в СК ЦСД","Р","t","D пв, тн", "t за ПВД","Dпр, тн"};
+            /// <summary>
+            /// 
+            /// </summary>
+            static int[] m_arMiddleCol,
+           m_arIntTopHeader;
+            /// <summary>
+            /// 
+            /// </summary>
+            public enum INDEX_HEADER
+            {
+                UNKNOW = -1,
+                TOP, MIDDLE, LOW,
+                COUNT
+            }
             /// <summary>
             /// 
             /// </summary>
@@ -1093,8 +1128,14 @@ namespace PluginTaskVedomostBl
                 //Ширина столбцов под видимую область
                 //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                 ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-                //HorizontalScrollBar.Enabled = true;
-                //this.ScrollBars = ScrollBars.Horizontal;
+
+                //this.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+                //this.ColumnHeadersHeight = this.ColumnHeadersHeight * m_drwH;//высота от нижнего(headerText)
+                //this.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.BottomCenter;
+                //this.CellPainting += new DataGridViewCellPaintingEventHandler(dataGridView1_CellPainting);
+                //m_hDataGrid.Paint += new PaintEventHandler(dataGridView1_Paint);
+                //this.m_hDataGrid.Scroll += new ScrollEventHandler(dataGridView1_Scroll);
+                //m_hDataGrid.ColumnWidthChanged += new DataGridViewColumnEventHandler(dataGridView1_ColumnWidthChanged);
 
                 if (!bIsHeader)
                 {
@@ -1119,7 +1160,7 @@ namespace PluginTaskVedomostBl
                 /// <summary>
                 /// 
                 /// </summary>
-                public string topHeader;
+                public string m_topHeader;
             }
 
             /// <summary>
@@ -1242,7 +1283,7 @@ namespace PluginTaskVedomostBl
                             break;
                         }
 
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = idHeader, m_bCalcDeny = false, topHeader = topHeader };
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = idHeader, m_bCalcDeny = false, m_topHeader = topHeader };
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
 
@@ -1394,20 +1435,226 @@ namespace PluginTaskVedomostBl
                         m_strDesc = (string)r[@"DESCRIPTION"]
                     });
             }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="indexHeader"></param>
+            /// <param name="dictBl"></param>
+            /// <param name="idBlock"></param>
+            public void CntHeader(INDEX_HEADER indexHeader, Dictionary<int, List<string[]>>[] dictBl, int idBlock)
+            {
+                switch (indexHeader)
+                {
+                    case INDEX_HEADER.TOP:
+                        foreach (List<string[]> item in dictBl[idBlock].Values)
+                        {
+                            int untdCol = 0;
+                            foreach (HDataGridViewColumn col in Columns)
+                                if (col.m_topHeader == item[(int)INDEX_HEADER.TOP].ToString())
+                                    untdCol++;
+                            // m_arIntTopHeader[m_dict.Keys] = untdCol;
+                        }
+                        break;
+                    case INDEX_HEADER.MIDDLE:
+                        //foreach (var item in headerCol)
+                        //{
+                        //    untdCol = 0;
+                        //    foreach (HDataGridViewColumn col in m_hDataGrid.Columns)
+                        //        if (col.Name == item)
+                        //            untdCol++;
+                        //    m_arMiddleCol[headerCol.ToList().IndexOf(item)] = untdCol;
+                        //}
+                        break;
+                    case INDEX_HEADER.LOW:
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="hDataGrid"></param>
+            /// <param name="pictureBox"></param>
+            /// <param name="BasicPanel"></param>
+            public void ReSizeControls(DGVVedomostBl hDataGrid, PictureBox pictureBox, Panel BasicPanel)
+            {
+                BasicPanel.AutoScrollMinSize = new System.Drawing.Size(hDataGrid.Width, hDataGrid.Rows.Count * hDataGrid.Rows[0].Height);
+                hDataGrid.Size = new System.Drawing.Size(m_drwW + 2, hDataGrid.Rows.Count * hDataGrid.Rows[0].Height);
+                pictureBox.Size = new System.Drawing.Size(hDataGrid.Width, hDataGrid.Height);
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="e"></param>
+            void dataGridView1_Paint(object sender, PaintEventArgs e)
+            {
+                //Rectangle _r1 = new Rectangle();
+                //Rectangle _r2 = new Rectangle();
+                //Pen pen = new Pen(Color.Black);
+                //m_drwH = 3;
+                //StringFormat format = new StringFormat();
+                //format.Alignment = StringAlignment.Center;
+                //format.LineAlignment = StringAlignment.Center;
+                ////
+                //for (int i = 0; i < m_hDataGrid.Columns.Count; i++)
+                //{
+                //    if (this.m_hDataGrid.GetCellDisplayRectangle(i, -1, true).Height > 0 & this.m_hDataGrid.GetCellDisplayRectangle(i, -1, true).X > 0)
+                //    {
+                //        recParentCol = this.m_hDataGrid.GetCellDisplayRectangle(i, -1, true);
+                //        _r1 = recParentCol;
+                //        _r2 = recParentCol;
+                //        break;
+                //    }
+                //}
+
+                //m_drwH = _r1.Height / m_drwH;
+
+                //foreach (var item in headerCol)
+                //{
+                //    //get the column header cell
+                //    _r1.Width = m_arUntdCol[headerCol.ToList().IndexOf(item)] * m_hDataGrid.Columns[2].Width;
+                //    _r1.Height = m_drwH + 3;//??? 
+
+                //    if (headerCol.ToList().IndexOf(item) - 1 > -1)
+                //        _r1.X = _r1.X + m_arUntdCol[headerCol.ToList().IndexOf(item) - 1] * m_hDataGrid.Columns[2].Width;
+                //    else
+                //    {
+                //        _r1.X += m_hDataGrid.Columns[1].Width;
+                //        _r1.Y = _r1.Y + _r1.Height;
+                //    }
+
+                //    e.Graphics.FillRectangle(new SolidBrush(this.m_hDataGrid.ColumnHeadersDefaultCellStyle.BackColor), _r1);
+                //    e.Graphics.DrawString(item, this.m_hDataGrid.ColumnHeadersDefaultCellStyle.Font,
+                //      new SolidBrush(this.m_hDataGrid.ColumnHeadersDefaultCellStyle.ForeColor),
+                //      _r1,
+                //      format);
+                //    e.Graphics.DrawRectangle(pen, _r1);
+                //}
+
+                //foreach (var item in headerText)
+                //{
+                //    //get the column header cell
+                //    _r2.Width = m_arIntTopHeader[headerText.ToList().IndexOf(item)] * m_hDataGrid.Columns[2].Width;
+                //    _r2.Height = m_drwH + 2;//??? 
+
+                //    if (headerText.ToList().IndexOf(item) - 1 > -1)
+                //        _r2.X = _r2.X + m_arIntTopHeader[headerText.ToList().IndexOf(item) - 1] * m_hDataGrid.Columns[2].Width;
+                //    else
+                //    {
+                //        _r2.X += m_hDataGrid.Columns[1].Width;
+                //        _r2.Y += _r2.Y;
+                //    }
+
+                //    e.Graphics.FillRectangle(new SolidBrush(this.m_hDataGrid.ColumnHeadersDefaultCellStyle.BackColor), _r2);
+                //    e.Graphics.DrawString(item, this.m_hDataGrid.ColumnHeadersDefaultCellStyle.Font,
+                //      new SolidBrush(this.m_hDataGrid.ColumnHeadersDefaultCellStyle.ForeColor),
+                //      _r2,
+                //      format);
+                //    e.Graphics.DrawRectangle(pen, _r2);
+                //}
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="e"></param>
+            private void dataGridView1_ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e)
+            {
+                Rectangle rtHeader = this.DisplayRectangle;
+                rtHeader.Height = this.ColumnHeadersHeight / m_drwH;
+                this.Invalidate(rtHeader);
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="e"></param>
+            private void dataGridView1_Scroll(object sender, ScrollEventArgs e)
+            {
+                Rectangle rtHeader = this.DisplayRectangle;
+                rtHeader.Height = this.ColumnHeadersHeight / m_drwH;
+                //Refresh();
+                //this.hDataGrid.Invalidate(rtHeader);
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="sender"></param>0
+            /// <param name="e"></param>
+            static void dataGridView1_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+            {
+                if (e.RowIndex == -1 && e.ColumnIndex > -1)
+                {
+                    e.PaintBackground(e.CellBounds, false);
+
+                    //Rectangle r2 = e.CellBounds;
+                    //r2.Y += e.CellBounds.Height / m_drwH;
+                    //r2.Height = e.CellBounds.Height / m_drwH;
+                    //e.PaintContent(r2);
+                    //e.Handled = true;
+                }
+            }
         }
 
+
         /// <summary>
-        /// 
+        ///  
         /// </summary>
         protected class VedomostBlCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
-            public static Dictionary<int, Dictionary<int, Dictionary<int, string>>> dict;
+            /// <summary>
+            /// словарь хидеров
+            /// </summary>
+            //private List<string[]> listHeader;
+            /// <summary>
+            /// 
+            /// </summary>
+            private parsingData _pData;
+            /// <summary>
+            /// индекс уровней хидеров
+            /// </summary>
+            protected enum lvlHeader
+            {
+                UNKNOW = -1,
+                TOP, MIDDLE, LOW,
+                COUNT
+            }
 
             public VedomostBlCalculate()
                 : base()
             {
-
+                //listHeader = new List<string[]>();
             }
+
+            /// <summary>
+            /// Создание словаря заголвоков для каждого блока(ТГ)
+            /// </summary>
+            /// <param name="dtSource"></param>
+            public List<string[]> CreateDictHeader(DataTable dtSource, int param)
+            {
+                _pData = new parsingData(dtSource, param);
+
+                return compilingDict(_pData.ListParam, dtSource.Select("ID_COMP = " + param));
+            }
+
+            ///// <summary>
+            ///// 
+            ///// </summary>
+            //public List<string[]> ListArrHeader
+            //{
+            //    get 
+            //    {
+            //        return listHeader;
+            //    }
+            //}
 
             /// <summary>
             /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
@@ -1418,6 +1665,81 @@ namespace PluginTaskVedomostBl
                 throw new NotImplementedException();
             }
 
+            /// <summary>
+            /// сборка и компановка словаря
+            /// </summary>
+            /// <param name="arlistStr">лист парамтеров</param>
+            /// <param name="dtPars">таблица с данными</param>
+            private List<string[]> compilingDict(List<List<string>> arlistStr, DataRow[] dtPars)
+            {
+                int cntHeader = 0;
+                string[] _arStrHeader;
+                List<string[]> listHeader = new System.Collections.Generic.List<string[]> { };
+
+                var enumHeader = (from r in dtPars.AsEnumerable()
+                                  orderby r.Field<string>("N_ALG")
+                                  select new
+                                  {
+                                      NAME_SHR = r.Field<string>("NAME_SHR"),
+                                  }).Distinct();
+
+                listHeader.Clear();
+
+                for (int j = 0; j < arlistStr.Count; j++)
+                {
+                    if (arlistStr[j].Count < 3)
+                        _arStrHeader = new string[arlistStr[j].Count + 1];
+                    else
+                        _arStrHeader = new string[arlistStr[j].Count];
+
+                    bool bflagStopfor = false;
+                    cntHeader = 0;
+
+                    for (int i = arlistStr[j].Count - 1; i > -1; i--)
+                    {
+                        switch (i)
+                        {
+                            case (int)lvlHeader.TOP:
+                                for (int t = 0; t < m_listHeader.Count; t++)
+                                {
+                                    for (int n = 0; n < m_listHeader[t].Count; n++)
+                                    {
+                                        cntHeader++;
+                                        if (int.Parse(arlistStr[j].ElementAt((int)lvlHeader.TOP)) == cntHeader)
+                                        {
+                                            _arStrHeader[i] = m_listHeader[t][n];
+                                            listHeader.Add(_arStrHeader);
+                                            bflagStopfor = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (bflagStopfor)
+                                        break;
+                                }
+                                break;
+                            case (int)lvlHeader.MIDDLE:
+
+                                if (arlistStr[j].Count < 3)
+                                    _arStrHeader[i - 1] = "";
+
+                                _arStrHeader[(int)lvlHeader.MIDDLE] = dtPars[j]["NAME_SHR"].ToString().Trim();
+                                break;
+                            case (int)lvlHeader.LOW:
+                                _arStrHeader[i] = dtPars[j]["DESCRIPTION"].ToString().Trim();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                return listHeader;
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
             private class DataWorkClass
             {
 
@@ -1429,76 +1751,46 @@ namespace PluginTaskVedomostBl
             private class parsingData
             {
                 /// <summary>
-                /// 
+                /// набор листов с параметрами группировки
                 /// </summary>
-                protected enum lvlHeader
+                private List<List<string>> arList;
+
+                /// <summary>
+                /// конструктор с парметрами
+                /// </summary>
+                /// <param name="dt"></param>
+                public parsingData(DataTable dt, int param)
                 {
-                    UNKNOW = -1,
-                    TOP, MIDDLE, LOW,
-                    COUNT
+                    disaggregationToParts(dt.Select("ID_COMP = " + param));
                 }
 
                 /// <summary>
-                /// 
+                /// формирование листа параметров вида x.y.z,
+                /// где x - TopHeader, y - MiddleHeader, y - LowHeader
                 /// </summary>
-                /// <param name="dt"></param>
-                public parsingData(DataTable dt)
+                /// <param name="dtPars">таблица с данными</param>
+                private void disaggregationToParts(DataRow[] dtPars)
                 {
-                    disaggregationToParts(dt);
-                }
+                    arList = new List<List<string>>(dtPars.Count());
 
-                private void compilingDict(int nmbrHeader, List<string> listStr, DataTable dtPars)
-                {
-
-                    var m_enumModes = (from r in dtPars.AsEnumerable()
-                                       orderby r.Field<string>("N_ALG")
-                                       select new
-                                       {
-                                           NAME_SHR = r.Field<string>("NAME_SHR"),
-                                       }).Distinct();
-
-                    int cntHeader = 0;
-                    Dictionary<string, string> lowHeaderDict = new Dictionary<string, string>();
-
-                    if (listStr.Count < 3)
+                    foreach (DataRow row in dtPars)
                     {
-                        //lowHeaderDict.Add(
-                    }
-                    else ;
-
-                    for (int i = 0; i < m_listHeader.Count; i++)
-                    {
-                        for (int j = 0; j < m_listHeader[i].Count; j++)
-                        {
-                            cntHeader++;
-                            if (nmbrHeader == cntHeader)
-                                ;
-                        }
+                        List<string> list = new List<string>();
+                        list = row["N_ALG"].ToString().Split('.', ',').ToList();
+                        arList.Add(list);
                     }
                 }
 
-                private void disaggregationToParts(DataTable dtPars)
+                /// <summary>
+                /// возвращает лист с парметрами 
+                /// для построения словаря заголовков
+                /// </summary>
+                public List<List<string>> ListParam
                 {
-                    Dictionary<int, string> dictLowerLvl = new Dictionary<int, string>();
-                    int cntAr = 0;
-                    List<List<string>> arList = new List<List<string>> { };
-
-                    foreach (DataRow row in dtPars.Rows)
+                    get
                     {
-                        arList[cntAr] = row["N_ALG"].ToString().Split('.', ',').ToList();
-                        cntAr++;
+                        return arList;
                     }
-
-                    for (int i = 0; i < arList.Count; i++)
-                    {
-
-                    }
-
-                }
-
-                private void createDict()
-                {
-                    //dict = new Dictionary<int, Dictionary<int, Dictionary<int, string>>> { };
                 }
             }
         }
@@ -1510,6 +1802,7 @@ namespace PluginTaskVedomostBl
         public PanelTaskVedomostBl(IPlugIn iFunc)
             : base(iFunc)
         {
+            m_VedCalculate = new VedomostBlCalculate();
             InitializeComponent();
         }
 
@@ -1519,9 +1812,6 @@ namespace PluginTaskVedomostBl
         private void InitializeComponent()
         {
             Control ctrl = new Control();
-            TableLayoutPanel tblPanelHGrid = new TableLayoutPanel();
-            FlowLayoutPanel flPanelHG = new FlowLayoutPanel();
-            tblPanelHGrid.Name = INDEX_CONTROL.TBLP_HGRID.ToString();
             // переменные для инициализации кнопок "Добавить", "Удалить"
             string strPartLabelButtonDropDownMenuItem = string.Empty;
             Array namePut = Enum.GetValues(typeof(INDEX_CONTROL));
@@ -1529,33 +1819,13 @@ namespace PluginTaskVedomostBl
                 , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить" 
 
             SuspendLayout();
-            //создание грида со значениями
-            for (int i = (int)INDEX_CONTROL.DGV_DATA_B1; i < (int)INDEX_CONTROL.RADIOBTN_BLK1; i++)
-            {
-                ctrl = new DGVVedomostBl(namePut.GetValue(i).ToString(), false);
-                ctrl.Name = namePut.GetValue(i).ToString();
-                ctrl.Enabled = false;
-                ctrl.Visible = false;
-
-                //this.Controls.Add(ctrl, 5, posRow + 1);
-                //this.SetColumnSpan(ctrl, 9); this.SetRowSpan(ctrl, 10);
-            }
 
             this.Controls.Add(PanelManagementVed, 0, posRow);
             this.SetColumnSpan(PanelManagementVed, 4); this.SetRowSpan(PanelManagementVed, 13);
 
-            for (int i = 0; i < m_listHeader.Count; i++)
-            {
-                //добавление столбцов
-                for (int j = 0; j < m_listHeader[i].Count; j++)
-                {
-
-                }
-            }
-
-            (tblPanelHGrid as TableLayoutPanel).AutoScroll = true;
-            this.Controls.Add(tblPanelHGrid, 5, posRow);
-            this.SetColumnSpan(tblPanelHGrid, 9); this.SetRowSpan(tblPanelHGrid, 1);
+            //(tblPanelHGrid as TableLayoutPanel).AutoScroll = true;
+            //this.Controls.Add(tblPanelHGrid, 5, posRow);
+            //this.SetColumnSpan(tblPanelHGrid, 9); this.SetRowSpan(tblPanelHGrid, 1);
 
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 
@@ -1629,7 +1899,6 @@ namespace PluginTaskVedomostBl
                 default:
                     break;
             }
-            //Controls.Find(INDEX_CONTROL.DGV_HEADER_GRP_1)
         }
 
         /// <summary>
@@ -1641,7 +1910,6 @@ namespace PluginTaskVedomostBl
         {
             err = 0;
             errMsg = string.Empty;
-            Control cntrl;
             string[] arstrItem;
             Array namePut = Enum.GetValues(typeof(INDEX_CONTROL));
             RadioButton[] arRadioBtn;
@@ -1652,8 +1920,6 @@ namespace PluginTaskVedomostBl
             {
                 INDEX_ID.BLOCK_VISIBLED
             };
-
-            cntrl = Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.TBLP_BLK.ToString(), true)[0];
             //инициализация массивов
             bool[] arChecked = new bool[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
             arRadioBtn = new RadioButton[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
@@ -1698,6 +1964,7 @@ namespace PluginTaskVedomostBl
             errMsg = string.Empty;
             string strItem = string.Empty;
             Array namePut = Enum.GetValues(typeof(INDEX_CONTROL));
+            DataTable dtComponentId = new DataTable();
             int i = -1,
                 id_comp,
                 idPer = int.Parse(HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.PERIOD_IND + " AND ID_EXT = " + HTepUsers.Role)[0]["VALUE"].ToString())
@@ -1741,11 +2008,24 @@ namespace PluginTaskVedomostBl
                     break;
             }
             (PanelManagementVed as PanelManagementVedomost).Clear();
-            //
+            //радиобаттаны
             initializeRB(m_arTableDictPrjs, out err, out errMsg);
+            dtComponentId = HandlerDb.GetHeaderDGV();
+            m_dict = new Dictionary<int, List<string[]>>[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];//???
+            //создание грида со значениями
+            for (int j = (int)INDEX_CONTROL.DGV_DATA_B1; j < (int)INDEX_CONTROL.RADIOBTN_BLK1; j++)
+            {
+                ctrl = new DGVVedomostBl(namePut.GetValue(i).ToString(), false);
+                ctrl.Name = namePut.GetValue(i).ToString();
+                (ctrl as DGVVedomostBl).m_idCompDGV = int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows[j]["ID"].ToString());
+                ctrl.Enabled = false;
+                ctrl.Visible = false;
+
+                filingDictHeader(dtComponentId, int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows[j]["ID"].ToString()), j);
+            }
 
             bool[] arChecked = new bool[m_listHeader.Count];
-
+            //
             foreach (var list in m_listHeader)
             {
                 id_comp = m_listHeader.IndexOf(list);
@@ -1827,20 +2107,14 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// 
+        /// Заполнение словаря[x] заголовков
         /// </summary>
-        /// <param name="dgvBl"></param>
-        protected void filingDictHeader(DataGridView dgvBl)
+        /// <param name="dt">табилца парамтеров</param>
+        /// <param name="paramBl">параметр(идТГ)</param>
+        protected void filingDictHeader(DataTable dt, int paramBl, int cntDict)
         {
-            DataTable dtHtext = HandlerDb.GetHeaderDGV();
-
-            foreach (var item in m_listHeader)
-            {
-                for (int i = 0; i < item.Count; i++)
-                {
-                    //dgvBl.Add
-                }
-            }
+            m_dict[cntDict] = new Dictionary<int, List<string[]>> { };
+            m_dict[cntDict].Add(paramBl, m_VedCalculate.CreateDictHeader(dt, paramBl));//???
         }
 
         /// <summary>
