@@ -200,7 +200,8 @@ namespace PluginTaskVedomostBl
                 CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END,
                 MENUITEM_UPDATE, MENUITEM_HISTORY,
                 CLBX_COMP_VISIBLED, CLBX_COMP_CALCULATED, CLBX_COL_VISIBLED,
-                CHKBX_EDIT, TBLP_BLK, TOOLTIP_GRP,
+                CHKBX_EDIT, TBLP_BLK, TOOLTIP_GRP, 
+                PICTURE_BOXDGV, PANEL_PICTUREDGV,
                 COUNT
             }
             /// <summary>
@@ -258,9 +259,17 @@ namespace PluginTaskVedomostBl
             public PanelManagementVedomost()
                 : base(4, 3)
             {
-                InitializeComponents();
-                toolTipText = new string[m_listHeader.Count];
-                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
+                try
+                {
+                    InitializeComponents();
+                    toolTipText = new string[m_listHeader.Count];
+                    (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.ToString());
+                }
+               
             }
 
             /// <summary>
@@ -376,7 +385,7 @@ namespace PluginTaskVedomostBl
                 tlpButton.Controls.Add(ctrlExp, 0, 2);
                 this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
                 this.SetColumnSpan(tlpButton, 4); this.SetRowSpan(tlpButton, 2);
-                //Признаки включения/исключения для отображения компонента
+                //Признаки включения/исключения для отображения блока(ТГ)
                 ctrl = new System.Windows.Forms.Label();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as System.Windows.Forms.Label).Text = @"Выбрать блок для отображения";
@@ -410,6 +419,16 @@ namespace PluginTaskVedomostBl
                 tlpChk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 75F));
                 this.Controls.Add(tlpChk, 0, posRow = posRow + 4);
                 this.SetColumnSpan(tlpChk, 4); this.SetRowSpan(tlpChk, 2);
+                //контейнеры для DGV
+                PictureBox pictureBox = new PictureBox();
+                pictureBox.Name = INDEX_CONTROL_BASE.PICTURE_BOXDGV.ToString();
+                pictureBox.TabStop = false;
+
+                Panel m_paneL = new Panel();
+                m_paneL.Name = INDEX_CONTROL_BASE.PANEL_PICTUREDGV.ToString();
+                (m_paneL as Panel).AutoScroll = true;
+                m_paneL.Controls.Add(pictureBox);
+
 
                 //Признак Корректировка_включена/корректировка_отключена 
                 CheckBox cBox = new CheckBox();
@@ -1604,7 +1623,6 @@ namespace PluginTaskVedomostBl
             }
         }
 
-
         /// <summary>
         ///  
         /// </summary>
@@ -2114,7 +2132,7 @@ namespace PluginTaskVedomostBl
         protected void filingDictHeader(DataTable dt, int paramBl, int cntDict)
         {
             m_dict[cntDict] = new Dictionary<int, List<string[]>> { };
-            m_dict[cntDict].Add(paramBl, m_VedCalculate.CreateDictHeader(dt, paramBl));//???
+            m_dict[cntDict].Add(paramBl, m_VedCalculate.CreateDictHeader(dt, paramBl));
         }
 
         /// <summary>
