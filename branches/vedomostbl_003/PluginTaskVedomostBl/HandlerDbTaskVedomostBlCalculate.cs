@@ -301,7 +301,7 @@ namespace PluginTaskVedomostBl
                 + @"LEFT JOIN [input] p "
                 + @"ON a.ID = p.ID_ALG "
                 + @"WHERE a.ID_TASK = " + (int)ID_TASK.VEDOM_BL
-                + @" ORDER BY a.N_ALG"
+                + @" ORDER BY a.ID"
                 ;
 
             return Select(query, out err);
