@@ -1557,8 +1557,7 @@ namespace PluginTaskAutobook
             public enum INDEX_CONTROL_BASE
             {
                 UNKNOWN = -1,
-                BUTTON_SEND, BUTTON_SAVE,
-                BUTTON_LOAD, BUTTON_EXPORT,
+                BUTTON_SEND, BUTTON_SAVE, BUTTON_LOAD, BUTTON_EXPORT,
                 TXTBX_EMAIL, CALENDAR,
                 CBX_PERIOD, CBX_TIMEZONE,
                 HDTP_BEGIN, HDTP_END,
@@ -1584,8 +1583,6 @@ namespace PluginTaskAutobook
 
             private void InitializeComponents()
             {
-                //initializeLayoutStyle();
-
                 Control ctrl = new Control(); ;
                 // переменные для инициализации кнопок "Добавить", "Удалить"
                 string strPartLabelButtonDropDownMenuItem = string.Empty;
