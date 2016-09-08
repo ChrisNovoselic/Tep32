@@ -1471,7 +1471,7 @@ namespace PluginTaskVedomostBl
 
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.m_iIdComp >= 0)
-                        if (col.Name == _oldItem)
+                        if (col.Name != _oldItem)
                         {
                             _oldItem = col.Name;
                             headerCol.Add(col.Name);
@@ -1504,23 +1504,46 @@ namespace PluginTaskVedomostBl
             /// <param name="idBlock"></param>
             private void cntHeader(int idBlock)
             {
+                string _oldItem = string.Empty;
+                int _indx = 0,
+                    indxId = 0;
+
                 foreach (var item in headerText)
                 {
                     int untdCol = 0;
                     foreach (HDataGridViewColumn col in Columns)
-                        if (col.m_topHeader == item)
-                            untdCol++;
+                        if (item == "")
+                            if (col.m_topHeader == item)
+                                untdCol++;
+                            else
+                            {
+                                untdCol = 1;
+                                break;
+                            }
                     m_arIntTopHeader[headerText.ToList().IndexOf(item)] = untdCol;
                 }
 
-                foreach (var item in headerCol)
-                {
-                    int untdCol = 0;
-                    foreach (HDataGridViewColumn col in Columns)
-                        if (col.Name == item)
-                            untdCol++;
-                    m_arMiddleCol[headerCol.ToList().IndexOf(item)] = untdCol;
-                }
+                foreach (var name in headerText)
+                    foreach (var item in headerCol)
+                    {
+                        int untdCol = 0;
+                        foreach (HDataGridViewColumn col in Columns)
+                            if(col.m_iIdComp >-1)
+                            if (name == col.m_topHeader)//""???
+                            {
+                                if (item == col.Name)
+                                    untdCol++;
+                                else
+                                    if (untdCol > 0)
+                                        break;
+                            }
+
+                        if (untdCol > 0)
+                        {
+                            m_arMiddleCol[_indx] = untdCol;
+                            _indx++;
+                        }
+                    }
             }
 
             /// <summary>
