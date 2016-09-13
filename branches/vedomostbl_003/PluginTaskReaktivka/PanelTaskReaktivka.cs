@@ -619,7 +619,6 @@ namespace PluginTaskReaktivka
             m_currentOffSet = Session.m_curOffsetUTC;
         }
 
-
         /// <summary>
         /// Установка длительности периода 
         /// </summary>
