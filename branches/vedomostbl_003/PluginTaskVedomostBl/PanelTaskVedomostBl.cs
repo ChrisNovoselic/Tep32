@@ -410,7 +410,7 @@ namespace PluginTaskVedomostBl
                 //Признаки включения/исключения для отображения блока(ТГ)
                 ctrl = new System.Windows.Forms.Label();
                 ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Выбрать блок для отображения";
+                (ctrl as System.Windows.Forms.Label).Text = @"Выбрать блок для отображения:";
                 TableLayoutPanel tlpChk = new TableLayoutPanel();
                 tlpChk.Controls.Add(ctrl, 0, 0);
                 //
@@ -419,11 +419,10 @@ namespace PluginTaskVedomostBl
                 ctrl.Name = INDEX_CONTROL_BASE.TBLP_BLK.ToString();
                 ctrl.Dock = DockStyle.Top;
                 tlpChk.Controls.Add(ctrl, 0, 1);
-
                 //Признак для включения/исключения для отображения столбца(ов)
                 ctrl = new System.Windows.Forms.Label();
                 ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Включить/исключить столбец(ы) для отображения";
+                (ctrl as System.Windows.Forms.Label).Text = @"Включить/исключить столбец(ы) для отображения:";
                 tlpChk.Controls.Add(ctrl, 0, 2);
                 //
                 ctrl = new CheckedListBoxTaskVed();
@@ -1073,19 +1072,21 @@ namespace PluginTaskVedomostBl
         protected class DGVVedomostBl : DataGridView
         {
             static int m_drwH,
-            m_drwW = 0,
-            CntParentHeader = 0;
+            m_drwW = 0
+            //,CntParentHeader = 0
+            ;
             /// <summary>
             /// 
             /// </summary>
             Rectangle recParentCol;
             /// <summary>
-            /// 
+            /// списки названий загллвоков 
+            /// верхнего и среднего уровней
             /// </summary>
             static List<string> headerText = new List<string>(),
                 headerCol = new List<string>();
             /// <summary>
-            /// 
+            /// соотношение заголовков
             /// </summary>
             static int[] m_arMiddleCol,
            m_arIntTopHeader;
@@ -1232,7 +1233,7 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
+            /// Структура для описания добавляемых столбцов
             /// </summary>
             public class COLUMN_PROPERTY
             {
@@ -1507,7 +1508,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="picture"></param>
             /// <param name="panel"></param>
-            public void dgvConfigCol(DataGridView dgv)
+            public void dgvConfigCol(DataGridView dgv)//idTG
             {
                 string _oldItem = string.Empty;
 
@@ -1529,15 +1530,12 @@ namespace PluginTaskVedomostBl
                 m_arIntTopHeader = new int[headerText.Count()];
                 m_arMiddleCol = new int[headerCol.Count()];
 
-                cntHeader();
+                cntHeader();//???
 
-                CntParentHeader = headerCol.Count();
+                //CntParentHeader = headerCol.Count();
 
                 m_drwW = (dgv.Columns.Count - 1) * dgv.Columns[2].Width + dgv.Columns[2].Width / m_listHeader.Count;
                 m_drwH = m_listHeader.Count;
-
-                //dgv.Size = new System.Drawing.Size(m_drwW + 2, panel.Height - 20);//??panel
-                //picture.Size = new System.Drawing.Size(Width, Height);//???picture
 
                 this.ColumnHeadersHeight = dgv.ColumnHeadersHeight * m_drwH;//высота от нижнего(headerText)
                 this.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
@@ -1552,7 +1550,7 @@ namespace PluginTaskVedomostBl
             /// Формирвоанеи списка отношения 
             /// кол-во верхних заголовков к нижним
             /// </summary>
-            private void cntHeader()
+            private void cntHeader()//idComp(TG)
             {
                 string _oldItem = string.Empty;
                 int _indx = 0;
@@ -2027,7 +2025,7 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// 
+        /// Обработчик события - добавления строк в грид(изменение размера контролов)
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
