@@ -301,7 +301,7 @@ namespace PluginTaskVedomostBl
                 + @"LEFT JOIN [input] p "
                 + @"ON a.ID = p.ID_ALG "
                 + @"WHERE a.ID_TASK = " + (int)IdTask
-                + @" ORDER BY a.ID"
+                + @" ORDER BY p.ID"
                 ;
 
             return Select(query, out err);
@@ -315,26 +315,26 @@ namespace PluginTaskVedomostBl
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT a.[ID] as ID_ALG, p.[ID], p.[ID_COMP], cl.[DESCRIPTION], a.[N_ALG] , m.NAME_RU as NAME_SHR_MEASURE, m.[AVG] "
-            + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
-            + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
-            + @"ON a.ID = p.ID_ALG "
-            + @"LEFT JOIN " + "[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] cl "
-            + @"ON cl.ID = p.ID_COMP "
-            + @"JOIN [dbo].[measure] as m "
-            + @"ON a.ID_MEASURE = m.ID "
-            + @"WHERE a.ID_TASK  = " + (int)IdTask;
-
-            return strRes;
-            //string strRes = string.Empty;
-
-            //strRes = @"SELECT l.[ID] , l.[ID_COMP], l.[DESCRIPTION] "
-            //+ @"FROM  [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] l "
-            //+ @"LEFT JOIN [TEP_NTEC_5].[dbo].[comp] c "
-            //+ @"ON c.ID = l.ID_COMP "
-            //+ @"WHERE c.ID >= 1000 AND c.ID < 20000";
+            //strRes = @"SELECT a.[ID] as ID_ALG, p.[ID], p.[ID_COMP], cl.[DESCRIPTION], a.[N_ALG] , m.NAME_RU as NAME_SHR_MEASURE, m.[AVG] "
+            //+ @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
+            //+ @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
+            //+ @"ON a.ID = p.ID_ALG "
+            //+ @"LEFT JOIN " + "[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] cl "
+            //+ @"ON cl.ID = p.ID_COMP "
+            //+ @"JOIN [dbo].[measure] as m "
+            //+ @"ON a.ID_MEASURE = m.ID "
+            //+ @"WHERE a.ID_TASK  = " + (int)IdTask;
 
             //return strRes;
+            //string strRes = string.Empty;
+
+            strRes = @"SELECT l.[ID] , l.[ID_COMP], l.[DESCRIPTION] "
+            + @"FROM  [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] l "
+            + @"LEFT JOIN [TEP_NTEC_5].[dbo].[comp] c "
+            + @"ON c.ID = l.ID_COMP "
+            + @"WHERE c.ID > 500 AND c.ID < 20000";
+
+            return strRes;
         }
 
         /// <summary>

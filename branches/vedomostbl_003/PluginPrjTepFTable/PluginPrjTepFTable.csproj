@@ -58,7 +58,9 @@
     <Compile Include="DataGridViewAutoFilterColumnHeaderCell.cs" />
     <Compile Include="DataGridViewAutoFilterTextBoxColumn.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PanelPrjTepFTable.cs" />
+    <Compile Include="PanelPrjTepFTable.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="ZedGraphFTable.cs" />
   </ItemGroup>
   <ItemGroup>
