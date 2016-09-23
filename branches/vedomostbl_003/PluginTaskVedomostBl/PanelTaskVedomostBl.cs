@@ -801,7 +801,7 @@ namespace PluginTaskVedomostBl
 
             /// <summary>
             /// Добавить элемент компонент станции в списки
-            /// , в соответствии с 'arIndexIdToAdd'
+            ///, в соответствии с 'arIndexIdToAdd'
             /// </summary>
             /// <param name="id">Идентификатор компонента</param>
             /// <param name="text">Текст подписи к компоненту</param>
@@ -1000,7 +1000,15 @@ namespace PluginTaskVedomostBl
             /// <param name="ev">Аргумент события</param>
             protected void onItemCheck(object obj, ItemCheckEventArgs ev)
             {
+                CheckedListBox clbx = (Controls.Find(INDEX_CONTROL_BASE.CLBX_COL_VISIBLED.ToString(), true)[0] as CheckedListBox);
+
                 itemCheck((obj as IControl).SelectedId, getIndexIdOfControl(obj as Control), ev.NewValue);
+
+                if (clbx.CheckedItems.Count == 0)
+                    clbx.SetItemChecked((obj as IControl).SelectedId + 1 == clbx.Items.Count ? 0 : (obj as IControl).SelectedId + 1, true);
+                else if (clbx.CheckedItems.Count == 1)
+                    if (clbx.CheckedItems.Contains(clbx.CheckedItems[(obj as IControl).SelectedId]))
+                        ;
             }
 
             /// <summary>
@@ -1071,7 +1079,7 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// 
+        /// класс пикчи
         /// </summary>
         protected class PictureVedBl : PictureBox
         {
@@ -1097,7 +1105,7 @@ namespace PluginTaskVedomostBl
             {
                 int _drwH = (viewActive.Rows.Count) * viewActive.Rows[0].Height + 70;
 
-                Size = new Size(viewActive.Width - viewActive.Columns[2].Width * m_listHeader.Count + 1, _drwH);
+                Size = new Size(viewActive.Width - 10, _drwH);
                 m_idCompPicture = viewActive.m_idCompDGV;
                 Controls.Add(viewActive);
             }
@@ -1108,7 +1116,10 @@ namespace PluginTaskVedomostBl
         /// </summary>
         protected class DGVVedomostBl : DataGridView
         {
-            static int m_drwW, 
+            /// <summary>
+            /// ширина и высота
+            /// </summary>
+            static int m_drwW,
                 m_drwH = m_listHeader.Count;
             /// <summary>
             /// 
@@ -1118,8 +1129,8 @@ namespace PluginTaskVedomostBl
             /// словарь названий заголовков 
             /// верхнего и среднего уровней
             /// </summary>
-            static Dictionary<int, List<string>> headerText = new Dictionary<int, List<string>>(),
-                headerCol = new Dictionary<int, List<string>>();
+            static Dictionary<int, List<string>> headerTop = new Dictionary<int, List<string>>(),
+                headerMiddle = new Dictionary<int, List<string>>();
             /// <summary>
             /// соотношение заголовков
             /// </summary>
@@ -1159,7 +1170,7 @@ namespace PluginTaskVedomostBl
             /// <param name="nameDGV"></param>
             private void InitializeComponents(string nameDGV)
             {
-                this.Name = nameDGV;
+                Name = nameDGV;
                 Dock = DockStyle.None;
                 //Запретить выделение "много" строк
                 MultiSelect = false;
@@ -1183,7 +1194,7 @@ namespace PluginTaskVedomostBl
                 ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.BottomCenter;
                 ColumnHeadersHeight = ColumnHeadersHeight * m_drwH;//высота от нижнего(headerText)
                 ScrollBars = ScrollBars.None;
-           
+
                 AddColumns(-2, string.Empty, "ALG", false);
                 AddColumns(-1, "Дата", "Date", true);
             }
@@ -1337,8 +1348,6 @@ namespace PluginTaskVedomostBl
             public void AddColumns(int idHeader, string nameCol, string headerText, bool bVisible)
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
-                //DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
                 try
                 {
@@ -1540,20 +1549,24 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
+            /// Подготовка параметров к рисовке хидера
             /// </summary>
             /// <param name="picture"></param>
             /// <param name="panel"></param>
             public void dgvConfigCol(DataGridView dgv)
             {
+                int cntCol = 0;
                 formingTitleLists((dgv as DGVVedomostBl).m_idCompDGV);
 
                 formRelationsHeading((dgv as DGVVedomostBl).m_idCompDGV);
 
-                m_drwW = (dgv.Columns.Count) * dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width +
+                foreach (DataGridViewColumn col in dgv.Columns)
+                    if (col.Visible == true)
+                        cntCol++;
+
+                m_drwW = cntCol * dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width +
                     dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width / m_listHeader.Count;
 
-                //CellPainting += new DataGridViewCellPaintingEventHandler(dataGridView1_CellPainting);
                 dgv.Paint += new PaintEventHandler(dataGridView1_Paint);
             }
 
@@ -1566,8 +1579,8 @@ namespace PluginTaskVedomostBl
                 List<string> _listTop = new List<string>(),
                     _listMiddle = new List<string>();
 
-                if (headerText.ContainsKey(idTG))
-                    headerText.Remove(idTG);
+                if (headerTop.ContainsKey(idTG))
+                    headerTop.Remove(idTG);
 
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.m_iIdComp >= 0)
@@ -1584,10 +1597,10 @@ namespace PluginTaskVedomostBl
                         else;
                     else;
 
-                headerText.Add(idTG, _listTop);
+                headerTop.Add(idTG, _listTop);
 
-                if (headerCol.ContainsKey(idTG))
-                    headerCol.Remove(idTG);
+                if (headerMiddle.ContainsKey(idTG))
+                    headerMiddle.Remove(idTG);
 
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.m_iIdComp >= 0)
@@ -1598,7 +1611,7 @@ namespace PluginTaskVedomostBl
                                 _listMiddle.Add(col.Name);
                             }
 
-                headerCol.Add(idTG, _listMiddle);
+                headerMiddle.Add(idTG, _listMiddle);
             }
 
             /// <summary>
@@ -1610,13 +1623,13 @@ namespace PluginTaskVedomostBl
                 string _oldItem = string.Empty;
                 int _indx = 0,
                     _untdColM = 0;
-                int[] _arrIntTop = new int[headerText[idDgv].Count()],
-                    _arrIntMiddle = new int[headerCol[idDgv].Count()];
+                int[] _arrIntTop = new int[headerTop[idDgv].Count()],
+                    _arrIntMiddle = new int[headerMiddle[idDgv].Count()];
 
                 if (m_arIntTopHeader.ContainsKey(idDgv))
                     m_arIntTopHeader.Remove(idDgv);
 
-                foreach (var item in headerText[idDgv])
+                foreach (var item in headerTop[idDgv])
                 {
                     int untdCol = 0;
                     foreach (HDataGridViewColumn col in Columns)
@@ -1639,7 +1652,7 @@ namespace PluginTaskVedomostBl
                 if (m_arMiddleCol.ContainsKey(idDgv))
                     m_arMiddleCol.Remove(idDgv);
 
-                foreach (var item in headerCol[idDgv])
+                foreach (var item in headerMiddle[idDgv])
                 {
                     foreach (HDataGridViewColumn col in Columns)
                     {
@@ -1662,7 +1675,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="dgvActive"></param>
             /// <param name="listHeaderTop"></param>
-            public void HideColumns(DataGridView dgv,List<string> listHeaderTop, bool isCheck)
+            public void HideColumns(DataGridView dgv, List<string> listHeaderTop, bool isCheck)
             {
                 foreach (var item in listHeaderTop)
                     foreach (HDataGridViewColumn col in Columns)
@@ -1705,14 +1718,14 @@ namespace PluginTaskVedomostBl
 
                 m_drwH = _r1.Height / m_drwH;
 
-                foreach (var item in headerCol[(sender as DGVVedomostBl).m_idCompDGV])
+                foreach (var item in headerMiddle[(sender as DGVVedomostBl).m_idCompDGV])
                 {
                     //get the column header cell
-                    _r1.Width = m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][headerCol[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item)] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                    _r1.Width = m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item)] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
                     _r1.Height = m_drwH + 3;//??? 
 
-                    if (headerCol[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1 > -1)
-                        _r1.X = _r1.X + m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][headerCol[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                    if (headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1 > -1)
+                        _r1.X = _r1.X + m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
                     else
                     {
                         _r1.X += Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
@@ -1727,7 +1740,7 @@ namespace PluginTaskVedomostBl
                     e.Graphics.DrawRectangle(pen, _r1);
                 }
 
-                foreach (var item in headerText[(sender as DGVVedomostBl).m_idCompDGV])
+                foreach (var item in headerTop[(sender as DGVVedomostBl).m_idCompDGV])
                 {
                     //get the column header cell
                     _r2.Width = m_arIntTopHeader[(sender as DGVVedomostBl).m_idCompDGV][_indxCol] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
@@ -2053,7 +2066,7 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// 
+        /// Изменить структуру 'HDataGRidVIew's'
         /// </summary>
         /// <param name="item"></param>
         private void placementHGridViewOnTheForm(PanelManagementVedomost.ItemCheckedParametersEventArgs item)
@@ -2095,16 +2108,22 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="pictureBox">пикча</param>
         /// <param name="BasicPanel">панель</param>
-        private void ReSizeControls(DataGridView viewActiv)
+        private void ReSizeControls(DataGridView viewActive)
         {
-            for (int j = 1; j < viewActiv.ColumnCount; j++)
-                viewActiv.Columns[j].Width = 65;
+            int cntCol = 0;
 
-            int _drwW = (viewActiv.Columns.Count) * viewActiv.Columns[2].Width,
-                _drwH = (viewActiv.Rows.Count) * viewActiv.Rows[0].Height + 70;
+            for (int j = 1; j < viewActive.ColumnCount; j++)
+                viewActive.Columns[j].Width = 65;
 
-            viewActiv.Size = new Size(_drwW + 2, _drwH);
-            (Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).AutoScrollMinSize = new Size(_drwW, viewActiv.Rows.Count * viewActiv.Rows[0].Height);
+            foreach (DataGridViewColumn col in viewActive.Columns)
+                if (col.Visible == true)
+                    cntCol++;
+
+            int _drwW = cntCol * viewActive.Columns[2].Width + 10
+                , _drwH = (viewActive.Rows.Count) * viewActive.Rows[0].Height + 70;
+
+            viewActive.Size = new Size(_drwW + 2, _drwH);
+            //(Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).AutoScrollMinSize = new Size(_drwW, viewActive.Rows.Count * viewActive.Rows[0].Height);
         }
 
         /// <summary>
@@ -2150,7 +2169,6 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Инициализация радиобаттанов
         /// </summary>
-        /// <param name="m_arTableDictPrjs"></param>
         /// <param name="namePut">массив имен элементов</param>
         /// <param name="err">номер ошибки</param>
         /// <param name="errMsg">текст ошибки</param>
@@ -2385,10 +2403,7 @@ namespace PluginTaskVedomostBl
                         errMsg = @"Неизвестная ошибка";
                         break;
                 }
-            //Dgv's
-            initializeDGV(namePut);
-            //радиобаттаны
-            initializeRB(namePut, out err, out errMsg);
+
             bool[] arChecked = new bool[m_listHeader.Count];
             //
             foreach (var list in m_listHeader)
@@ -2397,7 +2412,7 @@ namespace PluginTaskVedomostBl
                 //m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_comp);
                 strItem = "Группа " + (id_comp + 1);
                 // установить признак отображения группы столбцов
-                arChecked[0] = m_arListIds[(int)INDEX_ID.HGRID_VISIBLE].IndexOf(id_comp) > -1;
+                arChecked[id_comp] = true;//m_arListIds[(int)INDEX_ID.HGRID_VISIBLE].IndexOf(id_comp) > -1;
                 (PanelManagementVed as PanelManagementVedomost).AddComponent(id_comp
                     , strItem
                     , list
@@ -2406,6 +2421,10 @@ namespace PluginTaskVedomostBl
             }
             //
             (PanelManagementVed as PanelManagementVedomost).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
+            //Dgv's
+            initializeDGV(namePut);//???
+            //радиобаттаны
+            initializeRB(namePut, out err, out errMsg);
 
             //m_dgvReak.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
         }
