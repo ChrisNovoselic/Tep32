@@ -178,7 +178,7 @@ namespace PluginTaskReaktivka
 
             SuspendLayout();
 
-            this.Controls.Add(PanelManagementReak, 0, posRow);
+            Controls.Add(PanelManagementReak, 0, posRow);
             this.SetColumnSpan(PanelManagementReak, 4);
             this.SetRowSpan(PanelManagementReak, 9);
 
@@ -2256,14 +2256,14 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// 
         /// </summary>
-        protected System.Data.DataTable m_TableOrigin
+        protected DataTable m_TableOrigin
         {
             get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
         /// <summary>
         /// 
         /// </summary>
-        protected System.Data.DataTable m_TableEdit
+        protected DataTable m_TableEdit
         {
             get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
@@ -2300,7 +2300,7 @@ namespace PluginTaskReaktivka
                             // отобразить значения
                             m_dgvReak.ShowValues(m_TableOrigin);
                             //
-                            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
+                            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
                         }
                         else
                             deleteSession();

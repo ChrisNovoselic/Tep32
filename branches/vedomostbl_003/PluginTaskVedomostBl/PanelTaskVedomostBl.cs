@@ -258,7 +258,9 @@ namespace PluginTaskVedomostBl
                     m_newCheckState = newCheckState;
                 }
             }
-
+            /// <summary>
+            /// 
+            /// </summary>
             public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
             /// <summary>
             /// Тип обработчика события - изменение выбора запрет/разрешение
@@ -1973,7 +1975,7 @@ namespace PluginTaskVedomostBl
             m_VedCalculate = new VedomostBlCalculate();
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
             Session.SetRangeDatetime(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
-            m_dict = new Dictionary<int, List<string[]>> { };//???
+            m_dict = new Dictionary<int, List<string[]>> { };
 
             m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
@@ -2238,9 +2240,7 @@ namespace PluginTaskVedomostBl
             {
                 ctrl = new DGVVedomostBl(namePut.GetValue(j).ToString());
                 ctrl.Name = namePut.GetValue(j).ToString();
-                (ctrl as DGVVedomostBl).m_idCompDGV = int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows[j]["ID"].ToString());//enumIdComp.ElementAt(j).ID_COMP;
-                //ctrl.Enabled = false;
-                //ctrl.Visible = false;
+                (ctrl as DGVVedomostBl).m_idCompDGV = int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows[j]["ID"].ToString());
 
                 filingDictHeader(dtComponentId, (ctrl as DGVVedomostBl).m_idCompDGV, j);//
 
@@ -2343,6 +2343,28 @@ namespace PluginTaskVedomostBl
             }
             (PanelManagementVed as PanelManagementVedomost).Clear();
 
+            bool[] arChecked = new bool[m_listHeader.Count];
+            //
+            foreach (var list in m_listHeader)
+            {
+                id_comp = m_listHeader.IndexOf(list);
+                //m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_comp);
+                strItem = "Группа " + (id_comp + 1);
+                // установить признак отображения группы столбцов
+                arChecked[id_comp] = true;//m_arListIds[(int)INDEX_ID.HGRID_VISIBLE].IndexOf(id_comp) > -1;
+                (PanelManagementVed as PanelManagementVedomost).AddComponent(id_comp
+                    , strItem
+                    , list
+                    , arIndxIdToAdd
+                    , arChecked);
+            }
+            //
+            (PanelManagementVed as PanelManagementVedomost).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
+            //Dgv's
+            initializeDGV(namePut);//???
+            //радиобаттаны
+            initializeRB(namePut, out err, out errMsg);
+
             if (err == 0)
             {
                 try
@@ -2403,28 +2425,6 @@ namespace PluginTaskVedomostBl
                         errMsg = @"Неизвестная ошибка";
                         break;
                 }
-
-            bool[] arChecked = new bool[m_listHeader.Count];
-            //
-            foreach (var list in m_listHeader)
-            {
-                id_comp = m_listHeader.IndexOf(list);
-                //m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_comp);
-                strItem = "Группа " + (id_comp + 1);
-                // установить признак отображения группы столбцов
-                arChecked[id_comp] = true;//m_arListIds[(int)INDEX_ID.HGRID_VISIBLE].IndexOf(id_comp) > -1;
-                (PanelManagementVed as PanelManagementVedomost).AddComponent(id_comp
-                    , strItem
-                    , list
-                    , arIndxIdToAdd
-                    , arChecked);
-            }
-            //
-            (PanelManagementVed as PanelManagementVedomost).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
-            //Dgv's
-            initializeDGV(namePut);//???
-            //радиобаттаны
-            initializeRB(namePut, out err, out errMsg);
 
             //m_dgvReak.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
         }
@@ -2574,20 +2574,23 @@ namespace PluginTaskVedomostBl
         {
             int err = -1
              , id_alg = -1;
+            DGVVedomostBl _dgv = (getActiveView() as DGVVedomostBl);
             string n_alg = string.Empty;
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
-            //settingDateRange();
+            settingDateRange();
             Session.SetRangeDatetime(dtBegin, dtEnd);
 
             if (m_bflgClear)
             {
                 clear();
-                m_dgvVedomst.ClearRows();
+
+                if (_dgv.Rows.Count != 0)
+                    _dgv.ClearRows();
 
                 for (int i = 0; i < DaysInMonth + 1; i++)
                 {
-                    if (m_dgvVedomst.Rows.Count != DaysInMonth)
-                        m_dgvVedomst.AddRow(new DGVVedomostBl.ROW_PROPERTY()
+                    if (_dgv.Rows.Count != DaysInMonth)
+                        _dgv.AddRow(new DGVVedomostBl.ROW_PROPERTY()
                         {
                             m_idAlg = id_alg
                             ,
@@ -2596,7 +2599,7 @@ namespace PluginTaskVedomostBl
                             m_Value = dt.AddDays(i).ToShortDateString()
                         });
                     else
-                        m_dgvVedomst.AddRow(new DGVVedomostBl.ROW_PROPERTY()
+                        _dgv.AddRow(new DGVVedomostBl.ROW_PROPERTY()
                         {
                             m_idAlg = id_alg
                             ,
@@ -2608,8 +2611,36 @@ namespace PluginTaskVedomostBl
                 }
             }
 
-            m_dgvVedomst.Rows[dtBegin.Day - 1].Selected = true;
+            _dgv.Rows[dtBegin.Day - 1].Selected = true;
             //m_currentOffSet = Session.m_curOffsetUTC;
+        }
+
+        /// <summary>
+        /// Установка длительности периода 
+        /// </summary>
+        private void settingDateRange()
+        {
+            int cntDays,
+                today = 0;
+
+            PanelManagementVed.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+
+            cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
+              (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
+            today = (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
+
+            (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value =
+                (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
+
+            cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
+  (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
+            today = (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
+
+            (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
+                (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(cntDays - today);
+
+            PanelManagementVed.DateTimeRangeValue_Changed += new PanelManagementVedomost.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
+
         }
 
         /// <summary>
@@ -2624,6 +2655,129 @@ namespace PluginTaskVedomostBl
                 listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select().ToList<DataRow>();
 
                 return listRes;
+            }
+        }
+
+        /// <summary>
+        /// загрузка/обновление данных
+        /// </summary>
+        private void updateDataValues()
+        {
+            int err = -1
+                , cnt = CountBasePeriod
+                , iRegDbConn = -1;
+            string errMsg = string.Empty;
+            DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
+
+            clear();
+            m_handlerDb.RegisterDbConnection(out iRegDbConn);
+
+            if (!(iRegDbConn < 0))
+            {
+                // установить значения в таблицах для расчета, создать новую сессию
+                setValues(dtrGet, out err, out errMsg);
+
+                if (err == 0)
+                {
+                    if (m_TableOrigin.Rows.Count > 0)
+                    {
+                        // создать копии для возможности сохранения изменений
+                        setValues();
+                        // отобразить значения
+                        //m_dgvReak.ShowValues(m_TableOrigin);
+                        //
+                        //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
+                    }
+                    else
+                        deleteSession();
+                }
+                else
+                {
+                    // в случае ошибки "обнулить" идентификатор сессии
+                    deleteSession();
+                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                }
+            }
+            else
+                deleteSession();
+
+            if (!(iRegDbConn > 0))
+                m_handlerDb.UnRegisterDbConnection();
+        }
+
+        /// <summary>
+        /// получение значений
+        /// создание сессии
+        /// </summary>
+        /// <param name="arQueryRanges"></param>
+        /// <param name="err">номер ошибки</param>
+        /// <param name="strErr">текст ошибки</param>
+        private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
+        {
+            err = 0;
+            strErr = string.Empty;
+            //Создание сессии
+            Session.New();
+            //Запрос для получения архивных данных
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            //Запрос для получения автоматически собираемых данных
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+                (
+                Type
+                , ActualIdPeriod
+                , CountBasePeriod
+                , arQueryRanges
+               , out err
+                );
+            //Проверить признак выполнения запроса
+            if (err == 0)
+            {
+                //Проверить признак выполнения запроса
+                if (err == 0)
+                    //Начать новую сессию расчета
+                    //, получить входные для расчета значения для возможности редактирования
+                    HandlerDb.CreateSession(m_id_panel
+                        , CountBasePeriod
+                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT]
+                        , ref m_arTableOrigin
+                        , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
+                        , out err, out strErr);
+                else
+                    strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
+                        + @" по " + Session.m_rangeDatetime.End.ToString();
+            }
+            else
+                strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
+                    + @" по " + Session.m_rangeDatetime.End.ToString();
+        }
+
+        /// <summary>
+        /// copy
+        /// </summary>
+        private void setValues()
+        {
+            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
+        }
+
+        /// <summary>
+        /// Количество базовых периодов
+        /// </summary>
+        protected int CountBasePeriod
+        {
+            get
+            {
+                int iRes = -1;
+                ID_PERIOD idPeriod = ActualIdPeriod;
+
+                iRes =
+                    idPeriod == ID_PERIOD.HOUR ?
+                        (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalHours - 0 :
+                        idPeriod == ID_PERIOD.DAY ?
+                            (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalDays - 0 :
+                            24;
+
+                return iRes;
             }
         }
 
@@ -2824,7 +2978,7 @@ namespace PluginTaskVedomostBl
         protected virtual void onButtonLoadClick()
         {
             // ... - загрузить/отобразить значения из БД
-            //updateDataValues();
+            updateDataValues();
         }
     }
 
@@ -2840,6 +2994,11 @@ namespace PluginTaskVedomostBl
             register(21, typeof(PanelTaskVedomostBl), @"Задача", @"Ведомости эн./блоков");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="ev"></param>
         public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
             base.OnClickMenuItem(obj, ev);
