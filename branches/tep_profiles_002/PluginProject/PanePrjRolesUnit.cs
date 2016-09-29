@@ -752,7 +752,7 @@ namespace PluginProject
         /// <summary>
         /// Обработчик события окончания изменения ячейки
         /// </summary>
-        protected void cell_EndEdit(object sender, DataGridViewCellEventArgs e)
+        protected virtual void cell_EndEdit(object sender, DataGridViewCellEventArgs e)
         {
             int n_row = -1;
             for (int i = 0; i < this.Rows.Count; i++)

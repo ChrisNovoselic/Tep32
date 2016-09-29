@@ -45,12 +45,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PanelDictFPanels.cs" />
-    <Compile Include="PanelDictMeasure.cs" />
-    <Compile Include="PanelDictMessage.cs" />
-    <Compile Include="PanelDictProfilesUnit.cs" />
-    <Compile Include="PanelDictSourceInterface.cs" />
-    <Compile Include="PanelDictTime.cs" />
+    <Compile Include="PanelDictFPanels.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelDictMeasure.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelDictMessage.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelDictProfilesUnit.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelDictSourceInterface.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelDictTime.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PluginItems.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
