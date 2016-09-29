@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Data;
 using System.Windows.Forms;
+using System.Globalization;
 using System.Drawing;
 using Excel = Microsoft.Office.Interop.Excel;
 using HClassLibrary;
@@ -1155,7 +1156,11 @@ namespace PluginTaskVedomostBl
             /// Перечисление для индексации столбцов со служебной информацией
             /// </summary>
             protected enum INDEX_SERVICE_COLUMN : uint { ALG = 0, DATE, COUNT }
+            /// <summary>
+            /// 
+            /// </summary>
             private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
+            private Dictionary<int, COLUMN_PROPERTY> m_dictPropertyColumns;
 
             /// <summary>
             /// Конструктор
@@ -1383,10 +1388,14 @@ namespace PluginTaskVedomostBl
             {
                 int indxCol = -1; // индекс столбца при вставке
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
-                //DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
 
                 try
                 {
+                    if (m_dictPropertyColumns == null)
+                        m_dictPropertyColumns = new Dictionary<int, COLUMN_PROPERTY>();
+
+                    if (!m_dictPropertyColumns.ContainsKey(col_prop.m_idAlg))
+                        m_dictPropertyColumns.Add(col_prop.m_idAlg, col_prop);
                     // найти индекс нового столбца
                     // столбец для станции - всегда крайний
                     //foreach (HDataGridViewColumn col in Columns)
@@ -1785,6 +1794,71 @@ namespace PluginTaskVedomostBl
                     e.PaintContent(r2);
                     e.Handled = true;
                 }
+            }
+
+            public void ShowValues()
+            {
+                DataTable _dtOriginVal = new DataTable();
+                int idAlg = -1
+                   , idParameter = -1
+                   , iQuality = -1
+                   , iCol = 0//, iRow = 0
+                   , vsRatioValue = -1
+                   , iRowCount = 0;
+                double dblVal = -1F,
+                    dbSumVal = 0;
+                DataRow[] parameterRows = null;
+
+                foreach (HDataGridViewColumn col in Columns)
+                {
+                    if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
+                        foreach (DataGridViewRow row in Rows)
+                        {
+                            if (row.Index != row.DataGridView.RowCount - 1)
+                            {
+
+                            }
+                            else
+                                if (m_dictPropertyColumns[idAlg].m_Avg > )
+                                ;
+                            else;
+                        }
+                }
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="indxCol"></param>
+            private double sumVal(int indxCol)
+            {
+                int idAlg = -1;
+                double _sumValue = 0F
+                    , value;
+
+                foreach (DataGridViewRow row in Rows)
+                    if (Rows.Count - 1 != row.Index)
+                        if (double.TryParse(row.Cells[indxCol].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+                            _sumValue += value;
+                        else;
+
+                return _sumValue;
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="indxCol"></param>
+            private void avgVal(int indxCol)
+            {
+                int idAlg = -1;
+                double _avgValue = 0F
+                   , _sumValue = 0F
+                    , value;
+                foreach (DataGridViewRow row in Rows)
+                    if (double.TryParse(row.Cells[indxCol].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+                        _sumValue += value;
+                    else;
             }
         }
 
