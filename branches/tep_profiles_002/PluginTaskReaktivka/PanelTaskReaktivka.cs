@@ -262,10 +262,10 @@ namespace PluginTaskReaktivka
                     };
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
             //
-            DataRow[] drEdtCol =
-                HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.EDIT_COLUMN + " AND ID_EXT = " + HTepUsers.Role);
-            DataRow[] drTZ =
-               HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + HTepUsers.Role);
+            DataRow[] drEdtCol = new DataRow[0];
+            //???? HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.EDIT_COLUMN + " AND ID_EXT = " + HTepUsers.Role);
+            DataRow[] drTZ = new DataRow[0];
+            //???? HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + HTepUsers.Role);
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
                 switch (id)

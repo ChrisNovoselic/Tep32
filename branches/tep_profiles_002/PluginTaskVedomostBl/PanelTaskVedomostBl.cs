@@ -1593,7 +1593,7 @@ namespace PluginTaskVedomostBl
             Array namePut = Enum.GetValues(typeof(INDEX_CONTROL));
             int i = -1,
                 id_comp,
-                idPer = int.Parse(HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.PERIOD_IND + " AND ID_EXT = " + HTepUsers.Role)[0]["VALUE"].ToString())
+                idPer = 1 //int.Parse(HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.PERIOD_IND + " AND ID_EXT = " + HTepUsers.Role)[0]["VALUE"].ToString())
             , rbCnt = (int)INDEX_CONTROL.RADIOBTN_BLK1;
             Control ctrl = null;
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
@@ -1671,7 +1671,7 @@ namespace PluginTaskVedomostBl
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = int.Parse(HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + HTepUsers.Role)[0]["VALUE"].ToString());//??? требуется прочитать из [profile]
+                    (ctrl as ComboBox).SelectedIndex = 1;//???? int.Parse(HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + HTepUsers.Role)[0]["VALUE"].ToString());//??? требуется прочитать из [profile]
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета

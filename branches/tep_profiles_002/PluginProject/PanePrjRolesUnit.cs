@@ -240,7 +240,7 @@ namespace PluginProject
             User.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
 
-            m_AllUnits = HUsers.GetTableProfileUnits.Copy();
+            m_AllUnits = HTepUsers.GetTableProfileUnits.Copy();
             foreach (DataRow r in m_AllUnits.Select("ID>3"))
             {
                 m_AllUnits.Rows.Remove(r);

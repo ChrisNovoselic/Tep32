@@ -1172,7 +1172,7 @@ namespace PluginTaskBalTeplo
             string query = string.Empty;
             int err = -1;
             DataTable dt = new DataTable();
-            dt = HTepUsers.GetProfileUser_Tab(IdTab);
+            //dt = HTepUsers.GetProfileUser_Tab(IdTab);????
 
             return dt;
         }

@@ -90,7 +90,7 @@ namespace Tep64
         private void loadProfile()
         {
             PlugInMenuItem plugIn;
-            string ids = HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS)
+            string ids = HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS, s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett())
                 /*/*, strNameOwnerMenuItem = string.Empty, strNameMenuItem = string.Empty*/;
             string[] arIds = ids.Split(new char [] {','}, StringSplitOptions.RemoveEmptyEntries);
             ////Вариант №1
@@ -216,12 +216,8 @@ namespace Tep64
         /// </summary>
         private void saveProfile()
         {
-            int iListenerId = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString());
-
             string ids = m_TabCtrl.VisibleIDs;
-            HTepUsers.SetAllowed(iListenerId, (int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS, ids);
-
-            DbSources.Sources().UnRegister(iListenerId);
+            HTepUsers.SetAllowed((int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS, ids, s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett());
         }
         /// <summary>
         /// Обработчик выбора пункта меню 'Файл - Профиль - Сохранить'
@@ -243,9 +239,7 @@ namespace Tep64
             профайлСохранитьToolStripMenuItem.Enabled =
                 ! (sender as ToolStripMenuItem).Checked;
 
-            int iListenerId = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString());
-            HTepUsers.SetAllowed(iListenerId, (int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED, Convert.ToString((sender as ToolStripMenuItem).Checked == true ? 1 : 0));
-            DbSources.Sources().UnRegister(iListenerId);
+            HTepUsers.SetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED, Convert.ToString((sender as ToolStripMenuItem).Checked == true ? 1 : 0), s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett());
         }
         /// <summary>
         /// Обработчик выбора пункта меню 'Файл - выход'
@@ -522,8 +516,8 @@ namespace Tep64
 
                     if (iRes == 0)
                     {
-                        профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Checked = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED));
-                        профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Enabled = Convert.ToBoolean(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_ACCESS));
+                        профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Checked = Convert.ToBoolean(int.Parse( HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED, s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett())));
+                        профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Enabled = Convert.ToBoolean(int.Parse(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_ACCESS, s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett())));
                         //Успешный запуск на выполнение приложения
                         Start();
                     }

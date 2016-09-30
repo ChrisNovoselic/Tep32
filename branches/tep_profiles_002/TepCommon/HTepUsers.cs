@@ -12,8 +12,6 @@ namespace TepCommon
 {
     public class HTepUsers : HUsers
     {
-
-        HTepProfilesXml profilesXml;
         /// <summary>
         /// Перечисление - идентификаторы ролей (групп) пользователей из БД [roles_unit]
         /// </summary>
@@ -210,6 +208,35 @@ namespace TepCommon
             return tableRes;
         }
 
+        public static string GetAllowed(int id, ConnectionSettings connSett)
+        {
+            string strRes = string.Empty;
+
+            HTepProfilesXml.UpdateProfile(connSett);
+            
+                DictElement dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
+
+            Dictionary<string, string> dictAttr = dictElement.Attributes;
+
+            if (dictAttr.ContainsKey(id.ToString()) == true)
+            {
+                strRes = dictAttr[id.ToString()];
+            }
+
+            return strRes;
+        }
+        public static void SetAllowed(int id, string val, ConnectionSettings connSett)
+        {
+            HTepProfilesXml.EditAttr(val, id, connSett);
+        }
+        public static bool IsAllowed(int id, ConnectionSettings connSett)
+        {
+            return bool.Parse(GetAllowed(id, connSett));
+        }
+
+        public static DataTable GetTableProfileUnits { get { return HTepProfilesXml.GetTableUnits; } }
+
+
         public struct VISUAL_SETTING
         {
             public int m_ratio;
@@ -398,39 +425,43 @@ namespace TepCommon
             {
                 DictElement dictElement = HTepProfilesXml.GetProfileUserPanel(Id, Role, fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]);
 
-                Dictionary<string, DictElement> dictProfile = dictElement.Objects[fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()].Objects;
+                Dictionary<string, DictElement> dictProfile = new Dictionary<string, DictElement>();
 
-
-                foreach (string rAlg in dictProfile.Keys)
+                if (dictElement.Objects.ContainsKey(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()) == true)
                 {
-                    foreach (string idUnit in dictProfile[rAlg].Attributes.Keys)
+                    dictProfile = dictElement.Objects[fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()].Objects;
+
+
+                    foreach (string rAlg in dictProfile.Keys)
                     {
-                        ratio = 0;
-                        round = 0;
-                        switch ((ID_ALLOWED)Int16.Parse(idUnit))
+                        foreach (string idUnit in dictProfile[rAlg].Attributes.Keys)
                         {
-                            case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
-                                ratio = int.Parse(dictProfile[rAlg].Attributes[idUnit]);
+                            ratio = 0;
+                            round = 0;
+                            switch ((ID_ALLOWED)Int16.Parse(idUnit))
+                            {
+                                case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
+                                    ratio = int.Parse(dictProfile[rAlg].Attributes[idUnit]);
+                                    break;
+                                case ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND:
+                                    round = int.Parse(dictProfile[rAlg].Attributes[idUnit]);
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                            curSum += id_unit;
+
+                            if (curSum == checkSum)
                                 break;
-                            case ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND:
-                                round = int.Parse(dictProfile[rAlg].Attributes[idUnit]);
-                                break;
-                            default:
-                                break;
+                            else
+                                ;
                         }
 
-                        curSum += id_unit;
-
-                        if (curSum == checkSum)
-                            break;
-                        else
-                            ;
+                        dictRes.Add(rAlg.Trim(), new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
                     }
 
-                    dictRes.Add(rAlg.Trim(), new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
                 }
-
-
 
             }
             else
@@ -544,36 +575,7 @@ namespace TepCommon
                 return objRes;
             }
         }
-
-        /// <summary>
-        /// Метод для получения Profile для вкладки
-        /// </summary>
-        /// <param name="id_tab"></param>
-        /// <returns></returns>
-        public static DataTable GetProfileUser_Tab(int id_tab)
-        {
-            DataTable m_dt_profileUser = new DataTable();
-
-            m_dt_profileUser = (DataTable)HTepProfiles.GetAllowed(id_tab);
-
-
-            return m_dt_profileUser;
-        }
-
-        /// <summary>
-        /// Метод для получения Profile пользователя
-        /// </summary>
-        /// <param name="id_tab"></param>
-        /// <returns></returns>
-        public static DataTable GetProfileUser_Tab()
-        {
-            DataTable m_dt_profileUser = new DataTable();
-
-            m_dt_profileUser = (DataTable)HTepProfiles.GetAllowed();
-
-            return m_dt_profileUser;
-        }
-
+        
         /// <summary>
         /// Функция получения строки запроса пользователя
         ///  /// <returns>Строка строку запроса</returns>
@@ -701,6 +703,10 @@ namespace TepCommon
 
         public class HTepProfilesXml
         {
+            public static string m_nameTableProfilesUnit = @"profiles_unit";
+
+            protected static DataTable m_tblValues;
+            protected static DataTable m_tblTypes;
             static XmlDocument xml_tree;
 
             public static Dictionary<string, DictElement> DictRoles,
@@ -742,6 +748,7 @@ namespace TepCommon
                 DbSources.Sources().UnRegister(idListener);
 
                 DictRoles = new Dictionary<string, DictElement>();
+                XmlRoles = new Dictionary<string, XmlDocument>();
 
                 for (int i = 0; i < dtUnic.Rows.Count; i++)
                 {
@@ -769,6 +776,7 @@ namespace TepCommon
                 DbSources.Sources().UnRegister(idListener);
 
                 DictUsers = new Dictionary<string, DictElement>();
+                XmlUsers = new Dictionary<string, XmlDocument>();
 
                 for (int i = 0; i < dtUnic.Rows.Count; i++)
                 {
@@ -879,9 +887,25 @@ namespace TepCommon
                 dtProfiles_Edit = dtProfiles_Orig.Copy();
                 getProfileAllRoles(connSet);
                 getProfileAllUsers(connSet);
+                GetTableProfileUnits(connSet);
             }
 
             #region EditXML
+
+            public static void EditAttr(string value, int id_unit, ConnectionSettings connSet)
+            {
+                ParamComponent parComp = new ParamComponent();
+
+                parComp.ID_Unit = id_unit;
+                parComp.Value = value;
+
+                XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
+
+                saveXml(connSet, doc, Id, Type.User);
+
+                getProfileAllRoles(connSet);
+                getProfileAllUsers(connSet);
+            }
 
             public static void AddActivePanel(int idPanel, ConnectionSettings connSet)
             {
@@ -1073,7 +1097,7 @@ namespace TepCommon
 
                     Dictionary<int, UNIT_VALUE> dictRes = new Dictionary<int, UNIT_VALUE>();
 
-                    foreach (DataRow r in HUsers.GetTableProfileUnits.Rows)
+                    foreach (DataRow r in HTepUsers.GetTableProfileUnits.Rows)
                     {
                         id_unit = (int)r[@"ID"];
 
@@ -1155,6 +1179,31 @@ namespace TepCommon
 
                 return doc;
             }
+
+            private static void GetTableProfileUnits(ConnectionSettings connSet)
+            {
+                int err = -1;
+                string query = string.Empty
+                    , errMsg = string.Empty;
+
+                int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
+                DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
+
+                if (!(err == 0))
+                    errMsg = @"нет соединения с БД";
+                else
+                {
+                    query = @"SELECT * from " + m_nameTableProfilesUnit;
+                    m_tblTypes = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
+
+                    if (!(err == 0))
+                        errMsg = @"Ошибка при чтении ТИПов ДАНных настроек для группы(роли) (irole = " + Role + @"), пользователя (iuser=" + Id + @")";
+                    else
+                        ;
+                }
+            }
+
+            public static DataTable GetTableUnits { get { return m_tblTypes; } }
         }
 
 

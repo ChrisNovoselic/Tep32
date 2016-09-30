@@ -13,6 +13,8 @@ using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 using System.Xml;
+using System.Drawing;
+
 
 namespace PluginProject
 {
@@ -23,7 +25,7 @@ namespace PluginProject
         DataGridView_Prop_Text_Check dgvProp = new DataGridView_Prop_Text_Check();
         DataGridView_Prop_Text_Check dgvProp_Context = new DataGridView_Prop_Text_Check();
         DataGridView_Prop_Text_Check dgvProp_Panel = new DataGridView_Prop_Text_Check();
-        TreeView treeProfiles = new TreeView();
+        TreeViewProfile treeProfiles = new TreeViewProfile();
         TableLayoutPanel panel_Prop = new TableLayoutPanel();
         
 
@@ -144,7 +146,7 @@ namespace PluginProject
             m_arr_editTable = new DataTable[(int)ID_Table.Count];
 
             m_context_Unit = new DataTable();
-            m_AllUnits = HUsers.GetTableProfileUnits.Copy(); ;
+            m_AllUnits = HTepUsers.GetTableProfileUnits.Copy(); ;
             m_context_Unit = m_AllUnits.Clone();
             m_panel_Unit = m_AllUnits.Clone();
             foreach (DataRow r in m_AllUnits.Select("ID>" + (int)INDEX_PARSE_UNIT.PANEL + " AND ID<" + (int)INDEX_PARSE_UNIT.CONTEXT))
@@ -169,7 +171,8 @@ namespace PluginProject
             dgvProp.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_CellEndEdit);
             dgvProp_Context.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_Context_CellEndEdit);
             dgvProp_Panel.EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(dgvProp_Panel_CellEndEdit);
-
+            treeProfiles.BeforeLabelEdit += new NodeLabelEditEventHandler(treeView_NodeEdit);
+            treeProfiles.ClickItem += new TreeViewProfile.ClickItemEventHandler(clickItemContext);
         }
 
         public override bool Activate(bool active)
@@ -201,6 +204,8 @@ namespace PluginProject
             //panelProfiles.Dock = DockStyle.Fill;
             treeProfiles.Dock = DockStyle.Fill;
             panel_Prop.Dock = DockStyle.Fill;
+            treeProfiles.HideSelection = false;
+            treeProfiles.LabelEdit = true;
 
             this.Controls.Add(tvUsers, 1, 0);
             this.SetColumnSpan(tvUsers, 4); this.SetRowSpan(tvUsers, 13);
@@ -465,8 +470,77 @@ namespace PluginProject
                 inTreeNode.Text = ((TypeName)(level-1)).ToString() + ' ' + inXmlNode.LocalName.ToString().Remove(0, 1);
             }
         }
-        
 
+        private void treeView_NodeEdit(object sender, NodeLabelEditEventArgs e)
+        {
+
+        }
+
+        private void clickItemContext(object sender, TreeViewProfile.ClickItemEventArgs e)
+        {
+            HTepUsers.HTepProfilesXml.ParamComponent comp = new HTepUsers.HTepProfilesXml.ParamComponent();
+            string tag = e.Node.Tag.ToString();
+            string[] tags = tag.Split(',');
+            Dictionary<string, HTepUsers.DictElement> dict = new Dictionary<string, HTepUsers.DictElement>();
+            if (tags.Length > 1)
+            {
+                if (m_list_id.id_user.Equals(-1) == false)//User
+                {
+                    dict = arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][m_list_id.id_user.ToString()].Objects;
+                }
+
+                if (m_list_id.id_user.Equals(-1) == true & m_list_id.id_role.Equals(-1) == false)//Role
+                {
+                    dict = arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][m_list_id.id_role.ToString()].Objects;
+                }
+
+            }
+
+            switch (e.TypeButt)
+            {
+                case TreeViewProfile.TypeButton.Add:
+
+                    switch ((TypeName)Int16.Parse(tags[0]))
+                    {
+                        case TypeName.Context:
+                            comp.ID_Panel = Int32.Parse(e.Node.Parent.Parent.Tag.ToString().Split(',')[1]);
+                            comp.ID_Item = Int32.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                            comp.Context = tags[1];
+                            break;
+
+                        case TypeName.Item:
+                            comp.ID_Panel = Int32.Parse(e.Node.Parent.Parent.Tag.ToString().Split(',')[1]);
+                            comp.ID_Item = Int32.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                            break;
+
+                        case TypeName.Panel:
+                            comp.ID_Panel = Int32.Parse(tags[1]);
+                            break;
+                    }
+                    break;
+
+                case TreeViewProfile.TypeButton.Delete:
+
+                    switch ((TypeName)Int16.Parse(tags[0]))
+                    {
+                        case TypeName.Context:
+                            comp.ID_Panel = Int32.Parse(e.Node.Parent.Parent.Tag.ToString().Split(',')[1]);
+                            comp.ID_Item = Int32.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                            comp.Context = tags[1];
+                            break;
+
+                        case TypeName.Item:
+                            comp.ID_Panel = Int32.Parse(e.Node.Parent.Parent.Tag.ToString().Split(',')[1]);
+                            comp.ID_Item = Int32.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                            break;
+
+                        case TypeName.Panel:
+                            comp.ID_Panel = Int32.Parse(tags[1]);
+                            break;
+                    }
+                    break;
+            }
+        }
 
         protected void activate_btn(bool active)
         {
@@ -651,6 +725,99 @@ namespace PluginProject
                 }
             }
             return have;
+        }
+
+
+        public class TreeViewProfile : TreeView
+        {
+            public ContextMenuStrip m_contextMenuNode, m_contextMenuTree, m_contextMenuContext;
+            public enum TypeButton : int { Add, Delete };
+            string[] m_arrNameButton = { "Добавить элемент", "Удалить элемент" };
+
+            public TreeViewProfile() : base()
+            {
+                m_contextMenuNode = new ContextMenuStrip();
+                m_contextMenuTree = new ContextMenuStrip();
+                m_contextMenuContext = new ContextMenuStrip();
+
+                m_contextMenuNode.Items.Add(m_arrNameButton[(int)TypeButton.Add]);
+                m_contextMenuNode.Items.Add(m_arrNameButton[(int)TypeButton.Delete]);
+                m_contextMenuTree.Items.Add(m_arrNameButton[(int)TypeButton.Add]);
+                m_contextMenuContext.Items.Add(m_arrNameButton[(int)TypeButton.Delete]);
+
+                this.AfterSelect += new TreeViewEventHandler(selectNode);
+                this.NodeMouseClick += new TreeNodeMouseClickEventHandler(nodeClick);
+                this.ContextMenuStrip = m_contextMenuTree;
+
+                m_contextMenuNode.ItemClicked += new ToolStripItemClickedEventHandler(contextItemClick);
+                m_contextMenuTree.ItemClicked += new ToolStripItemClickedEventHandler(contextItemClick);
+                m_contextMenuContext.ItemClicked += new ToolStripItemClickedEventHandler(contextItemClick);
+            }
+
+            private void selectNode(object sender, TreeViewEventArgs e)
+            {
+                if (e.Node.ContextMenuStrip == null)
+                    if (e.Node.Tag.ToString().Split(',')[0] != ((int)TypeName.Context).ToString() )
+                        e.Node.ContextMenuStrip = m_contextMenuNode;
+                    else
+                        e.Node.ContextMenuStrip = m_contextMenuContext;
+            }
+
+            /// <summary>
+            /// Обработчик события нажатия на элемент в TreeView
+            /// </summary>
+            private void nodeClick(object sender, TreeNodeMouseClickEventArgs e)
+            {
+                if (e.Button == System.Windows.Forms.MouseButtons.Right)
+                {
+                    this.SelectedNode = e.Node;//Выбор компонента при нажатии на него правой кнопкой мыши
+                }
+            }
+
+            private void contextItemClick(object sender, ToolStripItemClickedEventArgs e)
+            {
+                if (e.ClickedItem.Text == m_arrNameButton[(int)TypeButton.Add])
+                {
+                    ClickItem?.Invoke(this, new ClickItemEventArgs(TypeButton.Add, this.SelectedNode));
+                }
+                else
+                    if (e.ClickedItem.Text == m_arrNameButton[(int)TypeButton.Delete])
+                {
+                    ClickItem?.Invoke(this, new ClickItemEventArgs(TypeButton.Delete, this.SelectedNode));
+                }
+            }
+
+            /// <summary>
+            /// Класс для описания аргумента события - изменения компонента
+            /// </summary>
+            public class ClickItemEventArgs : EventArgs
+            {
+                /// <summary>
+                /// Тип действия
+                /// </summary>
+                public TypeButton TypeButt;
+
+                /// <summary>
+                /// Выбранная нода
+                /// </summary>
+                public TreeNode Node;
+
+                public ClickItemEventArgs(TypeButton typeButt, TreeNode node)
+                {
+                    TypeButt = typeButt;
+                    Node = node;
+                }
+            }
+
+            /// <summary>
+            /// Тип делегата для обработки события - изменение компонента
+            /// </summary>
+            public delegate void ClickItemEventHandler(object obj, ClickItemEventArgs e);
+
+            /// <summary>
+            /// Событие - редактирование компонента
+            /// </summary>
+            public event ClickItemEventHandler ClickItem;
         }
 
     }
@@ -855,7 +1022,7 @@ namespace PluginProject
 
                     Dictionary<int, UNIT_VALUE> dictRes = new Dictionary<int, UNIT_VALUE>();
 
-                    foreach (DataRow r in HUsers.GetTableProfileUnits.Rows)
+                    foreach (DataRow r in HTepUsers.GetTableProfileUnits.Rows)
                     {
                         id_unit = (int)r[@"ID"];
 
