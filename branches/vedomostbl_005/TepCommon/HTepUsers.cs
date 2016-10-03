@@ -835,7 +835,14 @@ namespace TepCommon
             {
                 DictElement profileUser = getDictElement(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
 
-                return profileUser.Objects[id_panel.ToString()];
+                DictElement profilePanel = new DictElement();
+
+                if (profileUser.Objects.ContainsKey(id_panel.ToString()) == true)
+                {
+                    profilePanel = profileUser.Objects[id_panel.ToString()];
+                }
+
+                    return profilePanel;
             }
 
             private static DictElement getDictElement(DictElement dictObject_Role, DictElement dictObject_User)
