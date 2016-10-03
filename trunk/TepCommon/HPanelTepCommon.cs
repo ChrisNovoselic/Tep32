@@ -86,9 +86,7 @@ namespace TepCommon
 
             m_id_panel = findMyID();
 
-
             m_dictProfile = new HTepUsers.DictElement();
-            m_dictProfile = HTepUsers.HTepProfilesXml.GetProfileUserPanel(HTepUsers.Id,HTepUsers.Role, m_id_panel);
         }
 
         private void InitializeComponent()
@@ -263,6 +261,10 @@ namespace TepCommon
 
             //m_handlerDb.InitConnectionSettings(((EventArgsDataHost)obj).par[0] as ConnectionSettings);
             m_handlerDb.InitConnectionSettings(obj as ConnectionSettings);
+            
+            HTepUsers.HTepProfilesXml.UpdateProfile(m_handlerDb.ConnectionSettings);
+            m_dictProfile = HTepUsers.HTepProfilesXml.GetProfileUserPanel(HTepUsers.Id, HTepUsers.Role, m_id_panel);
+
         }
         ///// <summary>
         ///// Инициализация с заданными параметрами соединения с БД 
