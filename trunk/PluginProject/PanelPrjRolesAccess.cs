@@ -119,13 +119,14 @@ namespace PluginProject
             INDEX_CONTROL i = INDEX_CONTROL.BUTTON_SAVE;
             for (i = INDEX_CONTROL.BUTTON_SAVE; i < (INDEX_CONTROL.BUTTON_BREAK + 1); i++)
                 addButton(i.ToString(), (int)i, m_arButtonText[(int)i]);
-
+            //TreeView
             ctrl = new TreeView_Users(false);
             ctrl.Name = INDEX_CONTROL.TREE_DICT_ITEM.ToString();
             ctrl.Dock = DockStyle.Fill;
             this.Controls.Add(ctrl, 1, 0);
             this.SetColumnSpan(ctrl, 6); this.SetRowSpan(ctrl, 13);
 
+            //DGV
             ctrl = new DataGridView_Prop_Text_Check();
             ctrl.Name = INDEX_CONTROL.DGV_DICT_PROP.ToString();
             ctrl.Dock = DockStyle.Fill;

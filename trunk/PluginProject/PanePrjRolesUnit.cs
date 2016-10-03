@@ -240,7 +240,7 @@ namespace PluginProject
             User.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
 
-            m_AllUnits = HUsers.GetTableProfileUnits.Copy();
+            m_AllUnits = HTepUsers.GetTableProfileUnits.Copy();
             foreach (DataRow r in m_AllUnits.Select("ID>3"))
             {
                 m_AllUnits.Rows.Remove(r);
@@ -752,7 +752,7 @@ namespace PluginProject
         /// <summary>
         /// Обработчик события окончания изменения ячейки
         /// </summary>
-        protected void cell_EndEdit(object sender, DataGridViewCellEventArgs e)
+        protected virtual void cell_EndEdit(object sender, DataGridViewCellEventArgs e)
         {
             int n_row = -1;
             for (int i = 0; i < this.Rows.Count; i++)
