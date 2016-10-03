@@ -1827,7 +1827,7 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
+            /// Получение суммы по столбцу
             /// </summary>
             /// <param name="indxCol"></param>
             private double sumVal(int indxCol)
@@ -1846,18 +1846,22 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
+            /// Получение среднего по столбцу
             /// </summary>
             /// <param name="indxCol"></param>
             private void avgVal(int indxCol)
             {
-                int idAlg = -1;
+                int idAlg = -1,
+                    cntNum = 0;
                 double _avgValue = 0F
                    , _sumValue = 0F
                     , value;
                 foreach (DataGridViewRow row in Rows)
                     if (double.TryParse(row.Cells[indxCol].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+                    {
                         _sumValue += value;
+                        cntNum++;
+                    }                       
                     else;
             }
         }
