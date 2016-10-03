@@ -3,7 +3,6 @@ using System.IO;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Data;
 using System.Windows.Forms;
 using System.Drawing;
@@ -178,7 +177,7 @@ namespace PluginTaskReaktivka
 
             SuspendLayout();
 
-            this.Controls.Add(PanelManagementReak, 0, posRow);
+            Controls.Add(PanelManagementReak, 0, posRow);
             this.SetColumnSpan(PanelManagementReak, 4);
             this.SetRowSpan(PanelManagementReak, 9);
 
@@ -618,7 +617,6 @@ namespace PluginTaskReaktivka
             m_dgvReak.Rows[dtBegin.Day - 1].Selected = true;
             m_currentOffSet = Session.m_curOffsetUTC;
         }
-
 
         /// <summary>
         /// Установка длительности периода 
@@ -1807,8 +1805,7 @@ namespace PluginTaskReaktivka
                    , idParameter = -1
                    , iQuality = -1
                    , iCol = 0//, iRow = 0
-                   , vsRatioValue = -1
-                   , iRowCount = 0;
+                   , vsRatioValue = -1;
                 double dblVal = -1F,
                     dbSumVal = 0;
                 DataRow[] parameterRows = null;
@@ -1827,7 +1824,6 @@ namespace PluginTaskReaktivka
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
-                                iRowCount++;
                                 idAlg = (int)row.Cells["ALG"].Value;
                                 parameterRows =
                                 source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
@@ -1847,19 +1843,18 @@ namespace PluginTaskReaktivka
                                         dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
                                         row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                            System.Globalization.CultureInfo.InvariantCulture);
+                                            CultureInfo.InvariantCulture);
                                         dbSumVal += dblVal;
                                     }
                                 }
                             }
                             else
                                 row.Cells[iCol].Value = dbSumVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                    System.Globalization.CultureInfo.InvariantCulture);
+                                    CultureInfo.InvariantCulture);
                         }
 
                     iCol++;
                     dbSumVal = 0;
-                    iRowCount = 0;
                 }
             }
 
@@ -1879,12 +1874,12 @@ namespace PluginTaskReaktivka
 
                 foreach (DataGridViewRow row in Rows)
                     if (Rows.Count - 1 != row.Index)
-                        if (double.TryParse(row.Cells[indxCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
+                        if (double.TryParse(row.Cells[indxCol].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
                             sumValue += value;
                         else ;
                     else
                         row.Cells[indxCol].Value = sumValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                    System.Globalization.CultureInfo.InvariantCulture);
+                                    CultureInfo.InvariantCulture);
 
                 formatCell();
             }
@@ -1965,7 +1960,7 @@ namespace PluginTaskReaktivka
                         foreach (DataGridViewRow row in Rows)
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
-                                if (double.TryParse(row.Cells[iCol].Value.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dblVal))
+                                if (double.TryParse(row.Cells[iCol].Value.ToString(), NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dblVal))
                                 {
                                     //dblVal = double.Parse(row.Cells[iCol].Value.ToString(), System.Globalization.CultureInfo.InvariantCulture);
                                     idAlg = (int)row.Cells["ALG"].Value;
@@ -2257,14 +2252,14 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// 
         /// </summary>
-        protected System.Data.DataTable m_TableOrigin
+        protected DataTable m_TableOrigin
         {
             get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
         /// <summary>
         /// 
         /// </summary>
-        protected System.Data.DataTable m_TableEdit
+        protected DataTable m_TableEdit
         {
             get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
@@ -2301,7 +2296,7 @@ namespace PluginTaskReaktivka
                             // отобразить значения
                             m_dgvReak.ShowValues(m_TableOrigin);
                             //
-                            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
+                            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
                         }
                         else
                             deleteSession();

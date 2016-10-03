@@ -45,8 +45,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PanelPrjInParameters.cs" />
-    <Compile Include="PanelPrjOutParameters.cs" />
+    <Compile Include="PanelPrjInParameters.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelPrjOutParameters.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PluginItems.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
