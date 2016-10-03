@@ -35,6 +35,8 @@ namespace TepCommon
         public enum ID_DT_DESC { TABLE, PROP };
         public DataTable[] Descriptions = new DataTable[] { new DataTable(), new DataTable() };
 
+        protected HTepUsers.DictElement m_dictProfile;
+
         public enum ID_TABLE
         {
             MAIN = 1//Главная
@@ -83,6 +85,10 @@ namespace TepCommon
             m_handlerDb = createHandlerDb();
 
             m_id_panel = findMyID();
+
+
+            m_dictProfile = new HTepUsers.DictElement();
+            m_dictProfile = HTepUsers.HTepProfilesXml.GetProfileUserPanel(HTepUsers.Id,HTepUsers.Role, m_id_panel);
         }
 
         private void InitializeComponent()
