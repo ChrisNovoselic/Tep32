@@ -439,14 +439,14 @@ namespace PluginProject
                 TreeNode tNode;
                 tNode = treeProfiles.Nodes[i];
                 tNode.Tag = ((int)((TypeName)level)).ToString() + ',' + nodeChild.Name.Remove(0, 1);
-                AddNode(nodeChild, tNode, level);
+                AddNodeToTree(nodeChild, tNode, level);
                 i++;
             }
 
 
         }
 
-        private void AddNode(XmlNode inXmlNode, TreeNode inTreeNode, int level)
+        private void AddNodeToTree(XmlNode inXmlNode, TreeNode inTreeNode, int level)
         {
             XmlNode xNode;
             TreeNode tNode;
@@ -462,7 +462,7 @@ namespace PluginProject
                     inTreeNode.Nodes.Add(new TreeNode(((TypeName)level).ToString() + ' ' + xNode.Name.Remove(0,1)));
                     tNode = inTreeNode.Nodes[i];
                     tNode.Tag = ((int)((TypeName)level)).ToString() + ',' + xNode.Name.Remove(0, 1);
-                    AddNode(xNode, tNode, level);
+                    AddNodeToTree(xNode, tNode, level);
                 }
             }
             else
