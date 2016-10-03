@@ -1818,10 +1818,10 @@ namespace PluginTaskVedomostBl
                             {
 
                             }
-                            else
-                                if (m_dictPropertyColumns[idAlg].m_Avg > )
-                                ;
-                            else;
+                            else ;
+                            //    if (m_dictPropertyColumns[idAlg].m_Avg > )
+                            //    ;
+                            //else;
                         }
                 }
             }
@@ -2379,8 +2379,8 @@ namespace PluginTaskVedomostBl
             string strItem = string.Empty;
             Array namePut = Enum.GetValues(typeof(INDEX_CONTROL));
             int i = -1,
-                id_comp,
-                idPer = int.Parse(HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.PERIOD_IND + " AND ID_EXT = " + HTepUsers.Role)[0]["VALUE"].ToString());
+                id_comp;
+                //idPer = int.Parse(HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.PERIOD_IND + " AND ID_EXT = " + HTepUsers.Role)[0]["VALUE"].ToString());
             Control ctrl = null;
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
@@ -2469,7 +2469,7 @@ namespace PluginTaskVedomostBl
 
                     (ctrl as ComboBox).SelectedIndex = 2; //??? требуется прочитать из [profile]
                     Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][2]);//??
-                    (PanelManagementVed as PanelManagementVedomost).SetPeriod((ID_PERIOD)idPer);
+                    (PanelManagementVed as PanelManagementVedomost).SetPeriod(ID_PERIOD.MONTH);
                     (ctrl as ComboBox).Enabled = false;
 
                 }

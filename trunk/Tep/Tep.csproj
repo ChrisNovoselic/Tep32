@@ -115,12 +115,6 @@
     <Compile Include="FormParameters.Designer.cs">
       <DependentUpon>FormParameters.cs</DependentUpon>
     </Compile>
-    <Compile Include="HTepTabCtrlEx.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="HTepTabCtrlEx.Designer.cs">
-      <DependentUpon>HTepTabCtrlEx.cs</DependentUpon>
-    </Compile>
     <Compile Include="Plugins.cs">
       <SubType>Form</SubType>
     </Compile>

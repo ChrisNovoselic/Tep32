@@ -41,7 +41,7 @@ namespace Tep64
             this.настройкаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.бДКонфигурацииToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 
-            this.m_TabCtrl = new HTepTabCtrlEx ();
+            this.m_TabCtrl = new HTabCtrlEx ();
 
             this.MainMenuStrip.SuspendLayout();
             this.SuspendLayout();
@@ -169,7 +169,7 @@ namespace Tep64
         private System.Windows.Forms.ToolStripMenuItem настройкаToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem бДКонфигурацииToolStripMenuItem;
 
-        private HTepTabCtrlEx m_TabCtrl;
+        private HTabCtrlEx m_TabCtrl;
     }
 }
 
