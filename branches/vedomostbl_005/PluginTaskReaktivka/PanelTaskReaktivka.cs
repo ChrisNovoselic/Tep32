@@ -55,13 +55,22 @@ namespace PluginTaskReaktivka
         /// </summary>
         protected enum INDEX_TABLE_DICTPRJ : int
         {
-            UNKNOWN = -1
-            , PERIOD, TIMEZONE,
+            UNKNOWN = -1,
+            PERIOD, TIMEZONE,
             COMPONENT,
             //PARAMETER, 
             //, MODE_DEV/*, MEASURE*/,
-            RATIO
-               , COUNT
+            RATIO,
+            COUNT
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        protected enum PROFILE_INDEX
+        {
+            UNKNOW = -1,
+            TIMEZONE = 101,MAIL,PERIOD,
+            RATIO = 201, ROUND,EDIT_COLUMN = 204,
         }
         /// <summary>
         /// Значения параметров сессии
@@ -261,10 +270,10 @@ namespace PluginTaskReaktivka
                     };
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
             //
-            DataRow[] drEdtCol = new DataRow[0];
-            //???? HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.EDIT_COLUMN + " AND ID_EXT = " + HTepUsers.Role);
-            DataRow[] drTZ = new DataRow[0];
-            //???? HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + HTepUsers.Role);
+            //DataRow[] drEdtCol = new DataRow[0];
+            ////??? HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.EDIT_COLUMN + " AND ID_EXT = " + HTepUsers.Role);
+            //DataRow[] drTZ = new DataRow[0];
+            ////??? HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + HTepUsers.Role);
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
                 switch (id)
@@ -333,7 +342,7 @@ namespace PluginTaskReaktivka
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = Convert.ToInt32(drTZ[0]["VALUE"].ToString()); //??? требуется прочитать из [profile]
+                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.TIMEZONE).ToString()]);
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
@@ -342,10 +351,9 @@ namespace PluginTaskReaktivka
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-
-                    (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
-                    Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][1]);//??
-                    (PanelManagementReak as PanelManagementReaktivka).SetPeriod(ID_PERIOD.MONTH);
+                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
+                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));//??
+                    (PanelManagementReak as PanelManagementReaktivka).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
                     (ctrl as ComboBox).Enabled = false;
 
                 }
@@ -420,9 +428,9 @@ namespace PluginTaskReaktivka
                     PanelManagementReak.DateTimeRangeValue_Changed += new PanelManagementReaktivka.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
                 else
                     if (active == false)
-                        PanelManagementReak.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-                    else
-                        throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
+                    PanelManagementReak.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+                else
+                    throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
 
         /// <summary>
@@ -586,17 +594,17 @@ namespace PluginTaskReaktivka
                 {
                     if (m_dgvReak.Rows.Count != DaysInMonth)
                         m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
-                                {
-                                    m_idAlg = id_alg
+                        {
+                            m_idAlg = id_alg
                                     ,
-                                    //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                                    //,
-                                    m_Value = dt.AddDays(i).ToShortDateString()
+                            //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                            //,
+                            m_Value = dt.AddDays(i).ToShortDateString()
                                     ,
-                                    m_vsRatio = ratio
+                            m_vsRatio = ratio
                                     ,
-                                    m_vsRound = round
-                                });
+                            m_vsRound = round
+                        });
                     else
                         m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
                         {
@@ -1783,12 +1791,12 @@ namespace PluginTaskReaktivka
                             // для всех ячеек в столбце
                             Columns[cIndx].Visible = bItemChecked;
                             break;
-                        //case INDEX_ID.DENY_PARAMETER_VISIBLED:
-                        //    // для всех ячеек в строке
-                        //    Rows[indx].Visible = bItemChecked;
-                        //    break;
-                        //default:
-                        //    break;
+                            //case INDEX_ID.DENY_PARAMETER_VISIBLED:
+                            //    // для всех ячеек в строке
+                            //    Rows[indx].Visible = bItemChecked;
+                            //    break;
+                            //default:
+                            //    break;
                     }
                 }
                 else
@@ -1876,7 +1884,7 @@ namespace PluginTaskReaktivka
                     if (Rows.Count - 1 != row.Index)
                         if (double.TryParse(row.Cells[indxCol].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
                             sumValue += value;
-                        else ;
+                        else;
                     else
                         row.Cells[indxCol].Value = sumValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                     CultureInfo.InvariantCulture);
@@ -1925,12 +1933,12 @@ namespace PluginTaskReaktivka
 
                                         quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
 
-                                        dtSourceEdit.Rows.Add(new object[] 
+                                        dtSourceEdit.Rows.Add(new object[]
                                     {
                                         col.m_iIdComp
                                         , idSession
                                         , quality
-                                        , valueToRes                 
+                                        , valueToRes
                                         , dtVal.AddMinutes(-m_currentOffSet).ToString("F",dtSourceEdit.Locale)
                                         , i
                                     });
@@ -2236,13 +2244,13 @@ namespace PluginTaskReaktivka
             if (ev.m_newCheckState == CheckState.Unchecked)
                 if (m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0)
                     m_arListIds[(int)ev.m_indxIdDeny].Add(idItem);
-                else ; //throw new Exception (@"");
+                else; //throw new Exception (@"");
             else
                 if (ev.m_newCheckState == CheckState.Checked)
-                    if (!(m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0))
-                        m_arListIds[(int)ev.m_indxIdDeny].Remove(idItem);
-                    else ; //throw new Exception (@"");
-                else ;
+                if (!(m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0))
+                    m_arListIds[(int)ev.m_indxIdDeny].Remove(idItem);
+                else; //throw new Exception (@"");
+            else;
             //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
             // или в этом же плюгИне измененить/сохраннить индивидуальные настройки
             //Изменить структуру 'DataGridView'          
