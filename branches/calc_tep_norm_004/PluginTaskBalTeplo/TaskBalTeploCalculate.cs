@@ -340,11 +340,11 @@ namespace PluginTaskBalTeplo
             string query = string.Empty;
             if (db_type == INDEX_DBTABLE_NAME.INVALUES)
             {
-                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] from [TEP_NTEC_5].[dbo].[inalg] a left join [TEP_NTEC_5].[dbo].[input] i on a.id=i.ID_ALG inner join inval_def d on d.ID_PUT=i.ID where a.ID_TASK=2 and d.[ID_TIME] = " + (int)idPeriod;
+                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] from [dbo].[inalg] a left join [dbo].[input] i on a.id=i.ID_ALG inner join inval_def d on d.ID_PUT=i.ID where a.ID_TASK=2 and d.[ID_TIME] = " + (int)idPeriod;
             }
             if (db_type == INDEX_DBTABLE_NAME.OUTVALUES)
             {
-                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] from [TEP_NTEC_5].[dbo].[outalg] a left join [TEP_NTEC_5].[dbo].[output] i on a.id=i.ID_ALG inner join inval_def d on d.ID_PUT=i.ID where a.ID_TASK=2 and d.[ID_TIME] = " + (int)idPeriod;
+                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] from [dbo].[outalg] a left join [dbo].[output] i on a.id=i.ID_ALG inner join inval_def d on d.ID_PUT=i.ID where a.ID_TASK=2 and d.[ID_TIME] = " + (int)idPeriod;
             }
             err = -1;
 

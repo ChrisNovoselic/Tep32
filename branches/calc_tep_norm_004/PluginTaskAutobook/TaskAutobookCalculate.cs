@@ -804,7 +804,7 @@ namespace PluginTaskAutobook
             int err = -1;
 
             query = @"SELECT * "
-                + @"FROM [TEP_NTEC_5].[dbo].[profiles] "
+                + @"FROM [dbo].[profiles] "
                 + @"WHERE ID_EXT = " + HTepUsers.Role;
 
             return Select(query, out err);
@@ -1301,7 +1301,7 @@ namespace PluginTaskAutobook
             int err = -1;
 
             query = @"SELECT * "
-                + @"FROM [TEP_NTEC_5].[dbo].[profiles] "
+                + @"FROM [dbo].[profiles] "
                 + @"WHERE ID_EXT = " + HTepUsers.Role;
 
             return Select(query, out err);

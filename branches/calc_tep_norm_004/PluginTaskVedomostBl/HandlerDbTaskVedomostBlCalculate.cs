@@ -330,7 +330,7 @@ namespace PluginTaskVedomostBl
 
             strRes = @"SELECT l.[ID] , l.[ID_COMP], l.[DESCRIPTION] "
             + @"FROM  [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] l "
-            + @"LEFT JOIN [TEP_NTEC_5].[dbo].[comp] c "
+            + @"LEFT JOIN [dbo].[comp] c "
             + @"ON c.ID = l.ID_COMP "
             + @"WHERE c.ID > 500 AND c.ID < 20000";
 
@@ -363,7 +363,7 @@ namespace PluginTaskVedomostBl
             int err = -1;
 
             query = @"SELECT * "
-                + @"FROM [TEP_NTEC_5].[dbo].[profiles] "
+                + @"FROM [dbo].[profiles] "
                 + @"WHERE ID_EXT = " + HTepUsers.Role
                 + @" AND ID_TAB = " + idTab
                 ;

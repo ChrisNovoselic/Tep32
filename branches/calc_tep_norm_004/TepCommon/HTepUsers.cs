@@ -728,7 +728,7 @@ namespace TepCommon
                 int err = 0;
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM [TEP_NTEC_5].[dbo].[profiles_new]";
+                string query = "SELECT * FROM [dbo].[profiles_new]";
                 dt = new DataTable();
                 dt = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 DbSources.Sources().UnRegister(idListener);
@@ -742,7 +742,7 @@ namespace TepCommon
                 int err = 0;
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM [TEP_NTEC_5].[dbo].[profiles_new] where IS_ROLE=1";
+                string query = "SELECT * FROM [dbo].[profiles_new] where IS_ROLE=1";
                 dtUnic = new DataTable();
                 dtUnic = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 DbSources.Sources().UnRegister(idListener);
@@ -770,7 +770,7 @@ namespace TepCommon
                 int err = 0;
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM [TEP_NTEC_5].[dbo].[profiles_new] where IS_ROLE=0";
+                string query = "SELECT * FROM [dbo].[profiles_new] where IS_ROLE=0";
                 dtUnic = new DataTable();
                 dtUnic = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 DbSources.Sources().UnRegister(idListener);
