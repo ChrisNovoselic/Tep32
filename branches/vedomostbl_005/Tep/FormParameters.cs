@@ -291,7 +291,7 @@ namespace Tep64
                 , query = string.Empty;
 
             if (readString(key, valDef).CompareTo(valDef) == 0) {
-                query = @"SELECT MAX([ID]) as ID FROM [TEP_NTEC_5].[dbo].[setup]";
+                query = @"SELECT MAX([ID]) as ID FROM [setup]";
                 DataTable tableId = DbTSQLInterface.Select(ref m_dbConn, query, null, null, out err);
 
                 if ((err == 0) && (tableId.Rows.Count == 1) && (Int32.TryParse(tableId.Rows[0][@"ID"].ToString(), out id) == true)) {
@@ -300,7 +300,7 @@ namespace Tep64
                     id = 1;
                 }
 
-                query = @"INSERT INTO [TEP_NTEC_5].[dbo].[setup] ([ID],[ID_APP],[KEY],[VALUE],[LAST_UPDATE],[ID_UNIT]) VALUES " +
+                query = @"INSERT INTO [setup] ([ID],[ID_APP],[KEY],[VALUE],[LAST_UPDATE],[ID_UNIT]) VALUES " +
                         @"(" + id + @"," + ProgramBase.s_iAppID + @",'" + key + @"','" + val + @"',GETDATE (),9)";
             }
             else

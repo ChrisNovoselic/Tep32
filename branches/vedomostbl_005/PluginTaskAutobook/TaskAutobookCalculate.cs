@@ -804,7 +804,7 @@ namespace PluginTaskAutobook
             int err = -1;
 
             query = @"SELECT * "
-                + @"FROM [TEP_NTEC_5].[dbo].[profiles] "
+                + @"FROM [profiles] "
                 + @"WHERE ID_EXT = " + HTepUsers.Role;
 
             return Select(query, out err);
@@ -1288,23 +1288,6 @@ namespace PluginTaskAutobook
             });
 
             return tableEdit;
-        }
-
-        /// <summary>
-        /// Получение данныз из profiles
-        /// </summary>
-        /// <param name="IdTab">Ид панели</param>
-        /// <returns>таблица данных</returns>
-        public DataTable GetProfilesContext()
-        {
-            string query = string.Empty;
-            int err = -1;
-
-            query = @"SELECT * "
-                + @"FROM [TEP_NTEC_5].[dbo].[profiles] "
-                + @"WHERE ID_EXT = " + HTepUsers.Role;
-
-            return Select(query, out err);
         }
 
         /// <summary>

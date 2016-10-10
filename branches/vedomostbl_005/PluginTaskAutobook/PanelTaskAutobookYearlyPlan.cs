@@ -1,18 +1,10 @@
-﻿using System;
-using System.Globalization;
+﻿using HClassLibrary;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using System.Data;
-using System.Drawing;
-using System.Data.Common;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
-
-using HClassLibrary;
+using System.Linq;
+using System.Windows.Forms;
 using TepCommon;
-using InterfacePlugIn;
 
 namespace PluginTaskAutobook
 {
@@ -23,7 +15,15 @@ namespace PluginTaskAutobook
         /// </summary>
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
-
+        /// <summary>
+        /// 
+        /// </summary>
+        protected enum PROFILE_INDEX
+        {
+            UNKNOW = -1,
+            TIMEZONE = 101, MAIL, PERIOD,
+            RATIO = 201, ROUND, EDIT_COLUMN = 204,
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -806,7 +806,7 @@ namespace PluginTaskAutobook
 
             m_dgvYear = new DGVAutoBook(INDEX_CONTROL.DGV_PLANEYAR.ToString());
             m_dgvYear.Dock = DockStyle.Fill;
-            m_dgvYear.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            m_dgvYear.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             m_dgvYear.AllowUserToResizeRows = false;
             m_dgvYear.AddColumn("Выработка, тыс. кВтч", false, "Output");
 
@@ -815,28 +815,27 @@ namespace PluginTaskAutobook
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
             m_dgvYear.CellEndEdit += dgvYear_CellEndEdit;
             //
-            Label lblyearDGV = new System.Windows.Forms.Label();
+            Label lblyearDGV = new Label();
             lblyearDGV.Dock = DockStyle.Top;
             lblyearDGV.Text = @"Плановая выработка электроэнергии на "
                 + DateTime.Now.Year + " год.";
             lblyearDGV.Name = INDEX_CONTROL.LABEL_YEARPLAN.ToString();
-            Label lblTEC = new System.Windows.Forms.Label();
+            Label lblTEC = new Label();
             lblTEC.Dock = DockStyle.Top;
             lblTEC.Text = @"Новосибирская ТЭЦ-5";
             //
             TableLayoutPanel tlpYear = new TableLayoutPanel();
             tlpYear.Dock = DockStyle.Fill;
             tlpYear.AutoSize = true;
-            tlpYear.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
+            tlpYear.AutoSizeMode = AutoSizeMode.GrowOnly;
             tlpYear.Controls.Add(lblyearDGV, 0, 0);
             tlpYear.Controls.Add(lblTEC, 0, 1);
             tlpYear.Controls.Add(m_dgvYear, 0, 2);
-            this.Controls.Add(tlpYear, 1, posRow);
-            this.SetColumnSpan(tlpYear, 9); this.SetRowSpan(tlpYear, 10);
+            Controls.Add(tlpYear, 1, posRow);
+            SetColumnSpan(tlpYear, 9); SetRowSpan(tlpYear, 10);
             //
-            this.Controls.Add(PanelManagementYear, 0, posRow);
-            this.SetColumnSpan(PanelManagementYear, posColdgvTEPValues);
-            this.SetRowSpan(PanelManagementYear, posRow = posRow + 6);//this.RowCount);
+            Controls.Add(PanelManagementYear, 0, posRow);
+            SetColumnSpan(PanelManagementYear, posColdgvTEPValues); SetRowSpan(PanelManagementYear, posRow = posRow + 6);
 
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4, 10);
 
@@ -855,24 +854,24 @@ namespace PluginTaskAutobook
         /// <summary>
         /// 
         /// </summary>
-        protected System.Data.DataTable m_TableOrigin
+        protected DataTable m_TableOrigin
         {
-            get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
 
-        protected System.Data.DataTable m_TableEdit
+        protected DataTable m_TableEdit
         {
-            get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
 
         /// <summary>
-        /// 
+        /// обработчик события - конец редактирования занчения в ячейке
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         void dgvYear_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                 m_dgvYear.FillTableEdit((int)Session.m_Id);
         }
 
@@ -894,16 +893,13 @@ namespace PluginTaskAutobook
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
             m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
-            int role = (int)HTepUsers.Role;
-
-            DataRow[] drTZ =
-                HandlerDb.GetProfilesContext().Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_TAB = " + findMyID());
+            int role = HTepUsers.Role;
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
                 switch (id)
                 {
                     case INDEX_ID.PERIOD:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
+                        m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH , (int)ID_PERIOD.YEAR};
                         break;
                     case INDEX_ID.TIMEZONE:
                         m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
@@ -947,7 +943,7 @@ namespace PluginTaskAutobook
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = Convert.ToInt32(drTZ[0]["VALUE"].ToString()); //??? требуется прочитать из [profile]
+                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.TIMEZONE).ToString()]);
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
@@ -956,9 +952,9 @@ namespace PluginTaskAutobook
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = 2; //??? требуется прочитать из [profile]
-                    Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][2]);//??
-                    //(PanelManagement as PanelManagementAutobook).SetPeriod(Session.m_currIdPeriod);
+                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
+                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
+                    (PanelManagementYear as PanelManagementAutobook).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
                     (ctrl as ComboBox).Enabled = false;
 
                 }

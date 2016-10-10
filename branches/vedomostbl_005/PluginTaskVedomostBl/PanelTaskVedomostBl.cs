@@ -442,12 +442,12 @@ namespace PluginTaskVedomostBl
                 tlpChk.Dock = DockStyle.Fill;
                 tlpChk.AutoSize = true;
                 tlpChk.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                tlpChk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
-                tlpChk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 75F));
-                tlpChk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
-                tlpChk.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 75F));
-                this.Controls.Add(tlpChk, 0, posRow = posRow + 4);
-                this.SetColumnSpan(tlpChk, 4); this.SetRowSpan(tlpChk, 2);
+                tlpChk.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+                tlpChk.RowStyles.Add(new RowStyle(SizeType.Absolute, 75F));
+                tlpChk.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+                tlpChk.RowStyles.Add(new RowStyle(SizeType.Absolute, 75F));
+                Controls.Add(tlpChk, 0, posRow = posRow + 4);
+                SetColumnSpan(tlpChk, 4); SetRowSpan(tlpChk, 2);
                 //Признак Корректировка_включена/корректировка_отключена 
                 CheckBox cBox = new CheckBox();
                 cBox.Name = INDEX_CONTROL_BASE.CHKBX_EDIT.ToString();
@@ -455,8 +455,8 @@ namespace PluginTaskVedomostBl
                 cBox.Dock = DockStyle.Top;
                 cBox.Enabled = false;
                 cBox.Checked = true;
-                this.Controls.Add(cBox, 0, posRow = posRow + 1);
-                this.SetColumnSpan(cBox, 4); this.SetRowSpan(cBox, 1);
+                Controls.Add(cBox, 0, posRow = posRow + 1);
+                SetColumnSpan(cBox, 4); SetRowSpan(cBox, 1);
 
                 ResumeLayout(false);
                 PerformLayout();
@@ -1419,7 +1419,6 @@ namespace PluginTaskVedomostBl
                         if (bVisible == true)
                         {// только для столбца с [SYMBOL]
                             alignText = DataGridViewContentAlignment.MiddleLeft;
-                            //autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
                         }
                         column.Frozen = true;
                         column.ReadOnly = true;
@@ -1429,7 +1428,6 @@ namespace PluginTaskVedomostBl
                     column.HeaderText = col_prop.hdrText;
                     column.Name = col_prop.nameCol;
                     column.DefaultCellStyle.Alignment = alignText;
-                    //column.AutoSizeMode = autoSzColMode;
                     column.Visible = bVisible;
 
                     if (!(indxCol < 0))
@@ -1810,20 +1808,22 @@ namespace PluginTaskVedomostBl
                 DataRow[] parameterRows = null;
 
                 foreach (HDataGridViewColumn col in Columns)
-                {
                     if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                         foreach (DataGridViewRow row in Rows)
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
+                                //    if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString() ==
+                                //            row.Cells["Date"].Value.ToString())
+                                //    {
 
+                                //    }
+                                //else;
+                                //    if (m_dictPropertyColumns[idAlg].m_Avg > )
+                                //    ;
+                                //else;
                             }
-                            else ;
-                            //    if (m_dictPropertyColumns[idAlg].m_Avg > )
-                            //    ;
-                            //else;
                         }
-                }
             }
 
             /// <summary>
@@ -1861,7 +1861,7 @@ namespace PluginTaskVedomostBl
                     {
                         _sumValue += value;
                         cntNum++;
-                    }                       
+                    }
                     else;
             }
         }
@@ -1920,7 +1920,7 @@ namespace PluginTaskVedomostBl
             {
                 int cntHeader = 0;
                 string[] _arStrHeader;
-                List<string[]> listHeader = new System.Collections.Generic.List<string[]> { };
+                List<string[]> listHeader = new List<string[]> { };
 
                 var enumHeader = (from r in dtPars.AsEnumerable()
                                   orderby r.Field<int>("ID")
@@ -2055,8 +2055,8 @@ namespace PluginTaskVedomostBl
             Session.SetRangeDatetime(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
             m_dict = new Dictionary<int, List<string[]>> { };
 
-            m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponent();
             m_getPicture = new DelgetPictureOfIdComp(getPictureOfIdComp);
@@ -2076,8 +2076,8 @@ namespace PluginTaskVedomostBl
 
             SuspendLayout();
 
-            this.Controls.Add(PanelManagementVed, 0, posRow);
-            this.SetColumnSpan(PanelManagementVed, 4); this.SetRowSpan(PanelManagementVed, 13);
+            Controls.Add(PanelManagementVed, 0, posRow);
+            SetColumnSpan(PanelManagementVed, 4); SetRowSpan(PanelManagementVed, 13);
             //контейнеры для DGV
             PictureBox pictureBox = new PictureBox();
             pictureBox.Name = INDEX_CONTROL.PICTURE_BOXDGV.ToString();
@@ -2089,7 +2089,7 @@ namespace PluginTaskVedomostBl
             (m_paneL as Panel).AutoScroll = true;
             //m_paneL.Controls.Add(pictureBox);
             Controls.Add(m_paneL, 5, posRow);
-            this.SetColumnSpan(m_paneL, 9); this.SetRowSpan(m_paneL, 10);
+            SetColumnSpan(m_paneL, 9); SetRowSpan(m_paneL, 10);
             //
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 
@@ -2168,7 +2168,7 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// Нахожджение активного окна
+        /// Нахожджение активного DGV
         /// </summary>
         /// <returns>активная вьюха</returns>
         private DataGridView getActiveView()
@@ -2203,7 +2203,6 @@ namespace PluginTaskVedomostBl
                 , _drwH = (viewActive.Rows.Count) * viewActive.Rows[0].Height + 70;
 
             viewActive.Size = new Size(_drwW + 2, _drwH);
-            //(Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).AutoScrollMinSize = new Size(_drwW, viewActive.Rows.Count * viewActive.Rows[0].Height);
         }
 
         /// <summary>
@@ -2320,9 +2319,9 @@ namespace PluginTaskVedomostBl
                 ctrl.Name = namePut.GetValue(j).ToString();
                 (ctrl as DGVVedomostBl).m_idCompDGV = int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows[j]["ID"].ToString());
 
-                filingDictHeader(dtComponentId, (ctrl as DGVVedomostBl).m_idCompDGV, j);//
+                filingDictHeader(dtComponentId, (ctrl as DGVVedomostBl).m_idCompDGV);
 
-                Dictionary<string, List<int>> _dictVisualSett = visualSettingsCol((ctrl as DGVVedomostBl).m_idCompDGV);
+                //Dictionary<string, List<int>> _dictVisualSett = visualSettingsCol((ctrl as DGVVedomostBl).m_idCompDGV);
 
                 for (int k = 0; k < m_dict[(ctrl as DGVVedomostBl).m_idCompDGV].Count; k++)
                 {
@@ -2334,9 +2333,9 @@ namespace PluginTaskVedomostBl
                         topHeader = m_dict[(ctrl as DGVVedomostBl).m_idCompDGV][k][(int)DGVVedomostBl.INDEX_HEADER.TOP].ToString(),
                         nameCol = m_dict[(ctrl as DGVVedomostBl).m_idCompDGV][k][(int)DGVVedomostBl.INDEX_HEADER.MIDDLE].ToString(),
                         hdrText = m_dict[(ctrl as DGVVedomostBl).m_idCompDGV][k][(int)DGVVedomostBl.INDEX_HEADER.LOW].ToString(),
-                        m_idAlg = (ctrl as DGVVedomostBl).m_idCompDGV,
-                        m_vsRatio = _dictVisualSett["ratio"][k],
-                        m_vsRound = _dictVisualSett["round"][k],
+                        m_idAlg = idPar,//(ctrl as DGVVedomostBl).m_idCompDGV,
+                        //m_vsRatio = _dictVisualSett["ratio"][k],
+                        //m_vsRound = _dictVisualSett["round"][k],
                         m_Avg = _avg
                     }
                        , true);
@@ -2384,7 +2383,7 @@ namespace PluginTaskVedomostBl
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
             m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
-            int role = (int)HTepUsers.Role;
+            int role = HTepUsers.Role;
 
             INDEX_ID[] arIndxIdToAdd = new INDEX_ID[]
             {
@@ -2428,7 +2427,7 @@ namespace PluginTaskVedomostBl
                 //m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_comp);
                 strItem = "Группа " + (id_comp + 1);
                 // установить признак отображения группы столбцов
-                arChecked[id_comp] = true;//m_arListIds[(int)INDEX_ID.HGRID_VISIBLE].IndexOf(id_comp) > -1;
+                arChecked[id_comp] = true;
                 (PanelManagementVed as PanelManagementVedomost).AddComponent(id_comp
                     , strItem
                     , list
@@ -2456,7 +2455,7 @@ namespace PluginTaskVedomostBl
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = 1;//???? int.Parse(HTepUsers.GetProfileUser_Tab(m_id_panel).Select("ID_UNIT = " + (int)HTepUsers.ID_ALLOWED.QUERY_TIMEZONE + " AND ID_EXT = " + HTepUsers.Role)[0]["VALUE"].ToString());//??? требуется прочитать из [profile]
+                    (ctrl as ComboBox).SelectedIndex = 1;
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
@@ -2521,6 +2520,7 @@ namespace PluginTaskVedomostBl
 
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             Dictionary<string, List<int>> _dictSett = new Dictionary<string, List<int>>();
+
             dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
                , new int[] {
                     m_id_panel
@@ -2573,7 +2573,7 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="dt">табилца парамтеров</param>
         /// <param name="paramBl">параметр(идТГ)</param>
-        protected void filingDictHeader(DataTable dt, int paramBl, int cntDict)
+        protected void filingDictHeader(DataTable dt, int paramBl)
         {
             m_dict.Add(paramBl, m_VedCalculate.CreateDictHeader(dt, paramBl));//cловарь заголовков
         }
