@@ -158,7 +158,7 @@ namespace PluginTaskBalTeplo
                         r[@"ID_SESSION"]
                         , r[@"ID_PUT"]
                         , rowSel[0][@"QUALITY"]
-                        , rowSel[0][@"VALUE"]                        
+                        , rowSel[0][@"VALUE"]
                         , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
                         , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
                     });
@@ -340,11 +340,13 @@ namespace PluginTaskBalTeplo
             string query = string.Empty;
             if (db_type == INDEX_DBTABLE_NAME.INVALUES)
             {
-                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] from [TEP_NTEC_5].[dbo].[inalg] a left join [TEP_NTEC_5].[dbo].[input] i on a.id=i.ID_ALG inner join inval_def d on d.ID_PUT=i.ID where a.ID_TASK=2 and d.[ID_TIME] = " + (int)idPeriod;
+                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] FROM [inalg] a LEFT JOIN [input] i on a.id=i.ID_ALG INNER JOIN inval_def d on d.ID_PUT=i.ID WHERE a.ID_TASK=2 and d.[ID_TIME] = " + (int)idPeriod;
             }
             if (db_type == INDEX_DBTABLE_NAME.OUTVALUES)
             {
-                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] from [TEP_NTEC_5].[dbo].[outalg] a left join [TEP_NTEC_5].[dbo].[output] i on a.id=i.ID_ALG inner join inval_def d on d.ID_PUT=i.ID where a.ID_TASK=2 and d.[ID_TIME] = " + (int)idPeriod;
+                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] "
++ @"FROM [outalg] a LEFT JOIN [output] i on a.id=i.ID_ALG INNER JOIN inval_def d on d.ID_PUT=i.ID "
++ @"WHERE a.ID_TASK = 2 AND d.[ID_TIME] = " + (int)idPeriod;
             }
             err = -1;
 
@@ -357,8 +359,8 @@ namespace PluginTaskBalTeplo
         {
             string strRes = string.Empty;
             DataTable res = new DataTable();
-            string from = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)type] + @"_" + _Session.m_rangeDatetime.Begin.Year.ToString() + _Session.m_rangeDatetime.Begin.Month.ToString(@"00");
-            HClassLibrary.DateTimeRange[] dt_range = GetDateTimeRangeValuesVar();
+            string from = s_NameDbTables[(int)type] + @"_" + _Session.m_rangeDatetime.Begin.Year.ToString() + _Session.m_rangeDatetime.Begin.Month.ToString(@"00");
+            DateTimeRange[] dt_range = GetDateTimeRangeValuesVar();
             strRes = "SELECT * FROM "
                 + from
                 + " WHERE DATE_TIME>='" + dt_range[0].Begin.ToString() + "' AND DATE_TIME<= '" + dt_range[0].End.ToString() + "' AND ID_USER=" + HUsers.Id.ToString();
@@ -478,12 +480,12 @@ namespace PluginTaskBalTeplo
             strErr = string.Empty;
             string strQuery = string.Empty;
 
-            if(m_ViewValues == INDEX_VIEW_VALUES.SOURCE)
+            if (m_ViewValues == INDEX_VIEW_VALUES.SOURCE)
                 CS_Source(idFPanel
                     , cntBasePeriod
                     , tablePars
                     , ref arTableValuesIn
-                    , ref  arTableValuesOut
+                    , ref arTableValuesOut
                     , dtRange, out err
                     , out strErr);
             if (m_ViewValues == INDEX_VIEW_VALUES.ARCHIVE)
@@ -491,7 +493,7 @@ namespace PluginTaskBalTeplo
                     , cntBasePeriod
                     , tablePars
                     , ref arTableValuesIn
-                    , ref  arTableValuesOut
+                    , ref arTableValuesOut
                     , dtRange, out err
                     , out strErr);
         }
@@ -545,7 +547,7 @@ namespace PluginTaskBalTeplo
                     , cntBasePeriod
                     , tablePars
                     , ref arTableValuesIn
-                    , ref  arTableValuesOut
+                    , ref arTableValuesOut
                     , dtRange, out err
                     , out strErr);
             }
@@ -633,21 +635,21 @@ namespace PluginTaskBalTeplo
                 }
                 else
                     if (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count == 0)
+                {
+                    string strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
+                        + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
+                        + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
+                        + @" FROM [dbo].[output] as p"
+                        + @" JOIN [dbo].[outalg] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask
+                        + @" JOIN [dbo].[measure] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
+                    DataTable param = Select(strRes, out err);
+                    foreach (DataRow r in param.Rows)
                     {
-                        string strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
-                            + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
-                            + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
-                            + @" FROM [dbo].[output] as p"
-                            + @" JOIN [dbo].[outalg] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask
-                            + @" JOIN [dbo].[measure] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
-                        DataTable param = Select(strRes, out err);
-                        foreach (DataRow r in param.Rows)
-                        {
-                            arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Add(new object[] { r["ID"], "19", "0", "0", DateTime.Now });
-                        }
-                        insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], out err);
-
+                        arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Add(new object[] { r["ID"], "19", "0", "0", DateTime.Now });
                     }
+                    insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], out err);
+
+                }
                 Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
@@ -734,23 +736,23 @@ namespace PluginTaskBalTeplo
                 int i_col = 0;
                 strQuery += _Session.m_Id + @",";
                 i_col++;
-                
+
                 foreach (string str in col_names)
                 {
                     foreach (DataColumn c in tableInValues.Columns)
                     {
-                        if (c.ColumnName == str & c.ColumnName!="ID_SESSION")
+                        if (c.ColumnName == str & c.ColumnName != "ID_SESSION")
                         {
                             strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], c.DataType) + @",";
                             i_col++;
                         }
-                        
+
                     }
-                    
+
                 }
                 if (col_names.Length - i_col == 1)
                 {
-                    strQuery += "'"+DateTime.Now.ToString() + @"',";
+                    strQuery += "'" + DateTime.Now.ToString() + @"',";
                 }
 
                 // исключить лишнюю запятую
@@ -893,10 +895,10 @@ namespace PluginTaskBalTeplo
                     strQuery += idSession + @"," //ID_SEESION
                       + rowSel[@"ID_PUT"] + @"," //ID_PUT
                       + rowSel[@"QUALITY"] + @"," //QUALITY
-                      + rowSel[@"VALUE"].ToString().Replace(',','.') + @"," + //VALUE
+                      + rowSel[@"VALUE"].ToString().Replace(',', '.') + @"," + //VALUE
                     "'" + rowSel[@"WR_DATETIME"]
                       ;
-                    
+
                     strQuery += @"'),";
 
                     iRowCounterToInsert++;
@@ -1044,14 +1046,14 @@ namespace PluginTaskBalTeplo
         private int getNextIdDB_in(DateTime date)
         {
             int id = -1,
-                err =-1;
+                err = -1;
             string month = string.Empty;
             if (date.Month < 10)
                 month = "0" + date.Month.ToString();
             else
                 month = date.Month.ToString();
             DataTable res = Select("SELECT TOP 1 ID FROM inval_" + date.Year.ToString() + month + " order by ID desc", out err);
-            if(res.Rows.Count==0)
+            if (res.Rows.Count == 0)
             {
                 id = 0;
             }
@@ -1102,7 +1104,7 @@ namespace PluginTaskBalTeplo
                     //{
                     rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
 
-                    tableEdit.Rows.Add(new object[] 
+                    tableEdit.Rows.Add(new object[]
                             {
                                 rowSel
                                 , HUsers.Id.ToString()
@@ -1111,14 +1113,14 @@ namespace PluginTaskBalTeplo
                                 , ID_PERIOD.DAY
                                 , ID_TIMEZONE.NSK
                                 , 1.ToString()
-                                , tableRes.Rows[i]["VALUE"]               
+                                , tableRes.Rows[i]["VALUE"]
                                 , DateTime.Now
                             });
                     //}
                 }
                 //}
             }
-            else ;
+            else;
 
             return tableEdit;
         }
@@ -1144,7 +1146,7 @@ namespace PluginTaskBalTeplo
                 {
                     rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
 
-                    tableEdit.Rows.Add(new object[] 
+                    tableEdit.Rows.Add(new object[]
                             {
                                 rowSel
                                 , HUsers.Id.ToString()
@@ -1153,7 +1155,7 @@ namespace PluginTaskBalTeplo
                                 , ID_PERIOD.DAY
                                 , ID_TIMEZONE.NSK
                                 , 1.ToString()
-                                , tableRes.Rows[i]["VALUE"]            
+                                , tableRes.Rows[i]["VALUE"]
                                 , DateTime.Now
                             });
                 }
@@ -1370,7 +1372,7 @@ namespace PluginTaskBalTeplo
                 }
                 else
                     ; // ошибка при инициализации параметров, значений
-                return new DataTable[] {tableResIn,tableRes};
+                return new DataTable[] { tableResIn, tableRes };
             }
 
             private float calculateOut(string nAlg)
@@ -1392,7 +1394,7 @@ namespace PluginTaskBalTeplo
                                 + 1.432 * Math.Pow(10, -7) * Math.Pow((1 / (In["1.2"][ID_COMP[i]].value / 100 + 0.5)), 3)) * ((50 - In["1.4"][ID_COMP[i]].value * 0.0980665) / 10)
                                 + (3.7 * Math.Pow(10, -8) + 3.588 * Math.Pow(10, -8) * Math.Pow((In["1.2"][ID_COMP[i]].value / 100), 3) - 4.05 * Math.Pow(10, -13) * Math.Pow((In["1.2"][ID_COMP[i]].value / 100), 9)) * Math.Pow(((50 - In["1.4"][ID_COMP[i]].value * 0.0980665) / 10), 2) +
                                 +1.1766 * Math.Pow(10, -13) * Math.Pow((In["1.2"][ID_COMP[i]].value / 100), 12) * Math.Pow(((50 - In["1.4"][ID_COMP[i]].value * 0.0980665) / 10), 4);
-                            
+
                             Out[nAlg][ID_COMP[i]].value = (float)str * 10000;
                             fRes += Out[nAlg][ID_COMP[i]].value;
                             Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
@@ -1405,7 +1407,7 @@ namespace PluginTaskBalTeplo
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
                         {
                             double str = In["1.1"][ID_COMP[i]].value;
-                            
+
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
                             Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes;
@@ -1426,7 +1428,7 @@ namespace PluginTaskBalTeplo
                                 0.008 * Math.Pow((1 / (t / 100 + 0.5)), 5)) * ((50 - p * 0.0980665) / 10) +
                                 (-0.073 + 0.079 * t / 100 + 6.8 * Math.Pow(10, -4) * Math.Pow((t / 100), 6)) * Math.Pow(((50 - p * 0.0980665) / 10), 2) +
                                 3.39 * Math.Pow(10, -8) * Math.Pow((1 / 100), 12) * Math.Pow(((50 - p * 0.0980665) / 10), 4)) / 4.1868;
-                            
+
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
                             Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
@@ -1460,7 +1462,7 @@ namespace PluginTaskBalTeplo
                     case @"1.5": //Тепло по блокам
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
                         {
-                            Out[nAlg][ID_COMP[i]].value = (In["1.1"][ID_COMP[i]].value * (Out["1.3"][ID_COMP[i]].value - In["5.2"][ID_COMP[(int)INDX_COMP.iST]].value))/1000;
+                            Out[nAlg][ID_COMP[i]].value = (In["1.1"][ID_COMP[i]].value * (Out["1.3"][ID_COMP[i]].value - In["5.2"][ID_COMP[(int)INDX_COMP.iST]].value)) / 1000;
                             fRes += Out[nAlg][ID_COMP[i]].value;
                             Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes;
 
@@ -1667,8 +1669,8 @@ namespace PluginTaskBalTeplo
                             Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes;
                         }
                         nAlg = "6.3";
-                            fRes = 0;
-                            goto entpr;
+                        fRes = 0;
+                        goto entpr;
                         break;
                     #endregion
 
@@ -1687,7 +1689,7 @@ namespace PluginTaskBalTeplo
 
                     #region 6.3
                     case @"6.3": //Энтальпия пр
-                entpr:
+                    entpr:
                         for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
                         {
                             double p = In["6.5"][ID_COMP[i]].value;
@@ -1698,15 +1700,15 @@ namespace PluginTaskBalTeplo
                                 0.008 * Math.Pow((1 / (t / 100 + 0.5)), 5)) * ((50 - p * 0.0980665) / 10) +
                                 (-0.073 + 0.079 * t / 100 + 6.8 * Math.Pow(10, -4) * Math.Pow((t / 100), 6)) * Math.Pow(((50 - p * 0.0980665) / 10), 2) +
                                 3.39 * Math.Pow(10, -8) * Math.Pow((1 / 100), 12) * Math.Pow(((50 - p * 0.0980665) / 10), 4)) / 4.1868;
-                            
+
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
                             Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iST - (int)INDX_COMP.iPP1);
 
                         }
                         nAlg = "6.4";
-                            fRes = 0;
-                            goto entob;
+                        fRes = 0;
+                        goto entob;
                         break;
                     #endregion
 
@@ -1769,7 +1771,7 @@ namespace PluginTaskBalTeplo
                         }
                         str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
-                            fRes += In["1.2"][ID_COMP[(int)INDX_COMP.iST]].value;
+                        fRes += In["1.2"][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
                     #endregion
 
@@ -1781,7 +1783,7 @@ namespace PluginTaskBalTeplo
                         }
                         str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
-                            fRes += In["1.3"][ID_COMP[(int)INDX_COMP.iST]].value;
+                        fRes += In["1.3"][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
                     #endregion
 
@@ -1793,7 +1795,7 @@ namespace PluginTaskBalTeplo
                         }
                         str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
-                            fRes += In["1.4"][ID_COMP[(int)INDX_COMP.iST]].value;
+                        fRes += In["1.4"][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
                     #endregion
 
@@ -1805,7 +1807,7 @@ namespace PluginTaskBalTeplo
                         }
                         str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
-                            fRes += In["1.5"][ID_COMP[(int)INDX_COMP.iST]].value;
+                        fRes += In["1.5"][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
                     #endregion
 
@@ -1969,7 +1971,7 @@ namespace PluginTaskBalTeplo
                 tableRes.Columns.AddRange(new DataColumn[] {
                     new DataColumn (@"ID", typeof(int))
                     , new DataColumn (@"QUALITY", typeof(short))
-                    , new DataColumn (@"VALUE", typeof(float))                    
+                    , new DataColumn (@"VALUE", typeof(float))
                 });
 
                 foreach (P_ALG.P_PUT pPut in pAlg.Values)

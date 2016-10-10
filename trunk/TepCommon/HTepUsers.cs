@@ -431,14 +431,13 @@ namespace TepCommon
                 {
                     dictProfile = dictElement.Objects[fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()].Objects;
 
-
                     foreach (string rAlg in dictProfile.Keys)
                     {
                         foreach (string idUnit in dictProfile[rAlg].Attributes.Keys)
                         {
                             ratio = 0;
                             round = 0;
-                            switch ((ID_ALLOWED)Int16.Parse(idUnit))
+                            switch ((ID_ALLOWED)short.Parse(idUnit))
                             {
                                 case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
                                     ratio = int.Parse(dictProfile[rAlg].Attributes[idUnit]);
@@ -460,9 +459,7 @@ namespace TepCommon
 
                         dictRes.Add(rAlg.Trim(), new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
                     }
-
                 }
-
             }
             else
                 ; // невозможно сформировать запрос - недостаточно параметров
@@ -728,7 +725,7 @@ namespace TepCommon
                 int err = 0;
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM [TEP_NTEC_5].[dbo].[profiles_new]";
+                string query = "SELECT * FROM [profiles_new]";
                 dt = new DataTable();
                 dt = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 DbSources.Sources().UnRegister(idListener);
@@ -742,7 +739,7 @@ namespace TepCommon
                 int err = 0;
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM [TEP_NTEC_5].[dbo].[profiles_new] where IS_ROLE=1";
+                string query = "SELECT * FROM [profiles_new] where IS_ROLE=1";
                 dtUnic = new DataTable();
                 dtUnic = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 DbSources.Sources().UnRegister(idListener);
@@ -770,7 +767,7 @@ namespace TepCommon
                 int err = 0;
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM [TEP_NTEC_5].[dbo].[profiles_new] where IS_ROLE=0";
+                string query = "SELECT * FROM [profiles_new] where IS_ROLE=0";
                 dtUnic = new DataTable();
                 dtUnic = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 DbSources.Sources().UnRegister(idListener);
