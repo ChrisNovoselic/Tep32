@@ -624,7 +624,7 @@ namespace PluginTaskAutobook
                       + rowSel[@"ID_PUT"] + @"," //ID_PUT
                       + rowSel[@"QUALITY"] + @"," //QUALITY
                       + rowSel[@"VALUE"] + @"," + //VALUE
-                    "'" + Convert.ToDateTime(rowSel[@"WR_DATETIME"]).ToString(CultureInfo.InvariantCulture) + "',"
+                    "'" + Convert.ToDateTime(rowSel[@"WR_DATETIME"]).ToString() + "',"
                       + rowSel[@"EXTENDED_DEFINITION"]
                       ;
 

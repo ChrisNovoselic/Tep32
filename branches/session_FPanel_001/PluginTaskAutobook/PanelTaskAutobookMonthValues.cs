@@ -1630,6 +1630,48 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static float AsParseToF(string value)
+        {
+            int _indxChar = 0;
+            string _sepReplace = string.Empty;
+            bool bFlag = true;
+            //char[] _separators = { ' ', ',', '.', ':', '\t'};
+            //char[] letters = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).ToArray();
+            float fValue = 0;
+
+            foreach (char item in value.ToCharArray())
+            {
+                if (!char.IsDigit(item))
+                    if (char.IsLetter(item))
+                        value = value.Remove(_indxChar, 1);
+                    else
+                        _sepReplace = value.Substring(_indxChar, 1);
+                else
+                    _indxChar++;
+
+                switch (_sepReplace)
+                {
+                    case ".":
+                    case ",":
+                    case " ":
+                    case ":":
+                        float.TryParse(value.Replace(_sepReplace, "."), NumberStyles.Float, CultureInfo.InvariantCulture, out fValue);
+                        bFlag = false;
+                        break;
+                }
+            }
+
+            if (bFlag)
+                fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+
+            return fValue;
+        }
+
+        /// <summary>
         /// Панель элементов
         /// </summary>
         protected class PanelManagementAutobook : HPanelCommon
