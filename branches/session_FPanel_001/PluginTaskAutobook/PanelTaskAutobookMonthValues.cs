@@ -756,7 +756,8 @@ namespace PluginTaskAutobook
                             if (row.Cells[col.Name].Value.ToString() == string.Empty)
                                 valueCor = 0;
                             else
-                                double.TryParse(row.Cells[col.Name].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCor);
+                                valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
+                                //double.TryParse(row.Cells[col.Name].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCor);
 
                             double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
 
@@ -771,7 +772,8 @@ namespace PluginTaskAutobook
                             if (row.Cells[col.Name].Value.ToString() == string.Empty)
                                 valueCor = 0;
                             else
-                                double.TryParse(row.Cells[col.Name].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCor);
+                                valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
+                            //double.TryParse(row.Cells[col.Name].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCor);
 
                             double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
 
