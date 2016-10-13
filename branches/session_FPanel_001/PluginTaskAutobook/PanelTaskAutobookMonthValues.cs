@@ -514,6 +514,7 @@ namespace PluginTaskAutobook
                 int idAlg = -1
                   , vsRatioValue = -1
                   , corOffset = 0;
+                DataRow[] dr_CorValues, dr_Values = null;
                 Array namePut = Enum.GetValues(typeof(INDEX_GTP));
                 bool bflg = false;
                 double dblVal = -1F;
@@ -530,8 +531,8 @@ namespace PluginTaskAutobook
                     {
                         if (col.Index > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                         {
-                            DataRow[] dr_CorValues = formingValue(tbOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
-                                , row.Cells["DATE"].Value.ToString(), m_currentOffSet, col.m_iIdComp);
+                            dr_CorValues = formingValue(tbOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                               , row.Cells["DATE"].Value.ToString(), m_currentOffSet, col.m_iIdComp);
                             idAlg = (int)row.Cells["ALG"].Value;
 
                             if (dr_CorValues != null)
@@ -547,10 +548,10 @@ namespace PluginTaskAutobook
                             if ((int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION == (int)typeValues)
                                 corOffset = 1;
 
-                            DataRow[] dr_Values = formingValue(tbOrigin[(int)typeValues],
-                                row.Cells["DATE"].Value.ToString()
-                                , (m_currentOffSet * corOffset)
-                                , col.m_iIdComp);
+                            dr_Values = formingValue(tbOrigin[(int)typeValues],
+                               row.Cells["DATE"].Value.ToString()
+                               , (m_currentOffSet * corOffset)
+                               , col.m_iIdComp);
 
                             if (dr_Values != null)
                                 if (dr_Values.Count() > 0)
@@ -572,15 +573,23 @@ namespace PluginTaskAutobook
                                             row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                                 CultureInfo.InvariantCulture);
                                         }
+
+                            //if (dr_CorValues != null)
+                            //    if (dr_CorValues.Count() > 0 &&   dr_Values == null)
+                            //{
+                            //    editCells(row);
+                            //}                        
+
                         }
                     }
-                    editCells(row);
+                    fillCells(row);
                 }
             }
 
             /// <summary>
             ///Корректировка знач.
             /// </summary>
+            /// <param name="pow"></param>
             /// <param name="rowValue">значение</param>
             /// <param name="namecol">имя столбца</param>
             /// <param name="bflg">признак корректировки</param>
@@ -699,42 +708,49 @@ namespace PluginTaskAutobook
                 if (e.Value.ToString() == string.Empty)
                     valueNew = 0;
                 else
-                    double.TryParse(e.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueNew);
+                    valueNew = AsParseToF(e.Value.ToString());
 
-                double.TryParse(Rows[e.RowIndex].Cells[Columns[e.ColumnIndex].Name].Value.ToString(), out valueCor);
+                valueCor = AsParseToF(Rows[e.RowIndex].Cells[Columns[e.ColumnIndex].Name].Value.ToString());
 
                 switch (Columns[e.ColumnIndex].Name)
                 {
                     case "CorGTP12":
+
                         double.TryParse(Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value.ToString(), out valueCell);
 
-                        if (valueNew == 0)
-                            Rows[e.RowIndex].Cells[colName].Value = valueCell - valueCor;
-                        else
-                            Rows[e.RowIndex].Cells[colName].Value = (valueNew - valueCor) + valueCell;
+                        if (valueCell != 0)
+                            if (valueNew == 0)
+                                Rows[e.RowIndex].Cells[colName].Value = valueCell - valueCor;
+                            else
+                                Rows[e.RowIndex].Cells[colName].Value = (valueNew - valueCor) + valueCell;
 
                         double.TryParse(Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value.ToString(), out valueCell);
+
                         break;
                     case "CorGTP36":
                         double.TryParse(Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value.ToString(), out valueCell);
 
-                        if (valueNew == 0)
-                            Rows[e.RowIndex].Cells[colName].Value = valueCell - valueCor;
-                        else
-                            Rows[e.RowIndex].Cells[colName].Value = (valueNew - valueCor) + valueCell;
+                        if (valueCell != 0)
+                            if (valueNew == 0)
+                                Rows[e.RowIndex].Cells[colName].Value = valueCell - valueCor;
+                            else
+                                Rows[e.RowIndex].Cells[colName].Value = (valueNew - valueCor) + valueCell;
 
                         double.TryParse(Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value.ToString(), out valueCell);
                         break;
                 }
 
-                Rows[e.RowIndex].Cells[INDEX_GTP.TEC.ToString()].Value = double.Parse(Rows[e.RowIndex].Cells[colName].Value.ToString())
-                           + valueCell;
+                if (valueCell != 0)
+                {
+                    Rows[e.RowIndex].Cells[INDEX_GTP.TEC.ToString()].Value = AsParseToF(Rows[e.RowIndex].Cells[colName].Value.ToString())
+                               + valueCell;
 
-                for (int i = e.RowIndex; i < Rows.Count; i++)
-                    if (double.TryParse(Rows[e.RowIndex].Cells[INDEX_GTP.TEC.ToString()].Value.ToString(), out value))
-                        fillCells(Rows[i]);
-                    else
-                        break;
+                    for (int i = e.RowIndex; i < Rows.Count; i++)
+                        if (double.TryParse(Rows[e.RowIndex].Cells[INDEX_GTP.TEC.ToString()].Value.ToString(), out value))
+                            fillCells(Rows[i]);
+                        else
+                            break;
+                }
             }
 
             /// <summary>
@@ -757,7 +773,7 @@ namespace PluginTaskAutobook
                                 valueCor = 0;
                             else
                                 valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
-                                //double.TryParse(row.Cells[col.Name].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCor);
+                            //double.TryParse(row.Cells[col.Name].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCor);
 
                             double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
 
@@ -912,7 +928,6 @@ namespace PluginTaskAutobook
             /// <param name="e">переменная с данными события</param>
             /// <returns></returns>
             public DataTable FillTableCorValue(int offset, DataGridViewCellParsingEventArgs e)
-
             {
                 double valueToRes;
                 int idComp = 0
@@ -944,8 +959,8 @@ namespace PluginTaskAutobook
                             if (cols.m_iIdComp == col.m_iIdComp &&
                                 Rows[i].Cells["Date"].Value == Rows[e.RowIndex].Cells["Date"].Value)
                             {
-                                
-                                valueToRes = AsParseToF(e.Value.ToString()) *Math.Pow(10F, 1 * vsRatioValue);
+
+                                valueToRes = AsParseToF(e.Value.ToString()) * Math.Pow(10F, 1 * vsRatioValue);
                                 //double.Parse(e.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture) //
                                 idComp = cols.m_iIdComp;
                             }
@@ -1670,7 +1685,17 @@ namespace PluginTaskAutobook
             }
 
             if (bFlag)
-                fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+                try
+                {
+                    if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out fValue))
+                        fValue = 0;
+                }
+                catch (Exception)
+                {
+                    if (value.ToString() == "")
+                        ;
+                }
+
 
             return fValue;
         }
