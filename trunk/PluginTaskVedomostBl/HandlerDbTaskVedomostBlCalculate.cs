@@ -113,7 +113,8 @@ namespace PluginTaskVedomostBl
         {
             err = -1;
             int cntRow = 1,
-                maxNumAdd = 0;
+                maxNumAdd = 0,
+                maxInsertRow = 0;
             string strQuery = string.Empty
                 , strNameColumn = string.Empty;
             string[] arNameColumns = null;
@@ -144,9 +145,11 @@ namespace PluginTaskVedomostBl
 
                 strQuery += @") VALUES ";
 
+                maxInsertRow = 0;
+
                 while (maxNumAdd < tableInValues.Rows.Count)
                 {
-                    if ((maxNumAdd / 1000) == 0)
+                    if ((maxInsertRow % 1000) > 0 || maxInsertRow == 0)
                     {
                         strQuery += @"(";
 
@@ -157,6 +160,7 @@ namespace PluginTaskVedomostBl
 
                         strQuery += @"),";
                         maxNumAdd++;
+                        maxInsertRow++;
                     }
                     else
                         break;

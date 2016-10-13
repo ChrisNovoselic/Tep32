@@ -1174,7 +1174,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Инициализация компонента
             /// </summary>
-            /// <param name="nameDGV"></param>
+            /// <param name="nameDGV">имя окна отображения данных</param>
             private void InitializeComponents(string nameDGV)
             {
                 Name = nameDGV;
@@ -1349,8 +1349,8 @@ namespace PluginTaskVedomostBl
             /// Добавление колонки
             /// </summary>
             /// <param name="idHeader">номер колонки</param>
-            /// <param name="headerText">текст заголовка</param>
             /// <param name="nameCol">имя колонки</param>
+            /// <param name="headerText">текст заголовка</param>
             /// <param name="bVisible">видимость</param>
             public void AddColumns(int idHeader, string nameCol, string headerText, bool bVisible)
             {
@@ -1380,9 +1380,7 @@ namespace PluginTaskVedomostBl
             /// Добавление колонки
             /// </summary>
             /// <param name="idHeader">номер колонки</param>
-            /// <param name="topHeader">имя общей группы заголовков</param>
-            /// <param name="headerText">текст заголовка</param>
-            /// <param name="nameCol">имя колонки</param>
+            /// <param name="col_prop">Структура для описания добавляемых столбцов</param>
             /// <param name="bVisible">видимость</param>
             public void AddColumns(int idHeader, COLUMN_PROPERTY col_prop, bool bVisible)
             {
@@ -1471,6 +1469,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Добавить строку в таблицу
             /// </summary>
+            /// <param name="rowProp"></param>
             public void AddRow(ROW_PROPERTY rowProp)
             {
                 int i = -1;
@@ -1494,6 +1493,8 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Добавить строку в таблицу
             /// </summary>
+            /// <param name="rowProp"></param>
+            /// <param name="DaysInMonth"></param>
             public void AddRow(ROW_PROPERTY rowProp, int DaysInMonth)
             {
                 int i = -1;
@@ -1560,8 +1561,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Подготовка параметров к рисовке хидера
             /// </summary>
-            /// <param name="picture"></param>
-            /// <param name="panel"></param>
+            /// <param name="dgv">активное окно отображения данных</param>
             public void dgvConfigCol(DataGridView dgv)
             {
                 int cntCol = 0;
@@ -1582,6 +1582,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Формирование списков заголовков
             /// </summary>
+            /// <param name="idTG">номер идТГ</param>
             private void formingTitleLists(int idTG)
             {
                 string _oldItem = string.Empty;
@@ -1627,6 +1628,7 @@ namespace PluginTaskVedomostBl
             /// Формирвоанеи списка отношения 
             /// кол-во верхних заголовков к нижним
             /// </summary>
+            /// <param name="idDgv">номер окна отображения</param>
             private void formRelationsHeading(int idDgv)
             {
                 string _oldItem = string.Empty;
@@ -1794,14 +1796,14 @@ namespace PluginTaskVedomostBl
                 }
             }
 
-            public void ShowValues()
+            public void ShowValues(DataGridView activView, DataTable tableOrigin)
             {
                 DataTable _dtOriginVal = new DataTable();
                 int idAlg = -1
                    , idParameter = -1
                    , iQuality = -1
                    , iCol = 0//, iRow = 0
-                   , vsRatioValue = -1
+                   , _vsRatioValue = -1
                    , iRowCount = 0;
                 double dblVal = -1F,
                     dbSumVal = 0;
@@ -2177,8 +2179,8 @@ namespace PluginTaskVedomostBl
 
             foreach (PictureVedBl item in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
                 if (item.Visible == true)
-                    foreach (var dgv in item.Controls)
-                        cntrl = (dgv as DataGridView);
+                    foreach (DataGridView dgv in item.Controls)
+                        cntrl = dgv;
 
             return (cntrl as DataGridView);
         }
@@ -2217,7 +2219,7 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// Возвращает активный грид
+        /// Возвращает пикчу по номеру
         /// </summary>
         /// <param name="idComp">ид номер грида</param>
         public PictureBox getPictureOfIdComp(int idComp)
@@ -2232,6 +2234,21 @@ namespace PluginTaskVedomostBl
                     (item as PictureBox).Visible = false;
                     (item as PictureBox).Enabled = false;
                 }
+
+            return cntrl;
+        }
+
+        /// <summary>
+        /// Возвращает пикчу по номеру
+        /// </summary>
+        /// <param name="idComp">ид номер грида</param>
+        public DataGridView getDGVOfIdComp(int idComp)
+        {
+            DataGridView cntrl = new DataGridView();
+
+            foreach (DGVVedomostBl item in Controls.Find(INDEX_CONTROL.PICTURE_BOXDGV.ToString(), true)[0].Controls)
+                if (idComp == item.m_idCompDGV)
+                    cntrl = (item as DataGridView);
 
             return cntrl;
         }
@@ -2761,7 +2778,7 @@ namespace PluginTaskVedomostBl
                         // создать копии для возможности сохранения изменений
                         setValues();
                         // отобразить значения
-                        //m_dgvReak.ShowValues(m_TableOrigin);
+                        m_dgvVedomst.ShowValues(getActiveView(), m_TableOrigin);
                         //
                         //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
                     }
