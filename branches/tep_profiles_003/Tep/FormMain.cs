@@ -300,6 +300,8 @@ namespace Tep64
                 iRes = connectionSettings(CONN_SETT_TYPE.MAIN_DB);
             } else {
                 string msg = string.Empty;
+                HTepUsers.HTepProfilesXml.UpdateProfile(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett());
+
                 iRes = Initialize (out msg);
 
                 if (! (iRes == 0)) {

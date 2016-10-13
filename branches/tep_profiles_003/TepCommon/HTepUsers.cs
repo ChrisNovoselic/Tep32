@@ -212,7 +212,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            HTepProfilesXml.UpdateProfile(connSett);
+            //HTepProfilesXml.UpdateProfile(connSett);
             
                 DictElement dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
 
@@ -227,6 +227,7 @@ namespace TepCommon
         }
         public static void SetAllowed(int id, string val, ConnectionSettings connSett)
         {
+            //HTepProfilesXml.UpdateProfile(connSett);
             HTepProfilesXml.EditAttr(val, id, connSett);
         }
         public static bool IsAllowed(int id, ConnectionSettings connSett)
@@ -419,7 +420,7 @@ namespace TepCommon
                 ;
             DataRow[] rowsAlg = null;
 
-            HTepProfilesXml.UpdateProfile(connSett);
+            //HTepProfilesXml.UpdateProfile(connSett);
 
             if (fields.Length == (int)INDEX_VISUALSETTINGS_PARAMS.COUNT)
             {
@@ -944,12 +945,17 @@ namespace TepCommon
 
                 parComp.ID_Unit = id_unit;
                 parComp.Value = value;
+                XmlDocument doc = new XmlDocument();
 
-                XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
+                try
+                {
+                    doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
+                }
+                catch(Exception e)
+                {
 
+                }
                 saveXml(connSet, doc, Id, Type.User);
-
-                UpdateProfile(connSet);
             }
 
             public static void AddActivePanel(int idPanel, ConnectionSettings connSet)
@@ -963,8 +969,6 @@ namespace TepCommon
                 XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
 
                 saveXml(connSet, doc, Id, Type.User);
-
-                UpdateProfile(connSet);
             }
 
             public static void DelActivePanel(int idPanel, ConnectionSettings connSet)
@@ -985,46 +989,52 @@ namespace TepCommon
                 XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
 
                 saveXml(connSet, doc, Id, Type.User);
-
-                UpdateProfile(connSet);
             }
 
             public static XmlDocument EditAttr(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
             {
                 if (doc != null)
-                    switch (comp)
+                {
+                    try
                     {
-                        case Component.Context:
-                            doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                ["_" + parComp.ID_Panel.ToString()]
-                                ["_" + parComp.ID_Item.ToString()]
-                                ["_" + parComp.Context]
-                                .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
-                            break;
-                        case Component.Item:
-                            doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                ["_" + parComp.ID_Panel.ToString()]
-                                ["_" + parComp.ID_Item.ToString()]
-                                .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                        switch (comp)
+                        {
+                            case Component.Context:
+                                doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()]
+                                    ["_" + parComp.ID_Item.ToString()]
+                                    ["_" + parComp.Context]
+                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                break;
+                            case Component.Item:
+                                doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()]
+                                    ["_" + parComp.ID_Item.ToString()]
+                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
 
-                            break;
-                        case Component.Panel:
-                            doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                ["_" + parComp.ID_Panel.ToString()]
-                                .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                break;
+                            case Component.Panel:
+                                doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()]
+                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
 
-                            break;
+                                break;
 
-                        case Component.None:
-                            doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
-                            break;
+                            case Component.None:
+                                doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                break;
+                        }
                     }
-
+                    catch
+                    {
+                        
+                    }
+                }
                 return doc;
                 
             }
@@ -1084,6 +1094,8 @@ namespace TepCommon
                 DbTSQLInterface.RecUpdateInsertDelete(ref dbConn,"profiles_new", "ID_EXT, IS_ROLE", string.Empty,dtProfiles_Orig,dtProfiles_Edit, out err);
                 
                 DbSources.Sources().UnRegister(idListener);
+
+                UpdateProfile(connSet);
             }
 
             public static void SaveXml(ConnectionSettings connSet, Dictionary<string, XmlDocument>[] arrDictOrig, Dictionary<string, XmlDocument>[] arrDictEdit)
