@@ -944,7 +944,9 @@ namespace PluginTaskAutobook
                             if (cols.m_iIdComp == col.m_iIdComp &&
                                 Rows[i].Cells["Date"].Value == Rows[e.RowIndex].Cells["Date"].Value)
                             {
-                                valueToRes = double.Parse(e.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture) * Math.Pow(10F, 1 * vsRatioValue);
+                                
+                                valueToRes = AsParseToF(e.Value.ToString()) *Math.Pow(10F, 1 * vsRatioValue);
+                                //double.Parse(e.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture) //
                                 idComp = cols.m_iIdComp;
                             }
                             else
