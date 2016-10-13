@@ -212,7 +212,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            HTepProfilesXml.UpdateProfile(connSett);
+            //HTepProfilesXml.UpdateProfile(connSett);
             
                 DictElement dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
 
@@ -227,6 +227,7 @@ namespace TepCommon
         }
         public static void SetAllowed(int id, string val, ConnectionSettings connSett)
         {
+            //HTepProfilesXml.UpdateProfile(connSett);
             HTepProfilesXml.EditAttr(val, id, connSett);
         }
         public static bool IsAllowed(int id, ConnectionSettings connSett)
@@ -419,7 +420,7 @@ namespace TepCommon
                 ;
             DataRow[] rowsAlg = null;
 
-            HTepProfilesXml.UpdateProfile(connSett);
+            //HTepProfilesXml.UpdateProfile(connSett);
 
             if (fields.Length == (int)INDEX_VISUALSETTINGS_PARAMS.COUNT)
             {
@@ -644,6 +645,9 @@ namespace TepCommon
             }
         }
 
+        /// <summary>
+        /// Получение словаря с Profile для ролей
+        /// </summary>
         public static Dictionary<string, DictElement> GetDicpRolesProfile
         {
             get
@@ -653,6 +657,9 @@ namespace TepCommon
             }
         }
 
+        /// <summary>
+        /// Получение словаря с Profile для пользователей
+        /// </summary>
         public static Dictionary<string, DictElement> GetDicpUsersProfile
         {
             get
@@ -662,6 +669,9 @@ namespace TepCommon
             }
         }
 
+        /// <summary>
+        /// Получение словаря с XML для ролей
+        /// </summary>
         public static Dictionary<string, XmlDocument> GetDicpXmlRoles
         {
             get
@@ -671,6 +681,9 @@ namespace TepCommon
             }
         }
 
+        /// <summary>
+        /// Получение словаря с XML для пользователей
+        /// </summary>
         public static Dictionary<string, XmlDocument> GetDicpXmlUsers
         {
             get
@@ -719,6 +732,11 @@ namespace TepCommon
 
             #region GetDict
 
+            /// <summary>
+            /// Получить таблицу из БД
+            /// </summary>
+            /// <param name="connSet">Connection Settings</param>
+            /// <returns>Таблица с XML</returns>
             private static DataTable getDataTable(ConnectionSettings connSet)
             {
                 DataTable dt;
@@ -732,60 +750,59 @@ namespace TepCommon
                 return dt;
             }
 
-            private static void getProfileAllRoles(ConnectionSettings connSet)
+            /// <summary>
+            /// Получение словаря с профайлом для ролей
+            /// </summary>
+            /// <param name="connSet">Connection Settings</param>
+            private static void getProfileAllRoles()
             {
-                DataTable dtUnic;
-                
-                int err = 0;
-                int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
-                DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM [profiles_new] where IS_ROLE=1";
-                dtUnic = new DataTable();
-                dtUnic = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
-                DbSources.Sources().UnRegister(idListener);
+                string query = "IS_ROLE=1";
+                DataRow[] dtUnic = dtProfiles_Orig.Select(query);
 
                 DictRoles = new Dictionary<string, DictElement>();
                 XmlRoles = new Dictionary<string, XmlDocument>();
 
-                for (int i = 0; i < dtUnic.Rows.Count; i++)
+                for (int i = 0; i < dtUnic.Length; i++)
                 {
                     Dictionary<string, DictElement> dict = new Dictionary<string, DictElement>();
                     XmlDocument xml = new XmlDocument();
-                    xml.LoadXml(dtUnic.Rows[i]["XML"].ToString());
+                    xml.LoadXml(dtUnic[i]["XML"].ToString());
                     dict = getDictFromXml(xml["Role"]);
 
-                    DictRoles.Add(dtUnic.Rows[i]["ID_EXT"].ToString().Trim(), dict[dtUnic.Rows[i]["ID_EXT"].ToString().Trim()]);
+                    DictRoles.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), dict[dtUnic[i]["ID_EXT"].ToString().Trim()]);
 
-                    XmlRoles.Add(dtUnic.Rows[i]["ID_EXT"].ToString().Trim(), xml);
+                    XmlRoles.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), xml);
                 }
             }
 
-            private static void getProfileAllUsers(ConnectionSettings connSet)
+            /// <summary>
+            /// Получение словаря с профайлом для пользователей
+            /// </summary>
+            /// <param name="connSet">Connection Settings</param>
+            private static void getProfileAllUsers()
             {
-                DataTable dtUnic;
-
-                int err = 0;
-                int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
-                DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM [profiles_new] where IS_ROLE=0";
-                dtUnic = new DataTable();
-                dtUnic = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
-                DbSources.Sources().UnRegister(idListener);
+                string query = "IS_ROLE=0";
+                DataRow[] dtUnic = dtProfiles_Orig.Select(query);
 
                 DictUsers = new Dictionary<string, DictElement>();
                 XmlUsers = new Dictionary<string, XmlDocument>();
 
-                for (int i = 0; i < dtUnic.Rows.Count; i++)
+                for (int i = 0; i < dtUnic.Length; i++)
                 {
                     Dictionary<string, DictElement> dict = new Dictionary<string, DictElement>();
                     XmlDocument xml = new XmlDocument();
-                    xml.LoadXml(dtUnic.Rows[i]["XML"].ToString());
+                    xml.LoadXml(dtUnic[i]["XML"].ToString());
                     dict = getDictFromXml(xml["User"]);
-                    DictUsers.Add(dtUnic.Rows[i]["ID_EXT"].ToString().Trim(), dict[dtUnic.Rows[i]["ID_EXT"].ToString().Trim()]);
-                    XmlUsers.Add(dtUnic.Rows[i]["ID_EXT"].ToString().Trim(), xml);
+                    DictUsers.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), dict[dtUnic[i]["ID_EXT"].ToString().Trim()]);
+                    XmlUsers.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), xml);
                 }
             }
 
+            /// <summary>
+            /// Метод для получения словаря из XML
+            /// </summary>
+            /// <param name="node">Node для разбора</param>
+            /// <returns>Словарь полученный из XML</returns>
             private static Dictionary<string, DictElement> getDictFromXml(XmlNode node)
             {
                 Dictionary<string, DictElement> dict = new Dictionary<string, DictElement>();
@@ -821,6 +838,12 @@ namespace TepCommon
                 return dict;
             }
 
+            /// <summary>
+            /// Получить профайл для конкретного пользователя
+            /// </summary>
+            /// <param name="id_user">ИД пользователя</param>
+            /// <param name="id_role">ИД роли</param>
+            /// <returns></returns>
             public static DictElement GetProfileUser(int id_user, int id_role)
             {
                 DictElement profileUser = getDictElement(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
@@ -828,6 +851,13 @@ namespace TepCommon
                 return profileUser;
             }
 
+            /// <summary>
+            /// Получить профайл для панели конкретного пользователя
+            /// </summary>
+            /// <param name="id_user">ИД пользователя</param>
+            /// <param name="id_role">ИД роли</param>
+            /// <param name="id_panel">ИД панели (вкладки)</param>
+            /// <returns></returns>
             public static DictElement GetProfileUserPanel(int id_user, int id_role, int id_panel)
             {
                 DictElement profileUser = getDictElement(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
@@ -842,6 +872,12 @@ namespace TepCommon
                     return profilePanel;
             }
 
+            /// <summary>
+            /// Метод для объединения профайла пользователя и роли
+            /// </summary>
+            /// <param name="dictObject_Role">Структура с данными роли</param>
+            /// <param name="dictObject_User">Структура с данными пользователя</param>
+            /// <returns>Структура с объединенными данными</returns>
             private static DictElement getDictElement(DictElement dictObject_Role, DictElement dictObject_User)
             {
                 DictElement profileUser = new DictElement();
@@ -879,7 +915,11 @@ namespace TepCommon
             public HTepProfilesXml()
             {
             }
-
+            
+            /// <summary>
+            /// Обновление данных 
+            /// </summary>
+            /// <param name="connSet"></param>
             public static void UpdateProfile(ConnectionSettings connSet)
             {
                 dtProfiles_Orig = new DataTable();
@@ -888,10 +928,10 @@ namespace TepCommon
                 XmlUsers = new Dictionary<string, XmlDocument>();
 
                 dtProfiles_Orig = getDataTable(connSet);
-                dtProfiles_Edit = dtProfiles_Orig.Copy();
-                getProfileAllRoles(connSet);
-                getProfileAllUsers(connSet);
                 GetTableProfileUnits(connSet);
+                dtProfiles_Edit = dtProfiles_Orig.Copy();
+                getProfileAllRoles();
+                getProfileAllUsers();
             }
 
             #region EditXML
@@ -902,13 +942,17 @@ namespace TepCommon
 
                 parComp.ID_Unit = id_unit;
                 parComp.Value = value;
+                XmlDocument doc = new XmlDocument();
 
-                XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
+                try
+                {
+                    doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
+                }
+                catch(Exception e)
+                {
 
+                }
                 saveXml(connSet, doc, Id, Type.User);
-
-                getProfileAllRoles(connSet);
-                getProfileAllUsers(connSet);
             }
 
             public static void AddActivePanel(int idPanel, ConnectionSettings connSet)
@@ -922,9 +966,6 @@ namespace TepCommon
                 XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
 
                 saveXml(connSet, doc, Id, Type.User);
-
-                getProfileAllRoles(connSet);
-                getProfileAllUsers(connSet);
             }
 
             public static void DelActivePanel(int idPanel, ConnectionSettings connSet)
@@ -945,47 +986,52 @@ namespace TepCommon
                 XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
 
                 saveXml(connSet, doc, Id, Type.User);
-
-                getProfileAllRoles(connSet);
-                getProfileAllUsers(connSet);
             }
 
             public static XmlDocument EditAttr(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
             {
                 if (doc != null)
-                    switch (comp)
+                {
+                    try
                     {
-                        case Component.Context:
-                            doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                ["_" + parComp.ID_Panel.ToString()]
-                                ["_" + parComp.ID_Item.ToString()]
-                                ["_" + parComp.Context]
-                                .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
-                            break;
-                        case Component.Item:
-                            doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                ["_" + parComp.ID_Panel.ToString()]
-                                ["_" + parComp.ID_Item.ToString()]
-                                .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                        switch (comp)
+                        {
+                            case Component.Context:
+                                doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()]
+                                    ["_" + parComp.ID_Item.ToString()]
+                                    ["_" + parComp.Context]
+                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                break;
+                            case Component.Item:
+                                doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()]
+                                    ["_" + parComp.ID_Item.ToString()]
+                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
 
-                            break;
-                        case Component.Panel:
-                            doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                ["_" + parComp.ID_Panel.ToString()]
-                                .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                break;
+                            case Component.Panel:
+                                doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()]
+                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
 
-                            break;
+                                break;
 
-                        case Component.None:
-                            doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
-                            break;
+                            case Component.None:
+                                doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                break;
+                        }
                     }
-
+                    catch
+                    {
+                        
+                    }
+                }
                 return doc;
                 
             }
@@ -997,7 +1043,7 @@ namespace TepCommon
                     switch (comp)
                     {
                         case Component.Context:
-                            newElement = doc.CreateElement(parComp.Context);
+                            newElement = doc.CreateElement("_"+parComp.Context);
 
                             doc[type.ToString()]
                                 ["_" + id.ToString()]
@@ -1005,20 +1051,20 @@ namespace TepCommon
                                 ["_" + parComp.ID_Item.ToString()].AppendChild(newElement);
                             break;
                         case Component.Item:
-                            newElement = doc.CreateElement(parComp.ID_Item.ToString());
+                            newElement = doc.CreateElement("_" + parComp.ID_Item.ToString());
                             doc[type.ToString()]
                                 ["_" + id.ToString()]
                                 ["_" + parComp.ID_Panel.ToString()].AppendChild(newElement);
 
                             break;
                         case Component.Panel:
-                            newElement = doc.CreateElement(parComp.ID_Panel.ToString());
+                            newElement = doc.CreateElement("_" + parComp.ID_Panel.ToString());
                             doc[type.ToString()]
                                 ["_" + id.ToString()].AppendChild(newElement);
                             break;
 
                         case Component.None:
-                            newElement = doc.CreateElement(id.ToString());
+                            newElement = doc.CreateElement("_" + id.ToString());
                             doc[type.ToString()].AppendChild(newElement);
                             break;
                     }
@@ -1045,6 +1091,8 @@ namespace TepCommon
                 DbTSQLInterface.RecUpdateInsertDelete(ref dbConn,"profiles_new", "ID_EXT, IS_ROLE", string.Empty,dtProfiles_Orig,dtProfiles_Edit, out err);
                 
                 DbSources.Sources().UnRegister(idListener);
+
+                UpdateProfile(connSet);
             }
 
             public static void SaveXml(ConnectionSettings connSet, Dictionary<string, XmlDocument>[] arrDictOrig, Dictionary<string, XmlDocument>[] arrDictEdit)
@@ -1159,14 +1207,44 @@ namespace TepCommon
                 return objRes;
             }
 
-
+            /// <summary>
+            /// Структура с параметрами изменяемого(выбранного) элемента
+            /// </summary>
             public struct ParamComponent
             {
-                public int ID_Panel, ID_Item, ID_Unit;
-                public string Context, Value;
+                /// <summary>
+                /// ИД панели(вкладки)
+                /// </summary>
+                public int ID_Panel;
+
+                /// <summary>
+                /// ИД объекта на вкладке
+                /// </summary>
+                public int ID_Item;
+                
+                /// <summary>
+                /// ИД параметра
+                /// </summary>
+                public int ID_Unit;
+
+                /// <summary>
+                /// Имя объекта вложенного в объект
+                /// </summary>
+                public string Context;
+                
+                /// <summary>
+                /// Значение параметра ID_Unit
+                /// </summary>
+                public string Value;
             }
             #endregion
 
+            /// <summary>
+            /// Получение XML для объекта
+            /// </summary>
+            /// <param name="Type_Xml">Тип объекта</param>
+            /// <param name="Id">ИД</param>
+            /// <returns>XML документ</returns>
             public XmlDocument GetXml(Type Type_Xml, int Id)
             {
                 XmlDocument doc = new XmlDocument();
@@ -1184,6 +1262,10 @@ namespace TepCommon
                 return doc;
             }
 
+            /// <summary>
+            /// Метод для получения таблицы со списком параметров
+            /// </summary>
+            /// <param name="connSet">ConnectionSettings</param>
             private static void GetTableProfileUnits(ConnectionSettings connSet)
             {
                 int err = -1;
@@ -1207,14 +1289,25 @@ namespace TepCommon
                 }
             }
 
+            /// <summary>
+            /// Список параметров
+            /// </summary>
             public static DataTable GetTableUnits { get { return m_tblTypes; } }
         }
 
-
+        /// <summary>
+        /// Структура содержащая в себе атрибуты выбранного объекта и словарь с вложенными в него элементами
+        /// </summary>
         public struct DictElement
         {
+            /// <summary>
+            /// Словарь с вложенными объектами
+            /// </summary>
             public Dictionary<string, DictElement> Objects;
 
+            /// <summary>
+            /// Словарь с атрибутами объекта
+            /// </summary>
             public Dictionary<string, string> Attributes;
         }
     }
