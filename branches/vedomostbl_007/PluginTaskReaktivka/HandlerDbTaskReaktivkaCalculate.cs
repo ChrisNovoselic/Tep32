@@ -1,24 +1,27 @@
 ﻿using System;
 using System.Globalization;
-//using System.Collections.Generic;
-using System.Linq;
-//using System.Text;
 using System.Data;
 
 using HClassLibrary;
-using InterfacePlugIn;
 using TepCommon;
 
 
 namespace PluginTaskReaktivka
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class HandlerDbTaskReaktivkaCalculate : HandlerDbTaskCalculate
     {
         protected override void createTaskCalculate()
         {
             base.createTaskCalculate();
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="err"></param>
         protected override void calculate(TaskCalculate.TYPE type, out int err)
         {
             err = 0;
@@ -58,10 +61,9 @@ namespace PluginTaskReaktivka
             return s_NameDbTables[(int)indx];
         }
 
-
         /// <summary>
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
-        ///  , структура таблицы совместима с [inval], [outval]
+        /// , структура таблицы совместима с [inval], [outval]
         /// </summary>
         /// <param name="type">тип задачи</param>
         /// <param name="idPeriod">период</param>
@@ -131,7 +133,6 @@ namespace PluginTaskReaktivka
 
             return strRes;
         }
-
 
         /// <summary>
         ///  Создать новую сессию для расчета
@@ -327,7 +328,7 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// 
+        /// Сохранение значений в БД
         /// </summary>
         /// <param name="tableOrigin">первоначальная таблица</param>
         /// <param name="tableRes">измененная таблица</param>

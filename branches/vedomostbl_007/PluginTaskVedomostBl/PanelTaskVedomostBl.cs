@@ -24,9 +24,16 @@ namespace PluginTaskVedomostBl
         /// <returns>грид</returns>
         public delegate PictureBox DelgetPictureOfIdComp(int id);
         /// <summary>
+        /// Делегат 
+        /// </summary>
+        /// <param name="id">ид грида</param>
+        /// <returns>грид</returns>
+        public delegate DataGridView DelgetDataGridViewOfIdComp();
+        /// <summary>
         /// экземпляр делегата
         /// </summary>
         static public DelgetPictureOfIdComp m_getPicture;
+        static public DelgetDataGridViewOfIdComp m_getDGV;
         /// <summary>
         /// флаг очистки отображения
         /// </summary>
@@ -1809,17 +1816,22 @@ namespace PluginTaskVedomostBl
                     dbSumVal = 0;
                 DataRow[] parameterRows = null;
 
+                string query = "ID_COMP = " + (m_getDGV() as DGVVedomostBl).m_idCompDGV;
+                parameterRows = tableOrigin.Select(string.Format(tableOrigin.Locale, query));
+
                 foreach (HDataGridViewColumn col in Columns)
                     if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                         foreach (DataGridViewRow row in Rows)
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
-                                //    if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString() ==
-                                //            row.Cells["Date"].Value.ToString())
-                                //    {
+                                
 
-                                //    }
+                                if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes().ToShortDateString() ==
+                                        row.Cells["Date"].Value.ToString())
+                                {
+
+                                }
                                 //else;
                                 //    if (m_dictPropertyColumns[idAlg].m_Avg > )
                                 //    ;
@@ -2061,7 +2073,8 @@ namespace PluginTaskVedomostBl
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponent();
-            m_getPicture = new DelgetPictureOfIdComp(getPictureOfIdComp);
+            m_getPicture = new DelgetPictureOfIdComp(GetPictureOfIdComp);
+            m_getDGV = new DelgetDataGridViewOfIdComp(GetDGVOfIdComp);
         }
 
         /// <summary>
@@ -2222,7 +2235,7 @@ namespace PluginTaskVedomostBl
         /// Возвращает пикчу по номеру
         /// </summary>
         /// <param name="idComp">ид номер грида</param>
-        public PictureBox getPictureOfIdComp(int idComp)
+        public PictureBox GetPictureOfIdComp(int idComp)
         {
             PictureBox cntrl = new PictureBox();
 
@@ -2239,24 +2252,25 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// Возвращает пикчу по номеру
+        /// Возвращает  по номеру
         /// </summary>
         /// <param name="idComp">ид номер грида</param>
-        public DataGridView getDGVOfIdComp(int idComp)
+        public DataGridView GetDGVOfIdComp()
         {
             DataGridView cntrl = new DataGridView();
 
             foreach (DGVVedomostBl item in Controls.Find(INDEX_CONTROL.PICTURE_BOXDGV.ToString(), true)[0].Controls)
-                if (idComp == item.m_idCompDGV)
+                if (item.Visible == true)
+                    //(idComp == item.m_idCompDGV)
                     cntrl = (item as DataGridView);
 
             return cntrl;
         }
 
         /// <summary>
-        /// 
+        /// Настройка размеров формы отображения данных
         /// </summary>
-        /// <param name="dgv"></param>
+        /// <param name="dgv">активное окно отображения данных</param>
         public void SizeDgv(object dgv)
         {
             (dgv as DGVVedomostBl).dgvConfigCol(dgv as DataGridView);

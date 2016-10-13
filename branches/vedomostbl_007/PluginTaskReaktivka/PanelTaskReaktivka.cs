@@ -1836,7 +1836,7 @@ namespace PluginTaskReaktivka
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
                                 idAlg = (int)row.Cells["ALG"].Value;
-                                parameterRows = source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
+                                parameterRows = source.Select(string.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
 
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
@@ -1928,7 +1928,7 @@ namespace PluginTaskReaktivka
                                     if (row.Cells[col.Index].Value.ToString() != "")
                                     {
                                         idAlg = (int)row.Cells["ALG"].Value;
-                                        valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
+                                        valueToRes = //Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
                                         vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
 
                                         valueToRes *= Math.Pow(10F, vsRatioValue);
