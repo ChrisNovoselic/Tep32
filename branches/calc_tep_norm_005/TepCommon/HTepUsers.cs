@@ -64,7 +64,7 @@ namespace TepCommon
         /// </summary>
         public static int Role
         {
-            get { return (int)(m_DataRegistration[(int)INDEX_REGISTRATION.ROLE] == null ? -1 : m_DataRegistration[(int)INDEX_REGISTRATION.ROLE]); }
+            get { return (int)(s_DataRegistration[(int)INDEX_REGISTRATION.ROLE] == null ? -1 : s_DataRegistration[(int)INDEX_REGISTRATION.ROLE]); }
         }
         /// <summary>
         /// Получить строку с идентификаторами плюгинов, разрешенных к использованию для пользователя
@@ -214,11 +214,12 @@ namespace TepCommon
 
             //HTepProfilesXml.UpdateProfile(connSett);
             
-                DictElement dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
+            DictElement dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
 
             Dictionary<string, string> dictAttr = dictElement.Attributes;
 
-            if (dictAttr.ContainsKey(id.ToString()) == true)
+            if ((!(dictAttr == null))
+                && (dictAttr.ContainsKey(id.ToString()) == true))
             {
                 strRes = dictAttr[id.ToString()];
             }
@@ -843,10 +844,22 @@ namespace TepCommon
             /// </summary>
             /// <param name="id_user">ИД пользователя</param>
             /// <param name="id_role">ИД роли</param>
-            /// <returns></returns>
+            /// <returns>Элемент словаря со значенями параметров настроек</returns>
             public static DictElement GetProfileUser(int id_user, int id_role)
             {
-                DictElement profileUser = getDictElement(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
+                DictElement profileUser = new DictElement();
+
+                if ((!(DictRoles == null))
+                    && (!(DictUsers == null)))
+                    if ((DictRoles.Keys.Contains (id_role.ToString()) == true)
+                        && (DictUsers.Keys.Contains (id_user.ToString()) == true))
+                        profileUser = getDictElement(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
+                    else {
+                        Logging.Logg().Error(string.Format(@"HTepUsers.HTepProfilesXML::GetProfileUser () - один из словарей 'DictRoles', 'DictUsers' не содержат ключей [0{}, {1}]...", id_user, id_role), Logging.INDEX_MESSAGE.NOT_SET);
+                    }
+                else {
+                    Logging.Logg().Error(@"HTepUsers.HTepProfilesXML::GetProfileUser () - один из словарей 'DictRoles', 'DictUsers' = NULL...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
 
                 return profileUser;
             }
