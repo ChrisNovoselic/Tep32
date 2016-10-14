@@ -61,7 +61,7 @@ namespace TepCommon
         /// </summary>
         public static int Role
         {
-            get { return (int)(m_DataRegistration[(int)INDEX_REGISTRATION.ROLE] == null ? -1 : m_DataRegistration[(int)INDEX_REGISTRATION.ROLE]); }
+            get { return (int)(s_DataRegistration[(int)INDEX_REGISTRATION.ROLE] == null ? -1 : s_DataRegistration[(int)INDEX_REGISTRATION.ROLE]); }
         }
         /// <summary>
         /// Получить строку с идентификаторами плюгинов, разрешенных к использованию для пользователя
