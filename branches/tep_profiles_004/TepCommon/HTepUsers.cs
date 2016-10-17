@@ -29,11 +29,11 @@ namespace TepCommon
             , AUTO_LOADSAVE_USERPROFILE_ACCESS = 1 //Разрешение изменять свойство "Автоматическая загрузка/сохранение ..."
             , AUTO_LOADSAVE_USERPROFILE_CHECKED //Автоматическая загрузка/сохранение списка идентификаторов вкладок, загружаемых автоматически
             , USERPROFILE_PLUGINS //Список вкладок, загружаемых автоматически
-            
+
             , QUERY_TIMEZONE = 101 //Идентификатор часового пояса при запросе значений
             , ADRESS_MAIL_AUTOBOOK //Адрес_эп_Активной_ээ 
             , PERIOD_IND //Период_идентификатор  
-             
+
 
             , VISUAL_SETTING_VALUE_ROUND = 201 //Отображение значений, количество знаков после запятой
             , VISUAL_SETTING_VALUE_RATIO //Отображение значений, множитель относительно базовой единицы измерения
@@ -194,7 +194,7 @@ namespace TepCommon
                     //Прочитать наименования плюгинов
                     tableRes = DbTSQLInterface.Select(ref dbConn
                         ,
-                        //@"SELECT * FROM plugins WHERE ID IN ("
+                            //@"SELECT * FROM plugins WHERE ID IN ("
                             @"SELECT p.[ID] as [ID_PLUGIN], p.[NAME] as [NAME_PLUGIN] FROM plugins as p WHERE [ID] IN (SELECT [ID_PLUGIN] FROM [fpanels] WHERE [ID] IN ("
                                  + strIdFPanels + @")" + @")"
                         , null, null, out iRes);
@@ -213,8 +213,8 @@ namespace TepCommon
             string strRes = string.Empty;
 
             //HTepProfilesXml.UpdateProfile(connSett);
-            
-                DictElement dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
+
+            DictElement dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
 
             Dictionary<string, string> dictAttr = dictElement.Attributes;
 
@@ -235,7 +235,7 @@ namespace TepCommon
             return bool.Parse(GetAllowed(id, connSett));
         }
 
-        public static DataTable GetTableProfileUnits { get { return HTepProfilesXml.GetTableUnits; } }
+        new public static DataTable GetTableProfileUnits { get { return HTepProfilesXml.GetTableUnits; } }
 
 
         public struct VISUAL_SETTING
@@ -509,8 +509,8 @@ namespace TepCommon
                                 ;
                         }
                         break;
-                    //default: //Ошибка - исключение
-                    //    throw new Exception(@"HUsers.HProfiles::GetAllowed (id=" + id_tab + @") - не найдено ни одной записи...");
+                        //default: //Ошибка - исключение
+                        //    throw new Exception(@"HUsers.HProfiles::GetAllowed (id=" + id_tab + @") - не найдено ни одной записи...");
                 }
 
                 // проверка не нужна, т.к. вызывается исключение
@@ -573,7 +573,7 @@ namespace TepCommon
                 return objRes;
             }
         }
-        
+
         /// <summary>
         /// Функция получения строки запроса пользователя
         ///  /// <returns>Строка строку запроса</returns>
@@ -602,7 +602,7 @@ namespace TepCommon
         /// </summary>
         new public static void GetUsers(ref DbConnection conn, string where, string orderby, out DataTable users, out int err)
         {
-            
+
             err = 0;
             users = null;
 
@@ -869,7 +869,7 @@ namespace TepCommon
                     profilePanel = profileUser.Objects[id_panel.ToString()];
                 }
 
-                    return profilePanel;
+                return profilePanel;
             }
 
             /// <summary>
@@ -909,13 +909,13 @@ namespace TepCommon
 
                 return profileUser;
             }
-            
+
             #endregion
 
             public HTepProfilesXml()
             {
             }
-            
+
             /// <summary>
             /// Обновление данных 
             /// </summary>
@@ -948,11 +948,11 @@ namespace TepCommon
                 {
                     doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
 
                 }
-                saveXml(connSet, doc, Id, Type.User);
+                SaveXml(connSet, doc, Id, Type.User);
             }
 
             public static void AddActivePanel(int idPanel, ConnectionSettings connSet)
@@ -965,7 +965,7 @@ namespace TepCommon
 
                 XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
 
-                saveXml(connSet, doc, Id, Type.User);
+                SaveXml(connSet, doc, Id, Type.User);
             }
 
             public static void DelActivePanel(int idPanel, ConnectionSettings connSet)
@@ -985,11 +985,13 @@ namespace TepCommon
                 parComp.Value = string.Join(",", add_pan);
                 XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
 
-                saveXml(connSet, doc, Id, Type.User);
+                SaveXml(connSet, doc, Id, Type.User);
             }
 
             public static XmlDocument EditAttr(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
             {
+                XmlAttribute edit_attr = null;
+                XmlNode edit_node = null;
                 if (doc != null)
                 {
                     try
@@ -997,43 +999,113 @@ namespace TepCommon
                         switch (comp)
                         {
                             case Component.Context:
-                                doc[type.ToString()]
+
+                                foreach (XmlAttribute attr in doc[type.ToString()]
                                     ["_" + id.ToString()]
                                     ["_" + parComp.ID_Panel.ToString()]
                                     ["_" + parComp.ID_Item.ToString()]
                                     ["_" + parComp.Context]
-                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
-                                break;
-                            case Component.Item:
-                                doc[type.ToString()]
+                                    .Attributes)
+                                {
+                                    if (attr.LocalName == "_" + parComp.ID_Unit.ToString())
+                                    {
+                                        edit_attr = attr;
+                                        break;
+                                    }
+                                }
+
+                                edit_node = doc[type.ToString()]
                                     ["_" + id.ToString()]
                                     ["_" + parComp.ID_Panel.ToString()]
                                     ["_" + parComp.ID_Item.ToString()]
-                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                    ["_" + parComp.Context];
+
+                                
+                                break;
+                            case Component.Item:
+                                
+                                foreach (XmlAttribute attr in doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()]
+                                    ["_" + parComp.ID_Item.ToString()]
+                                    .Attributes)
+                                {
+                                    if (attr.LocalName == "_" + parComp.ID_Unit.ToString())
+                                    {
+                                        edit_attr = attr;
+                                        break;
+                                    }
+                                }
+                                edit_node = doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()]
+                                    ["_" + parComp.ID_Item.ToString()];
+
 
                                 break;
                             case Component.Panel:
-                                doc[type.ToString()]
+
+                                foreach (XmlAttribute attr in doc[type.ToString()]
                                     ["_" + id.ToString()]
                                     ["_" + parComp.ID_Panel.ToString()]
-                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                    .Attributes)
+                                {
+                                    if (attr.LocalName == "_" + parComp.ID_Unit.ToString())
+                                    {
+                                        edit_attr = attr;
+                                        break;
+                                    }
+                                }
+
+                                edit_node = doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()];
 
                                 break;
 
                             case Component.None:
-                                doc[type.ToString()]
+
+                                foreach (XmlAttribute attr in doc[type.ToString()]
                                     ["_" + id.ToString()]
-                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                    .Attributes)
+                                {
+                                    if (attr.LocalName == "_" + parComp.ID_Unit.ToString())
+                                    {
+                                        edit_attr = attr;
+                                        break;
+                                    }
+                                }
+
+                                edit_node = doc[type.ToString()]
+                                    ["_" + id.ToString()];
+
                                 break;
                         }
+
+                        if (edit_attr != null)
+                        {
+                            if (parComp.Value != string.Empty & parComp.Value!=null)
+                                edit_attr.Value = parComp.Value;
+                            else
+                            {
+                                edit_node.Attributes.Remove(edit_attr);
+                            }
+                        }
+                        else
+                        {
+                            XmlAttribute new_attr = doc.CreateAttribute("_" + parComp.ID_Unit.ToString());
+                            new_attr.Value = parComp.Value;
+                            edit_node
+                            .Attributes.Append(new_attr);
+                        }
                     }
-                    catch
+                    catch (Exception e)
                     {
-                        
+
                     }
                 }
                 return doc;
-                
+
             }
 
             public static XmlDocument AddElement(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
@@ -1043,7 +1115,7 @@ namespace TepCommon
                     switch (comp)
                     {
                         case Component.Context:
-                            newElement = doc.CreateElement("_"+parComp.Context);
+                            newElement = doc.CreateElement("_" + parComp.Context);
 
                             doc[type.ToString()]
                                 ["_" + id.ToString()]
@@ -1072,7 +1144,45 @@ namespace TepCommon
                 return doc;
             }
 
-            private static void saveXml(ConnectionSettings connSet, XmlDocument doc, int id, Type type)
+            public static XmlDocument DelElement(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
+            {
+                if (doc != null)
+                    switch (comp)
+                    {
+                        case Component.Context:
+                            doc[type.ToString()]
+                                ["_" + id.ToString()]
+                                ["_" + parComp.ID_Panel.ToString()]
+                                ["_" + parComp.ID_Item.ToString()].RemoveChild(doc[type.ToString()]
+                                ["_" + id.ToString()]
+                                ["_" + parComp.ID_Panel.ToString()]
+                                ["_" + parComp.ID_Item.ToString()]["_" + parComp.Context]);
+                                
+                            break;
+                        case Component.Item:
+                            doc[type.ToString()]
+                                ["_" + id.ToString()]
+                                ["_" + parComp.ID_Panel.ToString()].RemoveChild(
+                            doc[type.ToString()]
+                                ["_" + id.ToString()]
+                                ["_" + parComp.ID_Panel.ToString()]
+                                ["_" + parComp.ID_Item.ToString()]);
+
+                            break;
+                        case Component.Panel:
+                            doc[type.ToString()]
+                                ["_" + id.ToString()].RemoveChild(
+                            doc[type.ToString()]
+                                ["_" + id.ToString()]
+                                ["_" + parComp.ID_Panel.ToString()]);
+                            break;
+                    }
+
+                return doc;
+            }
+
+
+            public static void SaveXml(ConnectionSettings connSet, XmlDocument doc, int id, Type type)
             {
                 dtProfiles_Edit = new DataTable();
                 dtProfiles_Edit = dtProfiles_Orig.Copy();
@@ -1083,13 +1193,13 @@ namespace TepCommon
                         row["XML"] = doc.InnerXml;
                     }
                 }
-                
+
                 int err = 0;
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
-                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn,"profiles_new", "ID_EXT, IS_ROLE", string.Empty,dtProfiles_Orig,dtProfiles_Edit, out err);
-                
+                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, "profiles_new", "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
+
                 DbSources.Sources().UnRegister(idListener);
 
                 UpdateProfile(connSet);
@@ -1122,11 +1232,11 @@ namespace TepCommon
                 dt = dtProfiles_Orig.Clone();
 
 
-                for (int i=0;i<(int)Type.Count; i++)
+                for (int i = 0; i < (int)Type.Count; i++)
                 {
-                    foreach(string key in arrDict[i].Keys)
+                    foreach (string key in arrDict[i].Keys)
                     {
-                        dt.Rows.Add(new object[] {key, i, arrDict[i][key].InnerXml });
+                        dt.Rows.Add(new object[] { key, i, arrDict[i][key].InnerXml });
                     }
                 }
 
@@ -1169,7 +1279,7 @@ namespace TepCommon
                     return dictRes;
                 }
             }
-            
+
             /// <summary>
             /// Метод получения строки со значениями прав доступа
             /// </summary>
@@ -1221,7 +1331,7 @@ namespace TepCommon
                 /// ИД объекта на вкладке
                 /// </summary>
                 public int ID_Item;
-                
+
                 /// <summary>
                 /// ИД параметра
                 /// </summary>
@@ -1231,7 +1341,7 @@ namespace TepCommon
                 /// Имя объекта вложенного в объект
                 /// </summary>
                 public string Context;
-                
+
                 /// <summary>
                 /// Значение параметра ID_Unit
                 /// </summary>
