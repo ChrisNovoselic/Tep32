@@ -497,14 +497,11 @@ namespace PluginTaskAutobook
             /// <param name="tbOrigin">таблица значений</param>
             /// <param name="planOnMonth">план на месяц</param>
             /// <param name="typeValues">тип данных</param>
-            public void ShowValues(DataTable[] tbOrigin
-                , DataTable planOnMonth
-                , HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
+            public void ShowValues(DataTable[] tbOrigin, DataTable planOnMonth, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
                 int idAlg = -1
                   , vsRatioValue = -1
                   , corOffset = 0;
-                //Array namePut = Enum.GetValues(typeof(INDEX_GTP));
                 bool bflg = false;
                 double dblVal = -1F;
                 //
