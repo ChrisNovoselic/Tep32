@@ -732,6 +732,14 @@ namespace TepCommon
 
             #region GetDict
 
+            public static DataTable GetTableAllProfile
+            {
+                get
+                {
+                    return dtProfiles_Orig;
+                }
+            }
+
             /// <summary>
             /// Получить таблицу из БД
             /// </summary>
@@ -1355,7 +1363,7 @@ namespace TepCommon
             /// <param name="Type_Xml">Тип объекта</param>
             /// <param name="Id">ИД</param>
             /// <returns>XML документ</returns>
-            public XmlDocument GetXml(Type Type_Xml, int Id)
+            public static XmlDocument GetXml(Type Type_Xml, int Id)
             {
                 XmlDocument doc = new XmlDocument();
 
@@ -1370,6 +1378,17 @@ namespace TepCommon
                 }
 
                 return doc;
+            }
+
+            public static XmlDocument GetNewXml(Type Type_Xml, int Id)
+            {
+                XmlDocument doc = new XmlDocument();
+                doc.AppendChild(doc.CreateXmlDeclaration("1.0", "utf-8", null));
+                doc.AppendChild(doc.CreateElement(Type_Xml.ToString()));
+                doc[Type_Xml.ToString()].AppendChild(doc.CreateElement("_"+Id.ToString()));
+
+                return doc;
+
             }
 
             /// <summary>
