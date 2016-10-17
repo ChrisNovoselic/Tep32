@@ -1000,7 +1000,10 @@ namespace PluginProject
 
             contextMenu_TreeView = new System.Windows.Forms.ContextMenuStrip();
             добавитьРольToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.ContextMenuStrip = contextMenu_TreeView;
+            if(m_b_visible_context_menu==true)
+            {
+                this.ContextMenuStrip = contextMenu_TreeView;
+            }
 
             #region Context add TEC
             // 
@@ -1028,7 +1031,7 @@ namespace PluginProject
             InitializeComponent();
 
             this.NodeMouseClick += new TreeNodeMouseClickEventHandler(this.tree_NodeClick);
-            this.ContextMenuStrip.ItemClicked += new ToolStripItemClickedEventHandler(this.add_New_Role);
+            this.contextMenu_TreeView.ItemClicked += new ToolStripItemClickedEventHandler(this.add_New_Role);
 
             this.AfterSelect += new TreeViewEventHandler(this.tree_NodeSelect);
         }
@@ -1045,11 +1048,6 @@ namespace PluginProject
             return nameModes[indx];
         }
 
-        /// <summary>
-        /// Для возвращения имена по умолчанию для компонентов
-        /// </summary>
-        /// <param name="indx">Идентификатор типа компонента</param>
-        /// <returns>Имя по умолчанию</returns>
         public static string Mass_NewVal_Comp(int indx)
         {
             String[] arPREFIX_COMPONENT = { "Новая роль", "Новый пользователь" };
@@ -1345,62 +1343,65 @@ namespace PluginProject
 
             if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
-                this.SelectedNode = e.Node;//Выбор компонента при нажатии на него правой кнопкой мыши
-
-                #region Добавление компонентов
-
-                if (m_selNode_id.id_user != -1)//выбран ли элемент пользователь
+                if (m_b_visible_context_menu == true)
                 {
-                    #region Context delete TG
-                    // 
-                    // contextMenu_TreeNode
-                    // 
-                    contextMenu_TreeNode.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+                    this.SelectedNode = e.Node;//Выбор компонента при нажатии на него правой кнопкой мыши
+
+                    #region Добавление компонентов
+
+                    if (m_selNode_id.id_user != -1)//выбран ли элемент пользователь
+                    {
+                        #region Context delete TG
+                        // 
+                        // contextMenu_TreeNode
+                        // 
+                        contextMenu_TreeNode.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
                                 УдалитьToolStripMenuItem});
-                    contextMenu_TreeNode.Name = "contextMenu_TreeNode";
-                    // 
-                    // УдалитьToolStripMenuItem
-                    //
-                    УдалитьToolStripMenuItem.Name = "УдалитьToolStripMenuItem";
-                    УдалитьToolStripMenuItem.Text = "Удалить";
-                    #endregion
+                        contextMenu_TreeNode.Name = "contextMenu_TreeNode";
+                        // 
+                        // УдалитьToolStripMenuItem
+                        //
+                        УдалитьToolStripMenuItem.Name = "УдалитьToolStripMenuItem";
+                        УдалитьToolStripMenuItem.Text = "Удалить";
+                        #endregion
 
-                    this.SelectedNode.ContextMenuStrip = contextMenu_TreeNode;
-                    this.SelectedNode.ContextMenuStrip.ItemClicked += new ToolStripItemClickedEventHandler(this.del_user);
-                }
+                        this.SelectedNode.ContextMenuStrip = contextMenu_TreeNode;
+                        this.SelectedNode.ContextMenuStrip.ItemClicked += new ToolStripItemClickedEventHandler(this.del_user);
+                    }
 
-                if (m_selNode_id.id_user == -1 & m_selNode_id.id_role != -1)//Выбрана ли роль
-                {
-                    #region Добавление в ТЭЦ компонентов
+                    if (m_selNode_id.id_user == -1 & m_selNode_id.id_role != -1)//Выбрана ли роль
+                    {
+                        #region Добавление в ТЭЦ компонентов
 
-                    #region Context TEC
-                    // 
-                    // contextMenu_TreeView_TEC
-                    // 
-                    contextMenu_TreeNode.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+                        #region Context TEC
+                        // 
+                        // contextMenu_TreeView_TEC
+                        // 
+                        contextMenu_TreeNode.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
                     добавитьПользователяToolStripMenuItem,
                     УдалитьToolStripMenuItem});
-                    contextMenu_TreeNode.Name = "contextMenu_TreeNode";
-                    // 
-                    // добавитьПользователяToolStripMenuItem
-                    // 
-                    добавитьПользователяToolStripMenuItem.Name = "добавитьПользователяToolStripMenuItem";
-                    добавитьПользователяToolStripMenuItem.Text = "Добавить пользователя";
-                    // 
-                    // УдалитьToolStripMenuItem
-                    // 
-                    УдалитьToolStripMenuItem.Name = "УдалитьToolStripMenuItem";
-                    УдалитьToolStripMenuItem.Text = "Удалить";
-                    #endregion
+                        contextMenu_TreeNode.Name = "contextMenu_TreeNode";
+                        // 
+                        // добавитьПользователяToolStripMenuItem
+                        // 
+                        добавитьПользователяToolStripMenuItem.Name = "добавитьПользователяToolStripMenuItem";
+                        добавитьПользователяToolStripMenuItem.Text = "Добавить пользователя";
+                        // 
+                        // УдалитьToolStripMenuItem
+                        // 
+                        УдалитьToolStripMenuItem.Name = "УдалитьToolStripMenuItem";
+                        УдалитьToolStripMenuItem.Text = "Удалить";
+                        #endregion
 
-                    this.SelectedNode.ContextMenuStrip = contextMenu_TreeNode;
+                        this.SelectedNode.ContextMenuStrip = contextMenu_TreeNode;
 
-                    this.SelectedNode.ContextMenuStrip.ItemClicked += new ToolStripItemClickedEventHandler(this.add_New_User);
+                        this.SelectedNode.ContextMenuStrip.ItemClicked += new ToolStripItemClickedEventHandler(this.add_New_User);
+
+                        #endregion
+                    }
 
                     #endregion
                 }
-
-                #endregion
             }
 
             #endregion
