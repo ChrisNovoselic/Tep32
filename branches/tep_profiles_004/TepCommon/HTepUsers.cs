@@ -56,7 +56,6 @@ namespace TepCommon
         public HTepUsers(int iListenerId)
             : base(iListenerId)
         {
-            int err = -1;
             m_tblValues = new DataTable();
         }
         /// <summary>
@@ -207,7 +206,7 @@ namespace TepCommon
 
             return tableRes;
         }
-
+        
         public static string GetAllowed(int id, ConnectionSettings connSett)
         {
             string strRes = string.Empty;
@@ -473,113 +472,7 @@ namespace TepCommon
 
             return dictRes;
         }
-
-
-        protected class HTepProfiles : HProfiles
-        {
-            public HTepProfiles(int idListener, int id_role, int id_user)
-                : base(idListener, id_role, id_user)
-            {
-            }
-
-            /// <summary>
-            /// Функция получения доступа
-            /// </summary>
-            /// <param name="id_tab">ID вкладки</param>
-            /// <returns></returns>
-            public static object GetAllowed(int id_tab)
-            {
-                object objRes = false;
-                bool bValidate = false;
-                int indxRowAllowed = -1;
-                Int16 val = -1
-                   , type = -1;
-                string strVal = string.Empty;
-
-                DataRow[] rowsAllowed = m_tblValues.Select(@"ID_TAB=" + id_tab);
-                switch (rowsAllowed.Length)
-                {
-                    case 1:
-                        indxRowAllowed = 0;
-                        break;
-                    default:
-                        //В табл. с настройками возможность 'id' определена как для "роли", так и для "пользователя"
-                        // требуется выбрать строку с 'IS_ROLE' == 0 (пользователя)
-                        // ...
-                        foreach (DataRow r in rowsAllowed)
-                        {
-                            indxRowAllowed++;
-                            if (Int16.Parse(r[@"IS_ROLE"].ToString()) == 0)
-                                break;
-                            else
-                                ;
-                        }
-                        break;
-                        //default: //Ошибка - исключение
-                        //    throw new Exception(@"HUsers.HProfiles::GetAllowed (id=" + id_tab + @") - не найдено ни одной записи...");
-                }
-
-                // проверка не нужна, т.к. вызывается исключение
-                //if ((!(indxRowAllowed < 0))
-                //    && (indxRowAllowed < rowsAllowed.Length))
-                //{
-                strVal = rowsAllowed[indxRowAllowed][@"VALUE"].ToString().Trim();
-                objRes = m_tblValues.Clone();
-
-                foreach (DataRow r in rowsAllowed)
-                {
-                    (objRes as DataTable).Rows.Add(r.ItemArray);
-                }
-
-                return objRes;
-            }
-
-            /// <summary>
-            /// Функция получения доступа
-            /// </summary>
-            /// <returns></returns>
-            public static object GetAllowed()
-            {
-                object objRes = false;
-                bool bValidate = false;
-                int indxRowAllowed = -1;
-                Int16 val = -1
-                   , type = -1;
-                string strVal = string.Empty;
-
-                DataRow[] rowsAllowed = m_tblValues.Select();
-                switch (rowsAllowed.Length)
-                {
-                    case 1:
-                        indxRowAllowed = 0;
-                        break;
-                    case 2:
-                        //В табл. с настройками возможность 'id' определена как для "роли", так и для "пользователя"
-                        // требуется выбрать строку с 'IS_ROLE' == 0 (пользователя)
-                        // ...
-                        foreach (DataRow r in rowsAllowed)
-                        {
-                            indxRowAllowed++;
-                            if (Int16.Parse(r[@"IS_ROLE"].ToString()) == 0)
-                                break;
-                            else
-                                ;
-                        }
-                        break;
-                    default: //Ошибка - исключение
-                        throw new Exception(@"HUsers.HProfiles::GetAllowed () - не найдено ни одной записи...");
-                }
-
-                // проверка не нужна, т.к. вызывается исключение
-                //if ((!(indxRowAllowed < 0))
-                //    && (indxRowAllowed < rowsAllowed.Length))
-                //{
-                strVal = rowsAllowed[indxRowAllowed][@"VALUE"].ToString().Trim();
-
-                return objRes;
-            }
-        }
-
+        
         /// <summary>
         /// Функция получения строки запроса пользователя
         ///  /// <returns>Строка строку запроса</returns>
@@ -701,6 +594,7 @@ namespace TepCommon
         
         public class HTepProfilesXml
         {
+            public static string m_nameTableProfilesData = @"profiles";
             public static string m_nameTableProfilesUnit = @"profiles_unit";
 
             protected static DataTable m_tblValues;
@@ -763,7 +657,7 @@ namespace TepCommon
                 int err = 0;
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM [profiles_new]";
+                string query = "SELECT * FROM ["+ m_nameTableProfilesData + "]";
                 dt = new DataTable();
                 dt = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 DbSources.Sources().UnRegister(idListener);
@@ -1270,7 +1164,7 @@ namespace TepCommon
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
-                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, "profiles_new", "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
+                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, m_nameTableProfilesData, "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
 
                 DbSources.Sources().UnRegister(idListener);
 
@@ -1297,7 +1191,7 @@ namespace TepCommon
                 dtProfiles_Orig = getDTfromDict(arrDictOrig);
                 dtProfiles_Edit = getDTfromDict(arrDictEdit);
 
-                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, "profiles_new", "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
+                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, m_nameTableProfilesData, "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
 
                 DbSources.Sources().UnRegister(idListener);
 

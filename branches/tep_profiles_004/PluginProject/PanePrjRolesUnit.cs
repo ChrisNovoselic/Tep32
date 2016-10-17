@@ -101,7 +101,7 @@ namespace PluginProject
         /// <returns>Строка - наименование</returns>
         protected static string getNameMode(ID_Table id)
         {
-            string[] nameModes = { "roles_unit", "users", "profiles_new" };
+            string[] nameModes = { "roles_unit", "users", "profiles" };
 
             return nameModes[(int)id];
         }
