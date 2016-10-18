@@ -2553,22 +2553,6 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="origin">оригинальная таблица</param>
-        /// <param name="edit">таблица с данными</param>
-        /// <returns></returns>
-        private DataTable diffRowsInTables(DataTable origin, DataTable edit)
-        {
-            for (int i = 0; i < origin.Rows.Count; i++)
-                for (int j = 0; j < edit.Rows.Count; j++)
-                    if (origin.Rows[i]["Value"].Equals(edit.Rows[j]["Value"]))
-                        edit.Rows.RemoveAt(j);
-
-            return edit;
-        }
-
-        /// <summary>
         /// Освободить (при закрытии), связанные с функционалом ресурсы
         /// </summary>
         public override void Stop()

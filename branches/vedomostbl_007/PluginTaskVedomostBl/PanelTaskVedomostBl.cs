@@ -198,7 +198,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// 
         /// </summary>
-        protected VedomostBlCalculate m_VedCalculate;
+        static VedomostBlCalculate m_VedCalculate;
         /// <summary>
         /// 
         /// </summary>
@@ -1429,7 +1429,6 @@ namespace PluginTaskVedomostBl
 
                     HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_topHeader = col_prop.topHeader, m_iIdComp = idHeader };
                     alignText = DataGridViewContentAlignment.MiddleRight;
-                    //autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
 
                     if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
                         ; // оставить значения по умолчанию
@@ -1841,13 +1840,11 @@ namespace PluginTaskVedomostBl
                 DataRow[] parameterRows = null;
 
                 _dtOriginVal = tableOrigin.Copy();
-                //string query = "ID_COMP = " + (m_getDGV() as DGVVedomostBl).m_idCompDGV;
-                //parameterRows = tableOrigin.Select(string.Format(tableOrigin.Locale, query));
 
                 if (flagBl)
                     _hoursOffSet = -1 * (DateTimeOffset.Now.Offset.Hours + 10);
                 else
-                    _hoursOffSet = m_currentOffSet;
+                    _hoursOffSet = (m_currentOffSet / 60);
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
@@ -1856,21 +1853,24 @@ namespace PluginTaskVedomostBl
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
+                                idAlg = col.m_iIdComp;
+                                _vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
+
                                 if (Convert.ToDateTime(_dtOriginVal.Rows[row.Index][@"WR_DATETIME"]).AddHours(_hoursOffSet).ToShortDateString() ==
                                         row.Cells["Date"].Value.ToString())
                                 {
                                     dblVal = ((double)_dtOriginVal.Rows[row.Index][@"VALUE"]);
+                                    row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound,
+                                           CultureInfo.InvariantCulture);
                                 }
-                                else;
-
                             }
-                            else;
-                            //if (m_dictPropertyColumns[idAlg].m_Avg > )
-                            //    ;
-                            //else
-                            //row.Cells[iCol].Value = dbSumVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                            //       CultureInfo.InvariantCulture); 
+                            else
+                            if (m_dictPropertyColumns[idAlg].m_Avg == 0)
+                                row.Cells[iCol].Value = sumVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
+                            else
+                                row.Cells[iCol].Value = avgVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
                         }
+
                     iCol++;
                 }
             }
@@ -1879,17 +1879,22 @@ namespace PluginTaskVedomostBl
             /// Получение суммы по столбцу
             /// </summary>
             /// <param name="indxCol"></param>
+            /// <returns></returns>
             private double sumVal(int indxCol)
             {
-                int idAlg = -1;
-                double _sumValue = 0F
-                    , value;
+                double _sumValue = 0F;
 
-                foreach (DataGridViewRow row in Rows)
-                    if (Rows.Count - 1 != row.Index)
-                        if (double.TryParse(row.Cells[indxCol].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
-                            _sumValue += value;
-                        else;
+                try
+                {
+                    foreach (DataGridViewRow row in Rows)
+                        if (Rows.Count - 1 != row.Index)
+                            _sumValue += m_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Ошибка суммирования столбца!");
+                }
+             
 
                 return _sumValue;
             }
@@ -1898,27 +1903,33 @@ namespace PluginTaskVedomostBl
             /// Получение среднего по столбцу
             /// </summary>
             /// <param name="indxCol"></param>
-            private void avgVal(int indxCol)
+            /// <returns></returns>
+            private double avgVal(int indxCol)
             {
-                int idAlg = -1,
-                    cntNum = 0;
+                int cntNum = 0;
                 double _avgValue = 0F
-                   , _sumValue = 0F
-                    , value;
-                foreach (DataGridViewRow row in Rows)
-                    if (double.TryParse(row.Cells[indxCol].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
-                    {
-                        _sumValue += value;
-                        cntNum++;
-                    }
-                    else;
+                   , _sumValue = 0F;
+
+                try
+                {
+                    foreach (DataGridViewRow row in Rows)
+                        _sumValue += m_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
+                    cntNum++;
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Ошибка усреднения столбца!");
+                }
+            
+
+                return _avgValue = _sumValue / cntNum;
             }
         }
 
         /// <summary>
         ///класс для обработки данных
         /// </summary>
-        protected class VedomostBlCalculate : HandlerDbTaskCalculate.TaskCalculate
+        public class VedomostBlCalculate : HandlerDbTaskCalculate.TaskCalculate
         {
             /// <summary>
             /// 
@@ -2041,6 +2052,57 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
+            /// преобразование числа в нужный формат отображения
+            /// </summary>
+            /// <param name="value">число</param>
+            /// <returns>преобразованное число</returns>
+            public float AsParseToF(string value)
+            {
+                int _indxChar = 0;
+                string _sepReplace = string.Empty;
+                bool bFlag = true;
+                //char[] _separators = { ' ', ',', '.', ':', '\t'};
+                //char[] letters = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).ToArray();
+                float fValue = 0;
+
+                foreach (char item in value.ToCharArray())
+                {
+                    if (!char.IsDigit(item))
+                        if (char.IsLetter(item))
+                            value = value.Remove(_indxChar, 1);
+                        else
+                            _sepReplace = value.Substring(_indxChar, 1);
+                    else
+                        _indxChar++;
+
+                    switch (_sepReplace)
+                    {
+                        case ".":
+                        case ",":
+                        case " ":
+                        case ":":
+                            float.TryParse(value.Replace(_sepReplace, "."), NumberStyles.Float, CultureInfo.InvariantCulture, out fValue);
+                            bFlag = false;
+                            break;
+                    }
+                }
+
+                if (bFlag)
+                    try
+                    {
+                        fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+                    }
+                    catch (Exception e)
+                    {
+                        if (value.ToString() == "")
+                            fValue = 0;
+                    }
+
+
+                return fValue;
+            }
+
+            /// <summary>
             /// класс для формирования листа с параметрами 
             /// для формирования заголовков
             /// </summary>
@@ -2106,7 +2168,6 @@ namespace PluginTaskVedomostBl
 
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
-
             InitializeComponent();
             m_getPicture = new DelgetPictureOfIdComp(GetPictureOfIdComp);
             m_getDGV = new DelgetDataGridViewOfIdComp(GetDGVOfIdComp);
@@ -2138,7 +2199,6 @@ namespace PluginTaskVedomostBl
             m_paneL.Name = INDEX_CONTROL.PANEL_PICTUREDGV.ToString();
             m_paneL.Dock = DockStyle.Fill;
             (m_paneL as Panel).AutoScroll = true;
-            //m_paneL.Controls.Add(pictureBox);
             Controls.Add(m_paneL, 5, posRow);
             SetColumnSpan(m_paneL, 9); SetRowSpan(m_paneL, 10);
             //
@@ -2237,8 +2297,6 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Настройка размеров контролов отображения
         /// </summary>
-        /// <param name="pictureBox">пикча</param>
-        /// <param name="BasicPanel">панель</param>
         private void ReSizeControls(DataGridView viewActive)
         {
             int cntCol = 0;
@@ -2253,6 +2311,7 @@ namespace PluginTaskVedomostBl
             int _drwW = cntCol * viewActive.Columns[2].Width + 10
                 , _drwH = (viewActive.Rows.Count) * viewActive.Rows[0].Height + 70;
 
+            GetPictureOfIdComp((viewActive as DGVVedomostBl).m_idCompDGV).Size = new Size(_drwW + 2, _drwH);
             viewActive.Size = new Size(_drwW + 2, _drwH);
         }
 
@@ -2421,7 +2480,7 @@ namespace PluginTaskVedomostBl
 
                 for (int k = 0; k < m_dict[(ctrl as DGVVedomostBl).m_idCompDGV].Count; k++)
                 {
-                    int idPar = int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["ID"].ToString());
+                    int idPar = int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["ID_ALG"].ToString());
                     int _avg = int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["AVG"].ToString());
 
                     (ctrl as DGVVedomostBl).AddColumns(idPar, new DGVVedomostBl.COLUMN_PROPERTY
@@ -2430,8 +2489,8 @@ namespace PluginTaskVedomostBl
                         nameCol = m_dict[(ctrl as DGVVedomostBl).m_idCompDGV][k][(int)DGVVedomostBl.INDEX_HEADER.MIDDLE].ToString(),
                         hdrText = m_dict[(ctrl as DGVVedomostBl).m_idCompDGV][k][(int)DGVVedomostBl.INDEX_HEADER.LOW].ToString(),
                         m_idAlg = idPar,//(ctrl as DGVVedomostBl).m_idCompDGV,
-                        //m_vsRatio = _dictVisualSett["ratio"][k],
-                        //m_vsRound = _dictVisualSett["round"][k],
+                        m_vsRatio = _dictVisualSett["ratio"][k],
+                        m_vsRound = _dictVisualSett["round"][k],
                         m_Avg = _avg
                     }
                        , true);
@@ -2456,6 +2515,7 @@ namespace PluginTaskVedomostBl
                         }
                        , DaysInMonth);
                     }
+
                 SizeDgv(ctrl);
                 m_pictureVedBl = new PictureVedBl(ctrl as DGVVedomostBl);
                 (Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).Controls.Add(m_pictureVedBl);
@@ -2619,7 +2679,7 @@ namespace PluginTaskVedomostBl
             dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
                , new int[] {
                     m_id_panel
-                    , (int)Session.m_currIdPeriod }
+                    , idComp }
                , out err);
 
             IEnumerable<DataRow> listParameter = ListParameter.Select(x => x).Where(x => (int)x["ID_COMP"] == idComp);
@@ -2846,7 +2906,6 @@ namespace PluginTaskVedomostBl
                 dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
             else
                 dtrGet = HandlerDb.GetDateTimeRangeValuesVarExtremeBL();
-
 
             clear();
             m_handlerDb.RegisterDbConnection(out iRegDbConn);

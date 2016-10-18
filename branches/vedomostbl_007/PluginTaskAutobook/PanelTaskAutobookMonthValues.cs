@@ -1624,10 +1624,10 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// преобразование числа в нужный формат отображения
         /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        /// <param name="value">число</param>
+        /// <returns>преобразованное число</returns>
         public static float AsParseToF(string value)
         {
             int _indxChar = 0;
@@ -1667,9 +1667,7 @@ namespace PluginTaskAutobook
                 catch (Exception e)
                 {
                     if (value.ToString() == "")
-                    {
                         fValue = 0;
-                    }
                 }
 
 
