@@ -64,7 +64,7 @@ namespace TepCommon
         /// </summary>
         public static int Role
         {
-            get { return (int)(m_DataRegistration[(int)INDEX_REGISTRATION.ROLE] == null ? -1 : m_DataRegistration[(int)INDEX_REGISTRATION.ROLE]); }
+            get { return (int)(s_DataRegistration[(int)INDEX_REGISTRATION.ROLE] == null ? -1 : s_DataRegistration[(int)INDEX_REGISTRATION.ROLE]); }
         }
         /// <summary>
         /// Получить строку с идентификаторами плюгинов, разрешенных к использованию для пользователя
@@ -235,7 +235,7 @@ namespace TepCommon
             return bool.Parse(GetAllowed(id, connSett));
         }
 
-        public static DataTable GetTableProfileUnits { get { return HTepProfilesXml.GetTableUnits; } }
+        public new static DataTable GetTableProfileUnits { get { return HTepProfilesXml.GetTableUnits; } }
 
 
         public struct VISUAL_SETTING
@@ -481,7 +481,7 @@ namespace TepCommon
             /// </summary>
             /// <param name="id_tab">ID вкладки</param>
             /// <returns></returns>
-            public static object GetAllowed(int id_tab)
+            public new static object GetAllowed(int id_tab)
             {
                 object objRes = false;
                 bool bValidate = false;
