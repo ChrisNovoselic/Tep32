@@ -133,9 +133,18 @@ namespace PluginProject
             ctrl = this.Controls.Find(INDEX_CONTROL.TREE_DICT_ITEM.ToString(), true)[0];
             ((TreeView_Users)ctrl).Update_tree(m_arr_editTable[(int)ID_Table.User], m_arr_editTable[(int)ID_Table.Role]);
 
-            ((TreeView_Users)ctrl).GetID += new TreeView_Users.intGetID(this.GetNextID);
-            ((TreeView_Users)ctrl).EditNode += new TreeView_Users.EditNodeEventHandler(this.get_operation_tree);
-            ((TreeView_Users)ctrl).Report += new TreeView_Users.ReportEventHandler(this.tree_report);
+            if (((TreeView_Users)ctrl).GetID == null)
+            {
+                ((TreeView_Users)ctrl).GetID += new TreeView_Users.intGetID(this.GetNextID);
+            }
+            if (((TreeView_Users)ctrl).EditNode == null)
+            {
+                ((TreeView_Users)ctrl).EditNode += new TreeView_Users.EditNodeEventHandler(this.get_operation_tree);
+            }
+            if (((TreeView_Users)ctrl).Report == null)
+            {
+                ((TreeView_Users)ctrl).Report += new TreeView_Users.ReportEventHandler(this.tree_report);
+            }
 
             return base.Activate(active);
         }
@@ -246,7 +255,8 @@ namespace PluginProject
                 m_AllUnits.Rows.Remove(r);
             }
 
-            m_arr_origTable[(int)ID_Table.Profiles] = User.GetTableAllProfile(connConfigDB).Copy();
+            m_arr_origTable[(int)ID_Table.Profiles] = HTepUsers.HTepProfilesXml.GetTableAllProfile.Copy();
+                //User.GetTableAllProfile(connConfigDB).Copy();
 
             m_handlerDb.UnRegisterDbConnection();
         }
@@ -383,7 +393,7 @@ namespace PluginProject
             if (list_id.id_user.Equals(-1) == false)
             {
                 m_arr_editTable[(int)ID_Table.User].Rows.Remove(m_arr_editTable[(int)ID_Table.User].Select("ID=" + list_id.id_user)[0]);
-                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_user + " and IS_ROLE=0 and ID_TAB=0 and ID_ITEM=0 and CONTEXT=0"))
+                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_user + " and IS_ROLE=0"))
                 {
                     m_arr_editTable[(int)ID_Table.Profiles].Rows.Remove(r);
                 }
@@ -393,7 +403,7 @@ namespace PluginProject
             if (list_id.id_user.Equals(-1) == true & list_id.id_role.Equals(-1) == false)
             {
                 m_arr_editTable[(int)ID_Table.Role].Rows.Remove(m_arr_editTable[(int)ID_Table.Role].Select("ID=" + list_id.id_role)[0]);
-                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_role + " and IS_ROLE=1 and ID_TAB=0 and ID_ITEM=0 and CONTEXT=0"))
+                foreach (DataRow r in m_arr_editTable[(int)ID_Table.Profiles].Select("ID_EXT=" + list_id.id_role + " and IS_ROLE=1"))
                 {
                     m_arr_editTable[(int)ID_Table.Profiles].Rows.Remove(r);
                 }
@@ -473,10 +483,8 @@ namespace PluginProject
                 }
 
                 m_arr_editTable[(int)ID_Table.User].Rows.Add(obj);
-                foreach (DataRow r in m_AllUnits.Rows)
-                {
-                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { obj[0], 0, r["ID"], "0", "0", "0", "0" });
-                }
+                m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { obj[0], 0, (HTepUsers.HTepProfilesXml.GetNewXml(HTepUsers.HTepProfilesXml.Type.User, Int16.Parse(obj[0].ToString()))).InnerXml});
+                
                 iRes = 1;
             }
 
@@ -498,10 +506,7 @@ namespace PluginProject
                 }
 
                 m_arr_editTable[(int)ID_Table.Role].Rows.Add(obj_role);
-                foreach (DataRow r in m_AllUnits.Rows)
-                {
-                    m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { obj_role[0], 1, r["ID"], "0", "0", "0", "0" });
-                }
+                m_arr_editTable[(int)ID_Table.Profiles].Rows.Add(new object[] { obj_role[0], 1, (HTepUsers.HTepProfilesXml.GetNewXml(HTepUsers.HTepProfilesXml.Type.Role, Int16.Parse(obj_role[0].ToString()))).InnerXml });
 
                 iRes = 1;
             }
@@ -609,7 +614,7 @@ namespace PluginProject
                             keys = @"ID";
                             break;
                         case ID_Table.Profiles:
-                            keys = @"ID_EXT,IS_ROLE,ID_TAB,ID_ITEM,CONTEXT,ID_UNIT";
+                            keys = @"ID_EXT,IS_ROLE";
                             break;
                         default:
                             break;
@@ -618,6 +623,7 @@ namespace PluginProject
                     m_handlerDb.RecUpdateInsertDelete(getNameMode(i), keys, "",m_arr_origTable[(int)i], m_arr_editTable[(int)i], out err);
                 }
 
+                HTepUsers.HTepProfilesXml.UpdateProfile(m_handlerDb.ConnectionSettings);
                 fillDataTable();
                 resetDataTable();
                 ((TreeView_Users)this.Controls.Find(INDEX_CONTROL.TREE_DICT_ITEM.ToString(), true)[0]).Update_tree(m_arr_editTable[(int)ID_Table.User], m_arr_editTable[(int)ID_Table.Role]);
@@ -626,7 +632,6 @@ namespace PluginProject
                 //btnOK.Enabled = false;
                 ((Button)(this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0])).Enabled = false;
                 //btnBreak.Enabled = false;
-
             }
             else
             {
@@ -642,6 +647,7 @@ namespace PluginProject
         private void buttonBreak_click(object sender, EventArgs e)
         {
             //delegateReportClear(true);
+            fillDataTable();
             resetDataTable();
 
             ((TreeView_Users)this.Controls.Find(INDEX_CONTROL.TREE_DICT_ITEM.ToString(), true)[0]).Update_tree(m_arr_editTable[(int)ID_Table.User], m_arr_editTable[(int)ID_Table.Role]);
@@ -994,7 +1000,10 @@ namespace PluginProject
 
             contextMenu_TreeView = new System.Windows.Forms.ContextMenuStrip();
             добавитьРольToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.ContextMenuStrip = contextMenu_TreeView;
+            if(m_b_visible_context_menu==true)
+            {
+                this.ContextMenuStrip = contextMenu_TreeView;
+            }
 
             #region Context add TEC
             // 
@@ -1022,7 +1031,7 @@ namespace PluginProject
             InitializeComponent();
 
             this.NodeMouseClick += new TreeNodeMouseClickEventHandler(this.tree_NodeClick);
-            this.ContextMenuStrip.ItemClicked += new ToolStripItemClickedEventHandler(this.add_New_Role);
+            this.contextMenu_TreeView.ItemClicked += new ToolStripItemClickedEventHandler(this.add_New_Role);
 
             this.AfterSelect += new TreeViewEventHandler(this.tree_NodeSelect);
         }
@@ -1039,11 +1048,6 @@ namespace PluginProject
             return nameModes[indx];
         }
 
-        /// <summary>
-        /// Для возвращения имена по умолчанию для компонентов
-        /// </summary>
-        /// <param name="indx">Идентификатор типа компонента</param>
-        /// <returns>Имя по умолчанию</returns>
         public static string Mass_NewVal_Comp(int indx)
         {
             String[] arPREFIX_COMPONENT = { "Новая роль", "Новый пользователь" };
@@ -1339,62 +1343,65 @@ namespace PluginProject
 
             if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
-                this.SelectedNode = e.Node;//Выбор компонента при нажатии на него правой кнопкой мыши
-
-                #region Добавление компонентов
-
-                if (m_selNode_id.id_user != -1)//выбран ли элемент пользователь
+                if (m_b_visible_context_menu == true)
                 {
-                    #region Context delete TG
-                    // 
-                    // contextMenu_TreeNode
-                    // 
-                    contextMenu_TreeNode.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+                    this.SelectedNode = e.Node;//Выбор компонента при нажатии на него правой кнопкой мыши
+
+                    #region Добавление компонентов
+
+                    if (m_selNode_id.id_user != -1)//выбран ли элемент пользователь
+                    {
+                        #region Context delete TG
+                        // 
+                        // contextMenu_TreeNode
+                        // 
+                        contextMenu_TreeNode.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
                                 УдалитьToolStripMenuItem});
-                    contextMenu_TreeNode.Name = "contextMenu_TreeNode";
-                    // 
-                    // УдалитьToolStripMenuItem
-                    //
-                    УдалитьToolStripMenuItem.Name = "УдалитьToolStripMenuItem";
-                    УдалитьToolStripMenuItem.Text = "Удалить";
-                    #endregion
+                        contextMenu_TreeNode.Name = "contextMenu_TreeNode";
+                        // 
+                        // УдалитьToolStripMenuItem
+                        //
+                        УдалитьToolStripMenuItem.Name = "УдалитьToolStripMenuItem";
+                        УдалитьToolStripMenuItem.Text = "Удалить";
+                        #endregion
 
-                    this.SelectedNode.ContextMenuStrip = contextMenu_TreeNode;
-                    this.SelectedNode.ContextMenuStrip.ItemClicked += new ToolStripItemClickedEventHandler(this.del_user);
-                }
+                        this.SelectedNode.ContextMenuStrip = contextMenu_TreeNode;
+                        this.SelectedNode.ContextMenuStrip.ItemClicked += new ToolStripItemClickedEventHandler(this.del_user);
+                    }
 
-                if (m_selNode_id.id_user == -1 & m_selNode_id.id_role != -1)//Выбрана ли роль
-                {
-                    #region Добавление в ТЭЦ компонентов
+                    if (m_selNode_id.id_user == -1 & m_selNode_id.id_role != -1)//Выбрана ли роль
+                    {
+                        #region Добавление в ТЭЦ компонентов
 
-                    #region Context TEC
-                    // 
-                    // contextMenu_TreeView_TEC
-                    // 
-                    contextMenu_TreeNode.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+                        #region Context TEC
+                        // 
+                        // contextMenu_TreeView_TEC
+                        // 
+                        contextMenu_TreeNode.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
                     добавитьПользователяToolStripMenuItem,
                     УдалитьToolStripMenuItem});
-                    contextMenu_TreeNode.Name = "contextMenu_TreeNode";
-                    // 
-                    // добавитьПользователяToolStripMenuItem
-                    // 
-                    добавитьПользователяToolStripMenuItem.Name = "добавитьПользователяToolStripMenuItem";
-                    добавитьПользователяToolStripMenuItem.Text = "Добавить пользователя";
-                    // 
-                    // УдалитьToolStripMenuItem
-                    // 
-                    УдалитьToolStripMenuItem.Name = "УдалитьToolStripMenuItem";
-                    УдалитьToolStripMenuItem.Text = "Удалить";
-                    #endregion
+                        contextMenu_TreeNode.Name = "contextMenu_TreeNode";
+                        // 
+                        // добавитьПользователяToolStripMenuItem
+                        // 
+                        добавитьПользователяToolStripMenuItem.Name = "добавитьПользователяToolStripMenuItem";
+                        добавитьПользователяToolStripMenuItem.Text = "Добавить пользователя";
+                        // 
+                        // УдалитьToolStripMenuItem
+                        // 
+                        УдалитьToolStripMenuItem.Name = "УдалитьToolStripMenuItem";
+                        УдалитьToolStripMenuItem.Text = "Удалить";
+                        #endregion
 
-                    this.SelectedNode.ContextMenuStrip = contextMenu_TreeNode;
+                        this.SelectedNode.ContextMenuStrip = contextMenu_TreeNode;
 
-                    this.SelectedNode.ContextMenuStrip.ItemClicked += new ToolStripItemClickedEventHandler(this.add_New_User);
+                        this.SelectedNode.ContextMenuStrip.ItemClicked += new ToolStripItemClickedEventHandler(this.add_New_User);
+
+                        #endregion
+                    }
 
                     #endregion
                 }
-
-                #endregion
             }
 
             #endregion
@@ -1440,7 +1447,7 @@ namespace PluginProject
         /// <summary>
         /// Событие - редактирование компонента
         /// </summary>
-        public event EditNodeEventHandler EditNode;
+        public EditNodeEventHandler EditNode;
 
 
         /// <summary>

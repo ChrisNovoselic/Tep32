@@ -29,11 +29,11 @@ namespace TepCommon
             , AUTO_LOADSAVE_USERPROFILE_ACCESS = 1 //Разрешение изменять свойство "Автоматическая загрузка/сохранение ..."
             , AUTO_LOADSAVE_USERPROFILE_CHECKED //Автоматическая загрузка/сохранение списка идентификаторов вкладок, загружаемых автоматически
             , USERPROFILE_PLUGINS //Список вкладок, загружаемых автоматически
-            
+
             , QUERY_TIMEZONE = 101 //Идентификатор часового пояса при запросе значений
             , ADRESS_MAIL_AUTOBOOK //Адрес_эп_Активной_ээ 
             , PERIOD_IND //Период_идентификатор  
-             
+
 
             , VISUAL_SETTING_VALUE_ROUND = 201 //Отображение значений, количество знаков после запятой
             , VISUAL_SETTING_VALUE_RATIO //Отображение значений, множитель относительно базовой единицы измерения
@@ -56,7 +56,6 @@ namespace TepCommon
         public HTepUsers(int iListenerId)
             : base(iListenerId)
         {
-            int err = -1;
             m_tblValues = new DataTable();
         }
         /// <summary>
@@ -194,7 +193,7 @@ namespace TepCommon
                     //Прочитать наименования плюгинов
                     tableRes = DbTSQLInterface.Select(ref dbConn
                         ,
-                        //@"SELECT * FROM plugins WHERE ID IN ("
+                            //@"SELECT * FROM plugins WHERE ID IN ("
                             @"SELECT p.[ID] as [ID_PLUGIN], p.[NAME] as [NAME_PLUGIN] FROM plugins as p WHERE [ID] IN (SELECT [ID_PLUGIN] FROM [fpanels] WHERE [ID] IN ("
                                  + strIdFPanels + @")" + @")"
                         , null, null, out iRes);
@@ -207,14 +206,14 @@ namespace TepCommon
 
             return tableRes;
         }
-
+        
         public static string GetAllowed(int id, ConnectionSettings connSett)
         {
             string strRes = string.Empty;
 
             //HTepProfilesXml.UpdateProfile(connSett);
-            
-                DictElement dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
+
+            DictElement dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
 
             Dictionary<string, string> dictAttr = dictElement.Attributes;
 
@@ -235,7 +234,7 @@ namespace TepCommon
             return bool.Parse(GetAllowed(id, connSett));
         }
 
-        public new static DataTable GetTableProfileUnits { get { return HTepProfilesXml.GetTableUnits; } }
+        new public static DataTable GetTableProfileUnits { get { return HTepProfilesXml.GetTableUnits; } }
 
 
         public struct VISUAL_SETTING
@@ -402,7 +401,13 @@ namespace TepCommon
 
             return dictRes;
         }
-
+        /// <summary>
+        /// Получить таблицу с установками для отображения значений
+        /// </summary>
+        /// <param name="connSett">Параметры соединения с БД</param>
+        /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
+        /// <param name="err">Результат выполнения функции</param>
+        /// <returns>Таблица с установками для отображения значений</returns>
         public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(ConnectionSettings connSett, int[] fields, out int err)
         {
             err = -1; //Обшая ошибка
@@ -602,7 +607,7 @@ namespace TepCommon
         /// </summary>
         new public static void GetUsers(ref DbConnection conn, string where, string orderby, out DataTable users, out int err)
         {
-            
+
             err = 0;
             users = null;
 
@@ -692,45 +697,60 @@ namespace TepCommon
                 return xmlUsers;
             }
         }
-
-        /// <summary>
-        /// Метод для получения словаря со значениями прав доступа
-        /// </summary>
-        /// <param name="iListenerId">Идентификатор для подключения к БД</param>
-        /// <param name="id_role">ИД роли</param>
-        /// <param name="id_user">ИД пользователя</param>
-        /// <param name="bIsRole">Пользователь или роль</param>
-        /// <returns>Словарь со значениями</returns>
-        public static Dictionary<int, UNIT_VALUE> GetDictProfileItem(DbConnection dbConn, int id_role, int id_user, bool bIsRole, DataTable allProfiles)
-        {
-            Dictionary<int, UNIT_VALUE> dictPrifileItem = null;
-
-            dictPrifileItem = HTepProfilesXml.GetProfileItem;
-
-            return dictPrifileItem;
-        }
-
-
+        
         public class HTepProfilesXml
         {
+            public static string m_nameTableProfilesData = @"profiles";
             public static string m_nameTableProfilesUnit = @"profiles_unit";
 
             protected static DataTable m_tblValues;
             protected static DataTable m_tblTypes;
             static XmlDocument xml_tree;
 
-            public static Dictionary<string, DictElement> DictRoles,
-                DictUsers;
+            /// <summary>
+            /// Словарь с Профайлом для ролей
+            /// </summary>
+            public static Dictionary<string, DictElement> DictRoles;
 
-            public static Dictionary<string, XmlDocument> XmlRoles,
-                XmlUsers;
+            /// <summary>
+            /// Словарь с Профайлом для пользователей
+            /// </summary>
+            public static Dictionary<string, DictElement> DictUsers;
+
+            /// <summary>
+            /// Словарь с XML для каждой роли
+            /// </summary>
+            public static Dictionary<string, XmlDocument> XmlRoles;
+
+            /// <summary>
+            /// Словарь с XML для каждого пользователя
+            /// </summary>
+            public static Dictionary<string, XmlDocument> XmlUsers;
 
             static DataTable dtProfiles_Orig, dtProfiles_Edit;
 
+            /// <summary>
+            /// Тип XML (роль/пользователь)
+            /// </summary>
             public enum Type : int { User, Role, Count };
+
+            /// <summary>
+            /// Типы элементов
+            /// </summary>
             public enum Component : int { None, Panel, Item, Context, Count };
 
             #region GetDict
+
+            /// <summary>
+            /// Возвращает таблицу с профайлами для ролей и пользователей
+            /// </summary>
+            public static DataTable GetTableAllProfile
+            {
+                get
+                {
+                    return dtProfiles_Orig;
+                }
+            }
 
             /// <summary>
             /// Получить таблицу из БД
@@ -743,7 +763,7 @@ namespace TepCommon
                 int err = 0;
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM [profiles_new]";
+                string query = "SELECT * FROM ["+ m_nameTableProfilesData + "]";
                 dt = new DataTable();
                 dt = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
                 DbSources.Sources().UnRegister(idListener);
@@ -869,7 +889,7 @@ namespace TepCommon
                     profilePanel = profileUser.Objects[id_panel.ToString()];
                 }
 
-                    return profilePanel;
+                return profilePanel;
             }
 
             /// <summary>
@@ -909,13 +929,16 @@ namespace TepCommon
 
                 return profileUser;
             }
-            
+
             #endregion
 
+            /// <summary>
+            /// Конструктор
+            /// </summary>
             public HTepProfilesXml()
             {
             }
-            
+
             /// <summary>
             /// Обновление данных 
             /// </summary>
@@ -936,6 +959,12 @@ namespace TepCommon
 
             #region EditXML
 
+            /// <summary>
+            /// Метод для редактирования аттрибута текущего пользователя
+            /// </summary>
+            /// <param name="value">Значение</param>
+            /// <param name="id_unit">ИД атрибута</param>
+            /// <param name="connSet">ConnectionSettings для сохранения</param>
             public static void EditAttr(string value, int id_unit, ConnectionSettings connSet)
             {
                 ParamComponent parComp = new ParamComponent();
@@ -948,13 +977,18 @@ namespace TepCommon
                 {
                     doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
 
                 }
-                saveXml(connSet, doc, Id, Type.User);
+                SaveXml(connSet, doc, Id, Type.User);
             }
 
+            /// <summary>
+            /// Метод для добавления активной панели
+            /// </summary>
+            /// <param name="idPanel">ИД панели</param>
+            /// <param name="connSet">ConnectionSettings для сохранения</param>
             public static void AddActivePanel(int idPanel, ConnectionSettings connSet)
             {
                 ParamComponent parComp = new ParamComponent();
@@ -965,9 +999,14 @@ namespace TepCommon
 
                 XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
 
-                saveXml(connSet, doc, Id, Type.User);
+                SaveXml(connSet, doc, Id, Type.User);
             }
 
+            /// <summary>
+            /// Метод для удаления активной панели
+            /// </summary>
+            /// <param name="idPanel">ИД панели</param>
+            /// <param name="connSet">ConnectionSettings для сохранения</param>
             public static void DelActivePanel(int idPanel, ConnectionSettings connSet)
             {
                 ParamComponent parComp = new ParamComponent();
@@ -985,11 +1024,22 @@ namespace TepCommon
                 parComp.Value = string.Join(",", add_pan);
                 XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
 
-                saveXml(connSet, doc, Id, Type.User);
+                SaveXml(connSet, doc, Id, Type.User);
             }
 
+            /// <summary>
+            /// Метод для редактирования параметра в XML
+            /// </summary>
+            /// <param name="doc">XML документ</param>
+            /// <param name="id">ИД пользователя/роли</param>
+            /// <param name="type">Тип XML (пользователь/роль)</param>
+            /// <param name="comp">Тип изменяемого компонента</param>
+            /// <param name="parComp">Структура с ИД компонентов и изменяемым значением</param>
+            /// <returns>XML документ</returns>
             public static XmlDocument EditAttr(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
             {
+                XmlAttribute edit_attr = null;
+                XmlNode edit_node = null;
                 if (doc != null)
                 {
                     try
@@ -997,45 +1047,124 @@ namespace TepCommon
                         switch (comp)
                         {
                             case Component.Context:
-                                doc[type.ToString()]
+
+                                foreach (XmlAttribute attr in doc[type.ToString()]
                                     ["_" + id.ToString()]
                                     ["_" + parComp.ID_Panel.ToString()]
                                     ["_" + parComp.ID_Item.ToString()]
                                     ["_" + parComp.Context]
-                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
-                                break;
-                            case Component.Item:
-                                doc[type.ToString()]
+                                    .Attributes)
+                                {
+                                    if (attr.LocalName == "_" + parComp.ID_Unit.ToString())
+                                    {
+                                        edit_attr = attr;
+                                        break;
+                                    }
+                                }
+
+                                edit_node = doc[type.ToString()]
                                     ["_" + id.ToString()]
                                     ["_" + parComp.ID_Panel.ToString()]
                                     ["_" + parComp.ID_Item.ToString()]
-                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                    ["_" + parComp.Context];
+
+                                
+                                break;
+                            case Component.Item:
+                                
+                                foreach (XmlAttribute attr in doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()]
+                                    ["_" + parComp.ID_Item.ToString()]
+                                    .Attributes)
+                                {
+                                    if (attr.LocalName == "_" + parComp.ID_Unit.ToString())
+                                    {
+                                        edit_attr = attr;
+                                        break;
+                                    }
+                                }
+                                edit_node = doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()]
+                                    ["_" + parComp.ID_Item.ToString()];
+
 
                                 break;
                             case Component.Panel:
-                                doc[type.ToString()]
+
+                                foreach (XmlAttribute attr in doc[type.ToString()]
                                     ["_" + id.ToString()]
                                     ["_" + parComp.ID_Panel.ToString()]
-                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                    .Attributes)
+                                {
+                                    if (attr.LocalName == "_" + parComp.ID_Unit.ToString())
+                                    {
+                                        edit_attr = attr;
+                                        break;
+                                    }
+                                }
+
+                                edit_node = doc[type.ToString()]
+                                    ["_" + id.ToString()]
+                                    ["_" + parComp.ID_Panel.ToString()];
 
                                 break;
 
                             case Component.None:
-                                doc[type.ToString()]
+
+                                foreach (XmlAttribute attr in doc[type.ToString()]
                                     ["_" + id.ToString()]
-                                    .Attributes["_" + parComp.ID_Unit.ToString()].Value = parComp.Value;
+                                    .Attributes)
+                                {
+                                    if (attr.LocalName == "_" + parComp.ID_Unit.ToString())
+                                    {
+                                        edit_attr = attr;
+                                        break;
+                                    }
+                                }
+
+                                edit_node = doc[type.ToString()]
+                                    ["_" + id.ToString()];
+
                                 break;
                         }
+
+                        if (edit_attr != null)
+                        {
+                            if (parComp.Value != string.Empty & parComp.Value!=null)
+                                edit_attr.Value = parComp.Value;
+                            else
+                            {
+                                edit_node.Attributes.Remove(edit_attr);
+                            }
+                        }
+                        else
+                        {
+                            XmlAttribute new_attr = doc.CreateAttribute("_" + parComp.ID_Unit.ToString());
+                            new_attr.Value = parComp.Value;
+                            edit_node
+                            .Attributes.Append(new_attr);
+                        }
                     }
-                    catch
+                    catch (Exception e)
                     {
-                        
+
                     }
                 }
                 return doc;
-                
+
             }
 
+            /// <summary>
+            /// Метод добавления компонента в XML
+            /// </summary>
+            /// <param name="doc">XML документ</param>
+            /// <param name="id">ИД пользователя/роли</param>
+            /// <param name="type">Тип XML (пользователь/роль)</param>
+            /// <param name="comp">Тип изменяемого компонента</param>
+            /// <param name="parComp">Структура с ИД компонентов и изменяемым значением</param>
+            /// <returns>XML документ</returns>
             public static XmlDocument AddElement(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
             {
                 XmlElement newElement;
@@ -1043,7 +1172,7 @@ namespace TepCommon
                     switch (comp)
                     {
                         case Component.Context:
-                            newElement = doc.CreateElement("_"+parComp.Context);
+                            newElement = doc.CreateElement("_" + parComp.Context);
 
                             doc[type.ToString()]
                                 ["_" + id.ToString()]
@@ -1072,7 +1201,60 @@ namespace TepCommon
                 return doc;
             }
 
-            private static void saveXml(ConnectionSettings connSet, XmlDocument doc, int id, Type type)
+            /// <summary>
+            /// Метод удаления компонента из XML
+            /// </summary>
+            /// <param name="doc">XML документ</param>
+            /// <param name="id">ИД пользователя/роли</param>
+            /// <param name="type">Тип XML (пользователь/роль)</param>
+            /// <param name="comp">Тип изменяемого компонента</param>
+            /// <param name="parComp">Структура с ИД компонентов и изменяемым значением</param>
+            /// <returns>XML документ</returns>
+            public static XmlDocument DelElement(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
+            {
+                if (doc != null)
+                    switch (comp)
+                    {
+                        case Component.Context:
+                            doc[type.ToString()]
+                                ["_" + id.ToString()]
+                                ["_" + parComp.ID_Panel.ToString()]
+                                ["_" + parComp.ID_Item.ToString()].RemoveChild(doc[type.ToString()]
+                                ["_" + id.ToString()]
+                                ["_" + parComp.ID_Panel.ToString()]
+                                ["_" + parComp.ID_Item.ToString()]["_" + parComp.Context]);
+                                
+                            break;
+                        case Component.Item:
+                            doc[type.ToString()]
+                                ["_" + id.ToString()]
+                                ["_" + parComp.ID_Panel.ToString()].RemoveChild(
+                            doc[type.ToString()]
+                                ["_" + id.ToString()]
+                                ["_" + parComp.ID_Panel.ToString()]
+                                ["_" + parComp.ID_Item.ToString()]);
+
+                            break;
+                        case Component.Panel:
+                            doc[type.ToString()]
+                                ["_" + id.ToString()].RemoveChild(
+                            doc[type.ToString()]
+                                ["_" + id.ToString()]
+                                ["_" + parComp.ID_Panel.ToString()]);
+                            break;
+                    }
+
+                return doc;
+            }
+
+            /// <summary>
+            /// Метод для сохранения определённой XML
+            /// </summary>
+            /// <param name="connSet">ConnectionSettings для сохранения</param>
+            /// <param name="doc">Сохраняемый документ</param>
+            /// <param name="id">ИД пользователя/роли</param>
+            /// <param name="type">Тип XML (пользователь/роль)</param>
+            public static void SaveXml(ConnectionSettings connSet, XmlDocument doc, int id, Type type)
             {
                 dtProfiles_Edit = new DataTable();
                 dtProfiles_Edit = dtProfiles_Orig.Copy();
@@ -1083,18 +1265,24 @@ namespace TepCommon
                         row["XML"] = doc.InnerXml;
                     }
                 }
-                
+
                 int err = 0;
                 int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
-                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn,"profiles_new", "ID_EXT, IS_ROLE", string.Empty,dtProfiles_Orig,dtProfiles_Edit, out err);
-                
+                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, m_nameTableProfilesData, "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
+
                 DbSources.Sources().UnRegister(idListener);
 
                 UpdateProfile(connSet);
             }
 
+            /// <summary>
+            /// Метод для сохранения внесенных изменений в таблице
+            /// </summary>
+            /// <param name="connSet">ConnectionSettings для сохранения</param>
+            /// <param name="arrDictOrig">Оригинальная таблица</param>
+            /// <param name="arrDictEdit">Измененная таблица</param>
             public static void SaveXml(ConnectionSettings connSet, Dictionary<string, XmlDocument>[] arrDictOrig, Dictionary<string, XmlDocument>[] arrDictEdit)
             {
                 int err = 0;
@@ -1109,104 +1297,36 @@ namespace TepCommon
                 dtProfiles_Orig = getDTfromDict(arrDictOrig);
                 dtProfiles_Edit = getDTfromDict(arrDictEdit);
 
-                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, "profiles_new", "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
+                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, m_nameTableProfilesData, "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
 
                 DbSources.Sources().UnRegister(idListener);
 
                 UpdateProfile(connSet);
             }
 
+            /// <summary>
+            /// Метод для получения таблицы из словаря с XML документами
+            /// </summary>
+            /// <param name="arrDict">Словарь с XML документами</param>
+            /// <returns>Таблицу</returns>
             private static DataTable getDTfromDict(Dictionary<string, XmlDocument>[] arrDict)
             {
                 DataTable dt = new DataTable();
                 dt = dtProfiles_Orig.Clone();
 
 
-                for (int i=0;i<(int)Type.Count; i++)
+                for (int i = 0; i < (int)Type.Count; i++)
                 {
-                    foreach(string key in arrDict[i].Keys)
+                    foreach (string key in arrDict[i].Keys)
                     {
-                        dt.Rows.Add(new object[] {key, i, arrDict[i][key].InnerXml });
+                        dt.Rows.Add(new object[] { key, i, arrDict[i][key].InnerXml });
                     }
                 }
 
 
                 return dt;
             }
-
-            /// <summary>
-            /// Метод для получения словаря с параметрами Profil'а для пользователя
-            /// </summary>
-            /// <param name="id_ext">ИД пользователя</param>
-            /// <param name="bIsRole">Флаг для определения роли</param>
-            /// <returns>Словарь с параметрами</returns>
-            public static Dictionary<int, UNIT_VALUE> GetProfileItem
-            {
-                get
-                {
-                    int id_unit = -1;
-                    DataRow[] unitRows = new DataRow[1]; ;
-
-                    Dictionary<int, UNIT_VALUE> dictRes = new Dictionary<int, UNIT_VALUE>();
-
-                    foreach (DataRow r in HTepUsers.GetTableProfileUnits.Rows)
-                    {
-                        id_unit = (int)r[@"ID"];
-
-                        if (id_unit < 4)
-                        {
-                            unitRows[0] = GetRowAllowed(id_unit);
-
-                            if (unitRows.Length == 1)
-                            {
-                                dictRes.Add(id_unit, new UNIT_VALUE() { m_value = unitRows[0][@"VALUE"].ToString().Trim(), m_idType = Convert.ToInt32(unitRows[0][@"ID_UNIT"]) });
-                            }
-                            else
-                                Logging.Logg().Warning(@"", Logging.INDEX_MESSAGE.NOT_SET);
-                        }
-                    }
-
-                    return dictRes;
-                }
-            }
-            
-            /// <summary>
-            /// Метод получения строки со значениями прав доступа
-            /// </summary>
-            /// <param name="id">ИД типа</param>
-            /// <param name="bIsRole"></param>
-            /// <returns></returns>
-            private static DataRow GetRowAllowed(int id)
-            {
-                DataRow objRes = null;
-
-                DataRow[] rowsAllowed = m_tblValues.Select("ID_UNIT='" + id + "' and ID_TAB=0");
-
-                switch (rowsAllowed.Length)
-                {
-                    case 1:
-                        objRes = rowsAllowed[0];
-                        break;
-                    case 2:
-                        //В табл. с настройками возможность 'id' определена как для "роли", так и для "пользователя"
-                        // требуется выбрать строку с 'IS_ROLE' == 0 (пользователя)
-                        // ...
-                        foreach (DataRow r in rowsAllowed)
-                            if (Int16.Parse(r[@"IS_ROLE"].ToString()) == Convert.ToInt32(m_bIsRole))
-                            {
-                                objRes = r;
-                                break;
-                            }
-                            else
-                                ;
-                        break;
-                    default: //Ошибка - исключение
-                        throw new Exception(@"HUsers.HProfiles::GetAllowed (id=" + id + @") - не найдено ни одной записи...");
-                }
-
-                return objRes;
-            }
-
+                        
             /// <summary>
             /// Структура с параметрами изменяемого(выбранного) элемента
             /// </summary>
@@ -1221,7 +1341,7 @@ namespace TepCommon
                 /// ИД объекта на вкладке
                 /// </summary>
                 public int ID_Item;
-                
+
                 /// <summary>
                 /// ИД параметра
                 /// </summary>
@@ -1231,7 +1351,7 @@ namespace TepCommon
                 /// Имя объекта вложенного в объект
                 /// </summary>
                 public string Context;
-                
+
                 /// <summary>
                 /// Значение параметра ID_Unit
                 /// </summary>
@@ -1245,7 +1365,7 @@ namespace TepCommon
             /// <param name="Type_Xml">Тип объекта</param>
             /// <param name="Id">ИД</param>
             /// <returns>XML документ</returns>
-            public XmlDocument GetXml(Type Type_Xml, int Id)
+            public static XmlDocument GetXml(Type Type_Xml, int Id)
             {
                 XmlDocument doc = new XmlDocument();
 
@@ -1260,6 +1380,23 @@ namespace TepCommon
                 }
 
                 return doc;
+            }
+
+            /// <summary>
+            /// Метод для получения новой XML(при создании пользователя/роли)
+            /// </summary>
+            /// <param name="Type_Xml">Тип создаваемой XML</param>
+            /// <param name="Id">ИД роли/пользователя</param>
+            /// <returns>XmlDocument</returns>
+            public static XmlDocument GetNewXml(Type Type_Xml, int Id)
+            {
+                XmlDocument doc = new XmlDocument();
+                doc.AppendChild(doc.CreateXmlDeclaration("1.0", "utf-8", null));
+                doc.AppendChild(doc.CreateElement(Type_Xml.ToString()));
+                doc[Type_Xml.ToString()].AppendChild(doc.CreateElement("_"+Id.ToString()));
+
+                return doc;
+
             }
 
             /// <summary>
