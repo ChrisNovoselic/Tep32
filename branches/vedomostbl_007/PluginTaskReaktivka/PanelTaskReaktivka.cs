@@ -48,7 +48,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// 
         /// </summary>
-        protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
+        protected HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         /// <summary>
         /// Перечисление - индексы таблиц со словарными величинами и проектными данными
         /// </summary>
@@ -63,7 +63,8 @@ namespace PluginTaskReaktivka
             COUNT
         }
         /// <summary>
-        /// 
+        /// перечисление параметров настройки 
+        /// отображения данных и формы
         /// </summary>
         protected enum PROFILE_INDEX
         {
@@ -152,7 +153,7 @@ namespace PluginTaskReaktivka
         DGVReaktivka m_dgvReak;
 
         /// <summary>
-        /// 
+        /// Конструктор
         /// </summary>
         /// <param name="iFunc"></param>
         public PanelTaskReaktivka(IPlugIn iFunc)
@@ -1831,13 +1832,15 @@ namespace PluginTaskReaktivka
                 foreach (HDataGridViewColumn col in Columns)
                 {
                     if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
+                    {
+                        parameterRows = source.Select(string.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
+
                         foreach (DataGridViewRow row in Rows)
                         {
+                            idAlg = (int)row.Cells["ALG"].Value;
+
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
-                                idAlg = (int)row.Cells["ALG"].Value;
-                                parameterRows = source.Select(string.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
-
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
                                     if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString() ==
@@ -1862,6 +1865,7 @@ namespace PluginTaskReaktivka
                                 row.Cells[iCol].Value = dbSumVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                     CultureInfo.InvariantCulture);
                         }
+                    }
 
                     iCol++;
                     dbSumVal = 0;
@@ -1989,7 +1993,7 @@ namespace PluginTaskReaktivka
             /// </summary>
             /// <param name="table">таблица для сортировки</param>
             /// <param name="sortStr">имя столбца/ов для сортировки</param>
-            /// <returns></returns>
+            /// <returns>отсортированная таблица</returns>
             private DataTable sortingTable(DataTable table, string colSort)
             {
                 DataView dView = table.DefaultView;

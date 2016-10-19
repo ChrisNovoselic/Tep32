@@ -1,14 +1,15 @@
-﻿//using Excel = Microsoft.Office.Interop.Excel;
-using HClassLibrary;
+﻿using HClassLibrary;
 using InterfacePlugIn;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using TepCommon;
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace PluginTaskVedomostBl
 {
@@ -133,7 +134,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
-        protected DataTable[] m_arTableDictPrjs;
+        protected static DataTable[] m_arTableDictPrjs;
         /// <summary>
         /// 
         /// </summary>
@@ -204,14 +205,14 @@ namespace PluginTaskVedomostBl
         /// </summary>
         protected DataTable m_TableOrigin
         {
-            get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
         /// <summary>
         /// 
         /// </summary>
         protected DataTable m_TableEdit
         {
-            get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
 
         /// <summary>
@@ -294,7 +295,8 @@ namespace PluginTaskVedomostBl
             /// 
             /// </summary>
             /// <param name="idComp"></param>
-            public delegate DataGridView GetDgvOfId(int idComp);
+            public delegate Control GetControl(INDEX_CONTROL_BASE indx);
+            public static GetControl _getControls;
             /// <summary>
             /// Событие - изменение выбора запрет/разрешение
             ///  для компонента/параметра при участии_в_расчете/отображении
@@ -328,7 +330,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             private void InitializeComponents()
             {
-                //initializeLayoutStyle();
+                _getControls = new GetControl(find);
                 ToolTip tlTipHeader = new ToolTip();
                 tlTipHeader.AutoPopDelay = 5000;
                 tlTipHeader.InitialDelay = 1000;
@@ -338,7 +340,6 @@ namespace PluginTaskVedomostBl
                 string strPartLabelButtonDropDownMenuItem = string.Empty;
                 int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
                     , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
-                //int posColdgvTEPValues = 6;
                 SuspendLayout();
                 posRow = 0;
                 //Период расчета - подпись
@@ -360,7 +361,7 @@ namespace PluginTaskVedomostBl
                 //
                 TableLayoutPanel tlp = new TableLayoutPanel();
                 tlp.AutoSize = true;
-                tlp.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
+                tlp.AutoSizeMode = AutoSizeMode.GrowOnly;
                 tlp.Controls.Add(lblCalcPer, 0, 0);
                 tlp.Controls.Add(cbxCalcPer, 0, 1);
                 tlp.Controls.Add(lblCalcTime, 1, 0);
@@ -369,13 +370,12 @@ namespace PluginTaskVedomostBl
                 this.SetColumnSpan(tlp, 4); this.SetRowSpan(tlp, 1);
                 //
                 TableLayoutPanel tlpValue = new TableLayoutPanel();
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
                 tlpValue.Dock = DockStyle.Fill;
                 tlpValue.AutoSize = true;
-                //tlpValue.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
                 ////Дата/время начала периода расчета - подпись
                 Label lBeginCalcPer = new Label();
                 lBeginCalcPer.Dock = DockStyle.Bottom;
@@ -386,7 +386,7 @@ namespace PluginTaskVedomostBl
 
                 ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(-(today - 1)), null);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
+                ctrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
                 tlpValue.Controls.Add(lBeginCalcPer, 0, 0);
                 tlpValue.Controls.Add(ctrl, 0, 1);
                 //Дата/время  окончания периода расчета - подпись
@@ -397,17 +397,17 @@ namespace PluginTaskVedomostBl
                 ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(cntDays - today)
                     , tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
+                ctrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
                 //              
                 tlpValue.Controls.Add(lEndPer, 0, 2);
                 tlpValue.Controls.Add(ctrl, 0, 3);
-                this.Controls.Add(tlpValue, 0, posRow = posRow + 1);
-                this.SetColumnSpan(tlpValue, 4); this.SetRowSpan(tlpValue, 1);
+                Controls.Add(tlpValue, 0, posRow = posRow + 1);
+                SetColumnSpan(tlpValue, 4); SetRowSpan(tlpValue, 1);
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
                 ctrl = new DropDownButton();
                 ctrl.Name = INDEX_CONTROL_BASE.BUTTON_LOAD.ToString();
-                ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
+                ctrl.ContextMenuStrip = new ContextMenuStrip();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
                 ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
@@ -428,41 +428,40 @@ namespace PluginTaskVedomostBl
                 TableLayoutPanel tlpButton = new TableLayoutPanel();
                 tlpButton.Dock = DockStyle.Fill;
                 tlpButton.AutoSize = true;
-                tlpButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-                tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+                tlpButton.AutoSizeMode = AutoSizeMode.GrowOnly;
+                tlpButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+                tlpButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
                 tlpButton.Controls.Add(ctrl, 0, 0);
                 tlpButton.Controls.Add(ctrlBsave, 1, 0);
                 tlpButton.Controls.Add(ctrlExp, 0, 2);
-                this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
-                this.SetColumnSpan(tlpButton, 4); this.SetRowSpan(tlpButton, 2);
+                Controls.Add(tlpButton, 0, posRow = posRow + 2);
+                SetColumnSpan(tlpButton, 4); SetRowSpan(tlpButton, 2);
                 //Признаки включения/исключения для отображения блока(ТГ)
-                ctrl = new System.Windows.Forms.Label();
+                ctrl = new Label();
                 ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Выбрать блок для отображения:";
+                (ctrl as Label).Text = @"Выбрать блок для отображения:";
                 TableLayoutPanel tlpChk = new TableLayoutPanel();
                 tlpChk.Controls.Add(ctrl, 0, 0);
                 //
                 ctrl = new TableLayoutPanelkVed();
-                //ctrl = new CheckedListBoxTaskReaktivka();
                 ctrl.Name = INDEX_CONTROL_BASE.TBLP_BLK.ToString();
                 ctrl.Dock = DockStyle.Top;
                 tlpChk.Controls.Add(ctrl, 0, 1);
                 //Признак для включения/исключения для отображения столбца(ов)
-                ctrl = new System.Windows.Forms.Label();
+                ctrl = new Label();
                 ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Включить/исключить столбец(ы) для отображения:";
+                (ctrl as Label).Text = @"Включить/исключить столбцы для отображения:";
                 tlpChk.Controls.Add(ctrl, 0, 2);
                 //
                 ctrl = new CheckedListBoxTaskVed();
-                ctrl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.showCheckBoxToolTip); ;
+                ctrl.MouseMove += new MouseEventHandler(showCheckBoxToolTip); ;
                 ctrl.Name = INDEX_CONTROL_BASE.CLBX_COL_VISIBLED.ToString();
                 ctrl.Dock = DockStyle.Top;
                 (ctrl as CheckedListBoxTaskVed).CheckOnClick = true;
                 tlpChk.Controls.Add(ctrl, 0, 3);
                 tlpChk.Dock = DockStyle.Fill;
                 tlpChk.AutoSize = true;
-                tlpChk.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
+                tlpChk.AutoSizeMode = AutoSizeMode.GrowOnly;
                 tlpChk.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
                 tlpChk.RowStyles.Add(new RowStyle(SizeType.Absolute, 75F));
                 tlpChk.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
@@ -487,7 +486,7 @@ namespace PluginTaskVedomostBl
             /// обработчик события - отображения всплывающей подсказки по группам
             /// </summary>
             /// <param name="sender"></param>
-            /// <param name="e"></param>
+            /// <param name="e">Аргумент события</param>
             private void showCheckBoxToolTip(object sender, MouseEventArgs e)
             {
                 CheckedListBoxTaskVed chkVed = (this.Controls.Find(INDEX_CONTROL_BASE.CLBX_COL_VISIBLED.ToString(), true)[0] as CheckedListBoxTaskVed);
@@ -633,11 +632,34 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
+            /// 
+            /// </summary>
+            public class RadioButtonBl : RadioButton
+            {
+                /// <summary>
+                /// список активных групп хидеров отображения
+                /// </summary>
+                public List<bool> m_arBoolCheck = new List<bool>();
+                /// <summary>
+                /// 
+                /// </summary>
+                public RadioButtonBl() : base()
+                {
+
+                }
+
+                private void initialize()
+                {
+
+                }
+            }
+
+            /// <summary>
             /// Класс для размещения элементов (блоков) выбора отображения значений
             /// </summary>
             protected class TableLayoutPanelkVed : TableLayoutPanel
             {
-                RadioButton[] arRb;
+                RadioButtonBl[] arRb;
                 /// <summary>
                 /// Список для хранения идентификаторов переменных
                 /// </summary>
@@ -675,16 +697,17 @@ namespace PluginTaskVedomostBl
                 /// <summary>
                 /// Добавить элемент в список
                 /// </summary>
-                /// <param name="text">Текст подписи элемента</param>
                 /// <param name="id">Идентификатор элемента</param>
+                /// <param name="text">Текст подписи элемента</param>
                 /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
-                public void AddItems(int[] id, string[] text, bool[] bChecked, RadioButton[] rb)
+                /// <param name="rb">массив элементов</param>
+                /// <param name="groupCheck">массив чеков группы</param>
+                public void AddItems(int[] id, string[] text, bool[] bChecked, RadioButtonBl[] rb, List<bool> groupCheck)
                 {
                     int indx = -1
                        , col = -1
                        , row = -1;
-                    if (arRb == null)
-                        arRb = rb;
+
                     RowCount = 1;
                     ColumnCount = 3;
                     RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
@@ -692,19 +715,23 @@ namespace PluginTaskVedomostBl
                     ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
                     ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
 
+                    if (arRb == null)
+                        arRb = rb;
+
                     for (int i = 0; i < arRb.Length; i++)
                     {
                         arRb[i].CheckedChanged += TableLayoutPanelkVed_CheckedChanged;
                         arRb[i].Text = text[i];
                         m_listId.Add(id[i]);
                         arRb[i].Checked = bChecked[i];
+                        arRb[i].m_arBoolCheck = groupCheck;
 
                         if (RowCount * ColumnCount < arRb.Length)
                         {
                             if (InvokeRequired)
                             {
                                 Invoke(new Action(() => RowCount++));
-                                Invoke(new Action(() => RowStyles.Add(new RowStyle(System.Windows.Forms.SizeType.Percent, 20F))));
+                                Invoke(new Action(() => RowStyles.Add(new RowStyle(SizeType.Percent, 20F))));
                             }
                             else
                             {
@@ -747,8 +774,15 @@ namespace PluginTaskVedomostBl
                 {
                     int id = SelectedId;
                     PictureBox pictrure;
+                    Control cntrl = _getControls(INDEX_CONTROL_BASE.CLBX_COL_VISIBLED);
 
-                    if ((sender as RadioButton).Checked == true)
+                    if ((sender as RadioButtonBl).m_arBoolCheck.Count != 0)
+                        (sender as RadioButtonBl).m_arBoolCheck.Clear();
+
+                    for (int i = 0; i < (cntrl as CheckedListBoxTaskVed).Items.Count; i++)
+                        (sender as RadioButtonBl).m_arBoolCheck.Add((cntrl as CheckedListBoxTaskVed).GetItemChecked(i));
+
+                    if ((sender as RadioButtonBl).Checked == true)
                     {
                         pictrure = m_getPicture(id);
                         pictrure.Visible = true;
@@ -883,7 +917,8 @@ namespace PluginTaskVedomostBl
                 string[] text,
                 INDEX_ID[] arIndexIdToAdd,
                 bool[] arChecked,
-                RadioButton[] rb)
+                RadioButtonBl[] rb
+                , List<bool> checkedGroup)
             {
                 Control ctrl = null;
 
@@ -892,7 +927,7 @@ namespace PluginTaskVedomostBl
                     ctrl = find(arIndexIdToAdd[i]);
 
                     if (!(ctrl == null))
-                        (ctrl as TableLayoutPanelkVed).AddItems(id_comp, text, arChecked, rb);
+                        (ctrl as TableLayoutPanelkVed).AddItems(id_comp, text, arChecked, rb, checkedGroup);
                     else
                         Logging.Logg().Error(@"PanelManagementTaskVed::AddComponentRB () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -917,7 +952,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="indxCtrl">Идентификатор элемента управления</param>
             /// <returns>элемент панели</returns>
-            protected Control find(INDEX_CONTROL_BASE indxCtrl)
+            public Control find(INDEX_CONTROL_BASE indxCtrl)
             {
                 Control ctrlRes = null;
 
@@ -1117,7 +1152,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Конструктор
             /// </summary>
-            /// <param name="viewActive"></param>
+            /// <param name="viewActive">активный грид</param>
             public PictureVedBl(DGVVedomostBl viewActive)
             {
                 InitializeComponents(viewActive);
@@ -1126,7 +1161,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Инициализация компонента
             /// </summary>
-            /// <param name="viewActive"></param>
+            /// <param name="viewActive">активный грид</param>
             private void InitializeComponents(DGVVedomostBl viewActive)
             {
                 int _drwH = (viewActive.Rows.Count) * viewActive.Rows[0].Height + 70;
@@ -1158,12 +1193,12 @@ namespace PluginTaskVedomostBl
             static Dictionary<int, List<string>> headerTop = new Dictionary<int, List<string>>(),
                 headerMiddle = new Dictionary<int, List<string>>();
             /// <summary>
-            /// соотношение заголовков
+            /// словарь соотношения заголовков
             /// </summary>
             static Dictionary<int, int[]> m_arIntTopHeader = new Dictionary<int, int[]> { },
             m_arMiddleCol = new Dictionary<int, int[]> { };
             /// <summary>
-            /// 
+            /// перечисление уровней заголовка грида
             /// </summary>
             public enum INDEX_HEADER
             {
@@ -1172,7 +1207,7 @@ namespace PluginTaskVedomostBl
                 COUNT
             }
             /// <summary>
-            /// 
+            /// ИдГрида
             /// </summary>
             public int m_idCompDGV;
             /// <summary>
@@ -1180,7 +1215,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             protected enum INDEX_SERVICE_COLUMN : uint { ALG = 0, DATE, COUNT }
             /// <summary>
-            /// 
+            /// словарь настроечных данных
             /// </summary>
             private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
             private Dictionary<int, COLUMN_PROPERTY> m_dictPropertyColumns;
@@ -1188,7 +1223,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Конструктор
             /// </summary>
-            /// <param name="nameDGV"></param>
+            /// <param name="nameDGV">имя грида</param>
             public DGVVedomostBl(string nameDGV)
             {
                 InitializeComponents(nameDGV);
@@ -1516,7 +1551,7 @@ namespace PluginTaskVedomostBl
             /// Добавить строку в таблицу
             /// </summary>
             /// <param name="rowProp"></param>
-            /// <param name="DaysInMonth"></param>
+            /// <param name="DaysInMonth">кол-во дней в месяце</param>
             public void AddRow(ROW_PROPERTY rowProp, int DaysInMonth)
             {
                 int i = -1;
@@ -1560,7 +1595,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// 
             /// </summary>
-            /// <param name="tblRatio"></param>
+            /// <param name="tblRatio">таблица параметров</param>
             public void SetRatio(DataTable tblRatio)
             {
                 m_dictRatio = new Dictionary<int, RATIO>();
@@ -1706,20 +1741,18 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Скрыть/показать столбцы из списка групп
             /// </summary>
-            /// <param name="dgvActive"></param>
-            /// <param name="listHeaderTop"></param>
-            /// <param name="isCheck"></param>
+            /// <param name="dgvActive">активное окно отображения данных</param>
+            /// <param name="listHeaderTop">лист с именами заголовков</param>
+            /// <param name="isCheck">проверка чека</param>
             public void HideColumns(DataGridView dgv, List<string> listHeaderTop, bool isCheck)
             {
                 foreach (var item in listHeaderTop)
                     foreach (HDataGridViewColumn col in Columns)
-                    {
                         if (col.m_topHeader == item)
                             if (isCheck)
                                 col.Visible = true;
                             else
                                 col.Visible = false;
-                    }
 
                 dgvConfigCol(dgv);
             }
@@ -1727,8 +1760,8 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// обработчик события перерисовки грида(построение шапки заголовка)
             /// </summary>
-            /// <param name="sender"></param>
-            /// <param name="e"></param>
+            /// <param name="sender">Объект, инициировавший событие</param>
+            /// <param name="ev">Аргумент события</param>
             void dataGridView1_Paint(object sender, PaintEventArgs e)
             {
                 int _indxCol = 0;
@@ -1805,8 +1838,8 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// обработчик события - перерисовки ячейки
             /// </summary>
-            /// <param name="sender"></param>0
-            /// <param name="e"></param>
+            /// <param name="sender">Объект, инициировавший событие</param>
+            /// <param name="ev">Аргумент события</param>
             static void dataGridView1_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
             {
                 if (e.RowIndex == -1 && e.ColumnIndex > -1)
@@ -1833,11 +1866,11 @@ namespace PluginTaskVedomostBl
                    , iQuality = -1
                    , _hoursOffSet
                    , iCol = 0//, iRow = 0
-                   , _vsRatioValue = -1
-                   , iRowCount = 0;
+                   , _vsRatioValue = -1;
                 double dblVal = -1F,
                     dbSumVal = 0;
-                DataRow[] parameterRows = null;
+                DataRow[] parameterRows = null,
+                    editRow = null;
 
                 _dtOriginVal = tableOrigin.Copy();
 
@@ -1848,28 +1881,35 @@ namespace PluginTaskVedomostBl
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
+                    parameterRows =
+                        m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(string.Format(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_COMP = " + col.m_iIdComp));
+
                     if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
+                    {
                         foreach (DataGridViewRow row in Rows)
                         {
+                            editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_ALG = " + parameterRows[row.Index]["ID"]));//???
+
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
                                 idAlg = col.m_iIdComp;
                                 _vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
 
-                                if (Convert.ToDateTime(_dtOriginVal.Rows[row.Index][@"WR_DATETIME"]).AddHours(_hoursOffSet).ToShortDateString() ==
+                                if (Convert.ToDateTime(parameterRows[row.Index][@"WR_DATETIME"]).AddHours(_hoursOffSet).ToShortDateString() ==
                                         row.Cells["Date"].Value.ToString())
                                 {
-                                    dblVal = ((double)_dtOriginVal.Rows[row.Index][@"VALUE"]);
+                                    dblVal = ((double)parameterRows[row.Index][@"VALUE"]);
                                     row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound,
                                            CultureInfo.InvariantCulture);
                                 }
                             }
                             else
-                            if (m_dictPropertyColumns[idAlg].m_Avg == 0)
+                        if (m_dictPropertyColumns[idAlg].m_Avg == 0)
                                 row.Cells[iCol].Value = sumVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
                             else
                                 row.Cells[iCol].Value = avgVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
                         }
+                    }
 
                     iCol++;
                 }
@@ -1878,8 +1918,8 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Получение суммы по столбцу
             /// </summary>
-            /// <param name="indxCol"></param>
-            /// <returns></returns>
+            /// <param name="indxCol">индекс столбца</param>
+            /// <returns>сумма по столбцу</returns>
             private double sumVal(int indxCol)
             {
                 double _sumValue = 0F;
@@ -1888,13 +1928,13 @@ namespace PluginTaskVedomostBl
                 {
                     foreach (DataGridViewRow row in Rows)
                         if (Rows.Count - 1 != row.Index)
-                            _sumValue += m_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
+                            if (row.Cells[indxCol].Value != null || row.Cells[indxCol].Value.ToString() != "")
+                                _sumValue += m_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
                 }
                 catch (Exception)
                 {
                     MessageBox.Show("Ошибка суммирования столбца!");
                 }
-             
 
                 return _sumValue;
             }
@@ -1902,8 +1942,8 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Получение среднего по столбцу
             /// </summary>
-            /// <param name="indxCol"></param>
-            /// <returns></returns>
+            /// <param name="indxCol">индекс столбца</param>
+            /// <returns>среднее по столбцу</returns>
             private double avgVal(int indxCol)
             {
                 int cntNum = 0;
@@ -1913,16 +1953,231 @@ namespace PluginTaskVedomostBl
                 try
                 {
                     foreach (DataGridViewRow row in Rows)
-                        _sumValue += m_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
-                    cntNum++;
+                        if (row.Cells[indxCol].Value != null || row.Cells[indxCol].Value.ToString() != "")
+                        {
+                            _sumValue += m_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
+                            cntNum++;
+                        }
                 }
                 catch (Exception)
                 {
                     MessageBox.Show("Ошибка усреднения столбца!");
                 }
-            
 
                 return _avgValue = _sumValue / cntNum;
+            }
+        }
+
+        /// <summary>
+        /// Класс формирования отчета Excel 
+        /// </summary>
+        public class ReportExcel
+        {
+            private Excel.Application m_excApp;
+            private Excel.Workbook m_workBook;
+            private Excel.Worksheet m_wrkSheet;
+            private object _missingObj = System.Reflection.Missing.Value;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            protected enum INDEX_DIVISION : int
+            {
+                UNKNOW = -1,
+                SEPARATE_CELL,
+                ADJACENT_CELL
+            }
+
+            /// <summary>
+            /// конструктор(основной)
+            /// </summary>
+            public ReportExcel()
+            {
+                m_excApp = new Excel.Application();
+                m_excApp.Visible = false;
+            }
+
+            /// <summary>
+            /// Подключение шаблона листа экселя и его заполнение
+            /// </summary>
+            /// <param name="dgView">отрбражение данных</param>
+            /// <param name="dtRange">дата</param>
+            public void CreateExcel(DataGridView dgView, DateTimeRange dtRange)
+            {
+                if (addWorkBooks())
+                {
+                    m_workBook.AfterSave += workBook_AfterSave;
+                    m_workBook.BeforeClose += workBook_BeforeClose;
+                    m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("Reaktivka");
+                    int indxCol = 1;
+
+                    try
+                    {
+                        for (int i = 0; i < dgView.Columns.Count; i++)
+                        {
+                            if (dgView.Columns[i].HeaderText != "")
+                            {
+                                Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
+
+                                foreach (Excel.Range cell in colRange.Cells)
+                                    if (Convert.ToString(cell.Value) != "")
+                                        if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
+                                        {
+                                            fillSheetExcel(colRange, dgView, i, cell.Row);
+                                            break;
+                                        }
+                                indxCol++;
+                            }
+                        }
+                        //
+                        setSignature(m_wrkSheet, dgView, dtRange);
+                        m_excApp.Visible = true;
+                        closeExcel();
+                        //System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+                    }
+                    catch (Exception e)
+                    {
+                        closeExcel();
+                        MessageBox.Show("Ошибка экспорта данных!");
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Подключение шаблона
+            /// </summary>
+            /// <returns>признак ошибки</returns>
+            private bool addWorkBooks()
+            {
+                string pathToTemplate = Path.GetFullPath(@"Template\TemplateReaktivka.xlsx");
+                object pathToTemplateObj = pathToTemplate;
+                bool bflag = true;
+                try
+                {
+                    m_workBook = m_excApp.Workbooks.Add(pathToTemplate);
+                }
+                catch (Exception exp)
+                {
+                    closeExcel();
+                    bflag = false;
+                    MessageBox.Show("Отсутствует шаблон для отчета Excel");
+                }
+                return bflag;
+            }
+
+            /// <summary>
+            /// Обработка события - закрытие экселя
+            /// </summary>
+            /// <param name="Cancel"></param>
+            void workBook_BeforeClose(ref bool Cancel)
+            {
+                closeExcel();
+            }
+
+            /// <summary>
+            /// обработка события сохранения книги
+            /// </summary>
+            /// <param name="Success"></param>
+            void workBook_AfterSave(bool Success)
+            {
+                closeExcel();
+            }
+
+            /// <summary>
+            /// Добавление подписи месяца
+            /// </summary>
+            /// <param name="exclWrksht">лист экселя</param>
+            /// <param name="dgv">грид</param>
+            /// <param name="dtRange">дата</param>
+            private void setSignature(Excel.Worksheet exclWrksht, DataGridView dgv, DateTimeRange dtRange)
+            {
+                Excel.Range exclTEC = exclWrksht.get_Range("B2");
+                Excel.Range exclRMonth = exclWrksht.get_Range("A2");
+                exclRMonth.Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
+            }
+
+            /// <summary>
+            /// Деление 
+            /// </summary>
+            /// <param name="headerTxt">строка</param>
+            /// <returns>часть строки</returns>
+            private string splitString(string headerTxt)
+            {
+                string[] spltHeader = headerTxt.Split(',');
+
+                if (spltHeader.Length > (int)INDEX_DIVISION.ADJACENT_CELL)
+                    return spltHeader[(int)INDEX_DIVISION.ADJACENT_CELL].TrimStart();
+                else
+                    return spltHeader[(int)INDEX_DIVISION.SEPARATE_CELL];
+            }
+
+            /// <summary>
+            /// Заполнение выбранного стоблца в шаблоне
+            /// </summary>
+            /// <param name="colRange">столбец в excel</param>
+            /// <param name="dgv">отображение</param>
+            /// <param name="indxColDgv">индекс столбца</param>
+            /// <param name="indxRowExcel">индекс строки в excel</param>
+            private void fillSheetExcel(Excel.Range colRange
+                , DataGridView dgv
+                , int indxColDgv
+                , int indxRowExcel)
+            {
+                int row = 0;
+
+                for (int i = indxRowExcel; i < colRange.Rows.Count; i++)
+                    if (((Excel.Range)colRange.Cells[i]).Value == null &&
+                        ((Excel.Range)colRange.Cells[i]).MergeCells.ToString() != "True")
+                    {
+                        row = i;
+                        break;
+                    }
+
+                for (int j = 0; j < dgv.Rows.Count; j++)
+                    if (dgv.Rows.Count - 1 != j)
+                    {
+                        colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
+                        row++;
+                    }
+                    else
+                    {
+                        deleteNullRow(colRange, row);
+
+                        if (Convert.ToString(((Excel.Range)colRange.Cells[row]).Value) == "")
+                            colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
+                    }
+
+            }
+
+            /// <summary>
+            /// Удаление пустой строки
+            /// </summary>
+            /// <param name="colRange">столбец в excel</param>
+            /// <param name="row">номер строки</param>
+            private void deleteNullRow(Excel.Range colRange, int row)
+            {
+                Excel.Range rangeCol = (Excel.Range)m_wrkSheet.Columns[1];
+
+                while (Convert.ToString(((Excel.Range)rangeCol.Cells[row]).Value) == "")
+                {
+                    Excel.Range rangeRow = (Excel.Range)m_wrkSheet.Rows[row];
+                    rangeRow.Delete(Excel.XlDeleteShiftDirection.xlShiftUp);
+                }
+            }
+
+            /// <summary>
+            /// вызов закрытия Excel
+            /// </summary>
+            private void closeExcel()
+            {
+                //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
+                //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+
+                m_excApp = null;
+                m_workBook = null;
+                m_wrkSheet = null;
+                GC.Collect();
             }
         }
 
@@ -2155,7 +2410,7 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// 
+        /// Конструктор
         /// </summary>
         /// <param name="iFunc"></param>
         public PanelTaskVedomostBl(IPlugIn iFunc)
@@ -2249,8 +2504,8 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Обработчик события - Признак Корректировка_включена/корректировка_отключена 
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         void PanelManagementVedomost_CheckedChanged(object sender, EventArgs e)
         {
 
@@ -2281,7 +2536,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Нахожджение активного DGV
         /// </summary>
-        /// <returns>активная вьюха</returns>
+        /// <returns>активная вьюха на панели</returns>
         private DataGridView getActiveView()
         {
             Control cntrl = new Control();
@@ -2292,6 +2547,29 @@ namespace PluginTaskVedomostBl
                         cntrl = dgv;
 
             return (cntrl as DataGridView);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="indx"></param>
+        /// <returns>контрол на панели</returns>
+        private Control getControl(INDEX_CONTROL indx)
+        {
+            Control cntrl = new Control();
+
+            cntrl = Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.TBLP_BLK.ToString(), true)[0];
+
+            //PanelManagementVedomost.find(PanelManagementVedomost.INDEX_CONTROL_BASE.TBLP_BLK);
+
+            //foreach (var item in )
+            //{
+
+            //}
+
+            cntrl = Controls.Find(indx.ToString(), true)[0];
+
+            return cntrl;
         }
 
         /// <summary>
@@ -2319,8 +2597,8 @@ namespace PluginTaskVedomostBl
         /// Обработчик события - добавления строк в грид
         /// (для изменение размера контролов)
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void DGVVedomostBl_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
         {
             ReSizeControls(sender as DataGridView);
@@ -2330,6 +2608,7 @@ namespace PluginTaskVedomostBl
         /// Возвращает пикчу по номеру
         /// </summary>
         /// <param name="idComp">ид номер грида</param>
+        /// <returns>активная пикча на панели</returns>
         public PictureBox GetPictureOfIdComp(int idComp)
         {
             int cnt = 0,
@@ -2362,6 +2641,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Возвращает по номеру
         /// </summary>
+        /// <returns>активный грид на панели</returns>
         public DataGridView GetDGVOfIdComp()
         {
             DataGridView cntrl = new DataGridView();
@@ -2377,6 +2657,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Возвращает idComp
         /// </summary>
+        /// <returns></returns>
         public int GetIdComp()
         {
             int _idComp = 0;
@@ -2409,7 +2690,7 @@ namespace PluginTaskVedomostBl
             err = 0;
             errMsg = string.Empty;
             string[] arstrItem;
-            RadioButton[] arRadioBtn;
+            PanelManagementVedomost.RadioButtonBl[] arRadioBtn;
             int[] arId_comp;
             int rbCnt = (int)INDEX_CONTROL.RADIOBTN_BLK1;
 
@@ -2419,15 +2700,15 @@ namespace PluginTaskVedomostBl
             };
             //инициализация массивов
             bool[] arChecked = new bool[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
-            arRadioBtn = new RadioButton[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
+            List<bool> arGroup = new List<bool>();
+            arRadioBtn = new PanelManagementVedomost.RadioButtonBl[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
             arId_comp = new int[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
             arstrItem = new string[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
-            arRadioBtn = new RadioButton[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
             //создание списка гридов по блокам
             foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
             {
                 //инициализация радиобаттанов
-                arRadioBtn[rbCnt - (int)INDEX_CONTROL.RADIOBTN_BLK1] = new RadioButton();
+                arRadioBtn[rbCnt - (int)INDEX_CONTROL.RADIOBTN_BLK1] = new PanelManagementVedomost.RadioButtonBl();
                 arRadioBtn[rbCnt - (int)INDEX_CONTROL.RADIOBTN_BLK1].Name = namePut.GetValue(rbCnt).ToString();
 
                 arId_comp[rbCnt - (int)INDEX_CONTROL.RADIOBTN_BLK1] = int.Parse(r[@"ID"].ToString());
@@ -2437,6 +2718,10 @@ namespace PluginTaskVedomostBl
                     arChecked[0] = true;
                 else
                     arChecked[rbCnt - (int)INDEX_CONTROL.RADIOBTN_BLK1] = false;
+
+                for (int i = 0; i < m_listHeader.Count; i++)
+                    arGroup.Add(true);
+
                 try
                 {
                     if (arId_comp[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count - 1] != 0)
@@ -2445,7 +2730,8 @@ namespace PluginTaskVedomostBl
                                   , arstrItem
                                   , arIndxIdToAdd
                                   , arChecked
-                                  , arRadioBtn);
+                                  , arRadioBtn
+                                  , arGroup);
                     rbCnt++;
                 }
                 catch (Exception e)
@@ -2459,6 +2745,8 @@ namespace PluginTaskVedomostBl
         /// Инициализация сетки данных
         /// </summary>
         /// <param name="namePut">массив имен элементов</param>
+        /// <param name="err">номер ошибки</param>
+        /// <param name="errMsg">текст ошибки</param>
         private void initializeDGV(Array namePut, out int err, out string errMsg)
         {
             err = 0;
@@ -2523,28 +2811,62 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="err">номер ошибки</param>
+        /// <param name="errMsg">текст ошибки</param>
+        private void initializeGroup(out int err, out string errMsg)
+        {
+            err = 0;
+            errMsg = string.Empty;
+            string strItem = string.Empty;
+            int id_comp;
+
+            INDEX_ID[] arIndxIdToAdd = new INDEX_ID[]
+            {
+                INDEX_ID.HGRID_VISIBLE
+            };
+
+            bool[] arChecked = new bool[m_listHeader.Count];
+
+           // getControl(INDEX_CONTROL.)
+
+            foreach (var list in m_listHeader)
+            {
+                id_comp = m_listHeader.IndexOf(list);
+                //m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_comp);
+                strItem = "Группа " + (id_comp + 1);
+                // установить признак отображения группы столбцов
+                arChecked[id_comp] = true;
+                (PanelManagementVed as PanelManagementVedomost).AddComponent(id_comp
+                    , strItem
+                    , list
+                    , arIndxIdToAdd
+                    , arChecked);
+            }
+        }
+
+        /// <summary>
         /// Инициализация объектов формы
         /// </summary>
-        /// <param name="err"></param>
-        /// <param name="errMsg"></param>
+        /// <param name="err">номер ошибки</param>
+        /// <param name="errMsg">текст ошибки</param>
         protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
             string strItem = string.Empty;
             Array namePut = Enum.GetValues(typeof(INDEX_CONTROL));
-            int i = -1,
-                id_comp;
+            int i = -1;
             Control ctrl = null;
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
             m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
-            int role = HTepUsers.Role;
 
-            INDEX_ID[] arIndxIdToAdd = new INDEX_ID[]
-            {
-                INDEX_ID.HGRID_VISIBLE
-            };
+            //INDEX_ID[] arIndxIdToAdd = new INDEX_ID[]
+            //{
+            //    INDEX_ID.HGRID_VISIBLE
+            //};
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
                 switch (id)
@@ -2575,22 +2897,23 @@ namespace PluginTaskVedomostBl
             }
             (PanelManagementVed as PanelManagementVedomost).Clear();
 
-            bool[] arChecked = new bool[m_listHeader.Count];
+            //bool[] arChecked = new bool[m_listHeader.Count];
             //
-            foreach (var list in m_listHeader)
-            {
-                id_comp = m_listHeader.IndexOf(list);
-                //m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_comp);
-                strItem = "Группа " + (id_comp + 1);
-                // установить признак отображения группы столбцов
-                arChecked[id_comp] = true;
-                (PanelManagementVed as PanelManagementVedomost).AddComponent(id_comp
-                    , strItem
-                    , list
-                    , arIndxIdToAdd
-                    , arChecked);
-            }
-            //
+            //foreach (var list in m_listHeader)
+            //{
+            //    id_comp = m_listHeader.IndexOf(list);
+            //    //m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_comp);
+            //    strItem = "Группа " + (id_comp + 1);
+            //    // установить признак отображения группы столбцов
+            //    arChecked[id_comp] = true;
+            //    (PanelManagementVed as PanelManagementVedomost).AddComponent(id_comp
+            //        , strItem
+            //        , list
+            //        , arIndxIdToAdd
+            //        , arChecked);
+            //}
+            //groupHeader
+            initializeGroup(out err, out errMsg);
             (PanelManagementVed as PanelManagementVedomost).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
             //Dgv's
             initializeDGV(namePut, out err, out errMsg);//???
@@ -2664,7 +2987,8 @@ namespace PluginTaskVedomostBl
         /// Получение визуальных настроек 
         /// для отображения данных на форме
         /// </summary>
-        /// <returns></returns>
+        /// <param name="idComp">идКомпонента</param>
+        /// <returns>словарь настроечных данных</returns>
         private Dictionary<string, List<int>> visualSettingsCol(int idComp)
         {
             int err = -1
@@ -2885,7 +3209,7 @@ namespace PluginTaskVedomostBl
             {
                 List<DataRow> listRes;
 
-                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select().ToList<DataRow>();
+                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select().ToList();
 
                 return listRes;
             }
@@ -2999,7 +3323,7 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// 
+        /// проверка выборки блока(для 1 и 6)
         /// </summary>
         protected bool WhichBlIsSelected
         {
@@ -3159,11 +3483,12 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="err"></param>
+        /// <param name="err">номер ошибки</param>
         protected override void recUpdateInsertDelete(out int err)
         {
             throw new NotImplementedException();
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -3175,8 +3500,8 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Обработчик события - нажатие кнопки сохранить
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Составной объект - календарь</param>
+        /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
         {
             int err = -1;
@@ -3199,8 +3524,8 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Обработчик события - нажатие кнопки загрузить(сыр.)
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Составной объект - календарь</param>
+        /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
             m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION;
@@ -3211,8 +3536,8 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Обработчик события - нажатие кнопки загрузить(арх.)
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Составной объект - календарь</param>
+        /// <param name="ev">Аргумент события</param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
             m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE;

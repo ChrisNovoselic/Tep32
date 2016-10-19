@@ -53,7 +53,8 @@ namespace PluginTaskAutobook
             COUNT
         }
         /// <summary>
-        /// 
+        /// перечисление параметров настройки 
+        /// отображения данных и формы
         /// </summary>
         protected enum PROFILE_INDEX
         {
@@ -106,7 +107,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Значения параметров сессии
         /// </summary>
-        protected TepCommon.HandlerDbTaskCalculate.SESSION Session { get { return HandlerDb._Session; } }
+        protected HandlerDbTaskCalculate.SESSION Session { get { return HandlerDb._Session; } }
         /// <summary>
         /// 
         /// </summary>
@@ -173,7 +174,10 @@ namespace PluginTaskAutobook
         /// Набор текстов для подписей для кнопок
         /// </summary>
         protected static string[] m_arButtonText = { @"Отправить", @"Сохранить", @"Загрузить" };
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>экземпляр класса</returns>
         protected override HandlerDbValues createHandlerDb()
         {
             return new HandlerDbTaskAutobookMonthValuesCalculate();
@@ -249,12 +253,18 @@ namespace PluginTaskAutobook
                         m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
                 }
             }
-
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="nameDGV">имя вьюхи</param>
             public DGVAutoBook(string nameDGV)
             {
                 InitializeComponents(nameDGV);
             }
-
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="nameDGV">имя вьюхи</param>
             private void InitializeComponents(string nameDGV)
             {
                 Name = nameDGV;
@@ -1087,7 +1097,7 @@ namespace PluginTaskAutobook
             public List<string> value;
 
             /// <summary>
-            /// 
+            /// Конструктор
             /// </summary>
             public TaskAutobookCalculate()
             {
@@ -2327,7 +2337,7 @@ namespace PluginTaskAutobook
         /// обработчик кнопки-архивные значения
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev"></param>
+        /// <param name="ev">Аргумент события</param>
         private void HPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
         {
             try
@@ -2389,11 +2399,11 @@ namespace PluginTaskAutobook
         /// </summary>
         protected DataTable m_TableOrigin
         {
-            get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
         protected DataTable m_TableEdit
         {
-            get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
 
         /// <summary>
@@ -2416,7 +2426,7 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// инициализация элементов на форме
         /// </summary>
         /// <param name="err">номер ошибки</param>
         /// <param name="errMsg">текст ошибки</param>
@@ -2680,7 +2690,7 @@ namespace PluginTaskAutobook
             {
                 List<DataRow> listRes;
 
-                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Select().ToList<DataRow>();
+                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Select().ToList();
 
                 return listRes;
             }
