@@ -903,19 +903,19 @@ namespace PluginTaskReaktivka
                 //
                 TableLayoutPanel tlp = new TableLayoutPanel();
                 tlp.AutoSize = true;
-                tlp.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
+                tlp.AutoSizeMode = AutoSizeMode.GrowOnly;
                 tlp.Controls.Add(lblCalcPer, 0, 0);
                 tlp.Controls.Add(cbxCalcPer, 0, 1);
                 tlp.Controls.Add(lblCalcTime, 1, 0);
                 tlp.Controls.Add(cbxCalcTime, 1, 1);
-                this.Controls.Add(tlp, 0, posRow);
-                this.SetColumnSpan(tlp, 4); this.SetRowSpan(tlp, 1);
+                Controls.Add(tlp, 0, posRow);
+                SetColumnSpan(tlp, 4); this.SetRowSpan(tlp, 1);
                 //
                 TableLayoutPanel tlpValue = new TableLayoutPanel();
-                tlpValue.RowStyles.Add(new RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(SizeType.Absolute, 35F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
                 tlpValue.Dock = DockStyle.Fill;
                 //tlpValue.AutoSize = true;
                 //tlpValue.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
@@ -1836,7 +1836,8 @@ namespace PluginTaskReaktivka
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
                                 idAlg = (int)row.Cells["ALG"].Value;
-                                parameterRows = source.Select(String.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
+                                parameterRows =
+                                source.Select(string.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
 
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
@@ -1883,14 +1884,13 @@ namespace PluginTaskReaktivka
                 idAlg = (int)Rows[indxRow].Cells[0].Value;
 
                 foreach (DataGridViewRow row in Rows)
-                    if (row.Cells[indxCol].Value != null)
-                        if (Rows.Count - 1 != row.Index)
-                            if (double.TryParse(row.Cells[indxCol].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
-                                sumValue += value;
-                            else;
-                        else
-                            row.Cells[indxCol].Value = sumValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                        CultureInfo.InvariantCulture);
+                    if (Rows.Count - 1 != row.Index)
+                        if (double.TryParse(row.Cells[indxCol].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+                            sumValue += value;
+                        else;
+                    else
+                        row.Cells[indxCol].Value = sumValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                    CultureInfo.InvariantCulture);
 
                 formatCell();
             }
@@ -1970,15 +1970,14 @@ namespace PluginTaskReaktivka
                     if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                         foreach (DataGridViewRow row in Rows)
                         {
-                            if (row.Cells[iCol].Value != null)
-                                if (row.Index != row.DataGridView.RowCount - 1)
-                                    if (double.TryParse(row.Cells[iCol].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out dblVal))
-                                    {
-                                        idAlg = (int)row.Cells["ALG"].Value;
-                                        vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                        row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                                    CultureInfo.InvariantCulture);
-                                    }
+                            if (row.Index != row.DataGridView.RowCount - 1)
+                                if (row.Cells[iCol].Value.ToString() != "")
+                                {
+                                    idAlg = (int)row.Cells["ALG"].Value;
+                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                    row.Cells[iCol].Value = AsParseToF(row.Cells[iCol].Value.ToString()).ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
+                                                CultureInfo.InvariantCulture);
+                                }
                         }
                     iCol++;
                 }
@@ -2011,13 +2010,55 @@ namespace PluginTaskReaktivka
             {
                 int quality = 0;
 
-                origin = sortingTable(origin, "WR_DATETIME, ID_PUT");
+                origin = sortingTable(origin, "ID_PUT, WR_DATETIME");
 
                 if (origin.Rows[i]["Value"].ToString() != editValue.ToString())
                     quality = 1;
 
                 return quality;
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static float AsParseToF(string value)
+        {
+            int _indxChar = 0;
+            string _sepReplace = string.Empty;
+            bool bFlag = true;
+            //char[] _separators = { ' ', ',', '.', ':', '\t'};
+            //char[] letters = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).ToArray();
+            float fValue = 0;
+
+            foreach (char item in value.ToCharArray())
+            {
+                if (!char.IsDigit(item))
+                    if (char.IsLetter(item))
+                        value = value.Remove(_indxChar, 1);
+                    else
+                        _sepReplace = value.Substring(_indxChar, 1);
+                else
+                    _indxChar++;
+
+                switch (_sepReplace)
+                {
+                    case ".":
+                    case ",":
+                    case " ":
+                    case ":":
+                        float.TryParse(value.Replace(_sepReplace, "."), NumberStyles.Float, CultureInfo.InvariantCulture, out fValue);
+                        bFlag = false;
+                        break;
+                }
+            }
+
+            if (bFlag)
+                fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+
+            return fValue;
         }
 
         /// <summary>
@@ -2416,8 +2457,8 @@ namespace PluginTaskReaktivka
         /// </summary>
         private void setValues()
         {
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
+            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
         }
 
         /// <summary>
@@ -2501,9 +2542,9 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// разбор данных по разным табилца(взависимости от месяца)
         /// </summary>
-        /// <param name="nameTable">имя таблицы</param>
         /// <param name="origin">оригинальная таблица</param>
         /// <param name="edit">таблица с данными</param>
+        /// <param name="nameTable">имя таблицы</param>
         /// <param name="unCol">столбец, неучаствующий в InsertUpdate</param>
         /// <param name="err">номер ошибки</param>
         private void sortingDataToTable(DataTable origin

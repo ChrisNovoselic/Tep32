@@ -501,7 +501,7 @@ namespace TepCommon
                     + @" JOIN [timezones] tz ON s.ID_TIMEZONE = tz.ID"
                     +
                         //@" WHERE [ID_USER]=" + HTepUsers.Id
-                        @" WHERE [ID]=" + _Session.m_Id
+                        @" WHERE  s.[ID]=" + _Session.m_Id
                         ;
             }
         }
