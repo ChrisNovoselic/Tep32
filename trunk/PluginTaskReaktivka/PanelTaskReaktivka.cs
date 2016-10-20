@@ -1937,14 +1937,14 @@ namespace PluginTaskReaktivka
                                         quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
 
                                         dtSourceEdit.Rows.Add(new object[]
-                                    {
-                                        col.m_iIdComp
-                                        , idSession
-                                        , quality
-                                        , valueToRes
-                                        , dtVal.AddMinutes(-m_currentOffSet).ToString("F",dtSourceEdit.Locale)
-                                        , i
-                                    });
+                                        {
+                                            col.m_iIdComp
+                                            , idSession
+                                            , quality
+                                            , valueToRes
+                                            , dtVal.AddMinutes(-m_currentOffSet).ToString("F",dtSourceEdit.Locale)
+                                            , i
+                                        });
                                         i++;
                                     }
                         }
