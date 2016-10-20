@@ -550,7 +550,7 @@ namespace PluginTaskAutobook
                                         if (row.Cells["DATE"].Value.ToString() ==
                                         Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())
                                         {
-                                            dblVal = correctingValues(Math.Pow(10F, vsRatioValue)
+                                            dblVal = correctingValues(Math.Pow(10F,-1* vsRatioValue)
                                                 , dr_Values[p]["VALUE"]
                                                 , col.Name
                                                 , ref bflg
