@@ -830,7 +830,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="type">тип задачи</param>
         /// <param name="err">Индентификатор ошибки</param>
-        protected override void calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, out int err)
+        protected override void calculate(TaskCalculate.TYPE type, out int err)
         {
             err = 0;
         }
@@ -940,21 +940,21 @@ namespace PluginTaskAutobook
             strErr = string.Empty;
             string strQuery = string.Empty;
 
-            if ((arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
-                && (arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
+            if ((arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
+                && (arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
             {
                 //Вставить строку с идентификатором новой сессии
                 insertIdSession(idFPanel, cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
+                insertInValues(arTableValues[(int)INDEX_TABLE_VALUES.SESSION], out err);
 
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
                     + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                arTableValues[(int)INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
             else
                 Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -1152,7 +1152,7 @@ namespace PluginTaskAutobook
             bool bEndMonthBoudary = false;
 
             DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMonths(-startMonth)
-                , dtEnd = _Session.m_rangeDatetime.End.AddDays(1);
+                , dtEnd = _Session.m_rangeDatetime.Begin.AddYears(1).AddDays(1);
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
 
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);

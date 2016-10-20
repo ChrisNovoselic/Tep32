@@ -530,7 +530,7 @@ namespace PluginTaskAutobook
                                 {
                                     dblVal = Convert.ToDouble(dr_CorValues[t]["VALUE"]);
                                     vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                    dblVal *= Math.Pow(10F, -1 * vsRatioValue);
+                                    dblVal *= Math.Pow(10F, 1 * vsRatioValue);
 
                                     row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, CultureInfo.InvariantCulture);
                                 }
@@ -558,7 +558,7 @@ namespace PluginTaskAutobook
                                                 , typeValues);
 
                                             vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                            dblVal *= Math.Pow(10F, -1 * vsRatioValue);
+                                            dblVal *= Math.Pow(10F, 1 * vsRatioValue);
 
                                             row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                                 CultureInfo.InvariantCulture);
@@ -671,12 +671,12 @@ namespace PluginTaskAutobook
                 for (int i = 0; i < Rows.Count - 1; i++)
                 {
                     increment = increment + planDay;
-                    dbValue = increment * Math.Pow(10F, -1 * vsRatioValue);
+                    dbValue = increment * Math.Pow(10F, 1 * vsRatioValue);
                     Rows[i].Cells["PlanSwen"].Value = dbValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                              CultureInfo.InvariantCulture);
                 }
 
-                dbValue = float.Parse(value) * Math.Pow(10F, -1 * vsRatioValue);
+                dbValue = float.Parse(value) * Math.Pow(10F, 1 * vsRatioValue);
 
                 Rows[DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month) - 1].Cells["PlanSwen"].Value =
                     dbValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, CultureInfo.InvariantCulture);
@@ -950,14 +950,14 @@ namespace PluginTaskAutobook
                                 Rows[i].Cells["Date"].Value == Rows[e.RowIndex].Cells["Date"].Value)
                             {
 
-                                valueToRes = AsParseToF(e.Value.ToString()) * Math.Pow(10F, 1 * vsRatioValue);
+                                valueToRes = AsParseToF(e.Value.ToString()) * Math.Pow(10F, -1 * vsRatioValue);
                                 //double.Parse(e.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture) //
                                 idComp = cols.m_iIdComp;
                             }
                             else
                                 if (double.TryParse(Rows[i].Cells[col.Index].Value.ToString(), out valueToRes))
                             {
-                                valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                                valueToRes *= Math.Pow(10F, -1 * vsRatioValue);
                                 idComp = col.m_iIdComp;
                             }
                             else
@@ -1014,7 +1014,7 @@ namespace PluginTaskAutobook
                             dtRes = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
 
                             if (double.TryParse(row.Cells[col.Index].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueToRes))
-                                valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                                valueToRes *= Math.Pow(10F, -1 * vsRatioValue);
                             else
                                 valueToRes = -1;
 
@@ -1068,7 +1068,7 @@ namespace PluginTaskAutobook
 
                                 if (double.TryParse(row.Cells[col.Index].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueToRes))
                                 {
-                                    valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                                    valueToRes *= Math.Pow(10F, -1 * vsRatioValue);
 
                                     dtSourceEdit.Rows.Add(new object[]
                                     {
@@ -1618,8 +1618,8 @@ namespace PluginTaskAutobook
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             AutoBookCalc = new TaskAutobookCalculate();
 
-            m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponent();
 
@@ -2056,7 +2056,7 @@ namespace PluginTaskAutobook
 
             string toSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
             DateTime dtSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CALENDAR.ToString(), true)[0] as DateTimePicker).Value;
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = m_dgvAB.FillTableValueDay();
+            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = m_dgvAB.FillTableValueDay();
             //
             m_rptsNSS.SendMailToNSS(m_TableEdit, dtSend, toSend);
         }

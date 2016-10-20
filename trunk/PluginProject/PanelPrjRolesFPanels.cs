@@ -559,7 +559,9 @@ namespace PluginProject
 
                                 foreach (XmlAttribute attr in xml.ChildNodes[1].ChildNodes[0]["_" + comp.ID_Panel.ToString()]["_" + comp.ID_Item.ToString()]["_" + e.Node.Text.Split(' ')[1]].Attributes)
                                 {
-                                    newNode.Attributes.Append(attr);
+                                    XmlAttribute new_attr = xml.CreateAttribute(attr.LocalName);
+                                    new_attr.Value = attr.Value;
+                                    newNode.Attributes.Append(new_attr);
                                 }
 
                                 foreach (XmlNode node in xml.ChildNodes[1].ChildNodes[0]["_" + comp.ID_Panel.ToString()]["_" + comp.ID_Item.ToString()]["_" + e.Node.Text.Split(' ')[1]])

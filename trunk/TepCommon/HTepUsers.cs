@@ -439,10 +439,11 @@ namespace TepCommon
 
                     foreach (string rAlg in dictProfile.Keys)
                     {
+                        ratio = 0;
+                        round = 0;
+
                         foreach (string idUnit in dictProfile[rAlg].Attributes.Keys)
                         {
-                            ratio = 0;
-                            round = 0;
                             switch ((ID_ALLOWED)short.Parse(idUnit))
                             {
                                 case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
