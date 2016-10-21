@@ -2337,33 +2337,25 @@ namespace PluginTaskAutobook
         /// <param name="ev"></param>
         private void HPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
         {
-            try
-            {
-                m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE;
-                onButtonLoadClick(m_ViewValues);
-            }
-            catch (Exception)
-            {
-
-            }
-
+            m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE;
+            onButtonLoadClick();
         }
 
         /// <summary>
         /// оброботчик события кнопки
         /// </summary>
-        protected virtual void onButtonLoadClick(HandlerDbTaskCalculate.INDEX_TABLE_VALUES index)
+        protected virtual void onButtonLoadClick()
         {
             // ... - загрузить/отобразить значения из БД
-            switch (index)
+            switch (m_ViewValues)
             {
                 case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN:
                     break;
                 case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION:
-                    updateDataValues(index);
+                    updateDataValues(m_ViewValues);
                     break;
                 case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE:
-                    loadArchValues(index);
+                    loadArchValues(m_ViewValues);
                     break;
                 case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT:
                     break;
@@ -2380,7 +2372,7 @@ namespace PluginTaskAutobook
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
             m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION;
-            onButtonLoadClick(m_ViewValues);
+            onButtonLoadClick();
         }
 
         /// <summary>
@@ -2611,8 +2603,6 @@ namespace PluginTaskAutobook
             string n_alg = string.Empty;
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
-            //
-            settingDateRange();
             Session.SetRangeDatetime(dtBegin, dtEnd);
             // очистить содержание представления
             if (m_bflgClear)
@@ -2668,8 +2658,6 @@ namespace PluginTaskAutobook
                     });
                 }
             }
-            //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
-            //
             m_currentOffSet = Session.m_curOffsetUTC;
             m_bflgClear = true;
         }
@@ -2699,6 +2687,8 @@ namespace PluginTaskAutobook
                 (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(cntDays - today);
 
             PanelManagementAB.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
+
+            //m_bflgDTRange = false;
 
         }
 
@@ -2801,9 +2791,9 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// обработку события - изменение начала/окончания даты/времени
         /// </summary>
-        /// <param name="active"></param>
+        /// <param name="active">параметр активации</param>
         protected void activateDateTimeRangeValue_OnChanged(bool active)
         {
             if (!(PanelManagementAB == null))
@@ -2895,11 +2885,15 @@ namespace PluginTaskAutobook
             valuesFence();
             Control ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
 
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(
+            m_arTableOrigin[(int)m_ViewValues] = getStructurOutval(
                 GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value), out err);
 
-            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            HandlerDb.SaveResOut(m_TableOrigin, m_TableEdit, (ctrl as ComboBox).SelectedIndex, out err);
+            m_arTableEdit[(int)m_ViewValues] = HandlerDb.SaveResOut(m_arTableOrigin[(int)m_ViewValues]
+                , m_arTableEdit[(int)m_ViewValues]
+                , (ctrl as ComboBox).SelectedIndex
+                , out err);
+
+            base.HPanelTepCommon_btnSave_Click(obj, ev);
 
             if (m_TableEdit.Rows.Count > 0)
                 //save вх. значений
@@ -2963,7 +2957,7 @@ namespace PluginTaskAutobook
         {
             err = -1;
             //
-            sortingDataToTable(HandlerDb.GetDataOutval(HandlerDb.getDateTimeRangeExtremeVal(), out err)
+            sortingDataToTable(HandlerDb.GetDataOutvalFull(HandlerDb.getDateTimeRangeExtremeVal(), out err)
                 , m_TableEdit
                 , GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value)
                 , @""
@@ -3093,4 +3087,3 @@ namespace PluginTaskAutobook
         }
     }
 }
-
