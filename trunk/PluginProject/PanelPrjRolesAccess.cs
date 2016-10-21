@@ -349,7 +349,7 @@ namespace PluginProject
 
         protected void dgvProp_CellEndEdit(object sender, DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventArgs e)
         {
-            string id = m_arr_UserRolesTable[(int)ID_Table.Panels].Select(@"DESCRIPTION='" + e.m_Header_name + @"'")[0]["ID"].ToString();
+            string id = e.m_Header_name.Trim();//m_arr_UserRolesTable[(int)ID_Table.Panels].Select(@"DESCRIPTION='" + e.m_Header_name + @"'")[0]["ID"].ToString();
             object[] obj = new object[2];
             if (m_type_sel_node == TreeView_Users.Type_Comp.Role)
             {
