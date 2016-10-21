@@ -704,6 +704,16 @@ namespace TepCommon
             public static string m_nameTableProfilesData = @"profiles";
             public static string m_nameTableProfilesUnit = @"profiles_unit";
 
+            /// <summary>
+            /// Перечисление индексов профайла
+            /// </summary>
+            public enum PROFILE_INDEX
+            {
+                UNKNOW = -1,
+                TIMEZONE = 101, MAIL, PERIOD, IS_SAVE_SOURCE,
+                RATIO = 201, ROUND, EDIT_COLUMN = 204,
+            }
+
             protected static DataTable m_tblValues;
             protected static DataTable m_tblTypes;
             static XmlDocument xml_tree;

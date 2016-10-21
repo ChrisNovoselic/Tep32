@@ -16,14 +16,9 @@ namespace PluginTaskAutobook
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
         /// <summary>
-        /// 
+        /// Перечисление - режимы работы вкладки
         /// </summary>
-        protected enum PROFILE_INDEX
-        {
-            UNKNOW = -1,
-            TIMEZONE = 101, MAIL, PERIOD,
-            RATIO = 201, ROUND, EDIT_COLUMN = 204,
-        }
+        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
         /// <summary>
         /// 
         /// </summary>
@@ -56,7 +51,7 @@ namespace PluginTaskAutobook
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1,
-            DGV_PLANEYAR,
+            DGV_PLANEYAR = 2,
             LABEL_DESC, LABEL_YEARPLAN
         }
         /// <summary>
@@ -362,6 +357,12 @@ namespace PluginTaskAutobook
                 }
             }
 
+            public void AddBRead(bool bRead)
+            {
+                foreach (HDataGridViewColumn col in Columns)
+                        col.ReadOnly = bRead;
+            }
+
             /// <summary>
             /// Добавить строку в таблицу
             /// </summary>
@@ -556,11 +557,10 @@ namespace PluginTaskAutobook
             public enum INDEX_CONTROL_BASE
             {
                 UNKNOWN = -1
-                    , BUTTON_SEND, BUTTON_SAVE,
-                BUTTON_LOAD,
-                TXTBX_EMAIL
-                , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN,
-                HDTP_END
+                    , BUTTON_SEND, BUTTON_SAVE, BUTTON_LOAD
+                    , TXTBX_EMAIL
+                    , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END
+                    , CHKBX_EDIT
                     , COUNT
             }
 
@@ -682,8 +682,17 @@ namespace PluginTaskAutobook
                 tlpButton.Controls.Add(ctrlBsave, 1, 0);
                 tlpButton.Controls.Add(ctrlBSend, 0, 1);
                 //tlpButton.Controls.Add(ctrlTxt, 1, 1);
-                this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
-                this.SetColumnSpan(tlpButton, 4); this.SetRowSpan(tlpButton, 2);
+                Controls.Add(tlpButton, 0, posRow = posRow + 2);
+                SetColumnSpan(tlpButton, 4); SetRowSpan(tlpButton, 2);
+                //Признак Корректировка_включена/корректировка_отключена 
+                CheckBox cBox = new CheckBox();
+                cBox.Name = INDEX_CONTROL_BASE.CHKBX_EDIT.ToString();
+                cBox.Text = @"Корректировка значений разрешена";
+                cBox.Dock = DockStyle.Top;
+                cBox.Enabled = false;
+                cBox.Checked = true;
+                Controls.Add(cBox, 0, posRow = posRow + 1);
+                SetColumnSpan(cBox, 4); SetRowSpan(cBox, 1);
 
                 ResumeLayout(false);
                 PerformLayout();
@@ -932,6 +941,47 @@ namespace PluginTaskAutobook
 
             m_dgvYear.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
+            try
+            {
+                if (m_dictProfile.Objects[((int)ID_PERIOD.YEAR).ToString()].Objects[((int)INDEX_CONTROL.DGV_PLANEYAR).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                {
+                    if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.YEAR).ToString()].Objects[((int)INDEX_CONTROL.DGV_PLANEYAR).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
+                    else
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+                }
+                else
+                    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+
+                if ((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
+                    m_dgvYear.AddBRead(false);
+                else
+                    m_dgvYear.AddBRead(true);
+
+            }
+            catch (Exception)
+            {
+
+            }
+
+
+            try
+            {
+                if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
+                {
+                    if (int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = true;
+                    else
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+                }
+                else
+                    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+            }
+            catch (Exception)
+            {
+
+            }
+
             if (err == 0)
             {
                 try
@@ -942,7 +992,7 @@ namespace PluginTaskAutobook
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.TIMEZONE).ToString()]);
+                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
@@ -951,9 +1001,9 @@ namespace PluginTaskAutobook
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
-                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
-                    (PanelManagementYear as PanelManagementAutobook).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
+                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
+                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
+                    (PanelManagementYear as PanelManagementAutobook).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
                     (ctrl as ComboBox).Enabled = false;
 
                 }
