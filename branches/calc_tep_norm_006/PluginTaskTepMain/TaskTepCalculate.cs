@@ -73,11 +73,13 @@ namespace PluginTaskTepMain
         public partial class TaskTepCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
             /// <summary>
-            /// Признак расчета ТЭП-оперативно
+            /// Признак расчета ТЭП-оперативно (для любого из эн./блоков)
             /// </summary>
             protected /*override */bool isRealTime { get { return !(m_indxCompRealTime == INDX_COMP.UNKNOWN); } }
             //protected virtual bool isRealTime { get { return _type == TYPE.OUT_TEP_REALTIME; } }
-
+            /// <summary>
+            /// Признак расчета ТЭП-оперативно (только для одного из эн./блоков №№1, 4, 5, 6)
+            /// </summary>
             private bool isRealTimeBL1456
             {
                 get
@@ -650,9 +652,12 @@ namespace PluginTaskTepMain
                 //Изменение прямого порядка вычисления
                 /*-------------26 Э тф п-------------*/
                 calculateNormative(@"26");
-                /*-------------27 -------------*/
-                /*-------------28 -------------*/
-                /*-------------29 -------------*/
+                /*-------------27 W п/тф-------------*/
+                calculateNormative(@"27");
+                /*-------------28 N кн (ном)-------------*/
+                Norm[@"28"][ID_COMP[ST]].value = calculateNormative(@"28");
+                /*-------------29 N цн (н) гр-------------*/
+                Norm[@"29"][ID_COMP[ST]].value = calculateNormative(@"29");
                 /*-------------30 -------------*/
                 /*-------------31 -------------*/
                 /*-------------32 -------------*/

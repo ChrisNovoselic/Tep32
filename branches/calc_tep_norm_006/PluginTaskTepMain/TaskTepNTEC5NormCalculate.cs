@@ -18,6 +18,8 @@ namespace PluginTaskTepMain
         /// </summary>
         public partial class TaskTepCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
+            private enum ERROR { Unknown = -1 }
+
             private bool qSeason
             {
                 get
@@ -715,8 +717,10 @@ namespace PluginTaskTepMain
                         case "26":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                Norm[nAlg][id_comp].value = Norm[@"4"][ID_COMP[i]].value
-                                    * (Norm[@"57.1"][ID_COMP[i]].value - Norm[@"60"][ID_COMP[i]].value) / .7F / 860;
+                                id_comp = ID_COMP[i];
+
+                                Norm[nAlg][id_comp].value = Norm[@"4"][id_comp].value
+                                    * (Norm[@"57.1"][id_comp].value - Norm[@"60"][id_comp].value) / .7F / 860;
                             }
                             break;
                         #endregion
@@ -725,23 +729,57 @@ namespace PluginTaskTepMain
                         case "27":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                if (Norm[@"4"][ID_COMP[i]].value == 0)
+                                id_comp = ID_COMP[i];
+
+                                if (Norm[@"4"][id_comp].value == 0)
                                     Norm[nAlg][id_comp].value = 0;
                                 else
-                                    Norm[nAlg][id_comp].value = fTable.F1("2.9в:1", Norm[@"13"][ID_COMP[i]].value);
+                                    Norm[nAlg][id_comp].value = fTable.F1("2.9в:1", Norm[@"13"][id_comp].value);
                             }
                             break;
                         #endregion
 
-                        #region 28 - ???
+                        #region 28 - N кн (ном)
                         case "28":
-                            //???
+                            for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
+                                id_comp = ID_COMP[i];
+
+                                Norm[nAlg][id_comp].value =
+                                    Norm[@"9"][id_comp].value - Norm[@"25"][id_comp].value * Norm[@"10"][id_comp].value / 1000
+                                    - Norm[@"27"][id_comp].value * Norm[@"11"][id_comp].value / 1000;
+                            }
+
+                            fSum = 0F;
+                            for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
+                                id_comp = ID_COMP[i];
+
+                                fSum += Norm[nAlg][id_comp].value * Norm[@"1"][id_comp].value;
+                            }
+
+                            fRes = fSum / Norm[@"1"][ID_COMP[(int)INDX_COMP.iST]].value;
+
                             break;
                         #endregion
 
-                        #region 29 - ???
+                        #region 29 - N цн (н) гр
                         case "29":
-                            //???
+                            fSum1 =
+                            fSum2 =
+                                0F;
+
+                            for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
+                                id_comp = ID_COMP[i];
+
+                                fSum1 += Norm[@"14"][id_comp].value;
+                                fSum2 += In[@"28"][id_comp].value;
+                            }
+
+                            if (isRealTime == true)
+                                fSum1 *= n_blokov1;
+                            else
+                                ;
+
+                            fSum2 /= n_blokov;
                             break;
                         #endregion
 
@@ -1370,12 +1408,12 @@ namespace PluginTaskTepMain
 
                         #region 63 - i 2
                         case "63":
-                            Norm[nAlg][0].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[0]].value / 98.067F);
-                            Norm[nAlg][1].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[1]].value / 98.067F);
-                            Norm[nAlg][2].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[2]].value / 98.067F);
-                            Norm[nAlg][3].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[3]].value / 98.067F);
-                            Norm[nAlg][4].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[4]].value / 98.067F);
-                            Norm[nAlg][5].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[5]].value);
+                            Norm[nAlg][BL1].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL1]].value / 98.067F);
+                            Norm[nAlg][BL2].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL2]].value / 98.067F);
+                            Norm[nAlg][BL3].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL3]].value / 98.067F);
+                            Norm[nAlg][BL4].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL4]].value / 98.067F);
+                            Norm[nAlg][BL5].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL5]].value / 98.067F);
+                            Norm[nAlg][BL6].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL6]].value);
                             break;
                         #endregion
 
