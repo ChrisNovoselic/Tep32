@@ -1,17 +1,25 @@
-﻿using System;
-using HClassLibrary;
+﻿using HClassLibrary;
+using System;
 using System.Data;
+using System.Globalization;
 using TepCommon;
 
 namespace PluginTaskVedomostBl
 {
     public class HandlerDbTaskVedomostBlCalculate : HandlerDbTaskCalculate
     {
+        /// <summary>
+        /// 
+        /// </summary>
         protected override void createTaskCalculate()
         {
             base.createTaskCalculate();
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="err"></param>
         protected override void calculate(TaskCalculate.TYPE type, out int err)
         {
             err = 0;
@@ -375,7 +383,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// 
         /// </summary>
-        /// <returns></returns>
+        /// <returns>строка запроса</returns>
         public DataTable GetHeaderDGV()
         {
             string query = string.Empty;
@@ -395,7 +403,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// 
         /// </summary>
-        /// <returns></returns>
+        /// <returns>строка запроса</returns>
         public string GetQueryComp(TaskCalculate.TYPE type)
         {
             string strRes = string.Empty;
@@ -407,6 +415,63 @@ namespace PluginTaskVedomostBl
             + @"WHERE c.ID > 500 AND c.ID < 2000";
 
             return strRes;
+        }
+
+        /// <summary>
+        /// Сохранение значений в БД
+        /// </summary>
+        /// <param name="tableOrigin">первоначальная таблица</param>
+        /// <param name="tableRes">измененная таблица</param>
+        /// <param name="timezone">индентификатор таймзоны</param>
+        /// <param name="err">номер ошибки</param>
+        /// <returns>таблица данных</returns>
+        public DataTable SaveValues(DataTable tableOrigin, DataTable tableRes, int timezone, out int err)
+        {
+            err = -1;
+            DataTable tableEdit = new DataTable();
+            DateTime dtRes;
+            string rowSel = null;
+            int idUser = 0
+                , idSource = 0;
+
+            tableEdit = tableOrigin.Clone();//копия структуры
+
+            for (int i = 0; i < tableRes.Rows.Count; i++)
+            {
+                rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
+                dtRes = Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"]);
+
+                for (int j = 0; j < tableOrigin.Rows.Count; j++)
+                    if (rowSel == tableOrigin.Rows[j]["ID_PUT"].ToString())
+                        if (dtRes == Convert.ToDateTime(tableOrigin.Rows[j]["DATE_TIME"]))
+                            if (tableOrigin.Rows[j]["Value"].ToString() == tableRes.Rows[i]["VALUE"].ToString())
+                            {
+                                idUser = (int)tableOrigin.Rows[j]["ID_USER"];
+                                idSource = (int)tableOrigin.Rows[j]["ID_SOURCE"];
+                                break;
+                            }
+                            else
+                            {
+                                idUser = HUsers.Id;
+                                idSource = 0;
+                            }
+
+                tableEdit.Rows.Add(new object[]
+                {
+                    DbTSQLInterface.GetIdNext(tableEdit, out err)
+                    , rowSel
+                    , idUser.ToString()
+                    , idSource.ToString()
+                    , dtRes.ToString(CultureInfo.InvariantCulture)
+                    , ID_PERIOD.DAY
+                    , timezone
+                    , tableRes.Rows[i]["QUALITY"].ToString()
+                    , tableRes.Rows[i]["VALUE"].ToString()
+                    , DateTime.Now
+                });
+            }
+
+            return tableEdit;
         }
 
         /// <summary>

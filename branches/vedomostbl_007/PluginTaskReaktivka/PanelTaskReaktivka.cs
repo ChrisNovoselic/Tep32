@@ -214,8 +214,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события - окончание редактирования отображения
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         void m_dgvReak_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             m_dgvReak.SumValue(e.ColumnIndex, e.RowIndex);
@@ -225,8 +225,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события изменения значения в ячейке
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         void m_dgvReak_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
 
@@ -235,8 +235,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события - нажатие клавиши ЭКСПОРТ
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         void PanelTaskReaktivka_ClickExport(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();//
@@ -246,8 +246,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// инициализация параметров вкладки
         /// </summary>
-        /// <param name="err"></param>
-        /// <param name="errMsg"></param>
+        /// <param name="err">номер ошибки</param>
+        /// <param name="errMsg">текст ошибки</param>
         protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
@@ -637,7 +637,7 @@ namespace PluginTaskReaktivka
                 (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
 
             cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-  (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
+                (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
             today = (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
 
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
@@ -725,8 +725,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события - нажатие кнопки сохранить
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         protected override void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
         {
             int err = -1;
@@ -748,8 +748,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события - нажатие кнопки загрузить(сыр.)
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
             m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
@@ -760,8 +760,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события - нажатие кнопки загрузить(арх.)
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
             m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
@@ -2268,15 +2268,16 @@ namespace PluginTaskReaktivka
         /// </summary>
         protected DataTable m_TableOrigin
         {
-            get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
         /// <summary>
         /// 
         /// </summary>
         protected DataTable m_TableEdit
         {
-            get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
+        
 
         /// <summary>
         /// загрузка/обновление данных
@@ -2289,10 +2290,10 @@ namespace PluginTaskReaktivka
             string errMsg = string.Empty;
             DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
-            if (rangeCheking(dtrGet))
-                MessageBox.Show("Выбранный диапазон месяцев неверен");
-            else
-            {
+            //if (rangeCheking(dtrGet))
+            //    MessageBox.Show("Выбранный диапазон месяцев неверен");
+            //else
+            //{
                 clear();
                 m_handlerDb.RegisterDbConnection(out iRegDbConn);
 
@@ -2327,7 +2328,7 @@ namespace PluginTaskReaktivka
 
                 if (!(iRegDbConn > 0))
                     m_handlerDb.UnRegisterDbConnection();
-            }
+            //}
         }
 
         /// <summary>
@@ -2419,7 +2420,7 @@ namespace PluginTaskReaktivka
         /// </summary>
         private void setValues()
         {
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
              m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
         }
 

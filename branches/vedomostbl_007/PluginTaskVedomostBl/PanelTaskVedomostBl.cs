@@ -18,11 +18,11 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// 
         /// </summary>
-        static int m_currentOffSet;
+        static int s_currentOffSet;
         /// <summary>
         /// 
         /// </summary>
-        static bool flagBl = true;
+        static bool s_flagBl = true;
         /// <summary>
         /// Делегат 
         /// </summary>
@@ -37,13 +37,13 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// экземпляр делегата
         /// </summary>
-        static public DelgetPictureOfIdComp m_getPicture;
+        static public DelgetPictureOfIdComp s_getPicture;
         static public DelgetDataGridViewOfIdComp m_getDGV;
         static public IntDelegateFunc m_getIdComp;
         /// <summary>
         /// флаг очистки отображения
         /// </summary>
-        static bool m_bflgClear = false;
+        protected bool m_bflgClear = false;
         /// <summary>
         /// 
         /// </summary>
@@ -51,27 +51,27 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Массив словарей для составления хидеров каждого блока(ТГ)
         /// </summary>
-        static Dictionary<int, List<string[]>> m_dict;
+        protected Dictionary<int, List<string[]>> m_dict;
         /// <summary>
         /// Листы с хидерами грида
         /// </summary>
-        protected static List<string> m_listGroupSett_1 = new List<string>
+        protected static List<string> s_listGroupSett_1 = new List<string>
         {
          "Острый пар", "Горячий промперегрев", "ХПП"
         };
-        protected static List<string> m_listGroupSett_2 = new List<string>
+        protected static List<string> s_listGroupSett_2 = new List<string>
         {
          "Питательная вода","Продувка", "Конденсатор", "Холодный воздух"
          , "Горячий воздух", "Кислород", "VI отбор", "VII отбор"
         };
-        protected static List<string> m_listGroupSett_3 = new List<string>
+        protected static List<string> s_listGroupSett_3 = new List<string>
         {
           "Уходящие газы","","" ,"","РОУ", "Сетевая вода", "Выхлоп ЦНД"
         };
         /// <summary>
         /// Лист с группами хидеров отображения
         /// </summary>
-        protected static List<List<string>> m_listHeader = new List<List<string>> { m_listGroupSett_1, m_listGroupSett_2, m_listGroupSett_3 };
+        protected static List<List<string>> s_listHeader = new List<List<string>> { s_listGroupSett_1, s_listGroupSett_2, s_listGroupSett_3 };
         /// <summary>
         /// Набор элементов
         /// </summary>
@@ -134,7 +134,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
-        protected static DataTable[] m_arTableDictPrjs;
+        protected static DataTable[] s_arTableDictPrjs;
         /// <summary>
         /// 
         /// </summary>
@@ -199,7 +199,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// 
         /// </summary>
-        static VedomostBlCalculate m_VedCalculate;
+        static VedomostBlCalculate s_VedCalculate;
         /// <summary>
         /// 
         /// </summary>
@@ -247,12 +247,14 @@ namespace PluginTaskVedomostBl
                 PICTURE_BOXDGV, PANEL_PICTUREDGV,
                 COUNT
             }
+
             /// <summary>
-            /// 
+            /// ДЕлегат
             /// </summary>
             /// <param name="dtBegin"></param>
             /// <param name="dtEnd"></param>
             public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
+
             /// <summary>
             /// Класс аргумента для события - изменение выбора запрет/разрешение
             ///  для компонента/параметра при участии_в_расчете/отображении
@@ -281,6 +283,7 @@ namespace PluginTaskVedomostBl
                     m_newCheckState = newCheckState;
                 }
             }
+
             /// <summary>
             /// 
             /// </summary>
@@ -292,7 +295,7 @@ namespace PluginTaskVedomostBl
             /// <param name="ev">Аргумент события</param>
             public delegate void ItemCheckedParametersEventHandler(ItemCheckedParametersEventArgs ev);
             /// <summary>
-            /// 
+            /// Делегат
             /// </summary>
             /// <param name="idComp"></param>
             public delegate Control GetControl(INDEX_CONTROL_BASE indx);
@@ -315,7 +318,7 @@ namespace PluginTaskVedomostBl
                 try
                 {
                     InitializeComponents();
-                    toolTipText = new string[m_listHeader.Count];
+                    toolTipText = new string[s_listHeader.Count];
                     (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
                 }
                 catch (Exception e)
@@ -544,7 +547,7 @@ namespace PluginTaskVedomostBl
             public void SetPeriod(ID_PERIOD idPeriod)
             {
                 HDateTimePicker hdtpBtimePer = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                , hdtpEndtimePer = Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
+                , hdtpEndtimePer = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
 
                 int cntDays = DateTime.DaysInMonth(hdtpBtimePer.Value.Year, hdtpBtimePer.Value.Month);
                 int today = hdtpBtimePer.Value.Day;
@@ -632,7 +635,7 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
+            /// Класс кнопки выбора блока
             /// </summary>
             public class RadioButtonBl : RadioButton
             {
@@ -784,7 +787,7 @@ namespace PluginTaskVedomostBl
 
                     if ((sender as RadioButtonBl).Checked == true)
                     {
-                        pictrure = m_getPicture(id);
+                        pictrure = s_getPicture(id);
                         pictrure.Visible = true;
                         pictrure.Enabled = true;
                     }
@@ -1180,8 +1183,8 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// ширина и высота
             /// </summary>
-            static int m_drwW,
-                m_drwH = m_listHeader.Count;
+            static int s_drwW,
+                s_drwH = s_listHeader.Count;
             /// <summary>
             /// 
             /// </summary>
@@ -1190,12 +1193,12 @@ namespace PluginTaskVedomostBl
             /// словарь названий заголовков 
             /// верхнего и среднего уровней
             /// </summary>
-            static Dictionary<int, List<string>> headerTop = new Dictionary<int, List<string>>(),
-                headerMiddle = new Dictionary<int, List<string>>();
+            protected Dictionary<int, List<string>> m_headerTop = new Dictionary<int, List<string>>(),
+                m_headerMiddle = new Dictionary<int, List<string>>();
             /// <summary>
             /// словарь соотношения заголовков
             /// </summary>
-            static Dictionary<int, int[]> m_arIntTopHeader = new Dictionary<int, int[]> { },
+            protected Dictionary<int, int[]> m_arIntTopHeader = new Dictionary<int, int[]> { },
             m_arMiddleCol = new Dictionary<int, int[]> { };
             /// <summary>
             /// перечисление уровней заголовка грида
@@ -1257,7 +1260,7 @@ namespace PluginTaskVedomostBl
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
                 AllowUserToResizeColumns = false;
                 ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.BottomCenter;
-                ColumnHeadersHeight = ColumnHeadersHeight * m_drwH;//высота от нижнего(headerText)
+                ColumnHeadersHeight = ColumnHeadersHeight * s_drwH;//высота от нижнего(headerText)
                 ScrollBars = ScrollBars.None;
 
                 AddColumns(-2, "ALG", string.Empty, false);
@@ -1301,14 +1304,20 @@ namespace PluginTaskVedomostBl
                     /// <summary>
                     /// Признак качества значения в ячейке
                     /// </summary>
-                    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
-
+                    public HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
+                    /// <summary>
+                    /// 
+                    /// </summary>
+                    /// <param name="idParameter"></param>
+                    /// <param name="iQuality"></param>
                     public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
                     {
                         m_IdParameter = idParameter;
                         m_iQuality = iQuality;
                     }
-
+                    /// <summary>
+                    /// 
+                    /// </summary>
                     public bool IsNaN { get { return m_IdParameter < 0; } }
                 }
 
@@ -1340,7 +1349,7 @@ namespace PluginTaskVedomostBl
                 {
                     m_arPropertiesCells = new HDataGridViewCell[cntCols];
                     for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
+                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
                 }
             }
 
@@ -1364,12 +1373,14 @@ namespace PluginTaskVedomostBl
                     /// </summary>
                     public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
 
-                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
+                    public HDataGridViewCell(int idParameter, HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
                     {
                         m_IdParameter = idParameter;
                         m_iQuality = iQuality;
                     }
-
+                    /// <summary>
+                    /// 
+                    /// </summary>
                     public bool IsNaN { get { return m_IdParameter < 0; } }
                 }
 
@@ -1630,8 +1641,8 @@ namespace PluginTaskVedomostBl
                     if (col.Visible == true)
                         cntCol++;
 
-                m_drwW = cntCol * dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width +
-                    dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width / m_listHeader.Count;
+                s_drwW = cntCol * dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width +
+                    dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width / s_listHeader.Count;
 
                 dgv.Paint += new PaintEventHandler(dataGridView1_Paint);
             }
@@ -1646,8 +1657,8 @@ namespace PluginTaskVedomostBl
                 List<string> _listTop = new List<string>(),
                     _listMiddle = new List<string>();
 
-                if (headerTop.ContainsKey(idTG))
-                    headerTop.Remove(idTG);
+                if (m_headerTop.ContainsKey(idTG))
+                    m_headerTop.Remove(idTG);
 
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.m_iIdComp >= 0)
@@ -1664,10 +1675,10 @@ namespace PluginTaskVedomostBl
                         else;
                     else;
 
-                headerTop.Add(idTG, _listTop);
+                m_headerTop.Add(idTG, _listTop);
 
-                if (headerMiddle.ContainsKey(idTG))
-                    headerMiddle.Remove(idTG);
+                if (m_headerMiddle.ContainsKey(idTG))
+                    m_headerMiddle.Remove(idTG);
 
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.m_iIdComp >= 0)
@@ -1678,7 +1689,7 @@ namespace PluginTaskVedomostBl
                                 _listMiddle.Add(col.Name);
                             }
 
-                headerMiddle.Add(idTG, _listMiddle);
+                m_headerMiddle.Add(idTG, _listMiddle);
             }
 
             /// <summary>
@@ -1691,13 +1702,13 @@ namespace PluginTaskVedomostBl
                 string _oldItem = string.Empty;
                 int _indx = 0,
                     _untdColM = 0;
-                int[] _arrIntTop = new int[headerTop[idDgv].Count()],
-                    _arrIntMiddle = new int[headerMiddle[idDgv].Count()];
+                int[] _arrIntTop = new int[m_headerTop[idDgv].Count()],
+                    _arrIntMiddle = new int[m_headerMiddle[idDgv].Count()];
 
                 if (m_arIntTopHeader.ContainsKey(idDgv))
                     m_arIntTopHeader.Remove(idDgv);
 
-                foreach (var item in headerTop[idDgv])
+                foreach (var item in m_headerTop[idDgv])
                 {
                     int untdCol = 0;
                     foreach (HDataGridViewColumn col in Columns)
@@ -1720,7 +1731,7 @@ namespace PluginTaskVedomostBl
                 if (m_arMiddleCol.ContainsKey(idDgv))
                     m_arMiddleCol.Remove(idDgv);
 
-                foreach (var item in headerMiddle[idDgv])
+                foreach (var item in m_headerMiddle[idDgv])
                 {
                     foreach (HDataGridViewColumn col in Columns)
                     {
@@ -1772,7 +1783,7 @@ namespace PluginTaskVedomostBl
                 format.Alignment = StringAlignment.Center;
                 format.LineAlignment = StringAlignment.Center;
 
-                m_drwH = 3;
+                s_drwH = 3;
                 //
                 for (int i = 0; i < Columns.Count; i++)
                     if (GetCellDisplayRectangle(i, -1, true).Height > 0 & GetCellDisplayRectangle(i, -1, true).X > 0)
@@ -1783,17 +1794,17 @@ namespace PluginTaskVedomostBl
                         break;
                     }
 
-                m_drwH = _r1.Height / m_drwH;
+                s_drwH = _r1.Height / s_drwH;
 
-                foreach (var item in headerMiddle[(sender as DGVVedomostBl).m_idCompDGV])
+                foreach (var item in m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV])
                 {
                     //get the column header cell
-                    _r1.Width = m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item)]
+                    _r1.Width = m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item)]
                         * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
-                    _r1.Height = m_drwH + 3;//??? 
+                    _r1.Height = s_drwH + 3;//??? 
 
-                    if (headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1 > -1)
-                        _r1.X = _r1.X + m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1]
+                    if (m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1 > -1)
+                        _r1.X = _r1.X + m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1]
                             * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
                     else
                     {
@@ -1809,11 +1820,11 @@ namespace PluginTaskVedomostBl
                     e.Graphics.DrawRectangle(pen, _r1);
                 }
 
-                foreach (var item in headerTop[(sender as DGVVedomostBl).m_idCompDGV])
+                foreach (var item in m_headerTop[(sender as DGVVedomostBl).m_idCompDGV])
                 {
                     //get the column header cell
                     _r2.Width = m_arIntTopHeader[(sender as DGVVedomostBl).m_idCompDGV][_indxCol] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
-                    _r2.Height = m_drwH + 2;//??? 
+                    _r2.Height = s_drwH + 2;//??? 
 
                     if (_indxCol - 1 > -1)
                         _r2.X = _r2.X + m_arIntTopHeader[(sender as DGVVedomostBl).m_idCompDGV][_indxCol - 1] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
@@ -1847,8 +1858,8 @@ namespace PluginTaskVedomostBl
                     e.PaintBackground(e.CellBounds, false);
 
                     Rectangle r2 = e.CellBounds;
-                    r2.Y += e.CellBounds.Height / m_drwH;
-                    r2.Height = e.CellBounds.Height / m_drwH;
+                    r2.Y += e.CellBounds.Height / s_drwH;
+                    r2.Height = e.CellBounds.Height / s_drwH;
                     e.PaintContent(r2);
                     e.Handled = true;
                 }
@@ -1874,15 +1885,15 @@ namespace PluginTaskVedomostBl
 
                 _dtOriginVal = tableOrigin.Copy();
 
-                if (flagBl)
+                if (s_flagBl)
                     _hoursOffSet = -1 * (DateTimeOffset.Now.Offset.Hours + 10);
                 else
-                    _hoursOffSet = (m_currentOffSet / 60);
+                    _hoursOffSet = (s_currentOffSet / 60);
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
                     parameterRows =
-                        m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(string.Format(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_COMP = " + col.m_iIdComp));
+                        s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(string.Format(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_COMP = " + col.m_iIdComp));
 
                     if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                     {
@@ -1929,7 +1940,7 @@ namespace PluginTaskVedomostBl
                     foreach (DataGridViewRow row in Rows)
                         if (Rows.Count - 1 != row.Index)
                             if (row.Cells[indxCol].Value != null || row.Cells[indxCol].Value.ToString() != "")
-                                _sumValue += m_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
+                                _sumValue += s_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
                 }
                 catch (Exception)
                 {
@@ -1955,7 +1966,7 @@ namespace PluginTaskVedomostBl
                     foreach (DataGridViewRow row in Rows)
                         if (row.Cells[indxCol].Value != null || row.Cells[indxCol].Value.ToString() != "")
                         {
-                            _sumValue += m_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
+                            _sumValue += s_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
                             cntNum++;
                         }
                 }
@@ -1965,6 +1976,107 @@ namespace PluginTaskVedomostBl
                 }
 
                 return _avgValue = _sumValue / cntNum;
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="dtSourceOrg"></param>
+            /// <param name="idSession"></param>
+            /// <returns></returns>
+            private DataTable fillTableToSave(DataTable dtSourceOrg, int idSession)
+            {
+                int i = 0,
+                    idAlg = -1
+                    , _hoursOffSet
+                    , vsRatioValue = -1
+                    , quality = -1;
+                double valueToRes = 0;
+                DateTime dtVal;
+
+                DataTable dtSourceEdit = new DataTable();
+                dtSourceEdit.Columns.AddRange(new DataColumn[] {
+                        new DataColumn (@"ID_PUT", typeof (int))
+                        , new DataColumn (@"ID_SESSION", typeof (long))
+                        , new DataColumn (@"QUALITY", typeof (int))
+                        , new DataColumn (@"VALUE", typeof (float))
+                        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
+                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
+                    });
+
+                if (s_flagBl)
+                    _hoursOffSet = -1 * (DateTimeOffset.Now.Offset.Hours + 10);
+                else
+                    _hoursOffSet = (s_currentOffSet / 60);
+
+                foreach (HDataGridViewColumn col in Columns)
+                {
+                    if (col.m_iIdComp > 0)
+                        foreach (DataGridViewRow row in Rows)
+                        {
+                            if (row.Index != row.DataGridView.RowCount - 1)
+                                if (row.Cells[col.Index].Value != null)
+                                    if (row.Cells[col.Index].Value.ToString() != "")
+                                    {
+                                        idAlg = (int)row.Cells["ALG"].Value;
+                                        //valueToRes = 
+                                        vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+
+                                        valueToRes *= Math.Pow(10F, vsRatioValue);
+                                        dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
+
+                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
+
+                                        dtSourceEdit.Rows.Add(new object[]
+                                        {
+                                            col.m_iIdComp
+                                            , idSession
+                                            , quality
+                                            , valueToRes
+                                            , dtVal.AddMinutes(-_hoursOffSet).ToString("F",dtSourceEdit.Locale)
+                                            , i
+                                        });
+                                        i++;
+                                    }
+                        }
+                }
+
+                return dtSourceEdit;
+            }
+
+            /// <summary>
+            /// соритровка таблицы по столбцу
+            /// </summary>
+            /// <param name="table">таблица для сортировки</param>
+            /// <param name="sortStr">имя столбца/ов для сортировки</param>
+            /// <returns>отсортированная таблица</returns>
+            private DataTable sortingTable(DataTable table, string colSort)
+            {
+                DataView dView = table.DefaultView;
+                string sortExpression = string.Format(colSort);
+                dView.Sort = sortExpression;
+                table = dView.ToTable();
+
+                return table;
+            }
+
+            /// <summary>
+            /// Проверка на изменение значения
+            /// </summary>
+            /// <param name="origin">оригинальная таблица</param>
+            /// <param name="editValue">значение</param>
+            /// <param name="i">номер строки</param>
+            /// <returns>показатель изменения</returns>
+            private int diffRowsInTables(DataTable origin, double editValue, int i)
+            {
+                int quality = 0;
+
+                origin = sortingTable(origin, "WR_DATETIME, ID_PUT");
+
+                if (origin.Rows[i]["Value"].ToString() != editValue.ToString())
+                    quality = 1;
+
+                return quality;
             }
         }
 
@@ -2008,7 +2120,7 @@ namespace PluginTaskVedomostBl
                 {
                     m_workBook.AfterSave += workBook_AfterSave;
                     m_workBook.BeforeClose += workBook_BeforeClose;
-                    m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("Reaktivka");
+                    m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("VedomostBl");
                     int indxCol = 1;
 
                     try
@@ -2261,14 +2373,14 @@ namespace PluginTaskVedomostBl
                         switch (i)
                         {
                             case (int)lvlHeader.TOP:
-                                for (int t = 0; t < m_listHeader.Count; t++)
+                                for (int t = 0; t < s_listHeader.Count; t++)
                                 {
-                                    for (int n = 0; n < m_listHeader[t].Count; n++)
+                                    for (int n = 0; n < s_listHeader[t].Count; n++)
                                     {
                                         cntHeader++;
                                         if (int.Parse(arlistStr[j].ElementAt((int)lvlHeader.TOP)) == cntHeader)
                                         {
-                                            _arStrHeader[i] = m_listHeader[t][n];
+                                            _arStrHeader[i] = s_listHeader[t][n];
                                             listHeader.Add(_arStrHeader);
                                             bflagStopfor = true;
                                             break;
@@ -2416,7 +2528,7 @@ namespace PluginTaskVedomostBl
         public PanelTaskVedomostBl(IPlugIn iFunc)
             : base(iFunc)
         {
-            m_VedCalculate = new VedomostBlCalculate();
+            s_VedCalculate = new VedomostBlCalculate();
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
             Session.SetRangeDatetime(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
             m_dict = new Dictionary<int, List<string[]>> { };
@@ -2424,7 +2536,7 @@ namespace PluginTaskVedomostBl
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             InitializeComponent();
-            m_getPicture = new DelgetPictureOfIdComp(GetPictureOfIdComp);
+            s_getPicture = new DelgetPictureOfIdComp(GetPictureOfIdComp);
             m_getDGV = new DelgetDataGridViewOfIdComp(GetDGVOfIdComp);
             m_getIdComp = new IntDelegateFunc(GetIdComp);
         }
@@ -2525,7 +2637,7 @@ namespace PluginTaskVedomostBl
             switch (item.m_indxIdDeny)
             {
                 case INDEX_ID.HGRID_VISIBLE:
-                    cntrl.HideColumns(cntrl as DataGridView, m_listHeader[item.m_idItem], bItemChecked);
+                    cntrl.HideColumns(cntrl as DataGridView, s_listHeader[item.m_idItem], bItemChecked);
                     ReSizeControls(cntrl as DataGridView);
                     break;
                 default:
@@ -2554,22 +2666,23 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="indx"></param>
         /// <returns>контрол на панели</returns>
-        private Control getControl(INDEX_CONTROL indx)
+        private List<bool> getControl()
         {
-            Control cntrl = new Control();
+            Control _cntrl = new Control()
+                , rbt = new Control();
+            List<bool> _list;
 
-            cntrl = Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.TBLP_BLK.ToString(), true)[0];
+            _cntrl = Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.TBLP_BLK.ToString(), true)[0];
 
-            //PanelManagementVedomost.find(PanelManagementVedomost.INDEX_CONTROL_BASE.TBLP_BLK);
+            foreach (PanelManagementVedomost.RadioButtonBl rbts in _cntrl.Controls)
+                if (rbts.Checked == true)
+                {
+                    rbt = rbts;
+                    _list = (rbt as PanelManagementVedomost.RadioButtonBl).m_arBoolCheck;
+                    break;
+                }
 
-            //foreach (var item in )
-            //{
-
-            //}
-
-            cntrl = Controls.Find(indx.ToString(), true)[0];
-
-            return cntrl;
+            return _list;
         }
 
         /// <summary>
@@ -2657,7 +2770,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Возвращает idComp
         /// </summary>
-        /// <returns></returns>
+        /// <returns>индентификатор объекта</returns>
         public int GetIdComp()
         {
             int _idComp = 0;
@@ -2699,13 +2812,13 @@ namespace PluginTaskVedomostBl
                 INDEX_ID.BLOCK_VISIBLED
             };
             //инициализация массивов
-            bool[] arChecked = new bool[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
+            bool[] arChecked = new bool[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
             List<bool> arGroup = new List<bool>();
-            arRadioBtn = new PanelManagementVedomost.RadioButtonBl[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
-            arId_comp = new int[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
-            arstrItem = new string[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
+            arRadioBtn = new PanelManagementVedomost.RadioButtonBl[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
+            arId_comp = new int[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
+            arstrItem = new string[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
             //создание списка гридов по блокам
-            foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
+            foreach (DataRow r in s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
             {
                 //инициализация радиобаттанов
                 arRadioBtn[rbCnt - (int)INDEX_CONTROL.RADIOBTN_BLK1] = new PanelManagementVedomost.RadioButtonBl();
@@ -2719,12 +2832,12 @@ namespace PluginTaskVedomostBl
                 else
                     arChecked[rbCnt - (int)INDEX_CONTROL.RADIOBTN_BLK1] = false;
 
-                for (int i = 0; i < m_listHeader.Count; i++)
+                for (int i = 0; i < s_listHeader.Count; i++)
                     arGroup.Add(true);
 
                 try
                 {
-                    if (arId_comp[m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count - 1] != 0)
+                    if (arId_comp[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count - 1] != 0)
                         //добавление радиобатонов на форму
                         (PanelManagementVed as PanelManagementVedomost).AddComponentRB(arId_comp
                                   , arstrItem
@@ -2760,7 +2873,7 @@ namespace PluginTaskVedomostBl
             {
                 ctrl = new DGVVedomostBl(namePut.GetValue(j).ToString());
                 ctrl.Name = namePut.GetValue(j).ToString();
-                (ctrl as DGVVedomostBl).m_idCompDGV = int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows[j]["ID"].ToString());
+                (ctrl as DGVVedomostBl).m_idCompDGV = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows[j]["ID"].ToString());
 
                 filingDictHeader(dtComponentId, (ctrl as DGVVedomostBl).m_idCompDGV);
 
@@ -2768,8 +2881,8 @@ namespace PluginTaskVedomostBl
 
                 for (int k = 0; k < m_dict[(ctrl as DGVVedomostBl).m_idCompDGV].Count; k++)
                 {
-                    int idPar = int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["ID_ALG"].ToString());
-                    int _avg = int.Parse(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["AVG"].ToString());
+                    int idPar = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["ID_ALG"].ToString());
+                    int _avg = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["AVG"].ToString());
 
                     (ctrl as DGVVedomostBl).AddColumns(idPar, new DGVVedomostBl.COLUMN_PROPERTY
                     {
@@ -2827,14 +2940,13 @@ namespace PluginTaskVedomostBl
                 INDEX_ID.HGRID_VISIBLE
             };
 
-            bool[] arChecked = new bool[m_listHeader.Count];
+            bool[] arChecked = new bool[s_listHeader.Count];
 
-           // getControl(INDEX_CONTROL.)
+            getControl();
 
-            foreach (var list in m_listHeader)
+            foreach (var list in s_listHeader)
             {
-                id_comp = m_listHeader.IndexOf(list);
-                //m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_comp);
+                id_comp = s_listHeader.IndexOf(list);
                 strItem = "Группа " + (id_comp + 1);
                 // установить признак отображения группы столбцов
                 arChecked[id_comp] = true;
@@ -2861,12 +2973,7 @@ namespace PluginTaskVedomostBl
             Control ctrl = null;
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
-            m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
-
-            //INDEX_ID[] arIndxIdToAdd = new INDEX_ID[]
-            //{
-            //    INDEX_ID.HGRID_VISIBLE
-            //};
+            s_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
                 switch (id)
@@ -2890,35 +2997,20 @@ namespace PluginTaskVedomostBl
             //Заполнить элементы управления с компонентами станции
             for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
             {
-                m_arTableDictPrjs[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
+                s_arTableDictPrjs[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
 
                 if (!(err == 0))
                     break;
             }
             (PanelManagementVed as PanelManagementVedomost).Clear();
-
-            //bool[] arChecked = new bool[m_listHeader.Count];
-            //
-            //foreach (var list in m_listHeader)
-            //{
-            //    id_comp = m_listHeader.IndexOf(list);
-            //    //m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_comp);
-            //    strItem = "Группа " + (id_comp + 1);
-            //    // установить признак отображения группы столбцов
-            //    arChecked[id_comp] = true;
-            //    (PanelManagementVed as PanelManagementVedomost).AddComponent(id_comp
-            //        , strItem
-            //        , list
-            //        , arIndxIdToAdd
-            //        , arChecked);
-            //}
-            //groupHeader
-            initializeGroup(out err, out errMsg);
+         
             (PanelManagementVed as PanelManagementVedomost).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
             //Dgv's
             initializeDGV(namePut, out err, out errMsg);//???
             //радиобаттаны
             initializeRB(namePut, out err, out errMsg);
+            //groupHeader
+            initializeGroup(out err, out errMsg);
 
             if (err == 0)
             {
@@ -2930,7 +3022,7 @@ namespace PluginTaskVedomostBl
                         m_bflgClear = false;
                     //Заполнить элемент управления с часовыми поясами
                     ctrl = Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
+                    foreach (DataRow r in s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
@@ -2939,7 +3031,7 @@ namespace PluginTaskVedomostBl
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     ctrl = Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
+                    foreach (DataRow r in s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
@@ -3054,7 +3146,7 @@ namespace PluginTaskVedomostBl
         /// <param name="paramBl">параметр(идТГ)</param>
         protected void filingDictHeader(DataTable dt, int paramBl)
         {
-            m_dict.Add(paramBl, m_VedCalculate.CreateDictHeader(dt, paramBl));//cловарь заголовков
+            m_dict.Add(paramBl, s_VedCalculate.CreateDictHeader(dt, paramBl));//cловарь заголовков
         }
 
         /// <summary>
@@ -3082,7 +3174,7 @@ namespace PluginTaskVedomostBl
             int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
 
             Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
-                , (int)m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
 
         /// <summary>
@@ -3169,7 +3261,7 @@ namespace PluginTaskVedomostBl
             }
 
             _dgv.Rows[dtBegin.Day - 1].Selected = true;
-            m_currentOffSet = Session.m_curOffsetUTC;
+            s_currentOffSet = Session.m_curOffsetUTC;
         }
 
         /// <summary>
@@ -3190,7 +3282,7 @@ namespace PluginTaskVedomostBl
                 (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
 
             cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-  (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
+                (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
             today = (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
 
             (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
@@ -3209,7 +3301,7 @@ namespace PluginTaskVedomostBl
             {
                 List<DataRow> listRes;
 
-                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select().ToList();
+                listRes = s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select().ToList();
 
                 return listRes;
             }
@@ -3300,7 +3392,7 @@ namespace PluginTaskVedomostBl
                     //, получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
                         , CountBasePeriod
-                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT]
+                        , s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                         , out err, out strErr);
@@ -3327,9 +3419,9 @@ namespace PluginTaskVedomostBl
         /// </summary>
         protected bool WhichBlIsSelected
         {
-            get { return flagBl; }
+            get { return s_flagBl; }
 
-            set { flagBl = value; }
+            set { s_flagBl = value; }
         }
 
         /// <summary>
@@ -3369,13 +3461,13 @@ namespace PluginTaskVedomostBl
             {
                 //(PanelManagementReak as PanelManagmentReaktivka).Clear();
 
-                if (!(m_arTableDictPrjs == null))
+                if (!(s_arTableDictPrjs == null))
                     for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
                     {
-                        if (!(m_arTableDictPrjs[i] == null))
+                        if (!(s_arTableDictPrjs[i] == null))
                         {
-                            m_arTableDictPrjs[i].Clear();
-                            m_arTableDictPrjs[i] = null;
+                            s_arTableDictPrjs[i].Clear();
+                            s_arTableDictPrjs[i] = null;
                         }
                     }
 
@@ -3506,17 +3598,21 @@ namespace PluginTaskVedomostBl
         {
             int err = -1;
 
-            //DateTimeRange[] dtR = HandlerDb.GetDateTimeRangeValuesVar();
+            DateTimeRange[] dtR;
 
-            //m_arTableOrigin[(int)m_ViewValues] =
+            if (!WhichBlIsSelected)
+                dtR = HandlerDb.GetDateTimeRangeValuesVar();
+            else
+                dtR = HandlerDb.GetDateTimeRangeValuesVarExtremeBL();
+
+            //m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
             //HandlerDb.GetInVal(Type
             //, dtR
             //, ActualIdPeriod
-            //, m_ViewValues
             //, out err);
 
-            //m_arTableEdit[(int)m_ViewValues] =
-            //    HandlerDb.SaveValues(m_arTableOrigin[(int)m_ViewValues], valuesFence(), (int)Session.m_currIdTimezone, out err);
+            //m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+            //    HandlerDb.SaveValues(m_TableOrigin, valuesFence, (int)Session.m_currIdTimezone, out err);
 
             //saveInvalValue(out err);
         }
