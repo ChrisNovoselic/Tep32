@@ -89,7 +89,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Набор элементов
         /// </summary>
-        protected enum INDEX_CONTROL { UNKNOWN = -1, DGV_DATA, LABEL_DESC }
+        protected enum INDEX_CONTROL { UNKNOWN = -1, LABEL_DESC=1, DGV_DATA=3 }
         /// <summary>
         /// Индексы массива списков идентификаторов
         /// </summary>
@@ -2490,7 +2490,7 @@ namespace PluginTaskAutobook
                 tCount++;
             }
 
-            if (int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
+            if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes[((int)PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
                 (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
 
             if ((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
