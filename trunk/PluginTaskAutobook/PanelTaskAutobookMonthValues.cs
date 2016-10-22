@@ -2423,7 +2423,8 @@ namespace PluginTaskAutobook
         {
             err = 0;
             errMsg = string.Empty;
-            string strItem = string.Empty;
+            string strItem = string.Empty
+                , key = string.Empty;
             int i = -1
                 , id_comp = -1
                 , tCount = 0;
@@ -2549,7 +2550,13 @@ namespace PluginTaskAutobook
 
                     ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString(), true)[0];
                     //из profiles
-                    ctrl.Text = m_dictProfile.Objects[((int)PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.MAIL).ToString()];
+                    key = ((int)PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL).ToString();
+                    if (m_dictProfile.Objects.Keys.Contains(key) == true)
+                        ctrl.Text = m_dictProfile.Objects[key].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.MAIL).ToString()];
+                    else
+                        Logging.Logg().Warning(string.Format(@"PanelTaskAutoBook::initialize () - в словаре 'm_dictProfile' не определен ключ [{0:1}]..."
+                            , key, PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL)
+                            , Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 catch (Exception e)
                 {
