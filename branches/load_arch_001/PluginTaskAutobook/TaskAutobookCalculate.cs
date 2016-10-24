@@ -28,7 +28,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="type"></param>
         /// <param name="err"></param>
-        protected override void calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, out int err)
+        protected override void calculate(TaskCalculate.TYPE type, out int err)
         {
             err = 0;
         }
