@@ -51,7 +51,7 @@ namespace PluginTaskAutobook
             PERIOD, TIMEZONE,
             COMPONENT, PARAMETER, RATIO,
             COUNT
-        }     
+        }
         /// <summary>
         /// Перечисление - режимы работы вкладки
         /// </summary>
@@ -80,7 +80,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Набор элементов
         /// </summary>
-        protected enum INDEX_CONTROL { UNKNOWN = -1, LABEL_DESC=1, DGV_DATA=3 }
+        protected enum INDEX_CONTROL { UNKNOWN = -1, LABEL_DESC = 1, DGV_DATA = 3 }
         /// <summary>
         /// Индексы массива списков идентификаторов
         /// </summary>
@@ -494,7 +494,8 @@ namespace PluginTaskAutobook
             {
                 int idAlg = -1
                   , vsRatioValue = -1
-                  , corOffset = 0;
+                  , corOffset = 0
+                  , offSet = 0;
                 DataRow[] dr_CorValues, dr_Values = null;
                 Array namePut = Enum.GetValues(typeof(INDEX_GTP));
                 bool bflg = false;
@@ -527,11 +528,16 @@ namespace PluginTaskAutobook
                                 }
 
                             if ((int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION == (int)typeValues)
+                            {
+                                offSet = m_currentOffSet;
                                 corOffset = 1;
+                            }
+                            else
+                                offSet = -1440;
 
                             dr_Values = formingValue(tbOrigin[(int)typeValues],
                                row.Cells["DATE"].Value.ToString()
-                               , (m_currentOffSet * corOffset)
+                               , (offSet )
                                , col.m_iIdComp);
 
                             if (dr_Values != null)
@@ -539,9 +545,9 @@ namespace PluginTaskAutobook
                                     //заполнение столбцов ГТП,ТЭЦ
                                     for (int p = 0; p < dr_Values.Count(); p++)
                                         if (row.Cells["DATE"].Value.ToString() ==
-                                        Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())
+                                        Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(offSet).ToShortDateString())
                                         {
-                                            dblVal = correctingValues(Math.Pow(10F,-1* vsRatioValue)
+                                            dblVal = correctingValues(Math.Pow(10F, -1 * vsRatioValue)
                                                 , dr_Values[p]["VALUE"]
                                                 , col.Name
                                                 , ref bflg
@@ -590,7 +596,7 @@ namespace PluginTaskAutobook
                 switch (typeValues)
                 {
                     case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE:
-                        signValues = -1;
+                        signValues = 0;
                         break;
                     case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION:
                         break;
@@ -605,8 +611,8 @@ namespace PluginTaskAutobook
                     case "GTP12":
                         if (double.TryParse(row.Cells["CorGTP12"].Value.ToString(), out valRes))
                         {
-                            valRes *= pow;
-                            valRes += (double)rowValue * signValues;
+                            valRes *= pow * signValues;
+                            valRes += (double)rowValue;
                             bflg = true;
                         }
                         else
@@ -616,8 +622,8 @@ namespace PluginTaskAutobook
                     case "GTP36":
                         if (double.TryParse(row.Cells["CorGTP36"].Value.ToString(), out valRes))
                         {
-                            valRes *= pow;
-                            valRes += (double)rowValue * signValues;
+                            valRes *= pow * signValues;
+                            valRes += (double)rowValue;
                             bflg = true;
                         }
                         else
@@ -2112,9 +2118,9 @@ namespace PluginTaskAutobook
             //Создание сессии
             Session.New();
             //Запрос для получения архивных данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutval(arQueryRanges, out err);
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutval(arQueryRanges, out err);
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
                 Type
                 , ActualIdPeriod
@@ -2196,52 +2202,52 @@ namespace PluginTaskAutobook
             //    MessageBox.Show("Выбранный диапазон месяцев неверен");
             //else
             //{
-                clear();
-                m_handlerDb.RegisterDbConnection(out iRegDbConn);
+            clear();
+            m_handlerDb.RegisterDbConnection(out iRegDbConn);
 
-                if (!(iRegDbConn < 0))
+            if (!(iRegDbConn < 0))
+            {
+                // установить значения в таблицах для расчета, создать новую сессию
+                setValues(dtrGet, out err, out errMsg);
+
+                if (err == 0)
                 {
-                    // установить значения в таблицах для расчета, создать новую сессию
-                    setValues(dtrGet, out err, out errMsg);
-
-                    if (err == 0)
+                    if (m_TableOrigin.Rows.Count > 0)
                     {
-                        if (m_TableOrigin.Rows.Count > 0)
-                        {
-                            // создать копии для возможности сохранения изменений
-                            setValues();
-                            //вычисление значений
-                            AutoBookCalc.getTable(m_arTableOrigin, HandlerDb.GetOutPut(out err));
-                            //
-                            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                                AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
-                            //запись выходных значений во временную таблицу
-                            HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
-                            // отобразить значения
-                            m_dgvAB.ShowValues(m_arTableOrigin
-                                , HandlerDb.GetPlanOnMonth(Type
-                                , HandlerDb.GetDateTimeRangeValuesVarPlanMonth()
-                                , ActualIdPeriod
-                                , out err)
-                                , typeValues);
-                            //формирование таблиц на основе грида
-                            valuesFence();
-                        }
-                        else
-                            deleteSession();
+                        // создать копии для возможности сохранения изменений
+                        setValues();
+                        //вычисление значений
+                        AutoBookCalc.getTable(m_arTableOrigin, HandlerDb.GetOutPut(out err));
+                        //
+                        m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                            AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
+                        //запись выходных значений во временную таблицу
+                        HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
+                        // отобразить значения
+                        m_dgvAB.ShowValues(m_arTableOrigin
+                            , HandlerDb.GetPlanOnMonth(Type
+                            , HandlerDb.GetDateTimeRangeValuesVarPlanMonth()
+                            , ActualIdPeriod
+                            , out err)
+                            , typeValues);
+                        //формирование таблиц на основе грида
+                        valuesFence();
                     }
                     else
-                    {
-                        // в случае ошибки "обнулить" идентификатор сессии
                         deleteSession();
-                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-                    }
                 }
                 else
+                {
+                    // в случае ошибки "обнулить" идентификатор сессии
                     deleteSession();
+                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                }
+            }
+            else
+                deleteSession();
 
-                if (!(iRegDbConn > 0))
-                    m_handlerDb.UnRegisterDbConnection();
+            if (!(iRegDbConn > 0))
+                m_handlerDb.UnRegisterDbConnection();
             //}
         }
 
@@ -2486,11 +2492,11 @@ namespace PluginTaskAutobook
                     (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
                 if ((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
-                        for (int j = (int)INDEX_GTP.CorGTP12; j < (int)INDEX_GTP.COUNT; j++)
-                            m_dgvAB.AddBRead(false, namePut.GetValue(j).ToString());
-              
+                    for (int j = (int)INDEX_GTP.CorGTP12; j < (int)INDEX_GTP.COUNT; j++)
+                        m_dgvAB.AddBRead(false, namePut.GetValue(j).ToString());
+
             }
-            catch(Exception)
+            catch (Exception)
             {
 
             }
