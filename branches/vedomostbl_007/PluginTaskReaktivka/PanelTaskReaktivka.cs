@@ -300,7 +300,7 @@ namespace PluginTaskReaktivka
 
             foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
             {
-                id_comp = (Int32)r[@"ID"];
+                id_comp = (int)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
                 strItem = ((string)r[@"DESCRIPTION"]).Trim();
                 // установить признак отображения компонента станции
@@ -2335,7 +2335,7 @@ namespace PluginTaskReaktivka
         /// Проверка выбранного диапазона
         /// </summary>
         /// <param name="dtRange">диапазон дат</param>
-        /// <returns></returns>
+        /// <returns>флагп проверки</returns>
         private bool rangeCheking(DateTimeRange[] dtRange)
         {
             bool bflag = false;
@@ -2383,9 +2383,9 @@ namespace PluginTaskReaktivka
             //Создание сессии
             Session.New();
             //Запрос для получения архивных данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
                 Type
                 , ActualIdPeriod
