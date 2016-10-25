@@ -207,13 +207,18 @@ namespace PluginTaskTepMain
 
             try
             {
-                // обновить входные значения для расчета
-                HandlerDb.UpdateSession(INDEX_DBTABLE_NAME.INVALUES
-                    , m_TableOrigin
-                    , m_TableEdit
-                    , out err);
-                // выполнить расчет
-                HandlerDb.Calculate(type);
+                if ((!(m_TableOrigin == null))
+                    && (!(m_TableEdit == null))) {
+                    // обновить входные значения для расчета
+                    HandlerDb.UpdateSession(INDEX_DBTABLE_NAME.INVALUES
+                        , m_TableOrigin
+                        , m_TableEdit
+                        , out err);
+                    // выполнить расчет
+                    HandlerDb.Calculate(type);
+                } else
+                    Logging.Logg().Warning(@"PanelTaskTepInval::btnRun_onClick (type=" + type.ToString() + @") - попытка расчета без загрузки входных данных..."
+                        , Logging.INDEX_MESSAGE.NOT_SET);
             }
             catch (Exception e)
             {
