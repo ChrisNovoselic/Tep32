@@ -1780,8 +1780,8 @@ namespace PluginTaskTepMain
 
                         #region 75 - t yx исх
                         case "75":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F2("2.32:2", Norm[@"65"][ID_COMP[(int)INDX_COMP.iBL1]].value, In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value);
-                            Norm[nAlg][BL2].value = fTable.F2("2.32:2", Norm[@"65"][BL2].value, In[@"59"][BL2].value);
+                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F2("2.23:2", Norm[@"65"][ID_COMP[(int)INDX_COMP.iBL1]].value, In[@"59"][BL1].value);
+                            Norm[nAlg][BL2].value = fTable.F2("2.23:2", Norm[@"65"][BL2].value, In[@"59"][BL2].value);
                             Norm[nAlg][BL3].value = fTable.F1("2.23а:1", Norm[@"65"][BL3].value);
                             Norm[nAlg][BL4].value = fTable.F1("2.23а:1", Norm[@"65"][BL4].value);
                             Norm[nAlg][BL5].value = fTable.F1("2.21:1", Norm[@"65"][BL5].value);
@@ -2014,8 +2014,10 @@ namespace PluginTaskTepMain
                         case "93":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = .004F * ((In[@"32"][id_comp].value + In[@"32.1"][id_comp].value) / 2 - 30)
-                                * (100 - In[@"59"][id_comp].value) / 100;
+                                    * (100 - In[@"59"][id_comp].value) / 100;
                             }
                             break;
                         #endregion
@@ -2030,9 +2032,13 @@ namespace PluginTaskTepMain
                         case "95":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = Norm[@"91"][id_comp].value + Norm["92"][id_comp].value;
+
                                 fSum += Norm[nAlg][id_comp].value * Norm[@"64"][id_comp].value;
                             }
+
                             fRes = fSum / Norm[@"64"][ST].value;
                             break;
                         #endregion
