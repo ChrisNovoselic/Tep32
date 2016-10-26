@@ -76,8 +76,11 @@ namespace PluginTaskTepMain
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
                                 id_comp = ID_COMP[i];
-
+                                
                                 Norm[nAlg][id_comp].value = In[nAlg][id_comp].value;
+                                //??? чтобы расчет привести к виду в образце
+                                Norm[nAlg][id_comp].value /= 1000000;
+
                                 fRes += Norm[nAlg][id_comp].value;
                             }
                             break;
@@ -96,6 +99,8 @@ namespace PluginTaskTepMain
                                         Norm[nAlg][id_comp].value = In[@"47"][id_comp].value * (In[@"48"][id_comp].value - In[@"49"][id_comp].value);
                                 else
                                     Norm[nAlg][id_comp].value = In[@"47"][id_comp].value * (In[@"48"][id_comp].value - In[@"49"][id_comp].value);
+                                //??? чтобы расчет привести к виду в образце
+                                Norm[nAlg][id_comp].value /= 1000;
 
                                 fRes += Norm[nAlg][id_comp].value;
                             }
