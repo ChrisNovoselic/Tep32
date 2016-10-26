@@ -2076,9 +2076,13 @@ namespace PluginTaskTepMain
                         case "98":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = Norm[@"96"][id_comp].value + Norm["97"][id_comp].value;
+
                                 fSum += Norm[nAlg][id_comp].value * Norm[@"90"][id_comp].value;
                             }
+
                             fRes = fSum / Norm[@"90"][ST].value;
                             break;
                         #endregion
@@ -2087,9 +2091,13 @@ namespace PluginTaskTepMain
                         case "99":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = fTable.F1("2.29:1", Norm[@"66.1"][id_comp].value);
+
                                 fSum += Norm[nAlg][id_comp].value * Norm[@"66"][id_comp].value;
                             }
+
                             fRes = fSum / Norm[@"66"][ST].value;
                             break;
                         #endregion
@@ -2098,6 +2106,8 @@ namespace PluginTaskTepMain
                         case "100":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (In[@"59"][id_comp].value == 100)
                                     Norm[nAlg][id_comp].value = 0;
                                 else
@@ -2147,7 +2157,7 @@ namespace PluginTaskTepMain
                         #region 105 - N доп.пр (н)
                         case "105":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                                fSum += Norm[@"64"][id_comp].value;
+                                fSum += Norm[@"64"][ID_COMP[i]].value;
 
                             if (isRealTime)
                                 fRes = fTable.F1("2.51:1", fSum * n_blokov1);
@@ -2172,13 +2182,13 @@ namespace PluginTaskTepMain
                             {
                                 fRes = (Norm[@"102"][ST].value + Norm[@"103"][ST].value + Norm[@"104"][ST].value
                                     + Norm[@"105"][ST].value) * In[@"70"][ST].value / 1E3F / n_blokov1 + Norm[@"101"][ST].value
-                                    * In[@"88"][ST].value / 1E3F + Norm[@"105a"][ST].value * In[@"88"][ST].value / 1E3F;
+                                    * In[@"88"][ST].value / 1E3F + Norm[@"105а"][ST].value * In[@"88"][ST].value / 1E3F;
                             }
                             else
                                 fRes = (Norm[@"102"][ST].value + Norm[@"103"][ST].value + Norm[@"104"][ST].value
                                     + Norm[@"105"][ST].value)
                                     * In[@"70"][ST].value / 1E3F + Norm[@"101"][ST].value * In[@"88"][ST].value
-                                    / 1E3F + Norm[@"105a"][ST].value
+                                    / 1E3F + Norm[@"105а"][ST].value
                                     * In[@"88"][ST].value / 1E3F;
                             break;
                         #endregion
@@ -2187,7 +2197,10 @@ namespace PluginTaskTepMain
                         case "107":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = 6.19F * In[@"69"][id_comp].value;
+
                                 fRes += Norm[nAlg][id_comp].value;
                             }
                             break;
@@ -2197,11 +2210,14 @@ namespace PluginTaskTepMain
                         case "108":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = 1.03F * (Norm[@"95"][id_comp].value * Norm[@"64"][id_comp].value
                                     + Norm[@"98"][id_comp].value * Norm[@"90"][id_comp].value + Norm[@"99"][id_comp].value
                                     * Norm[@"66"][id_comp].value + Norm[@"100"][id_comp].value * Norm[@"90"][id_comp].value)
                                     / 1E3F + 1.03F * Norm[@"106"][ST].value * Norm[@"64"][id_comp].value / Norm[@"64"][ST].value
                                     + Norm[@"107"][id_comp].value;
+
                                 fRes += Norm[nAlg][id_comp].value;
                             }
                             break;
@@ -2287,10 +2303,10 @@ namespace PluginTaskTepMain
 
                         #region 118 - Q пр (н)
                         case "118":
-                            for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                            {
-                                fSum += Norm[@"65"][id_comp].value;
+                            for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
+                                fSum += Norm[@"65"][ID_COMP[i]].value;
                             }
+
                             fRes = fTable.F1("2.60:1", fSum);
                             break;
                         #endregion
@@ -2299,7 +2315,10 @@ namespace PluginTaskTepMain
                         case "119":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = 15.4F * In[@"69"][id_comp].value;
+
                                 fRes += Norm[nAlg][id_comp].value;
                             }
                             break;
@@ -2320,6 +2339,8 @@ namespace PluginTaskTepMain
                             //???n_blokov1
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (isRealTime)
                                     Norm[nAlg][id_comp].value = Norm[@"120"][ST].value / n_blokov1 * 1E2F / Norm[@"64"][id_comp].value;
                                 else
@@ -2343,6 +2364,7 @@ namespace PluginTaskTepMain
                                             break;
                                     }
                             }
+
                             fRes = Norm[@"120"][ST].value * 1E2F / Norm[@"64"][ST].value;
                             break;
                         #endregion
@@ -2351,7 +2373,7 @@ namespace PluginTaskTepMain
                         case "122":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                Norm[nAlg][id_comp].value = fTable.F1("2.17:1", In[@"43"][ST].value);
+                                Norm[nAlg][ID_COMP[i]].value = fTable.F1("2.17:1", In[@"43"][ST].value);
                             }
                             break;
                         #endregion
@@ -2373,6 +2395,8 @@ namespace PluginTaskTepMain
                         case "125":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (In[@"85"][ST].value == 0)
                                     fTmp = fTable.F1("2.12б:1", In[@"43"][ST].value) + Norm[@"112"][ST].value;
                                 else
@@ -2387,9 +2411,7 @@ namespace PluginTaskTepMain
                                            + Norm[@"124"][ST].value * In[@"71"][ST].value + 393 * (In[@"50"][ST].value
                                            + In[@"51"][ST].value) / 1E3F) / n_blokov1 + Norm[@"122"][id_comp].value * In[@"71"][id_comp].value)
                                            / Norm[@"8"][id_comp].value * 100;
-                                }
-                                else
-                                {
+                                } else {
                                     if (Norm[@"8"][id_comp].value == 0)
                                         Norm[nAlg][id_comp].value = 0;
                                     else
@@ -2398,8 +2420,10 @@ namespace PluginTaskTepMain
                                             + In[@"51"][ST].value) / 1E3F) * Norm[@"8"][id_comp].value / Norm[@"8"][ST].value
                                             + Norm[@"122"][id_comp].value * In[@"71"][id_comp].value) / Norm[@"8"][id_comp].value * 100;
                                 }
+
                                 fSum += Norm[@"122"][id_comp].value * In[@"71"][id_comp].value;
                             }
+
                             if (Norm[@"8"][ST].value == 0)
                                 fRes = 0;
                             else
@@ -2413,7 +2437,10 @@ namespace PluginTaskTepMain
                         case "126":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = 1 / 1E3F * 860 * Norm[@"139"][id_comp].value * In[@"71"][id_comp].value * 85 / 1E2F;
+
                                 fRes += Norm[nAlg][id_comp].value;
                             }
                             break;
@@ -2423,11 +2450,14 @@ namespace PluginTaskTepMain
                         case "126.1":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (Norm[@"8"][id_comp].value == 0)
                                     Norm[nAlg][id_comp].value = 0;
                                 else
                                     Norm[nAlg][id_comp].value = Norm[@"126"][id_comp].value / Norm[@"8"][id_comp].value * 1E2F;
                             }
+
                             if (Norm[@"8"][ST].value == 0)
                                 fRes = 0;
                             else
@@ -2439,6 +2469,8 @@ namespace PluginTaskTepMain
                         case "127":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1:
@@ -2455,15 +2487,17 @@ namespace PluginTaskTepMain
                                     default:
                                         break;
                                 }
+
                                 fSum += In[@"47"][id_comp].value;
                             }
+
                             if (fSum == 0)
                                 fRes = 0;
                             else
                                 fRes = (Norm[@"24"][ST].value * (100 + Norm[@"41"][ST].value)
-                                            * Norm[@"2"][ST].value / 1E5F + Norm[@"47"][ST].value) / (Norm[@"24"][ST].value
-                                            * (100 + Norm[@"41"][ST].value) * Norm[@"2"][ST].value / 1E5F + Norm[@"47"][ST].value
-                                            + (Norm[@"8"][ST].value - Norm[@"126"][ST].value) * (100 + Norm[@"125"][ST].value) / 1E2F);
+                                    * Norm[@"2"][ST].value / 1E5F + Norm[@"47"][ST].value) / (Norm[@"24"][ST].value
+                                    * (100 + Norm[@"41"][ST].value) * Norm[@"2"][ST].value / 1E5F + Norm[@"47"][ST].value
+                                    + (Norm[@"8"][ST].value - Norm[@"126"][ST].value) * (100 + Norm[@"125"][ST].value) / 1E2F);
                             break;
                         #endregion
 
@@ -2471,9 +2505,12 @@ namespace PluginTaskTepMain
                         case "128":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = Norm[@"36"][id_comp].value + Norm[@"127"][id_comp].value * Norm[@"108"][id_comp].value
                                     / Norm[@"2"][id_comp].value * 100;
                             }
+
                             fRes = Norm[@"36"][ST].value + Norm[@"127"][ST].value * Norm[@"108"][ST].value
                                 / Norm[@"2"][ST].value * 100;
                             break;
@@ -2483,11 +2520,14 @@ namespace PluginTaskTepMain
                         case "129":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = Norm[@"88"][id_comp].value * (100 - Norm[@"121"][id_comp].value)
                                     * (100 - Norm[@"126"][id_comp].value) / 100 / (100 - Norm[@"36"][id_comp].value);
                             }
+
                             fRes = Norm[@"88"][ST].value * (100 - Norm[@"121"][ST].value)
-                                    * (100 - Norm[@"126"][ST].value) / 100 / (100 - Norm[@"36"][ST].value);
+                                * (100 - Norm[@"126"][ST].value) / 100 / (100 - Norm[@"36"][ST].value);
                             break;
                         #endregion
 
@@ -2495,8 +2535,11 @@ namespace PluginTaskTepMain
                         case "130":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = 100 - 1.0F * 472.2F / Norm[@"65"][id_comp].value;
                             }
+
                             fRes = 100 - 1.0F * 472.2F / Norm[@"65"][ST].value;
                             break;
                         #endregion
@@ -2505,8 +2548,11 @@ namespace PluginTaskTepMain
                         case "131":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = Norm[@"65"][id_comp].value / 472.2F;
                             }
+
                             fRes = Norm[@"65"][ST].value / 472.2F;
                             break;
                         #endregion
@@ -2515,6 +2561,8 @@ namespace PluginTaskTepMain
                         case "132":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (fTable.F1("2.35:1", Norm[@"131"][id_comp].value) > 1)
                                     Norm[nAlg][id_comp].value = 1;
                                 else
@@ -2522,6 +2570,7 @@ namespace PluginTaskTepMain
 
                                 fSum += Norm[nAlg][id_comp].value * Norm[@"64"][id_comp].value;
                             }
+
                             fRes = fSum / Norm[@"64"][ST].value;
                             break;
                         #endregion
@@ -2530,6 +2579,8 @@ namespace PluginTaskTepMain
                         case "133":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (In[@"84"][id_comp].value == 1)
                                     Norm[nAlg][id_comp].value = 4;
                                 else
@@ -2543,6 +2594,7 @@ namespace PluginTaskTepMain
                                             ;
                                 fSum += Norm[@"64"][id_comp].value * Norm[nAlg][id_comp].value;
                             }
+
                             fRes = fSum / Norm[@"64"][ST].value;
                             break;
                         #endregion
@@ -2551,6 +2603,8 @@ namespace PluginTaskTepMain
                         case "134":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (In[@"84"][id_comp].value == 1)
                                     Norm[nAlg][id_comp].value = 2;
                                 else
@@ -2562,8 +2616,10 @@ namespace PluginTaskTepMain
                                         else
                                             //??1 / 0
                                             ;
+
                                 fSum += Norm[@"64"][id_comp].value * Norm[nAlg][id_comp].value;
                             }
+
                             fRes = fSum / Norm[@"64"][ST].value;
                             break;
                         #endregion
@@ -2572,17 +2628,19 @@ namespace PluginTaskTepMain
                         case "135":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = 1 + Norm[@"47"][id_comp].value / (Norm[@"24"][id_comp].value * Norm[@"2"][id_comp].value
                                     * (100 + Norm[@"41"][id_comp].value) / 1E5F + Norm[@"8"][id_comp].value * (100 - Norm[@"126.1"][id_comp].value)
                                     * (100 + Norm[@"125"][id_comp].value) / 1E4F);
                             }
+
                             if (In[@"81"][ST].value == 0)
                                 fRes = 1;
                             else
                                 fRes = 1 + Norm[@"47"][ST].value / (Norm[@"24"][ST].value * Norm[@"2"][ST].value
                                     * (100 + Norm[@"41"][ST].value) / 1E5F + Norm[@"126"][ST].value / Norm[@"8"][ST].value
                                     * 100) * (100 + Norm[@"125"][ST].value) / 1E4F;
-
                             break;
                         #endregion
 
@@ -2590,15 +2648,18 @@ namespace PluginTaskTepMain
                         case "136":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = Norm[@"42"][id_comp].value
                                     * (100 + Norm[@"132"][id_comp].value + Norm[@"133"][id_comp].value)
                                     * Norm[@"48"][id_comp].value * 100 / (Norm[@"129"][id_comp].value
                                     * Norm[@"130"][id_comp].value * 7 * Norm[@"135"][id_comp].value);
                             }
+
                             fRes = Norm[@"42"][ST].value
-                                    * (100 + Norm[@"132"][ST].value + Norm[@"133"][ST].value)
-                                    * Norm[@"48"][ST].value * 100 / (Norm[@"129"][ST].value
-                                    * Norm[@"130"][ST].value * 7 * Norm[@"135"][ST].value);
+                                * (100 + Norm[@"132"][ST].value + Norm[@"133"][ST].value)
+                                * Norm[@"48"][ST].value * 100 / (Norm[@"129"][ST].value
+                                * Norm[@"130"][ST].value * 7 * Norm[@"135"][ST].value);
                             break;
                         #endregion
 
@@ -2606,11 +2667,14 @@ namespace PluginTaskTepMain
                         case "137":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = Norm[@"136"][id_comp].value * (1 + In[@"64"][ST].value
                                     * (1 - In[@"65"][ST].value));
                             }
+
                             fRes = Norm[@"136"][ST].value * (1 + In[@"64"][ST].value
-                                      * (1 - In[@"65"][ST].value));
+                                * (1 - In[@"65"][ST].value));
                             break;
                         #endregion
 
@@ -2618,6 +2682,8 @@ namespace PluginTaskTepMain
                         case "138":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (In[@"71"][id_comp].value == 0)
                                     Norm[nAlg][id_comp].value = 0;
                                 else
@@ -2625,22 +2691,27 @@ namespace PluginTaskTepMain
 
                                 fSum += Norm[@"1"][id_comp].value * Norm[nAlg][id_comp].value;
                             }
+
                             fRes = fSum / Norm[@"1"][ST].value;
                             break;
                         #endregion
 
                         #region 139 - N сет
                         case "139":
+                            id_comp = ID_COMP[(int)INDX_COMP.iBL1];
+
                             if (Norm[@"138"][id_comp].value <= 4500)
                                 Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = (float)(fTable.F1("2.39б:1", Norm[@"138"][id_comp].value)
-                                                          * (float)(1.4F - (float)Math.Min(1.4F, In[@"10.1"][id_comp].value
-                                                          / In[@"1"][id_comp].value)) + fTable.F1("2.39в:1", Norm[@"138"][id_comp].value)
-                                                          * (float)Math.Min(1.4F, In[@"10.1"][id_comp].value / In[@"1"][id_comp].value)) / 1.4F;
+                                    * (float)(1.4F - (float)Math.Min(1.4F, In[@"10.1"][id_comp].value
+                                    / In[@"1"][id_comp].value)) + fTable.F1("2.39в:1", Norm[@"138"][id_comp].value)
+                                    * (float)Math.Min(1.4F, In[@"10.1"][id_comp].value / In[@"1"][id_comp].value)) / 1.4F;
                             else
                                 Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F1("2.39г:1", Norm[@"138"][id_comp].value);
 
                             for (i = (int)INDX_COMP.iBL2; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (Norm[@"138"][id_comp].value <= 4500)
                                 {
                                     fTmp = (float)(fTable.F1("2.39б:1", Norm[@"138"][id_comp].value)
@@ -2681,6 +2752,8 @@ namespace PluginTaskTepMain
                         case "143":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1:
@@ -2704,6 +2777,8 @@ namespace PluginTaskTepMain
                         case "144":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (isRealTime)
                                 {
                                     if (((!(iMonth < 6) && !(iMonth > 9)) || iMonth == 5) && iDay > 15)
@@ -2773,6 +2848,7 @@ namespace PluginTaskTepMain
                                             break;
                                     }
                                 }
+
                                 fRes += Norm[nAlg][id_comp].value;
                             }
                             break;
@@ -2782,6 +2858,8 @@ namespace PluginTaskTepMain
                         case "145":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.UNKNOWN:
@@ -2801,8 +2879,10 @@ namespace PluginTaskTepMain
                                     default:
                                         break;
                                 }
+
                                 fSum += Norm[nAlg][id_comp].value * Norm[@"8"][id_comp].value;
                             }
+
                             fRes = fSum / Norm[@"8"][ST].value;
                             break;
                         #endregion
@@ -2823,6 +2903,8 @@ namespace PluginTaskTepMain
                         case "147":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 if (Norm[@"8"][id_comp].value == 0)
                                     Norm[nAlg][id_comp].value = 0;
                                 else
@@ -2831,6 +2913,7 @@ namespace PluginTaskTepMain
 
                                 fSum += Norm[nAlg][id_comp].value * Norm[@"3"][id_comp].value;
                             }
+
                             fRes = fSum / Norm[@"3"][ST].value;
                             break;
                         #endregion
@@ -2839,11 +2922,14 @@ namespace PluginTaskTepMain
                         case "148":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = Norm[@"145"][id_comp].value * (100 - Norm["126.1"][id_comp].value) / 1E2F
                                     + Norm[@"147"][id_comp].value;
                             }
+
                             fRes = Norm[@"145"][ST].value * (100 - Norm["126.1"][ST].value) / 1E2F
-                                     + Norm[@"147"][ST].value; ;
+                                + Norm[@"147"][ST].value; ;
                             break;
                         #endregion
 
@@ -2859,10 +2945,13 @@ namespace PluginTaskTepMain
                         case "150":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = Norm[@"145"][ST].value * (100 - Norm["126.1"][id_comp].value) / 1E2F
                                     * (1 + In[@"66"][ST].value * (1 - In[@"67"][ST].value)) + Norm[@"147"][id_comp].value
                                     * Norm[@"137"][id_comp].value / Norm["136"][id_comp].value;
                             }
+
                             fRes = Norm[@"145"][ST].value * (100 - Norm["146.1"][ST].value - Norm["126.1"][ST].value)
                                 * (1 + In[@"66"][ST].value * (1 - In[@"67"][ST].value)) / 1E2F + Norm[@"146"][ST].value
                                 * Norm[@"146.1"][ST].value / 1E2F + In[@"87"][ST].value * 1E3F / Norm[@"5"][ST].value
@@ -2874,12 +2963,15 @@ namespace PluginTaskTepMain
                         case "151":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = Norm[@"24"][id_comp].value * Norm[@"2"][id_comp].value / 1E3F
                                     + (Norm[@"8"][id_comp].value - Norm[@"126"][id_comp].value) * (100 + Norm[@"125"][id_comp].value)
                                     / 1E2F + Norm[@"41"][id_comp].value * Norm[@"24"][id_comp].value * Norm[@"2"][id_comp].value
                                     / 1E3F / 1E2F + Norm[@"121"][id_comp].value * Norm[@"64"][id_comp].value / 100 + 472.2F
                                     * Norm[@"1"][id_comp].value / 1E2F;
                             }
+
                             fRes = Norm[@"24"][ST].value * Norm[@"2"][ST].value / 1E3F
                                     + (Norm[@"8"][ST].value - Norm[@"126"][ST].value) * (100 + Norm[@"125"][ST].value)
                                     / 1E2F + Norm[@"41"][ST].value * Norm[@"24"][ST].value * Norm[@"2"][ST].value
@@ -2892,9 +2984,12 @@ namespace PluginTaskTepMain
                         case "152":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
+                                id_comp = ID_COMP[i];
+
                                 Norm[nAlg][id_comp].value = (Norm[@"64"][id_comp].value - Norm["151"][id_comp].value)
                                     / Norm[@"64"][id_comp].value * 1E2F;
                             }
+
                             fRes = (Norm[@"64"][ST].value - Norm["151"][ST].value)
                                     / Norm[@"64"][ST].value * 1E2F;
                             break;
