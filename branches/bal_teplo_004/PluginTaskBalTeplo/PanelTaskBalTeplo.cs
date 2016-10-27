@@ -2138,7 +2138,8 @@ namespace PluginTaskBalTeplo
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = 2; //??? требуется прочитать из [profile]
+                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
+
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
@@ -2147,9 +2148,9 @@ namespace PluginTaskBalTeplo
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = 1; //??? требуется прочитать из [profile]
-                    Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][1]);//??
-                    (PanelManagement as PanelManagementBalTeplo).SetPeriod(Session.m_currIdPeriod);
+                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()])); //??? требуется прочитать из [profile]
+                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
+                    (PanelManagement as PanelManagementBalTeplo).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
                     (ctrl as ComboBox).Enabled = false;
 
                     ctrl = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0];
@@ -2196,37 +2197,39 @@ namespace PluginTaskBalTeplo
         private Dictionary<int, object[]> GetProfileDGV(int id_dgv)
         {
             Dictionary<int, object[]> dict_profile = new Dictionary<int, object[]>();
+            string value = string.Empty;
+            string[] contexts = {"33","34"};
             string[] id;
             List<double> ids = new List<double>();
-            DataRow[] rows = m_dt_profile.Select("ID_UNIT= 7 and ID_ITEM='" + id_dgv + "'");
             string type = string.Empty;
-            if (rows.Length == 2)
-            {
-                List<object> obj = new List<object>();
-                foreach (DataRow r in rows)
-                {
-                    id = r["VALUE"].ToString().Trim().Split(';');
-                    ids.Clear();
-                    if (id.Length > 0)
-                    {
-                        foreach (string str in id)
-                        {
-                            ids.Add(Convert.ToDouble(str.Replace('.', ',')));
-                        }
-                    }
-                    if (Convert.ToInt32(r["CONTEXT"].ToString().Trim()) == 33)
-                    {
-                        type = "in";
-                    }
-                    if (Convert.ToInt32(r["CONTEXT"].ToString().Trim()) == 34)
-                    {
-                        type = "out";
-                    }
-                    obj.Add(new object[] { ids.ToArray(), type });
-                }
-                dict_profile.Add(id_dgv, obj.ToArray());
+            
+            List<object> obj = new List<object>();
 
+            foreach (string context in contexts)
+            {
+                value = m_dictProfile.Objects[id_dgv.ToString()].Objects[context].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.INPUT_PARAM).ToString()];
+                id = value.Trim().Split(';');
+                ids.Clear();
+                if (id.Length > 0)
+                {
+                    foreach (string str in id)
+                    {
+                        ids.Add(Convert.ToDouble(str.Replace('.', ',')));
+                    }
+                }
+
+                if (Convert.ToInt32(context) == 33)
+                {
+                    type = "in";
+                }
+                if (Convert.ToInt32(context) == 34)
+                {
+                    type = "out";
+                }
+                obj.Add(new object[] { ids.ToArray(), type });
             }
+            dict_profile.Add(id_dgv, obj.ToArray());
+
 
             return dict_profile;
         }

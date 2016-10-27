@@ -896,7 +896,8 @@ namespace PluginTaskBalTeplo
                       + rowSel[@"ID_PUT"] + @"," //ID_PUT
                       + rowSel[@"QUALITY"] + @"," //QUALITY
                       + rowSel[@"VALUE"].ToString().Replace(',', '.') + @"," + //VALUE
-                    "'" + rowSel[@"WR_DATETIME"]
+                    "'" + rowSel[@"WR_DATETIME"] + @"'," +
+                    "'" + HDateTime.ToMoscowTimeZone().ToString()
                       ;
 
                     strQuery += @"'),";
@@ -1089,7 +1090,7 @@ namespace PluginTaskBalTeplo
         /// <returns>таблицу значений</returns>
         public DataTable saveResOut(DataTable tableOrigin, DataTable tableRes, out int err)
         {
-            err = -1;
+            err = 0;
             DataTable tableEdit = new DataTable();
             string rowSel = null;
             tableEdit = tableOrigin.Clone();//копия структуры
@@ -1109,7 +1110,7 @@ namespace PluginTaskBalTeplo
                                 rowSel
                                 , HUsers.Id.ToString()
                                 , 0.ToString()
-                                , Convert.ToDateTime(_Session.m_rangeDatetime.Begin.ToUniversalTime().ToString()).ToString(CultureInfo.InvariantCulture)
+                                , Convert.ToDateTime(HDateTime.ToMoscowTimeZone(_Session.m_rangeDatetime.Begin).ToString()).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
                                 , ID_TIMEZONE.NSK
                                 , 1.ToString()
@@ -1134,7 +1135,7 @@ namespace PluginTaskBalTeplo
         /// <returns>таблицу значений</returns>
         public DataTable saveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
         {
-            err = -1;
+            err = 0;
             DataTable tableEdit = new DataTable();
             string rowSel = null;
             tableEdit = tableOrigin.Clone();//копия структуры
@@ -1145,13 +1146,13 @@ namespace PluginTaskBalTeplo
                 for (int i = 0; i < tableRes.Rows.Count; i++)
                 {
                     rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
-
+                    
                     tableEdit.Rows.Add(new object[]
                             {
                                 rowSel
                                 , HUsers.Id.ToString()
                                 , 0.ToString()
-                                , Convert.ToDateTime(_Session.m_rangeDatetime.Begin.ToUniversalTime().ToString()).ToString(CultureInfo.InvariantCulture)
+                                , Convert.ToDateTime(HDateTime.ToMoscowTimeZone(_Session.m_rangeDatetime.Begin).ToString()).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
                                 , ID_TIMEZONE.NSK
                                 , 1.ToString()
