@@ -534,14 +534,29 @@ namespace PluginTaskTepMain
 
                 return tableRes;
             }
-
-            private struct NodeCalc { public string nAlg; public bool IsGroup; }
-
+            /// <summary>
+            /// Элемент расчета
+            /// </summary>
+            private struct NodeCalc {
+                /// <summary>
+                /// Номер алгоритма расчета
+                /// </summary>
+                public string nAlg;
+                /// <summary>
+                /// Признак пасчета группового элемента
+                /// </summary>
+                public bool IsGroup;
+            }
+            /// <summary>
+            /// Расчитать нормативные значения
+            /// </summary>
+            /// <returns>Признак наличия ошибки при расчете</returns>
             private int calculateNormative()
             {
                 int iRes = 0;
                 string nAlg = string.Empty;
 
+                #region Определения для элементов расчета
                 NodeCalc[] arCalculate = new NodeCalc[] {
                     /*-------------1 - TAU раб-------------*/
                     new NodeCalc() { nAlg = @"1", IsGroup = true }
@@ -891,6 +906,7 @@ namespace PluginTaskTepMain
                     ///*-------------155-------------*/
                     //, new NodeCalc() { nAlg = @"", IsGroup = false }
                 };
+                #endregion
 
                 for (int i = 0; i < arCalculate.Length; i++) {
                     try {
@@ -937,17 +953,28 @@ namespace PluginTaskTepMain
 
                 return tableRes;
             }
-
+            /// <summary>
+            /// Расчитать выходные значения
+            /// </summary>
+            /// <returns>Признак наличия/отсутствия ошибки при выполнении метода</returns>
             private int calculateMaket()
             {
                 int iRes = 0;
 
+                #region Определения для элементов расчета
                 NodeCalc[] arCalculate = new NodeCalc[] {
                 };
+                #endregion
+
+                arCalculate.ToList().ForEach(node => { if (node.IsGroup == true) Out[node.nAlg][ST].value = calculateNormative(node.nAlg); else calculateNormative(node.nAlg); });
 
                 return iRes;
             }
-
+            /// <summary>
+            /// Преобразование словаря с результатом в таблицу для БД
+            /// </summary>
+            /// <param name="pAlg">Словарь с результатами расчета</param>
+            /// <returns>Таблица для БД с результатами расчета</returns>
             private DataTable resultToTable(P_ALG pAlg)
             {
                 DataTable tableRes = new DataTable();
