@@ -16,11 +16,11 @@ namespace PluginTaskVedomostBl
     public class PanelTaskVedomostBl : HPanelTepCommon
     {
         /// <summary>
-        /// 
+        /// переменная с текущем отклоненеим от UTC
         /// </summary>
         static int s_currentOffSet;
         /// <summary>
-        /// 
+        /// Для обозначения выбора 1 или 6 блоков
         /// </summary>
         static bool s_flagBl = true;
         /// <summary>
@@ -114,15 +114,6 @@ namespace PluginTaskVedomostBl
             COUNT
         }
         /// <summary>
-        /// 
-        /// </summary>
-        protected enum PROFILE_INDEX
-        {
-            UNKNOW = -1,
-            TIMEZONE = 101, MAIL, PERIOD,
-            RATIO = 201, ROUND, EDIT_COLUMN = 204,
-        }
-        /// <summary>
         /// Таблицы со значениями для редактирования
         /// </summary>
         protected DataTable[] m_arTableOrigin
@@ -189,15 +180,15 @@ namespace PluginTaskVedomostBl
             return new HandlerDbTaskVedomostBlCalculate();
         }
         /// <summary>
-        /// 
+        /// экземпляр класса вьюхи
         /// </summary>
         protected DGVVedomostBl m_dgvVedomst;
         /// <summary>
-        /// 
+        /// экземпляр класса пикчи
         /// </summary>
         protected PictureVedBl m_pictureVedBl;
         /// <summary>
-        /// 
+        /// экземпляр класса обрабокти данных
         /// </summary>
         static VedomostBlCalculate s_VedCalculate;
         /// <summary>
@@ -297,8 +288,12 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Делегат
             /// </summary>
-            /// <param name="idComp"></param>
+            /// <param name="indx">индекс контрола панели</param>
+            /// <returns>контрол на панели</returns>
             public delegate Control GetControl(INDEX_CONTROL_BASE indx);
+            /// <summary>
+            /// экземпляр делегата
+            /// </summary>
             public static GetControl _getControls;
             /// <summary>
             /// Событие - изменение выбора запрет/разрешение
@@ -310,7 +305,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
             /// <summary>
-            /// 
+            /// конструктор класса
             /// </summary>
             public PanelManagementVedomost()
                 : base(4, 3)
@@ -968,7 +963,7 @@ namespace PluginTaskVedomostBl
             /// Возвратить идентификатор элемента управления по идентификатору
             ///  , используемого для его заполнения
             /// </summary>
-            /// <param name="indxId"></param>
+            /// <param name="indxId">индекс индентификатора контрола</param>
             /// <returns>индекс элемента панели</returns>
             protected INDEX_CONTROL_BASE getIndexControlOfIndexID(INDEX_ID indxId)
             {
@@ -3071,7 +3066,7 @@ namespace PluginTaskVedomostBl
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.TIMEZONE).ToString()]);
+                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
@@ -3080,9 +3075,9 @@ namespace PluginTaskVedomostBl
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
-                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
-                    (PanelManagementVed as PanelManagementVedomost).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
+                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
+                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
+                    (PanelManagementVed as PanelManagementVedomost).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
                     (ctrl as ComboBox).Enabled = false;
 
                 }
@@ -3655,7 +3650,7 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// 
+        /// удачное заврешение UpdateInsertDelete
         /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
