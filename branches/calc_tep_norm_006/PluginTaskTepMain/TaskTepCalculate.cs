@@ -2,11 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Data;
-using System.Data.Common;
-using System.Text;
 
 using HClassLibrary;
-using InterfacePlugIn;
 using TepCommon;
 
 namespace PluginTaskTepMain
@@ -966,7 +963,7 @@ namespace PluginTaskTepMain
                 };
                 #endregion
 
-                arCalculate.ToList().ForEach(node => { if (node.IsGroup == true) Out[node.nAlg][ST].value = calculateNormative(node.nAlg); else calculateNormative(node.nAlg); });
+                arCalculate.ToList().ForEach(node => { if (node.IsGroup == true) Out[node.nAlg][ST].value = calculateMaket(node.nAlg); else calculateMaket(node.nAlg); });
 
                 return iRes;
             }

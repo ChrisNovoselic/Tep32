@@ -1,19 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using System.Data;
-using System.Data.Common;
-using System.Text.RegularExpressions;
-using System.Drawing;
 
 using HClassLibrary;
-using InterfacePlugIn;
-using TepCommon;
 
 namespace PluginTaskTepMain
 {
+    /// <summary>
+    /// Базовый класс для отображения расчетных значений ИРЗ Расчет ТЭП
+    ///  при расчете всегда "чужая" сессия (переопределена 'Activate', отправлен запрос для получения "чужого" идентификатора сессии)
+    ///  при просмотре архивных значений собственная сессия, но расчет недоступен
+    /// </summary>
     public abstract partial class PanelTaskTepOutVal : PanelTaskTepValues
     {
         //protected enum TYPE_OUTVALUES { UNKNOWUN = -1, NORMATIVE, MAKET, COUNT }
@@ -37,6 +34,18 @@ namespace PluginTaskTepMain
 
             eventAddCompParameter += new DelegateObjectFunc ((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
         }
+
+        //public override bool Activate(bool activate)
+        //{
+        //    bool bRes = base.Activate(activate);
+
+        //    if (bRes == true)
+        //        ;
+        //    else
+        //        ;
+
+        //    return bRes;
+        //}
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>

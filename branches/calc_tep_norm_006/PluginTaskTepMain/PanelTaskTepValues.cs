@@ -1082,19 +1082,23 @@ namespace PluginTaskTepMain
 
                             if (getClrCellToValue(iCol, iRow, out clrCell) == true)
                             {
+                                // символ (??? один для строки, но назначается много раз по числу столбцов)
+                                row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol
+                                    + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
+                                // Множитель для значения - для отображения
                                 vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                // Множитель для значения - исходный в БД
                                 ratioValue =
                                     //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
                                     m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
                                     ;
+                                // проверить требуется ли преобразование
                                 if (!(ratioValue == vsRatioValue))
-                                {
-                                    row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol
-                                        + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
-                                    dblVal *= Math.Pow(10F, ratioValue > vsRatioValue ? vsRatioValue : -1 * vsRatioValue);
-                                }
+                                    // домножить значение на коэффициент
+                                    dblVal *= Math.Pow(10F, ratioValue - vsRatioValue);
                                 else
                                     ;
+                                // отобразить с количеством знаков в соответствии с настройками
                                 row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);
                             }
                             else

@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Data;
-using System.Data.Common;
-using System.Text;
 
 using HClassLibrary;
-using InterfacePlugIn;
 using TepCommon;
 
 namespace PluginTaskTepMain
@@ -17,8 +11,7 @@ namespace PluginTaskTepMain
         /// Класс для расчета технико-экономических показателей
         /// </summary>
         public partial class TaskTepCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
-        {
-            
+        {            
             private float calculateMaket(string nAlg)
             {
                 float fRes = 0F,
