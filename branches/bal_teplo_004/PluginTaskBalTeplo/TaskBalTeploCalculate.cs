@@ -1110,9 +1110,9 @@ namespace PluginTaskBalTeplo
                                 rowSel
                                 , HUsers.Id.ToString()
                                 , 0.ToString()
-                                , Convert.ToDateTime(HDateTime.ToMoscowTimeZone(_Session.m_rangeDatetime.Begin).ToString()).ToString(CultureInfo.InvariantCulture)
+                                , (_Session.m_rangeDatetime.Begin - getOffsetMoscowToUTC).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
-                                , ID_TIMEZONE.NSK
+                                , ID_TIMEZONE.MSK
                                 , 1.ToString()
                                 , tableRes.Rows[i]["VALUE"]
                                 , DateTime.Now
@@ -1124,6 +1124,52 @@ namespace PluginTaskBalTeplo
             else;
 
             return tableEdit;
+        }
+
+        /// <summary>
+        /// Смещение по времени до Москвы
+        /// </summary>
+        private TimeSpan getOffsetToMoscow
+        {
+            get
+            {
+                TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset - TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset;
+                
+                return offset;
+            }
+            set
+            {
+            }
+        }
+        /// <summary>
+        /// Смещение по времени Москвы до UTC
+        /// </summary>
+        private TimeSpan getOffsetMoscowToUTC
+        {
+            get
+            {
+                TimeSpan offset = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset;
+                
+                return offset;
+            }
+            set
+            {
+            }
+        }
+        /// <summary>
+        /// Смещение по времени до UTC
+        /// </summary>
+        private TimeSpan getOffsetToUTC
+        {
+            get
+            {
+                TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
+
+                return offset;
+            }
+            set
+            {
+            }
         }
 
         /// <summary>
@@ -1152,9 +1198,9 @@ namespace PluginTaskBalTeplo
                                 rowSel
                                 , HUsers.Id.ToString()
                                 , 0.ToString()
-                                , Convert.ToDateTime(HDateTime.ToMoscowTimeZone(_Session.m_rangeDatetime.Begin).ToString()).ToString(CultureInfo.InvariantCulture)
+                                , (_Session.m_rangeDatetime.Begin - getOffsetMoscowToUTC).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
-                                , ID_TIMEZONE.NSK
+                                , ID_TIMEZONE.MSK
                                 , 1.ToString()
                                 , tableRes.Rows[i]["VALUE"]
                                 , DateTime.Now
