@@ -1866,15 +1866,15 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
+            /// Отображение данных на вьюхе
             /// </summary>
-            /// <param name="tableOrigin"></param>
-            public void ShowValues(DataTable tableOrigin)
+            /// <param name="tableOrigin">таблица с данными</param>
+            /// <param name="typeValues">тип загружаемых данных</param>
+            public void ShowValues(DataTable tableOrigin, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
                 DataTable _dtOriginVal = new DataTable();
                 int idAlg = -1
                    , idParameter = -1
-                   , iQuality = -1
                    , _hoursOffSet
                    , iCol = 0//, iRow = 0
                    , _vsRatioValue = -1;
@@ -1886,7 +1886,7 @@ namespace PluginTaskVedomostBl
                 _dtOriginVal = tableOrigin.Copy();
 
                 if (s_flagBl)
-                    _hoursOffSet = -1 * (DateTimeOffset.Now.Offset.Hours + 10);
+                    _hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset - TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset).Hours + 24);
                 else
                     _hoursOffSet = (s_currentOffSet / 60);
 
@@ -1897,29 +1897,35 @@ namespace PluginTaskVedomostBl
                         parameterRows = s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].
                         Select(string.Format(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_ALG = " + col.m_iIdComp + " AND ID_COMP = " + m_idCompDGV));
                         idParameter = (int)parameterRows[0]["ID"];
-                        editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + idParameter));//???
+                        editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + idParameter));
 
                         for (int i = 0; i < editRow.Count(); i++)
                         {
-                            if (Rows[i].Index != RowCount - 1)
+                            idAlg = col.m_iIdComp;
+                            _vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
+
+                            foreach (DataGridViewRow row in Rows)
                             {
-                                idAlg = col.m_iIdComp;
-                                _vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
                                 if (Convert.ToDateTime(editRow[i][@"WR_DATETIME"]).AddHours(_hoursOffSet).ToShortDateString() ==
-                                        Rows[i].Cells["Date"].Value.ToString())
+                                        row.Cells["Date"].Value.ToString())
                                 {
                                     dblVal = ((double)editRow[i][@"VALUE"]);
-                                    Rows[i].Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound,
+                                    row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound,
                                                CultureInfo.InvariantCulture);
                                 }
                             }
-                            else;
-
                         }
-                        if (m_dictPropertyColumns[idAlg].m_Avg == 0)
-                            Rows[RowCount - 1].Cells[iCol].Value = sumVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
-                        else
-                            Rows[RowCount - 1].Cells[iCol].Value = avgVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
+                        try
+                        {
+                            if (m_dictPropertyColumns[idAlg].m_Avg == 0)//???ARCH
+                                Rows[RowCount - 1].Cells[iCol].Value = sumVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
+                            else
+                                Rows[RowCount - 1].Cells[iCol].Value = avgVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
+                        }
+                        catch (Exception exp)
+                        {
+                            throw;
+                        }   
                     }
 
                     iCol++;
@@ -1941,7 +1947,7 @@ namespace PluginTaskVedomostBl
                         if (Rows.Count - 1 != row.Index)
                             if (row.Cells[indxCol].Value != null)
                                 if (row.Cells[indxCol].Value.ToString() != "")
-                                _sumValue += s_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
+                                    _sumValue += s_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
                 }
                 catch (Exception e)
                 {
@@ -1967,11 +1973,11 @@ namespace PluginTaskVedomostBl
                 {
                     foreach (DataGridViewRow row in Rows)
                         if (row.Cells[indxCol].Value != null)
-                            if(row.Cells[indxCol].Value.ToString() != "")
-                        {
-                            _sumValue += s_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
-                            cntNum++;
-                        }
+                            if (row.Cells[indxCol].Value.ToString() != "")
+                            {
+                                _sumValue += s_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
+                                cntNum++;
+                            }
                 }
                 catch (Exception exp)
                 {
@@ -1983,12 +1989,12 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
+            /// Формирование таблицы данных с отображения
             /// </summary>
-            /// <param name="dtSourceOrg"></param>
-            /// <param name="idSession"></param>
-            /// <returns></returns>
-            public DataTable FillTableToSave(DataTable dtSourceOrg, int idSession)
+            /// <param name="dtSourceOrg">таблица с оригинальными данными</param>
+            /// <param name="idSession">номер сессии пользователя</param>
+            /// <returns>таблица с новыми данными с вьюхи</returns>
+            public DataTable FillTableToSave(DataTable dtSourceOrg, int idSession, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
                 int i = 0,
                     idAlg = -1
@@ -2029,7 +2035,7 @@ namespace PluginTaskVedomostBl
                                         valueToRes *= Math.Pow(10F, vsRatioValue);
                                         dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
 
-                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
+                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i, idAlg, typeValues);
 
                                         dtSourceEdit.Rows.Add(new object[]
                                         {
@@ -2070,15 +2076,48 @@ namespace PluginTaskVedomostBl
             /// <param name="origin">оригинальная таблица</param>
             /// <param name="editValue">значение</param>
             /// <param name="i">номер строки</param>
+            /// <param name="idAlg"></param>
             /// <returns>показатель изменения</returns>
-            private int diffRowsInTables(DataTable origin, double editValue, int i)
+            private int diffRowsInTables(DataTable origin, double editValue, int i, int idAlg, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
-                int quality = 0;
+                //int quality = 0;
+                //double dbVal = 0F;
 
-                origin = sortingTable(origin, "WR_DATETIME, ID_PUT");
+                //origin = sortingTable(origin, "WR_DATETIME, ID_PUT");
+                //dbVal = (double)origin.Rows[i]["Value"];
 
-                if (origin.Rows[i]["Value"].ToString() != editValue.ToString())
-                    quality = 1;
+                //if (dbVal.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound,CultureInfo.InvariantCulture) 
+                //    != editValue.ToString())
+                //    quality = 1;
+
+                //return quality;
+
+                int quality = 1;
+                double originValues;
+
+                origin = sortingTable(origin, "ID_PUT, WR_DATETIME");
+
+                if (origin.Rows.Count - 1 < i)
+                    originValues = 0;
+                else
+                    originValues =
+                        AsParseToF(origin.Rows[i]["VALUE"].ToString());
+                //double.Parse(origin.Rows[i]["VALUE"].ToString(), NumberStyles.Float, CultureInfo.InvariantCulture);
+
+                switch (typeValues)
+                {
+                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE:
+                        if (originValues.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture) != editValue.ToString())
+                            quality = 2;
+                        break;
+                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION:
+                        quality = 1;
+                        break;
+                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT:
+                        break;
+                    default:
+                        break;
+                }
 
                 return quality;
             }
@@ -2666,11 +2705,10 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// 
+        /// Получение листа с чекедами для каждого из блока
         /// </summary>
-        /// <param name="indx"></param>
-        /// <returns>контрол на панели</returns>
-        private List<bool> getControl()
+        /// <returns>лист с чекедами для групп</returns>
+        private List<bool> getListCheckedGroup()
         {
             Control _cntrl = new Control()
                 , rbt = new Control();
@@ -3345,9 +3383,9 @@ namespace PluginTaskVedomostBl
                         // создать копии для возможности сохранения изменений
                         setValues();
                         // отобразить значения
-                        (getActiveView() as DGVVedomostBl).ShowValues(m_TableOrigin);
+                        (getActiveView() as DGVVedomostBl).ShowValues(m_arTableOrigin[(int)m_ViewValues], m_ViewValues);
                         //
-                        m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
+                        m_arTableEdit[(int)m_ViewValues] = valuesFence();
                     }
                     else
                         deleteSession();
@@ -3367,6 +3405,26 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
+        /// Обновить/Вставить/Удалить
+        /// </summary>
+        /// <param name="nameTable">имя таблицы</param>
+        /// <param name="origin">оригинальная таблица</param>
+        /// <param name="edit">таблица с данными</param>
+        /// <param name="unCol">столбец, неучаствующий в InsetUpdate</param>
+        /// <param name="err">номер ошибки</param>
+        private void updateInsertDel(string nameTable, DataTable origin, DataTable edit, string unCol, out int err)
+        {
+            err = -1;
+
+            m_handlerDb.RecUpdateInsertDelete(nameTable
+                    , @"ID_PUT, DATE_TIME, QUALITY"
+                    , unCol
+                    , origin
+                    , edit
+                    , out err);
+        }
+
+        /// <summary>
         /// получение значений
         /// создание сессии
         /// </summary>
@@ -3380,7 +3438,7 @@ namespace PluginTaskVedomostBl
             //Создание сессии
             Session.New();
             //Запрос для получения архивных данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutvalArch(Type, arQueryRanges, out err);
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
@@ -3424,18 +3482,15 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// формирование таблицы данных
         /// </summary>
-        private DataTable valuesFence
-        {
-            get
-            { //сохранить вх. знач. в DataTable
-                return (getActiveView() as DGVVedomostBl).FillTableToSave(m_TableOrigin, (int)Session.m_Id);
-            }
+        private DataTable valuesFence()
+        { //сохранить вх. знач. в DataTable
+            return (getActiveView() as DGVVedomostBl).FillTableToSave(m_TableOrigin, (int)Session.m_Id, m_ViewValues);
         }
 
         /// <summary>
         /// проверка выборки блока(для 1 и 6)
         /// </summary>
-        protected bool WhichBlIsSelected
+        public bool WhichBlIsSelected
         {
             get { return s_flagBl; }
 
@@ -3604,7 +3659,8 @@ namespace PluginTaskVedomostBl
         /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
-            throw new NotImplementedException();
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+               m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
         }
 
         /// <summary>
@@ -3623,16 +3679,105 @@ namespace PluginTaskVedomostBl
             else
                 dtR = HandlerDb.GetDateTimeRangeValuesVarExtremeBL();
 
-            //m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            //HandlerDb.GetInVal(Type
-            //, dtR
-            //, ActualIdPeriod
-            //, out err);
+            m_arTableOrigin[(int)m_ViewValues] = HandlerDb.GetInVal(Type
+                , dtR
+                , ActualIdPeriod
+                , out err);
 
-            //m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            //    HandlerDb.SaveValues(m_TableOrigin, valuesFence, (int)Session.m_currIdTimezone, out err);
+            m_arTableEdit[(int)m_ViewValues] =
+          HandlerDb.SaveValues(m_arTableOrigin[(int)m_ViewValues]
+          , valuesFence()
+          , (int)Session.m_currIdTimezone
+          , out err);
 
-            //saveInvalValue(out err);
+            //base.HPanelTepCommon_btnSave_Click(obj, ev);
+
+            saveInvalValue(out err);
+        }
+
+        /// <summary>
+        /// Сохранение входных знчений
+        /// </summary>
+        /// <param name="err">номер ошибки</param>
+        private void saveInvalValue(out int err)
+        {
+            DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVarArchive();
+
+            sortingDataToTable(m_arTableOrigin[(int)m_ViewValues]
+                , m_arTableEdit[(int)m_ViewValues]
+                , HandlerDb.GetNameTableOut(dtrPer[0].Begin)
+                , @"ID"
+                , out err);
+        }
+
+        /// <summary>
+        /// разбор данных по разным табилца(взависимости от месяца)
+        /// </summary>
+        /// <param name="origin">оригинальная таблица</param>
+        /// <param name="edit">таблица с данными</param>
+        /// <param name="nameTable">имя таблицы</param>
+        /// <param name="unCol">столбец, неучаствующий в InsertUpdate</param>
+        /// <param name="err">номер ошибки</param>
+        private void sortingDataToTable(DataTable origin
+            , DataTable edit
+            , string nameTable
+            , string unCol
+            , out int err)
+        {
+            string nameTableExtrmRow = string.Empty
+                          , nameTableNew = string.Empty;
+            DataTable editTemporary = new DataTable()
+                , originTemporary = new DataTable();
+
+            err = -1;
+            editTemporary = edit.Clone();
+            originTemporary = origin.Clone();
+            nameTableNew = nameTable;
+
+            foreach (DataRow row in edit.Rows)
+            {
+                nameTableExtrmRow = extremeRow(row["DATE_TIME"].ToString(), nameTableNew);
+
+                if (nameTableExtrmRow != nameTableNew)
+                {
+                    foreach (DataRow rowOrigin in origin.Rows)
+                        if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month != Convert.ToDateTime(row["DATE_TIME"]).Month)
+                            originTemporary.Rows.Add(rowOrigin.ItemArray);
+
+                    updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
+
+                    nameTableNew = nameTableExtrmRow;
+                    editTemporary.Rows.Clear();
+                    originTemporary.Rows.Clear();
+                    editTemporary.Rows.Add(row.ItemArray);
+                }
+                else
+                    editTemporary.Rows.Add(row.ItemArray);
+            }
+
+            if (editTemporary.Rows.Count > 0)
+            {
+                foreach (DataRow rowOrigin in origin.Rows)
+                    if (extremeRow(Convert.ToDateTime(rowOrigin["DATE_TIME"]).ToString(), nameTableNew) == nameTableNew)
+                        originTemporary.Rows.Add(rowOrigin.ItemArray);
+
+                updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
+            }
+        }
+
+        /// <summary>
+        /// Нахождение имени таблицы для крайних строк
+        /// </summary>
+        /// <param name="strDate">дата</param>
+        /// <param name="nameTable">изначальное имя таблицы</param>
+        /// <returns>имя таблицы</returns>
+        private static string extremeRow(string strDate, string nameTable)
+        {
+            DateTime dtStr = Convert.ToDateTime(strDate);
+            string newNameTable = dtStr.Year.ToString() + dtStr.Month.ToString(@"00");
+            string[] pref = nameTable.Split('_');
+
+            return pref[0] + "_" + newNameTable;
         }
 
         /// <summary>
@@ -3678,6 +3823,57 @@ namespace PluginTaskVedomostBl
             // ... - загрузить/отобразить значения из БД
             updateDataValues();
         }
+
+        /// <summary>
+        /// преобразование числа в нужный формат отображения
+        /// </summary>
+        /// <param name="value">число</param>
+        /// <returns>преобразованное число</returns>
+        public static float AsParseToF(string value)
+        {
+            int _indxChar = 0;
+            string _sepReplace = string.Empty;
+            bool bFlag = true;
+            //char[] _separators = { ' ', ',', '.', ':', '\t'};
+            //char[] letters = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).ToArray();
+            float fValue = 0;
+
+            foreach (char item in value.ToCharArray())
+            {
+                if (!char.IsDigit(item))
+                    if (char.IsLetter(item))
+                        value = value.Remove(_indxChar, 1);
+                    else
+                        _sepReplace = value.Substring(_indxChar, 1);
+                else
+                    _indxChar++;
+
+                switch (_sepReplace)
+                {
+                    case ".":
+                    case ",":
+                    case " ":
+                    case ":":
+                        float.TryParse(value.Replace(_sepReplace, "."), NumberStyles.Float, CultureInfo.InvariantCulture, out fValue);
+                        bFlag = false;
+                        break;
+                }
+            }
+
+            if (bFlag)
+                try
+                {
+                    fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+                }
+                catch (Exception e)
+                {
+                    if (value.ToString() == "")
+                        fValue = 0;
+                }
+
+
+            return fValue;
+        }
     }
 
     /// <summary>
@@ -3703,4 +3899,6 @@ namespace PluginTaskVedomostBl
         }
     }
 }
+
+
 

@@ -169,7 +169,7 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// 
+        /// Конструктор
         /// </summary>
         private void InitializeComponent()
         {
@@ -1833,11 +1833,25 @@ namespace PluginTaskReaktivka
                 {
                     if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                     {
-                        parameterRows = source.Select(string.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
+                        try
+                        {
+                            parameterRows = source.Select(string.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
+                        }
+                        catch (Exception e)
+                        {
+                            throw;
+                        }
 
                         foreach (DataGridViewRow row in Rows)
                         {
-                            idAlg = (int)row.Cells["ALG"].Value;
+                            try
+                            {
+                                idAlg = (int)row.Cells["ALG"].Value;
+                            }
+                            catch (Exception exp)
+                            {
+                                throw;
+                            }
 
                             if (row.Index != row.DataGridView.RowCount - 1)
                             {
@@ -1866,7 +1880,6 @@ namespace PluginTaskReaktivka
                                     CultureInfo.InvariantCulture);
                         }
                     }
-
                     iCol++;
                     dbSumVal = 0;
                 }
@@ -1932,7 +1945,7 @@ namespace PluginTaskReaktivka
                                     if (row.Cells[col.Index].Value.ToString() != "")
                                     {
                                         idAlg = (int)row.Cells["ALG"].Value;
-                                        valueToRes = //Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
+                                        valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
                                         vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
 
                                         valueToRes *= Math.Pow(10F, vsRatioValue);
@@ -1954,8 +1967,15 @@ namespace PluginTaskReaktivka
                         }
                 }
 
-                dtSourceEdit = sortingTable(dtSourceEdit, "WR_DATETIME, ID_PUT");
-
+                try
+                {
+                    dtSourceEdit = sortingTable(dtSourceEdit, "WR_DATETIME, ID_PUT");
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+            
                 return dtSourceEdit;
             }
 
@@ -2277,7 +2297,7 @@ namespace PluginTaskReaktivka
         {
             get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
-        
+
 
         /// <summary>
         /// загрузка/обновление данных
@@ -2290,45 +2310,40 @@ namespace PluginTaskReaktivka
             string errMsg = string.Empty;
             DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
-            //if (rangeCheking(dtrGet))
-            //    MessageBox.Show("Выбранный диапазон месяцев неверен");
-            //else
-            //{
-                clear();
-                m_handlerDb.RegisterDbConnection(out iRegDbConn);
+            clear();
+            m_handlerDb.RegisterDbConnection(out iRegDbConn);
 
-                if (!(iRegDbConn < 0))
+            if (!(iRegDbConn < 0))
+            {
+                // установить значения в таблицах для расчета, создать новую сессию
+                setValues(dtrGet, out err, out errMsg);
+
+                if (err == 0)
                 {
-                    // установить значения в таблицах для расчета, создать новую сессию
-                    setValues(dtrGet, out err, out errMsg);
-
-                    if (err == 0)
+                    if (m_TableOrigin.Rows.Count > 0)
                     {
-                        if (m_TableOrigin.Rows.Count > 0)
-                        {
-                            // создать копии для возможности сохранения изменений
-                            setValues();
-                            // отобразить значения
-                            m_dgvReak.ShowValues(m_TableOrigin);
-                            //
-                            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
-                        }
-                        else
-                            deleteSession();
+                        // создать копии для возможности сохранения изменений
+                        setValues();
+                        // отобразить значения
+                        m_dgvReak.ShowValues(m_TableOrigin);
+                        //
+                        m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
                     }
                     else
-                    {
-                        // в случае ошибки "обнулить" идентификатор сессии
                         deleteSession();
-                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-                    }
                 }
                 else
+                {
+                    // в случае ошибки "обнулить" идентификатор сессии
                     deleteSession();
+                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                }
+            }
+            else
+                deleteSession();
 
-                if (!(iRegDbConn > 0))
-                    m_handlerDb.UnRegisterDbConnection();
-            //}
+            if (!(iRegDbConn > 0))
+                m_handlerDb.UnRegisterDbConnection();
         }
 
         /// <summary>
