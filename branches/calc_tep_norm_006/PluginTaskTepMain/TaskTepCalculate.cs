@@ -11,6 +11,38 @@ namespace PluginTaskTepMain
     public class HandlerDbTaskTepCalculate : TepCommon.HandlerDbTaskCalculate
     {
         /// <summary>
+        /// Идентификатор панели-источника данных для всех панелей пр расчете ТЭП
+        ///  , идентификатор панели с входными данными
+        ///  (только эта панель заполняет [inval])
+        /// </summary>
+        private static int _idFPanelCommon;
+
+        public HandlerDbTaskTepCalculate(int idFPanelCommon = -1) : base ()
+        {
+            if (idFPanelCommon > 0)
+                _idFPanelCommon = idFPanelCommon;
+            else
+                ;
+        }
+        /// <summary>
+        /// Условие выбора строки с парметрами сессии (панель, пользователь, идентификатор интервала, идентификатор часового пояса)
+        /// </summary>
+        protected override string whereQuerySession
+        {
+            get {
+                string strRes = string.Empty;
+
+                if (_idFPanelCommon > 0) {
+                    strRes = string.Format(@"s.[ID_FPANEL]={0} AND s.[ID_USER]={1} AND s.[ID_TIME]={2} AND s.[ID_TIMEZONE]={3} AND s.[DATETIME_BEGIN]='{4:yyyyMMdd HH:mm:ss}' AND s.[DATETIME_END]='{5:yyyyMMdd HH:mm:ss}'"
+                        , _idFPanelCommon, HTepUsers.Id, (int)_Session.m_currIdPeriod, (int)_Session.m_currIdTimezone, _Session.m_rangeDatetime.Begin, _Session.m_rangeDatetime.End);
+                }
+                else
+                    strRes = @"s.[ID_CALCULATE]=" + _Session.m_Id;
+
+                return strRes;
+            }
+        }
+        /// <summary>
         /// Создать объект расчета для типа задачи
         /// </summary>
         /// <param name="type">Тип расчетной задачи</param>

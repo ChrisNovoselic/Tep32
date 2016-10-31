@@ -438,7 +438,7 @@ namespace TepCommon
         /// Удалить запись о параметрах сессии расчета (по триггеру - все входные и выходные значения)
         /// </summary>
         /// <param name="idSession">Идентификатор сессии расчета</param>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
         public void DeleteSession(out int err)
         {
             err = -1;
@@ -492,6 +492,15 @@ namespace TepCommon
             RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID_PUT, ID_SESSION", string.Empty, tableOriginValues, tableEditValues, out err);
         }
         /// <summary>
+        /// Условие выбора строки с парметрами сессии (панель, пользователь, идентификатор интервала, идентификатор часового пояса)
+        /// </summary>
+        protected virtual string whereQuerySession
+        {
+            get {
+                return @"s.[ID_CALCULATE]=" + _Session.m_Id;
+            }
+        }
+        /// <summary>
         /// Возвратить строку запроса для получения текущего идентификатора сессии расчета
         /// </summary>
         private string querySession
@@ -501,7 +510,7 @@ namespace TepCommon
                     + @" JOIN [timezones] tz ON s.ID_TIMEZONE = tz.ID"
                     +
                         //@" WHERE [ID_USER]=" + HTepUsers.Id
-                        @" WHERE  s.[ID_CALCULATE]=" + _Session.m_Id
+                        @" WHERE " + whereQuerySession;
                         ;
             }
         }
@@ -766,10 +775,10 @@ namespace TepCommon
                         ;
 
                     if (bEquDatetime == false)
-                        strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                            + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+                        strRes += string.Format(@" AND [DATE_TIME] > '{0:yyyyMMdd HH:mm:ss}' AND [DATE_TIME] <= '{1:yyyyMMdd HH:mm:ss}'"
+                            , arQueryRanges[i].Begin, arQueryRanges[i].End);
                     else
-                        strRes += @" AND [DATE_TIME] = '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+                        strRes += string.Format(@" AND [DATE_TIME] = '{0:yyyyMMdd HH:mm:ss}'", arQueryRanges[i].Begin);
 
                     if (bLastItem == false)
                         strRes += @" UNION ALL ";

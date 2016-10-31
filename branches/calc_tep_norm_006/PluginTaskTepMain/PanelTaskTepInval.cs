@@ -46,6 +46,11 @@ namespace PluginTaskTepMain
         //    //set { m_arTableEdit[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
         //}
 
+        protected override HandlerDbValues createHandlerDb()
+        {
+            return new HandlerDbTaskTepCalculate(m_id_panel);
+        }
+
         /// <summary>
         /// Сохранить изменения в редактируемых таблицах
         /// </summary>

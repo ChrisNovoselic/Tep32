@@ -224,7 +224,7 @@ namespace PluginTaskTepMain
             int err = -1
                 , cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
                 , iAVG = -1
-                , iRegDbConn = -1;
+                , iRegDbConn = -1; // признак установленного соединения (ошибка, был создан ранее, новое соединение)
             string errMsg = string.Empty;
 
             m_handlerDb.RegisterDbConnection(out iRegDbConn);
@@ -239,7 +239,7 @@ namespace PluginTaskTepMain
                 {
                     // создать копии для возможности сохранения изменений
                     setValues();
-                    // отобразить значкения
+                    // отобразить значения
                     m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
                 }
                 else
