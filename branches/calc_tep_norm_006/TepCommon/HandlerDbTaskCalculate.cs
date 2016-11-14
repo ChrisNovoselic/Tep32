@@ -60,6 +60,52 @@ namespace TepCommon
         public class SESSION
         {
             /// <summary>
+            /// Перечисление - типы сессии
+            /// локальный: только для вкладок норматив, макет. В этом режиме расчет не возможен (только просмотр)
+            /// общий: для всех вкладок
+            /// Коррелирует с 'INDEX_VIEW_VALUES'
+            /// </summary>
+            protected enum TYPE : short
+            {
+                Unknown = -1
+                , Locale, Common
+                , Count
+            }
+
+            protected TYPE m_typeSession
+            {
+                get
+                {
+                    TYPE typeRes = TYPE.Unknown;
+
+                    //if (Type == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
+                    //    typeRes = TYPE.Common;
+                    //else
+                        if (m_LoadValues == INDEX_LOAD_VALUES.SOURCE)
+                            typeRes = TYPE.Common;
+                        else
+                            if (m_LoadValues == INDEX_LOAD_VALUES.ARCHIVE)
+                                typeRes = TYPE.Locale;
+                            else
+                                ;
+
+                    return typeRes;
+                }
+            }
+            /// <summary>
+            /// Перечисление - признак типа загруженных из БД значений
+            ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
+            /// </summary>
+            public enum INDEX_LOAD_VALUES : short
+            {
+                UNKNOWN = -1, SOURCE, ARCHIVE
+                , COUNT
+            }
+            /// <summary>
+            /// Признак отображаемых на текущий момент значений
+            /// </summary>
+            public INDEX_LOAD_VALUES m_LoadValues;
+            /// <summary>
             /// Идентификатор сессии - уникальный идентификатор
             ///  для наборов входных, расчетных (нормативных, макетных) значений
             /// </summary>
@@ -75,7 +121,7 @@ namespace TepCommon
 
             public int m_curOffsetUTC;
 
-            public DateTimeRange m_rangeDatetime;
+            public DateTimeRange m_rangeDatetime; 
 
             public void Initialize(DataRow r)
             {

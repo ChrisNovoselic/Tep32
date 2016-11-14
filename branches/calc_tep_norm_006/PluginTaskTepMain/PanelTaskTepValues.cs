@@ -266,7 +266,7 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
+            Session.m_LoadValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE;
 
             onButtonLoadClick();
         }
@@ -278,7 +278,7 @@ namespace PluginTaskTepMain
         /// <param name="ev"></param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
+            Session.m_LoadValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.ARCHIVE;
 
             onButtonLoadClick();
         }

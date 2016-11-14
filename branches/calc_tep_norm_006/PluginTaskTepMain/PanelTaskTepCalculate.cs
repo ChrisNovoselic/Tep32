@@ -17,16 +17,6 @@ namespace PluginTaskTepMain
     public abstract partial class PanelTaskTepCalculate : HPanelTepCommon
     {
         /// <summary>
-        /// Перечисление - признак типа загруженных из БД значений
-        ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
-        /// </summary>
-        protected enum INDEX_VIEW_VALUES : short { UNKNOWN = -1, SOURCE, ARCHIVE
-            , COUNT }
-        /// <summary>
-        /// Признак отображаемых на текущий момент значений
-        /// </summary>
-        protected INDEX_VIEW_VALUES m_ViewValues;        
-        /// <summary>
         /// Массив списков идентификаторов компонентов ТЭЦ/параметров
         /// </summary>
         protected List<int>[] m_arListIds;
@@ -56,7 +46,7 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : Session.m_currIdPeriod; } }        
+        protected ID_PERIOD ActualIdPeriod { get { return Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE ? ID_PERIOD.HOUR : Session.m_currIdPeriod; } }        
         /// <summary>
         /// Метод для создания панели с активными объектами управления
         /// </summary>
