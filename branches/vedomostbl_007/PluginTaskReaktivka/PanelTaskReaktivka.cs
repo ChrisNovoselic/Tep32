@@ -46,6 +46,10 @@ namespace PluginTaskReaktivka
             COUNT
         }
         /// <summary>
+        /// Перечисление - режимы работы вкладки
+        /// </summary>
+        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
+        /// <summary>
         /// 
         /// </summary>
         protected HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
@@ -61,16 +65,6 @@ namespace PluginTaskReaktivka
             //, MODE_DEV/*, MEASURE*/,
             RATIO,
             COUNT
-        }
-        /// <summary>
-        /// перечисление параметров настройки 
-        /// отображения данных и формы
-        /// </summary>
-        protected enum PROFILE_INDEX
-        {
-            UNKNOW = -1,
-            TIMEZONE = 101, MAIL, PERIOD,
-            RATIO = 201, ROUND, EDIT_COLUMN = 204,
         }
         /// <summary>
         /// Значения параметров сессии
@@ -313,6 +307,47 @@ namespace PluginTaskReaktivka
                 if (m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count + 2 > m_dgvReak.Columns.Count)
                     m_dgvReak.AddColumn(id_comp, strItem, strItem, false, arChecked[0]);
             }
+
+            try
+            {
+                if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                {
+                    if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
+                    else
+                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+                }
+                else
+                    (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+
+                if ((Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
+                    m_dgvReak.AddBRead(false);
+                else
+                    m_dgvReak.AddBRead(true);
+
+            }
+            catch (Exception)
+            {
+
+            }
+
+            try
+            {
+                if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
+                {
+                    if (int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = true;
+                    else
+                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+                }
+                else
+                    (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+            }
+            catch (Exception)
+            {
+
+            }
+
             //Установить обработчик события - добавить параметр
             //eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
             // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
@@ -335,7 +370,7 @@ namespace PluginTaskReaktivka
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.TIMEZONE).ToString()]);
+                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
@@ -344,9 +379,9 @@ namespace PluginTaskReaktivka
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
-                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
-                    (PanelManagementReak as PanelManagementReaktivka).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)PROFILE_INDEX.PERIOD).ToString()]));
+                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
+                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
+                    (PanelManagementReak as PanelManagementReaktivka).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
                     (ctrl as ComboBox).Enabled = false;
 
                 }
@@ -1621,6 +1656,17 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
+            /// Установка возможности редактирования столбцов
+            /// </summary>
+            /// <param name="bRead">true/false</param>
+            public void AddBRead(bool bRead)
+            {
+                foreach (HDataGridViewColumn col in Columns)
+                    if (col.m_iIdComp > 0)
+                        col.ReadOnly = bRead;
+            }
+
+            /// <summary>
             /// Очищение отображения от значений
             /// </summary>
             public void ClearValues()
@@ -1816,7 +1862,7 @@ namespace PluginTaskReaktivka
                 int idAlg = -1
                    , idParameter = -1
                    , iQuality = -1
-                   , iCol = 0//, iRow = 0
+                   , iCol = 0, iRow = 0
                    , vsRatioValue = -1;
                 double dblVal = -1F,
                     dbSumVal = 0;
@@ -1839,7 +1885,7 @@ namespace PluginTaskReaktivka
                         }
                         catch (Exception e)
                         {
-                            throw;
+                           
                         }
 
                         foreach (DataGridViewRow row in Rows)
@@ -1850,10 +1896,10 @@ namespace PluginTaskReaktivka
                             }
                             catch (Exception exp)
                             {
-                                throw;
+                                
                             }
 
-                            if (row.Index != row.DataGridView.RowCount - 1)
+                            if (row.Index != RowCount - 1)
                             {
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
@@ -1878,6 +1924,8 @@ namespace PluginTaskReaktivka
                             else
                                 row.Cells[iCol].Value = dbSumVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                     CultureInfo.InvariantCulture);
+
+                            iRow++;
                         }
                     }
                     iCol++;
@@ -2297,7 +2345,6 @@ namespace PluginTaskReaktivka
         {
             get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
-
 
         /// <summary>
         /// загрузка/обновление данных

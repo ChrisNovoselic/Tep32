@@ -86,6 +86,10 @@ namespace PluginTaskVedomostBl
             COUNT
         }
         /// <summary>
+        /// Перечисление - режимы работы вкладки
+        /// </summary>
+        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
+        /// <summary>
         /// Индексы массива списков идентификаторов
         /// </summary>
         protected enum INDEX_ID
@@ -1582,6 +1586,18 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
+            /// Установка возможности редактирования столбцов
+            /// </summary>
+            /// <param name="bRead">true/false</param>
+            /// <param name="nameCol">имя стобца</param>
+            public void AddBRead(bool bRead, string nameCol)
+            {
+                foreach (HDataGridViewColumn col in Columns)
+                    if (col.Name == nameCol)
+                        col.ReadOnly = bRead;
+            }
+
+            /// <summary>
             /// 
             /// </summary>
             protected struct RATIO
@@ -3052,6 +3068,51 @@ namespace PluginTaskVedomostBl
             //радиобаттаны
             initializeRB(namePut, out err, out errMsg);
             (PanelManagementVed as PanelManagementVedomost).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
+
+            //возможность_редактирвоания_значений
+            try
+            {
+                if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                {
+                    if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                        (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
+                    else
+                        (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+                }
+                else
+                    (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+
+                foreach (var item in collection)
+                {
+
+                }
+                //if ((Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
+                //    for (int j = 0; j < m_dgvVedomst.RowCount; j++)
+                //        m_dgvVedomst.AddBRead(false, namePut.GetValue(j).ToString());
+
+            }
+            catch (Exception exp)
+            {
+                MessageBox.Show(exp.ToString());
+            }
+            //активность_кнопки_сохранения
+            try
+            {
+                if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
+                {
+                    if (int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                        (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = true;
+                    else
+                        (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+                }
+                else
+                    (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+            }
+            catch (Exception exp)
+            {
+                MessageBox.Show(exp.ToString());
+            }
+
             if (err == 0)
             {
                 try

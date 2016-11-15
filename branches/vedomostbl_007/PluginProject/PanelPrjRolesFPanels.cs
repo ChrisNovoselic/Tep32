@@ -1224,7 +1224,7 @@ namespace PluginProject
                         // требуется выбрать строку с 'IS_ROLE' == 0 (пользователя)
                         // ...
                         foreach (DataRow r in rowsAllowed)
-                            if (Int16.Parse(r[@"IS_ROLE"].ToString()) == Convert.ToInt32(m_bIsRole))
+                            if (short.Parse(r[@"IS_ROLE"].ToString()) == Convert.ToInt32(m_bIsRole))
                             {
                                 objRes = r;
                                 break;
