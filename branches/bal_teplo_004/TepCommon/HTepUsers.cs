@@ -711,7 +711,7 @@ namespace TepCommon
             {
                 UNKNOW = -1,
                 TIMEZONE = 101, MAIL, PERIOD, IS_SAVE_SOURCE,
-                RATIO = 201, ROUND, INPUT_PARAM, EDIT_COLUMN = 204,
+                ROUND = 201, RATIO, INPUT_PARAM, EDIT_COLUMN = 204,
             }
 
             protected static DataTable m_tblValues;

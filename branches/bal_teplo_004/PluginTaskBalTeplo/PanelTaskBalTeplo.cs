@@ -206,6 +206,8 @@ namespace PluginTaskBalTeplo
             private int m_id_dgv;
             public enum INDEX_TYPE_DGV { Block = 2001, Output = 2002, TeploBL = 2003, TeploOP = 2004, Param = 2005, PromPlozsh = 2006 };
 
+            public int m_iRound, m_iRatio;
+
             private INDEX_TYPE_DGV m_type_dgv;
 
             public INDEX_TYPE_DGV Type_DGV
@@ -222,7 +224,11 @@ namespace PluginTaskBalTeplo
 
             public DGVAutoBook(string nameDGV)
             {
+                m_iRound = 0;
+                m_iRatio = 0;
+
                 InitializeComponents(nameDGV);
+                this.CellValueChanged += new DataGridViewCellEventHandler(cellEndEdit);
             }
 
             private void InitializeComponents(string nameDGV)
@@ -246,6 +252,23 @@ namespace PluginTaskBalTeplo
                 //Ширина столбцов под видимую область
                 //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                 ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            }
+
+            private void cellEndEdit(object sender, DataGridViewCellEventArgs e)
+            {
+                this.CellValueChanged -= new DataGridViewCellEventHandler(cellEndEdit);
+
+                try
+                {
+                    double value = double.Parse(((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString());
+                    value *= Math.Pow(10F, 1 * m_iRatio);
+                    ((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = value.ToString(@"F" + m_iRound,
+                                                CultureInfo.InvariantCulture);
+                }
+                catch
+                { }
+                this.CellValueChanged += new DataGridViewCellEventHandler(cellEndEdit);
+
             }
 
             /// <summary>
@@ -739,6 +762,9 @@ namespace PluginTaskBalTeplo
                 {
                     if (list[1].ToString() == "in")
                     {
+                        m_iRatio = int.Parse(list[2].ToString());
+                        m_iRound = int.Parse(list[3].ToString());
+                        
                         foreach (Double id in (double[])list[0])
                         {
                             col_in.Add(nAlgTable.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
@@ -780,9 +806,8 @@ namespace PluginTaskBalTeplo
                     this.Rows[Rows.Count - 1].Cells[0].Value = "Итого";
                     this.Rows[Rows.Count - 1].HeaderCell.Value = rows[0]["ID"].ToString().Trim();
                 }
+
             }
-
-
         }
 
         /// <summary>
@@ -2193,7 +2218,7 @@ namespace PluginTaskBalTeplo
                         break;
                 }
         }
-
+        
         private Dictionary<int, object[]> GetProfileDGV(int id_dgv)
         {
             Dictionary<int, object[]> dict_profile = new Dictionary<int, object[]>();
@@ -2202,12 +2227,22 @@ namespace PluginTaskBalTeplo
             string[] id;
             List<double> ids = new List<double>();
             string type = string.Empty;
+
+            int idRatio=0,
+                idRound=0,
+                ratio = 0,
+                round = 0;
             
             List<object> obj = new List<object>();
 
             foreach (string context in contexts)
             {
                 value = m_dictProfile.Objects[id_dgv.ToString()].Objects[context].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.INPUT_PARAM).ToString()];
+                idRatio = int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.DAY).ToString()].Objects[id_dgv.ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.RATIO).ToString()]);
+                idRound = int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.DAY).ToString()].Objects[id_dgv.ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.ROUND).ToString()]);
+
+                
+
                 id = value.Trim().Split(';');
                 ids.Clear();
                 if (id.Length > 0)
@@ -2226,7 +2261,7 @@ namespace PluginTaskBalTeplo
                 {
                     type = "out";
                 }
-                obj.Add(new object[] { ids.ToArray(), type });
+                obj.Add(new object[] { ids.ToArray(), type, idRatio, idRound });
             }
             dict_profile.Add(id_dgv, obj.ToArray());
 
