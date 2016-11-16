@@ -307,7 +307,7 @@ namespace PluginTaskReaktivka
                 if (m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count + 2 > m_dgvReak.Columns.Count)
                     m_dgvReak.AddColumn(id_comp, strItem, strItem, false, arChecked[0]);
             }
-
+            //возможность_редактирвоания_значений
             try
             {
                 if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
@@ -326,11 +326,11 @@ namespace PluginTaskReaktivka
                     m_dgvReak.AddBRead(true);
 
             }
-            catch (Exception)
+            catch (Exception exp)
             {
 
             }
-
+            //активность_кнопки_сохранения
             try
             {
                 if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
@@ -343,7 +343,7 @@ namespace PluginTaskReaktivka
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
             }
-            catch (Exception)
+            catch (Exception exp)
             {
 
             }
@@ -1885,7 +1885,7 @@ namespace PluginTaskReaktivka
                         }
                         catch (Exception e)
                         {
-                           
+                            MessageBox.Show(e.ToString());
                         }
 
                         foreach (DataGridViewRow row in Rows)
@@ -1896,14 +1896,14 @@ namespace PluginTaskReaktivka
                             }
                             catch (Exception exp)
                             {
-                                
+                                MessageBox.Show(exp.ToString());
                             }
 
                             if (row.Index != RowCount - 1)
                             {
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
-                                    if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString() ==
+                                    if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(m_currentOffSet).AddDays(-1).ToShortDateString() ==
                                         row.Cells["Date"].Value.ToString())
                                     {
                                         idParameter = (int)parameterRows[i][@"ID_PUT"];

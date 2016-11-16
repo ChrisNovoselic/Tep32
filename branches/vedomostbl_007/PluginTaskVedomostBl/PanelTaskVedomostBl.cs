@@ -10,6 +10,7 @@ using System.Linq;
 using System.Windows.Forms;
 using TepCommon;
 using Excel = Microsoft.Office.Interop.Excel;
+using GemBox;
 
 namespace PluginTaskVedomostBl
 {
@@ -43,7 +44,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// флаг очистки отображения
         /// </summary>
-        protected bool m_bflgClear = false;
+        private bool m_bflgClear = false;
         /// <summary>
         /// 
         /// </summary>
@@ -187,6 +188,7 @@ namespace PluginTaskVedomostBl
         /// экземпляр класса вьюхи
         /// </summary>
         protected DGVVedomostBl m_dgvVedomst;
+        protected ReportExcel m_rptExcel;
         /// <summary>
         /// экземпляр класса пикчи
         /// </summary>
@@ -1192,12 +1194,12 @@ namespace PluginTaskVedomostBl
             /// словарь названий заголовков 
             /// верхнего и среднего уровней
             /// </summary>
-            protected Dictionary<int, List<string>> m_headerTop = new Dictionary<int, List<string>>(),
-                m_headerMiddle = new Dictionary<int, List<string>>();
+            private Dictionary<int, List<string>> _headerTop = new Dictionary<int, List<string>>(),
+                _headerMiddle = new Dictionary<int, List<string>>();
             /// <summary>
             /// словарь соотношения заголовков
             /// </summary>
-            protected Dictionary<int, int[]> m_arIntTopHeader = new Dictionary<int, int[]> { },
+            public Dictionary<int, int[]> m_arIntTopHeader = new Dictionary<int, int[]> { },
             m_arMiddleCol = new Dictionary<int, int[]> { };
             /// <summary>
             /// перечисление уровней заголовка грида
@@ -1590,11 +1592,11 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="bRead">true/false</param>
             /// <param name="nameCol">имя стобца</param>
-            public void AddBRead(bool bRead, string nameCol)
+            public void AddBRead(bool bRead)
             {
                 foreach (HDataGridViewColumn col in Columns)
-                    if (col.Name == nameCol)
-                        col.ReadOnly = bRead;
+                    //if (col.Name == nameCol)
+                    col.ReadOnly = bRead;
             }
 
             /// <summary>
@@ -1668,8 +1670,8 @@ namespace PluginTaskVedomostBl
                 List<string> _listTop = new List<string>(),
                     _listMiddle = new List<string>();
 
-                if (m_headerTop.ContainsKey(idTG))
-                    m_headerTop.Remove(idTG);
+                if (_headerTop.ContainsKey(idTG))
+                    _headerTop.Remove(idTG);
 
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.m_iIdComp >= 0)
@@ -1686,10 +1688,10 @@ namespace PluginTaskVedomostBl
                         else;
                     else;
 
-                m_headerTop.Add(idTG, _listTop);
+                _headerTop.Add(idTG, _listTop);
 
-                if (m_headerMiddle.ContainsKey(idTG))
-                    m_headerMiddle.Remove(idTG);
+                if (_headerMiddle.ContainsKey(idTG))
+                    _headerMiddle.Remove(idTG);
 
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.m_iIdComp >= 0)
@@ -1700,7 +1702,7 @@ namespace PluginTaskVedomostBl
                                 _listMiddle.Add(col.Name);
                             }
 
-                m_headerMiddle.Add(idTG, _listMiddle);
+                _headerMiddle.Add(idTG, _listMiddle);
             }
 
             /// <summary>
@@ -1713,13 +1715,13 @@ namespace PluginTaskVedomostBl
                 string _oldItem = string.Empty;
                 int _indx = 0,
                     _untdColM = 0;
-                int[] _arrIntTop = new int[m_headerTop[idDgv].Count()],
-                    _arrIntMiddle = new int[m_headerMiddle[idDgv].Count()];
+                int[] _arrIntTop = new int[_headerTop[idDgv].Count()],
+                    _arrIntMiddle = new int[_headerMiddle[idDgv].Count()];
 
                 if (m_arIntTopHeader.ContainsKey(idDgv))
                     m_arIntTopHeader.Remove(idDgv);
 
-                foreach (var item in m_headerTop[idDgv])
+                foreach (var item in _headerTop[idDgv])
                 {
                     int untdCol = 0;
                     foreach (HDataGridViewColumn col in Columns)
@@ -1742,7 +1744,7 @@ namespace PluginTaskVedomostBl
                 if (m_arMiddleCol.ContainsKey(idDgv))
                     m_arMiddleCol.Remove(idDgv);
 
-                foreach (var item in m_headerMiddle[idDgv])
+                foreach (var item in _headerMiddle[idDgv])
                 {
                     foreach (HDataGridViewColumn col in Columns)
                     {
@@ -1807,15 +1809,15 @@ namespace PluginTaskVedomostBl
 
                 s_drwH = _r1.Height / s_drwH;
 
-                foreach (var item in m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV])
+                foreach (var item in _headerMiddle[(sender as DGVVedomostBl).m_idCompDGV])
                 {
                     //get the column header cell
-                    _r1.Width = m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item)]
+                    _r1.Width = m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item)]
                         * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
                     _r1.Height = s_drwH + 3;//??? 
 
-                    if (m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1 > -1)
-                        _r1.X = _r1.X + m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1]
+                    if (_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1 > -1)
+                        _r1.X = _r1.X + m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1]
                             * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
                     else
                     {
@@ -1831,7 +1833,7 @@ namespace PluginTaskVedomostBl
                     e.Graphics.DrawRectangle(pen, _r1);
                 }
 
-                foreach (var item in m_headerTop[(sender as DGVVedomostBl).m_idCompDGV])
+                foreach (var item in _headerTop[(sender as DGVVedomostBl).m_idCompDGV])
                 {
                     //get the column header cell
                     _r2.Width = m_arIntTopHeader[(sender as DGVVedomostBl).m_idCompDGV][_indxCol] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
@@ -1935,8 +1937,8 @@ namespace PluginTaskVedomostBl
                         }
                         catch (Exception exp)
                         {
-                            throw;
-                        }   
+                            MessageBox.Show("" + exp.ToString());
+                        }
                     }
 
                     iCol++;
@@ -2139,8 +2141,15 @@ namespace PluginTaskVedomostBl
         /// </summary>
         public class ReportExcel
         {
+            //private GemBox.Spreadsheet.ExcelFile _gemBox = new GemBox.Spreadsheet.ExcelFile();
             private Excel.Application m_excApp;
+            /// <summary>
+            /// 
+            /// </summary>
             private Excel.Workbook m_workBook;
+            /// <summary>
+            /// 
+            /// </summary>
             private Excel.Worksheet m_wrkSheet;
             private object _missingObj = System.Reflection.Missing.Value;
 
@@ -2170,6 +2179,8 @@ namespace PluginTaskVedomostBl
             /// <param name="dtRange">дата</param>
             public void CreateExcel(DataGridView dgView, DateTimeRange dtRange)
             {
+                //_gemBox.Worksheets.Add("VedomostBl");
+                //GemBox.Spreadsheet.ExcelWorksheet workSheet = _gemBox.Worksheets["VedomostBl"];
                 if (addWorkBooks())
                 {
                     m_workBook.AfterSave += workBook_AfterSave;
@@ -2183,6 +2194,8 @@ namespace PluginTaskVedomostBl
                         {
                             if (dgView.Columns[i].HeaderText != "")
                             {
+                                //workSheet.Cells[1, i].Value = dgView.Columns[i].HeaderText;
+
                                 Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
 
                                 foreach (Excel.Range cell in colRange.Cells)
@@ -2195,16 +2208,44 @@ namespace PluginTaskVedomostBl
                                 indxCol++;
                             }
                         }
-                        //
                         setSignature(m_wrkSheet, dgView, dtRange);
                         m_excApp.Visible = true;
                         closeExcel();
-                        //System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+                        System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
                     }
                     catch (Exception e)
                     {
                         closeExcel();
-                        MessageBox.Show("Ошибка экспорта данных!");
+                        MessageBox.Show("Ошибка экспорта данных!" + e.ToString());
+                    }
+                    //_gemBox.SaveXls("VedomostBl_"+ dtRange.End.ToString("yyyyMMdd"));
+                }
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            private void paintTable()
+            {
+                int indxCol = 1,
+                    rowSheet = 0,colSheet = 0;
+
+                foreach (var list in s_listHeader)
+                {
+                    foreach (var item in list)
+                    {
+                        //записываем данные в ячейки
+                        m_wrkSheet.Cells[rowSheet,colSheet]= item;
+                        //объединяем ячейки
+                        m_wrkSheet.get_Range("B" + rowSheet + ":B" + rowSheet).Merge();
+
+                        //m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets
+                        //Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
+
+                        //for (int i = 0; i < dgView.Columns.Count; i++)
+                        //{
+
+                        //}
                     }
                 }
             }
@@ -2215,7 +2256,7 @@ namespace PluginTaskVedomostBl
             /// <returns>признак ошибки</returns>
             private bool addWorkBooks()
             {
-                string pathToTemplate = Path.GetFullPath(@"Template\TemplateReaktivka.xlsx");
+                string pathToTemplate = Path.GetFullPath(@"Template\TemplateVedBl.xlsx");
                 object pathToTemplateObj = pathToTemplate;
                 bool bflag = true;
                 try
@@ -2226,7 +2267,7 @@ namespace PluginTaskVedomostBl
                 {
                     closeExcel();
                     bflag = false;
-                    MessageBox.Show("Отсутствует шаблон для отчета Excel");
+                    MessageBox.Show("Отсутствует шаблон для отчета Excel" + exp.ToString());
                 }
                 return bflag;
             }
@@ -2312,7 +2353,6 @@ namespace PluginTaskVedomostBl
                         if (Convert.ToString(((Excel.Range)colRange.Cells[row]).Value) == "")
                             colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
                     }
-
             }
 
             /// <summary>
@@ -2636,9 +2676,20 @@ namespace PluginTaskVedomostBl
             (btn.ContextMenuStrip.Items.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(HPanelTepCommon_btnHistory_Click);
             (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
-            //(Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskReaktivka_ClickExport;
+            (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskVedomostBl_expExcel_Click;
             (PanelManagementVed as PanelManagementVedomost).ItemCheck += new PanelManagementVedomost.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
             (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).CheckedChanged += PanelManagementVedomost_CheckedChanged;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void PanelTaskVedomostBl_expExcel_Click(object sender, EventArgs e)
+        {
+            m_rptExcel = new ReportExcel();
+            m_rptExcel.CreateExcel(getActiveView(), Session.m_rangeDatetime);
         }
 
         /// <summary>
@@ -2977,6 +3028,28 @@ namespace PluginTaskVedomostBl
                 SizeDgv(ctrl);
                 m_pictureVedBl = new PictureVedBl(ctrl as DGVVedomostBl);
                 (Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).Controls.Add(m_pictureVedBl);
+                //возможность_редактирвоания_значений
+                try
+                {
+                    if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                    {
+                        if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                            (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
+                        else
+                            (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+                    }
+                    else
+                        (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+
+                    if ((Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
+                        for (int t = 0; t < (ctrl as DGVVedomostBl).RowCount; t++)
+                            (ctrl as DGVVedomostBl).AddBRead(false);
+
+                }
+                catch (Exception exp)
+                {
+                    MessageBox.Show("Ошибки проверки возможности редактирования ячеек " + exp.ToString());
+                }
             }
         }
 
@@ -3068,33 +3141,6 @@ namespace PluginTaskVedomostBl
             //радиобаттаны
             initializeRB(namePut, out err, out errMsg);
             (PanelManagementVed as PanelManagementVedomost).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
-
-            //возможность_редактирвоания_значений
-            try
-            {
-                if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
-                {
-                    if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
-                        (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
-                    else
-                        (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-                }
-                else
-                    (Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-
-                foreach (var item in collection)
-                {
-
-                }
-                //if ((Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
-                //    for (int j = 0; j < m_dgvVedomst.RowCount; j++)
-                //        m_dgvVedomst.AddBRead(false, namePut.GetValue(j).ToString());
-
-            }
-            catch (Exception exp)
-            {
-                MessageBox.Show(exp.ToString());
-            }
             //активность_кнопки_сохранения
             try
             {
@@ -3110,7 +3156,7 @@ namespace PluginTaskVedomostBl
             }
             catch (Exception exp)
             {
-                MessageBox.Show(exp.ToString());
+                MessageBox.Show(" " + exp.ToString());
             }
 
             if (err == 0)

@@ -544,7 +544,7 @@ namespace PluginTaskAutobook
                                     //заполнение столбцов ГТП,ТЭЦ
                                     for (int p = 0; p < dr_Values.Count(); p++)
                                         if (row.Cells["DATE"].Value.ToString() ==
-                                        Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())
+                                        Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).AddDays(-1).ToShortDateString())
                                         {
                                             dblVal = correctingValues(Math.Pow(10F, vsRatioValue)
                                                 , dr_Values[p]["VALUE"]
@@ -1496,7 +1496,7 @@ namespace PluginTaskAutobook
                 {
                     CloseExcel();
                     bflag = false;
-                    MessageBox.Show("Отсутствует шаблон для отчета Excel");
+                    MessageBox.Show("Отсутствует шаблон для отчета Excel" + exp);
                 }
                 return bflag;
             }
@@ -1584,7 +1584,7 @@ namespace PluginTaskAutobook
             {
                 //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
                 //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+                Marshal.ReleaseComObject(m_excApp);
 
                 m_excApp = null;
                 m_workBook = null;
@@ -1603,8 +1603,8 @@ namespace PluginTaskAutobook
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             AutoBookCalc = new TaskAutobookCalculate();
 
-            m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponent();
 
