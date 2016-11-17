@@ -2481,7 +2481,7 @@ namespace PluginTaskAutobook
                 m_dgvAB.AddIdComp(id_comp, namePut.GetValue(tCount).ToString());
                 tCount++;
             }
-            //
+            //возможность_редактирвоания_значений
             try
             {
                 if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
@@ -2503,7 +2503,7 @@ namespace PluginTaskAutobook
             {
                 MessageBox.Show(exp.ToString());
             }
-            //
+            //активность_кнопки_сохранения
             try
             {
                 if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
@@ -2539,6 +2539,7 @@ namespace PluginTaskAutobook
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
+
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 

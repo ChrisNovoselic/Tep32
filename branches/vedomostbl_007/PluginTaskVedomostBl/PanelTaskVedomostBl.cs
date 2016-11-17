@@ -1194,8 +1194,8 @@ namespace PluginTaskVedomostBl
             /// словарь названий заголовков 
             /// верхнего и среднего уровней
             /// </summary>
-            private Dictionary<int, List<string>> _headerTop = new Dictionary<int, List<string>>(),
-                _headerMiddle = new Dictionary<int, List<string>>();
+            public Dictionary<int, List<string>> m_headerTop = new Dictionary<int, List<string>>(),
+                m_headerMiddle = new Dictionary<int, List<string>>();
             /// <summary>
             /// словарь соотношения заголовков
             /// </summary>
@@ -1670,8 +1670,8 @@ namespace PluginTaskVedomostBl
                 List<string> _listTop = new List<string>(),
                     _listMiddle = new List<string>();
 
-                if (_headerTop.ContainsKey(idTG))
-                    _headerTop.Remove(idTG);
+                if (m_headerTop.ContainsKey(idTG))
+                    m_headerTop.Remove(idTG);
 
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.m_iIdComp >= 0)
@@ -1688,10 +1688,10 @@ namespace PluginTaskVedomostBl
                         else;
                     else;
 
-                _headerTop.Add(idTG, _listTop);
+                m_headerTop.Add(idTG, _listTop);
 
-                if (_headerMiddle.ContainsKey(idTG))
-                    _headerMiddle.Remove(idTG);
+                if (m_headerMiddle.ContainsKey(idTG))
+                    m_headerMiddle.Remove(idTG);
 
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.m_iIdComp >= 0)
@@ -1702,7 +1702,7 @@ namespace PluginTaskVedomostBl
                                 _listMiddle.Add(col.Name);
                             }
 
-                _headerMiddle.Add(idTG, _listMiddle);
+                m_headerMiddle.Add(idTG, _listMiddle);
             }
 
             /// <summary>
@@ -1715,13 +1715,13 @@ namespace PluginTaskVedomostBl
                 string _oldItem = string.Empty;
                 int _indx = 0,
                     _untdColM = 0;
-                int[] _arrIntTop = new int[_headerTop[idDgv].Count()],
-                    _arrIntMiddle = new int[_headerMiddle[idDgv].Count()];
+                int[] _arrIntTop = new int[m_headerTop[idDgv].Count()],
+                    _arrIntMiddle = new int[m_headerMiddle[idDgv].Count()];
 
                 if (m_arIntTopHeader.ContainsKey(idDgv))
                     m_arIntTopHeader.Remove(idDgv);
 
-                foreach (var item in _headerTop[idDgv])
+                foreach (var item in m_headerTop[idDgv])
                 {
                     int untdCol = 0;
                     foreach (HDataGridViewColumn col in Columns)
@@ -1744,7 +1744,7 @@ namespace PluginTaskVedomostBl
                 if (m_arMiddleCol.ContainsKey(idDgv))
                     m_arMiddleCol.Remove(idDgv);
 
-                foreach (var item in _headerMiddle[idDgv])
+                foreach (var item in m_headerMiddle[idDgv])
                 {
                     foreach (HDataGridViewColumn col in Columns)
                     {
@@ -1809,15 +1809,15 @@ namespace PluginTaskVedomostBl
 
                 s_drwH = _r1.Height / s_drwH;
 
-                foreach (var item in _headerMiddle[(sender as DGVVedomostBl).m_idCompDGV])
+                foreach (var item in m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV])
                 {
                     //get the column header cell
-                    _r1.Width = m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item)]
+                    _r1.Width = m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item)]
                         * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
                     _r1.Height = s_drwH + 3;//??? 
 
-                    if (_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1 > -1)
-                        _r1.X = _r1.X + m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1]
+                    if (m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1 > -1)
+                        _r1.X = _r1.X + m_arMiddleCol[(sender as DGVVedomostBl).m_idCompDGV][m_headerMiddle[(sender as DGVVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1]
                             * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
                     else
                     {
@@ -1833,7 +1833,7 @@ namespace PluginTaskVedomostBl
                     e.Graphics.DrawRectangle(pen, _r1);
                 }
 
-                foreach (var item in _headerTop[(sender as DGVVedomostBl).m_idCompDGV])
+                foreach (var item in m_headerTop[(sender as DGVVedomostBl).m_idCompDGV])
                 {
                     //get the column header cell
                     _r2.Width = m_arIntTopHeader[(sender as DGVVedomostBl).m_idCompDGV][_indxCol] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
@@ -2114,7 +2114,7 @@ namespace PluginTaskVedomostBl
                     originValues = 0;
                 else
                     originValues =
-                        AsParseToF(origin.Rows[i]["VALUE"].ToString());
+                        s_VedCalculate.AsParseToF(origin.Rows[i]["VALUE"].ToString());
                 //double.Parse(origin.Rows[i]["VALUE"].ToString(), NumberStyles.Float, CultureInfo.InvariantCulture);
 
                 switch (typeValues)
@@ -2141,7 +2141,9 @@ namespace PluginTaskVedomostBl
         /// </summary>
         public class ReportExcel
         {
-            //private GemBox.Spreadsheet.ExcelFile _gemBox = new GemBox.Spreadsheet.ExcelFile();
+            /// <summary>
+            /// 
+            /// </summary>
             private Excel.Application m_excApp;
             /// <summary>
             /// 
@@ -2179,75 +2181,132 @@ namespace PluginTaskVedomostBl
             /// <param name="dtRange">дата</param>
             public void CreateExcel(DataGridView dgView, DateTimeRange dtRange)
             {
-                //_gemBox.Worksheets.Add("VedomostBl");
-                //GemBox.Spreadsheet.ExcelWorksheet workSheet = _gemBox.Worksheets["VedomostBl"];
                 if (addWorkBooks())
                 {
                     m_workBook.AfterSave += workBook_AfterSave;
                     m_workBook.BeforeClose += workBook_BeforeClose;
                     m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("VedomostBl");
                     int indxCol = 1;
+                    bool b_flafErr = false;
 
                     try
                     {
-                        for (int i = 0; i < dgView.Columns.Count; i++)
-                        {
-                            if (dgView.Columns[i].HeaderText != "")
-                            {
-                                //workSheet.Cells[1, i].Value = dgView.Columns[i].HeaderText;
-
-                                Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
-
-                                foreach (Excel.Range cell in colRange.Cells)
-                                    if (Convert.ToString(cell.Value) != "")
-                                        if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
-                                        {
-                                            fillSheetExcel(colRange, dgView, i, cell.Row);
-                                            break;
-                                        }
-                                indxCol++;
-                            }
-                        }
-                        setSignature(m_wrkSheet, dgView, dtRange);
-                        m_excApp.Visible = true;
-                        closeExcel();
-                        System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+                        paintTable(dgView);
                     }
                     catch (Exception e)
                     {
-                        closeExcel();
-                        MessageBox.Show("Ошибка экспорта данных!" + e.ToString());
+                        b_flafErr = true;
+                        MessageBox.Show("Ошибка прорисовки таблицы для экспорта! " + e.ToString());
                     }
-                    //_gemBox.SaveXls("VedomostBl_"+ dtRange.End.ToString("yyyyMMdd"));
+
+                    if (!b_flafErr)
+                        try
+                        {
+                            for (int i = 0; i < dgView.Columns.Count; i++)
+                            {
+                                if (dgView.Columns[i].HeaderText != "")
+                                {
+                                    Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
+
+                                    foreach (Excel.Range cell in colRange.Cells)
+                                        if (Convert.ToString(cell.Value) != "")
+                                            if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
+                                            {
+                                                fillSheetExcel(colRange, dgView, i, cell.Row);
+                                                break;
+                                            }
+                                    indxCol++;
+                                }
+                            }
+                            setSignature(m_wrkSheet, dgView, dtRange);
+                            m_excApp.Visible = true;
+                            closeExcel();
+                            System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+                        }
+                        catch (Exception e)
+                        {
+                            closeExcel();
+                            MessageBox.Show("Ошибка экспорта данных!" + e.ToString());
+                        }
+                    else
+                        closeExcel();
                 }
             }
 
             /// <summary>
             /// 
             /// </summary>
-            private void paintTable()
+            private void paintTable(DataGridView dgvActive)
             {
-                int indxCol = 1,
-                    rowSheet = 0,colSheet = 0;
+                int indxCol = 0,
+                    colSheetBegin = 2, colSheetEnd = 2,
+                    rowSheet = 2,
+                    idDgv = (dgvActive as DGVVedomostBl).m_idCompDGV;
+                Excel.Range colRange;
 
                 foreach (var list in s_listHeader)
-                {
                     foreach (var item in list)
                     {
+                        //получаем диапазон
+                        colRange = (m_wrkSheet.Cells[rowSheet, colSheetEnd] as Excel.Range);
                         //записываем данные в ячейки
-                        m_wrkSheet.Cells[rowSheet,colSheet]= item;
+                        colRange.Cells[rowSheet, colSheetBegin] = item;
+                        colSheetEnd += (dgvActive as DGVVedomostBl).m_arIntTopHeader[idDgv][indxCol] - 1;
                         //объединяем ячейки
-                        m_wrkSheet.get_Range("B" + rowSheet + ":B" + rowSheet).Merge();
+                        m_wrkSheet.get_Range(getAdress(rowSheet, colSheetBegin, colSheetEnd)).Merge();
 
-                        //m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets
-                        //Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
-
-                        //for (int i = 0; i < dgView.Columns.Count; i++)
-                        //{
-
-                        //}
+                        colSheetBegin += colSheetEnd - 1;
+                   
+                        indxCol++;
                     }
+
+                colSheetBegin = 2; colSheetEnd = 2; rowSheet = 3;
+
+                foreach (var item in (dgvActive as DGVVedomostBl).m_headerMiddle[idDgv])
+                { 
+                    //получаем диапазон
+                    colRange = (m_wrkSheet.Cells[rowSheet, colSheetEnd] as Excel.Range);
+                    //записываем данные в ячейки
+                    colRange.Cells[rowSheet, colSheetBegin] = item;
+                    //объединяем ячейки
+                    m_wrkSheet.get_Range(getAdress(rowSheet, colSheetBegin, colSheetEnd)).Merge();
+                    colSheetEnd += (dgvActive as DGVVedomostBl).m_arMiddleCol[idDgv][(dgvActive as DGVVedomostBl).m_headerMiddle[idDgv].ToList().IndexOf(item)];
+
+                    colSheetBegin += colSheetEnd - 1;
                 }
+
+                colSheetBegin = 2; colSheetEnd = 2; rowSheet = 4;
+
+                for (int i = 0; i < dgvActive.Columns.Count; i++)
+                {
+                    //получаем диапазон
+                    colRange = (m_wrkSheet.Cells[rowSheet, colSheetEnd] as Excel.Range);
+                    //записываем данные в ячейки
+                    colRange.Cells[rowSheet, colSheetBegin] = dgvActive.Columns[i].HeaderText;
+                    //объединяем ячейки
+                    m_wrkSheet.get_Range(getAdress(rowSheet, colSheetBegin, colSheetEnd)).Merge();
+
+                    colSheetEnd++;
+                    colSheetBegin += colSheetEnd - 1;
+                }
+            }
+
+            /// <summary>
+            /// Получения адреса ячеек
+            /// </summary>
+            /// <param name="rowSheet">номер строки</param>
+            /// <param name="colSheetBegin">номер столбца начала</param>
+            /// <param name="colSheetEnd">номер столбца конца</param>
+            /// <returns>адрес ячеек</returns>
+            private string getAdress(int rowSheet, int colSheetBegin, int colSheetEnd)
+            {
+                Excel.Range colRangeBegin = (Excel.Range)m_wrkSheet.Cells[rowSheet, colSheetBegin],
+                    colRangeEnd = (Excel.Range)m_wrkSheet.Cells[rowSheet, colSheetEnd];
+                string adressCell = string.Empty;
+
+                adressCell = colRangeBegin.Address + ":" + colRangeEnd.Address;
+
+                return adressCell;
             }
 
             /// <summary>
@@ -3931,51 +3990,50 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="value">число</param>
         /// <returns>преобразованное число</returns>
-        public static float AsParseToF(string value)
-        {
-            int _indxChar = 0;
-            string _sepReplace = string.Empty;
-            bool bFlag = true;
-            //char[] _separators = { ' ', ',', '.', ':', '\t'};
-            //char[] letters = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).ToArray();
-            float fValue = 0;
+        //public static float AsParseToF(string value)
+        //{
+        //    int _indxChar = 0;
+        //    string _sepReplace = string.Empty;
+        //    bool bFlag = true;
+        //    //char[] _separators = { ' ', ',', '.', ':', '\t'};
+        //    //char[] letters = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).ToArray();
+        //    float fValue = 0;
 
-            foreach (char item in value.ToCharArray())
-            {
-                if (!char.IsDigit(item))
-                    if (char.IsLetter(item))
-                        value = value.Remove(_indxChar, 1);
-                    else
-                        _sepReplace = value.Substring(_indxChar, 1);
-                else
-                    _indxChar++;
+        //    foreach (char item in value.ToCharArray())
+        //    {
+        //        if (!char.IsDigit(item))
+        //            if (char.IsLetter(item))
+        //                value = value.Remove(_indxChar, 1);
+        //            else
+        //                _sepReplace = value.Substring(_indxChar, 1);
+        //        else
+        //            _indxChar++;
 
-                switch (_sepReplace)
-                {
-                    case ".":
-                    case ",":
-                    case " ":
-                    case ":":
-                        float.TryParse(value.Replace(_sepReplace, "."), NumberStyles.Float, CultureInfo.InvariantCulture, out fValue);
-                        bFlag = false;
-                        break;
-                }
-            }
+        //        switch (_sepReplace)
+        //        {
+        //            case ".":
+        //            case ",":
+        //            case " ":
+        //            case ":":
+        //                float.TryParse(value.Replace(_sepReplace, "."), NumberStyles.Float, CultureInfo.InvariantCulture, out fValue);
+        //                bFlag = false;
+        //                break;
+        //        }
+        //    }
 
-            if (bFlag)
-                try
-                {
-                    fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
-                }
-                catch (Exception e)
-                {
-                    if (value.ToString() == "")
-                        fValue = 0;
-                }
+        //    if (bFlag)
+        //        try
+        //        {
+        //            fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            if (value.ToString() == "")
+        //                fValue = 0;
+        //        }
 
-
-            return fValue;
-        }
+        //    return fValue;
+        //}
     }
 
     /// <summary>
