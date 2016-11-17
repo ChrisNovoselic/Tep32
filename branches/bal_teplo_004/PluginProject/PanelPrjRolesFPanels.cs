@@ -580,6 +580,7 @@ namespace PluginProject
                                 #endregion
 
                                 e.Node.Tag = (tag.Split(',')[0] + ',' + e.Label.Split(' ')[1]);
+                                e.Node.Name = "Context " + e.Label.Split(' ')[1];
 
                                 activate_btn(true);
                             }
@@ -617,6 +618,7 @@ namespace PluginProject
                                 #endregion
 
                                 e.Node.Tag = (tag.Split(',')[0] + ',' + e.Label.Split(' ')[1]);
+                                e.Node.Name = "Item " + e.Label.Split(' ')[1];
 
                                 activate_btn(true);
                             }
@@ -653,6 +655,7 @@ namespace PluginProject
                                 #endregion
 
                                 e.Node.Tag = (tag.Split(',')[0] + ',' + e.Label.Split(' ')[1]);
+                                e.Node.Name = "Panel " + e.Label.Split(' ')[1];
 
                                 activate_btn(true);
                             }

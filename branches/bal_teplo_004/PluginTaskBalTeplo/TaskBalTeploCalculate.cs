@@ -1463,7 +1463,7 @@ namespace PluginTaskBalTeplo
                                 + (3.7 * Math.Pow(10, -8) + 3.588 * Math.Pow(10, -8) * Math.Pow((In["1.2"][ID_COMP[i]].value / 100), 3) - 4.05 * Math.Pow(10, -13) * Math.Pow((In["1.2"][ID_COMP[i]].value / 100), 9)) * Math.Pow(((50 - In["1.4"][ID_COMP[i]].value * 0.0980665) / 10), 2) +
                                 +1.1766 * Math.Pow(10, -13) * Math.Pow((In["1.2"][ID_COMP[i]].value / 100), 12) * Math.Pow(((50 - In["1.4"][ID_COMP[i]].value * 0.0980665) / 10), 4);
 
-                            Out[nAlg][ID_COMP[i]].value = (float)str * 10000;
+                            Out[nAlg][ID_COMP[i]].value = (float)str /* 10000*/;
                             fRes += Out[nAlg][ID_COMP[i]].value;
                             Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
                         }
@@ -1610,7 +1610,11 @@ namespace PluginTaskBalTeplo
                         for (i = (int)INDX_COMP.iST; i < (int)INDX_COMP.COUNT; i++)
                         {
                             double str = 0;
-                            Out[nAlg][ID_COMP[i]].value = In["7.1"][ID_COMP[i]].value;
+                            if (Out["3.2"][ID_COMP[i]].value == 0)
+                            {
+                                calculateOut("3.2");
+                            }
+                            Out[nAlg][ID_COMP[i]].value = (In["3.1"][ID_COMP[i]].value * (Out["3.2"][ID_COMP[i]].value - In["5.2"][ID_COMP[(int)INDX_COMP.iST]].value)) / 1000;
 
                             fRes += Out[nAlg][ID_COMP[i]].value;
                         }
@@ -1936,6 +1940,32 @@ namespace PluginTaskBalTeplo
                         }
                         str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 3.3
+                    case @"3.3": //T циркулир. воды ТС по блокам
+                        int col = 0;
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
+                        {
+                            str = str + In["1.3"][ID_COMP[i]].value;
+                            col++;
+                        }
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)(str/col);
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+                        
+                    #region 4.3
+                    case @"4.3": //T обратной воды ТС по выводам
+                        double temp_vzves = 0;
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
+                        {
+                            str = str + In["2.2"][ID_COMP[i]].value;
+                            temp_vzves = temp_vzves + (In["2.2"][ID_COMP[i]].value * In["2.4"][ID_COMP[i]].value);
+                        }
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)(temp_vzves/str);
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
                     #endregion

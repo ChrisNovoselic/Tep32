@@ -204,10 +204,14 @@ namespace PluginTaskBalTeplo
         protected class DGVAutoBook : DataGridView
         {
             private int m_id_dgv;
+
+            private Dictionary<string, HTepUsers.DictElement> m_dict_ProfileNALG_IN
+                , m_dict_ProfileNALG_OUT;
+
+            private DataTable m_dbRatio;
+
             public enum INDEX_TYPE_DGV { Block = 2001, Output = 2002, TeploBL = 2003, TeploOP = 2004, Param = 2005, PromPlozsh = 2006 };
-
-            public int m_iRound, m_iRatio;
-
+            
             private INDEX_TYPE_DGV m_type_dgv;
 
             public INDEX_TYPE_DGV Type_DGV
@@ -224,8 +228,9 @@ namespace PluginTaskBalTeplo
 
             public DGVAutoBook(string nameDGV)
             {
-                m_iRound = 0;
-                m_iRatio = 0;
+                m_dict_ProfileNALG_IN = new Dictionary<string, HTepUsers.DictElement>();
+                m_dict_ProfileNALG_OUT = new Dictionary<string, HTepUsers.DictElement>();
+                m_dbRatio = new DataTable();
 
                 InitializeComponents(nameDGV);
                 this.CellValueChanged += new DataGridViewCellEventHandler(cellEndEdit);
@@ -256,19 +261,38 @@ namespace PluginTaskBalTeplo
 
             private void cellEndEdit(object sender, DataGridViewCellEventArgs e)
             {
+                int iRatio = HTepUsers.s_iRatioDefault,
+                    iRound = HTepUsers.s_iRoundDefault,
+                    idRatio = 0;
+
+                
                 this.CellValueChanged -= new DataGridViewCellEventHandler(cellEndEdit);
+                if(((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value!=null)
+                    if (double.IsNaN(double.Parse(((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString())) == false)
+                    {
+                        if(((HDataGridViewColumn)Columns[e.ColumnIndex]).m_bInPut==true)
+                        {
+                            idRatio = int.Parse(m_dict_ProfileNALG_IN[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.RATIO).ToString()]);
+                            iRound = int.Parse(m_dict_ProfileNALG_IN[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.ROUND).ToString()]);
+                        }
+                        else
+                        {
+                            idRatio = int.Parse(m_dict_ProfileNALG_OUT[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.RATIO).ToString()]);
+                            iRound = int.Parse(m_dict_ProfileNALG_OUT[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.ROUND).ToString()]);
+                        }
 
-                try
-                {
-                    double value = double.Parse(((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString());
-                    value *= Math.Pow(10F, 1 * m_iRatio);
-                    ((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = value.ToString(@"F" + m_iRound,
-                                                CultureInfo.InvariantCulture);
-                }
-                catch
-                { }
+                        DataRow[] rows_Ratio = m_dbRatio.Select("ID=" + idRatio);
+
+                        if (rows_Ratio.Length>0)
+                            iRatio = int.Parse(rows_Ratio[0]["VALUE"].ToString());
+
+                        double value = double.Parse(((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString());
+                        value *= Math.Pow(10F, -1 * iRatio);
+                        ((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = value.ToString(@"F" + iRound,
+                                                        CultureInfo.InvariantCulture);
+                    }
+
                 this.CellValueChanged += new DataGridViewCellEventHandler(cellEndEdit);
-
             }
 
             /// <summary>
@@ -279,7 +303,7 @@ namespace PluginTaskBalTeplo
                 /// <summary>
                 /// Идентификатор компонента
                 /// </summary>
-                public int m_iIdComp;
+                public string m_N_ALG;
                 /// <summary>
                 /// Признак запрета участия в расчете
                 /// </summary>
@@ -325,7 +349,7 @@ namespace PluginTaskBalTeplo
             /// <param name="bRead">флаг изменения пользователем ячейки</param>
             /// <param name="nameCol">имя столбца</param>
             /// <param name="idPut">индентификатор источника</param>
-            public void AddColumn(string txtHeader, bool bRead, string nameCol, int idPut, bool bInPut)
+            public void AddColumn(string txtHeader, bool bRead, string nameCol, string N_ALG, bool bInPut)
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
@@ -333,7 +357,7 @@ namespace PluginTaskBalTeplo
 
                 try
                 {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_iIdComp = idPut, m_bInPut = bInPut };
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_N_ALG = N_ALG, m_bInPut = bInPut };
                     alignText = DataGridViewContentAlignment.MiddleLeft;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
                     //column.Frozen = true;
@@ -408,8 +432,8 @@ namespace PluginTaskBalTeplo
                     if (col.Index != 0)
                         foreach (DataGridViewRow row in Rows)
                         {
-                            DataRow[] row_comp = arr_tb_param_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_ALG="
-                                + col.m_iIdComp.ToString()
+                            DataRow[] row_comp = arr_tb_param_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("N_ALG="
+                                + col.m_N_ALG
                                 + " and ID_COMP=" + row.HeaderCell.Value.ToString());
 
                             if (col.m_bInPut == true)
@@ -425,8 +449,8 @@ namespace PluginTaskBalTeplo
                             }
                             else
                             {
-                                row_comp = arr_tb_param_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("ID_ALG="
-                                    + col.m_iIdComp.ToString()
+                                row_comp = arr_tb_param_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("N_ALG="
+                                    + col.m_N_ALG.ToString()
                                     + " and ID_COMP=" + row.HeaderCell.Value.ToString());
                                 if (row_comp.Length > 0)
                                 {
@@ -594,7 +618,7 @@ namespace PluginTaskBalTeplo
                 , int row)
             {
                 double valueToRes;
-                int idComp = 0;
+                string N_ALG = "";
                 editTable.Rows.Clear();
                 HDataGridViewColumn cols = (HDataGridViewColumn)dgvView.Columns[column];
 
@@ -602,19 +626,19 @@ namespace PluginTaskBalTeplo
                 {
                     foreach (HDataGridViewColumn col in Columns)
                     {
-                        if (col.m_iIdComp > 0)
+                        if (double.Parse(col.m_N_ALG) > 0)
                         {
-                            if (cols.m_iIdComp == col.m_iIdComp &&
+                            if (cols.m_N_ALG == col.m_N_ALG &&
                                 dgvView.Rows[i].Cells["Date"].Value == dgvView.Rows[row].Cells["Date"].Value)
                             {
                                 valueToRes = Convert.ToDouble(value) * Math.Pow(10, 6);
-                                idComp = cols.m_iIdComp;
+                                N_ALG = cols.m_N_ALG;
                             }
                             else
                                 if (dgvView.Rows[i].Cells[col.Index].Value != null)
                                 {
                                     valueToRes = Convert.ToDouble(dgvView.Rows[i].Cells[col.Index].Value) * Math.Pow(10, 6);
-                                    idComp = col.m_iIdComp;
+                                    N_ALG = col.m_N_ALG;
                                 }
                                 else
                                     valueToRes = -1;
@@ -623,7 +647,7 @@ namespace PluginTaskBalTeplo
                             if (valueToRes > -1)
                                 editTable.Rows.Add(new object[] 
                                 {
-                                    idComp
+                                    N_ALG
                                     , -1
                                     , 1.ToString()
                                     , valueToRes                
@@ -711,8 +735,9 @@ namespace PluginTaskBalTeplo
                 return editTable;
             }
 
-            public void InitializeStruct(DataTable nAlgTable, DataTable nAlgOutTable, DataTable compTable, Dictionary<int, object[]> dict_profile)
+            public void InitializeStruct(DataTable nAlgTable, DataTable nAlgOutTable, DataTable compTable, Dictionary<int, object[]> dict_profile, DataTable db_ratio)
             {
+                this.CellValueChanged -= new DataGridViewCellEventHandler(cellEndEdit);
                 this.Rows.Clear();
                 this.Columns.Clear();
                 DataRow[] colums_in;
@@ -720,6 +745,7 @@ namespace PluginTaskBalTeplo
                 DataRow[] rows;
                 List<DataRow> col_in = new List<DataRow>();
                 List<DataRow> col_out = new List<DataRow>();
+                m_dbRatio = db_ratio.Copy();
                 switch (m_type_dgv)
                 {
                     case INDEX_TYPE_DGV.Block:
@@ -762,9 +788,9 @@ namespace PluginTaskBalTeplo
                 {
                     if (list[1].ToString() == "in")
                     {
-                        m_iRatio = int.Parse(list[2].ToString());
-                        m_iRound = int.Parse(list[3].ToString());
-                        
+
+                        m_dict_ProfileNALG_IN = (Dictionary<string,HTepUsers.DictElement>)list[2];
+
                         foreach (Double id in (double[])list[0])
                         {
                             col_in.Add(nAlgTable.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
@@ -772,12 +798,13 @@ namespace PluginTaskBalTeplo
                     }
                     if (list[1].ToString() == "out")
                     {
+                        m_dict_ProfileNALG_OUT = (Dictionary<string, HTepUsers.DictElement>)list[2];
+
                         foreach (Double id in (double[])list[0])
                         {
                             col_out.Add(nAlgOutTable.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
                         }
                     }
-
                 }
                 colums_in = col_in.ToArray();
                 colums_out = col_out.ToArray();
@@ -785,12 +812,12 @@ namespace PluginTaskBalTeplo
                 this.AddColumn("Компонент", true, "Comp");
                 foreach (DataRow c in colums_in)
                 {
-                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), Convert.ToInt32(c["ID"]), true);
+                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), true);
                 }
 
                 foreach (DataRow c in colums_out)
                 {
-                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), Convert.ToInt32(c["ID"]), false);
+                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), false);
                 }
 
                 foreach (DataRow r in rows)
@@ -806,7 +833,7 @@ namespace PluginTaskBalTeplo
                     this.Rows[Rows.Count - 1].Cells[0].Value = "Итого";
                     this.Rows[Rows.Count - 1].HeaderCell.Value = rows[0]["ID"].ToString().Trim();
                 }
-
+                this.CellValueChanged += new DataGridViewCellEventHandler(cellEndEdit);
             }
         }
 
@@ -1739,19 +1766,19 @@ namespace PluginTaskBalTeplo
         {
             int err = -1;
             int id_put = -1;
-            int id_alg = (((DGVAutoBook)sender).Columns[e.ColumnIndex] as DGVAutoBook.HDataGridViewColumn).m_iIdComp;
+            string N_ALG = (((DGVAutoBook)sender).Columns[e.ColumnIndex] as DGVAutoBook.HDataGridViewColumn).m_N_ALG;
             int id_comp = Convert.ToInt32(((DGVAutoBook)sender).Rows[e.RowIndex].HeaderCell.Value);
 
             if ((((DGVAutoBook)sender).Columns[e.ColumnIndex] as DGVAutoBook.HDataGridViewColumn).m_bInPut == true)
             {
-                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_ALG=" + id_alg + " and ID_COMP=" + id_comp);
+                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
                 if (rows.Length == 1)
                     id_put = Convert.ToInt32(rows[0]["ID"]);
                 m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
             }
             else
             {
-                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("ID_ALG=" + id_alg + " and ID_COMP=" + id_comp);
+                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("ID_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
                 if (rows.Length == 1)
                     id_put = Convert.ToInt32(rows[0]["ID"]);
                 m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
@@ -1797,17 +1824,7 @@ namespace PluginTaskBalTeplo
                 , m_arTableDictPrjs_in);
             ((DGVAutoBook)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = e.Value;
         }
-
-        /// <summary>
-        /// окнчание редактирваония
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void dgvAB_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-
-        }
-
+        
         /// <summary>
         /// Освободить (при закрытии), связанные с функционалом ресурсы
         /// </summary>
@@ -2138,12 +2155,12 @@ namespace PluginTaskBalTeplo
             get_m_arrDictPrj();
 
             m_dt_profile = HandlerDb.GetProfilesContext(m_id_panel);
-            dgvBlock.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvBlock.Type_DGV));
-            dgvOutput.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvOutput.Type_DGV));
-            dgvTeploBL.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvTeploBL.Type_DGV));
-            dgvTeploOP.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvTeploOP.Type_DGV));
-            dgvPromPlozsh.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvPromPlozsh.Type_DGV));
-            dgvParam.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvParam.Type_DGV));
+            dgvBlock.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvBlock.Type_DGV), m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+            dgvOutput.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvOutput.Type_DGV), m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+            dgvTeploBL.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvTeploBL.Type_DGV), m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+            dgvTeploOP.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvTeploOP.Type_DGV), m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+            dgvPromPlozsh.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvPromPlozsh.Type_DGV), m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+            dgvParam.InitializeStruct(m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvParam.Type_DGV), m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
             ////Назначить обработчик события - изменение дата/время начала периода
             //hdtpBegin.ValueChanged += new EventHandler(hdtpBegin_onValueChanged);
@@ -2178,8 +2195,8 @@ namespace PluginTaskBalTeplo
                     (PanelManagement as PanelManagementBalTeplo).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
                     (ctrl as ComboBox).Enabled = false;
 
-                    ctrl = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0];
-                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
+                    //ctrl = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0];
+                    //(ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
                     //из profiles
@@ -2227,21 +2244,13 @@ namespace PluginTaskBalTeplo
             string[] id;
             List<double> ids = new List<double>();
             string type = string.Empty;
-
-            int idRatio=0,
-                idRound=0,
-                ratio = 0,
-                round = 0;
-            
+                        
             List<object> obj = new List<object>();
 
             foreach (string context in contexts)
             {
+                Dictionary<string, HTepUsers.DictElement> dictParamNALG = new Dictionary<string, HTepUsers.DictElement>();
                 value = m_dictProfile.Objects[id_dgv.ToString()].Objects[context].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.INPUT_PARAM).ToString()];
-                idRatio = int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.DAY).ToString()].Objects[id_dgv.ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.RATIO).ToString()]);
-                idRound = int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.DAY).ToString()].Objects[id_dgv.ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.ROUND).ToString()]);
-
-                
 
                 id = value.Trim().Split(';');
                 ids.Clear();
@@ -2261,7 +2270,8 @@ namespace PluginTaskBalTeplo
                 {
                     type = "out";
                 }
-                obj.Add(new object[] { ids.ToArray(), type, idRatio, idRound });
+
+                obj.Add(new object[] { ids.ToArray(), type, m_dictProfile.Objects[context].Objects });
             }
             dict_profile.Add(id_dgv, obj.ToArray());
 
