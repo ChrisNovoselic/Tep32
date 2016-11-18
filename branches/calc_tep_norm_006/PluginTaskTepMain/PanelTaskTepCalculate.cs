@@ -357,7 +357,8 @@ namespace PluginTaskTepMain
             //Отменить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(false);
             //Установить новые режимы для "календарей"
-            Session.SetRangeDatetime(PanelManagement.SetPeriod(Session.m_currIdPeriod));
+            PanelManagement.SetPeriod(Session.m_currIdPeriod);
+            Session.SetRangeDatetime(PanelManagement.RangeDateTime);
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
 
@@ -754,10 +755,16 @@ namespace PluginTaskTepMain
                     ;
             }
 
-            public DateTimeRange SetPeriod(ID_PERIOD idPeriod)
+            public DateTimeRange RangeDateTime
             {
-                DateTimeRange rangeRes = new DateTimeRange();
+                get {
+                    return new DateTimeRange((Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value
+                        , (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value);
+                }
+            }
 
+            public void SetPeriod(ID_PERIOD idPeriod)
+            {
                 HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
                     , hdtpEnd = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
                 //Выполнить запрос на получение значений для заполнения 'DataGridView'
@@ -818,10 +825,6 @@ namespace PluginTaskTepMain
                     default:
                         break;
                 }
-
-                rangeRes.Set(hdtpBegin.Value, hdtpEnd.Value);
-                
-                return rangeRes;
             }
         }
     }

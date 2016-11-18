@@ -72,7 +72,7 @@ namespace TepCommon
                 , Count
             }
 
-            protected TYPE m_typeSession
+            protected TYPE m_type
             {
                 get
                 {
