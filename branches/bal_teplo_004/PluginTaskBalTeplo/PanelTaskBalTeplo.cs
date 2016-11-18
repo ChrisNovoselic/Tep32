@@ -268,7 +268,7 @@ namespace PluginTaskBalTeplo
                 
                 this.CellValueChanged -= new DataGridViewCellEventHandler(cellEndEdit);
                 if(((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value!=null)
-                    if (double.IsNaN(double.Parse(((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString())) == false)
+                    if (double.IsNaN(double.Parse(((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString().Replace('.',','))) == false)
                     {
                         if(((HDataGridViewColumn)Columns[e.ColumnIndex]).m_bInPut==true)
                         {
@@ -286,7 +286,7 @@ namespace PluginTaskBalTeplo
                         if (rows_Ratio.Length>0)
                             iRatio = int.Parse(rows_Ratio[0]["VALUE"].ToString());
 
-                        double value = double.Parse(((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString());
+                        double value = double.Parse(((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString().Replace('.', ','));
                         value *= Math.Pow(10F, -1 * iRatio);
                         ((DataGridView)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = value.ToString(@"F" + iRound,
                                                         CultureInfo.InvariantCulture);
@@ -1771,14 +1771,14 @@ namespace PluginTaskBalTeplo
 
             if ((((DGVAutoBook)sender).Columns[e.ColumnIndex] as DGVAutoBook.HDataGridViewColumn).m_bInPut == true)
             {
-                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
+                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
                 if (rows.Length == 1)
                     id_put = Convert.ToInt32(rows[0]["ID"]);
                 m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
             }
             else
             {
-                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("ID_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
+                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
                 if (rows.Length == 1)
                     id_put = Convert.ToInt32(rows[0]["ID"]);
                 m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;

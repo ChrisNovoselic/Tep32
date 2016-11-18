@@ -1863,7 +1863,7 @@ namespace PluginTaskBalTeplo
                     case @"1.4": //Энтальпия обр
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
                         {
-                            In["1.4"][ID_COMP[i]].value = In["1.4"][ID_COMP[i]].value * (float)10.197;
+                            In["1.4"][ID_COMP[i]].value = In["1.4"][ID_COMP[i]].value/* * (float)10.197*/;
                             str = str + In["1.4"][ID_COMP[i]].value;
                         }
                         str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
@@ -1975,7 +1975,7 @@ namespace PluginTaskBalTeplo
                     #region 3.4
                     case @"3.4":
 
-                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value * (float)10.197;
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value /** (float)10.197*/;
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
                     #endregion
