@@ -1863,6 +1863,7 @@ namespace PluginTaskBalTeplo
                     case @"1.4": //Энтальпия обр
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
                         {
+                            In["1.4"][ID_COMP[i]].value = In["1.4"][ID_COMP[i]].value * (float)10.197;
                             str = str + In["1.4"][ID_COMP[i]].value;
                         }
                         str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
@@ -1933,9 +1934,23 @@ namespace PluginTaskBalTeplo
                     #endregion
 
                     #region 2.5
-                    case @"2.5": //Q расч вывод
+                    case @"2.5": 
                         for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
+                            In[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value * (float)10.197;
+                            str = str + In[nAlg][ID_COMP[i]].value;
+                        }
+                        str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 2.6
+                    case @"2.6": 
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
+                        {
+                            In[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value * (float)10.197;
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
                         str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
@@ -1956,7 +1971,15 @@ namespace PluginTaskBalTeplo
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
                     #endregion
-                        
+
+                    #region 3.4
+                    case @"3.4":
+
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value * (float)10.197;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
                     #region 4.3
                     case @"4.3": //T обратной воды ТС по выводам
                         double temp_vzves = 0;
@@ -1970,16 +1993,20 @@ namespace PluginTaskBalTeplo
                         break;
                     #endregion
 
-                    #region 2.6
-                    case @"2.6": //Q расч вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
-                        {
-                            str = str + In[nAlg][ID_COMP[i]].value;
-                        }
-                        str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
-                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
+                    #region 4.4
+                    case @"4.4":
+
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value * (float)10.197;
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
+                    #endregion
+
+                    #region 5.1
+                    //case @"5.1":
+
+                    //    In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value * (float)10.197;
+                    //    fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                    //    break;
                     #endregion
 
                     #region 6.1
@@ -2035,6 +2062,7 @@ namespace PluginTaskBalTeplo
                     case @"6.5": //Q расч вывод
                         for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
+                            In[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value * (float)10.197;
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
                         str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
@@ -2047,6 +2075,7 @@ namespace PluginTaskBalTeplo
                     case @"6.6": //Q расч вывод
                         for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
+                            In[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value * (float)10.197;
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
                         str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
