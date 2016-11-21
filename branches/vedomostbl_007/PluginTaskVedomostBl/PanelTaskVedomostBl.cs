@@ -1217,7 +1217,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
             /// </summary>
-            protected enum INDEX_SERVICE_COLUMN : uint { ALG = 0, DATE, COUNT }
+            public enum INDEX_SERVICE_COLUMN : uint { ALG = 0, DATE, COUNT }
             /// <summary>
             /// словарь настроечных данных
             /// </summary>
@@ -2183,7 +2183,7 @@ namespace PluginTaskVedomostBl
                     }
                     catch (Exception e)
                     {
-                        b_flafErr = true;
+                        closeExcel();
                         MessageBox.Show("Ошибка прорисовки таблицы для экспорта! " + e.ToString());
                     }
 
@@ -2227,66 +2227,166 @@ namespace PluginTaskVedomostBl
             private void paintTable(DataGridView dgvActive)
             {
                 int indxCol = 0,
-                    colSheetBegin = 2, colSheetEnd = 2,
+                    colSheetBegin = 2, colSheetEnd = 1,
                     rowSheet = 2,
                     idDgv = (dgvActive as DGVVedomostBl).m_idCompDGV;
-                Excel.Range colRange;
+
+                m_excApp.Visible = true;
+                //получаем диапазон
+                Excel.Range colRange = (m_wrkSheet.Cells[2, colSheetBegin - 1] as Excel.Range);
+                //записываем данные в ячейки
+                colRange.Cells[rowSheet + 1, colSheetBegin - 1] = "Дата";
+                //
+                var cellsDate = m_wrkSheet.get_Range(getAdressRangeCol(rowSheet, (rowSheet + 1)+1, colSheetBegin - 1));
+                //объединяем ячейки
+                mergeCells(cellsDate.Address);
+                paintBorder(cellsDate, (int)Excel.XlLineStyle.xlContinuous);
+                cellsDate.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                cellsDate.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
 
                 foreach (var list in s_listHeader)
                     foreach (var item in list)
                     {
                         //получаем диапазон
-                        colRange = (m_wrkSheet.Cells[rowSheet, colSheetEnd] as Excel.Range);
+                        colRange = (m_wrkSheet.Cells[rowSheet, colSheetBegin] as Excel.Range);
                         //записываем данные в ячейки
-                        colRange.Cells[rowSheet, colSheetBegin] = item;
-                        colSheetEnd += (dgvActive as DGVVedomostBl).m_arIntTopHeader[idDgv][indxCol] - 1;
+                        colRange.Value2 = item;
+                        colSheetEnd += (dgvActive as DGVVedomostBl).m_arIntTopHeader[idDgv][indxCol];
+                        //выделяем область(левый верхний угол и правый нижний)
+                        var cells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
                         //объединяем ячейки
-                        m_wrkSheet.get_Range(getAdress(rowSheet, colSheetBegin, colSheetEnd)).Merge();
-                        //colSheetEnd
+                        mergeCells(cells.Address);             
+                        //
+                        paintBorder(cells, (int)Excel.XlLineStyle.xlContinuous);
+                        //
+                        cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                        cells.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
                         colSheetBegin = colSheetEnd + 1;
-                   
+
                         indxCol++;
                     }
 
-                colSheetBegin = 2; colSheetEnd = 2; rowSheet = 3;
+                colSheetBegin = 2; colSheetEnd = 1; rowSheet = 2;
 
                 foreach (var item in (dgvActive as DGVVedomostBl).m_headerMiddle[idDgv])
-                { 
+                {
                     //получаем диапазон
-                    colRange = (m_wrkSheet.Cells[rowSheet, colSheetEnd] as Excel.Range);
+                    colRange = (m_wrkSheet.Cells[rowSheet + 1, colSheetBegin] as Excel.Range);
                     //записываем данные в ячейки
-                    colRange.Cells[rowSheet, colSheetBegin] = item;
-                    //объединяем ячейки
-                    m_wrkSheet.get_Range(getAdress(rowSheet, colSheetBegin, colSheetEnd)).Merge();
+                    colRange.Value2 = item;
                     colSheetEnd += (dgvActive as DGVVedomostBl).m_arMiddleCol[idDgv][(dgvActive as DGVVedomostBl).m_headerMiddle[idDgv].ToList().IndexOf(item)];
+                    // выделяем область(левый верхний угол и правый нижний)
+                    var cells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet + 1, colSheetBegin, colSheetEnd));
+                    //объединяем ячейки
+                    mergeCells(cells.Address);     
+                    //
+                    paintBorder(cells, (int)Excel.XlLineStyle.xlContinuous);
+                    //
+                    cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                    cells.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
 
-                    colSheetBegin += colSheetEnd - 1;
+                    colSheetBegin = colSheetEnd + 1;
                 }
 
-                colSheetBegin = 2; colSheetEnd = 2; rowSheet = 4;
+                colSheetBegin = 2; colSheetEnd = 1; rowSheet = 3;
 
                 for (int i = 0; i < dgvActive.Columns.Count; i++)
                 {
-                    //получаем диапазон
-                    colRange = (m_wrkSheet.Cells[rowSheet, colSheetEnd] as Excel.Range);
-                    //записываем данные в ячейки
-                    colRange.Cells[rowSheet, colSheetBegin] = dgvActive.Columns[i].HeaderText;
-                    //объединяем ячейки
-                    m_wrkSheet.get_Range(getAdress(rowSheet, colSheetBegin, colSheetEnd)).Merge();
+                    if (i > ((int)DGVVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
+                    {
+                        //получаем диапазон
+                        colRange = (m_wrkSheet.Cells[rowSheet + 1, colSheetBegin] as Excel.Range);
+                        //записываем данные в ячейки
+                        colRange.Value2 = dgvActive.Columns[i].HeaderText;                       
+                         // выделяем область(левый верхний угол и правый нижний)
+                         var cells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet + 1, colSheetBegin, colSheetEnd));
 
-                    colSheetEnd++;
-                    colSheetBegin += colSheetEnd - 1;
+                        cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                        cells.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+
+                        paintBorder(cells, (int)Excel.XlLineStyle.xlContinuous);
+                        colSheetEnd++;
+                        colSheetBegin = colSheetEnd + 1;
+                    }
                 }
             }
 
+            private void simpleHeader()
+            {
+
+            }
+
             /// <summary>
-            /// Получения адреса ячеек
+            /// 
+            /// </summary>
+            /// <param name="cells">выбранный диапазон ячеек</param>
+            /// <param name="typeBorder">тип линий</param>
+            private void paintBorder(Excel.Range cells, int typeBorder)
+            {
+                Excel.XlLineStyle styleBorder = Excel.XlLineStyle.xlContinuous;
+
+                switch ((Excel.XlLineStyle)typeBorder)
+                {
+                    case Excel.XlLineStyle.xlContinuous:
+                        styleBorder = Excel.XlLineStyle.xlContinuous;
+                        break;
+                    case Excel.XlLineStyle.xlDash:
+                        break;
+                    case Excel.XlLineStyle.xlDashDot:
+                        break;
+                    case Excel.XlLineStyle.xlDashDotDot:
+                        break;
+                    case Excel.XlLineStyle.xlDot:
+                        break;
+                    case Excel.XlLineStyle.xlDouble:
+                        break;
+                    case Excel.XlLineStyle.xlSlantDashDot:
+                        break;
+                    case Excel.XlLineStyle.xlLineStyleNone:
+                        break;
+                    default:
+                        break;
+                }
+                // внутренние вертикальные
+                //  cells.Borders[Excel.XlBordersIndex.xlInsideVertical].LineStyle = Excel.XlLineStyle.xlContinuous;
+                // внутренние горизонтальные
+                //  cells.Borders[Excel.XlBordersIndex.xlInsideHorizontal].LineStyle = Excel.XlLineStyle.xlContinuous; 
+                // верхняя внешняя          
+                cells.Borders[Excel.XlBordersIndex.xlEdgeTop].LineStyle = styleBorder;
+                // правая внешняя
+                cells.Borders[Excel.XlBordersIndex.xlEdgeRight].LineStyle = styleBorder;
+                // левая внешняя
+                cells.Borders[Excel.XlBordersIndex.xlEdgeLeft].LineStyle = styleBorder;
+                // нижняя внешняя
+                cells.Borders[Excel.XlBordersIndex.xlEdgeBottom].LineStyle = styleBorder;
+            }
+
+            /// <summary>
+            /// Получения адреса диапазона ячеек в столбце
             /// </summary>
             /// <param name="rowSheet">номер строки</param>
             /// <param name="colSheetBegin">номер столбца начала</param>
             /// <param name="colSheetEnd">номер столбца конца</param>
-            /// <returns>адрес ячеек</returns>
-            private string getAdress(int rowSheet, int colSheetBegin, int colSheetEnd)
+            /// <returns>адрес ячеек в формате "A1:A2"</returns>
+            private string getAdressRangeCol(int rowSheetBegin, int rowSheetEnd, int colSheet)
+            {
+                Excel.Range RowRangeBegin = (Excel.Range)m_wrkSheet.Cells[rowSheetBegin, colSheet],
+                  RowRangeEnd = (Excel.Range)m_wrkSheet.Cells[rowSheetEnd, colSheet];
+                string adressCell = string.Empty;
+
+                adressCell = RowRangeBegin.Address + ":" + RowRangeEnd.Address;
+
+                return adressCell;
+            }
+
+            /// <summary>
+            /// Получения адреса диапазона ячеек в строке
+            /// </summary>
+            /// <param name="rowSheet">номер строки</param>
+            /// <param name="colSheetBegin">номер столбца начала</param>
+            /// <param name="colSheetEnd">номер столбца конца</param>
+            /// <returns>адрес диапазона ячеек в формате "A1:B1"</returns>
+            private string getAdressRangeRow(int rowSheet, int colSheetBegin, int colSheetEnd)
             {
                 Excel.Range colRangeBegin = (Excel.Range)m_wrkSheet.Cells[rowSheet, colSheetBegin],
                     colRangeEnd = (Excel.Range)m_wrkSheet.Cells[rowSheet, colSheetEnd];
@@ -2295,6 +2395,15 @@ namespace PluginTaskVedomostBl
                 adressCell = colRangeBegin.Address + ":" + colRangeEnd.Address;
 
                 return adressCell;
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="cells"></param>
+            private void mergeCells(string cells)
+            {
+                m_wrkSheet.get_Range(cells).Merge();
             }
 
             /// <summary>
