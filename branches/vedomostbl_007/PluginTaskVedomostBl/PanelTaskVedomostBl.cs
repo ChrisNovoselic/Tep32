@@ -2093,18 +2093,6 @@ namespace PluginTaskVedomostBl
             /// <returns>показатель изменения</returns>
             private int diffRowsInTables(DataTable origin, double editValue, int i, int idAlg, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
-                //int quality = 0;
-                //double dbVal = 0F;
-
-                //origin = sortingTable(origin, "WR_DATETIME, ID_PUT");
-                //dbVal = (double)origin.Rows[i]["Value"];
-
-                //if (dbVal.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound,CultureInfo.InvariantCulture) 
-                //    != editValue.ToString())
-                //    quality = 1;
-
-                //return quality;
-
                 int quality = 1;
                 double originValues;
 
@@ -2254,8 +2242,8 @@ namespace PluginTaskVedomostBl
                         colSheetEnd += (dgvActive as DGVVedomostBl).m_arIntTopHeader[idDgv][indxCol] - 1;
                         //объединяем ячейки
                         m_wrkSheet.get_Range(getAdress(rowSheet, colSheetBegin, colSheetEnd)).Merge();
-
-                        colSheetBegin += colSheetEnd - 1;
+                        //colSheetEnd
+                        colSheetBegin = colSheetEnd + 1;
                    
                         indxCol++;
                     }
