@@ -1890,17 +1890,17 @@ namespace PluginTaskReaktivka
 
                         foreach (DataGridViewRow row in Rows)
                         {
-                            try
-                            {
-                                idAlg = (int)row.Cells["ALG"].Value;
-                            }
-                            catch (Exception exp)
-                            {
-                                MessageBox.Show(exp.ToString());
-                            }
-
                             if (row.Index != RowCount - 1)
                             {
+                                try
+                                {
+                                    idAlg = (int)row.Cells["ALG"].Value;
+                                }
+                                catch (Exception exp)
+                                {
+                                    MessageBox.Show(exp.ToString());
+                                }
+
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
                                     if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(m_currentOffSet).AddDays(-1).ToShortDateString() ==

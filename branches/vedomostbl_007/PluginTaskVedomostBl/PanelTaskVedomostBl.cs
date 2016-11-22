@@ -2130,18 +2130,18 @@ namespace PluginTaskVedomostBl
         public class ReportExcel
         {
             /// <summary>
-            /// 
+            /// экземпляр интерфейса приложения
             /// </summary>
             private Excel.Application m_excApp;
             /// <summary>
-            /// 
+            /// экземпляр интерфейса книги
             /// </summary>
             private Excel.Workbook m_workBook;
             /// <summary>
-            /// 
+            /// экземпляр интерфейса листа
             /// </summary>
             private Excel.Worksheet m_wrkSheet;
-            private object _missingObj = System.Reflection.Missing.Value;
+            //private object _missingObj = System.Reflection.Missing.Value;
 
             /// <summary>
             /// 
@@ -2175,7 +2175,7 @@ namespace PluginTaskVedomostBl
                     m_workBook.BeforeClose += workBook_BeforeClose;
                     m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("VedomostBl");
                     int indxCol = 1;
-                    bool b_flafErr = false;
+                    //bool b_flafErr = false;
 
                     try
                     {
@@ -2187,62 +2187,69 @@ namespace PluginTaskVedomostBl
                         MessageBox.Show("Ошибка прорисовки таблицы для экспорта! " + e.ToString());
                     }
 
-                    if (!b_flafErr)
-                        try
-                        {
-                            for (int i = 0; i < dgView.Columns.Count; i++)
+                    try
+                    {
+                        for (int i = 0; i < dgView.Columns.Count; i++)
+                            if (i >= ((int)DGVVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
                             {
+                                Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
+
                                 if (dgView.Columns[i].HeaderText != "")
                                 {
-                                    Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
-
                                     foreach (Excel.Range cell in colRange.Cells)
                                         if (Convert.ToString(cell.Value) != "")
+                                        {
                                             if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
                                             {
                                                 fillSheetExcel(colRange, dgView, i, cell.Row);
                                                 break;
                                             }
-                                    indxCol++;
+                                        }
                                 }
+                                else
+                                    foreach (Excel.Range cell in colRange.Cells)
+                                        if (Convert.ToString(cell.Value) == dgView.Columns[i].Name)
+                                        {
+                                            fillSheetExcelToNHeader(colRange, dgView, i, cell.Row + 1);
+                                            break;
+                                        }
+                                indxCol++;
                             }
-                            setSignature(m_wrkSheet, dgView, dtRange);
-                            m_excApp.Visible = true;
-                            closeExcel();
-                            System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
-                        }
-                        catch (Exception e)
-                        {
-                            closeExcel();
-                            MessageBox.Show("Ошибка экспорта данных!" + e.ToString());
-                        }
-                    else
+
+                        setSignature(m_wrkSheet, dgView, dtRange);
+                        m_excApp.Visible = true;
                         closeExcel();
+                    }
+                    catch (Exception e)
+                    {
+                        closeExcel();
+                        MessageBox.Show("Ошибка экспорта данных!" + e.ToString());
+                    }
                 }
             }
 
             /// <summary>
-            /// 
+            /// Составление таблицы
             /// </summary>
+            /// <param name="dgvActive">активное окно данных</param>
             private void paintTable(DataGridView dgvActive)
             {
                 int indxCol = 0,
                     colSheetBegin = 2, colSheetEnd = 1,
                     rowSheet = 2,
                     idDgv = (dgvActive as DGVVedomostBl).m_idCompDGV;
-
                 m_excApp.Visible = true;
                 //получаем диапазон
                 Excel.Range colRange = (m_wrkSheet.Cells[2, colSheetBegin - 1] as Excel.Range);
                 //записываем данные в ячейки
                 colRange.Cells[rowSheet + 1, colSheetBegin - 1] = "Дата";
-                //
-                var cellsDate = m_wrkSheet.get_Range(getAdressRangeCol(rowSheet, (rowSheet + 1)+1, colSheetBegin - 1));
+                //получаем диапазон с условием длины заголовка
+                var cellsDate = m_wrkSheet.get_Range(getAdressRangeCol(rowSheet, (rowSheet + 1) + 1, colSheetBegin - 1));
                 //объединяем ячейки
                 mergeCells(cellsDate.Address);
-                paintBorder(cellsDate, (int)Excel.XlLineStyle.xlContinuous);
                 cellsDate.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
                 cellsDate.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+                paintBorder(cellsDate, (int)Excel.XlLineStyle.xlContinuous);
 
                 foreach (var list in s_listHeader)
                     foreach (var item in list)
@@ -2255,10 +2262,10 @@ namespace PluginTaskVedomostBl
                         //выделяем область(левый верхний угол и правый нижний)
                         var cells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
                         //объединяем ячейки
-                        mergeCells(cells.Address);             
+                        mergeCells(cells.Address);
                         //
                         paintBorder(cells, (int)Excel.XlLineStyle.xlContinuous);
-                        //
+                        //выравнивание текста в ячейке                  
                         cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
                         cells.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
                         colSheetBegin = colSheetEnd + 1;
@@ -2266,22 +2273,23 @@ namespace PluginTaskVedomostBl
                         indxCol++;
                     }
 
-                colSheetBegin = 2; colSheetEnd = 1; rowSheet = 2;
+                colSheetBegin = 2; colSheetEnd = 1; rowSheet = 3;
 
                 foreach (var item in (dgvActive as DGVVedomostBl).m_headerMiddle[idDgv])
                 {
                     //получаем диапазон
-                    colRange = (m_wrkSheet.Cells[rowSheet + 1, colSheetBegin] as Excel.Range);
+                    colRange = (m_wrkSheet.Cells[rowSheet, colSheetBegin] as Excel.Range);
                     //записываем данные в ячейки
                     colRange.Value2 = item;
                     colSheetEnd += (dgvActive as DGVVedomostBl).m_arMiddleCol[idDgv][(dgvActive as DGVVedomostBl).m_headerMiddle[idDgv].ToList().IndexOf(item)];
                     // выделяем область(левый верхний угол и правый нижний)
-                    var cells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet + 1, colSheetBegin, colSheetEnd));
+                    var cells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
                     //объединяем ячейки
-                    mergeCells(cells.Address);     
+                    mergeCells(cells.Address);
                     //
                     paintBorder(cells, (int)Excel.XlLineStyle.xlContinuous);
                     //
+                    cells.WrapText = true;
                     cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
                     cells.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
 
@@ -2297,9 +2305,9 @@ namespace PluginTaskVedomostBl
                         //получаем диапазон
                         colRange = (m_wrkSheet.Cells[rowSheet + 1, colSheetBegin] as Excel.Range);
                         //записываем данные в ячейки
-                        colRange.Value2 = dgvActive.Columns[i].HeaderText;                       
-                         // выделяем область(левый верхний угол и правый нижний)
-                         var cells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet + 1, colSheetBegin, colSheetEnd));
+                        colRange.Value2 = dgvActive.Columns[i].HeaderText;
+                        // выделяем область(левый верхний угол и правый нижний)
+                        var cells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet + 1, colSheetBegin, colSheetEnd));
 
                         cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
                         cells.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
@@ -2317,7 +2325,7 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
+            /// Нарисовать границы ячейки
             /// </summary>
             /// <param name="cells">выбранный диапазон ячеек</param>
             /// <param name="typeBorder">тип линий</param>
@@ -2454,9 +2462,11 @@ namespace PluginTaskVedomostBl
             /// <param name="dtRange">дата</param>
             private void setSignature(Excel.Worksheet exclWrksht, DataGridView dgv, DateTimeRange dtRange)
             {
-                Excel.Range exclTEC = exclWrksht.get_Range("B2");
-                Excel.Range exclRMonth = exclWrksht.get_Range("A2");
-                exclRMonth.Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
+                //Excel.Range exclTEC = exclWrksht.get_Range("B2");
+                Excel.Range exclRMonth = exclWrksht.get_Range("R1");
+                exclRMonth.Value2 = "Ведомость блока №" + (dgv as DGVVedomostBl).m_idCompDGV + " за " + HDateTime.NameMonths[dtRange.Begin.Month - 1] + " месяц " + dtRange.Begin.Year + " года";
+                exclRMonth.Font.Bold = true;
+                //HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
             }
 
             /// <summary>
@@ -2497,22 +2507,66 @@ namespace PluginTaskVedomostBl
                     }
 
                 for (int j = 0; j < dgv.Rows.Count; j++)
-                    if (dgv.Rows.Count - 1 != j)
-                    {
-                        colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-                        row++;
-                    }
+                {
+                    //colRange.NumberFormat = "0";
+                    if (indxColDgv > ((int)DGVVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
+                        colRange.Cells[row] = s_VedCalculate.AsParseToF(Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value));
                     else
-                    {
-                        deleteNullRow(colRange, row);
+                        colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
 
-                        if (Convert.ToString(((Excel.Range)colRange.Cells[row]).Value) == "")
-                            colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-                    }
+                    paintBorder((Excel.Range)colRange.Cells[row], (int)Excel.XlLineStyle.xlContinuous);
+                    row++;
+                }
+                //else
+                //{
+                //    deleteNullRow(colRange, row);
+
+                //    if (Convert.ToString(((Excel.Range)colRange.Cells[row]).Value) == "")
+                //        colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
+                //}
+            }
+
+            /// <summary>
+            /// Заполнение выбранного стоблца в шаблоне 
+            /// (при условии пустого заголовка)
+            /// </summary>
+            /// <param name="colRange">столбец в excel</param>
+            /// <param name="dgv">отображение</param>
+            /// <param name="indxColDgv">индекс столбца</param>
+            /// <param name="indxRowExcel">индекс строки в excel</param>
+            private void fillSheetExcelToNHeader(Excel.Range colRange
+                , DataGridView dgv
+                , int indxColDgv
+                , int indxRowExcel)
+            {
+                int row = 0;
+
+                for (int i = indxRowExcel; i < colRange.Rows.Count; i++)
+                    if (((Excel.Range)colRange.Cells[i]).Value == null &&
+                        ((Excel.Range)colRange.Cells[i]).MergeCells.ToString() != "True")
+
+                        if (((Excel.Range)colRange.Cells[i - 1]).Value2 == null)
+                        {
+                            row = i;
+                            break;
+                        }
+
+                for (int j = 0; j < dgv.Rows.Count; j++)
+                {
+                    //colRange.Cells.NumberFormat = "0";
+                    if (indxColDgv >= ((int)DGVVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
+                        colRange.Cells[row] = s_VedCalculate.AsParseToF(Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value));
+                    else
+                        colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
+
+                    paintBorder((Excel.Range)colRange.Cells[row], (int)Excel.XlLineStyle.xlContinuous);
+                    row++;
+                }
             }
 
             /// <summary>
             /// Удаление пустой строки
+            /// (при условии, что ниже пустой строки есть строка с данными)
             /// </summary>
             /// <param name="colRange">столбец в excel</param>
             /// <param name="row">номер строки</param>
@@ -2522,8 +2576,13 @@ namespace PluginTaskVedomostBl
 
                 while (Convert.ToString(((Excel.Range)rangeCol.Cells[row]).Value) == "")
                 {
-                    Excel.Range rangeRow = (Excel.Range)m_wrkSheet.Rows[row];
-                    rangeRow.Delete(Excel.XlDeleteShiftDirection.xlShiftUp);
+                    if (Convert.ToString(((Excel.Range)rangeCol.Cells[row + 1]).Value) == "")
+                        break;
+                    else
+                    {
+                        Excel.Range rangeRow = (Excel.Range)m_wrkSheet.Rows[row];
+                        rangeRow.Delete(Excel.XlDeleteShiftDirection.xlShiftUp);
+                    }
                 }
             }
 
@@ -2838,10 +2897,10 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// 
+        /// Обработчик события - Кнопка экспорта даных в Excel
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">объект, вызвавщий событие</param>
+        /// <param name="e">Аргумент события, описывающий состояние элемента</param>
         private void PanelTaskVedomostBl_expExcel_Click(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();
@@ -3012,7 +3071,7 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// Возвращает по номеру
+        /// Возвращает по номеру грид
         /// </summary>
         /// <returns>активный грид на панели</returns>
         public DataGridView GetDGVOfIdComp()
@@ -3025,6 +3084,7 @@ namespace PluginTaskVedomostBl
                         cntrl = (item as DataGridView);
 
             return cntrl;
+
         }
 
         /// <summary>
@@ -3033,6 +3093,7 @@ namespace PluginTaskVedomostBl
         /// <returns>индентификатор объекта</returns>
         public int GetIdComp()
         {
+
             int _idComp = 0;
 
             foreach (PictureVedBl picture in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
@@ -3041,6 +3102,7 @@ namespace PluginTaskVedomostBl
                         _idComp = item.m_idCompDGV;
 
             return _idComp;
+
         }
 
         /// <summary>
