@@ -333,7 +333,7 @@ namespace PluginTaskVedomostBl
             /// 
             /// </summary>
             private void InitializeComponents()
-            {
+            {               
                 _getControls = new GetControl(find);
                 ToolTip tlTipHeader = new ToolTip();
                 tlTipHeader.AutoPopDelay = 5000;
@@ -1276,7 +1276,11 @@ namespace PluginTaskVedomostBl
                 /// <summary>
                 /// Идентификатор компонента
                 /// </summary>
-                public int m_iIdComp;
+                public int m_IdAlg;
+                /// <summary>
+                /// Идентификатор компонента
+                /// </summary>
+                public int m_IdComp;
                 /// <summary>
                 /// Признак запрета участия в расчете
                 /// </summary>
@@ -1413,6 +1417,10 @@ namespace PluginTaskVedomostBl
                 /// Имя общей группы колонки
                 /// </summary>
                 public string topHeader;
+                /// <summary>
+                /// Имя общей группы колонки
+                /// </summary>
+                public int m_IdComp;
             }
 
             /// <summary>
@@ -1428,7 +1436,7 @@ namespace PluginTaskVedomostBl
 
                 try
                 {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = idHeader, m_bCalcDeny = false };
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_IdAlg = idHeader, m_bCalcDeny = false };
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     //column.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
                     column.Frozen = true;
@@ -1474,7 +1482,7 @@ namespace PluginTaskVedomostBl
                     //        break;
                     //    }
 
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_topHeader = col_prop.topHeader, m_iIdComp = idHeader };
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_topHeader = col_prop.topHeader, m_IdAlg = idHeader, m_IdComp = col_prop.m_IdComp };
                     alignText = DataGridViewContentAlignment.MiddleRight;
 
                     if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
@@ -1674,7 +1682,7 @@ namespace PluginTaskVedomostBl
                     m_headerTop.Remove(idTG);
 
                 foreach (HDataGridViewColumn col in Columns)
-                    if (col.m_iIdComp >= 0)
+                    if (col.m_IdAlg >= 0)
                         if (col.Visible == true)
                             if (col.m_topHeader != "")
                                 if (col.m_topHeader != _oldItem)
@@ -1694,7 +1702,7 @@ namespace PluginTaskVedomostBl
                     m_headerMiddle.Remove(idTG);
 
                 foreach (HDataGridViewColumn col in Columns)
-                    if (col.m_iIdComp >= 0)
+                    if (col.m_IdAlg >= 0)
                         if (col.Visible == true)
                             if (col.Name != _oldItem)
                             {
@@ -1748,7 +1756,7 @@ namespace PluginTaskVedomostBl
                 {
                     foreach (HDataGridViewColumn col in Columns)
                     {
-                        if (col.m_iIdComp > -1)
+                        if (col.m_IdAlg > -1)
                             if (item == col.Name)
                                 _untdColM++;
                             else
@@ -1899,23 +1907,23 @@ namespace PluginTaskVedomostBl
                 _dtOriginVal = tableOrigin.Copy();
 
                 if (s_flagBl)
-                    _hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1)  + 24);
+                    _hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);
                 else
                     _hoursOffSet = (s_currentOffSet / 60);
-                
+
                 if (_dtOriginVal.Rows.Count > 0)
                     foreach (HDataGridViewColumn col in Columns)
                     {
                         if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                         {
                             parameterRows = s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].
-                            Select(string.Format(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_ALG = " + col.m_iIdComp + " AND ID_COMP = " + m_idCompDGV));
+                            Select(string.Format(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_ALG = " + col.m_IdAlg + " AND ID_COMP = " + m_idCompDGV));
                             idParameter = (int)parameterRows[0]["ID"];
                             editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + idParameter));
 
                             for (int i = 0; i < editRow.Count(); i++)
                             {
-                                idAlg = col.m_iIdComp;
+                                idAlg = col.m_IdAlg;
                                 _vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
 
                                 foreach (DataGridViewRow row in Rows)
@@ -1945,7 +1953,6 @@ namespace PluginTaskVedomostBl
                         iCol++;
                     }
             }
-
 
             /// <summary>
             /// Отображение данных на вьюхе
@@ -2037,7 +2044,7 @@ namespace PluginTaskVedomostBl
                     , _hoursOffSet
                     , vsRatioValue = -1
                     , quality = 0,
-                    idPut = 0;
+                    indexPut = 0;
                 double valueToRes = 0;
                 DateTime dtVal;
 
@@ -2058,26 +2065,26 @@ namespace PluginTaskVedomostBl
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
-                    if (col.m_iIdComp > 0)
+                    if (col.m_IdAlg > 0)
+                    {
                         foreach (DataGridViewRow row in Rows)
                         {
                             if (row.Index != row.DataGridView.RowCount - 1)
                                 if (row.Cells[col.Index].Value != null)
                                     if (row.Cells[col.Index].Value.ToString() != "")
                                     {
-                                        idAlg = col.m_iIdComp;
+                                        idAlg = col.m_IdAlg;
                                         valueToRes = s_VedCalculate.AsParseToF(row.Cells[col.Index].Value.ToString());
                                         vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
-                                       
+
                                         valueToRes *= Math.Pow(10F, vsRatioValue);
                                         dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
-                                       DataRow[] idPutR = dtSourceOrg.Select(string.Format(dtSourceOrg.Locale, "WR_DATETIME = '" + dtVal.AddHours(_hoursOffSet).ToString() + "'"));
 
                                         quality = diffRowsInTables(dtSourceOrg, valueToRes, i, idAlg, typeValues);
 
                                         dtSourceEdit.Rows.Add(new object[]
                                         {
-                                            idPut
+                                            col.m_IdComp
                                             , idSession
                                             , quality
                                             , valueToRes
@@ -2087,6 +2094,8 @@ namespace PluginTaskVedomostBl
                                         i++;
                                     }
                         }
+                        indexPut++;
+                    }
                 }
 
                 return dtSourceEdit;
@@ -2111,7 +2120,7 @@ namespace PluginTaskVedomostBl
                 {
                     MessageBox.Show("Ошибка сортировки таблицы! " + e.ToString());
                 }
-             
+
 
                 return table;
             }
@@ -2122,7 +2131,7 @@ namespace PluginTaskVedomostBl
             /// <param name="origin">оригинальная таблица</param>
             /// <param name="editValue">значение</param>
             /// <param name="i">номер строки</param>
-            /// <param name="idAlg"></param>
+            /// <param name="idAlg">номер алгоритма</param>
             /// <param name="typeValues">тип данных</param>
             /// <returns>показатель изменения</returns>
             private int diffRowsInTables(DataTable origin, double editValue, int i, int idAlg, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
@@ -3004,12 +3013,18 @@ namespace PluginTaskVedomostBl
         /// <returns>активная вьюха на панели</returns>
         private DataGridView getActiveView()
         {
+            bool _flagb = false;
             Control cntrl = new Control();
 
             foreach (PictureVedBl item in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
                 if (item.Visible == true)
                     foreach (DataGridView dgv in item.Controls)
+                    {
                         cntrl = dgv;
+                        _flagb = true;
+                    }
+                else if(_flagb)
+                    break;
 
             return (cntrl as DataGridView);
         }
@@ -3242,13 +3257,15 @@ namespace PluginTaskVedomostBl
                 {
                     int idPar = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["ID_ALG"].ToString());
                     int _avg = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["AVG"].ToString());
+                    int _idComp = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["ID"].ToString());
 
                     (ctrl as DGVVedomostBl).AddColumns(idPar, new DGVVedomostBl.COLUMN_PROPERTY
                     {
                         topHeader = m_dict[(ctrl as DGVVedomostBl).m_idCompDGV][k][(int)DGVVedomostBl.INDEX_HEADER.TOP].ToString(),
                         nameCol = m_dict[(ctrl as DGVVedomostBl).m_idCompDGV][k][(int)DGVVedomostBl.INDEX_HEADER.MIDDLE].ToString(),
                         hdrText = m_dict[(ctrl as DGVVedomostBl).m_idCompDGV][k][(int)DGVVedomostBl.INDEX_HEADER.LOW].ToString(),
-                        m_idAlg = idPar,//(ctrl as DGVVedomostBl).m_idCompDGV,
+                        m_idAlg = idPar,
+                        m_IdComp = _idComp,
                         m_vsRatio = _dictVisualSett["ratio"][k],
                         m_vsRound = _dictVisualSett["round"][k],
                         m_Avg = _avg
@@ -4024,25 +4041,25 @@ namespace PluginTaskVedomostBl
         protected override void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
         {
             int err = -1;
-
-            DateTimeRange[] dtR;
+            DateTimeRange[] dtR; //= HandlerDb.GetDateTimeRangeValuesVarArchive();
 
             if (!WhichBlIsSelected)
                 dtR = HandlerDb.GetDateTimeRangeValuesVar();
             else
                 dtR = HandlerDb.GetDateTimeRangeValuesVarExtremeBL();
 
-            m_arTableOrigin[(int)m_ViewValues] = 
-                HandlerDb.GetOutVal(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
-                , dtR
-                , ActualIdPeriod
-                , out err);
+
+            m_arTableOrigin[(int)m_ViewValues] =
+            HandlerDb.GetInVal(Type
+            , dtR
+            , ActualIdPeriod
+            , out err);
 
             m_arTableEdit[(int)m_ViewValues] =
-          HandlerDb.SaveValues(m_arTableOrigin[(int)m_ViewValues]
-          , valuesFence()
-          , (int)Session.m_currIdTimezone
-          , out err);
+            HandlerDb.SaveValues(m_arTableOrigin[(int)m_ViewValues]
+            , valuesFence()
+            , (int)Session.m_currIdTimezone
+            , out err);
 
             //base.HPanelTepCommon_btnSave_Click(obj, ev);
 

@@ -739,12 +739,10 @@ namespace PluginTaskAutobook
                     switch (col.Name)
                     {
                         case "CorGTP12":
-
                             if (row.Cells[col.Name].Value.ToString() == string.Empty)
                                 valueCor = 0;
                             else
                                 valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
-                            //double.TryParse(row.Cells[col.Name].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCor);
 
                             double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
 
@@ -755,12 +753,10 @@ namespace PluginTaskAutobook
                             break;
 
                         case "CorGTP36":
-
                             if (row.Cells[col.Name].Value.ToString() == string.Empty)
                                 valueCor = 0;
                             else
                                 valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
-                            //double.TryParse(row.Cells[col.Name].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCor);
 
                             double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
 
@@ -801,7 +797,6 @@ namespace PluginTaskAutobook
                         int.TryParse(row.DataGridView.Rows[row.Index - 1].Cells["StSwen"].Value.ToString(), out swenValue);
                         row.Cells["StSwen"].Value = value + swenValue;
                     }
-
                     countDeviation(row);
                 }
             }
@@ -931,9 +926,7 @@ namespace PluginTaskAutobook
                             if (cols.m_iIdComp == col.m_iIdComp &&
                                 Rows[i].Cells["Date"].Value == Rows[e.RowIndex].Cells["Date"].Value)
                             {
-
                                 valueToRes = AsParseToF(e.Value.ToString()) * Math.Pow(10F, 1 * vsRatioValue);
-                                //double.Parse(e.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture) //
                                 idComp = cols.m_iIdComp;
                             }
                             else

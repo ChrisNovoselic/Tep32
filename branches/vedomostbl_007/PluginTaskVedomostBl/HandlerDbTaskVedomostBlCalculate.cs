@@ -475,7 +475,6 @@ namespace PluginTaskVedomostBl
                     , DateTime.Now
                 });
             }
-
             return tableEdit;
         }
 
@@ -623,7 +622,7 @@ namespace PluginTaskVedomostBl
 
         /// <summary>
         /// Получение входных значений
-        /// из INVAL
+        /// из INVAL???
         /// </summary>
         /// <param name="type">тип задачи</param>
         /// <param name="arQueryRanges">диапазон запроса</param>
@@ -631,7 +630,7 @@ namespace PluginTaskVedomostBl
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица значений</returns>
         /// <returns></returns>
-        internal DataTable GetOutVal(TaskCalculate.TYPE type, DateTimeRange[] arQueryRanges, ID_PERIOD actualIdPeriod, out int err)
+        internal DataTable GetInVal(TaskCalculate.TYPE type, DateTimeRange[] arQueryRanges, ID_PERIOD actualIdPeriod, out int err)
         {
             string strQuery = string.Empty;
             bool bLastItem = false;
@@ -652,8 +651,7 @@ namespace PluginTaskVedomostBl
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND v.ID_TIME = " + (int)ID_PERIOD.DAY
-                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
-                    + @" AND [QUALITY] > 0";
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone;
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";
