@@ -1899,50 +1899,73 @@ namespace PluginTaskVedomostBl
                 _dtOriginVal = tableOrigin.Copy();
 
                 if (s_flagBl)
-                    _hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset - TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset).Hours + 24);
+                    _hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1)  + 24);
                 else
                     _hoursOffSet = (s_currentOffSet / 60);
-
-                foreach (HDataGridViewColumn col in Columns)
-                {
-                    if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
+                
+                if (_dtOriginVal.Rows.Count > 0)
+                    foreach (HDataGridViewColumn col in Columns)
                     {
-                        parameterRows = s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].
-                        Select(string.Format(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_ALG = " + col.m_iIdComp + " AND ID_COMP = " + m_idCompDGV));
-                        idParameter = (int)parameterRows[0]["ID"];
-                        editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + idParameter));
-
-                        for (int i = 0; i < editRow.Count(); i++)
+                        if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                         {
-                            idAlg = col.m_iIdComp;
-                            _vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
+                            parameterRows = s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].
+                            Select(string.Format(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_ALG = " + col.m_iIdComp + " AND ID_COMP = " + m_idCompDGV));
+                            idParameter = (int)parameterRows[0]["ID"];
+                            editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + idParameter));
 
-                            foreach (DataGridViewRow row in Rows)
+                            for (int i = 0; i < editRow.Count(); i++)
                             {
-                                if (Convert.ToDateTime(editRow[i][@"WR_DATETIME"]).AddHours(_hoursOffSet).ToShortDateString() ==
-                                        row.Cells["Date"].Value.ToString())
+                                idAlg = col.m_iIdComp;
+                                _vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
+
+                                foreach (DataGridViewRow row in Rows)
                                 {
-                                    dblVal = ((double)editRow[i][@"VALUE"]);
-                                    row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound,
-                                               CultureInfo.InvariantCulture);
+                                    if (Convert.ToDateTime(editRow[i][@"WR_DATETIME"]).AddHours(_hoursOffSet).ToShortDateString() ==
+                                            row.Cells["Date"].Value.ToString())
+                                    {
+                                        dblVal = ((double)editRow[i][@"VALUE"]);
+                                        row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound,
+                                                   CultureInfo.InvariantCulture);
+                                    }
                                 }
                             }
+                            try
+                            {
+                                if (m_dictPropertyColumns[idAlg].m_Avg == 0)
+                                    Rows[RowCount - 1].Cells[iCol].Value = sumVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
+                                else
+                                    Rows[RowCount - 1].Cells[iCol].Value = avgVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
+                            }
+                            catch (Exception exp)
+                            {
+                                MessageBox.Show("" + exp.ToString());
+                            }
                         }
-                        try
-                        {
-                            if (m_dictPropertyColumns[idAlg].m_Avg == 0)//???ARCH
-                                Rows[RowCount - 1].Cells[iCol].Value = sumVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
-                            else
-                                Rows[RowCount - 1].Cells[iCol].Value = avgVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
-                        }
-                        catch (Exception exp)
-                        {
-                            MessageBox.Show("" + exp.ToString());
-                        }
-                    }
 
-                    iCol++;
-                }
+                        iCol++;
+                    }
+            }
+
+
+            /// <summary>
+            /// Отображение данных на вьюхе
+            /// </summary>
+            /// <param name="tableOrigin">таблица с данными</param>
+            /// <param name="typeValues">тип загружаемых данных</param>
+            public void ShowValuesArch(DataTable tableOrigin, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
+            {
+                DataTable _dtOriginVal = new DataTable();
+                int idAlg = -1
+                   , idParameter = -1
+                   , _hoursOffSet
+                   , iCol = 0//, iRow = 0
+                   , _vsRatioValue = -1;
+                double dblVal = -1F,
+                    dbSumVal = 0;
+                DataRow[] parameterRows = null,
+                    editRow = null;
+
+                _dtOriginVal = tableOrigin.Copy();
             }
 
             /// <summary>
@@ -2013,7 +2036,8 @@ namespace PluginTaskVedomostBl
                     idAlg = -1
                     , _hoursOffSet
                     , vsRatioValue = -1
-                    , quality = 0;
+                    , quality = 0,
+                    idPut = 0;
                 double valueToRes = 0;
                 DateTime dtVal;
 
@@ -2028,7 +2052,7 @@ namespace PluginTaskVedomostBl
                     });
 
                 if (s_flagBl)
-                    _hoursOffSet = -1 * (DateTimeOffset.Now.Offset.Hours + 10);
+                    _hoursOffSet = 1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);
                 else
                     _hoursOffSet = (s_currentOffSet / 60);
 
@@ -2044,15 +2068,16 @@ namespace PluginTaskVedomostBl
                                         idAlg = col.m_iIdComp;
                                         valueToRes = s_VedCalculate.AsParseToF(row.Cells[col.Index].Value.ToString());
                                         vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
-
+                                       
                                         valueToRes *= Math.Pow(10F, vsRatioValue);
                                         dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
+                                       DataRow[] idPutR = dtSourceOrg.Select(string.Format(dtSourceOrg.Locale, "WR_DATETIME = '" + dtVal.AddHours(_hoursOffSet).ToString() + "'"));
 
                                         quality = diffRowsInTables(dtSourceOrg, valueToRes, i, idAlg, typeValues);
 
                                         dtSourceEdit.Rows.Add(new object[]
                                         {
-                                            col.m_iIdComp
+                                            idPut
                                             , idSession
                                             , quality
                                             , valueToRes
@@ -2075,21 +2100,30 @@ namespace PluginTaskVedomostBl
             /// <returns>отсортированная таблица</returns>
             private DataTable sortingTable(DataTable table, string colSort)
             {
-                DataView dView = table.DefaultView;
-                string sortExpression = string.Format(colSort);
-                dView.Sort = sortExpression;
-                table = dView.ToTable();
+                try
+                {
+                    DataView dView = table.DefaultView;
+                    string sortExpression = string.Format(colSort);
+                    dView.Sort = sortExpression;
+                    table = dView.ToTable();
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show("Ошибка сортировки таблицы! " + e.ToString());
+                }
+             
 
                 return table;
             }
 
             /// <summary>
-            /// Проверка на изменение значения
+            /// Проверка на изменение значений в двух таблицах
             /// </summary>
             /// <param name="origin">оригинальная таблица</param>
             /// <param name="editValue">значение</param>
             /// <param name="i">номер строки</param>
             /// <param name="idAlg"></param>
+            /// <param name="typeValues">тип данных</param>
             /// <returns>показатель изменения</returns>
             private int diffRowsInTables(DataTable origin, double editValue, int i, int idAlg, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
@@ -2103,7 +2137,6 @@ namespace PluginTaskVedomostBl
                 else
                     originValues =
                         s_VedCalculate.AsParseToF(origin.Rows[i]["VALUE"].ToString());
-                //double.Parse(origin.Rows[i]["VALUE"].ToString(), NumberStyles.Float, CultureInfo.InvariantCulture);
 
                 switch (typeValues)
                 {
@@ -3758,7 +3791,7 @@ namespace PluginTaskVedomostBl
             //Создание сессии
             Session.New();
             //Запрос для получения архивных данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutvalArch(Type, arQueryRanges, out err);
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutvalArch(Type, HandlerDb.GetDateTimeRangeValuesVarArchive(), out err);
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
@@ -3999,7 +4032,8 @@ namespace PluginTaskVedomostBl
             else
                 dtR = HandlerDb.GetDateTimeRangeValuesVarExtremeBL();
 
-            m_arTableOrigin[(int)m_ViewValues] = HandlerDb.GetInVal(Type
+            m_arTableOrigin[(int)m_ViewValues] = 
+                HandlerDb.GetOutVal(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
                 , dtR
                 , ActualIdPeriod
                 , out err);

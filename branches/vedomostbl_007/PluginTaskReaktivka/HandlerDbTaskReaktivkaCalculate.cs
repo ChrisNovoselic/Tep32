@@ -155,66 +155,24 @@ namespace PluginTaskReaktivka
             strErr = string.Empty;
             string strQuery = string.Empty;
 
-            if ((arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
-                && (arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
+            if ((arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
+                && (arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
             {
                 //Вставить строку с идентификатором новой сессии
                 insertIdSession(idFPanel, cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
+                insertInValues(arTableValues[(int)INDEX_TABLE_VALUES.SESSION], out err);
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
                     + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                arTableValues[(int)INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
             else
                 Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
-
-        ///// <summary>
-        ///// Вставить в таблицу БД идентификатор новой сессии
-        ///// </summary>
-        ///// <param name="id">Идентификатор сессии</param>
-        ///// <param name="idPeriod">Идентификатор периода расчета</param>
-        ///// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
-        ///// <param name="idTimezone">Идентификатор часового пояса</param>
-        ///// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
-        ///// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        //private void insertIdSession(
-        //    int cntBasePeriod
-        //    , out int err)
-        //{
-        //    err = -1;
-
-        //    string strQuery = string.Empty;
-
-        //    // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
-        //    strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
-        //        + @"[ID_CALCULATE]"
-        //        + @", [ID_TASK]"
-        //        + @", [ID_USER]"
-        //        + @", [ID_TIME]"
-        //        + @", [ID_TIMEZONE]"
-        //        + @", [DATETIME_BEGIN]"
-        //        + @", [DATETIME_END]) VALUES ("
-        //        ;
-
-        //    strQuery += _Session.m_Id;
-        //    strQuery += @"," + (Int32)IdTask;
-        //    strQuery += @"," + HTepUsers.Id;
-        //    strQuery += @"," + (int)_Session.m_currIdPeriod;
-        //    strQuery += @"," + (int)_Session.m_currIdTimezone;
-        //    strQuery += @",'" + _Session.m_rangeDatetime.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture)  // @"yyyyMMdd HH:mm:ss"
-        //    strQuery += @",'" + _Session.m_rangeDatetime.End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture) ; // @"yyyyMMdd HH:mm:ss"
-
-        //    strQuery += @")";
-
-        //    //Вставить в таблицу БД строку с идентификтором новой сессии
-        //    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-        //}
 
         /// <summary>
         /// Вставить значения в таблицу для временных входных значений
@@ -231,7 +189,7 @@ namespace PluginTaskReaktivka
             Type[] arTypeColumns = null;
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+            strQuery = @"INSERT INTO " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];

@@ -446,6 +446,7 @@ namespace PluginTaskVedomostBl
 
                 for (int j = 0; j < tableOrigin.Rows.Count; j++)
                     if (rowSel == tableOrigin.Rows[j]["ID_PUT"].ToString())
+                    {
                         if (dtRes == Convert.ToDateTime(tableOrigin.Rows[j]["DATE_TIME"]))
                             if (tableOrigin.Rows[j]["Value"].ToString() == tableRes.Rows[i]["VALUE"].ToString())
                             {
@@ -453,11 +454,12 @@ namespace PluginTaskVedomostBl
                                 idSource = (int)tableOrigin.Rows[j]["ID_SOURCE"];
                                 break;
                             }
-                            else
-                            {
-                                idUser = HUsers.Id;
-                                idSource = 0;
-                            }
+                    }
+                    else
+                    {
+                        idUser = HUsers.Id;
+                        idSource = 0;
+                    }
 
                 tableEdit.Rows.Add(new object[]
                 {
@@ -629,7 +631,7 @@ namespace PluginTaskVedomostBl
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица значений</returns>
         /// <returns></returns>
-        internal DataTable GetInVal(TaskCalculate.TYPE type, DateTimeRange[] arQueryRanges, ID_PERIOD actualIdPeriod, out int err)
+        internal DataTable GetOutVal(TaskCalculate.TYPE type, DateTimeRange[] arQueryRanges, ID_PERIOD actualIdPeriod, out int err)
         {
             string strQuery = string.Empty;
             bool bLastItem = false;
