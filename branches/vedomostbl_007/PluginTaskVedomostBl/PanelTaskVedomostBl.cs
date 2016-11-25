@@ -333,7 +333,7 @@ namespace PluginTaskVedomostBl
             /// 
             /// </summary>
             private void InitializeComponents()
-            {               
+            {
                 _getControls = new GetControl(find);
                 ToolTip tlTipHeader = new ToolTip();
                 tlTipHeader.AutoPopDelay = 5000;
@@ -2076,10 +2076,8 @@ namespace PluginTaskVedomostBl
                                         idAlg = col.m_IdAlg;
                                         valueToRes = s_VedCalculate.AsParseToF(row.Cells[col.Index].Value.ToString());
                                         vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
-
                                         valueToRes *= Math.Pow(10F, vsRatioValue);
                                         dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
-
                                         quality = diffRowsInTables(dtSourceOrg, valueToRes, i, idAlg, typeValues);
 
                                         dtSourceEdit.Rows.Add(new object[]
@@ -2088,7 +2086,7 @@ namespace PluginTaskVedomostBl
                                             , idSession
                                             , quality
                                             , valueToRes
-                                            , dtVal.ToString("F",dtSourceEdit.Locale)
+                                            , dtVal.AddMinutes(-s_currentOffSet).ToString("F",dtSourceEdit.Locale)
                                             , i
                                         });
                                         i++;
@@ -2097,7 +2095,7 @@ namespace PluginTaskVedomostBl
                         indexPut++;
                     }
                 }
-
+                dtSourceEdit = sortingTable(dtSourceEdit,"WR_DATETIME");
                 return dtSourceEdit;
             }
 
@@ -3023,7 +3021,7 @@ namespace PluginTaskVedomostBl
                         cntrl = dgv;
                         _flagb = true;
                     }
-                else if(_flagb)
+                else if (_flagb)
                     break;
 
             return (cntrl as DataGridView);
@@ -4072,7 +4070,12 @@ namespace PluginTaskVedomostBl
         /// <param name="err">номер ошибки</param>
         private void saveInvalValue(out int err)
         {
-            DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVarArchive();
+            DateTimeRange[] dtrPer;
+
+            if (!WhichBlIsSelected)
+                dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
+            else
+                dtrPer = HandlerDb.GetDateTimeRangeValuesVarExtremeBL();
 
             sortingDataToTable(m_arTableOrigin[(int)m_ViewValues]
                 , m_arTableEdit[(int)m_ViewValues]

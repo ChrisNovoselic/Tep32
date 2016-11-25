@@ -258,8 +258,8 @@ namespace PluginTaskVedomostBl
             DateTimeRange[] arRangesRes = null;
             int i = -1;
             bool bEndMonthBoudary = false;
-            DateTime dtBegin = 
-                _Session.m_rangeDatetime.Begin.AddDays(_Session.m_rangeDatetime.Begin.Day).AddHours(-(TimeZoneInfo.Local.BaseUtcOffset - TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset).Hours).AddDays(-1),
+            DateTime dtBegin =
+                _Session.m_rangeDatetime.Begin.AddHours(-(TimeZoneInfo.Local.BaseUtcOffset - TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset).Hours),
             dtEnd = _Session.m_rangeDatetime.End.AddHours(-(TimeZoneInfo.Local.BaseUtcOffset - TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset).Hours).AddDays(1);
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
@@ -304,6 +304,63 @@ namespace PluginTaskVedomostBl
                         arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
             else
                 ;
+
+            return arRangesRes;
+        }
+
+        /// <summary>
+        /// получение временного диапазона 
+        /// для крайних значений
+        /// </summary>
+        /// <returns>временные диапазоны</returns>
+        public DateTimeRange[] getDateTimeRangeExtremeVal()
+        {
+            DateTimeRange[] arRangesRes = null;
+            int i = -1;
+            bool bEndMonthBoudary = false;
+
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.AddDays(-1).Day)
+            , dtEnd = _Session.m_rangeDatetime.End.AddDays(0);
+            ;
+            arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
+
+            if (bEndMonthBoudary == false)
+                if (arRangesRes.Length == 1)
+                    // самый простой вариант - один элемент в массиве - одна таблица
+                    arRangesRes[0] = new DateTimeRange(dtBegin, dtEnd);
+                else
+                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
+                    for (i = 0; i < arRangesRes.Length; i++)
+                        if (i == 1)
+                        {
+                            // предыдущих значений нет
+                            //arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                            arRangesRes[i] = new DateTimeRange(dtEnd.AddDays(-1), dtEnd);
+                        }
+                        else
+                            if (i == arRangesRes.Length - 1)
+                            // крайний элемент массива
+                            arRangesRes[i] = new DateTimeRange(dtBegin, dtBegin);
+                        else
+                            // для элементов в "середине" массива
+                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin).AddDays(-1));
+            else
+                if (bEndMonthBoudary == true)
+            {
+                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                // + использование следующей за 'dtEnd' таблицы
+                for (i = 0; i < arRangesRes.Length; i++)
+                    if (i == 1)
+                        // предыдущих значений нет
+                        arRangesRes[i] = new DateTimeRange(dtEnd, HDateTime.ToNextMonthBoundary(dtEnd));
+                    else
+                        if (i == arRangesRes.Length - 1)
+                        // крайний элемент массива
+                        arRangesRes[i] = new DateTimeRange(dtBegin, dtBegin);
+                    else
+                        // для элементов в "середине" массива
+                        arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+            }
 
             return arRangesRes;
         }
@@ -447,7 +504,7 @@ namespace PluginTaskVedomostBl
                 for (int j = 0; j < tableOrigin.Rows.Count; j++)
                     if (rowSel == tableOrigin.Rows[j]["ID_PUT"].ToString())
                     {
-                        if (dtRes == Convert.ToDateTime(tableOrigin.Rows[j]["DATE_TIME"]))
+                        if (dtRes.ToShortDateString() == Convert.ToDateTime(tableOrigin.Rows[j]["DATE_TIME"]).AddDays(-1).ToShortDateString())
                             if (tableOrigin.Rows[j]["Value"].ToString() == tableRes.Rows[i]["VALUE"].ToString())
                             {
                                 idUser = (int)tableOrigin.Rows[j]["ID_USER"];
@@ -459,6 +516,7 @@ namespace PluginTaskVedomostBl
                     {
                         idUser = HUsers.Id;
                         idSource = 0;
+                        break;
                     }
 
                 tableEdit.Rows.Add(new object[]
@@ -467,7 +525,7 @@ namespace PluginTaskVedomostBl
                     , rowSel
                     , idUser.ToString()
                     , idSource.ToString()
-                    , dtRes.AddDays(1).ToString(CultureInfo.InvariantCulture)
+                    , dtRes.ToString(CultureInfo.InvariantCulture)
                     , ID_PERIOD.DAY
                     , timezone
                     , tableRes.Rows[i]["QUALITY"].ToString()

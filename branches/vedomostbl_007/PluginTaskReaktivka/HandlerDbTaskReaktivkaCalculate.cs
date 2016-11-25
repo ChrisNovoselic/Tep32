@@ -236,8 +236,8 @@ namespace PluginTaskReaktivka
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(0);
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMinutes(-1 * _Session.m_curOffsetUTC)
+                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(1);
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
@@ -256,30 +256,30 @@ namespace PluginTaskReaktivka
                         }
                         else
                             if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End,
-                                   new DateTime(arRangesRes[i - 1].End.Year,arRangesRes[i - 1].End.AddMonths(1).Month,DateTime.DaysInMonth(arRangesRes[i - 1].End.Year,arRangesRes[i - 1].End.AddMonths(1).Month)));
-                                    //HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                            // крайний элемент массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                        else
+                            // для элементов в "середине" массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End,
+                               new DateTime(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month, DateTime.DaysInMonth(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month)));
+            //HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
             else
                 if (bEndMonthBoudary == true)
-                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
-                    // + использование следующей за 'dtEnd' таблицы
-                    for (i = 0; i < arRangesRes.Length; i++)
-                        if (i == 0)
-                            // предыдущих значений нет
-                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-                        else
-                            if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-                else
-                    ;
+                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                // + использование следующей за 'dtEnd' таблицы
+                for (i = 0; i < arRangesRes.Length; i++)
+                    if (i == 0)
+                        // предыдущих значений нет
+                        arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                    else
+                        if (i == arRangesRes.Length - 1)
+                        // крайний элемент массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                    else
+                        // для элементов в "середине" массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+            else
+                ;
 
             return arRangesRes;
         }
@@ -310,7 +310,7 @@ namespace PluginTaskReaktivka
 
                 for (int j = 0; j < tableOrigin.Rows.Count; j++)
                     if (rowSel == tableOrigin.Rows[j]["ID_PUT"].ToString())
-                        if (dtRes == Convert.ToDateTime(tableOrigin.Rows[j]["DATE_TIME"]))
+                        if (dtRes == Convert.ToDateTime(tableOrigin.Rows[j]["DATE_TIME"]).AddDays(-1))
                             if (tableOrigin.Rows[j]["Value"].ToString() == tableRes.Rows[i]["VALUE"].ToString())
                             {
                                 idUser = (int)tableOrigin.Rows[j]["ID_USER"];
@@ -323,7 +323,7 @@ namespace PluginTaskReaktivka
                                 idSource = 0;
                             }
 
-                tableEdit.Rows.Add(new object[] 
+                tableEdit.Rows.Add(new object[]
                 {
                     DbTSQLInterface.GetIdNext(tableEdit, out err)
                     , rowSel
@@ -333,7 +333,7 @@ namespace PluginTaskReaktivka
                     , ID_PERIOD.DAY
                     , timezone
                     , tableRes.Rows[i]["QUALITY"].ToString()
-                    , tableRes.Rows[i]["VALUE"].ToString()        
+                    , tableRes.Rows[i]["VALUE"].ToString()
                     , DateTime.Now
                 });
             }

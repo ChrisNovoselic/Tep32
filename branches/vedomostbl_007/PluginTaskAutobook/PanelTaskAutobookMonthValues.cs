@@ -736,35 +736,34 @@ namespace PluginTaskAutobook
 
                 foreach (DataGridViewColumn col in row.DataGridView.Columns)
                 {
-                    switch (col.Name)
+                    if (col.Name == "CorGTP12")
                     {
-                        case "CorGTP12":
-                            if (row.Cells[col.Name].Value.ToString() == string.Empty)
-                                valueCor = 0;
-                            else
-                                valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
+                        if (row.Cells[col.Name].Value.ToString() == string.Empty)
+                            valueCor = 0;
+                        else
+                            valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
 
-                            double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
+                        double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
 
-                            if (valueCor == 0)
-                                Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value = valueCell - valueCor;
-                            else
-                                Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value = valueCor + valueCell;
-                            break;
+                        if (valueCor == 0)
+                            Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value = valueCell - valueCor;
+                        else
+                            Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value = valueCor + valueCell;
+                    }
+                    else if (col.Name == "CorGTP36")
+                    {
+                        if (row.Cells[col.Name].Value.ToString() == string.Empty)
+                            valueCor = 0;
+                        else
+                            valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
 
-                        case "CorGTP36":
-                            if (row.Cells[col.Name].Value.ToString() == string.Empty)
-                                valueCor = 0;
-                            else
-                                valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
+                        double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
 
-                            double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
-
-                            if (valueCor == 0)
-                                Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value = valueCell - valueCor;
-                            else
-                                Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value = valueCor + valueCell;
-                            break;
+                        if (valueCor == 0)
+                            Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value = valueCell - valueCor;
+                        else
+                            Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value = valueCor + valueCell;
+                        break;
                     }
                 }
 
@@ -860,7 +859,10 @@ namespace PluginTaskAutobook
             /// <param name="offSet">часовая разница</param>
             /// <param name="idPut">идЭлемента</param>
             /// <returns>набор строк</returns>
-            private DataRow[] formingValue(DataTable dtOrigin, string date, int offSet, int idPut)
+            private DataRow[] formingValue(DataTable dtOrigin
+                , string date
+                , int offSet
+                , int idPut)
             {
                 DateTime dateOffSet;
                 DataRow[] dr_idCorPut = null;
@@ -874,13 +876,11 @@ namespace PluginTaskAutobook
 
                 for (int i = 0; i < m_enumResIDPUT.Count(); i++)
                 {
-                    dateOffSet = m_enumResIDPUT.ElementAt(i).DATE_TIME.AddMinutes(offSet);
+                    dateOffSet = m_enumResIDPUT.ElementAt(i).DATE_TIME.AddMinutes(offSet).AddDays(-1);
 
                     if (date == dateOffSet.ToShortDateString())
                     {
-                        dr_idCorPut = dtOrigin.Select(
-                        string.Format(dtOrigin.Locale
-                        , "WR_DATETIME = '{0:o}' AND ID_PUT = {1}", m_enumResIDPUT.ElementAt(i).DATE_TIME, idPut));
+                        dr_idCorPut = dtOrigin.Select(string.Format(dtOrigin.Locale, "WR_DATETIME = '{0:o}' AND ID_PUT = {1}", m_enumResIDPUT.ElementAt(i).DATE_TIME, idPut));
                         break;
                     }
                 }
@@ -965,8 +965,8 @@ namespace PluginTaskAutobook
             {
                 int idAlg
                     , vsRatioValue = -1;
-                double valueToRes;
-                DateTime dtRes;
+                double valueToRes = -1;
+                DateTime dtRes = new DateTime();
 
                 DataTable dtSourceEdit = new DataTable();
                 dtSourceEdit.Columns.AddRange(new DataColumn[] {
@@ -984,17 +984,25 @@ namespace PluginTaskAutobook
                     {
                         if (col.Index > (int)INDEX_GTP.GTP36 & col.Index < (int)INDEX_GTP.CorGTP36)
                         {
-                            idAlg = (int)row.Cells["ALG"].Value;
-                            vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                            dtRes = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
-
-                            if (row.Cells[col.Index].Value.ToString() != "")
+                            try
                             {
-                                valueToRes = AsParseToF(row.Cells[col.Index].Value.ToString());
-                                valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                                idAlg = (int)row.Cells["ALG"].Value;
+                                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                dtRes = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
+
+                                if (row.Cells[col.Index].Value != null)
+                                    if (row.Cells[col.Index].Value.ToString() != "")
+                                    {
+                                        valueToRes = AsParseToF(row.Cells[col.Index].Value.ToString());
+                                        valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                                    }
+                                    else
+                                        valueToRes = -1;
                             }
-                            else
-                                valueToRes = -1;
+                            catch (Exception)
+                            {
+
+                            }
 
                             if (valueToRes > -1)
                                 dtSourceEdit.Rows.Add(new object[]
@@ -1044,8 +1052,10 @@ namespace PluginTaskAutobook
                                 vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
                                 vsRatio = vsRatioValue;
 
-                                if (double.TryParse(row.Cells[col.Index].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueToRes))
+                                if (row.Cells[col.Index].Value != null)
                                 {
+                                    AsParseToF(row.Cells[col.Index].Value.ToString());
+
                                     valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
 
                                     dtSourceEdit.Rows.Add(new object[]
