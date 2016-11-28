@@ -25,7 +25,7 @@ namespace PluginTaskVedomostBl
         /// </summary>
         static bool s_flagBl = true;
         /// <summary>
-        /// Делегат 
+        /// Делегат (возврат пикчи по Ид)
         /// </summary>
         /// <param name="id">ид грида</param>
         /// <returns>picture</returns>
@@ -34,13 +34,19 @@ namespace PluginTaskVedomostBl
         /// Делегат 
         /// </summary>
         /// <returns>грид</returns>
-        public delegate DataGridView DelgetDataGridViewOfIdComp();
+        public delegate DataGridView DelgetDataGridViewActivate();
         /// <summary>
-        /// экземпляр делегата
+        /// экземпляр делегата(возврат пикчи по Ид)
         /// </summary>
         static public DelgetPictureOfIdComp s_getPicture;
-        static public DelgetDataGridViewOfIdComp m_getDGV;
-        static public IntDelegateFunc m_getIdComp;
+        /// <summary>
+        /// экземпляр делегата(возврат отображения активного)
+        /// </summary>
+        static public DelgetDataGridViewActivate s_getDGV;
+        /// <summary>
+        /// экземпляр делегата(возврат Ид)
+        /// </summary>
+        static public IntDelegateFunc s_getIdComp;
         /// <summary>
         /// флаг очистки отображения
         /// </summary>
@@ -188,6 +194,9 @@ namespace PluginTaskVedomostBl
         /// экземпляр класса вьюхи
         /// </summary>
         protected DGVVedomostBl m_dgvVedomst;
+        /// <summary>
+        /// 
+        /// </summary>
         protected ReportExcel m_rptExcel;
         /// <summary>
         /// экземпляр класса пикчи
@@ -270,7 +279,12 @@ namespace PluginTaskVedomostBl
                 /// <summary>
                 /// Состояние элемента, связанного с компонентом/параметром_расчета
                 /// </summary>
-                public CheckState m_newCheckState;
+                private CheckState _newCheckState;
+                public CheckState m_newCheckState
+                {
+                    get { return _newCheckState; }
+                    set { _newCheckState = value; }
+                }
 
                 public ItemCheckedParametersEventArgs(int idItem, INDEX_ID indxIdDeny, CheckState newCheckState)
                     : base()
@@ -641,17 +655,29 @@ namespace PluginTaskVedomostBl
             public class RadioButtonBl : RadioButton
             {
                 /// <summary>
-                /// список активных групп хидеров отображения
+                /// 
                 /// </summary>
-                public List<bool> m_arBoolCheck = new List<bool>();
+                private int _idRb;
                 /// <summary>
                 /// 
+                /// </summary>
+                public int idRb
+                {
+                    get { return _idRb; }
+                    set { _idRb = value; }
+                }
+
+                /// <summary>
+                /// Конструктор(основной)
                 /// </summary>
                 public RadioButtonBl(string nameRbtn) : base()
                 {
                     initialize(nameRbtn);
                 }
-
+                /// <summary>
+                /// Инициализация объекта
+                /// </summary>
+                /// <param name="nameRbtn"></param>
                 private void initialize(string nameRbtn)
                 {
                     Name = nameRbtn;
@@ -663,7 +689,14 @@ namespace PluginTaskVedomostBl
             /// </summary>
             protected class TableLayoutPanelkVed : TableLayoutPanel
             {
-                RadioButtonBl[] arRb;
+                /// <summary>
+                /// список активных групп хидеров отображения
+                /// </summary>
+                protected List<CheckState>[] m_arBoolCheck;
+                /// <summary>
+                /// 
+                /// </summary>
+                public RadioButtonBl[] arRb;
                 /// <summary>
                 /// Список для хранения идентификаторов переменных
                 /// </summary>
@@ -706,7 +739,7 @@ namespace PluginTaskVedomostBl
                 /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
                 /// <param name="rb">массив элементов</param>
                 /// <param name="groupCheck">массив чеков группы</param>
-                public void AddItems(int[] id, string[] text, bool[] bChecked, RadioButtonBl[] rb, List<bool> groupCheck)
+                public void AddItems(int[] id, string[] text, bool[] bChecked, RadioButtonBl[] rb, List<CheckState> groupCheck)
                 {
                     int indx = -1
                        , col = -1
@@ -719,16 +752,20 @@ namespace PluginTaskVedomostBl
                     ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
                     ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
 
+                    m_arBoolCheck = new List<CheckState>[rb.Count()];
+
                     if (arRb == null)
                         arRb = rb;
 
                     for (int i = 0; i < arRb.Length; i++)
                     {
-                        arRb[i].CheckedChanged += TableLayoutPanelkVed_CheckedChanged;
                         arRb[i].Text = text[i];
                         m_listId.Add(id[i]);
-                        arRb[i].m_arBoolCheck = groupCheck;
+                        m_arBoolCheck[i] = new List<CheckState>();
+                        m_arBoolCheck[i] = groupCheck;
                         arRb[i].Checked = bChecked[i];
+                        arRb[i].idRb = i;
+                        arRb[i].CheckedChanged += TableLayoutPanelkVed_CheckedChanged;
 
                         if (RowCount * ColumnCount < arRb.Length)
                         {
@@ -776,22 +813,82 @@ namespace PluginTaskVedomostBl
                 /// <param name="e"></param>
                 public void TableLayoutPanelkVed_CheckedChanged(object sender, EventArgs e)
                 {
-                    int id = SelectedId;
+                    int id = SelectedId,
+                         indx = (sender as RadioButtonBl).idRb;
+                    List<CheckState> _listCheck = new List<CheckState>();
                     PictureBox pictrure;
                     Control cntrl = _getControls(INDEX_CONTROL_BASE.CLBX_COL_VISIBLED);
 
-                    if ((sender as RadioButtonBl).m_arBoolCheck.Count != 0)
-                        (sender as RadioButtonBl).m_arBoolCheck.Clear();
+                    if ((sender as RadioButtonBl).Checked == false)
+                    {
+                        for (int i = 0; i < (cntrl as CheckedListBoxTaskVed).Items.Count; i++)
+                            _listCheck.Add((cntrl as CheckedListBoxTaskVed).GetItemCheckState(i));
 
-                    for (int i = 0; i < (cntrl as CheckedListBoxTaskVed).Items.Count; i++)
-                        (sender as RadioButtonBl).m_arBoolCheck.Add((cntrl as CheckedListBoxTaskVed).GetItemChecked(i));
+                        m_arBoolCheck[indx] = _listCheck;
+                    }
 
                     if ((sender as RadioButtonBl).Checked == true)
                     {
                         pictrure = s_getPicture(id);
                         pictrure.Visible = true;
                         pictrure.Enabled = true;
+                        Checked(getListCheckedGroup());
                     }
+                }
+
+                /// <summary>
+                /// Получение листа с чекедами для каждого из блока
+                /// </summary>
+                /// <returns>лист с чекедами для групп</returns>
+                private List<CheckState> getListCheckedGroup()
+                {
+                    Control _cntrl = _getControls(INDEX_CONTROL_BASE.TBLP_BLK);
+                    int indexRb = 0;
+                    List<CheckState> _list = new List<CheckState>();
+
+                    try
+                    {
+                        foreach (RadioButtonBl rbts in _cntrl.Controls)
+                            if (rbts.Checked == true)
+                            {
+                                _list = m_arBoolCheck[indexRb];
+                                break;
+                            }
+                            else
+                                indexRb++;
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show("Ошибка формирования списка с чекедами для каждого из блока" + e.ToString());
+                    }
+
+                    return _list;
+                }
+
+                /// <summary>
+                /// 
+                /// </summary>
+                /// <param name="listCheckState"></param>
+                public void Checked(List<CheckState> listCheckState)
+                {
+                    Control cntrl = _getControls(INDEX_CONTROL_BASE.CLBX_COL_VISIBLED);
+                    int indxState = 0;
+
+                    if (listCheckState.Count() > 0)
+                        try
+                        {
+                            if ((cntrl as CheckedListBoxTaskVed).Items.Count > 0)
+                                for (int i = 0; i < (cntrl as CheckedListBoxTaskVed).Items.Count; i++)
+                                {
+                                    (cntrl as CheckedListBoxTaskVed).SetItemCheckState(indxState, listCheckState[indxState]);
+                                    indxState++;
+                                }
+                        }
+                        catch (Exception e)
+                        {
+
+                        }
+
                 }
 
                 /// <summary>
@@ -922,7 +1019,7 @@ namespace PluginTaskVedomostBl
                 INDEX_ID[] arIndexIdToAdd,
                 bool[] arChecked,
                 RadioButtonBl[] rb
-                , List<bool> checkedGroup)
+                , List<CheckState> checkedGroup)
             {
                 Control ctrl = null;
 
@@ -1213,7 +1310,15 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// ИдГрида
             /// </summary>
-            public int m_idCompDGV;
+            private int _idCompDGV;
+            /// <summary>
+            /// ИдГрида
+            /// </summary>
+            public int m_idCompDGV
+            {
+                get { return _idCompDGV; }
+                set { _idCompDGV = value; }
+            }
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
             /// </summary>
@@ -1546,7 +1651,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Добавить строку в таблицу
             /// </summary>
-            /// <param name="rowProp"></param>
+            /// <param name="rowProp">структура строк</param>
             public void AddRow(ROW_PROPERTY rowProp)
             {
                 int i = -1;
@@ -1570,7 +1675,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Добавить строку в таблицу
             /// </summary>
-            /// <param name="rowProp"></param>
+            /// <param name="rowProp">структура строк</param>
             /// <param name="DaysInMonth">кол-во дней в месяце</param>
             public void AddRow(ROW_PROPERTY rowProp, int DaysInMonth)
             {
@@ -1899,17 +2004,22 @@ namespace PluginTaskVedomostBl
                    , _hoursOffSet
                    , iCol = 0//, iRow = 0
                    , _vsRatioValue = -1;
-                double dblVal = -1F,
-                    dbSumVal = 0;
+                double dblVal = -1F
+                    //,dbSumVal = 0
+                    ;
                 DataRow[] parameterRows = null,
                     editRow = null;
 
                 _dtOriginVal = tableOrigin.Copy();
+                ClearValues();
 
-                if (s_flagBl)
-                    _hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);
+                if ((int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION == (int)typeValues)
+                    if (s_flagBl)
+                        _hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);
+                    else
+                        _hoursOffSet = (s_currentOffSet / 60);
                 else
-                    _hoursOffSet = (s_currentOffSet / 60);
+                    _hoursOffSet = s_currentOffSet / 60;
 
                 if (_dtOriginVal.Rows.Count > 0)
                     foreach (HDataGridViewColumn col in Columns)
@@ -1962,15 +2072,15 @@ namespace PluginTaskVedomostBl
             public void ShowValuesArch(DataTable tableOrigin, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
                 DataTable _dtOriginVal = new DataTable();
-                int idAlg = -1
-                   , idParameter = -1
-                   , _hoursOffSet
-                   , iCol = 0//, iRow = 0
-                   , _vsRatioValue = -1;
-                double dblVal = -1F,
-                    dbSumVal = 0;
-                DataRow[] parameterRows = null,
-                    editRow = null;
+                //int idAlg = -1
+                //   , idParameter = -1
+                //   , _hoursOffSet
+                //   , iCol = 0//, iRow = 0
+                //   , _vsRatioValue = -1;
+                //double dblVal = -1F,
+                //    dbSumVal = 0;
+                //DataRow[] parameterRows = null,
+                //    editRow = null;
 
                 _dtOriginVal = tableOrigin.Copy();
             }
@@ -2095,7 +2205,7 @@ namespace PluginTaskVedomostBl
                         indexPut++;
                     }
                 }
-                dtSourceEdit = sortingTable(dtSourceEdit,"WR_DATETIME");
+                dtSourceEdit = sortingTable(dtSourceEdit, "WR_DATETIME");
                 return dtSourceEdit;
             }
 
@@ -2215,7 +2325,6 @@ namespace PluginTaskVedomostBl
                     m_workBook.BeforeClose += workBook_BeforeClose;
                     m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("VedomostBl");
                     int indxCol = 1;
-                    //bool b_flafErr = false;
 
                     try
                     {
@@ -2359,11 +2468,6 @@ namespace PluginTaskVedomostBl
                 }
             }
 
-            private void simpleHeader()
-            {
-
-            }
-
             /// <summary>
             /// Нарисовать границы ячейки
             /// </summary>
@@ -2379,6 +2483,7 @@ namespace PluginTaskVedomostBl
                         styleBorder = Excel.XlLineStyle.xlContinuous;
                         break;
                     case Excel.XlLineStyle.xlDash:
+                        styleBorder = Excel.XlLineStyle.xlDash;
                         break;
                     case Excel.XlLineStyle.xlDashDot:
                         break;
@@ -2446,9 +2551,9 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
+            /// Объединение ячеек
             /// </summary>
-            /// <param name="cells"></param>
+            /// <param name="cells">диапазон объединения</param>
             private void mergeCells(string cells)
             {
                 m_wrkSheet.get_Range(cells).Merge();
@@ -2648,7 +2753,7 @@ namespace PluginTaskVedomostBl
         public class VedomostBlCalculate : HandlerDbTaskCalculate.TaskCalculate
         {
             /// <summary>
-            /// 
+            /// Экземпляр класса
             /// </summary>
             private parsingData _pData;
             /// <summary>
@@ -2661,6 +2766,9 @@ namespace PluginTaskVedomostBl
                 COUNT
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
             public VedomostBlCalculate()
                 : base()
             {
@@ -2670,7 +2778,9 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Создание словаря заголвоков для каждого блока(ТГ)
             /// </summary>
-            /// <param name="dtSource"></param>
+            /// <param name="dtSource">таблица с данными</param>
+            /// <param name="param">номер компонента</param>
+            /// <returns>массив словарей заголовков</returns>
             public List<string[]> CreateDictHeader(DataTable dtSource, int param)
             {
                 _pData = new parsingData(dtSource, param);
@@ -2692,6 +2802,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="arlistStr">лист парамтеров</param>
             /// <param name="dtPars">таблица с данными</param>
+            /// <returns>массив словарей</returns>
             private List<string[]> compilingDict(List<List<string>> arlistStr, DataRow[] dtPars)
             {
                 int cntHeader = 0;
@@ -2808,12 +2919,11 @@ namespace PluginTaskVedomostBl
                     {
                         fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         if (value.ToString() == "")
                             fValue = 0;
                     }
-
 
                 return fValue;
             }
@@ -2886,8 +2996,8 @@ namespace PluginTaskVedomostBl
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
             InitializeComponent();
             s_getPicture = new DelgetPictureOfIdComp(GetPictureOfIdComp);
-            m_getDGV = new DelgetDataGridViewOfIdComp(GetDGVOfIdComp);
-            m_getIdComp = new IntDelegateFunc(GetIdComp);
+            s_getDGV = new DelgetDataGridViewActivate(GetDGVOfIdComp);
+            s_getIdComp = new IntDelegateFunc(GetIdComp);
         }
 
         /// <summary>
@@ -2990,8 +3100,7 @@ namespace PluginTaskVedomostBl
         private void placementHGridViewOnTheForm(PanelManagementVedomost.ItemCheckedParametersEventArgs item)
         {
             bool bItemChecked = item.m_newCheckState == CheckState.Checked ? true :
-                  item.m_newCheckState == CheckState.Unchecked ? false :
-                      false;
+                  item.m_newCheckState == CheckState.Unchecked ? false : false;
             DGVVedomostBl cntrl = (getActiveView() as DGVVedomostBl);
             //Поиск индекса элемента отображения
             switch (item.m_indxIdDeny)
@@ -3025,29 +3134,6 @@ namespace PluginTaskVedomostBl
                     break;
 
             return (cntrl as DataGridView);
-        }
-
-        /// <summary>
-        /// Получение листа с чекедами для каждого из блока
-        /// </summary>
-        /// <returns>лист с чекедами для групп</returns>
-        private List<bool> getListCheckedGroup()
-        {
-            Control _cntrl = new Control()
-                , rbt = new Control();
-            List<bool> _list = new List<bool>();
-
-            _cntrl = Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.TBLP_BLK.ToString(), true)[0];
-
-            foreach (PanelManagementVedomost.RadioButtonBl rbts in _cntrl.Controls)
-                if (rbts.Checked == true)
-                {
-                    rbt = rbts;
-                    _list = (rbt as PanelManagementVedomost.RadioButtonBl).m_arBoolCheck;
-                    break;
-                }
-
-            return _list;
         }
 
         /// <summary>
@@ -3139,7 +3225,6 @@ namespace PluginTaskVedomostBl
         /// <returns>индентификатор объекта</returns>
         public int GetIdComp()
         {
-
             int _idComp = 0;
 
             foreach (PictureVedBl picture in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
@@ -3148,7 +3233,6 @@ namespace PluginTaskVedomostBl
                         _idComp = item.m_idCompDGV;
 
             return _idComp;
-
         }
 
         /// <summary>
@@ -3181,7 +3265,7 @@ namespace PluginTaskVedomostBl
             };
             //инициализация массивов
             bool[] arChecked = new bool[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
-            List<bool> arGroup = new List<bool>();
+            List<CheckState> arGroup = new List<CheckState>();
             arRadioBtn = new PanelManagementVedomost.RadioButtonBl[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
             arId_comp = new int[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
             arstrItem = new string[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
@@ -3205,7 +3289,7 @@ namespace PluginTaskVedomostBl
             }
 
             for (int i = 0; i < s_listHeader.Count; i++)
-                arGroup.Add(true);
+                arGroup.Add(CheckState.Checked);
 
             try
             {
@@ -3633,8 +3717,8 @@ namespace PluginTaskVedomostBl
         /// <param name="ev">Аргумент события</param>
         private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
         {
-            int err = -1
-             , id_alg = -1;
+            int //err = -1,
+              id_alg = -1;
             DGVVedomostBl _dgv = (getActiveView() as DGVVedomostBl);
             string n_alg = string.Empty;
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
@@ -4039,19 +4123,19 @@ namespace PluginTaskVedomostBl
         protected override void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
         {
             int err = -1;
-            DateTimeRange[] dtR; //= HandlerDb.GetDateTimeRangeValuesVarArchive();
+            DateTimeRange[] dtR = HandlerDb.GetDateTimeRangeValuesVarArchive();
 
-            if (!WhichBlIsSelected)
-                dtR = HandlerDb.GetDateTimeRangeValuesVar();
-            else
-                dtR = HandlerDb.GetDateTimeRangeValuesVarExtremeBL();
-
+            //if (!WhichBlIsSelected)
+            //    dtR = HandlerDb.GetDateTimeRangeValuesVar();
+            //else
+            //    dtR = HandlerDb.GetDateTimeRangeValuesVarExtremeBL();
 
             m_arTableOrigin[(int)m_ViewValues] =
-            HandlerDb.GetInVal(Type
-            , dtR
-            , ActualIdPeriod
-            , out err);
+                HandlerDb.GetDataOutval(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, dtR, out err);
+            //HandlerDb.GetInVal(Type
+            //, dtR
+            //, ActualIdPeriod
+            //, out err);
 
             m_arTableEdit[(int)m_ViewValues] =
             HandlerDb.SaveValues(m_arTableOrigin[(int)m_ViewValues]
@@ -4197,56 +4281,6 @@ namespace PluginTaskVedomostBl
             // ... - загрузить/отобразить значения из БД
             updateDataValues();
         }
-
-        /// <summary>
-        /// преобразование числа в нужный формат отображения
-        /// </summary>
-        /// <param name="value">число</param>
-        /// <returns>преобразованное число</returns>
-        //public static float AsParseToF(string value)
-        //{
-        //    int _indxChar = 0;
-        //    string _sepReplace = string.Empty;
-        //    bool bFlag = true;
-        //    //char[] _separators = { ' ', ',', '.', ':', '\t'};
-        //    //char[] letters = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).ToArray();
-        //    float fValue = 0;
-
-        //    foreach (char item in value.ToCharArray())
-        //    {
-        //        if (!char.IsDigit(item))
-        //            if (char.IsLetter(item))
-        //                value = value.Remove(_indxChar, 1);
-        //            else
-        //                _sepReplace = value.Substring(_indxChar, 1);
-        //        else
-        //            _indxChar++;
-
-        //        switch (_sepReplace)
-        //        {
-        //            case ".":
-        //            case ",":
-        //            case " ":
-        //            case ":":
-        //                float.TryParse(value.Replace(_sepReplace, "."), NumberStyles.Float, CultureInfo.InvariantCulture, out fValue);
-        //                bFlag = false;
-        //                break;
-        //        }
-        //    }
-
-        //    if (bFlag)
-        //        try
-        //        {
-        //            fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
-        //        }
-        //        catch (Exception e)
-        //        {
-        //            if (value.ToString() == "")
-        //                fValue = 0;
-        //        }
-
-        //    return fValue;
-        //}
     }
 
     /// <summary>

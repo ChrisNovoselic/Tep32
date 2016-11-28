@@ -2,6 +2,7 @@
 using System;
 using System.Data;
 using System.Globalization;
+using System.Windows.Forms;
 using TepCommon;
 
 namespace PluginTaskVedomostBl
@@ -409,7 +410,7 @@ namespace PluginTaskVedomostBl
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)ID_PERIOD.DAY //+ " AND [ID_SOURCE] > 0 "
                             + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone
-                            + @" AND p.ID_COMP = " + PanelTaskVedomostBl.m_getIdComp()
+                            + @" AND p.ID_COMP = " + PanelTaskVedomostBl.s_getIdComp()
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
@@ -501,23 +502,23 @@ namespace PluginTaskVedomostBl
                 rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
                 dtRes = Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"]);
 
-                for (int j = 0; j < tableOrigin.Rows.Count; j++)
-                    if (rowSel == tableOrigin.Rows[j]["ID_PUT"].ToString())
-                    {
-                        if (dtRes.ToShortDateString() == Convert.ToDateTime(tableOrigin.Rows[j]["DATE_TIME"]).AddDays(-1).ToShortDateString())
-                            if (tableOrigin.Rows[j]["Value"].ToString() == tableRes.Rows[i]["VALUE"].ToString())
-                            {
-                                idUser = (int)tableOrigin.Rows[j]["ID_USER"];
-                                idSource = (int)tableOrigin.Rows[j]["ID_SOURCE"];
-                                break;
-                            }
-                    }
-                    else
-                    {
-                        idUser = HUsers.Id;
-                        idSource = 0;
-                        break;
-                    }
+                if (tableOrigin.Rows.Count > 0)
+                {
+                    for (int j = 0; j < tableOrigin.Rows.Count; j++)
+                        if (rowSel == tableOrigin.Rows[j]["ID_PUT"].ToString())
+                            if (dtRes.ToShortDateString() == Convert.ToDateTime(tableOrigin.Rows[j]["DATE_TIME"]).ToShortDateString())
+                                if (tableOrigin.Rows[j]["Value"].ToString() == tableRes.Rows[i]["VALUE"].ToString())
+                                {
+                                    idUser = (int)tableOrigin.Rows[j]["ID_USER"];
+                                    idSource = (int)tableOrigin.Rows[j]["ID_SOURCE"];
+                                    break;
+                                }
+                }
+                else
+                {
+                    idUser = HUsers.Id;
+                    idSource = 0;
+                }
 
                 tableEdit.Rows.Add(new object[]
                 {
@@ -591,6 +592,41 @@ namespace PluginTaskVedomostBl
         /// <param name="dtRange">диапазон временной</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблица данных</returns>
+        public DataTable GetDataOutval(TaskCalculate.TYPE type, DateTimeRange[] dtRange, out int err)
+        {
+            string strQuery = string.Empty;
+            bool bLastItem = false;
+
+            for (int i = 0; i < dtRange.Length; i++)
+            {
+                bLastItem = !(i < (dtRange.Length - 1));
+
+                strQuery += @"SELECT o.ID, o.ID_PUT, o.ID_USER, o.ID_SOURCE, o.DATE_TIME, o.ID_TIME"
+                    + @", o.ID_TIMEZONE, o.QUALITY, o.VALUE, o.WR_DATETIME"
+                    + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
+                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
+                    + @" ON a.ID = p.ID_ALG"
+                    + @" LEFT JOIN [dbo].[outval_" + dtRange[i].End.ToString(@"yyyyMM") + @"] o"
+                    + @" ON o.ID_PUT = p.ID"
+                    + @" WHERE  [ID_TASK] = " + (int)IdTask
+                    + @" AND [DATE_TIME] > '" + dtRange[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND [DATE_TIME] <= '" + dtRange[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
+                    + @" AND [ID_TIME] = " + (int)ID_PERIOD.DAY
+                    + @" AND [QUALITY] > 0";
+
+                if (bLastItem == false)
+                    strQuery += @" UNION ALL ";
+            }
+            return Select(strQuery, out err);
+        }
+
+        /// <summary>
+        /// Получение вых.знач.
+        /// </summary>
+        /// <param name="dtRange">диапазон временной</param>
+        /// <param name="err">Индентификатор ошибки</param>
+        /// <returns>таблица данных</returns>
         public DataTable GetDataOutvalArch(TaskCalculate.TYPE type, DateTimeRange[] dtRange, out int err)
         {
             string strQuery = string.Empty;
@@ -601,7 +637,7 @@ namespace PluginTaskVedomostBl
                 bLastItem = !(i < (dtRange.Length - 1));
 
                 strQuery += @"SELECT [ID_PUT], [QUALITY], [VALUE], [DATE_TIME] as [WR_DATETIME]"
-                    + @", CONVERT(varchar, [DATE_TIME], 127) as [EXTENDED_DEFINITION]"
+                    + @" , CONVERT(varchar, [DATE_TIME], 127) as [EXTENDED_DEFINITION]"
                     + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
                     + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
                     + @" ON a.ID = p.ID_ALG"
@@ -631,8 +667,9 @@ namespace PluginTaskVedomostBl
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin
-                , dtEnd = _Session.m_rangeDatetime.End.AddDays(-(DateTime.DaysInMonth(_Session.m_rangeDatetime.Begin.Year, _Session.m_rangeDatetime.Begin.Month) - 1)).AddMonths(1);
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC)
+                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(1);
+            //AddDays(-(DateTime.DaysInMonth(_Session.m_rangeDatetime.Begin.Year, _Session.m_rangeDatetime.Begin.Month) - 1));
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
