@@ -168,6 +168,7 @@ namespace PluginTaskTepMain
 
             InitializeComponents();
 
+            Session.m_IdFpanel = m_id_panel;
             Session.SetRangeDatetime(PanelManagementTaskTepCalculate.s_dtDefault, PanelManagementTaskTepCalculate.s_dtDefault.AddHours(1));
         }
 
@@ -406,10 +407,11 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
         {
+            //??? перед очисткой или после (не требуются ли предыдущий диапазон даты/времени)
+            Session.SetRangeDatetime(dtBegin, dtEnd);
+
             // очистить содержание представления
             clear();
-
-            Session.SetRangeDatetime(dtBegin, dtEnd);
 
             //// при наличии признака - загрузить/отобразить значения из БД
             //if (s_bAutoUpdateValues == true)
@@ -417,9 +419,9 @@ namespace PluginTaskTepMain
             //else ;
         }
         /// <summary>
-        /// 
+        /// Удалить сессию (+ очистить реквизиты сессии)
         /// </summary>
-        protected void deleteSession()
+        protected virtual void deleteSession()
         {
             int err = -1;
 

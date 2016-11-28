@@ -85,7 +85,7 @@ namespace PluginTaskTepMain
         /// </summary>
         public override void Stop()
         {
-            deleteSession();
+            //deleteSession();
 
             base.Stop();
         }

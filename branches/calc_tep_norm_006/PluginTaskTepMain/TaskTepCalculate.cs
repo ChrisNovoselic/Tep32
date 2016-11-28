@@ -17,7 +17,7 @@ namespace PluginTaskTepMain
         /// </summary>
         private static int _idFPanelTaskTepMainInValues;
 
-        public HandlerDbTaskTepCalculate(int idFPanelCommon = -1) : base ()
+        public HandlerDbTaskTepCalculate(int idFPanelCommon = -1) : base (/*TepCommon.ID_TASK.TEP, idFPanelCommon*/)
         {
             if (idFPanelCommon > 0)
                 _idFPanelTaskTepMainInValues = idFPanelCommon;
@@ -42,6 +42,8 @@ namespace PluginTaskTepMain
                 return strRes;
             }
         }
+
+        protected override bool IsDeleteSession { get { return (_Session.m_Id > 0) && (_Session.m_IdFpanel == _idFPanelTaskTepMainInValues); } }
         /// <summary>
         /// Создать объект расчета для типа задачи
         /// </summary>

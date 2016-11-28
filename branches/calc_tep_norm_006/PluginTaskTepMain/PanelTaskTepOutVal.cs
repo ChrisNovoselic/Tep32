@@ -35,17 +35,26 @@ namespace PluginTaskTepMain
             eventAddCompParameter += new DelegateObjectFunc ((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
         }
 
-        //public override bool Activate(bool activate)
-        //{
-        //    bool bRes = base.Activate(activate);
+        public override bool Activate(bool activate)
+        {
+            bool bRes = base.Activate(activate);
 
-        //    if (bRes == true)
-        //        ;
-        //    else
-        //        ;
+            int err = 0;
 
-        //    return bRes;
-        //}
+            if (bRes == true)
+                if (activate == true)
+                    if (IsFirstActivated == false)
+                        // подтвердить наличие сессии расчета
+                        HandlerDb.InitSession(out err);
+                    else
+                        ;
+                else
+                    ;
+            else
+                ;
+
+            return bRes;
+        }
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>
@@ -87,7 +96,6 @@ namespace PluginTaskTepMain
         {
             throw new NotImplementedException();
         }
-
         ///// <summary>
         ///// Инициировать подготовку к расчету
         /////  , выполнить расчет
@@ -98,6 +106,17 @@ namespace PluginTaskTepMain
         //{
         //    throw new NotImplementedException();
         //}
+        /// <summary>
+        /// Удалить сессию (+ очистить реквизиты сессии)
+        /// </summary>
+        protected override void deleteSession()
+        {
+            base.deleteSession();
+
+            int err = -1;            
+
+            HandlerDb.InitSession(out err);
+        }
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>

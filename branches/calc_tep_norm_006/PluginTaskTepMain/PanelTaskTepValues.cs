@@ -173,17 +173,12 @@ namespace PluginTaskTepMain
 
             bRes = base.Activate(activate);
 
-            if (bRes == true)
-            {
-                if (activate == true)
-                {
-                    HandlerDb.InitSession(out err);
-                }
-                else
-                    ;
-            }
-            else
-                ;
+            //if (bRes == true) {
+            //    if (activate == true) {                    
+            //    } else
+            //        ;
+            //} else
+            //    ;
 
             return bRes;
         }
