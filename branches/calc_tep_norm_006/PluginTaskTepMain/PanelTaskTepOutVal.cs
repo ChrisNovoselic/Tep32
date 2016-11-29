@@ -43,10 +43,15 @@ namespace PluginTaskTepMain
 
             if (bRes == true)
                 if (activate == true)
-                    if (IsFirstActivated == false)
+                    if (IsFirstActivated == false) {
                         // подтвердить наличие сессии расчета
                         HandlerDb.InitSession(out err);
-                    else
+
+                        if (err < 0)
+                            clear();
+                        else
+                            ;
+                    } else
                         ;
                 else
                     ;
