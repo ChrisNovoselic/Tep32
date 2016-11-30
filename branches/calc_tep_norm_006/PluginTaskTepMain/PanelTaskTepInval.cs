@@ -103,11 +103,10 @@ namespace PluginTaskTepMain
             //Запрос для получения архивных данных
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
-                , ActualIdPeriod
-                , CountBasePeriod
-                , arQueryRanges
-                , out err);
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE ?
+                HandlerDb.GetValuesVar(Type, ActualIdPeriod, CountBasePeriod, arQueryRanges, out err) :
+                    Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(out err) :
+                        new DataTable();
             //Проверить признак выполнения запроса
             if (err == 0)
             {

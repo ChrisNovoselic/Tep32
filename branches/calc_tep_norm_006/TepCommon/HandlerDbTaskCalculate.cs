@@ -101,7 +101,8 @@ namespace TepCommon
             /// </summary>
             public enum INDEX_LOAD_VALUES : short
             {
-                UNKNOWN = -1, SOURCE, ARCHIVE
+                SOURCE_IMPORT = -11
+                , UNKNOWN = -1, SOURCE, ARCHIVE
                 , COUNT
             }
             /// <summary>

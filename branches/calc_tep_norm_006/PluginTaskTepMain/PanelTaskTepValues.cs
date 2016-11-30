@@ -106,6 +106,9 @@ namespace PluginTaskTepMain
                 new EventHandler(HPanelTepCommon_btnHistory_Click);
             (Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
 
+            (Controls.Find(INDEX_CONTROL.BUTTON_IMPORT.ToString(), true)[0] as Button).Click += new EventHandler(btnImport_Click);
+            (Controls.Find(INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += new EventHandler(btnExport_Click);
+
             (PanelManagement as PanelManagementTaskTepValues).ItemCheck += new PanelManagementTaskTepValues.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
         }
 
@@ -193,6 +196,18 @@ namespace PluginTaskTepMain
             base.Stop();
         }
 
+        private void btnImport_Click(object sender, EventArgs e)
+        {
+            Session.m_LoadValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT;
+
+            onButtonLoadClick();            
+        }
+
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Установить значения таблиц для редактирования
         /// </summary>
@@ -267,10 +282,10 @@ namespace PluginTaskTepMain
         }
 
         /// <summary>
-        /// 
+        /// Обработчик события - нажатие на кнопку "Загрузить" (кнопка - аналог "Загрузить ранее сохраненные значения")
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Объект, инициировавший событие (??? кнопка или п. меню)</param>
+        /// <param name="ev">Аргумент события</param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
             Session.m_LoadValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.ARCHIVE;
@@ -1365,7 +1380,7 @@ namespace PluginTaskTepMain
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 4, posRow);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
-                ctrl.Enabled = false;
+                ctrl.Enabled = true;
                 //Кнопка - сохранить
                 ctrl = new Button();
                 ctrl.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
@@ -1813,19 +1828,14 @@ namespace PluginTaskTepMain
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1
-            , BUTTON_RUN_PREV,
-            BUTTON_RUN_RES
-                , CLBX_COMP_CALCULATED,
-            CLBX_PARAMETER_CALCULATED
-                , BUTTON_LOAD, MENUITEM_UPDATE, MENUITEM_HISTORY, BUTTON_SAVE, BUTTON_IMPORT,
-            BUTTON_EXPORT
-                , CLBX_COMP_VISIBLED,
-            CLBX_PARAMETER_VISIBLED
-                ,
-            DGV_DATA
-                ,
-            LABEL_DESC
-              ,
+            , BUTTON_RUN_PREV, BUTTON_RUN_RES
+            , CLBX_COMP_CALCULATED, CLBX_PARAMETER_CALCULATED
+            , BUTTON_LOAD, MENUITEM_UPDATE, MENUITEM_HISTORY
+                , BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
+            , CLBX_COMP_VISIBLED, CLBX_PARAMETER_VISIBLED
+            , DGV_DATA
+            , LABEL_DESC
+            ,
         }
     }
 }
