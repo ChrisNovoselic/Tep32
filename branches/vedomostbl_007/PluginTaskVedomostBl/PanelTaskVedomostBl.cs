@@ -2098,17 +2098,17 @@ namespace PluginTaskVedomostBl
                                 if (m_dictPropertyColumns[col.m_IdAlg].m_Avg == 0)
                                     Rows[RowCount - 1].Cells[iCol].Value =
                                     //_dtEditVal.Rows[RowCount - 1][colindex] =
-                                        sumVal(_dtEditVal, colindex).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound, CultureInfo.InvariantCulture);
+                                        sumVal(_dtEditVal, col.Index).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound, CultureInfo.InvariantCulture);
                                 else
                                     Rows[RowCount - 1].Cells[iCol].Value =
                                     //_dtEditVal.Rows[RowCount - 1][colindex] =
-                                        avgVal(_dtEditVal, colindex).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound, CultureInfo.InvariantCulture);
+                                        avgVal(_dtEditVal, col.Index).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound, CultureInfo.InvariantCulture);
                             }
                             catch (Exception exp)
                             {
                                 MessageBox.Show("Ошибка усредненния данных по столбцу " + col.m_topHeader + "! " + exp.ToString());
                             }
-                            colindex++;
+                            //colindex++;
                         }
                         iCol++;
                     }
@@ -3938,8 +3938,8 @@ namespace PluginTaskVedomostBl
                         setValues();
                         // отобразить значения
                         (getActiveView() as DGVVedomostBl).ShowValues(m_arTableOrigin[(int)m_ViewValues], m_ViewValues);
-                        //
-                        //m_arTableEdit[(int)m_ViewValues] = valuesFence();
+                        //сохранить готовые значения в таблицу
+                        m_arTableEdit[(int)m_ViewValues] = valuesFence();
                     }
                     else
                         deleteSession();
