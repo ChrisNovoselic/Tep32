@@ -759,13 +759,13 @@ namespace PluginTaskVedomostBl
 
                     for (int i = 0; i < arRb.Length; i++)
                     {
+                        arRb[i].CheckedChanged += TableLayoutPanelkVed_CheckedChanged;
                         arRb[i].Text = text[i];
                         m_listId.Add(id[i]);
                         m_arBoolCheck[i] = new List<CheckState>();
                         m_arBoolCheck[i] = groupCheck;
                         arRb[i].Checked = bChecked[i];
                         arRb[i].idRb = i;
-                        arRb[i].CheckedChanged += TableLayoutPanelkVed_CheckedChanged;
 
                         if (RowCount * ColumnCount < arRb.Length)
                         {
@@ -1308,9 +1308,22 @@ namespace PluginTaskVedomostBl
                 COUNT
             }
             /// <summary>
+            /// 
+            /// </summary>
+            private object[,] arrayData;
+            /// <summary>
             /// ИдГрида
             /// </summary>
             private int _idCompDGV;
+            private int _CountBL;
+            /// <summary>
+            /// 
+            /// </summary>
+            public int m_CountBL
+            {
+                get { return _CountBL; }
+                set { _CountBL = value; }
+            }
             /// <summary>
             /// ИдГрида
             /// </summary>
@@ -1662,7 +1675,6 @@ namespace PluginTaskVedomostBl
 
                 if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
                     m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
-
                 // добавить строку
                 i = Rows.Add(row);
                 // установить значения в ячейках для служебной информации
@@ -1670,6 +1682,24 @@ namespace PluginTaskVedomostBl
                 Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
                 // инициализировать значения в служебных ячейках
                 m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="countRow"></param>
+            private void addRow(DataTable table, int countRow)
+            {
+                int i = -1;
+                // создать строку
+                //DataRow row = table.NewRow();
+                for (int j = 0; j < countRow; j++)
+                {
+                    DataRow row = table.NewRow();
+                    table.Rows.Add(row);
+                    // добавить строку
+                    //i = Rows.Add(row);
+                }
             }
 
             /// <summary>
@@ -1883,13 +1913,21 @@ namespace PluginTaskVedomostBl
             /// <param name="isCheck">проверка чека</param>
             public void HideColumns(DataGridView dgv, List<string> listHeaderTop, bool isCheck)
             {
-                foreach (var item in listHeaderTop)
-                    foreach (HDataGridViewColumn col in Columns)
-                        if (col.m_topHeader == item)
-                            if (isCheck)
-                                col.Visible = true;
-                            else
-                                col.Visible = false;
+                try
+                {
+                    foreach (var item in listHeaderTop)
+                        foreach (HDataGridViewColumn col in Columns)
+                            if (col.m_topHeader == item)
+                                if (isCheck)
+                                    col.Visible = true;
+                                else
+                                    col.Visible = false;
+                }
+                catch (Exception)
+                {
+
+                }
+
 
                 dgvConfigCol(dgv);
             }
@@ -1998,15 +2036,19 @@ namespace PluginTaskVedomostBl
             /// <param name="typeValues">тип загружаемых данных</param>
             public void ShowValues(DataTable tableOrigin, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
-                DataTable _dtOriginVal = new DataTable();
+                DataTable _dtOriginVal = new DataTable(),
+                    _dtEditVal = new DataTable();
                 int idAlg = -1
                    , idParameter = -1
                    , _hoursOffSet
-                   , iCol = 0//, iRow = 0
+                   , iCol = 0, colindex = 0
                    , _vsRatioValue = -1;
                 double dblVal = -1F
                     //,dbSumVal = 0
                     ;
+
+                //addRow(_dtEditVal, RowCount);
+
                 DataRow[] parameterRows = null,
                     editRow = null;
 
@@ -2026,63 +2068,51 @@ namespace PluginTaskVedomostBl
                     {
                         if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                         {
-                            parameterRows = s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].
-                            Select(string.Format(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_ALG = " + col.m_IdAlg + " AND ID_COMP = " + m_idCompDGV));
-                            idParameter = (int)parameterRows[0]["ID"];
-                            editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + idParameter));
+                            //_dtEditVal.Columns.Add(col.m_IdComp.ToString());
+                            try
+                            {
+                                parameterRows = s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].
+                                    Select(string.Format(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_ALG = " + col.m_IdAlg + " AND ID_COMP = " + m_idCompDGV));
+                                editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + (int)parameterRows[0]["ID"]));
+                            }
+                            catch (Exception)
+                            {
+                                MessageBox.Show("Ошибка выборки данных!");
+                            }
 
                             for (int i = 0; i < editRow.Count(); i++)
                             {
-                                idAlg = col.m_IdAlg;
-                                _vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
+                                _vsRatioValue = m_dictPropertyColumns[col.m_IdAlg].m_vsRatio;
 
-                                foreach (DataGridViewRow row in Rows)
+                                if (Convert.ToDateTime(editRow[i][@"WR_DATETIME"]).AddHours(_hoursOffSet).ToShortDateString() ==
+                                        Rows[i].Cells["Date"].Value.ToString())
                                 {
-                                    if (Convert.ToDateTime(editRow[i][@"WR_DATETIME"]).AddHours(_hoursOffSet).ToShortDateString() ==
-                                            row.Cells["Date"].Value.ToString())
-                                    {
-                                        dblVal = ((double)editRow[i][@"VALUE"]);
-                                        row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound,
-                                                   CultureInfo.InvariantCulture);
-                                    }
+                                    Rows[i].Cells[iCol].Value =
+                                    //_dtEditVal.Rows[i][colindex] =
+                                    (((double)editRow[i][@"VALUE"]).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound,
+                                              CultureInfo.InvariantCulture));
                                 }
                             }
                             try
                             {
-                                if (m_dictPropertyColumns[idAlg].m_Avg == 0)
-                                    Rows[RowCount - 1].Cells[iCol].Value = sumVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
+                                if (m_dictPropertyColumns[col.m_IdAlg].m_Avg == 0)
+                                    Rows[RowCount - 1].Cells[iCol].Value =
+                                    //_dtEditVal.Rows[RowCount - 1][colindex] =
+                                        sumVal(_dtEditVal, colindex).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound, CultureInfo.InvariantCulture);
                                 else
-                                    Rows[RowCount - 1].Cells[iCol].Value = avgVal(col.Index).ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture);
+                                    Rows[RowCount - 1].Cells[iCol].Value =
+                                    //_dtEditVal.Rows[RowCount - 1][colindex] =
+                                        avgVal(_dtEditVal, colindex).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound, CultureInfo.InvariantCulture);
                             }
                             catch (Exception exp)
                             {
-                                MessageBox.Show("" + exp.ToString());
+                                MessageBox.Show("Ошибка усредненния данных по столбцу " + col.m_topHeader + "! " + exp.ToString());
                             }
+                            colindex++;
                         }
-
                         iCol++;
                     }
-            }
-
-            /// <summary>
-            /// Отображение данных на вьюхе
-            /// </summary>
-            /// <param name="tableOrigin">таблица с данными</param>
-            /// <param name="typeValues">тип загружаемых данных</param>
-            public void ShowValuesArch(DataTable tableOrigin, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
-            {
-                DataTable _dtOriginVal = new DataTable();
-                //int idAlg = -1
-                //   , idParameter = -1
-                //   , _hoursOffSet
-                //   , iCol = 0//, iRow = 0
-                //   , _vsRatioValue = -1;
-                //double dblVal = -1F,
-                //    dbSumVal = 0;
-                //DataRow[] parameterRows = null,
-                //    editRow = null;
-
-                _dtOriginVal = tableOrigin.Copy();
+                //DataSource = _dtEditVal;
             }
 
             /// <summary>
@@ -2090,12 +2120,17 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="indxCol">индекс столбца</param>
             /// <returns>сумма по столбцу</returns>
-            private double sumVal(int indxCol)
+            private double sumVal(DataTable table, int indxCol)
             {
                 double _sumValue = 0F;
 
                 try
                 {
+                    //foreach (DataRow item in table.Rows)
+                    //{
+                    //    if (Rows.Count - 1 != table.Rows.IndexOf(item))
+                    //        _sumValue += s_VedCalculate.AsParseToF(item[indxCol].ToString());
+                    //}
                     foreach (DataGridViewRow row in Rows)
                         if (Rows.Count - 1 != row.Index)
                             if (row.Cells[indxCol].Value != null)
@@ -2116,7 +2151,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="indxCol">индекс столбца</param>
             /// <returns>среднее по столбцу</returns>
-            private double avgVal(int indxCol)
+            private double avgVal(DataTable table, int indxCol)
             {
                 int cntNum = 0;
                 double _avgValue = 0F
@@ -2124,6 +2159,15 @@ namespace PluginTaskVedomostBl
 
                 try
                 {
+                    //foreach (DataRow item in table.Rows)
+                    //{
+                    //    if (Rows.Count - 1 != table.Rows.IndexOf(item))
+                    //    {
+                    //        _sumValue += s_VedCalculate.AsParseToF(item[indxCol].ToString());
+                    //        cntNum++;
+                    //    }
+                    //}
+
                     foreach (DataGridViewRow row in Rows)
                         if (row.Cells[indxCol].Value != null)
                             if (row.Cells[indxCol].Value.ToString() != "")
@@ -2292,6 +2336,10 @@ namespace PluginTaskVedomostBl
             /// </summary>
             private Excel.Worksheet m_wrkSheet;
             //private object _missingObj = System.Reflection.Missing.Value;
+            /// <summary>
+            /// Массив данных
+            /// </summary>
+            protected object[,] arrayData;
 
             /// <summary>
             /// 
@@ -2338,6 +2386,8 @@ namespace PluginTaskVedomostBl
 
                     try
                     {
+                        fillToArray(dgView);
+
                         for (int i = 0; i < dgView.Columns.Count; i++)
                             if (i >= ((int)DGVVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
                             {
@@ -2355,14 +2405,15 @@ namespace PluginTaskVedomostBl
                                             }
                                         }
                                 }
-                                else
-                                    foreach (Excel.Range cell in colRange.Cells)
-                                        if (Convert.ToString(cell.Value) == dgView.Columns[i].Name)
-                                        {
-                                            fillSheetExcelToNHeader(colRange, dgView, i, cell.Row + 1);
-                                            break;
-                                        }
-                                indxCol++;
+                                //else
+                                //    foreach (Excel.Range cell in colRange.Cells)
+                                //        if (Convert.ToString(cell.Value) == dgView.Columns[i].Name)
+                                //        {
+                                //            fillSheetExcelToNHeader(colRange, dgView, i, cell.Row + 1);
+                                //            break;
+                                //        }
+                                break;
+                                //indxCol++;
                             }
 
                         setSignature(m_wrkSheet, dgView, dtRange);
@@ -2378,6 +2429,31 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
+            /// Заполнение массива данными
+            /// </summary>
+            /// <param name="dgvActive">активное отображение данных</param>
+            private void fillToArray(DataGridView dgvActive)
+            {
+                arrayData = new object[dgvActive.RowCount, dgvActive.ColumnCount - 1];
+                int indexArray = 0;
+
+                for (int i = 0; i < dgvActive.Rows.Count; i++)
+                {
+                    for (int j = 0; j < dgvActive.Columns.Count; j++)
+                        if (j >= ((int)DGVVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
+                        {
+                            if (j > ((int)DGVVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
+                                arrayData[i, indexArray] = s_VedCalculate.AsParseToF(dgvActive.Rows[i].Cells[j].Value.ToString());
+                            else
+                                arrayData[i, indexArray] = dgvActive.Rows[i].Cells[j].Value.ToString();
+
+                            indexArray++;
+                        }
+                    indexArray = 0;
+                }
+            }
+
+            /// <summary>
             /// Составление таблицы
             /// </summary>
             /// <param name="dgvActive">активное окно данных</param>
@@ -2387,7 +2463,7 @@ namespace PluginTaskVedomostBl
                     colSheetBegin = 2, colSheetEnd = 1,
                     rowSheet = 2,
                     idDgv = (dgvActive as DGVVedomostBl).m_idCompDGV;
-                m_excApp.Visible = true;
+                //m_excApp.Visible = true;
                 //получаем диапазон
                 Excel.Range colRange = (m_wrkSheet.Cells[2, colSheetBegin - 1] as Excel.Range);
                 //записываем данные в ячейки
@@ -2412,8 +2488,10 @@ namespace PluginTaskVedomostBl
                         var cells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
                         //объединяем ячейки
                         mergeCells(cells.Address);
+                        //string w = (m_wrkSheet.Cells[rowSheet, colSheetBegin] as Excel.Range).ColumnWidth.ToString();
+                        //(cells as Excel.Range).Width.ToString();
                         //
-                        paintBorder(cells, (int)Excel.XlLineStyle.xlContinuous);
+
                         //выравнивание текста в ячейке                  
                         cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
                         cells.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
@@ -2421,8 +2499,11 @@ namespace PluginTaskVedomostBl
 
                         indxCol++;
                     }
-
-                colSheetBegin = 2; colSheetEnd = 1; rowSheet = 3;
+                colSheetBegin = 2;
+                //выделяем область(левый верхний угол и правый нижний)
+                var Commoncells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
+                paintBorder(Commoncells, (int)Excel.XlLineStyle.xlContinuous);
+                colSheetEnd = 1; rowSheet = 3;
 
                 foreach (var item in (dgvActive as DGVVedomostBl).m_headerMiddle[idDgv])
                 {
@@ -2435,8 +2516,7 @@ namespace PluginTaskVedomostBl
                     var cells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
                     //объединяем ячейки
                     mergeCells(cells.Address);
-                    //
-                    paintBorder(cells, (int)Excel.XlLineStyle.xlContinuous);
+
                     //
                     cells.WrapText = true;
                     cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
@@ -2444,8 +2524,11 @@ namespace PluginTaskVedomostBl
 
                     colSheetBegin = colSheetEnd + 1;
                 }
-
-                colSheetBegin = 2; colSheetEnd = 1; rowSheet = 3;
+                colSheetBegin = 2;
+                //       
+                Commoncells = m_wrkSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
+                paintBorder(Commoncells, (int)Excel.XlLineStyle.xlContinuous);
+                colSheetEnd = 1; rowSheet = 3;
 
                 for (int i = 0; i < dgvActive.Columns.Count; i++)
                 {
@@ -2486,8 +2569,10 @@ namespace PluginTaskVedomostBl
                         styleBorder = Excel.XlLineStyle.xlDash;
                         break;
                     case Excel.XlLineStyle.xlDashDot:
+                        styleBorder = Excel.XlLineStyle.xlDashDot;
                         break;
                     case Excel.XlLineStyle.xlDashDotDot:
+                        styleBorder = Excel.XlLineStyle.xlDashDotDot;
                         break;
                     case Excel.XlLineStyle.xlDot:
                         break;
@@ -2501,9 +2586,9 @@ namespace PluginTaskVedomostBl
                         break;
                 }
                 // внутренние вертикальные
-                //  cells.Borders[Excel.XlBordersIndex.xlInsideVertical].LineStyle = Excel.XlLineStyle.xlContinuous;
+                cells.Borders[Excel.XlBordersIndex.xlInsideVertical].LineStyle = styleBorder;
                 // внутренние горизонтальные
-                //  cells.Borders[Excel.XlBordersIndex.xlInsideHorizontal].LineStyle = Excel.XlLineStyle.xlContinuous; 
+                cells.Borders[Excel.XlBordersIndex.xlInsideHorizontal].LineStyle = styleBorder;
                 // верхняя внешняя          
                 cells.Borders[Excel.XlBordersIndex.xlEdgeTop].LineStyle = styleBorder;
                 // правая внешняя
@@ -2520,7 +2605,7 @@ namespace PluginTaskVedomostBl
             /// <param name="rowSheet">номер строки</param>
             /// <param name="colSheetBegin">номер столбца начала</param>
             /// <param name="colSheetEnd">номер столбца конца</param>
-            /// <returns>адрес ячеек в формате "A1:A2"</returns>
+            /// <returns>адрес ячеек в формате "A1:A3"</returns>
             private string getAdressRangeCol(int rowSheetBegin, int rowSheetEnd, int colSheet)
             {
                 Excel.Range RowRangeBegin = (Excel.Range)m_wrkSheet.Cells[rowSheetBegin, colSheet],
@@ -2538,7 +2623,7 @@ namespace PluginTaskVedomostBl
             /// <param name="rowSheet">номер строки</param>
             /// <param name="colSheetBegin">номер столбца начала</param>
             /// <param name="colSheetEnd">номер столбца конца</param>
-            /// <returns>адрес диапазона ячеек в формате "A1:B1"</returns>
+            /// <returns>адрес диапазона ячеек в формате "A1:C1"</returns>
             private string getAdressRangeRow(int rowSheet, int colSheetBegin, int colSheetEnd)
             {
                 Excel.Range colRangeBegin = (Excel.Range)m_wrkSheet.Cells[rowSheet, colSheetBegin],
@@ -2609,7 +2694,7 @@ namespace PluginTaskVedomostBl
             {
                 //Excel.Range exclTEC = exclWrksht.get_Range("B2");
                 Excel.Range exclRMonth = exclWrksht.get_Range("R1");
-                exclRMonth.Value2 = "Ведомость блока №" + (dgv as DGVVedomostBl).m_idCompDGV + " за " + HDateTime.NameMonths[dtRange.Begin.Month - 1] + " месяц " + dtRange.Begin.Year + " года";
+                exclRMonth.Value2 = "Ведомость блока №" + (dgv as DGVVedomostBl).m_CountBL + " за " + HDateTime.NameMonths[dtRange.Begin.Month - 1] + " месяц " + dtRange.Begin.Year + " года";
                 exclRMonth.Font.Bold = true;
                 //HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
             }
@@ -2641,34 +2726,43 @@ namespace PluginTaskVedomostBl
                 , int indxColDgv
                 , int indxRowExcel)
             {
-                int row = 0;
+                int _indxrow = 0;
+
+                string addressRange = string.Empty,
+                 addresBegin, addresEnd;
+                int cellBegin, cellEnd = 0;
 
                 for (int i = indxRowExcel; i < colRange.Rows.Count; i++)
                     if (((Excel.Range)colRange.Cells[i]).Value == null &&
                         ((Excel.Range)colRange.Cells[i]).MergeCells.ToString() != "True")
                     {
-                        row = i;
+                        _indxrow = i;
                         break;
                     }
+                //формировние начальной и конечной координаты диапазона
+                addresBegin = (colRange.Cells[_indxrow] as Excel.Range).Address;
+                _indxrow = _indxrow + dgv.Rows.Count;
+                cellEnd = cellEnd + (dgv.Columns.Count - 1);
+                addresEnd = (m_wrkSheet.Cells[_indxrow - 1, cellEnd] as Excel.Range).Address;
+                //получение диапазона
+                addressRange = addresBegin + ":" + addresEnd;
+                Excel.Range rangeFill = m_wrkSheet.get_Range(addressRange);
+                //заполнение
+                var arrayVar = arrayData;
+                rangeFill.Value2 = arrayVar;
+                paintBorder(rangeFill, (int)Excel.XlLineStyle.xlContinuous);
 
-                for (int j = 0; j < dgv.Rows.Count; j++)
-                {
-                    //colRange.NumberFormat = "0";
-                    if (indxColDgv > ((int)DGVVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
-                        colRange.Cells[row] = s_VedCalculate.AsParseToF(Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value));
-                    else
-                        colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-
-                    paintBorder((Excel.Range)colRange.Cells[row], (int)Excel.XlLineStyle.xlContinuous);
-                    row++;
-                }
-                //else
+                //for (int j = 0; j < dgv.Rows.Count; j++)
                 //{
-                //    deleteNullRow(colRange, row);
+                //    //colRange.NumberFormat = "0";
+                //    if (indxColDgv > ((int)DGVVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
+                //        colRange.Cells[_indxrow] = s_VedCalculate.AsParseToF(Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value));
+                //    else
+                //        colRange.Cells[_indxrow] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
 
-                //    if (Convert.ToString(((Excel.Range)colRange.Cells[row]).Value) == "")
-                //        colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-                //}
+                //    paintBorder((Excel.Range)colRange.Cells[_indxrow], (int)Excel.XlLineStyle.xlContinuous);
+                //    _indxrow++;
+                //}             
             }
 
             /// <summary>
@@ -2736,14 +2830,21 @@ namespace PluginTaskVedomostBl
             /// </summary>
             private void closeExcel()
             {
-                //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
-                //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+                try
+                {
+                    //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
+                    //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
 
-                m_excApp = null;
-                m_workBook = null;
-                m_wrkSheet = null;
-                GC.Collect();
+                    m_excApp = null;
+                    m_workBook = null;
+                    m_wrkSheet = null;
+                    GC.Collect();
+                }
+                catch (Exception)
+                {
+
+                }
             }
         }
 
@@ -3228,9 +3329,10 @@ namespace PluginTaskVedomostBl
             int _idComp = 0;
 
             foreach (PictureVedBl picture in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
-                foreach (DGVVedomostBl item in picture.Controls)
-                    if (item.Visible == true)
-                        _idComp = item.m_idCompDGV;
+                if (picture.Visible == true)
+                    foreach (DGVVedomostBl item in picture.Controls)
+                        if (item.Visible == true)
+                            _idComp = item.m_idCompDGV;
 
             return _idComp;
         }
@@ -3330,6 +3432,7 @@ namespace PluginTaskVedomostBl
                 ctrl = new DGVVedomostBl(namePut.GetValue(j).ToString());
                 ctrl.Name = namePut.GetValue(j).ToString();
                 (ctrl as DGVVedomostBl).m_idCompDGV = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows[j]["ID"].ToString());
+                (ctrl as DGVVedomostBl).m_CountBL = j + 1;
 
                 filingDictHeader(dtComponentId, (ctrl as DGVVedomostBl).m_idCompDGV);
 
@@ -3394,7 +3497,6 @@ namespace PluginTaskVedomostBl
                     if ((Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
                         for (int t = 0; t < (ctrl as DGVVedomostBl).RowCount; t++)
                             (ctrl as DGVVedomostBl).AddBRead(false);
-
                 }
                 catch (Exception exp)
                 {
@@ -3837,7 +3939,7 @@ namespace PluginTaskVedomostBl
                         // отобразить значения
                         (getActiveView() as DGVVedomostBl).ShowValues(m_arTableOrigin[(int)m_ViewValues], m_ViewValues);
                         //
-                        m_arTableEdit[(int)m_ViewValues] = valuesFence();
+                        //m_arTableEdit[(int)m_ViewValues] = valuesFence();
                     }
                     else
                         deleteSession();
@@ -3889,8 +3991,9 @@ namespace PluginTaskVedomostBl
             strErr = string.Empty;
             //Создание сессии
             Session.New();
-            //Запрос для получения архивных данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutvalArch(Type, HandlerDb.GetDateTimeRangeValuesVarArchive(), out err);
+            if (m_ViewValues == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE)
+                //Запрос для получения архивных данных
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutvalArch(Type, HandlerDb.GetDateTimeRangeValuesVarArchive(), out err);
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
@@ -3927,8 +4030,8 @@ namespace PluginTaskVedomostBl
         /// </summary>
         private void setValues()
         {
-            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
+            m_arTableEdit[(int)m_ViewValues] =
+             m_arTableOrigin[(int)m_ViewValues].Clone();
         }
 
         /// <summary>
@@ -4267,17 +4370,6 @@ namespace PluginTaskVedomostBl
         /// </summary>
         protected virtual void onButtonLoadClick()
         {
-            switch (m_ViewValues)
-            {
-                case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE:
-                    break;
-                case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION:
-                    break;
-                case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT:
-                    break;
-                default:
-                    break;
-            }
             // ... - загрузить/отобразить значения из БД
             updateDataValues();
         }
