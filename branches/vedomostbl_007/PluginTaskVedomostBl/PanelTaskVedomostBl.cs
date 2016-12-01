@@ -655,11 +655,11 @@ namespace PluginTaskVedomostBl
             public class RadioButtonBl : RadioButton
             {
                 /// <summary>
-                /// 
+                /// номер радиобаттона
                 /// </summary>
                 private int _idRb;
                 /// <summary>
-                /// 
+                /// номер радиобаттона
                 /// </summary>
                 public int idRb
                 {
@@ -866,9 +866,9 @@ namespace PluginTaskVedomostBl
                 }
 
                 /// <summary>
-                /// 
+                /// Установка состояния элемента 
                 /// </summary>
-                /// <param name="listCheckState"></param>
+                /// <param name="listCheckState">лист с чекедами для групп</param>
                 public void Checked(List<CheckState> listCheckState)
                 {
                     Control cntrl = _getControls(INDEX_CONTROL_BASE.CLBX_COL_VISIBLED);
@@ -1308,10 +1308,6 @@ namespace PluginTaskVedomostBl
                 COUNT
             }
             /// <summary>
-            /// 
-            /// </summary>
-            private object[,] arrayData;
-            /// <summary>
             /// ИдГрида
             /// </summary>
             private int _idCompDGV;
@@ -1685,24 +1681,6 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="countRow"></param>
-            private void addRow(DataTable table, int countRow)
-            {
-                int i = -1;
-                // создать строку
-                //DataRow row = table.NewRow();
-                for (int j = 0; j < countRow; j++)
-                {
-                    DataRow row = table.NewRow();
-                    table.Rows.Add(row);
-                    // добавить строку
-                    //i = Rows.Add(row);
-                }
-            }
-
-            /// <summary>
             /// Добавить строку в таблицу
             /// </summary>
             /// <param name="rowProp">структура строк</param>
@@ -2041,7 +2019,7 @@ namespace PluginTaskVedomostBl
                 int idAlg = -1
                    , idParameter = -1
                    , _hoursOffSet
-                   , iCol = 0, colindex = 0
+                   , iCol = 0
                    , _vsRatioValue = -1;
                 double dblVal = -1F
                     //,dbSumVal = 0
@@ -2068,7 +2046,6 @@ namespace PluginTaskVedomostBl
                     {
                         if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                         {
-                            //_dtEditVal.Columns.Add(col.m_IdComp.ToString());
                             try
                             {
                                 parameterRows = s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].
@@ -2108,11 +2085,9 @@ namespace PluginTaskVedomostBl
                             {
                                 MessageBox.Show("Ошибка усредненния данных по столбцу " + col.m_topHeader + "! " + exp.ToString());
                             }
-                            //colindex++;
                         }
                         iCol++;
                     }
-                //DataSource = _dtEditVal;
             }
 
             /// <summary>
@@ -2750,19 +2725,7 @@ namespace PluginTaskVedomostBl
                 //заполнение
                 var arrayVar = arrayData;
                 rangeFill.Value2 = arrayVar;
-                paintBorder(rangeFill, (int)Excel.XlLineStyle.xlContinuous);
-
-                //for (int j = 0; j < dgv.Rows.Count; j++)
-                //{
-                //    //colRange.NumberFormat = "0";
-                //    if (indxColDgv > ((int)DGVVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
-                //        colRange.Cells[_indxrow] = s_VedCalculate.AsParseToF(Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value));
-                //    else
-                //        colRange.Cells[_indxrow] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-
-                //    paintBorder((Excel.Range)colRange.Cells[_indxrow], (int)Excel.XlLineStyle.xlContinuous);
-                //    _indxrow++;
-                //}             
+                paintBorder(rangeFill, (int)Excel.XlLineStyle.xlContinuous);            
             }
 
             /// <summary>
@@ -4228,11 +4191,6 @@ namespace PluginTaskVedomostBl
             int err = -1;
             DateTimeRange[] dtR = HandlerDb.GetDateTimeRangeValuesVarArchive();
 
-            //if (!WhichBlIsSelected)
-            //    dtR = HandlerDb.GetDateTimeRangeValuesVar();
-            //else
-            //    dtR = HandlerDb.GetDateTimeRangeValuesVarExtremeBL();
-
             m_arTableOrigin[(int)m_ViewValues] =
                 HandlerDb.GetDataOutval(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, dtR, out err);
             //HandlerDb.GetInVal(Type
@@ -4245,8 +4203,6 @@ namespace PluginTaskVedomostBl
             , valuesFence()
             , (int)Session.m_currIdTimezone
             , out err);
-
-            //base.HPanelTepCommon_btnSave_Click(obj, ev);
 
             saveInvalValue(out err);
         }
