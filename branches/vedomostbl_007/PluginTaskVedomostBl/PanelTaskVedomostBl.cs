@@ -10,7 +10,6 @@ using System.Linq;
 using System.Windows.Forms;
 using TepCommon;
 using Excel = Microsoft.Office.Interop.Excel;
-using GemBox;
 
 namespace PluginTaskVedomostBl
 {
@@ -2021,11 +2020,7 @@ namespace PluginTaskVedomostBl
                    , _hoursOffSet
                    , iCol = 0
                    , _vsRatioValue = -1;
-                double dblVal = -1F
-                    //,dbSumVal = 0
-                    ;
-
-                //addRow(_dtEditVal, RowCount);
+                double dblVal = -1F;
 
                 DataRow[] parameterRows = null,
                     editRow = null;
@@ -2065,7 +2060,6 @@ namespace PluginTaskVedomostBl
                                         Rows[i].Cells["Date"].Value.ToString())
                                 {
                                     Rows[i].Cells[iCol].Value =
-                                    //_dtEditVal.Rows[i][colindex] =
                                     (((double)editRow[i][@"VALUE"]).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound,
                                               CultureInfo.InvariantCulture));
                                 }
@@ -2074,11 +2068,9 @@ namespace PluginTaskVedomostBl
                             {
                                 if (m_dictPropertyColumns[col.m_IdAlg].m_Avg == 0)
                                     Rows[RowCount - 1].Cells[iCol].Value =
-                                    //_dtEditVal.Rows[RowCount - 1][colindex] =
                                         sumVal(_dtEditVal, col.Index).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound, CultureInfo.InvariantCulture);
                                 else
                                     Rows[RowCount - 1].Cells[iCol].Value =
-                                    //_dtEditVal.Rows[RowCount - 1][colindex] =
                                         avgVal(_dtEditVal, col.Index).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound, CultureInfo.InvariantCulture);
                             }
                             catch (Exception exp)
@@ -2725,7 +2717,7 @@ namespace PluginTaskVedomostBl
                 //заполнение
                 var arrayVar = arrayData;
                 rangeFill.Value2 = arrayVar;
-                paintBorder(rangeFill, (int)Excel.XlLineStyle.xlContinuous);            
+                paintBorder(rangeFill, (int)Excel.XlLineStyle.xlContinuous);
             }
 
             /// <summary>
@@ -3958,14 +3950,12 @@ namespace PluginTaskVedomostBl
                 //Запрос для получения архивных данных
                 m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutvalArch(Type, HandlerDb.GetDateTimeRangeValuesVarArchive(), out err);
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
-                (
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(
                 Type
                 , ActualIdPeriod
                 , CountBasePeriod
                 , arQueryRanges
-               , out err
-                );
+               , out err);
             //Проверить признак выполнения запроса
             if (err == 0)
             {
