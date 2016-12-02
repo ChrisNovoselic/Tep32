@@ -2157,6 +2157,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="dtSourceOrg">таблица с оригинальными данными</param>
             /// <param name="idSession">номер сессии пользователя</param>
+            /// <param name="typeValues">тип данных</param>
             /// <returns>таблица с новыми данными с вьюхи</returns>
             public DataTable FillTableToSave(DataTable dtSourceOrg, int idSession, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {

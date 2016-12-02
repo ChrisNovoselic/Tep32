@@ -90,11 +90,11 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.DAY : Session.m_currIdPeriod; } }
+        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION ? ID_PERIOD.DAY : Session.m_currIdPeriod; } }
         /// <summary>
         /// Признак отображаемых на текущий момент значений
         /// </summary>
-        protected INDEX_VIEW_VALUES m_ViewValues;
+        protected HandlerDbTaskCalculate.INDEX_TABLE_VALUES m_ViewValues;
         /// <summary>
         /// Таблицы со значениями словарных, проектных данных
         /// </summary>
@@ -769,11 +769,12 @@ namespace PluginTaskReaktivka
 
             DateTimeRange[] dtR = HandlerDb.GetDateTimeRangeValuesVar();
 
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            HandlerDb.GetInVal(Type
-            , dtR
-            , ActualIdPeriod
-            , out err);
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = 
+                HandlerDb.GetDataOutval(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, dtR, out err);
+            //HandlerDb.GetInVal(Type
+            //, dtR
+            //, ActualIdPeriod
+            //, out err);
 
             m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                 HandlerDb.SaveValues(m_TableOrigin, valuesFence, (int)Session.m_currIdTimezone, out err);
@@ -788,7 +789,7 @@ namespace PluginTaskReaktivka
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
+            m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION;
 
             onButtonLoadClick();
         }
@@ -800,7 +801,7 @@ namespace PluginTaskReaktivka
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
+            m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE;
 
             onButtonLoadClick();
         }
@@ -1878,7 +1879,10 @@ namespace PluginTaskReaktivka
                                     WR_DATETIME = r.Field<DateTime>("WR_DATETIME"),
                                 }).Distinct();
 
-                foreach (HDataGridViewColumn col in Columns)
+                //if ((int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION == (int)typeValues)
+                //    ;
+
+                    foreach (HDataGridViewColumn col in Columns)
                 {
                     if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
                     {
@@ -1966,10 +1970,13 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// Сохранение значений отображения в табилцу
+            /// Формирование таблицы данных с отображения
             /// </summary>
-            /// <returns>таблица с данными</returns>
-            public DataTable GetValue(DataTable dtSourceOrg, int idSession)
+            /// <param name="dtSourceOrg">таблица с оригинальными данными</param>
+            /// <param name="idSession">номер сессии пользователя</param>
+            /// <param name="typeValues">тип данных</param>
+            /// <returns>таблица с новыми данными с вьюхи</returns>
+            public DataTable GetValue(DataTable dtSourceOrg, int idSession, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
                 int i = 0,
                     idAlg = -1,
@@ -2004,7 +2011,7 @@ namespace PluginTaskReaktivka
                                         valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
                                         dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
 
-                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i);
+                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i, idAlg, typeValues);
 
                                         dtSourceEdit.Rows.Add(new object[]
                                         {
@@ -2078,20 +2085,41 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// Проверка на изменение значения
+            /// Проверка на изменение значений в двух таблицах
             /// </summary>
             /// <param name="origin">оригинальная таблица</param>
             /// <param name="editValue">значение</param>
             /// <param name="i">номер строки</param>
+            /// <param name="idAlg">номер алгоритма</param>
+            /// <param name="typeValues">тип данных</param>
             /// <returns>показатель изменения</returns>
-            private int diffRowsInTables(DataTable origin, double editValue, int i)
+            private int diffRowsInTables(DataTable origin, double editValue, int i,int idAlg, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
-                int quality = 0;
+                int quality = 1;
+                double originValues;
 
                 origin = sortingTable(origin, "ID_PUT, WR_DATETIME");
 
-                if (origin.Rows[i]["Value"].ToString() != editValue.ToString())
-                    quality = 1;
+                if (origin.Rows.Count - 1 < i)
+                    originValues = 0;
+                else
+                    originValues =
+                        AsParseToF(origin.Rows[i]["VALUE"].ToString());
+
+                switch (typeValues)
+                {
+                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE:
+                        if (originValues.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, CultureInfo.InvariantCulture) != editValue.ToString())
+                            quality = 2;
+                        break;
+                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION:
+                        quality = 1;
+                        break;
+                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT:
+                        break;
+                    default:
+                        break;
+                }
 
                 return quality;
             }
@@ -2423,14 +2451,14 @@ namespace PluginTaskReaktivka
 
                 if (err == 0)
                 {
-                    if (m_TableOrigin.Rows.Count > 0)
+                    if (m_arTableOrigin[(int)m_ViewValues].Rows.Count > 0)
                     {
                         // создать копии для возможности сохранения изменений
                         setValues();
                         // отобразить значения
-                        m_dgvReak.ShowValues(m_TableOrigin);
+                        m_dgvReak.ShowValues(m_arTableOrigin[(int)m_ViewValues]);
                         //
-                        m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
+                        m_arTableEdit[(int)m_ViewValues] = valuesFence;
                     }
                     else
                         deleteSession();
@@ -2500,8 +2528,9 @@ namespace PluginTaskReaktivka
             strErr = string.Empty;
             //Создание сессии
             Session.New();
-            //Запрос для получения архивных данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            if (m_ViewValues == HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE)
+                //Запрос для получения архивных данных
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutvalArch(Type, HandlerDb.GetDateTimeRangeValuesVarArchive(), out err);
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
@@ -2549,7 +2578,7 @@ namespace PluginTaskReaktivka
         {
             get
             { //сохранить вх. знач. в DataTable
-                return m_dgvReak.GetValue(m_TableOrigin, (int)Session.m_Id);
+                return m_dgvReak.GetValue(m_TableOrigin, (int)Session.m_Id,m_ViewValues);
             }
         }
 
@@ -2565,7 +2594,7 @@ namespace PluginTaskReaktivka
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
 
-            strRes = HandlerDbValues.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = HandlerDbValues.s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }
