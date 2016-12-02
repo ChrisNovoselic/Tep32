@@ -1916,7 +1916,7 @@ namespace PluginTaskReaktivka
                                         row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
                                         vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
 
-                                        dblVal *= Math.Pow(10F, 1 * vsRatioValue);
+                                        dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
                                         row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                             CultureInfo.InvariantCulture);
@@ -2001,7 +2001,7 @@ namespace PluginTaskReaktivka
                                         valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
                                         vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
 
-                                        valueToRes *= Math.Pow(10F, -1 * vsRatioValue);
+                                        valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
                                         dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
 
                                         quality = diffRowsInTables(dtSourceOrg, valueToRes, i);

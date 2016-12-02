@@ -553,6 +553,25 @@ namespace PluginTaskBalTeplo
             }
         }
 
+        private DataTable mergeSessionDefault(DataTable dt_Session, DataTable dt_Default)
+        {
+            int id_session = int.Parse(dt_Session.Rows[0]["ID_SESSION"].ToString());
+            int quality = int.Parse(dt_Session.Rows[0]["QUALITY"].ToString());
+            DateTime wr_datetime = DateTime.Parse(dt_Session.Rows[0]["WR_DATETIME"].ToString());
+            string extended_def = dt_Session.Rows[0]["EXTENDED_DEFINITION"].ToString();
+
+            foreach (DataRow row in dt_Default.Rows)
+            {
+                DataRow[] rows_Session = dt_Session.Select("ID_PUT=" + row["ID_PUT"]);
+                if(rows_Session.Length==0)
+                {
+                    object[] obj_row = new object[] {row["ID_PUT"], id_session, quality, row["VALUE"], wr_datetime, extended_def};
+                    dt_Session.Rows.Add(obj_row);
+                }
+            }
+            return dt_Session;
+        }
+
         private void CS_Source(int idFPanel
             , int cntBasePeriod
             , DataTable tablePars
@@ -571,6 +590,9 @@ namespace PluginTaskBalTeplo
             {
                 //Вставить строку с идентификатором новой сессии
                 insertIdSession(idFPanel, cntBasePeriod, out err);
+
+                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = mergeSessionDefault(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]);
+
                 //Вставить строки в таблицу БД со входными значениями для расчета
                 insertInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
 
@@ -896,7 +918,8 @@ namespace PluginTaskBalTeplo
                       + rowSel[@"ID_PUT"] + @"," //ID_PUT
                       + rowSel[@"QUALITY"] + @"," //QUALITY
                       + rowSel[@"VALUE"].ToString().Replace(',', '.') + @"," + //VALUE
-                    "'" + rowSel[@"WR_DATETIME"]
+                    "'" + rowSel[@"WR_DATETIME"] + @"'," +
+                    "'" + HDateTime.ToMoscowTimeZone().ToString()
                       ;
 
                     strQuery += @"'),";
@@ -1089,7 +1112,7 @@ namespace PluginTaskBalTeplo
         /// <returns>таблицу значений</returns>
         public DataTable saveResOut(DataTable tableOrigin, DataTable tableRes, out int err)
         {
-            err = -1;
+            err = 0;
             DataTable tableEdit = new DataTable();
             string rowSel = null;
             tableEdit = tableOrigin.Clone();//копия структуры
@@ -1109,9 +1132,9 @@ namespace PluginTaskBalTeplo
                                 rowSel
                                 , HUsers.Id.ToString()
                                 , 0.ToString()
-                                , Convert.ToDateTime(_Session.m_rangeDatetime.Begin.ToUniversalTime().ToString()).ToString(CultureInfo.InvariantCulture)
+                                , (_Session.m_rangeDatetime.Begin - getOffsetMoscowToUTC).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
-                                , ID_TIMEZONE.NSK
+                                , ID_TIMEZONE.MSK
                                 , 1.ToString()
                                 , tableRes.Rows[i]["VALUE"]
                                 , DateTime.Now
@@ -1126,6 +1149,52 @@ namespace PluginTaskBalTeplo
         }
 
         /// <summary>
+        /// Смещение по времени до Москвы
+        /// </summary>
+        private TimeSpan getOffsetToMoscow
+        {
+            get
+            {
+                TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset - TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset;
+                
+                return offset;
+            }
+            set
+            {
+            }
+        }
+        /// <summary>
+        /// Смещение по времени Москвы до UTC
+        /// </summary>
+        private TimeSpan getOffsetMoscowToUTC
+        {
+            get
+            {
+                TimeSpan offset = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset;
+                
+                return offset;
+            }
+            set
+            {
+            }
+        }
+        /// <summary>
+        /// Смещение по времени до UTC
+        /// </summary>
+        private TimeSpan getOffsetToUTC
+        {
+            get
+            {
+                TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
+
+                return offset;
+            }
+            set
+            {
+            }
+        }
+
+        /// <summary>
         /// Формирование таблицы для сохранения значений IN
         /// </summary>
         /// <param name="tableOrigin">первичная таблица</param>
@@ -1134,7 +1203,7 @@ namespace PluginTaskBalTeplo
         /// <returns>таблицу значений</returns>
         public DataTable saveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
         {
-            err = -1;
+            err = 0;
             DataTable tableEdit = new DataTable();
             string rowSel = null;
             tableEdit = tableOrigin.Clone();//копия структуры
@@ -1145,15 +1214,15 @@ namespace PluginTaskBalTeplo
                 for (int i = 0; i < tableRes.Rows.Count; i++)
                 {
                     rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
-
+                    
                     tableEdit.Rows.Add(new object[]
                             {
                                 rowSel
                                 , HUsers.Id.ToString()
                                 , 0.ToString()
-                                , Convert.ToDateTime(_Session.m_rangeDatetime.Begin.ToUniversalTime().ToString()).ToString(CultureInfo.InvariantCulture)
+                                , (_Session.m_rangeDatetime.Begin - getOffsetMoscowToUTC).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
-                                , ID_TIMEZONE.NSK
+                                , ID_TIMEZONE.MSK
                                 , 1.ToString()
                                 , tableRes.Rows[i]["VALUE"]
                                 , DateTime.Now
@@ -1251,7 +1320,7 @@ namespace PluginTaskBalTeplo
                 UNKNOWN = -1
                     , iBL1, iBL2, iBL3, iBL4, iBL5, iBL6,
                 iOP1, iOP2, iOP3, iOP4, iOP5, iOP6,
-                iPP1, iPP2, iPP3, iPP4, iPP5, iPP6, iPP7, iPP8,
+                iPP2, iPP3, iPP4, iPP5, iPP6, iPP7, iPP8,
                 iST
                     , COUNT
             };
@@ -1270,7 +1339,6 @@ namespace PluginTaskBalTeplo
                 , OP4 = 2004
                 , OP5 = 2005
                 , OP6 = 2006
-                , PP1 = 3001
                 , PP2 = 3002
                 , PP3 = 3003
                 , PP4 = 3004
@@ -1286,7 +1354,7 @@ namespace PluginTaskBalTeplo
             {
                 BL1, BL2, BL3, BL4, BL5, BL6
                 ,OP1,OP2,OP3,OP4,OP5,OP6
-                ,PP1,PP2,PP3,PP4,PP5,PP6,PP7,PP8
+                    ,PP2,PP3,PP4,PP5,PP6,PP7,PP8
                     , ST
             };
             /// <summary>
@@ -1395,7 +1463,7 @@ namespace PluginTaskBalTeplo
                                 + (3.7 * Math.Pow(10, -8) + 3.588 * Math.Pow(10, -8) * Math.Pow((In["1.2"][ID_COMP[i]].value / 100), 3) - 4.05 * Math.Pow(10, -13) * Math.Pow((In["1.2"][ID_COMP[i]].value / 100), 9)) * Math.Pow(((50 - In["1.4"][ID_COMP[i]].value * 0.0980665) / 10), 2) +
                                 +1.1766 * Math.Pow(10, -13) * Math.Pow((In["1.2"][ID_COMP[i]].value / 100), 12) * Math.Pow(((50 - In["1.4"][ID_COMP[i]].value * 0.0980665) / 10), 4);
 
-                            Out[nAlg][ID_COMP[i]].value = (float)str * 10000;
+                            Out[nAlg][ID_COMP[i]].value = (float)str /* 10000*/;
                             fRes += Out[nAlg][ID_COMP[i]].value;
                             Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
                         }
@@ -1472,7 +1540,7 @@ namespace PluginTaskBalTeplo
 
                     #region 2.1
                     case @"2.1": //Энтальпия пр вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
                             double p = In["2.5"][ID_COMP[i]].value;
                             double t = In["2.3"][ID_COMP[i]].value;
@@ -1485,7 +1553,7 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
-                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
 
                         }
                         break;
@@ -1493,7 +1561,7 @@ namespace PluginTaskBalTeplo
 
                     #region 2.2
                     case @"2.2": //Энтальпия обр вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
                             double p = In["2.6"][ID_COMP[i]].value;
                             double t = In["2.4"][ID_COMP[i]].value;
@@ -1506,7 +1574,7 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
-                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
 
                         }
                         break;
@@ -1514,7 +1582,7 @@ namespace PluginTaskBalTeplo
 
                     #region 2.3
                     case @"2.3": //Q БД вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = In["7.1"][ID_COMP[i]].value;
                             fRes += Out[nAlg][ID_COMP[i]].value;
@@ -1526,7 +1594,7 @@ namespace PluginTaskBalTeplo
 
                     #region 2.4
                     case @"2.4": //Q расч вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = (In["2.1"][ID_COMP[i]].value * (Out["2.1"][ID_COMP[i]].value - In["5.2"][ID_COMP[(int)INDX_COMP.iST]].value)) / 1000;
 
@@ -1542,7 +1610,11 @@ namespace PluginTaskBalTeplo
                         for (i = (int)INDX_COMP.iST; i < (int)INDX_COMP.COUNT; i++)
                         {
                             double str = 0;
-                            Out[nAlg][ID_COMP[i]].value = In["7.1"][ID_COMP[i]].value;
+                            if (Out["3.2"][ID_COMP[i]].value == 0)
+                            {
+                                calculateOut("3.2");
+                            }
+                            Out[nAlg][ID_COMP[i]].value = (In["3.1"][ID_COMP[i]].value * (Out["3.2"][ID_COMP[i]].value - In["5.2"][ID_COMP[(int)INDX_COMP.iST]].value)) / 1000;
 
                             fRes += Out[nAlg][ID_COMP[i]].value;
                         }
@@ -1638,7 +1710,7 @@ namespace PluginTaskBalTeplo
 
                     #region 5.2
                     case @"5.2": //Тепло вывода F2              
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
                             fRes += In["2.1"][ID_COMP[i]].value * Out["2.1"][ID_COMP[i]].value - In["2.2"][ID_COMP[i]].value * Out["2.2"][ID_COMP[i]].value;
                         }
@@ -1660,7 +1732,7 @@ namespace PluginTaskBalTeplo
 
                     #region 6.1
                     case @"6.1": //Q бд
-                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
                             double str = 0;
 
@@ -1676,7 +1748,7 @@ namespace PluginTaskBalTeplo
 
                     #region 6.2
                     case @"6.2": //Q расч
-                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
                             Out[nAlg][ID_COMP[i]].value = (In["6.1"][ID_COMP[i]].value * (Out["6.3"][ID_COMP[i]].value - In["5.2"][ID_COMP[(int)INDX_COMP.iST]].value)) / 1000;
 
@@ -1690,7 +1762,7 @@ namespace PluginTaskBalTeplo
                     #region 6.3
                     case @"6.3": //Энтальпия пр
                     entpr:
-                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
                             double p = In["6.5"][ID_COMP[i]].value;
                             double t = In["6.3"][ID_COMP[i]].value;
@@ -1703,7 +1775,7 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
-                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iST - (int)INDX_COMP.iPP1);
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iST - (int)INDX_COMP.iPP2);
 
                         }
                         nAlg = "6.4";
@@ -1715,7 +1787,7 @@ namespace PluginTaskBalTeplo
                     #region 6.4
                     case @"6.4": //Энтальпия обр
                     entob:
-                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
                             double p = In["6.6"][ID_COMP[i]].value;//Индекс обратного давления
                             double t = In["6.4"][ID_COMP[i]].value;
@@ -1728,7 +1800,7 @@ namespace PluginTaskBalTeplo
 
                             Out[nAlg][ID_COMP[i]].value = (float)str;
                             fRes += Out[nAlg][ID_COMP[i]].value;
-                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iST - (int)INDX_COMP.iPP1);
+                            Out[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = fRes / ((int)INDX_COMP.iST - (int)INDX_COMP.iPP2);
 
                         }
                         break;
@@ -1759,7 +1831,7 @@ namespace PluginTaskBalTeplo
                         }
 
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
-                        fRes += In["1.1"][ID_COMP[(int)INDX_COMP.iST]].value;
+                        fRes += In["1.1"][ID_COMP[i-1]].value;
                         break;
                     #endregion
 
@@ -1791,6 +1863,7 @@ namespace PluginTaskBalTeplo
                     case @"1.4": //Энтальпия обр
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
                         {
+                            In["1.4"][ID_COMP[i]].value = In["1.4"][ID_COMP[i]].value/* * (float)10.197*/;
                             str = str + In["1.4"][ID_COMP[i]].value;
                         }
                         str = str / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
@@ -1813,7 +1886,7 @@ namespace PluginTaskBalTeplo
 
                     #region 2.1
                     case @"2.1": //Энтальпия пр вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
@@ -1825,7 +1898,7 @@ namespace PluginTaskBalTeplo
 
                     #region 2.2
                     case @"2.2": //Энтальпия обр вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
@@ -1838,11 +1911,11 @@ namespace PluginTaskBalTeplo
 
                     #region 2.3
                     case @"2.3": //Q БД вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
-                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
@@ -1850,43 +1923,95 @@ namespace PluginTaskBalTeplo
 
                     #region 2.4
                     case @"2.4": //Q расч вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
-                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
                     #endregion
 
                     #region 2.5
-                    case @"2.5": //Q расч вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                    case @"2.5": 
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
+                            In[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value * (float)10.197;
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
-                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
                     #endregion
 
                     #region 2.6
-                    case @"2.6": //Q расч вывод
-                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP1; i++)
+                    case @"2.6": 
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
                         {
+                            In[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value * (float)10.197;
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
-                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
                     #endregion
 
+                    #region 3.3
+                    case @"3.3": //T циркулир. воды ТС по блокам
+                        int col = 0;
+                        for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++)
+                        {
+                            str = str + In["1.3"][ID_COMP[i]].value;
+                            col++;
+                        }
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)(str/col);
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 3.4
+                    case @"3.4":
+
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value /** (float)10.197*/;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 4.3
+                    case @"4.3": //T обратной воды ТС по выводам
+                        double temp_vzves = 0;
+                        for (i = (int)INDX_COMP.iOP1; i < (int)INDX_COMP.iPP2; i++)
+                        {
+                            str = str + In["2.2"][ID_COMP[i]].value;
+                            temp_vzves = temp_vzves + (In["2.2"][ID_COMP[i]].value * In["2.4"][ID_COMP[i]].value);
+                        }
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)(temp_vzves/str);
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 4.4
+                    case @"4.4":
+
+                        In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value * (float)10.197;
+                        fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                        break;
+                    #endregion
+
+                    #region 5.1
+                    //case @"5.1":
+
+                    //    In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value * (float)10.197;
+                    //    fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
+                    //    break;
+                    #endregion
+
                     #region 6.1
                     case @"6.1": //Энтальпия пр вывод
-                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
@@ -1898,7 +2023,7 @@ namespace PluginTaskBalTeplo
 
                     #region 6.2
                     case @"6.2": //Энтальпия обр вывод
-                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
@@ -1911,11 +2036,11 @@ namespace PluginTaskBalTeplo
 
                     #region 6.3
                     case @"6.3": //Q БД вывод
-                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
-                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
@@ -1923,11 +2048,11 @@ namespace PluginTaskBalTeplo
 
                     #region 6.4
                     case @"6.4": //Q расч вывод
-                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
-                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
@@ -1935,11 +2060,12 @@ namespace PluginTaskBalTeplo
 
                     #region 6.5
                     case @"6.5": //Q расч вывод
-                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
+                            In[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value * (float)10.197;
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
-                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;
@@ -1947,11 +2073,12 @@ namespace PluginTaskBalTeplo
 
                     #region 6.6
                     case @"6.6": //Q расч вывод
-                        for (i = (int)INDX_COMP.iPP1; i < (int)INDX_COMP.iST; i++)
+                        for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++)
                         {
+                            In[nAlg][ID_COMP[i]].value = In[nAlg][ID_COMP[i]].value * (float)10.197;
                             str = str + In[nAlg][ID_COMP[i]].value;
                         }
-                        str = str / ((int)INDX_COMP.iPP1 - (int)INDX_COMP.iOP1);
+                        str = str / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
                         In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value = (float)str;
                         fRes += In[nAlg][ID_COMP[(int)INDX_COMP.iST]].value;
                         break;

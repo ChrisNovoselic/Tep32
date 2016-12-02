@@ -56,7 +56,6 @@ namespace TepCommon
         public HTepUsers(int iListenerId)
             : base(iListenerId)
         {
-            m_tblValues = new DataTable();
         }
         /// <summary>
         /// Роль пользователя (из БД конфигурации)
@@ -206,7 +205,12 @@ namespace TepCommon
 
             return tableRes;
         }
-        
+        /// <summary>
+        /// Метод возвращающий список вкладок открытых пользователем в предыдущей сессии
+        /// </summary>
+        /// <param name="id">Идентификатор параметра открытых вкладок</param>
+        /// <param name="connSett">Параменты подключения к БД</param>
+        /// <returns>Список вкладок в виде строки</returns>
         public static string GetAllowed(int id, ConnectionSettings connSett)
         {
             string strRes = string.Empty;
@@ -224,25 +228,39 @@ namespace TepCommon
 
             return strRes;
         }
+        /// <summary>
+        /// Добавление открытой вкладки
+        /// </summary>
+        /// <param name="id">ИД параметра содержащего открытые вкладки</param>
+        /// <param name="val">ИД вкладки</param>
+        /// <param name="connSett">Параметры подключения к БД</param>
         public static void SetAllowed(int id, string val, ConnectionSettings connSett)
         {
             //HTepProfilesXml.UpdateProfile(connSett);
             HTepProfilesXml.EditAttr(val, id, connSett);
         }
+        /// <summary>
+        /// Метод указывающий содержатся ли вкладки в списке открытых в пред сессии
+        /// </summary>
+        /// <param name="id">ИД параметра</param>
+        /// <param name="connSett">Параметры подключения к БД</param>
+        /// <returns></returns>
         public static bool IsAllowed(int id, ConnectionSettings connSett)
         {
             return bool.Parse(GetAllowed(id, connSett));
         }
-
+        /// <summary>
+        /// Свойство возвращающее таблицу с описанием атрибутов Profile
+        /// </summary>
         new public static DataTable GetTableProfileUnits { get { return HTepProfilesXml.GetTableUnits; } }
-
-
+        /// <summary>
+        /// Структура визуальных настроек элемента
+        /// </summary>
         public struct VISUAL_SETTING
         {
             public int m_ratio;
             public int m_round;
         }
-
         /// <summary>
         /// Структура со значением и типом значения
         /// </summary>
@@ -251,155 +269,28 @@ namespace TepCommon
             public object m_value;
             public int m_idType;
         }
-
-        static DataTable m_tblValues;
-        static bool m_bIsRole;
-
-
-        public static int s_iRatioDefault = 0
-            , s_iRoundDefault = 2;
         /// <summary>
-        /// Получить таблицу с установками для отображения значений
+        /// Значение по умолчанию для множителя
         /// </summary>
-        /// <param name="connSett">Параметры соединения с БД</param>
-        /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
-        /// <param name="err">Результат выполнения функции</param>
-        /// <returns>Таблица с установками для отображения значений</returns>
-        //public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(ConnectionSettings connSett, int[] fields, out int err)
-        //{
-        //    err = -1; //Обшая ошибка
-        //    int idListener = -1;
-        //    Dictionary<string, VISUAL_SETTING> dictRes;
-
-        //    idListener = DbSources.Sources().Register(connSett, false, @"MAIN_DB");
-
-        //    dictRes = GetParameterVisualSettings(idListener, fields, out err);
-
-        //    DbSources.Sources().UnRegister(idListener);
-
-        //    return dictRes;
-        //}
+        public static int s_iRatioDefault = 0;
         /// <summary>
-        /// Получить таблицу с установками для отображения значений
+        /// Значение по умолчанию для кол-ва знвков после запятой
         /// </summary>
-        /// <param name="idListener">Идентификатор установленного соединения с БД</param>>
-        /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
-        /// <param name="err">Результат выполнения функции</param>
-        /// <returns>Таблица с установками для отображения значений</returns>
-        public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(int idListener, int[] fields, out int err)
+        public static int s_iRoundDefault = 2;
+        /// <summary>
+        /// Структура содержащая в себе атрибуты выбранного объекта и словарь с вложенными в него элементами
+        /// </summary>
+        public struct DictElement
         {
-            err = -1; //Обшая ошибка
-            DbConnection dbConn = null;
-            Dictionary<string, VISUAL_SETTING> dictRes = new Dictionary<string, VISUAL_SETTING>();
+            /// <summary>
+            /// Словарь с вложенными объектами
+            /// </summary>
+            public Dictionary<string, DictElement> Objects;
 
-            dbConn = DbSources.Sources().GetConnection(idListener, out err);
-
-            if (err == 0)
-                dictRes = GetParameterVisualSettings(ref dbConn, fields, out err);
-            else
-                ; // не удалось получить объект соединения с БД по идентификатору
-
-            return dictRes;
-        }
-        /// <summary>
-        /// Получить таблицу с установками для отображения значений
-        /// </summary>
-        /// <param name="dbConn">Объект соединения с БД</param>
-        /// <param name="fields">Значения для подстановки в предложение 'where' при выборке записей из профиля группы пользователя (пользователя)</param>
-        /// <param name="err">Результат выполнения функции</param>
-        /// <returns>Таблица с установками для отображения значений</returns>
-        public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(ref DbConnection dbConn, int[] fields, out int err)
-        {
-            err = -1; //Обшая ошибка
-            string strQuery = string.Empty;
-            int id_unit = -1 // идентификатор параметра настроек при отображении значения [profiles_unit]
-                , ratio = -1 // коэффициент
-                , round = -1 // кол-во знаков при округлении
-                , checkSum = (int)ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND
-                    + (int)ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO
-                , curSum = -1;
-            string n_alg = string.Empty;
-            Dictionary<string, VISUAL_SETTING> dictRes = new Dictionary<string, VISUAL_SETTING>();
-            DataTable tblRes = new DataTable()
-                //, tblRatio
-                ;
-            DataRow[] rowsAlg = null;
-
-            if (fields.Length == (int)INDEX_VISUALSETTINGS_PARAMS.COUNT)
-            {
-                strQuery = @"SELECT CONTEXT as [ID], [ID_UNIT], [IS_ROLE], [VALUE]"
-                            + @" FROM [dbo].[profiles]"
-                            + @" WHERE"
-                                + @" ID_UNIT IN ("
-                                    + (int)ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND + @","
-                                    + (int)ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO
-                                    + @")"
-                                + @" AND ((ID_EXT=" + Id + @" AND " + @"IS_ROLE=0)"
-                                    + @" OR (ID_EXT=" + Role + @" AND " + @"IS_ROLE=1))"
-                                //+ @" AND ID_TASK=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TASK]
-                                //+ @" AND ID_PLUGIN=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.PLUGIN]
-                                + @" AND ID_TAB=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]
-                                + @" AND ID_ITEM=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM]
-                            //+ @" AND CONTEXT=" + fields[(int)INDEX_VISUALSETTINGS_PARAMS.CONTEXT]
-                            + @" ORDER BY [ID_UNIT], [ID]"
-                                ;
-
-                tblRes = DbTSQLInterface.Select(ref dbConn, strQuery, null, null, out err);
-                //tblRatio = DbTSQLInterface.Select(ref dbConn, @"SELECT * FROM [ratio]", null, null, out err);
-
-                try
-                {
-                    foreach (DataRow r in tblRes.Rows)
-                    {
-                        n_alg = r[@"ID"].ToString();
-                        ratio = s_iRatioDefault;
-                        round = s_iRoundDefault;
-
-                        if (dictRes.ContainsKey(n_alg.Trim()) == false)
-                        {
-                            rowsAlg = tblRes.Select(@"ID='" + n_alg + "'", @"ID_UNIT, IS_ROLE"); // приоритет значений для [IS_ROLE] = 0                            
-
-                            curSum = 0;
-                            foreach (DataRow rAlg in rowsAlg)
-                            {
-                                id_unit = (Int16)rAlg[@"ID_UNIT"];
-
-                                switch ((ID_ALLOWED)id_unit)
-                                {
-                                    case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
-                                        ratio = int.Parse(((string)rAlg[@"VALUE"]).Trim());
-                                        //ratio = Math.Pow(10F, (int)tblRatio.Select(@"ID=" + (int)rAlg[@"VALUE"])[0][@"VALUE"]);
-                                        break;
-                                    case ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND:
-                                        round = int.Parse(((string)rAlg[@"VALUE"]).Trim());
-                                        break;
-                                    default:
-                                        break;
-                                }
-
-                                curSum += id_unit;
-
-                                if (curSum == checkSum)
-                                    break;
-                                else
-                                    ;
-                            }
-
-                            dictRes.Add(n_alg.Trim(), new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
-                        }
-                        else
-                            ; // continue, этот параметр уже обработан
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"HTepUsers::GetParameterVisualSettings () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-            else
-                ; // невозможно сформировать запрос - недостаточно параметров
-
-            return dictRes;
+            /// <summary>
+            /// Словарь с атрибутами объекта
+            /// </summary>
+            public Dictionary<string, string> Attributes;
         }
         /// <summary>
         /// Получить таблицу с установками для отображения значений
@@ -422,21 +313,20 @@ namespace TepCommon
             Dictionary<string, VISUAL_SETTING> dictRes = new Dictionary<string, VISUAL_SETTING>();
             DataTable tblRes = new DataTable()
                 //, tblRatio
-                ;
-            DataRow[] rowsAlg = null;
-
-            //HTepProfilesXml.UpdateProfile(connSett);
+                ;            
 
             if (fields.Length == (int)INDEX_VISUALSETTINGS_PARAMS.COUNT)
             {
+                //Получения элемента со словарями атрибутов и вложенных элементов для панели
                 DictElement dictElement = HTepProfilesXml.GetProfileUserPanel(Id, Role, fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]);
-
+                
                 Dictionary<string, DictElement> dictProfile = new Dictionary<string, DictElement>();
-
+                //Перебор Item'ов в панели
                 if (dictElement.Objects.ContainsKey(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()) == true)
                 {
+                    //Словарь с объектами в Item
                     dictProfile = dictElement.Objects[fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()].Objects;
-
+                    
                     foreach (string rAlg in dictProfile.Keys)
                     {
                         ratio = 0;
@@ -473,10 +363,127 @@ namespace TepCommon
 
             return dictRes;
         }
+        /// <summary>
+        /// Функция получения строки запроса пользователя
+        ///  /// <returns>Строка строку запроса</returns>
+        /// </summary>
+        private static string getUsersRequest(string where, string orderby)
+        {
+            string strQuery = string.Empty;
+            //strQuer//strQuery =  "SELECT * FROM users WHERE DOMAIN_NAME='" + Environment.UserDomainName + "\\" + Environment.UserName + "'";
+            //strQuery =  "SELECT * FROM users WHERE DOMAIN_NAME='NE\\ChrjapinAN'";
+            strQuery = "SELECT * FROM users";
+            if ((!(where == null)) && (where.Length > 0))
+                strQuery += " WHERE " + where;
+            else
+                ;
 
+            if ((!(orderby == null)) && (orderby.Length > 0))
+                strQuery += " ORDER BY " + orderby;
+            else
+                ;
 
+            return strQuery;
+        }
+        /// <summary>
+        /// Функция запроса для поиска пользователя
+        /// </summary>
+        new public static void GetUsers(ref DbConnection conn, string where, string orderby, out DataTable users, out int err)
+        {
+
+            err = 0;
+            users = null;
+
+            if (!(conn == null))
+            {
+                users = new DataTable();
+                Logging.Logg().Debug(@"HUsers::GetUsers () - запрос для поиска пользователей = [" + getUsersRequest(where, orderby) + @"]", Logging.INDEX_MESSAGE.NOT_SET);
+                users = DbTSQLInterface.Select(ref conn, getUsersRequest(where, orderby), null, null, out err);
+            }
+            else
+            {
+                err = -1;
+            }
+        }
+        /// <summary>
+        /// Функция взятия ролей из БД
+        /// </summary>
+        new public static void GetRoles(ref DbConnection conn, string where, string orderby, out DataTable roles, out int err)
+        {
+            err = 0;
+            roles = null;
+            string query = string.Empty;
+
+            if (!(conn == null))
+            {
+                roles = new DataTable();
+                query = @"SELECT * FROM ROLES_UNIT";
+
+                if ((where.Equals(null) == true) || (where.Equals(string.Empty) == true))
+                    query += @" WHERE ID < 500";
+                else
+                    query += @" WHERE " + where;
+
+                roles = DbTSQLInterface.Select(ref conn, query, null, null, out err);
+            }
+            else
+            {
+                err = -1;
+            }
+        }
+        /// <summary>
+        /// Получение словаря с Profile для ролей
+        /// </summary>
+        public static Dictionary<string, DictElement> GetDicpRolesProfile
+        {
+            get
+            {
+                Dictionary<string, DictElement> dictRoles = HTepProfilesXml.DictRoles;
+                return dictRoles;
+            }
+        }
+        /// <summary>
+        /// Получение словаря с Profile для пользователей
+        /// </summary>
+        public static Dictionary<string, DictElement> GetDicpUsersProfile
+        {
+            get
+            {
+                Dictionary<string, DictElement> dictUsers = HTepProfilesXml.DictUsers;
+                return dictUsers;
+            }
+        }
+        /// <summary>
+        /// Получение словаря с XML для ролей
+        /// </summary>
+        public static Dictionary<string, XmlDocument> GetDicpXmlRoles
+        {
+            get
+            {
+                Dictionary<string, XmlDocument> xmlRoles = HTepProfilesXml.XmlRoles;
+                return xmlRoles;
+            }
+        }
+        /// <summary>
+        /// Получение словаря с XML для пользователей
+        /// </summary>
+        public static Dictionary<string, XmlDocument> GetDicpXmlUsers
+        {
+            get
+            {
+                Dictionary<string, XmlDocument> xmlUsers = HTepProfilesXml.XmlUsers;
+                return xmlUsers;
+            }
+        }
+        
         protected class HTepProfiles : HProfiles
         {
+            /// <summary>
+            /// Конструктор
+            /// </summary>
+            /// <param name="idListener">ИД слушателя</param>
+            /// <param name="id_role">ИД роли</param>
+            /// <param name="id_user">ИД пользователя</param>
             public HTepProfiles(int idListener, int id_role, int id_user)
                 : base(idListener, id_role, id_user)
             {
@@ -515,8 +522,8 @@ namespace TepCommon
                                 ;
                         }
                         break;
-                    //default: //Ошибка - исключение
-                    //    throw new Exception(@"HUsers.HProfiles::GetAllowed (id=" + id_tab + @") - не найдено ни одной записи...");
+                        //default: //Ошибка - исключение
+                        //    throw new Exception(@"HUsers.HProfiles::GetAllowed (id=" + id_tab + @") - не найдено ни одной записи...");
                 }
 
                 // проверка не нужна, т.к. вызывается исключение
@@ -580,130 +587,16 @@ namespace TepCommon
             }
         }
         
-        /// <summary>
-        /// Функция получения строки запроса пользователя
-        ///  /// <returns>Строка строку запроса</returns>
-        /// </summary>
-        private static string getUsersRequest(string where, string orderby)
-        {
-            string strQuery = string.Empty;
-            //strQuer//strQuery =  "SELECT * FROM users WHERE DOMAIN_NAME='" + Environment.UserDomainName + "\\" + Environment.UserName + "'";
-            //strQuery =  "SELECT * FROM users WHERE DOMAIN_NAME='NE\\ChrjapinAN'";
-            strQuery = "SELECT * FROM users";
-            if ((!(where == null)) && (where.Length > 0))
-                strQuery += " WHERE " + where;
-            else
-                ;
-
-            if ((!(orderby == null)) && (orderby.Length > 0))
-                strQuery += " ORDER BY " + orderby;
-            else
-                ;
-
-            return strQuery;
-        }
-
-        /// <summary>
-        /// Функция запроса для поиска пользователя
-        /// </summary>
-        new public static void GetUsers(ref DbConnection conn, string where, string orderby, out DataTable users, out int err)
-        {
-
-            err = 0;
-            users = null;
-
-            if (!(conn == null))
-            {
-                users = new DataTable();
-                Logging.Logg().Debug(@"HUsers::GetUsers () - запрос для поиска пользователей = [" + getUsersRequest(where, orderby) + @"]", Logging.INDEX_MESSAGE.NOT_SET);
-                users = DbTSQLInterface.Select(ref conn, getUsersRequest(where, orderby), null, null, out err);
-            }
-            else
-            {
-                err = -1;
-            }
-        }
-
-        /// <summary>
-        /// Функция взятия ролей из БД
-        /// </summary>
-        new public static void GetRoles(ref DbConnection conn, string where, string orderby, out DataTable roles, out int err)
-        {
-            err = 0;
-            roles = null;
-            string query = string.Empty;
-
-            if (!(conn == null))
-            {
-                roles = new DataTable();
-                query = @"SELECT * FROM ROLES_UNIT";
-
-                if ((where.Equals(null) == true) || (where.Equals(string.Empty) == true))
-                    query += @" WHERE ID < 500";
-                else
-                    query += @" WHERE " + where;
-
-                roles = DbTSQLInterface.Select(ref conn, query, null, null, out err);
-            }
-            else
-            {
-                err = -1;
-            }
-        }
-
-        /// <summary>
-        /// Получение словаря с Profile для ролей
-        /// </summary>
-        public static Dictionary<string, DictElement> GetDicpRolesProfile
-        {
-            get
-            {
-                Dictionary<string, DictElement> dictRoles = HTepProfilesXml.DictRoles;
-                return dictRoles;
-            }
-        }
-
-        /// <summary>
-        /// Получение словаря с Profile для пользователей
-        /// </summary>
-        public static Dictionary<string, DictElement> GetDicpUsersProfile
-        {
-            get
-            {
-                Dictionary<string, DictElement> dictUsers = HTepProfilesXml.DictUsers;
-                return dictUsers;
-            }
-        }
-
-        /// <summary>
-        /// Получение словаря с XML для ролей
-        /// </summary>
-        public static Dictionary<string, XmlDocument> GetDicpXmlRoles
-        {
-            get
-            {
-                Dictionary<string, XmlDocument> xmlRoles = HTepProfilesXml.XmlRoles;
-                return xmlRoles;
-            }
-        }
-
-        /// <summary>
-        /// Получение словаря с XML для пользователей
-        /// </summary>
-        public static Dictionary<string, XmlDocument> GetDicpXmlUsers
-        {
-            get
-            {
-                Dictionary<string, XmlDocument> xmlUsers = HTepProfilesXml.XmlUsers;
-                return xmlUsers;
-            }
-        }
-        
         public class HTepProfilesXml
         {
+            /// <summary>
+            /// Имя таблицы содержащей XML с описанием Profile
+            /// </summary>
             public static string m_nameTableProfilesData = @"profiles";
+            /// <summary>
+            /// Имя таблицы содержащей описания атрибутов элементов
+            /// </summary>
             public static string m_nameTableProfilesUnit = @"profiles_unit";
-
             /// <summary>
             /// Перечисление индексов профайла
             /// </summary>
@@ -711,40 +604,40 @@ namespace TepCommon
             {
                 UNKNOW = -1,
                 TIMEZONE = 101, MAIL, PERIOD, IS_SAVE_SOURCE,
-                RATIO = 201, ROUND, EDIT_COLUMN = 204,
+                ROUND = 201, RATIO, INPUT_PARAM, EDIT_COLUMN = 204,
             }
-
-            protected static DataTable m_tblValues;
+            /// <summary>
+            /// Таблица содержащая описания атрибутов Profile
+            /// </summary>
             protected static DataTable m_tblTypes;
-            static XmlDocument xml_tree;
-
             /// <summary>
             /// Словарь с Профайлом для ролей
             /// </summary>
             public static Dictionary<string, DictElement> DictRoles;
-
             /// <summary>
             /// Словарь с Профайлом для пользователей
             /// </summary>
             public static Dictionary<string, DictElement> DictUsers;
-
             /// <summary>
             /// Словарь с XML для каждой роли
             /// </summary>
             public static Dictionary<string, XmlDocument> XmlRoles;
-
             /// <summary>
             /// Словарь с XML для каждого пользователя
             /// </summary>
             public static Dictionary<string, XmlDocument> XmlUsers;
-
-            static DataTable dtProfiles_Orig, dtProfiles_Edit;
-
+            /// <summary>
+            /// Оригинальная таблица с Profile
+            /// </summary>
+            static DataTable dtProfiles_Orig;
+            /// <summary>
+            /// Измененная таблица с Profile
+            /// </summary>
+            static DataTable dtProfiles_Edit;
             /// <summary>
             /// Тип XML (роль/пользователь)
             /// </summary>
             public enum Type : int { User, Role, Count };
-
             /// <summary>
             /// Типы элементов
             /// </summary>
@@ -762,7 +655,6 @@ namespace TepCommon
                     return dtProfiles_Orig;
                 }
             }
-
             /// <summary>
             /// Получить таблицу из БД
             /// </summary>
@@ -780,7 +672,6 @@ namespace TepCommon
                 DbSources.Sources().UnRegister(idListener);
                 return dt;
             }
-
             /// <summary>
             /// Получение словаря с профайлом для ролей
             /// </summary>
@@ -805,7 +696,6 @@ namespace TepCommon
                     XmlRoles.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), xml);
                 }
             }
-
             /// <summary>
             /// Получение словаря с профайлом для пользователей
             /// </summary>
@@ -828,7 +718,6 @@ namespace TepCommon
                     XmlUsers.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), xml);
                 }
             }
-
             /// <summary>
             /// Метод для получения словаря из XML
             /// </summary>
@@ -868,7 +757,6 @@ namespace TepCommon
 
                 return dict;
             }
-
             /// <summary>
             /// Получить профайл для конкретного пользователя
             /// </summary>
@@ -881,7 +769,6 @@ namespace TepCommon
 
                 return profileUser;
             }
-
             /// <summary>
             /// Получить профайл для панели конкретного пользователя
             /// </summary>
@@ -902,7 +789,6 @@ namespace TepCommon
 
                 return profilePanel;
             }
-
             /// <summary>
             /// Метод для объединения профайла пользователя и роли
             /// </summary>
@@ -953,11 +839,10 @@ namespace TepCommon
             /// <summary>
             /// Обновление данных 
             /// </summary>
-            /// <param name="connSet"></param>
+            /// <param name="connSet">Параметры подключения к БД</param>
             public static void UpdateProfile(ConnectionSettings connSet)
             {
                 dtProfiles_Orig = new DataTable();
-                xml_tree = new XmlDocument();
                 XmlRoles = new Dictionary<string, XmlDocument>();
                 XmlUsers = new Dictionary<string, XmlDocument>();
 
@@ -990,11 +875,11 @@ namespace TepCommon
                 }
                 catch (Exception e)
                 {
-
+                    Logging.Logg().Exception(e, "HTepProfileXml: Ошибка редактирования атрибута с ИД="+ id_unit + ".", Logging.INDEX_MESSAGE.NOT_SET);
                 }
+
                 SaveXml(connSet, doc, Id, Type.User);
             }
-
             /// <summary>
             /// Метод для добавления активной панели
             /// </summary>
@@ -1012,7 +897,6 @@ namespace TepCommon
 
                 SaveXml(connSet, doc, Id, Type.User);
             }
-
             /// <summary>
             /// Метод для удаления активной панели
             /// </summary>
@@ -1037,7 +921,6 @@ namespace TepCommon
 
                 SaveXml(connSet, doc, Id, Type.User);
             }
-
             /// <summary>
             /// Метод для редактирования параметра в XML
             /// </summary>
@@ -1160,13 +1043,12 @@ namespace TepCommon
                     }
                     catch (Exception e)
                     {
-
+                        Logging.Logg().Exception(e, "HTepProfileXml:EditAttr: Ошибка редактирования атрибутов в XML.", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
                 return doc;
 
             }
-
             /// <summary>
             /// Метод добавления компонента в XML
             /// </summary>
@@ -1211,7 +1093,6 @@ namespace TepCommon
 
                 return doc;
             }
-
             /// <summary>
             /// Метод удаления компонента из XML
             /// </summary>
@@ -1257,7 +1138,6 @@ namespace TepCommon
 
                 return doc;
             }
-
             /// <summary>
             /// Метод для сохранения определённой XML
             /// </summary>
@@ -1287,7 +1167,6 @@ namespace TepCommon
 
                 UpdateProfile(connSet);
             }
-
             /// <summary>
             /// Метод для сохранения внесенных изменений в таблице
             /// </summary>
@@ -1314,7 +1193,6 @@ namespace TepCommon
 
                 UpdateProfile(connSet);
             }
-
             /// <summary>
             /// Метод для получения таблицы из словаря с XML документами
             /// </summary>
@@ -1337,7 +1215,6 @@ namespace TepCommon
 
                 return dt;
             }
-                        
             /// <summary>
             /// Структура с параметрами изменяемого(выбранного) элемента
             /// </summary>
@@ -1368,6 +1245,7 @@ namespace TepCommon
                 /// </summary>
                 public string Value;
             }
+
             #endregion
 
             /// <summary>
@@ -1392,7 +1270,6 @@ namespace TepCommon
 
                 return doc;
             }
-
             /// <summary>
             /// Метод для получения новой XML(при создании пользователя/роли)
             /// </summary>
@@ -1407,9 +1284,7 @@ namespace TepCommon
                 doc[Type_Xml.ToString()].AppendChild(doc.CreateElement("_"+Id.ToString()));
 
                 return doc;
-
             }
-
             /// <summary>
             /// Метод для получения таблицы со списком параметров
             /// </summary>
@@ -1436,27 +1311,10 @@ namespace TepCommon
                         ;
                 }
             }
-
             /// <summary>
             /// Список параметров
             /// </summary>
             public static DataTable GetTableUnits { get { return m_tblTypes; } }
-        }
-
-        /// <summary>
-        /// Структура содержащая в себе атрибуты выбранного объекта и словарь с вложенными в него элементами
-        /// </summary>
-        public struct DictElement
-        {
-            /// <summary>
-            /// Словарь с вложенными объектами
-            /// </summary>
-            public Dictionary<string, DictElement> Objects;
-
-            /// <summary>
-            /// Словарь с атрибутами объекта
-            /// </summary>
-            public Dictionary<string, string> Attributes;
         }
     }
 }

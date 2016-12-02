@@ -672,7 +672,7 @@ namespace PluginTaskAutobook
                                              CultureInfo.InvariantCulture);
                 }
 
-                dbValue = float.Parse(value) * Math.Pow(10F, 1 * vsRatioValue);
+                dbValue = float.Parse(value) * Math.Pow(10F, -1 * vsRatioValue);
 
                 Rows[DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month) - 1].Cells["PlanSwen"].Value =
                     dbValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, CultureInfo.InvariantCulture);
@@ -1004,7 +1004,7 @@ namespace PluginTaskAutobook
                             else
                                 if (double.TryParse(Rows[i].Cells[col.Index].Value.ToString(), out valueToRes))
                             {
-                                valueToRes *= Math.Pow(10F, -1 * vsRatioValue);
+                                valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
                                 idComp = col.m_iIdComp;
                             }
                             else

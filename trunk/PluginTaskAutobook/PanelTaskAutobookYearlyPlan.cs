@@ -484,7 +484,7 @@ namespace PluginTaskAutobook
                                 {
                                     double.TryParse(tbOrigin.Rows[j]["VALUE"].ToString(), out dblVal);
                                     vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                    dblVal *= Math.Pow(10F, 1 * vsRatioValue);
+                                    dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
                                     row.Cells[col.Index].Value =
                                      dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);
@@ -540,7 +540,7 @@ namespace PluginTaskAutobook
                                         col.m_iIdComp
                                         , idSession
                                         , 1.ToString()
-                                        , valueToRes *= Math.Pow(10F, -1 * vsRatioValue)
+                                        , valueToRes *= Math.Pow(10F, 1 * vsRatioValue)
                                         , Convert.ToDateTime(row.Cells["DATE"].Value.ToString()).ToString("F",editTable.Locale)
                                         , i
                                     });
