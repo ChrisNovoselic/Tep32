@@ -139,7 +139,7 @@ namespace PluginTaskTepMain
             {
             }
 
-            public override void ShowValues(DataTable values, DataTable parameter)
+            public override void ShowValues(DataTable values, DataTable parameter, bool bUseRatio = true)
             {
             }
 

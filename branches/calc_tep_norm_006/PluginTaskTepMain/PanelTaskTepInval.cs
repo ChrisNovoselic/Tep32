@@ -105,8 +105,11 @@ namespace PluginTaskTepMain
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE ?
                 HandlerDb.GetValuesVar(Type, ActualIdPeriod, CountBasePeriod, arQueryRanges, out err) :
-                    Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(out err) :
-                        new DataTable();
+                    Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
+                        , Session.m_Id
+                        , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                        , out err) :
+                            new DataTable();
             //Проверить признак выполнения запроса
             if (err == 0)
             {
@@ -164,8 +167,6 @@ namespace PluginTaskTepMain
                 }
                 else
                     ;
-            
-
         }
 
         protected override void onButtonLoadClick()

@@ -250,7 +250,7 @@ namespace PluginTaskTepMain
                     // создать копии для возможности сохранения изменений
                     setValues();
                     // отобразить значения
-                    m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
+                    m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER], !(Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT));
                 }
                 else
                 {
@@ -1045,7 +1045,7 @@ namespace PluginTaskTepMain
             /// Отобразить значения
             /// </summary>
             /// <param name="values">Значения для отображения</param>
-            public override void ShowValues(DataTable values, DataTable parameter)
+            public override void ShowValues(DataTable values, DataTable parameter, bool bUseRatio = true)
             {
                 int idAlg = -1
                     , idParameter = -1
@@ -1095,19 +1095,24 @@ namespace PluginTaskTepMain
                                 // символ (??? один для строки, но назначается много раз по числу столбцов)
                                 row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol
                                     + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
-                                // Множитель для значения - для отображения
-                                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                // Множитель для значения - исходный в БД
-                                ratioValue =
-                                    //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
-                                    m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
-                                    ;
-                                // проверить требуется ли преобразование
-                                if (!(ratioValue == vsRatioValue))
-                                    // домножить значение на коэффициент
-                                    dblVal *= Math.Pow(10F, ratioValue - vsRatioValue);
-                                else
-                                    ;
+
+                                if (bUseRatio == true) {
+                                    // Множитель для значения - для отображения
+                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                    // Множитель для значения - исходный в БД
+                                    ratioValue =
+                                        //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
+                                        m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
+                                        ;
+                                    // проверить требуется ли преобразование
+                                    if (!(ratioValue == vsRatioValue))
+                                        // домножить значение на коэффициент
+                                        dblVal *= Math.Pow(10F, ratioValue - vsRatioValue);
+                                    else
+                                        ;
+                                } else
+                                    ; //отображать без изменений
+
                                 // отобразить с количеством знаков в соответствии с настройками
                                 row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);
                             }

@@ -642,7 +642,7 @@ namespace PluginTaskTepMain
 
             public abstract void AddRow(ROW_PROPERTY rowProp);
 
-            public abstract void ShowValues(DataTable values, DataTable parameter);
+            public abstract void ShowValues(DataTable values, DataTable parameter, bool bUseRatio = true);
 
             public abstract void ClearColumns();
 
