@@ -51,7 +51,7 @@ namespace PluginTaskAutobook
             PERIOD, TIMEZONE,
             COMPONENT, PARAMETER, RATIO,
             COUNT
-        }     
+        }
         /// <summary>
         /// Перечисление - режимы работы вкладки
         /// </summary>
@@ -80,7 +80,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Набор элементов
         /// </summary>
-        protected enum INDEX_CONTROL { UNKNOWN = -1, LABEL_DESC=1, DGV_DATA=3 }
+        protected enum INDEX_CONTROL { UNKNOWN = -1, LABEL_DESC = 1, DGV_DATA = 3 }
         /// <summary>
         /// Индексы массива списков идентификаторов
         /// </summary>
@@ -164,7 +164,10 @@ namespace PluginTaskAutobook
         /// Набор текстов для подписей для кнопок
         /// </summary>
         protected static string[] m_arButtonText = { @"Отправить", @"Сохранить", @"Загрузить" };
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>экземпляр класса</returns>
         protected override HandlerDbValues createHandlerDb()
         {
             return new HandlerDbTaskAutobookMonthValuesCalculate();
@@ -240,12 +243,18 @@ namespace PluginTaskAutobook
                         m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
                 }
             }
-
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="nameDGV">имя вьюхи</param>
             public DGVAutoBook(string nameDGV)
             {
                 InitializeComponents(nameDGV);
             }
-
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="nameDGV">имя вьюхи</param>
             private void InitializeComponents(string nameDGV)
             {
                 Name = nameDGV;
@@ -521,7 +530,7 @@ namespace PluginTaskAutobook
                                 {
                                     dblVal = Convert.ToDouble(dr_CorValues[t]["VALUE"]);
                                     vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                    dblVal *= Math.Pow(10F, 1 * vsRatioValue);
+                                    dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
                                     row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, CultureInfo.InvariantCulture);
                                 }
@@ -539,31 +548,27 @@ namespace PluginTaskAutobook
                                     //заполнение столбцов ГТП,ТЭЦ
                                     for (int p = 0; p < dr_Values.Count(); p++)
                                         if (row.Cells["DATE"].Value.ToString() ==
-                                        Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString())
+                                        Convert.ToDateTime(dr_Values[p]["WR_DATETIME"]).AddMinutes(m_currentOffSet).AddDays(-1).ToShortDateString())
                                         {
-                                            dblVal = correctingValues(Math.Pow(10F,-1* vsRatioValue)
+                                            vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+
+                                            dblVal = correctingValues(Math.Pow(10F, -1 * vsRatioValue)
                                                 , dr_Values[p]["VALUE"]
                                                 , col.Name
                                                 , ref bflg
                                                 , row
                                                 , typeValues);
 
-                                            vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                            dblVal *= Math.Pow(10F, 1 * vsRatioValue);
+
+                                            dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
                                             row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                                 CultureInfo.InvariantCulture);
                                         }
 
-                            //if (dr_CorValues != null)
-                            //    if (dr_CorValues.Count() > 0 &&   dr_Values == null)
-                            //{
-                            //    editCells(row);
-                            //}                        
-
                         }
                     }
-                    fillCells(row);
+                    editCells(row);
                 }
             }
 
@@ -792,6 +797,59 @@ namespace PluginTaskAutobook
                         break;
             }
 
+            ///// <summary>
+            ///// Редактирование значений ввиду новых корр. значений
+            ///// </summary>
+            ///// <param name="row">редактируемая строка</param>
+            //public void editCells(DataGridViewRow row)
+            //{
+            //    double valueCor,//новое знач.
+            //    valueCell = 0,//знач. ячейки
+            //    value = 0;
+
+            //    foreach (DataGridViewColumn col in row.DataGridView.Columns)
+            //    {
+            //        if (col.Name == "CorGTP12")
+            //        {
+            //            if (row.Cells[col.Name].Value.ToString() == string.Empty)
+            //                valueCor = 0;
+            //            else
+            //                valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
+
+            //            double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
+
+            //            if (valueCor == 0)
+            //                Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value = valueCell - valueCor;
+            //            else
+            //                Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value = valueCor + valueCell;
+            //        }
+            //        else if (col.Name == "CorGTP36")
+            //        {
+            //            if (row.Cells[col.Name].Value.ToString() == string.Empty)
+            //                valueCor = 0;
+            //            else
+            //                valueCor = AsParseToF(row.Cells[col.Name].Value.ToString());
+
+            //            double.TryParse(Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueCell);
+
+            //            if (valueCor == 0)
+            //                Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value = valueCell - valueCor;
+            //            else
+            //                Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value = valueCor + valueCell;
+            //            break;
+            //        }
+            //    }
+
+            //    Rows[row.Index].Cells[INDEX_GTP.TEC.ToString()].Value = double.Parse(Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value.ToString())
+            //               + double.Parse(Rows[row.Index].Cells[INDEX_GTP.GTP36.ToString()].Value.ToString());
+
+            //    for (int i = row.Index; i < Rows.Count; i++)
+            //        if (double.TryParse(Rows[row.Index].Cells[INDEX_GTP.TEC.ToString()].Value.ToString(), out value))
+            //            fillCells(Rows[i]);
+            //        else
+            //            break;
+            //}
+
             /// <summary>
             /// Вычисление параметров нараст.ст.
             /// и заполнение грида
@@ -811,7 +869,6 @@ namespace PluginTaskAutobook
                         int.TryParse(row.DataGridView.Rows[row.Index - 1].Cells["StSwen"].Value.ToString(), out swenValue);
                         row.Cells["StSwen"].Value = value + swenValue;
                     }
-
                     countDeviation(row);
                 }
             }
@@ -875,7 +932,10 @@ namespace PluginTaskAutobook
             /// <param name="offSet">часовая разница</param>
             /// <param name="idPut">идЭлемента</param>
             /// <returns>набор строк</returns>
-            private DataRow[] formingValue(DataTable dtOrigin, string date, int offSet, int idPut)
+            private DataRow[] formingValue(DataTable dtOrigin
+                , string date
+                , int offSet
+                , int idPut)
             {
                 DateTime dateOffSet;
                 DataRow[] dr_idCorPut = null;
@@ -889,13 +949,11 @@ namespace PluginTaskAutobook
 
                 for (int i = 0; i < m_enumResIDPUT.Count(); i++)
                 {
-                    dateOffSet = m_enumResIDPUT.ElementAt(i).DATE_TIME.AddMinutes(offSet);
+                    dateOffSet = m_enumResIDPUT.ElementAt(i).DATE_TIME.AddMinutes(offSet).AddDays(-1);
 
                     if (date == dateOffSet.ToShortDateString())
                     {
-                        dr_idCorPut = dtOrigin.Select(
-                        string.Format(dtOrigin.Locale
-                        , "WR_DATETIME = '{0:o}' AND ID_PUT = {1}", m_enumResIDPUT.ElementAt(i).DATE_TIME, idPut));
+                        dr_idCorPut = dtOrigin.Select(string.Format(dtOrigin.Locale, "WR_DATETIME = '{0:o}' AND ID_PUT = {1}", m_enumResIDPUT.ElementAt(i).DATE_TIME, idPut));
                         break;
                     }
                 }
@@ -940,9 +998,7 @@ namespace PluginTaskAutobook
                             if (cols.m_iIdComp == col.m_iIdComp &&
                                 Rows[i].Cells["Date"].Value == Rows[e.RowIndex].Cells["Date"].Value)
                             {
-
-                                valueToRes = AsParseToF(e.Value.ToString()) * Math.Pow(10F, -1 * vsRatioValue);
-                                //double.Parse(e.Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture) //
+                                valueToRes = AsParseToF(e.Value.ToString()) * Math.Pow(10F, 1 * vsRatioValue);
                                 idComp = cols.m_iIdComp;
                             }
                             else
@@ -981,8 +1037,8 @@ namespace PluginTaskAutobook
             {
                 int idAlg
                     , vsRatioValue = -1;
-                double valueToRes;
-                DateTime dtRes;
+                double valueToRes = -1;
+                DateTime dtRes = new DateTime();
 
                 DataTable dtSourceEdit = new DataTable();
                 dtSourceEdit.Columns.AddRange(new DataColumn[] {
@@ -1000,14 +1056,25 @@ namespace PluginTaskAutobook
                     {
                         if (col.Index > (int)INDEX_GTP.GTP36 & col.Index < (int)INDEX_GTP.CorGTP36)
                         {
-                            idAlg = (int)row.Cells["ALG"].Value;
-                            vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                            dtRes = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
+                            try
+                            {
+                                idAlg = (int)row.Cells["ALG"].Value;
+                                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                dtRes = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
 
-                            if (double.TryParse(row.Cells[col.Index].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueToRes))
-                                valueToRes *= Math.Pow(10F, -1 * vsRatioValue);
-                            else
-                                valueToRes = -1;
+                                if (row.Cells[col.Index].Value != null)
+                                    if (row.Cells[col.Index].Value.ToString() != "")
+                                    {
+                                        valueToRes = AsParseToF(row.Cells[col.Index].Value.ToString());
+                                        valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                                    }
+                                    else
+                                        valueToRes = -1;
+                            }
+                            catch (Exception)
+                            {
+
+                            }
 
                             if (valueToRes > -1)
                                 dtSourceEdit.Rows.Add(new object[]
@@ -1057,9 +1124,11 @@ namespace PluginTaskAutobook
                                 vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
                                 vsRatio = vsRatioValue;
 
-                                if (double.TryParse(row.Cells[col.Index].Value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out valueToRes))
+                                if (row.Cells[col.Index].Value != null)
                                 {
-                                    valueToRes *= Math.Pow(10F, -1 * vsRatioValue);
+                                    AsParseToF(row.Cells[col.Index].Value.ToString());
+
+                                    valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
 
                                     dtSourceEdit.Rows.Add(new object[]
                                     {
@@ -1093,7 +1162,7 @@ namespace PluginTaskAutobook
             public List<string> value;
 
             /// <summary>
-            /// 
+            /// Конструктор
             /// </summary>
             public TaskAutobookCalculate()
             {
@@ -1130,7 +1199,7 @@ namespace PluginTaskAutobook
                 calcTable[(int)INDEX_GTP.TEC] = dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
                 calcTable[(int)INDEX_GTP.GTP36] = dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
                 //
-                var m_enumDT = (from r in dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].AsEnumerable()
+                var m_enumDT = (from r in dtOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].AsEnumerable()
                                 orderby r.Field<DateTime>("WR_DATETIME")
                                 select new
                                 {
@@ -1144,8 +1213,8 @@ namespace PluginTaskAutobook
                     calcTable[(int)INDEX_GTP.GTP36].Rows.Clear();
 
                     DataRow[] drOrigin =
-                        dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].
-                        Select(String.Format(dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Locale
+                        dtOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].
+                        Select(string.Format(dtOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Locale
                         , "WR_DATETIME = '{0:o}'", m_enumDT.ElementAt(j).DATE_TIME));
 
                     foreach (DataRow row in drOrigin)
@@ -1180,10 +1249,10 @@ namespace PluginTaskAutobook
                         calcTable[(int)INDEX_GTP.TEC].Rows.Add(new object[]
                         {
                             dtOut.Rows[t]["ID"]
-                            ,dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["ID_SESSION"]
-                            ,dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["QUALITY"]
+                            ,dtOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["ID_SESSION"]
+                            ,dtOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows[j]["QUALITY"]
                             ,value[t]
-                            ,Convert.ToDateTime(String.Format(dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Locale
+                            ,Convert.ToDateTime(String.Format(dtOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Locale
                             ,m_enumDT.ElementAt(j).DATE_TIME.ToString()))
                             ,count
                         });
@@ -1502,7 +1571,7 @@ namespace PluginTaskAutobook
                 {
                     CloseExcel();
                     bflag = false;
-                    MessageBox.Show("Отсутствует шаблон для отчета Excel");
+                    MessageBox.Show("Отсутствует шаблон для отчета Excel" + exp);
                 }
                 return bflag;
             }
@@ -1590,7 +1659,7 @@ namespace PluginTaskAutobook
             {
                 //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
                 //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
+                Marshal.ReleaseComObject(m_excApp);
 
                 m_excApp = null;
                 m_workBook = null;
@@ -1630,10 +1699,10 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// преобразование числа в нужный формат отображения
         /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        /// <param name="value">число</param>
+        /// <returns>преобразованное число</returns>
         public static float AsParseToF(string value)
         {
             int _indxChar = 0;
@@ -1668,13 +1737,12 @@ namespace PluginTaskAutobook
             if (bFlag)
                 try
                 {
-                    if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out fValue))
-                        fValue = 0;
+                    fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     if (value.ToString() == "")
-                        ;
+                        fValue = 0;
                 }
 
 
@@ -2112,9 +2180,9 @@ namespace PluginTaskAutobook
             //Создание сессии
             Session.New();
             //Запрос для получения архивных данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutval(arQueryRanges, out err);
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetDataOutval(arQueryRanges, out err);
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
                 Type
                 , ActualIdPeriod
@@ -2196,52 +2264,52 @@ namespace PluginTaskAutobook
             //    MessageBox.Show("Выбранный диапазон месяцев неверен");
             //else
             //{
-                clear();
-                m_handlerDb.RegisterDbConnection(out iRegDbConn);
+            clear();
+            m_handlerDb.RegisterDbConnection(out iRegDbConn);
 
-                if (!(iRegDbConn < 0))
+            if (!(iRegDbConn < 0))
+            {
+                // установить значения в таблицах для расчета, создать новую сессию
+                setValues(dtrGet, out err, out errMsg);
+
+                if (err == 0)
                 {
-                    // установить значения в таблицах для расчета, создать новую сессию
-                    setValues(dtrGet, out err, out errMsg);
-
-                    if (err == 0)
+                    if (m_TableOrigin.Rows.Count > 0)
                     {
-                        if (m_TableOrigin.Rows.Count > 0)
-                        {
-                            // создать копии для возможности сохранения изменений
-                            setValues();
-                            //вычисление значений
-                            AutoBookCalc.getTable(m_arTableOrigin, HandlerDb.GetOutPut(out err));
-                            //
-                            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                                AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
-                            //запись выходных значений во временную таблицу
-                            HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
-                            // отобразить значения
-                            m_dgvAB.ShowValues(m_arTableOrigin
-                                , HandlerDb.GetPlanOnMonth(Type
-                                , HandlerDb.GetDateTimeRangeValuesVarPlanMonth()
-                                , ActualIdPeriod
-                                , out err)
-                                , typeValues);
-                            //формирование таблиц на основе грида
-                            valuesFence();
-                        }
-                        else
-                            deleteSession();
+                        // создать копии для возможности сохранения изменений
+                        setValues();
+                        //вычисление значений
+                        AutoBookCalc.getTable(m_arTableOrigin, HandlerDb.GetOutPut(out err));
+                        //
+                        m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                            AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
+                        //запись выходных значений во временную таблицу
+                        HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
+                        // отобразить значения
+                        m_dgvAB.ShowValues(m_arTableOrigin
+                            , HandlerDb.GetPlanOnMonth(Type
+                            , HandlerDb.GetDateTimeRangeValuesVarPlanMonth()
+                            , ActualIdPeriod
+                            , out err)
+                            , typeValues);
+                        //формирование таблиц на основе грида
+                        valuesFence();
                     }
                     else
-                    {
-                        // в случае ошибки "обнулить" идентификатор сессии
                         deleteSession();
-                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-                    }
                 }
                 else
+                {
+                    // в случае ошибки "обнулить" идентификатор сессии
                     deleteSession();
+                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                }
+            }
+            else
+                deleteSession();
 
-                if (!(iRegDbConn > 0))
-                    m_handlerDb.UnRegisterDbConnection();
+            if (!(iRegDbConn > 0))
+                m_handlerDb.UnRegisterDbConnection();
             //}
         }
 
@@ -2334,7 +2402,7 @@ namespace PluginTaskAutobook
         /// обработчик кнопки-архивные значения
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev"></param>
+        /// <param name="ev">Аргумент события</param>
         private void HPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
         {
             try
@@ -2342,9 +2410,9 @@ namespace PluginTaskAutobook
                 m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE;
                 onButtonLoadClick(m_ViewValues);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-
+                MessageBox.Show(e.ToString());
             }
 
         }
@@ -2379,8 +2447,16 @@ namespace PluginTaskAutobook
         /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION;
-            onButtonLoadClick(m_ViewValues);
+            try
+            {
+                m_ViewValues = HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION;
+                onButtonLoadClick(m_ViewValues);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString());
+            }
+
         }
 
         /// <summary>
@@ -2415,7 +2491,7 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// инициализация элементов на форме
         /// </summary>
         /// <param name="err">номер ошибки</param>
         /// <param name="errMsg">текст ошибки</param>
@@ -2481,7 +2557,21 @@ namespace PluginTaskAutobook
                 m_dgvAB.AddIdComp(id_comp, namePut.GetValue(tCount).ToString());
                 tCount++;
             }
-
+            //возможность_редактирвоания_значений
+            try
+            {
+                if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                {
+                    if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
+                    else
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+                }
+                else
+                    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+            }
+            catch (Exception e)
+            { }
             try
             {
                 if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
@@ -2494,14 +2584,28 @@ namespace PluginTaskAutobook
                 else
                     (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
-                if ((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
-                        for (int j = (int)INDEX_GTP.CorGTP12; j < (int)INDEX_GTP.COUNT; j++)
-                            m_dgvAB.AddBRead(false, namePut.GetValue(j).ToString());
-              
             }
-            catch(Exception)
+            catch (Exception exp)
             {
-
+                MessageBox.Show(exp.ToString());
+            }
+            //активность_кнопки_сохранения
+            try
+            {
+                if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
+                {
+                    if (int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = true;
+                    else
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+                }
+                else
+                    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+            }
+            catch (Exception exp)
+            {
+                Logging.Logg().Exception(exp, @"PanelTaskAutoBook::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                MessageBox.Show(exp.ToString());
             }
 
 
@@ -2539,6 +2643,7 @@ namespace PluginTaskAutobook
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
+
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
@@ -2718,7 +2823,7 @@ namespace PluginTaskAutobook
             {
                 List<DataRow> listRes;
 
-                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Select().ToList<DataRow>();
+                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Select().ToList();
 
                 return listRes;
             }
@@ -2940,7 +3045,7 @@ namespace PluginTaskAutobook
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
 
-            strRes = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = HandlerDbValues.s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }
@@ -3073,7 +3178,6 @@ namespace PluginTaskAutobook
         /// <param name="err"></param>
         private void saveInvalValue(int timeZone, out int err)
         {
-            //err = -1;
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
 
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =

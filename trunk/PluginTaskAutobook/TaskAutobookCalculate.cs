@@ -28,7 +28,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="type"></param>
         /// <param name="err"></param>
-        protected override void calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, out int err)
+        protected override void calculate(TaskCalculate.TYPE type, out int err)
         {
             err = 0;
         }
@@ -65,28 +65,28 @@ namespace PluginTaskAutobook
                         }
                         else
                             if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(dtBegin, dtBegin);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin).AddDays(-1));
+                            // крайний элемент массива
+                            arRangesRes[i] = new DateTimeRange(dtBegin, dtBegin);
+                        else
+                            // для элементов в "середине" массива
+                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin).AddDays(-1));
             else
                 if (bEndMonthBoudary == true)
-                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
-                    // + использование следующей за 'dtEnd' таблицы
-                    for (i = 0; i < arRangesRes.Length; i++)
-                        if (i == 1)
-                            // предыдущих значений нет
-                            arRangesRes[i] = new DateTimeRange(dtEnd, HDateTime.ToNextMonthBoundary(dtEnd));
-                        else
-                            if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(dtBegin, dtBegin);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-                else
-                    ;
+                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                // + использование следующей за 'dtEnd' таблицы
+                for (i = 0; i < arRangesRes.Length; i++)
+                    if (i == 1)
+                        // предыдущих значений нет
+                        arRangesRes[i] = new DateTimeRange(dtEnd, HDateTime.ToNextMonthBoundary(dtEnd));
+                    else
+                        if (i == arRangesRes.Length - 1)
+                        // крайний элемент массива
+                        arRangesRes[i] = new DateTimeRange(dtBegin, dtBegin);
+                    else
+                        // для элементов в "середине" массива
+                        arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+            else
+                ;
 
             return arRangesRes;
         }
@@ -122,29 +122,29 @@ namespace PluginTaskAutobook
                         }
                         else
                             if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End,// HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-                                                   new DateTime(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month, DateTime.DaysInMonth(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month)));
+                            // крайний элемент массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                        else
+                            // для элементов в "середине" массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End,// HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                                               new DateTime(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month, DateTime.DaysInMonth(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month)));
             else
                 if (bEndMonthBoudary == true)
-                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
-                    // + использование следующей за 'dtEnd' таблицы
-                    for (i = 0; i < arRangesRes.Length; i++)
-                        if (i == 0)
-                            // предыдущих значений нет
-                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-                        else
-                            if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-                else
-                    ;
+                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                // + использование следующей за 'dtEnd' таблицы
+                for (i = 0; i < arRangesRes.Length; i++)
+                    if (i == 0)
+                        // предыдущих значений нет
+                        arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                    else
+                        if (i == arRangesRes.Length - 1)
+                        // крайний элемент массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                    else
+                        // для элементов в "середине" массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+            else
+                ;
 
             return arRangesRes;
         }
@@ -180,29 +180,29 @@ namespace PluginTaskAutobook
                         }
                         else
                             if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End,// HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-                                                   new DateTime(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month, DateTime.DaysInMonth(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month)));
+                            // крайний элемент массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                        else
+                            // для элементов в "середине" массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End,// HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                                               new DateTime(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month, DateTime.DaysInMonth(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month)));
             else
                 if (bEndMonthBoudary == true)
-                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
-                    // + использование следующей за 'dtEnd' таблицы
-                    for (i = 0; i < arRangesRes.Length; i++)
-                        if (i == 0)
-                            // предыдущих значений нет
-                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-                        else
-                            if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-                else
-                    ;
+                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                // + использование следующей за 'dtEnd' таблицы
+                for (i = 0; i < arRangesRes.Length; i++)
+                    if (i == 0)
+                        // предыдущих значений нет
+                        arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                    else
+                        if (i == arRangesRes.Length - 1)
+                        // крайний элемент массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                    else
+                        // для элементов в "середине" массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+            else
+                ;
 
             return arRangesRes;
         }
@@ -470,47 +470,6 @@ namespace PluginTaskAutobook
                 Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
-        ///// <summary>
-        ///// Вставить в таблицу БД идентификатор новой сессии
-        ///// </summary>
-        ///// <param name="id">Идентификатор сессии</param>
-        ///// <param name="idPeriod">Идентификатор периода расчета</param>
-        ///// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
-        ///// <param name="idTimezone">Идентификатор часового пояса</param>
-        ///// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
-        ///// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        //private void insertIdSession(
-        //    int cntBasePeriod
-        //    , out int err)
-        //{
-        //    err = -1;
-
-        //    string strQuery = string.Empty;
-        //    // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
-        //    strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
-        //        + @"[ID_CALCULATE]"
-        //        + @", [ID_TASK]"
-        //        + @", [ID_USER]"
-        //        + @", [ID_TIME]"
-        //        + @", [ID_TIMEZONE]"
-        //        + @", [DATETIME_BEGIN]"
-        //        + @", [DATETIME_END]) VALUES ("
-        //        ;
-
-        //    strQuery += _Session.m_Id;
-        //    strQuery += @"," + (Int32)IdTask;
-        //    strQuery += @"," + HTepUsers.Id;
-        //    strQuery += @"," + (int)_Session.m_currIdPeriod;
-        //    strQuery += @"," + (int)_Session.m_currIdTimezone;
-        //    strQuery += @",'" + _Session.m_rangeDatetime.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture)  // @"yyyyMMdd HH:mm:ss"
-        //    strQuery += @",'" + _Session.m_rangeDatetime.End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture) ; // @"yyyyMMdd HH:mm:ss"
-
-        //    strQuery += @")";
-
-        //    //Вставить в таблицу БД строку с идентификтором новой сессии
-        //    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-        //}
-
         /// <summary>
         /// Вставить значения в таблицу для временных входных значений
         /// </summary>
@@ -733,7 +692,7 @@ namespace PluginTaskAutobook
                 {
                     rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
 
-                    tableEdit.Rows.Add(new object[] 
+                    tableEdit.Rows.Add(new object[]
                     {
                         DbTSQLInterface.GetIdNext(tableEdit, out err)
                         , rowSel
@@ -743,7 +702,7 @@ namespace PluginTaskAutobook
                         , ID_PERIOD.DAY
                         , idTZ
                         , 1.ToString()
-                        , tableRes.Rows[i]["VALUE"]               
+                        , tableRes.Rows[i]["VALUE"]
                         , DateTime.Now
                     });
                 }
@@ -774,7 +733,7 @@ namespace PluginTaskAutobook
                     rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
                     dtRes = Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString());
 
-                    tableEdit.Rows.Add(new object[] 
+                    tableEdit.Rows.Add(new object[]
                     {
                         DbTSQLInterface.GetIdNext(tableEdit, out err)
                         , rowSel
@@ -784,7 +743,7 @@ namespace PluginTaskAutobook
                         , ID_PERIOD.DAY
                         , timezone
                         , 1.ToString()
-                        , tableRes.Rows[i]["VALUE"]            
+                        , tableRes.Rows[i]["VALUE"]
                         , DateTime.Now.ToString(CultureInfo.InvariantCulture)
                     });
                 }
@@ -792,29 +751,11 @@ namespace PluginTaskAutobook
 
             return tableEdit;
         }
-
-        /// <summary>
-        /// Получение данныз из profiles
-        /// </summary>
-        /// <param name="IdTab">Ид панели</param>
-        /// <returns>таблица данных</returns>
-        public DataTable GetProfilesContext()
-        {
-            string query = string.Empty;
-            int err = -1;
-
-            query = @"SELECT * "
-                + @"FROM [profiles] "
-                + @"WHERE ID_EXT = " + HTepUsers.Role;
-
-            return Select(query, out err);
-        }
     }
-
     /// <summary>
     /// PlanAutoBook
     /// </summary>
-    public class HandlerDbTaskAutobookYarlyPlanCalculate : TepCommon.HandlerDbTaskCalculate
+    public class HandlerDbTaskAutobookYarlyPlanCalculate : HandlerDbTaskCalculate
     {
         /// <summary>
         /// Создать объект расчета для типа задачи
@@ -956,42 +897,7 @@ namespace PluginTaskAutobook
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                 arTableValues[(int)INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
-            else
-                Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
-
-        ///// <summary>
-        ///// Вставить в таблицу БД идентификатор новой сессии
-        ///// </summary>
-        ///// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
-        ///// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        //private void insertIdSession(int cntBasePeriod, out int err)
-        //{
-        //    err = -1;
-        //    string strQuery = string.Empty;
-        //    // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
-        //    strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
-        //        + @"[ID_CALCULATE]"
-        //        + @", [ID_TASK]"
-        //        + @", [ID_USER]"
-        //        + @", [ID_TIME]"
-        //        + @", [ID_TIMEZONE]"
-        //        + @", [DATETIME_BEGIN]"
-        //        + @", [DATETIME_END]) VALUES ("
-        //        ;
-
-        //    strQuery += _Session.m_Id;
-        //    strQuery += @"," + (Int32)IdTask;
-        //    strQuery += @"," + HTepUsers.Id;
-        //    strQuery += @"," + (int)_Session.m_currIdPeriod;
-        //    strQuery += @"," + (int)_Session.m_currIdTimezone;
-        //    strQuery += @",'" + _Session.m_rangeDatetime.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture)  // @"yyyyMMdd HH:mm:ss"
-        //    strQuery += @",'" + _Session.m_rangeDatetime.End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture) ; // @"yyyyMMdd HH:mm:ss"
-
-        //    strQuery += @")";
-        //    //Вставить в таблицу БД строку с идентификтором новой сессии
-        //    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-        //}
 
         /// <summary>
         /// Вставить значения в таблицу для временных входных значений
@@ -1008,7 +914,7 @@ namespace PluginTaskAutobook
             Type[] arTypeColumns = null;
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+            strQuery = @"INSERT INTO " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];
@@ -1168,27 +1074,27 @@ namespace PluginTaskAutobook
                             arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin).AddDays(1));
                         else
                             if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End).AddDays(1));
+                            // крайний элемент массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                        else
+                            // для элементов в "середине" массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End).AddDays(1));
             else
                 if (bEndMonthBoudary == true)
-                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
-                    // + использование следующей за 'dtEnd' таблицы
-                    for (i = 0; i < arRangesRes.Length; i++)
-                        if (i == 0)
-                            // предыдущих значений нет
-                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-                        else
-                            if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd.AddDays(1));
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-                else ;
+                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                // + использование следующей за 'dtEnd' таблицы
+                for (i = 0; i < arRangesRes.Length; i++)
+                    if (i == 0)
+                        // предыдущих значений нет
+                        arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                    else
+                        if (i == arRangesRes.Length - 1)
+                        // крайний элемент массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd.AddDays(1));
+                    else
+                        // для элементов в "середине" массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+            else;
 
             return arRangesRes;
         }
@@ -1224,27 +1130,27 @@ namespace PluginTaskAutobook
                             arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin).AddDays(1));
                         else
                             if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End).AddDays(1));
+                            // крайний элемент массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                        else
+                            // для элементов в "середине" массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End).AddDays(1));
             else
                 if (bEndMonthBoudary == true)
-                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
-                    // + использование следующей за 'dtEnd' таблицы
-                    for (i = 0; i < arRangesRes.Length; i++)
-                        if (i == 0)
-                            // предыдущих значений нет
-                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-                        else
-                            if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd.AddDays(1));
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-                else ;
+                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                // + использование следующей за 'dtEnd' таблицы
+                for (i = 0; i < arRangesRes.Length; i++)
+                    if (i == 0)
+                        // предыдущих значений нет
+                        arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                    else
+                        if (i == arRangesRes.Length - 1)
+                        // крайний элемент массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd.AddDays(1));
+                    else
+                        // для элементов в "середине" массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+            else;
 
             return arRangesRes;
         }
@@ -1273,7 +1179,7 @@ namespace PluginTaskAutobook
                 dtRes = Convert.ToDateTime(rowRes[i]["WR_DATETIME"].ToString()).AddMonths(1);
             }
 
-            tableEdit.Rows.Add(new object[] 
+            tableEdit.Rows.Add(new object[]
             {
                 DbTSQLInterface.GetIdNext(tableOrigin, out err)
                 , rowSel
@@ -1283,7 +1189,7 @@ namespace PluginTaskAutobook
                 , ID_PERIOD.MONTH
                 , timezone
                 , 1.ToString()
-                , ResValue         
+                , ResValue
                 , DateTime.Now
             });
 
@@ -1309,3 +1215,5 @@ namespace PluginTaskAutobook
         }
     }
 }
+
+

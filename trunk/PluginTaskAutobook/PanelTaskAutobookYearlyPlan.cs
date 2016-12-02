@@ -74,8 +74,8 @@ namespace PluginTaskAutobook
         /// </summary>
         protected enum INDEX_TABLE_DICTPRJ : int
         {
-            UNKNOWN = -1
-            , PERIOD, TIMEZONE, COMPONENT,
+            UNKNOWN = -1,
+            PERIOD, TIMEZONE, COMPONENT,
             PARAMETER, //_IN, PARAMETER_OUT
             MODE_DEV/*, MEASURE*/,
             RATIO,
@@ -170,7 +170,7 @@ namespace PluginTaskAutobook
                     /// </summary>
                     public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
 
-                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
+                    public HDataGridViewCell(int idParameter, HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
                     {
                         m_IdParameter = idParameter;
                         m_iQuality = iQuality;
@@ -206,7 +206,7 @@ namespace PluginTaskAutobook
                 {
                     m_arPropertiesCells = new HDataGridViewCell[cntCols];
                     for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
+                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
                 }
             }
 
@@ -219,9 +219,13 @@ namespace PluginTaskAutobook
                 InitializeComponents(nameDGV);
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="nameDGV"></param>
             private void InitializeComponents(string nameDGV)
             {
-                this.Name = nameDGV;
+                Name = nameDGV;
                 Dock = DockStyle.Fill;
                 //Запретить выделение "много" строк
                 MultiSelect = false;
@@ -239,7 +243,7 @@ namespace PluginTaskAutobook
                 RowHeadersVisible = false;
                 //Ширина столбцов под видимую область
                 //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
                 AddColumn(-3, string.Empty, "ALG", true, false);
                 AddColumn(-2, "Дата", "DATE", true, false);
@@ -314,11 +318,8 @@ namespace PluginTaskAutobook
                             && (col.m_iIdComp < 1000))
                         {
                             indxCol = Columns.IndexOf(col);
-
                             break;
                         }
-                        else
-                            ;
 
                     HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp, m_bCalcDeny = false };
                     alignText = DataGridViewContentAlignment.MiddleRight;
@@ -554,14 +555,18 @@ namespace PluginTaskAutobook
         /// </summary>
         protected class PanelManagementAutobook : HPanelCommon
         {
+            /// <summary>
+            /// 
+            /// </summary>
             public enum INDEX_CONTROL_BASE
             {
-                UNKNOWN = -1
-                    , BUTTON_SEND, BUTTON_SAVE, BUTTON_LOAD
-                    , TXTBX_EMAIL
-                    , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END
-                    , CHKBX_EDIT
-                    , COUNT
+                UNKNOWN = -1,
+                BUTTON_SEND, BUTTON_SAVE, BUTTON_LOAD,
+                TXTBX_EMAIL,
+                CBX_PERIOD, CBX_TIMEZONE,
+                HDTP_BEGIN, HDTP_END,
+                CHKBX_EDIT,
+                COUNT
             }
 
             public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
@@ -608,22 +613,22 @@ namespace PluginTaskAutobook
                 //
                 TableLayoutPanel tlp = new TableLayoutPanel();
                 tlp.AutoSize = true;
-                tlp.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
+                tlp.AutoSizeMode = AutoSizeMode.GrowOnly;
                 tlp.Controls.Add(lblCalcPer, 0, 0);
                 tlp.Controls.Add(cbxCalcPer, 0, 1);
                 tlp.Controls.Add(lblCalcTime, 1, 0);
                 tlp.Controls.Add(cbxCalcTime, 1, 1);
-                this.Controls.Add(tlp, 0, posRow);
-                this.SetColumnSpan(tlp, 4); this.SetRowSpan(tlp, 1);
+                Controls.Add(tlp, 0, posRow);
+                SetColumnSpan(tlp, 4); SetRowSpan(tlp, 1);
                 //
                 TableLayoutPanel tlpValue = new TableLayoutPanel();
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
+                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
                 tlpValue.Dock = DockStyle.Fill;
                 tlpValue.AutoSize = true;
-                tlpValue.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
+                tlpValue.AutoSizeMode = AutoSizeMode.GrowOnly;
                 ////Дата/время начала периода расчета - подпись
                 Label lBeginCalcPer = new Label();
                 lBeginCalcPer.Dock = DockStyle.Bottom;
@@ -631,7 +636,7 @@ namespace PluginTaskAutobook
                 ////Дата/время начала периода расчета - значения
                 ctrl = new HDateTimePicker(s_dtDefaultAU, null);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
+                ctrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
                 tlpValue.Controls.Add(lBeginCalcPer, 0, 0);
                 tlpValue.Controls.Add(ctrl, 0, 1);
                 //Дата/время  окончания периода расчета - подпись
@@ -642,12 +647,12 @@ namespace PluginTaskAutobook
                 ctrl = new HDateTimePicker(s_dtDefaultAU.AddMonths(1)
                     , tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
+                ctrl.Anchor = (AnchorStyles.Left | AnchorStyles.Right);
                 //              
                 tlpValue.Controls.Add(lEndPer, 0, 2);
                 tlpValue.Controls.Add(ctrl, 0, 3);
-                this.Controls.Add(tlpValue, 0, posRow = posRow + 1);
-                this.SetColumnSpan(tlpValue, 4); this.SetRowSpan(tlpValue, 1);
+                Controls.Add(tlpValue, 0, posRow = posRow + 1);
+                SetColumnSpan(tlpValue, 4); SetRowSpan(tlpValue, 1);
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
                 ctrl = new Button();
@@ -675,9 +680,9 @@ namespace PluginTaskAutobook
                 TableLayoutPanel tlpButton = new TableLayoutPanel();
                 tlpButton.Dock = DockStyle.Fill;
                 tlpButton.AutoSize = true;
-                tlpButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-                tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+                tlpButton.AutoSizeMode = AutoSizeMode.GrowOnly;
+                tlpButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+                tlpButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
                 tlpButton.Controls.Add(ctrl, 0, 0);
                 tlpButton.Controls.Add(ctrlBsave, 1, 0);
                 tlpButton.Controls.Add(ctrlBSend, 0, 1);
@@ -789,8 +794,8 @@ namespace PluginTaskAutobook
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
 
-            m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponent();
 
@@ -933,7 +938,7 @@ namespace PluginTaskAutobook
 
             foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
             {
-                id_comp = (Int32)r[@"ID"];
+                id_comp = (int)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
 
                 m_dgvYear.AddIdComp(id_comp, "Output");
@@ -1202,8 +1207,8 @@ namespace PluginTaskAutobook
         {
             //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
             //         m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
+            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
         }
 
         /// <summary>
@@ -1224,7 +1229,7 @@ namespace PluginTaskAutobook
                 // список компонентов
                 , HandlerDb.GetQueryComp(Type)
                 // параметры расчета
-                , HandlerDb.GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+                , HandlerDb.GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
                 //// настройки визуального отображения значений
                 //, @""
                 // режимы работы
@@ -1446,10 +1451,10 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="iCtrl"></param>
         /// <param name="bClose"></param>
-        protected void clear(int iCtrl = (int)PanelTaskAutobookYearlyPlan.INDEX_CONTROL.UNKNOWN, bool bClose = false)
+        protected void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
         {
             ComboBox cbx = null;
-            PanelTaskAutobookYearlyPlan.INDEX_CONTROL indxCtrl = (PanelTaskAutobookYearlyPlan.INDEX_CONTROL)iCtrl;
+            INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
 
             deleteSession();
             //??? повторная проверка
@@ -1504,12 +1509,12 @@ namespace PluginTaskAutobook
 
             for (int i = 0; i < m_dgvYear.Rows.Count; i++)
             {
-                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i], out err);
-                dr_saveValue = valuesFence.Select(String.Format(m_TableEdit.Locale, "WR_DATETIME = '{0:o}'", m_dgvYear.Rows[i].Cells["DATE"].Value));
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i], out err);
+                dr_saveValue = valuesFence.Select(string.Format(m_TableEdit.Locale, "WR_DATETIME = '{0:o}'", m_dgvYear.Rows[i].Cells["DATE"].Value));
 
                 if (dr_saveValue.Count() > 0)
                 {
-                    m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                    m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                         HandlerDb.SavePlanValue(m_TableOrigin, dr_saveValue, (int)Session.m_currIdTimezone, out err);
 
                     s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
@@ -1559,7 +1564,7 @@ namespace PluginTaskAutobook
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
 
-            strRes = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = HandlerDbValues.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }

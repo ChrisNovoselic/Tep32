@@ -46,9 +46,13 @@ namespace PluginTaskReaktivka
             COUNT
         }
         /// <summary>
+        /// Перечисление - режимы работы вкладки
+        /// </summary>
+        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
+        /// <summary>
         /// 
         /// </summary>
-        protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
+        protected HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         /// <summary>
         /// Перечисление - индексы таблиц со словарными величинами и проектными данными
         /// </summary>
@@ -62,10 +66,6 @@ namespace PluginTaskReaktivka
             RATIO,
             COUNT
         }
-        /// <summary>
-        /// Перечисление - режимы работы вкладки
-        /// </summary>
-        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
         /// <summary>
         /// Значения параметров сессии
         /// </summary>
@@ -147,7 +147,7 @@ namespace PluginTaskReaktivka
         DGVReaktivka m_dgvReak;
 
         /// <summary>
-        /// 
+        /// Конструктор
         /// </summary>
         /// <param name="iFunc"></param>
         public PanelTaskReaktivka(IPlugIn iFunc)
@@ -163,7 +163,7 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// 
+        /// Конструктор
         /// </summary>
         private void InitializeComponent()
         {
@@ -208,8 +208,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события - окончание редактирования отображения
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         void m_dgvReak_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             m_dgvReak.SumValue(e.ColumnIndex, e.RowIndex);
@@ -220,8 +220,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события изменения значения в ячейке
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         void m_dgvReak_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
 
@@ -230,8 +230,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события - нажатие клавиши ЭКСПОРТ
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         void PanelTaskReaktivka_ClickExport(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();//
@@ -241,8 +241,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// инициализация параметров вкладки
         /// </summary>
-        /// <param name="err"></param>
-        /// <param name="errMsg"></param>
+        /// <param name="err">номер ошибки</param>
+        /// <param name="errMsg">текст ошибки</param>
         protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
@@ -295,7 +295,7 @@ namespace PluginTaskReaktivka
 
             foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
             {
-                id_comp = (Int32)r[@"ID"];
+                id_comp = (int)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
                 strItem = ((string)r[@"DESCRIPTION"]).Trim();
                 // установить признак отображения компонента станции
@@ -308,7 +308,7 @@ namespace PluginTaskReaktivka
                 if (m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count + 2 > m_dgvReak.Columns.Count)
                     m_dgvReak.AddColumn(id_comp, strItem, strItem, true, arChecked[0]);
             }
-
+            //возможность_редактирвоания_значений
             try
             {
                 if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
@@ -327,12 +327,11 @@ namespace PluginTaskReaktivka
                     m_dgvReak.AddBRead(true);
 
             }
-            catch (Exception)
+            catch (Exception exp)
             {
 
             }
-
-
+            //активность_кнопки_сохранения
             try
             {
                 if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
@@ -345,7 +344,7 @@ namespace PluginTaskReaktivka
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
             }
-            catch (Exception)
+            catch (Exception exp)
             {
 
             }
@@ -674,7 +673,7 @@ namespace PluginTaskReaktivka
                 (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
 
             cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-  (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
+                (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
             today = (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
 
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
@@ -755,28 +754,28 @@ namespace PluginTaskReaktivka
         /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-              m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+              m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
         }
 
         /// <summary>
         /// Обработчик события - нажатие кнопки сохранить
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         protected override void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
         {
             int err = -1;
 
             DateTimeRange[] dtR = HandlerDb.GetDateTimeRangeValuesVar();
 
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
             HandlerDb.GetInVal(Type
             , dtR
             , ActualIdPeriod
             , out err);
 
-            m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                 HandlerDb.SaveValues(m_TableOrigin, valuesFence, (int)Session.m_currIdTimezone, out err);
 
             saveInvalValue(out err);
@@ -785,8 +784,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события - нажатие кнопки загрузить(сыр.)
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
             m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
@@ -797,8 +796,8 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Обработчик события - нажатие кнопки загрузить(арх.)
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
             m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
@@ -1659,6 +1658,17 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
+            /// Установка возможности редактирования столбцов
+            /// </summary>
+            /// <param name="bRead">true/false</param>
+            public void AddBRead(bool bRead)
+            {
+                foreach (HDataGridViewColumn col in Columns)
+                    if (col.m_iIdComp > 0)
+                        col.ReadOnly = bRead;
+            }
+
+            /// <summary>
             /// Очищение отображения от значений
             /// </summary>
             public void ClearValues()
@@ -1845,16 +1855,6 @@ namespace PluginTaskReaktivka
                     ; // нет элемента для изменения стиля
             }
 
-            /// <summary>
-            /// Установка возможности редактирования столбцов
-            /// </summary>
-            /// <param name="bRead">true/false</param>
-            public void AddBRead(bool bRead)
-            {
-                foreach (HDataGridViewColumn col in Columns)
-                    if (col.m_iIdComp > 0)
-                        col.ReadOnly = bRead;
-            }
 
             /// <summary>
             /// Отображение значений
@@ -1865,7 +1865,7 @@ namespace PluginTaskReaktivka
                 int idAlg = -1
                    , idParameter = -1
                    , iQuality = -1
-                   , iCol = 0//, iRow = 0
+                   , iCol = 0, iRow = 0
                    , vsRatioValue = -1;
                 double dblVal = -1F,
                     dbSumVal = 0;
@@ -1881,17 +1881,32 @@ namespace PluginTaskReaktivka
                 foreach (HDataGridViewColumn col in Columns)
                 {
                     if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
+                    {
+                        try
+                        {
+                            parameterRows = source.Select(string.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
+                        }
+                        catch (Exception e)
+                        {
+                            MessageBox.Show(e.ToString());
+                        }
+
                         foreach (DataGridViewRow row in Rows)
                         {
-                            if (row.Index != row.DataGridView.RowCount - 1)
+                            if (row.Index != RowCount - 1)
                             {
-                                idAlg = (int)row.Cells["ALG"].Value;
-                                parameterRows =
-                                source.Select(string.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
+                                try
+                                {
+                                    idAlg = (int)row.Cells["ALG"].Value;
+                                }
+                                catch (Exception exp)
+                                {
+                                    MessageBox.Show(exp.ToString());
+                                }
 
                                 for (int i = 0; i < parameterRows.Count(); i++)
                                 {
-                                    if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(m_currentOffSet).ToShortDateString() ==
+                                    if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(m_currentOffSet).AddDays(-1).ToShortDateString() ==
                                         row.Cells["Date"].Value.ToString())
                                     {
                                         idParameter = (int)parameterRows[i][@"ID_PUT"];
@@ -1912,8 +1927,10 @@ namespace PluginTaskReaktivka
                             else
                                 row.Cells[iCol].Value = dbSumVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
                                     CultureInfo.InvariantCulture);
-                        }
 
+                            iRow++;
+                        }
+                    }
                     iCol++;
                     dbSumVal = 0;
                 }
@@ -2003,8 +2020,15 @@ namespace PluginTaskReaktivka
                         }
                 }
 
-                dtSourceEdit = sortingTable(dtSourceEdit, "WR_DATETIME, ID_PUT");
-
+                try
+                {
+                    dtSourceEdit = sortingTable(dtSourceEdit, "WR_DATETIME, ID_PUT");
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+            
                 return dtSourceEdit;
             }
 
@@ -2042,7 +2066,7 @@ namespace PluginTaskReaktivka
             /// </summary>
             /// <param name="table">таблица для сортировки</param>
             /// <param name="sortStr">имя столбца/ов для сортировки</param>
-            /// <returns></returns>
+            /// <returns>отсортированная таблица</returns>
             private DataTable sortingTable(DataTable table, string colSort)
             {
                 DataView dView = table.DefaultView;
@@ -2249,7 +2273,6 @@ namespace PluginTaskReaktivka
             {
                 Excel.Range exclTEC = exclWrksht.get_Range("B2");
                 Excel.Range exclRMonth = exclWrksht.get_Range("A2");
-                //exclRPL.Value2 = dgv.Rows[dgv.Rows.Count - 1].Cells[@"PlanSwen"].Value;
                 exclRMonth.Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
             }
 
@@ -2334,7 +2357,7 @@ namespace PluginTaskReaktivka
                 m_excApp = null;
                 m_workBook = null;
                 m_wrkSheet = null;
-                System.GC.Collect();
+                GC.Collect();
             }
         }
 
@@ -2369,14 +2392,14 @@ namespace PluginTaskReaktivka
         /// </summary>
         protected DataTable m_TableOrigin
         {
-            get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
         /// <summary>
         /// 
         /// </summary>
         protected DataTable m_TableEdit
         {
-            get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
         }
 
         /// <summary>
@@ -2390,52 +2413,47 @@ namespace PluginTaskReaktivka
             string errMsg = string.Empty;
             DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
-            //if (rangeCheking(dtrGet))
-            //    MessageBox.Show("Выбранный диапазон месяцев неверен");
-            //else
-            //{
-                clear();
-                m_handlerDb.RegisterDbConnection(out iRegDbConn);
+            clear();
+            m_handlerDb.RegisterDbConnection(out iRegDbConn);
 
-                if (!(iRegDbConn < 0))
+            if (!(iRegDbConn < 0))
+            {
+                // установить значения в таблицах для расчета, создать новую сессию
+                setValues(dtrGet, out err, out errMsg);
+
+                if (err == 0)
                 {
-                    // установить значения в таблицах для расчета, создать новую сессию
-                    setValues(dtrGet, out err, out errMsg);
-
-                    if (err == 0)
+                    if (m_TableOrigin.Rows.Count > 0)
                     {
-                        if (m_TableOrigin.Rows.Count > 0)
-                        {
-                            // создать копии для возможности сохранения изменений
-                            setValues();
-                            // отобразить значения
-                            m_dgvReak.ShowValues(m_TableOrigin);
-                            //
-                            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
-                        }
-                        else
-                            deleteSession();
+                        // создать копии для возможности сохранения изменений
+                        setValues();
+                        // отобразить значения
+                        m_dgvReak.ShowValues(m_TableOrigin);
+                        //
+                        m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
                     }
                     else
-                    {
-                        // в случае ошибки "обнулить" идентификатор сессии
                         deleteSession();
-                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-                    }
                 }
                 else
+                {
+                    // в случае ошибки "обнулить" идентификатор сессии
                     deleteSession();
+                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                }
+            }
+            else
+                deleteSession();
 
-                if (!(iRegDbConn > 0))
-                    m_handlerDb.UnRegisterDbConnection();
-            //}
+            if (!(iRegDbConn > 0))
+                m_handlerDb.UnRegisterDbConnection();
         }
 
         /// <summary>
         /// Проверка выбранного диапазона
         /// </summary>
         /// <param name="dtRange">диапазон дат</param>
-        /// <returns></returns>
+        /// <returns>флагп проверки</returns>
         private bool rangeCheking(DateTimeRange[] dtRange)
         {
             bool bflag = false;
@@ -2483,9 +2501,9 @@ namespace PluginTaskReaktivka
             //Создание сессии
             Session.New();
             //Запрос для получения архивных данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
                 Type
                 , ActualIdPeriod
@@ -2547,7 +2565,7 @@ namespace PluginTaskReaktivka
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
 
-            strRes = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = HandlerDbValues.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }
@@ -2655,22 +2673,6 @@ namespace PluginTaskReaktivka
 
                 updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="origin">оригинальная таблица</param>
-        /// <param name="edit">таблица с данными</param>
-        /// <returns></returns>
-        private DataTable diffRowsInTables(DataTable origin, DataTable edit)
-        {
-            for (int i = 0; i < origin.Rows.Count; i++)
-                for (int j = 0; j < edit.Rows.Count; j++)
-                    if (origin.Rows[i]["Value"].Equals(edit.Rows[j]["Value"]))
-                        edit.Rows.RemoveAt(j);
-
-            return edit;
         }
 
         /// <summary>
