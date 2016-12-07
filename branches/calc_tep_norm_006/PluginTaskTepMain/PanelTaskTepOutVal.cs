@@ -87,6 +87,7 @@ namespace PluginTaskTepMain
                 HandlerDb.GetValuesVar(Type, out err) : Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
                     , Session.m_Id
                     , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                    , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]
                     , out err) :
                         new DataTable ();
 

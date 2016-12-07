@@ -1096,7 +1096,7 @@ namespace PluginTaskTepMain
                                 row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol
                                     + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
 
-                                if (bUseRatio == true) {
+                                //if (bUseRatio == true) {
                                     // Множитель для значения - для отображения
                                     vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
                                     // Множитель для значения - исходный в БД
@@ -1110,8 +1110,8 @@ namespace PluginTaskTepMain
                                         dblVal *= Math.Pow(10F, ratioValue - vsRatioValue);
                                     else
                                         ;
-                                } else
-                                    ; //отображать без изменений
+                                //} else
+                                //    ; //отображать без изменений
 
                                 // отобразить с количеством знаков в соответствии с настройками
                                 row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);

@@ -40,6 +40,7 @@ namespace PluginTaskTepMain
             , long idSession
             , Int16 quality
             , DataTable tablePrjPars
+            , DataTable tableDictPrj
             , out int err)
         {
             err = 0;
@@ -49,7 +50,7 @@ namespace PluginTaskTepMain
             switch (type)
             {
                 case TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES:
-                    tableRes = importInValues(idSession, quality, tablePrjPars, out err);
+                    tableRes = importInValues(idSession, quality, tablePrjPars, tableDictPrj, out err);
                     break;
                 default:
                     tableRes = new DataTable();
@@ -64,6 +65,7 @@ namespace PluginTaskTepMain
         private static DataTable importInValues(long idSession
             , Int16 quality
             , DataTable tablePrjPars
+            , DataTable tableDictPrjRatio
             , out int err)
         {
             err = 0;
@@ -82,14 +84,19 @@ namespace PluginTaskTepMain
             OleDbCommand cmd;
             OleDbDataReader reader;
             DataTable tableRes = null;
-            string nAlg = string.Empty;
+            string nAlg = string.Empty
+                , mera = string.Empty;
             int idComp = -1, numColumnComp = -1
+                , iNumColumnRatio = -1, ratioValue = -1, dbRatioValue = -1
                 , cntRowValues = -1;
             object[] vals = null;
             double val = -1F;
-            DataRow[] arSel = null; // массив строк при поиске проектных данных по номеру алгоритма
+            DataRow[] arSelPrjPars = null // массив строк при поиске проектных данных по номеру алгоритма
+                , arSelDictPrjRatio = null;
 
             try {
+                iNumColumnRatio = 3;
+
                 tableRes = new DataTable();
                 tableRes.Columns.AddRange(new DataColumn[] {
                     new DataColumn ("ID_PUT", typeof(Int32))
@@ -131,17 +138,48 @@ namespace PluginTaskTepMain
 
                             vals = new object[reader.FieldCount];
                             while (reader.Read() == true) {
-                                cntRowValues = reader.GetValues(vals);
+                                try
+                                {
+                                    cntRowValues = reader.GetValues(vals);
 
-                                nAlg = ((string)vals[0]).Trim();
-                                arSel = tablePrjPars.Select(string.Format(@"N_ALG='{0}'", nAlg)); //0 - индекс поля 'ORDER' ('N_ALG')
+                                    nAlg = ((string)vals[0]).Trim();
+                                    arSelPrjPars = tablePrjPars.Select(string.Format(@"N_ALG='{0}'", nAlg)); //0 - индекс поля 'ORDER' ('N_ALG')
 
-                                try {
-                                    foreach (DataRow r in arSel) {                                    
+                                    ratioValue = 0;
+                                    mera = vals[iNumColumnRatio] is DBNull == false ? ((string)vals[iNumColumnRatio]).Trim().ToLower() : string.Empty;
+                                    arSelDictPrjRatio = new DataRow[] { tableDictPrjRatio.AsEnumerable().ToList().Find(r => {
+                                        // только если наименование не пустое И индекс 1-го найденного символа = 0
+                                        return ((string.IsNullOrEmpty(((string)r[@"NAME_RU"]).Trim()) == false)
+                                            && (string.IsNullOrEmpty(mera) == false)) ? mera.IndexOf(((string)r[@"NAME_RU"]).Trim()) == 0 : false;
+                                    }) };
+                                    if (!(arSelDictPrjRatio[0] == null))
+                                        ratioValue = (int)arSelDictPrjRatio[0]["VALUE"];
+                                    else
+                                        ;
+
+                                    foreach (DataRow r in arSelPrjPars) {                                    
                                         idComp = Int32.Parse(r[@"ID_COMP"].ToString().Trim());
                                         numColumnComp = listLinkIdToNumColumn.Find(item => { return item.id == idComp; }).iNumColumn;
 
                                         val = HMath.doubleParse((string)vals[numColumnComp]);
+
+                                        dbRatioValue = 0;
+                                        arSelDictPrjRatio = tableDictPrjRatio.Select(string.Format(@"ID ={0}", (int)r[@"ID_RATIO"]));
+                                        if (arSelDictPrjRatio.Length > 0)
+                                            if (arSelDictPrjRatio.Length == 1)
+                                                dbRatioValue = (int)arSelDictPrjRatio[0]["VALUE"];
+                                            else
+                                                ;
+                                        else
+                                            ;
+
+                                        // проверить требуется ли преобразование
+                                        if (!(ratioValue == dbRatioValue))
+                                            // домножить значение на коэффициент
+                                            val *= Math.Pow(10F, ratioValue - dbRatioValue);
+                                        else
+                                            ;
+
                                         //if (Double.TryParse(((string)vals[numColumnComp]).Trim(), out val) == true)
                                         if (double.IsNaN(val) == false)
                                             tableRes.Rows.Add(new object[] {
@@ -167,9 +205,12 @@ namespace PluginTaskTepMain
                         }
                     }
                     else
-                        ;
+                    // отказ пользователя от загрузки значений (файл не был выбран)
+                        err = 1;
                 }
             } catch (Exception e) {
+                err = -1; // неизвестная(общая) ошибка - смотреть лог-файл
+
                 Logging.Logg().Exception(e, @"ImpExpPrevVersionValues::importInValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
