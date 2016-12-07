@@ -82,9 +82,9 @@ namespace TepCommon
 
             InitializeComponent();
 
-            m_handlerDb = createHandlerDb();
-
             m_id_panel = findMyID();
+
+            m_handlerDb = createHandlerDb();            
 
             m_dictProfile = new HTepUsers.DictElement();
         }

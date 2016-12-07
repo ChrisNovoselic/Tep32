@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="GemBox.Spreadsheet, Version=33.1.0.1000, Culture=neutral, PublicKeyToken=b1b72c69714d4847, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ExternalDLL\GemBox.Spreadsheet.dll</HintPath>
+    </Reference>
     <Reference Include="HClassLibrary, Version=2.0.3.1, Culture=neutral, PublicKeyToken=2f5f95fc94cb3397, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\externaldll\HClassLibrary.dll</HintPath>
@@ -46,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ImpExpPrevVersionValues.cs" />
     <Compile Include="PanelTaskTepCalculate.cs">
       <SubType>Component</SubType>
     </Compile>

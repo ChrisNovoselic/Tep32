@@ -17,16 +17,6 @@ namespace PluginTaskTepMain
     public abstract partial class PanelTaskTepCalculate : HPanelTepCommon
     {
         /// <summary>
-        /// Перечисление - признак типа загруженных из БД значений
-        ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
-        /// </summary>
-        protected enum INDEX_VIEW_VALUES : short { UNKNOWN = -1, SOURCE, ARCHIVE
-            , COUNT }
-        /// <summary>
-        /// Признак отображаемых на текущий момент значений
-        /// </summary>
-        protected INDEX_VIEW_VALUES m_ViewValues;        
-        /// <summary>
         /// Массив списков идентификаторов компонентов ТЭЦ/параметров
         /// </summary>
         protected List<int>[] m_arListIds;
@@ -56,7 +46,7 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : Session.m_currIdPeriod; } }        
+        protected ID_PERIOD ActualIdPeriod { get { return Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE ? ID_PERIOD.HOUR : Session.m_currIdPeriod; } }        
         /// <summary>
         /// Метод для создания панели с активными объектами управления
         /// </summary>
@@ -178,6 +168,7 @@ namespace PluginTaskTepMain
 
             InitializeComponents();
 
+            Session.m_IdFpanel = m_id_panel;
             Session.SetRangeDatetime(PanelManagementTaskTepCalculate.s_dtDefault, PanelManagementTaskTepCalculate.s_dtDefault.AddHours(1));
         }
 
@@ -367,7 +358,8 @@ namespace PluginTaskTepMain
             //Отменить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(false);
             //Установить новые режимы для "календарей"
-            Session.SetRangeDatetime(PanelManagement.SetPeriod(Session.m_currIdPeriod));
+            PanelManagement.SetPeriod(Session.m_currIdPeriod);
+            Session.SetRangeDatetime(PanelManagement.RangeDateTime);
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
 
@@ -415,10 +407,11 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
         {
+            //??? перед очисткой или после (не требуются ли предыдущий диапазон даты/времени)
+            Session.SetRangeDatetime(dtBegin, dtEnd);
+
             // очистить содержание представления
             clear();
-
-            Session.SetRangeDatetime(dtBegin, dtEnd);
 
             //// при наличии признака - загрузить/отобразить значения из БД
             //if (s_bAutoUpdateValues == true)
@@ -426,9 +419,9 @@ namespace PluginTaskTepMain
             //else ;
         }
         /// <summary>
-        /// 
+        /// Удалить сессию (+ очистить реквизиты сессии)
         /// </summary>
-        protected void deleteSession()
+        protected virtual void deleteSession()
         {
             int err = -1;
 
@@ -649,7 +642,7 @@ namespace PluginTaskTepMain
 
             public abstract void AddRow(ROW_PROPERTY rowProp);
 
-            public abstract void ShowValues(DataTable values, DataTable parameter);
+            public abstract void ShowValues(DataTable values, DataTable parameter, bool bUseRatio = true);
 
             public abstract void ClearColumns();
 
@@ -764,10 +757,16 @@ namespace PluginTaskTepMain
                     ;
             }
 
-            public DateTimeRange SetPeriod(ID_PERIOD idPeriod)
+            public DateTimeRange RangeDateTime
             {
-                DateTimeRange rangeRes = new DateTimeRange();
+                get {
+                    return new DateTimeRange((Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value
+                        , (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value);
+                }
+            }
 
+            public void SetPeriod(ID_PERIOD idPeriod)
+            {
                 HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
                     , hdtpEnd = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
                 //Выполнить запрос на получение значений для заполнения 'DataGridView'
@@ -828,10 +827,6 @@ namespace PluginTaskTepMain
                     default:
                         break;
                 }
-
-                rangeRes.Set(hdtpBegin.Value, hdtpEnd.Value);
-                
-                return rangeRes;
             }
         }
     }

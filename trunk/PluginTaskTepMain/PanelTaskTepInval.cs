@@ -46,6 +46,11 @@ namespace PluginTaskTepMain
         //    //set { m_arTableEdit[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
         //}
 
+        protected override HandlerDbValues createHandlerDb()
+        {
+            return new HandlerDbTaskTepCalculate(m_id_panel);
+        }
+
         /// <summary>
         /// Сохранить изменения в редактируемых таблицах
         /// </summary>
@@ -80,7 +85,7 @@ namespace PluginTaskTepMain
         /// </summary>
         public override void Stop()
         {
-            deleteSession();
+            //deleteSession();
 
             base.Stop();
         }
@@ -98,11 +103,14 @@ namespace PluginTaskTepMain
             //Запрос для получения архивных данных
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type
-                , ActualIdPeriod
-                , CountBasePeriod
-                , arQueryRanges
-                , out err);
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE ?
+                HandlerDb.GetValuesVar(Type, ActualIdPeriod, CountBasePeriod, arQueryRanges, out err) :
+                    Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
+                        , Session.m_Id
+                        , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]
+                        , out err) :
+                            new DataTable();
             //Проверить признак выполнения запроса
             if (err == 0)
             {
@@ -160,8 +168,6 @@ namespace PluginTaskTepMain
                 }
                 else
                     ;
-            
-
         }
 
         protected override void onButtonLoadClick()
@@ -207,13 +213,18 @@ namespace PluginTaskTepMain
 
             try
             {
-                // обновить входные значения для расчета
-                HandlerDb.UpdateSession(INDEX_DBTABLE_NAME.INVALUES
-                    , m_TableOrigin
-                    , m_TableEdit
-                    , out err);
-                // выполнить расчет
-                HandlerDb.Calculate(type);
+                if ((!(m_TableOrigin == null))
+                    && (!(m_TableEdit == null))) {
+                    // обновить входные значения для расчета
+                    HandlerDb.UpdateSession(INDEX_DBTABLE_NAME.INVALUES
+                        , m_TableOrigin
+                        , m_TableEdit
+                        , out err);
+                    // выполнить расчет
+                    HandlerDb.Calculate(type);
+                } else
+                    Logging.Logg().Warning(@"PanelTaskTepInval::btnRun_onClick (type=" + type.ToString() + @") - попытка расчета без загрузки входных данных..."
+                        , Logging.INDEX_MESSAGE.NOT_SET);
             }
             catch (Exception e)
             {

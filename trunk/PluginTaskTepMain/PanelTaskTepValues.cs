@@ -106,6 +106,9 @@ namespace PluginTaskTepMain
                 new EventHandler(HPanelTepCommon_btnHistory_Click);
             (Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
 
+            (Controls.Find(INDEX_CONTROL.BUTTON_IMPORT.ToString(), true)[0] as Button).Click += new EventHandler(btnImport_Click);
+            (Controls.Find(INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += new EventHandler(btnExport_Click);
+
             (PanelManagement as PanelManagementTaskTepValues).ItemCheck += new PanelManagementTaskTepValues.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
         }
 
@@ -173,17 +176,12 @@ namespace PluginTaskTepMain
 
             bRes = base.Activate(activate);
 
-            if (bRes == true)
-            {
-                if (activate == true)
-                {
-                    HandlerDb.InitSession(out err);
-                }
-                else
-                    ;
-            }
-            else
-                ;
+            //if (bRes == true) {
+            //    if (activate == true) {                    
+            //    } else
+            //        ;
+            //} else
+            //    ;
 
             return bRes;
         }
@@ -196,6 +194,18 @@ namespace PluginTaskTepMain
             clear((int)INDEX_CONTROL.UNKNOWN, true);
 
             base.Stop();
+        }
+
+        private void btnImport_Click(object sender, EventArgs e)
+        {
+            Session.m_LoadValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT;
+
+            onButtonLoadClick();            
+        }
+
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -222,9 +232,9 @@ namespace PluginTaskTepMain
         private void updateDataValues()
         {
             int err = -1
-                , cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
+                //, cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
                 , iAVG = -1
-                , iRegDbConn = -1;
+                , iRegDbConn = -1; // признак установленного соединения (ошибка, был создан ранее, новое соединение)
             string errMsg = string.Empty;
 
             m_handlerDb.RegisterDbConnection(out iRegDbConn);
@@ -239,8 +249,8 @@ namespace PluginTaskTepMain
                 {
                     // создать копии для возможности сохранения изменений
                     setValues();
-                    // отобразить значкения
-                    m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
+                    // отобразить значения
+                    m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER], !(Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT));
                 }
                 else
                 {
@@ -266,19 +276,19 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.SOURCE;
+            Session.m_LoadValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE;
 
             onButtonLoadClick();
         }
 
         /// <summary>
-        /// 
+        /// Обработчик события - нажатие на кнопку "Загрузить" (кнопка - аналог "Загрузить ранее сохраненные значения")
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
+        /// <param name="obj">Объект, инициировавший событие (??? кнопка или п. меню)</param>
+        /// <param name="ev">Аргумент события</param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = INDEX_VIEW_VALUES.ARCHIVE;
+            Session.m_LoadValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.ARCHIVE;
 
             onButtonLoadClick();
         }
@@ -1035,7 +1045,7 @@ namespace PluginTaskTepMain
             /// Отобразить значения
             /// </summary>
             /// <param name="values">Значения для отображения</param>
-            public override void ShowValues(DataTable values, DataTable parameter)
+            public override void ShowValues(DataTable values, DataTable parameter, bool bUseRatio = true)
             {
                 int idAlg = -1
                     , idParameter = -1
@@ -1082,19 +1092,28 @@ namespace PluginTaskTepMain
 
                             if (getClrCellToValue(iCol, iRow, out clrCell) == true)
                             {
-                                vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                ratioValue =
-                                    //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
-                                    m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
-                                    ;
-                                if (!(ratioValue == vsRatioValue))
-                                {
-                                    row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol
-                                        + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
-                                    dblVal *= Math.Pow(10F, ratioValue > vsRatioValue ? vsRatioValue : -1 * vsRatioValue);
-                                }
-                                else
-                                    ;
+                                // символ (??? один для строки, но назначается много раз по числу столбцов)
+                                row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol
+                                    + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
+
+                                //if (bUseRatio == true) {
+                                    // Множитель для значения - для отображения
+                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                    // Множитель для значения - исходный в БД
+                                    ratioValue =
+                                        //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
+                                        m_dictRatio[(int)parameterRows[0][@"ID_RATIO"]].m_value
+                                        ;
+                                    // проверить требуется ли преобразование
+                                    if (!(ratioValue == vsRatioValue))
+                                        // домножить значение на коэффициент
+                                        dblVal *= Math.Pow(10F, ratioValue - vsRatioValue);
+                                    else
+                                        ;
+                                //} else
+                                //    ; //отображать без изменений
+
+                                // отобразить с количеством знаков в соответствии с настройками
                                 row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);
                             }
                             else
@@ -1366,7 +1385,7 @@ namespace PluginTaskTepMain
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 4, posRow);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
-                ctrl.Enabled = false;
+                ctrl.Enabled = true;
                 //Кнопка - сохранить
                 ctrl = new Button();
                 ctrl.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
@@ -1814,19 +1833,14 @@ namespace PluginTaskTepMain
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1
-            , BUTTON_RUN_PREV,
-            BUTTON_RUN_RES
-                , CLBX_COMP_CALCULATED,
-            CLBX_PARAMETER_CALCULATED
-                , BUTTON_LOAD, MENUITEM_UPDATE, MENUITEM_HISTORY, BUTTON_SAVE, BUTTON_IMPORT,
-            BUTTON_EXPORT
-                , CLBX_COMP_VISIBLED,
-            CLBX_PARAMETER_VISIBLED
-                ,
-            DGV_DATA
-                ,
-            LABEL_DESC
-              ,
+            , BUTTON_RUN_PREV, BUTTON_RUN_RES
+            , CLBX_COMP_CALCULATED, CLBX_PARAMETER_CALCULATED
+            , BUTTON_LOAD, MENUITEM_UPDATE, MENUITEM_HISTORY
+                , BUTTON_SAVE, BUTTON_IMPORT, BUTTON_EXPORT
+            , CLBX_COMP_VISIBLED, CLBX_PARAMETER_VISIBLED
+            , DGV_DATA
+            , LABEL_DESC
+            ,
         }
     }
 }

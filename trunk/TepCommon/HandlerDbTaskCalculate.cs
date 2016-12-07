@@ -59,11 +59,63 @@ namespace TepCommon
         /// </summary>
         public class SESSION
         {
+            private int _idFPanel;
+
+            public int m_IdFpanel { get { return _idFPanel; } set { _idFPanel = value; } }
+            ///// <summary>
+            ///// Перечисление - типы сессии
+            ///// локальный: только для вкладок норматив, макет. В этом режиме расчет не возможен (только просмотр)
+            ///// общий: для всех вкладок
+            ///// Коррелирует с 'INDEX_VIEW_VALUES'
+            ///// </summary>
+            //protected enum TYPE : short
+            //{
+            //    Unknown = -1
+            //    , Locale, Common
+            //    , Count
+            //}
+
+            //protected TYPE m_type
+            //{
+            //    get
+            //    {
+            //        TYPE typeRes = TYPE.Unknown;
+
+            //        //if (Type == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
+            //        //    typeRes = TYPE.Common;
+            //        //else
+            //            if (m_LoadValues == INDEX_LOAD_VALUES.SOURCE)
+            //                typeRes = TYPE.Common;
+            //            else
+            //                if (m_LoadValues == INDEX_LOAD_VALUES.ARCHIVE)
+            //                    typeRes = TYPE.Locale;
+            //                else
+            //                    ;
+
+            //        return typeRes;
+            //    }
+            //}
+            /// <summary>
+            /// Перечисление - признак типа загруженных из БД значений
+            ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
+            /// </summary>
+            public enum INDEX_LOAD_VALUES : short
+            {
+                SOURCE_IMPORT = -11
+                , UNKNOWN = -1, SOURCE, ARCHIVE
+                , COUNT
+            }
+            /// <summary>
+            /// Признак отображаемых на текущий момент значений
+            /// </summary>
+            public INDEX_LOAD_VALUES m_LoadValues;
+
+            private long _id;
             /// <summary>
             /// Идентификатор сессии - уникальный идентификатор
             ///  для наборов входных, расчетных (нормативных, макетных) значений
             /// </summary>
-            public long m_Id;
+            public long m_Id { get { return _id; } set { _id = value; } }
             /// <summary>
             /// Текущий выбранный идентификатор периода расчета
             /// </summary>
@@ -75,7 +127,7 @@ namespace TepCommon
 
             public int m_curOffsetUTC;
 
-            public DateTimeRange m_rangeDatetime;
+            public DateTimeRange m_rangeDatetime; 
 
             public void Initialize(DataRow r)
             {
@@ -123,14 +175,26 @@ namespace TepCommon
             {
                 m_currIdPeriod = idPeriod;
             }
+
+            //public void SetIdFPanel(int idFPanel)
+            //{
+            //    _idFPanel = idFPanel;
+            //}
         }
 
         public SESSION _Session;
 
-        public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN)
+        public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN/*, int idFPanel = -1*/)
             : base()
         {
-            _Session = new SESSION() { m_Id = -1, m_currIdPeriod = ID_PERIOD.UNKNOWN, m_currIdTimezone = ID_TIMEZONE.UNKNOWN, m_curOffsetUTC = int.MinValue, m_rangeDatetime = new DateTimeRange() };
+            _Session = new SESSION() { m_Id = -1
+                , m_IdFpanel = -1
+                , m_LoadValues = SESSION.INDEX_LOAD_VALUES.UNKNOWN
+                , m_currIdPeriod = ID_PERIOD.UNKNOWN
+                , m_currIdTimezone = ID_TIMEZONE.UNKNOWN
+                , m_curOffsetUTC = int.MinValue
+                , m_rangeDatetime = new DateTimeRange()
+            };
 
             IdTask = idTask;
         }
@@ -434,19 +498,21 @@ namespace TepCommon
             else
                 ; // при ошибке - не продолжать
         }
+
+        protected virtual bool IsDeleteSession { get { return _Session.m_Id > 0; } }
         /// <summary>
         /// Удалить запись о параметрах сессии расчета (по триггеру - все входные и выходные значения)
         /// </summary>
         /// <param name="idSession">Идентификатор сессии расчета</param>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
         public void DeleteSession(out int err)
         {
-            err = -1;
+            err = 0; // предполагаем, ошибки нет
 
             int iRegDbConn = -1; // признак регистрации соединения с БД
             string strQuery = string.Empty;
 
-            if (_Session.m_Id > 0)
+            if (IsDeleteSession == true)
             {
                 RegisterDbConnection(out iRegDbConn);
 
@@ -456,11 +522,6 @@ namespace TepCommon
                         + @" WHERE [ID_CALCULATE]=" + _Session.m_Id;
 
                     DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-
-                    if (err == 0)
-                        _Session.m_Id = -1;
-                    else
-                        ;
                 }
                 else
                     ;
@@ -472,6 +533,11 @@ namespace TepCommon
                 else
                     ;
             }
+            else
+                ;
+            // очистить сессию
+            if (err == 0)
+                _Session.m_Id = -1;
             else
                 ;
         }
@@ -492,6 +558,15 @@ namespace TepCommon
             RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID_PUT, ID_SESSION", string.Empty, tableOriginValues, tableEditValues, out err);
         }
         /// <summary>
+        /// Условие выбора строки с парметрами сессии (панель, пользователь, идентификатор интервала, идентификатор часового пояса)
+        /// </summary>
+        protected virtual string whereQuerySession
+        {
+            get {
+                return @"s.[ID_CALCULATE]=" + _Session.m_Id;
+            }
+        }
+        /// <summary>
         /// Возвратить строку запроса для получения текущего идентификатора сессии расчета
         /// </summary>
         private string querySession
@@ -501,7 +576,7 @@ namespace TepCommon
                     + @" JOIN [timezones] tz ON s.ID_TIMEZONE = tz.ID"
                     +
                         //@" WHERE [ID_USER]=" + HTepUsers.Id
-                        @" WHERE  s.[ID]=" + _Session.m_Id
+                        @" WHERE " + whereQuerySession;
                         ;
             }
         }
@@ -766,10 +841,10 @@ namespace TepCommon
                         ;
 
                     if (bEquDatetime == false)
-                        strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                            + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+                        strRes += string.Format(@" AND [DATE_TIME] > '{0:yyyyMMdd HH:mm:ss}' AND [DATE_TIME] <= '{1:yyyyMMdd HH:mm:ss}'"
+                            , arQueryRanges[i].Begin, arQueryRanges[i].End);
                     else
-                        strRes += @" AND [DATE_TIME] = '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+                        strRes += string.Format(@" AND [DATE_TIME] = '{0:yyyyMMdd HH:mm:ss}'", arQueryRanges[i].Begin);
 
                     if (bLastItem == false)
                         strRes += @" UNION ALL ";
@@ -879,6 +954,8 @@ namespace TepCommon
             DataRow rowSession = null;
             int iRegDbConn = -1
                 , iCntSession = -1;
+
+            _Session.m_Id = -1;
 
             RegisterDbConnection(out iRegDbConn);
 

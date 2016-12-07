@@ -1,19 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using System.Data;
-using System.Data.Common;
-using System.Text.RegularExpressions;
-using System.Drawing;
 
 using HClassLibrary;
-using InterfacePlugIn;
-using TepCommon;
 
 namespace PluginTaskTepMain
 {
+    /// <summary>
+    /// Базовый класс для отображения расчетных значений ИРЗ Расчет ТЭП
+    ///  при расчете всегда "чужая" сессия (переопределена 'Activate', отправлен запрос для получения "чужого" идентификатора сессии)
+    ///  при просмотре архивных значений собственная сессия, но расчет недоступен
+    /// </summary>
     public abstract partial class PanelTaskTepOutVal : PanelTaskTepValues
     {
         //protected enum TYPE_OUTVALUES { UNKNOWUN = -1, NORMATIVE, MAKET, COUNT }
@@ -36,6 +33,32 @@ namespace PluginTaskTepMain
             base.initialize();
 
             eventAddCompParameter += new DelegateObjectFunc ((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
+        }
+
+        public override bool Activate(bool activate)
+        {
+            bool bRes = base.Activate(activate);
+
+            int err = 0;
+
+            if (bRes == true)
+                if (activate == true)
+                    if (IsFirstActivated == false) {
+                        // подтвердить наличие сессии расчета
+                        HandlerDb.InitSession(out err);
+
+                        if (err < 0)
+                            clear();
+                        else
+                            ;
+                    } else
+                        ;
+                else
+                    ;
+            else
+                ;
+
+            return bRes;
         }
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
@@ -60,7 +83,13 @@ namespace PluginTaskTepMain
                 new DataTable()
                     ;
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(Type, out err);
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE ?
+                HandlerDb.GetValuesVar(Type, out err) : Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
+                    , Session.m_Id
+                    , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                    , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]
+                    , out err) :
+                        new DataTable ();
 
             switch (err)
             {
@@ -78,7 +107,6 @@ namespace PluginTaskTepMain
         {
             throw new NotImplementedException();
         }
-
         ///// <summary>
         ///// Инициировать подготовку к расчету
         /////  , выполнить расчет
@@ -89,6 +117,17 @@ namespace PluginTaskTepMain
         //{
         //    throw new NotImplementedException();
         //}
+        /// <summary>
+        /// Удалить сессию (+ очистить реквизиты сессии)
+        /// </summary>
+        protected override void deleteSession()
+        {
+            base.deleteSession();
+
+            int err = -1;            
+
+            HandlerDb.InitSession(out err);
+        }
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
