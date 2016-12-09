@@ -250,7 +250,7 @@ namespace PluginTaskTepMain
                     // создать копии для возможности сохранения изменений
                     setValues();
                     // отобразить значения
-                    m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER], !(Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT));
+                    m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
                 }
                 else
                 {
@@ -1045,7 +1045,7 @@ namespace PluginTaskTepMain
             /// Отобразить значения
             /// </summary>
             /// <param name="values">Значения для отображения</param>
-            public override void ShowValues(DataTable values, DataTable parameter, bool bUseRatio = true)
+            public override void ShowValues(DataTable values, DataTable parameter/*, bool bUseRatio = true*/)
             {
                 int idAlg = -1
                     , idParameter = -1

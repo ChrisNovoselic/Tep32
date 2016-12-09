@@ -464,7 +464,7 @@ namespace PluginTaskAutobook
             /// </summary>
             /// <param name="tbOrigin">таблица значений</param>
             /// <param name="dgvView">контрол</param>
-            public void ShowValues(DataTable tbOrigin, DataGridView dgvView)
+            public void ShowValues(DataTable tbOrigin)
             {
                 double dblVal = -1F;
                 int idAlg = -1
@@ -1116,9 +1116,7 @@ namespace PluginTaskAutobook
                         // создать копии для возможности сохранения изменений
                         setValues();
 
-                        m_dgvYear.ShowValues(
-                            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                            , m_dgvYear);
+                        m_dgvYear.ShowValues(m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]);
                     }
                 }
                 else
