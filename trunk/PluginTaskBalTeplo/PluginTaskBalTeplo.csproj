@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HClassLibrary, Version=2.0.4.3, Culture=neutral, PublicKeyToken=2f5f95fc94cb3397, processorArchitecture=MSIL">
+      <HintPath>..\..\ExternalDll\HClassLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -48,10 +51,6 @@
     <Compile Include="TaskBalTeploCalculate.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
-      <Project>{a4f24caa-acaa-4923-aa4f-cef6cba46291}</Project>
-      <Name>HClassLibrary</Name>
-    </ProjectReference>
     <ProjectReference Include="..\InterfacePlugIn\InterfacePlugIn.csproj">
       <Project>{25637BE7-4002-46BE-A0D4-4C7EAAAA5148}</Project>
       <Name>InterfacePlugIn</Name>
