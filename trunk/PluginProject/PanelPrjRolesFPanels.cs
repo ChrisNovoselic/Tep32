@@ -75,36 +75,32 @@ namespace PluginProject
         /// </summary>
         protected static string[] m_arButtonText = { @"Сохранить", @"Обновить" };
 
-        DataTable m_AllUnits, m_context_Unit, m_panel_Unit;
+        private DataTable m_AllUnits, m_context_Unit, m_panel_Unit;
 
         /// <summary>
         /// Текущий выбранный компонент
         /// </summary>
-        int m_sel_comp;
+        private int m_sel_comp;
 
-        TreeView_Users.ID_Comp m_list_id;
-        DataTable m_table_TEC = new DataTable();
-        DataTable[] m_ar_panel_table = new DataTable[3];
+        private TreeView_Users.ID_Comp m_list_id;
+        private DataTable m_table_TEC = new DataTable();
+        private DataTable[] m_ar_panel_table = new DataTable[3];
         /// <summary>
         /// Массив оригинальных таблиц
         /// </summary>
-        DataTable[] m_arr_origTable;
-
+        private DataTable[] m_arr_origTable;
         /// <summary>
         /// Массив редактируемых таблиц
         /// </summary>
-        DataTable[] m_arr_editTable;
-
+        private DataTable[] m_arr_editTable;
         /// <summary>
         /// Тип выбраной ноды
         /// </summary>
-        TreeView_Users.Type_Comp m_type_sel_node;
-
+        private TreeView_Users.Type_Comp m_type_sel_node;
         /// <summary>
         /// Идентификаторы типов таблиц
         /// </summary>
         public enum ID_Table : int { Unknown = -1, Role, User, Count }
-
         /// <summary>
         /// Возвратить наименование компонента 
         /// </summary>
@@ -117,16 +113,33 @@ namespace PluginProject
             return nameModes[(int)id];
         }
 
-        Dictionary<string, XmlDocument>[] arrDictXml_Edit, arrDictXml_Orig;
-        Dictionary<string, HTepUsers.DictElement>[] arrDictProfiles;
+        private Dictionary<string, XmlDocument>[] arrDictXml_Edit, arrDictXml_Orig;
+        private Dictionary<string, HTepUsers.DictElement>[] arrDictProfiles;
 
-        enum TypeName : int {Panel, Item, Context };
+        private enum TypeName : int {Panel, Item, Context };
 
-        XmlDocument selectedXml;
-        HTepUsers.HTepProfilesXml.ParamComponent selectedComp;
-        enum NewNameElement : int {NewPanel=999, NewItem=1999, NewContext=2999 };
+        private XmlDocument selectedXml;
+
+        private HTepUsers.HTepProfilesXml.ParamComponent selectedComp;
+
+        private struct NewNameElement {
+            public static int IdPanel = 999;
+            public static int IdItem = 1999;
+            public static int IdContext = 2999;
+
+            public static string PrefixPanel = @"Panel";
+            public static string PrefixItem = @"Item";
+            public static string PrefixContext = @"Context";
+
+            public static string TagPanel = string.Format(@"0,{0}", IdPanel);
+            public static string TagItem = string.Format(@"1,{0}", IdItem);
+            public static string TagContext = string.Format(@"2,{0}", IdContext);
+
+            public static string Panel = string.Format(@"{0} {1}", PrefixPanel, IdPanel);
+            public static string Item = string.Format(@"{0} {1}", PrefixItem, IdItem);
+            public static string Context = string.Format(@"{0} {1}", PrefixContext, IdContext);
+        }
         #endregion
-
 
         public PanelPrjRolesFPanels(IPlugIn iFunc)
             : base(iFunc)
@@ -160,9 +173,9 @@ namespace PluginProject
                 m_context_Unit.Rows.Add(r.ItemArray);
                 m_AllUnits.Rows.Remove(r);
             }
-            dgvProp.create_dgv(m_AllUnits);
-            dgvProp_Context.create_dgv(m_context_Unit);
-            dgvProp_Panel.create_dgv(m_panel_Unit);
+            dgvProp.Create_DGV(m_AllUnits);
+            dgvProp_Context.Create_DGV(m_context_Unit);
+            dgvProp_Panel.Create_DGV(m_panel_Unit);
 
             tvUsers.EditNode += new TreeView_Users.EditNodeEventHandler(this.get_operation_tree);
             treeProfiles.AfterSelect += new TreeViewEventHandler(this.treeProfiles_SelectedNode);
@@ -178,7 +191,6 @@ namespace PluginProject
 
         public override bool Activate(bool active)
         {
-
             fillDataTable();
 
             return base.Activate(active);
@@ -283,11 +295,11 @@ namespace PluginProject
 
             DbConnection connConfigDB = m_handlerDb.DbConnection;
 
-            if (m_table_TEC.Columns.Count == 0)
-            {
+            if (m_table_TEC.Columns.Count == 0) {
                 DataColumn[] columns = { new DataColumn("ID"), new DataColumn("DESCRIPTION") };
                 m_table_TEC.Columns.AddRange(columns);
-            }
+            } else
+                ;
 
             m_table_TEC.Rows.Clear();
 
@@ -296,8 +308,6 @@ namespace PluginProject
 
             HTepUsers.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
-
-
 
             string query = "Select * from dbo.task";
 
@@ -373,28 +383,27 @@ namespace PluginProject
             dgvProp_Context.Enabled = false;
             dgvProp_Panel.Enabled = false;
 
-            if (list_id.id_user.Equals(-1) == false)
-            {
+            if (list_id.id_user.Equals(-1) == false) {
                 treeProfiles.Nodes.Clear();
                 bIsRole = false;
                 m_type_sel_node = TreeView_Users.Type_Comp.User;
                 selectedXml = arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.User][list_id.id_user.ToString()];
                 fillTreeProfiles(selectedXml);
-                //panelProfiles.FillControls(m_ar_panel_table, m_arr_editTable[(int)ID_Table.Profiles], IdComp, false);
-                dgvProp.Update_dgv(arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][list_id.id_user.ToString()].Attributes);
-            }
 
-            if (list_id.id_user.Equals(-1) == true & list_id.id_role.Equals(-1) == false)
-            {
+                dgvProp.Update_DGV(arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][list_id.id_user.ToString()].Attributes);
+            } else
+                ;
+
+            if (list_id.id_user.Equals(-1) == true & list_id.id_role.Equals(-1) == false) {
                 treeProfiles.Nodes.Clear();
                 bIsRole = true;
                 m_type_sel_node = TreeView_Users.Type_Comp.Role;
                 selectedXml = arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.Role][list_id.id_role.ToString()];
                 fillTreeProfiles(selectedXml);
-                //panelProfiles.FillControls(m_ar_panel_table, m_arr_editTable[(int)ID_Table.Profiles], IdComp, true);
-                dgvProp.Update_dgv(arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][list_id.id_role.ToString()].Attributes);
 
-            }
+                dgvProp.Update_DGV(arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][list_id.id_role.ToString()].Attributes);
+            } else
+                ;
         }
 
         private void treeProfiles_SelectedNode(object sender, TreeViewEventArgs e)
@@ -429,13 +438,13 @@ namespace PluginProject
 
                         if (dict.ContainsKey(selectedComp.ID_Panel.ToString()) == true)
                         {
-                            dgvProp_Panel.Update_dgv(dict[selectedComp.ID_Panel.ToString()].Attributes);
+                            dgvProp_Panel.Update_DGV(dict[selectedComp.ID_Panel.ToString()].Attributes);
 
                             if (dict[selectedComp.ID_Panel.ToString()].Objects.ContainsKey(selectedComp.ID_Item.ToString()) == true)
                             {
                                 if (dict[selectedComp.ID_Panel.ToString()].Objects[selectedComp.ID_Item.ToString()].Objects.ContainsKey(selectedComp.Context.ToString()) == true)
                                 {
-                                    dgvProp_Context.Update_dgv(dict[selectedComp.ID_Panel.ToString()].Objects[selectedComp.ID_Item.ToString()].Objects[selectedComp.Context.ToString()].Attributes);
+                                    dgvProp_Context.Update_DGV(dict[selectedComp.ID_Panel.ToString()].Objects[selectedComp.ID_Item.ToString()].Objects[selectedComp.Context.ToString()].Attributes);
                                 }
                             }
                         }
@@ -452,7 +461,7 @@ namespace PluginProject
 
                         if (dict.ContainsKey(selectedComp.ID_Panel.ToString()) == true)
                         {
-                            dgvProp_Panel.Update_dgv(dict[selectedComp.ID_Panel.ToString()].Attributes);
+                            dgvProp_Panel.Update_DGV(dict[selectedComp.ID_Panel.ToString()].Attributes);
                         }
                             break;
                         
@@ -466,7 +475,7 @@ namespace PluginProject
 
                         selectedComp.ID_Panel = Int32.Parse(tags[1]);
                         if(dict.ContainsKey(selectedComp.ID_Panel.ToString()) ==true)
-                            dgvProp_Panel.Update_dgv(dict[selectedComp.ID_Panel.ToString()].Attributes);
+                            dgvProp_Panel.Update_DGV(dict[selectedComp.ID_Panel.ToString()].Attributes);
                         break;
                 }
             }
@@ -582,7 +591,7 @@ namespace PluginProject
                                 e.Node.Tag = (tag.Split(',')[0] + ',' + e.Label.Split(' ')[1]);
                                 e.Node.Name = "Context " + e.Label.Split(' ')[1];
 
-                                activate_btn(true);
+                                ButtonSaveEnabled = true;
                             }
                             else
                             {
@@ -620,7 +629,7 @@ namespace PluginProject
                                 e.Node.Tag = (tag.Split(',')[0] + ',' + e.Label.Split(' ')[1]);
                                 e.Node.Name = "Item " + e.Label.Split(' ')[1];
 
-                                activate_btn(true);
+                                ButtonSaveEnabled = true;
                             }
                             else
                             {
@@ -657,11 +666,11 @@ namespace PluginProject
                                 e.Node.Tag = (tag.Split(',')[0] + ',' + e.Label.Split(' ')[1]);
                                 e.Node.Name = "Panel " + e.Label.Split(' ')[1];
 
-                                activate_btn(true);
+                                ButtonSaveEnabled = true;
                             }
                             else
                             {
-                                Logging.Logg().Action("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
+                                Logging.Logg().Warning("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
                             }
                             break;
                     }
@@ -678,86 +687,87 @@ namespace PluginProject
             int id = -1;
             HTepUsers.HTepProfilesXml.Type type = new HTepUsers.HTepProfilesXml.Type();
             Dictionary<string, HTepUsers.DictElement> dict = new Dictionary<string, HTepUsers.DictElement>();
-            
-            if (m_list_id.id_user.Equals(-1) == false)//User
-            {
-                dict = arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][m_list_id.id_user.ToString()].Objects;
-                xmlDoc = arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.User][m_list_id.id_user.ToString()];
+
+            if (m_list_id.id_user.Equals(-1) == false) {
+            //User                
                 id = m_list_id.id_user;
                 type = HTepUsers.HTepProfilesXml.Type.User;
-            }
-            else
-            {
-                if (m_list_id.id_user.Equals(-1) == true & m_list_id.id_role.Equals(-1) == false)//Role
-                {
-                    dict = arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][m_list_id.id_role.ToString()].Objects;
-                    xmlDoc = arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.Role][m_list_id.id_role.ToString()];
+            } else
+                if (m_list_id.id_user.Equals(-1) == true & m_list_id.id_role.Equals(-1) == false) {
+                //Role
                     id = m_list_id.id_role;
                     type = HTepUsers.HTepProfilesXml.Type.Role;
                 }
-            }
+                else
+                    throw new Exception (@"PanelPrjRolesFPanels::clickItemContext () - неизвестный тип профиля настроек...");
+
+            dict = arrDictProfiles[(int)type][id.ToString()].Objects;
+            xmlDoc = arrDictXml_Edit[(int)type][id.ToString()];
 
             if (e.Node != null)
             {
                 tag = e.Node.Tag.ToString();
                 tags = tag.Split(',');
 
-                switch (e.TypeButt)
+                switch (e.TypeItem)
                 {
                     #region Add in element
-                    case TreeViewProfile.TypeButton.Add:
-
+                    case TreeViewProfile.TypeMenuContextItem.Add:
                         switch ((TypeName)short.Parse(tags[0]))
                         {
                             case TypeName.Item:
                                 comp.ID_Panel = int.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
                                 comp.ID_Item = int.Parse(e.Node.Tag.ToString().Split(',')[1]);
-                                comp.Context = ((int)NewNameElement.NewContext).ToString();
-                                if (e.Node.Nodes.Find("Context " + ((int)NewNameElement.NewContext).ToString(), false).Length == 0)
+                                comp.Context = ((int)NewNameElement.IdContext).ToString();
+                                if (e.Node.Nodes.Find(NewNameElement.Context, false).Length == 0)
                                 {
                                     xmlDoc = HTepUsers.HTepProfilesXml.AddElement(xmlDoc, id, type, HTepUsers.HTepProfilesXml.Component.Context, comp);
-                                    e.Node.Nodes.Add("Context " + ((int)NewNameElement.NewContext).ToString(), "Context " + ((int)NewNameElement.NewContext).ToString());
-                                    e.Node.Nodes["Context " + ((int)NewNameElement.NewContext).ToString()].Tag = "2," + ((int)NewNameElement.NewContext).ToString();
+                                    e.Node.Nodes.Add(NewNameElement.Context, NewNameElement.Context);
+                                    e.Node.Nodes[NewNameElement.Context].Tag = NewNameElement.TagContext;
 
                                     HTepUsers.DictElement dictEl = new HTepUsers.DictElement();
                                     dictEl.Attributes = new Dictionary<string, string>();
                                     dictEl.Objects = new Dictionary<string, HTepUsers.DictElement>();
-                                    dict[comp.ID_Panel.ToString()].Objects[comp.ID_Item.ToString()].Objects.Add(((int)NewNameElement.NewContext).ToString(), dictEl);
-                                    activate_btn(true);
+                                    dict[comp.ID_Panel.ToString()].Objects[comp.ID_Item.ToString()].Objects.Add(((int)NewNameElement.IdContext).ToString(), dictEl);
+                                    ButtonSaveEnabled = true;
 
-                                    activate_btn(true);
+                                    ButtonSaveEnabled = true;
                                 }
                                 else
                                 {
-                                    Logging.Logg().Action("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
+                                    Logging.Logg().Warning("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
                                 }
-                                break;
 
+                                break;
                             case TypeName.Panel:
                                 comp.ID_Panel = int.Parse(tags[1]);
-                                comp.ID_Item = (int)NewNameElement.NewItem;
-                                if (e.Node.Nodes.Find("Item " + ((int)NewNameElement.NewItem).ToString(), false).Length == 0)
+                                comp.ID_Item = NewNameElement.IdItem;
+                                if (e.Node.Nodes.Find(NewNameElement.Item, false).Length == 0)
                                 {
                                     xmlDoc = HTepUsers.HTepProfilesXml.AddElement(xmlDoc, id, type, HTepUsers.HTepProfilesXml.Component.Item, comp);
-                                    e.Node.Nodes.Add("Item " + ((int)NewNameElement.NewItem).ToString(), "Item " + ((int)NewNameElement.NewItem).ToString());
-                                    e.Node.Nodes["Item " + ((int)NewNameElement.NewItem).ToString()].Tag = "1," + ((int)NewNameElement.NewItem).ToString();
+                                    e.Node.Nodes.Add(NewNameElement.Item, NewNameElement.Item);
+                                    e.Node.Nodes[NewNameElement.Item].Tag = NewNameElement.TagItem;
 
                                     HTepUsers.DictElement dictEl = new HTepUsers.DictElement();
                                     dictEl.Attributes = new Dictionary<string, string>();
                                     dictEl.Objects = new Dictionary<string, HTepUsers.DictElement>();
-                                    dict[comp.ID_Panel.ToString()].Objects.Add(((int)NewNameElement.NewItem).ToString(), dictEl);
-                                    activate_btn(true);
+                                    dict[comp.ID_Panel.ToString()].Objects.Add(((int)NewNameElement.IdItem).ToString(), dictEl);
+                                    ButtonSaveEnabled = true;
                                 }
                                 else
                                 {
-                                    Logging.Logg().Action("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
+                                    Logging.Logg().Warning("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
                                 }
+
+                                break;
+                            default:
                                 break;
                         }
                         break;
                     #endregion
-                    case TreeViewProfile.TypeButton.Delete:
 
+                    #region Delete in element
+                    case TreeViewProfile.TypeMenuContextItem.Delete:
                         switch ((TypeName)short.Parse(tags[0]))
                         {
                             case TypeName.Context:
@@ -768,9 +778,9 @@ namespace PluginProject
                                 dict[comp.ID_Panel.ToString()].Objects[comp.ID_Item.ToString()].Objects.Remove(comp.Context.ToString());
                                 e.Node.Remove();
 
-                                activate_btn(true);
-                                break;
+                                ButtonSaveEnabled = true;
 
+                                break;
                             case TypeName.Item:
                                 comp.ID_Panel = int.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
                                 comp.ID_Item = int.Parse(e.Node.Tag.ToString().Split(',')[1]);
@@ -778,42 +788,48 @@ namespace PluginProject
                                 dict[comp.ID_Panel.ToString()].Objects.Remove(comp.ID_Item.ToString());
                                 e.Node.Remove();
 
-                                activate_btn(true);
-                                break;
+                                ButtonSaveEnabled = true;
 
+                                break;
                             case TypeName.Panel:
                                 comp.ID_Panel = int.Parse(tags[1]);
                                 xmlDoc = HTepUsers.HTepProfilesXml.DelElement(xmlDoc, id, type, HTepUsers.HTepProfilesXml.Component.Panel, comp);
                                 dict.Remove(comp.ID_Panel.ToString());
                                 e.Node.Remove();
 
-                                activate_btn(true);
+                                ButtonSaveEnabled = true;
+
+                                break;
+                            default:
                                 break;
                         }
+                        break;
+                    #endregion
+                    default:
                         break;
                 }
             }
             else
             {
                 #region Add panel
-                switch (e.TypeButt)
+                switch (e.TypeItem)
                 {
-                    case TreeViewProfile.TypeButton.Add:
-                        comp.ID_Panel = (int)NewNameElement.NewPanel;
-                        if (treeProfiles.Nodes.Find("Panel " + ((int)NewNameElement.NewPanel).ToString(), false).Length == 0)
+                    case TreeViewProfile.TypeMenuContextItem.Add:
+                        comp.ID_Panel = (int)NewNameElement.IdPanel;
+                        if (treeProfiles.Nodes.Find(NewNameElement.Panel, false).Length == 0)
                         {
                             xmlDoc =HTepUsers.HTepProfilesXml.AddElement(xmlDoc, id, type, HTepUsers.HTepProfilesXml.Component.Panel, comp);
-                            treeProfiles.Nodes.Add("Panel " + ((int)NewNameElement.NewPanel).ToString(), "Panel " + ((int)NewNameElement.NewPanel).ToString());
-                            treeProfiles.Nodes["Panel " + ((int)NewNameElement.NewPanel).ToString()].Tag = "0," + ((int)NewNameElement.NewPanel).ToString();
+                            treeProfiles.Nodes.Add(NewNameElement.Panel, NewNameElement.Panel);
+                            treeProfiles.Nodes[NewNameElement.Panel].Tag = NewNameElement.TagPanel;
                             HTepUsers.DictElement dictEl = new HTepUsers.DictElement();
                             dictEl.Attributes = new Dictionary<string, string>();
                             dictEl.Objects = new Dictionary<string, HTepUsers.DictElement>();
-                            dict.Add(((int)NewNameElement.NewPanel).ToString(), dictEl);
-                            activate_btn(true);
+                            dict.Add(((int)NewNameElement.IdPanel).ToString(), dictEl);
+                            ButtonSaveEnabled = true;
                         }
                         else
                         {
-                            Logging.Logg().Action("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Warning("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
                         }
                         break;
                 }
@@ -821,16 +837,33 @@ namespace PluginProject
             }
         }
 
-        protected void activate_btn(bool active)
+        private bool _bButtonSaveEbnabled;
+        /// <summary>
+        /// Свойство для установки состояния кнопки "Сохранить"
+        /// </summary>
+        private bool ButtonSaveEnabled { set { _bButtonSaveEbnabled = value; enableButtonSave(value);  } }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="active"></param>
+        private void enableButtonSave(bool active)
         {
-            this.Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0].Enabled = active;
-            //this.Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0].Enabled = active;
+            enableControl(INDEX_CONTROL.BUTTON_SAVE, active);
+        }
+        /// <summary>
+        /// Изменить состояние кнопки по идентификатору
+        /// </summary>
+        /// <param name="indxCtrl">Идентификатор кнопки - индекс элементов управления панели</param>
+        /// <param name="active">Новое состояние кнопки</param>
+        private void enableControl(INDEX_CONTROL indxCtrl, bool active)
+        {
+            this.Controls.Find(indxCtrl.ToString(), true)[0].Enabled = active;
         }
 
         protected void btnBreak_Click(object sender, EventArgs e)
         {
             fillDataTable();
-            activate_btn(false);
+            ButtonSaveEnabled = false;
         }
 
         protected void btnSave_Click(object sender, EventArgs e)
@@ -841,7 +874,7 @@ namespace PluginProject
 
             HTepUsers.HTepProfilesXml.SaveXml(m_handlerDb.ConnectionSettings,arrDictXml_Orig,arrDictXml_Edit);
 
-            activate_btn(false);
+            ButtonSaveEnabled = false;
             fillDataTable();
             resetDataTable();
 
@@ -863,8 +896,6 @@ namespace PluginProject
             //    //MessageBox.Show(warning[0] + warning[1] + warning[2] + warning[3], "Внимание!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             //}
         }
-
-
 
         protected void dgvProp_CellEndEdit(object sender, DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventArgs e)
         {
@@ -899,7 +930,7 @@ namespace PluginProject
             selectedXml = HTepUsers.HTepProfilesXml.EditAttr(selectedXml, id, type, HTepUsers.HTepProfilesXml.Component.None, parComp);
 
             
-            activate_btn(true);
+            ButtonSaveEnabled = true;
 
         }
 
@@ -938,8 +969,7 @@ namespace PluginProject
 
             selectedXml = HTepUsers.HTepProfilesXml.EditAttr(selectedXml, id, type, HTepUsers.HTepProfilesXml.Component.Context, parComp);
 
-
-            activate_btn(true);
+            ButtonSaveEnabled = true;
 
         }
 
@@ -976,11 +1006,8 @@ namespace PluginProject
 
             selectedXml = HTepUsers.HTepProfilesXml.EditAttr(selectedXml, id, type, HTepUsers.HTepProfilesXml.Component.Panel, parComp);
 
-
-            activate_btn(true);
+            ButtonSaveEnabled = true;
         }
-
-
         /// <summary>
         /// Проверка критичных параметров перед сохранением
         /// </summary>
@@ -1006,42 +1033,73 @@ namespace PluginProject
             return have;
         }
 
-
         public class TreeViewProfile : TreeView
         {
-            public ContextMenuStrip m_contextMenuNode, m_contextMenuTree, m_contextMenuContext;
-            public enum TypeButton : int { Add, Delete };
-            string[] m_arrNameButton = { "Добавить элемент", "Удалить элемент" };
+            public Dictionary<TypeMenuContext, ContextMenuStrip> m_dictMenuContext;
+
+            public enum TypeMenuContext : int { TREE, NODE, CONTEXT };
+
+            private struct ContextMenuItem
+            {
+                public TypeMenuContextItem type;
+
+                public string name;
+            }
+
+            public enum TypeMenuContextItem : int { Add, Import, Export, Delete };
+
+            private static ContextMenuItem[] m_arContextMenuItem = new ContextMenuItem[] {
+                new ContextMenuItem () { type = TypeMenuContextItem.Add, name = "Добавить элемент" }
+                , new ContextMenuItem () { type = TypeMenuContextItem.Import, name = "Импортировать элемент" }
+                , new ContextMenuItem () { type = TypeMenuContextItem.Export, name = "Экспортировать элемент" }
+                , new ContextMenuItem () { type = TypeMenuContextItem.Delete, name = "Удалить элемент" }
+            };
 
             public TreeViewProfile() : base()
             {
-                m_contextMenuNode = new ContextMenuStrip();
-                m_contextMenuTree = new ContextMenuStrip();
-                m_contextMenuContext = new ContextMenuStrip();
+                m_dictMenuContext = new Dictionary<TypeMenuContext, ContextMenuStrip>() {
+                    { TypeMenuContext.TREE, new ContextMenuStrip() }
+                    , { TypeMenuContext.NODE, new ContextMenuStrip() }
+                    , { TypeMenuContext.CONTEXT, new ContextMenuStrip() }
+                };
 
-                m_contextMenuNode.Items.Add(m_arrNameButton[(int)TypeButton.Add]);
-                m_contextMenuNode.Items.Add(m_arrNameButton[(int)TypeButton.Delete]);
-                m_contextMenuTree.Items.Add(m_arrNameButton[(int)TypeButton.Add]);
-                m_contextMenuContext.Items.Add(m_arrNameButton[(int)TypeButton.Delete]);
+                m_dictMenuContext[TypeMenuContext.TREE].Tag = TypeMenuContext.TREE;
+                m_dictMenuContext[TypeMenuContext.TREE].Items.Add(m_arContextMenuItem[(int)TypeMenuContextItem.Add].name).Tag = TypeMenuContextItem.Add;
+                m_dictMenuContext[TypeMenuContext.TREE].Items.Add(m_arContextMenuItem[(int)TypeMenuContextItem.Import].name).Tag = TypeMenuContextItem.Import;
+                m_dictMenuContext[TypeMenuContext.TREE].Items.Add(new ToolStripSeparator()); // разделитель
+                m_dictMenuContext[TypeMenuContext.TREE].Items.Add(m_arContextMenuItem[(int)TypeMenuContextItem.Export].name).Tag = TypeMenuContextItem.Export;
+
+                m_dictMenuContext[TypeMenuContext.NODE].Tag = TypeMenuContext.NODE;
+                m_dictMenuContext[TypeMenuContext.NODE].Items.Add(m_arContextMenuItem[(int)TypeMenuContextItem.Add].name).Tag = TypeMenuContextItem.Add;
+                m_dictMenuContext[TypeMenuContext.NODE].Items.Add(m_arContextMenuItem[(int)TypeMenuContextItem.Import].name).Tag = TypeMenuContextItem.Import;
+                m_dictMenuContext[TypeMenuContext.NODE].Items.Add(new ToolStripSeparator()); // разделитель
+                m_dictMenuContext[TypeMenuContext.NODE].Items.Add(m_arContextMenuItem[(int)TypeMenuContextItem.Export].name).Tag = TypeMenuContextItem.Export;
+                m_dictMenuContext[TypeMenuContext.NODE].Items.Add(new ToolStripSeparator()); // разделитель
+                m_dictMenuContext[TypeMenuContext.NODE].Items.Add(m_arContextMenuItem[(int)TypeMenuContextItem.Delete].name).Tag = TypeMenuContextItem.Delete;                
+
+                m_dictMenuContext[TypeMenuContext.CONTEXT].Tag = TypeMenuContext.CONTEXT;
+                m_dictMenuContext[TypeMenuContext.CONTEXT].Items.Add(m_arContextMenuItem[(int)TypeMenuContextItem.Delete].name).Tag = TypeMenuContextItem.Delete;
 
                 this.AfterSelect += new TreeViewEventHandler(selectNode);
                 this.NodeMouseClick += new TreeNodeMouseClickEventHandler(nodeClick);
-                this.ContextMenuStrip = m_contextMenuTree;
+                this.ContextMenuStrip = m_dictMenuContext[TypeMenuContext.TREE];
 
-                m_contextMenuNode.ItemClicked += new ToolStripItemClickedEventHandler(contextItemClick);
-                m_contextMenuTree.ItemClicked += new ToolStripItemClickedEventHandler(contextItemClick);
-                m_contextMenuContext.ItemClicked += new ToolStripItemClickedEventHandler(contextItemClick);
+                ToolStripItemClickedEventHandler handlerContextItemClick = new ToolStripItemClickedEventHandler(contextItemClick);
+                m_dictMenuContext[TypeMenuContext.NODE].ItemClicked += handlerContextItemClick;
+                m_dictMenuContext[TypeMenuContext.TREE].ItemClicked += handlerContextItemClick;
+                m_dictMenuContext[TypeMenuContext.CONTEXT].ItemClicked += handlerContextItemClick;
             }
 
             private void selectNode(object sender, TreeViewEventArgs e)
             {
                 if (e.Node.ContextMenuStrip == null)
-                    if (e.Node.Tag.ToString().Split(',')[0] != ((int)TypeName.Context).ToString() )
-                        e.Node.ContextMenuStrip = m_contextMenuNode;
+                    if (e.Node.Tag.ToString().Split(',')[0] != ((int)TypeName.Context).ToString())
+                        e.Node.ContextMenuStrip = m_dictMenuContext[TypeMenuContext.NODE];
                     else
-                        e.Node.ContextMenuStrip = m_contextMenuContext;
+                        e.Node.ContextMenuStrip = m_dictMenuContext[TypeMenuContext.CONTEXT];
+                else
+                    ;
             }
-
             /// <summary>
             /// Обработчик события нажатия на элемент в TreeView
             /// </summary>
@@ -1052,36 +1110,49 @@ namespace PluginProject
                     this.SelectedNode = e.Node;//Выбор компонента при нажатии на него правой кнопкой мыши
                 }
             }
-
+            /// <summary>
+            /// Обработчик события - выбор пункта контекстного меню
+            /// </summary>
+            /// <param name="sender">Объект, инициировавший событие (контекстное меню)</param>
+            /// <param name="e">Аргумент события</param>
             private void contextItemClick(object sender, ToolStripItemClickedEventArgs e)
             {
-                if (((ContextMenuStrip)sender).Items.Count == 1)
-                {
-                    if (e.ClickedItem.Text == m_arrNameButton[(int)TypeButton.Add])
-                    {
-                        ClickItem?.Invoke(this, new ClickItemEventArgs(TypeButton.Add, null));
-                    }
-                    else
-                    {
-                        ClickItem?.Invoke(this, new ClickItemEventArgs(TypeButton.Delete, this.SelectedNode));
-                    }
-                }
-                else
-                {
-                    if (e.ClickedItem.Text == m_arrNameButton[(int)TypeButton.Add])
-                    {
-                        ClickItem?.Invoke(this, new ClickItemEventArgs(TypeButton.Add, this.SelectedNode));
-                    }
-                    else
-                    {
-                        if (e.ClickedItem.Text == m_arrNameButton[(int)TypeButton.Delete])
-                        {
-                            ClickItem?.Invoke(this, new ClickItemEventArgs(TypeButton.Delete, this.SelectedNode));
-                        }
-                    }
-                }
-            }
+                //if (((TypeMenuContext)((ContextMenuStrip)sender).Tag == TypeMenuContext.TREE)
+                //    || ((TypeMenuContext)((ContextMenuStrip)sender).Tag == TypeMenuContext.CONTEXT))
+                //// только контекстных меню элементов дерева, имющих дочерние и не имеющие родительских элементов
+                //// либо не имеющих дочерние и имеющие родительские элементы
+                //// для элементов самого высокого и низкого уровней
+                //    switch ((TypeMenuContextItem)e.ClickedItem.Tag) {
+                //        case TypeMenuContextItem.Add:
+                //            ClickItem?.Invoke(this, new ClickItemEventArgs(TypeMenuContextItem.Add, null));
+                //            break;
+                //        case TypeMenuContextItem.Delete:
+                //            ClickItem?.Invoke(this, new ClickItemEventArgs(TypeMenuContextItem.Delete, this.SelectedNode));
+                //            break;
+                //        default:
+                //            break;
+                //    }
+                //else
+                //    if ((TypeMenuContext)((ContextMenuStrip)sender).Tag == TypeMenuContext.NODE)
+                //    // для контекстного меню элемента дерева, имеющего родительские и дочерние элементы
+                //        switch ((TypeMenuContextItem)e.ClickedItem.Tag) {
+                //            case TypeMenuContextItem.Add:
+                //                ClickItem?.Invoke(this, new ClickItemEventArgs(TypeMenuContextItem.Add, this.SelectedNode));
+                //                break;
+                //            case TypeMenuContextItem.Delete:
+                //                ClickItem?.Invoke(this, new ClickItemEventArgs(TypeMenuContextItem.Delete, this.SelectedNode));
+                //                break;
+                //            default:
+                //                break;
+                //        }
+                //    else
+                //        ;
 
+                ClickItem?.Invoke(this
+                    , new ClickItemEventArgs((TypeMenuContextItem)e.ClickedItem.Tag
+                        , (TypeMenuContext)((ContextMenuStrip)sender).Tag == TypeMenuContext.TREE ? null : this.SelectedNode)
+                );
+            }
             /// <summary>
             /// Класс для описания аргумента события - изменения компонента
             /// </summary>
@@ -1090,31 +1161,27 @@ namespace PluginProject
                 /// <summary>
                 /// Тип действия
                 /// </summary>
-                public TypeButton TypeButt;
-
+                public TypeMenuContextItem TypeItem;
                 /// <summary>
                 /// Выбранная нода
                 /// </summary>
                 public TreeNode Node;
 
-                public ClickItemEventArgs(TypeButton typeButt, TreeNode node)
+                public ClickItemEventArgs(TypeMenuContextItem typeItem, TreeNode node)
                 {
-                    TypeButt = typeButt;
+                    TypeItem = typeItem;
                     Node = node;
                 }
             }
-
             /// <summary>
             /// Тип делегата для обработки события - изменение компонента
             /// </summary>
             public delegate void ClickItemEventHandler(object obj, ClickItemEventArgs e);
-
             /// <summary>
             /// Событие - редактирование компонента
             /// </summary>
             public event ClickItemEventHandler ClickItem;
         }
-
     }
 
     public class DataGridView_Prop_Text_Check : DataGridView_Prop
@@ -1129,70 +1196,55 @@ namespace PluginProject
             //this.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllHeaders;
             //this.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         }
-
         /// <summary>
         /// Запрос на получение таблицы со свойствами и ComboBox
         /// </summary>
         /// <param name="id_list">Лист с идентификаторами компонентов</param>
-        public void create_dgv(DataTable tables)
+        public void Create_DGV(DataTable tables)
         {
             this.CellValueChanged -= cell_EndEdit;
             this.Rows.Clear();
 
-            foreach (DataRow r in tables.Rows)
-            {
+            foreach (DataRow r in tables.Rows) {
                 DataGridViewRow row = new DataGridViewRow();
 
-                if (r["ID_UNIT"].ToString().Trim() == "8")
-                {
-                    DataGridViewCheckBoxCell check = new DataGridViewCheckBoxCell();
-                    row.Cells.Add(check);
-                    check.Value = false;
-                    this.Rows.Add(row);
-                    this.Rows[this.Rows.Count - 1].HeaderCell.Value = r["DESCRIPTION"].ToString().Trim();
-                    
-                }
+                if ((int)r["ID_UNIT"] == 8)
+                // логическое значение
+                    row.Cells.Add(new DataGridViewCheckBoxCell(false));                    
                 else
-                {
-                    this.Rows.Add();
-                    this.Rows[this.Rows.Count - 1].HeaderCell.Value = r["DESCRIPTION"].ToString().Trim();
-                    this.Rows[this.Rows.Count - 1].Cells[0].Value = "";
-                }
+                    row.Cells.Add(new DataGridViewTextBoxCell());
+
+                this.Rows.Add(row);
+                this.Rows[this.Rows.Count - 1].HeaderCell.Value = r["DESCRIPTION"].ToString().Trim();
                 this.Rows[this.Rows.Count - 1].Tag = r["ID"].ToString().Trim();
             }
+
             this.CellValueChanged += cell_EndEdit;
         }
 
-        public override void Update_dgv(int id_component, DataTable[] tables)
+        public override void Update_DGV(int id_component, DataTable[] tables)
         {
             this.CellValueChanged -= cell_EndEdit;
             DataTable inputTable = tables[0];
 
-            for (int i = 0; i < this.Rows.Count; i++)
-            {
-                if (this.Rows[i].Cells[0] is DataGridViewCheckBoxCell)
-                {
+            for (int i = 0; i < this.Rows.Count; i++) {
+                if (this.Rows[i].Cells[0] is DataGridViewCheckBoxCell) {
                     if (Convert.ToInt32(inputTable.Rows[i]["VALUE"]) == 0)
                         this.Rows[i].Cells[0].Value = false;
                     else
                         this.Rows[i].Cells[0].Value = true;
-                }
-                else
-                {
+                } else {
                     if (inputTable.Rows.Count <= i)
-                    {
                         this.Rows[i].Cells[0].Value = string.Empty;
-                    }
                     else
-                    {
                         this.Rows[i].Cells[0].Value = inputTable.Rows[i]["VALUE"];
-                    }
                 }
             }
+
             this.CellValueChanged += cell_EndEdit;
         }
 
-        public void Update_dgv(Dictionary<string, string> dict)
+        public void Update_DGV(Dictionary<string, string> dict)
         {
             this.CellValueChanged -= cell_EndEdit;
             
@@ -1242,28 +1294,27 @@ namespace PluginProject
         {
             int n_row = -1;
             for (int i = 0; i < this.Rows.Count; i++)
-            {
                 if (this.Rows[i].HeaderCell.Value.ToString() == "ID")
-                {
                     n_row = Convert.ToInt32(this.Rows[i].Cells[0].Value);
-                }
-            }
+                else
+                    ;
+
             if (Rows[e.RowIndex].Cells[0].Value != null)
-            {
                 if (EventCellValueChanged != null)
                     EventCellValueChanged(this, new DataGridView_Prop.DataGridView_Prop_ValuesCellValueChangedEventArgs(n_row//Идентификатор компонента
-                                        , Rows[e.RowIndex].Tag.ToString() //Идентификатор компонента
-                                        , Rows[e.RowIndex].Cells[0].Value.ToString() //Идентификатор параметра с учетом периода расчета
-                                        ));
-            }
+                        , Rows[e.RowIndex].Tag.ToString() //Идентификатор компонента
+                        , Rows[e.RowIndex].Cells[0].Value.ToString() //Идентификатор параметра с учетом периода расчета
+                    ));
+                else
+                    ;
             else
-            {
                 if (EventCellValueChanged != null)
                     EventCellValueChanged(this, new DataGridView_Prop.DataGridView_Prop_ValuesCellValueChangedEventArgs(n_row//Идентификатор компонента
-                                        , Rows[e.RowIndex].Tag.ToString() //Идентификатор компонента
-                                        , null //Идентификатор параметра с учетом периода расчета
-                                        ));
-            }
+                        , Rows[e.RowIndex].Tag.ToString() //Идентификатор компонента
+                        , null //Идентификатор параметра с учетом периода расчета
+                    ));
+                else
+                    ;
         }
     }
 
@@ -1301,7 +1352,6 @@ namespace PluginProject
                 m_id_user = id_user;
                 Update(true, allProfiles);
             }
-
             /// <summary>
             /// Метод для получения словаря с параметрами Profil'а для пользователя
             /// </summary>
@@ -1323,7 +1373,7 @@ namespace PluginProject
 
                         if (id_unit < 4)
                         {
-                            unitRows[0] = GetRowAllowed(id_unit);
+                            unitRows[0] = getRowAllowed(id_unit);
 
                             if (unitRows.Length == 1)
                             {
@@ -1337,7 +1387,6 @@ namespace PluginProject
                     return dictRes;
                 }
             }
-
             /// <summary>
             /// Обновление таблиц
             /// </summary>
@@ -1370,14 +1419,13 @@ namespace PluginProject
                 }
                 m_tblValues = table.Copy();
             }
-
             /// <summary>
             /// Метод получения строки со значениями прав доступа
             /// </summary>
             /// <param name="id">ИД типа</param>
             /// <param name="bIsRole"></param>
-            /// <returns></returns>
-            private DataRow GetRowAllowed(int id)
+            /// <returns>Строка со значенями прав доступа</returns>
+            private DataRow getRowAllowed(int id)
             {
                 DataRow objRes = null;
 
@@ -1416,10 +1464,10 @@ namespace PluginProject
 
                 query = @"SELECT * FROM " + m_nameTableProfilesData + " ORDER BY ID_UNIT";
                 m_allProfile = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
+
                 return m_allProfile;
             }
         }
-
         /// <summary>
         /// Метод для получения таблицы со всеми профайлами
         /// </summary>
@@ -1429,7 +1477,6 @@ namespace PluginProject
         {
             return Profile.GetAllProfile(dbConn);
         }
-
         /// <summary>
         /// Метод для получения словаря со значениями прав доступа
         /// </summary>
@@ -1447,8 +1494,6 @@ namespace PluginProject
 
             return dictPrifileItem;
         }
-
-
         /// <summary>
         /// Функция получения строки запроса пользователя
         ///  /// <returns>Строка строку запроса</returns>
@@ -1471,7 +1516,6 @@ namespace PluginProject
 
             return strQuery;
         }
-
         /// <summary>
         /// Функция запроса для поиска пользователя
         /// </summary>
@@ -1491,7 +1535,6 @@ namespace PluginProject
                 err = -1;
             }
         }
-
         /// <summary>
         /// Функция взятия ролей из БД
         /// </summary>
@@ -1557,7 +1600,5 @@ namespace PluginProject
             }
             return profiles;
         }
-
-
     }
 }

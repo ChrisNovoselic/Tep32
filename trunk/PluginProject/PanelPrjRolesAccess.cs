@@ -187,7 +187,7 @@ namespace PluginProject
             ((TreeView_Users)ctrl).EditNode += new TreeView_Users.EditNodeEventHandler(this.get_operation_tree);
             ((TreeView_Users)ctrl).Report += new TreeView_Users.ReportEventHandler(this.tree_report);
 
-            ((DataGridView_Prop_Text_Check)this.Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).create_dgv(m_arr_UserRolesTable[(int)ID_Table.Panels]);
+            ((DataGridView_Prop_Text_Check)this.Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).Create_DGV(m_arr_UserRolesTable[(int)ID_Table.Panels]);
             
             m_handlerDb.UnRegisterDbConnection();
             resetDataTable();
@@ -343,7 +343,7 @@ namespace PluginProject
             }
             massTable[0]=massTable[0].DefaultView.ToTable();
             
-            ((DataGridView_Prop_Text_Check)this.Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(),true)[0]).Update_dgv(IdComp, massTable);
+            ((DataGridView_Prop_Text_Check)this.Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(),true)[0]).Update_DGV(IdComp, massTable);
             
         }
 

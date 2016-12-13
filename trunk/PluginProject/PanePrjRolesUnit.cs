@@ -536,7 +536,7 @@ namespace PluginProject
                 tables[0] = m_arr_editTable[(int)TreeView_Users.Type_Comp.User];
                 tables[1] = m_arr_editTable[(int)TreeView_Users.Type_Comp.Role];
                 tables[2] = m_table_TEC;
-                ((DataGridView_Prop_ComboBoxCell)ctrl).Update_dgv(list_id.id_user, tables);
+                ((DataGridView_Prop_ComboBoxCell)ctrl).Update_DGV(list_id.id_user, tables);
                 bIsRole = false;
                 m_type_sel_node = TreeView_Users.Type_Comp.User;
 
@@ -545,7 +545,7 @@ namespace PluginProject
             if (list_id.id_user.Equals(-1) == true & list_id.id_role.Equals(-1) == false)
             {
                 tables[0] = m_arr_editTable[(int)TreeView_Users.Type_Comp.Role];
-                ((DataGridView_Prop_ComboBoxCell)ctrl).Update_dgv(list_id.id_role, tables);
+                ((DataGridView_Prop_ComboBoxCell)ctrl).Update_DGV(list_id.id_role, tables);
                 bIsRole = true;
                 m_type_sel_node = TreeView_Users.Type_Comp.Role;
             }
@@ -722,7 +722,7 @@ namespace PluginProject
         /// Запрос на получение таблицы со свойствами
         /// </summary>
         /// <param name="id_list">Лист с идентификаторами компонентов</param>
-        public virtual void Update_dgv(int id_component, DataTable[] tables)
+        public virtual void Update_DGV(int id_component, DataTable[] tables)
         {
             this.Rows.Clear();
             DataRow[] rowsSel = tables[0].Select(@"ID=" + id_component);
@@ -843,7 +843,7 @@ namespace PluginProject
         /// Запрос на получение таблицы со свойствами и ComboBox
         /// </summary>
         /// <param name="id_list">Лист с идентификаторами компонентов</param>
-        public override void Update_dgv(int id_component, DataTable[] tables)
+        public override void Update_DGV(int id_component, DataTable[] tables)
         {
             this.CellValueChanged -= cell_EndEdit;
             this.Rows.Clear();
