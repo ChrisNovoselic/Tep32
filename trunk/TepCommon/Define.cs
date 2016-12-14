@@ -21,6 +21,9 @@ namespace TepCommon
         , OUTPUT
         , OUTVALUES
         , FTABLE
+        , PLUGINS
+        , TASK
+        , FPANELS
             , COUNT
     };    
 

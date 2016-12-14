@@ -237,7 +237,7 @@ namespace TepCommon
         public static void SetAllowed(int id, string val, ConnectionSettings connSett)
         {
             //HTepProfilesXml.UpdateProfile(connSett);
-            HTepProfilesXml.EditAttr(val, id, connSett);
+            HTepProfilesXml.Edit(id, val, connSett);
         }
         /// <summary>
         /// Метод указывающий содержатся ли вкладки в списке открытых в пред сессии
@@ -664,7 +664,7 @@ namespace TepCommon
             {
                 DataTable dt;
                 int err = 0;
-                int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
+                int idListener = DbSources.Sources().Register(connSet, false, string.Format(@"Интерфейс: {0}", connSet.dbName));
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
                 string query = "SELECT * FROM ["+ m_nameTableProfilesData + "]";
                 dt = new DataTable();
@@ -858,10 +858,10 @@ namespace TepCommon
             /// <summary>
             /// Метод для редактирования аттрибута текущего пользователя
             /// </summary>
-            /// <param name="value">Значение</param>
             /// <param name="id_unit">ИД атрибута</param>
+            /// <param name="value">Значение</param>
             /// <param name="connSet">ConnectionSettings для сохранения</param>
-            public static void EditAttr(string value, int id_unit, ConnectionSettings connSet)
+            public static void Edit(int id_unit, string value, ConnectionSettings connSet)
             {
                 ParamComponent parComp = new ParamComponent();
 
@@ -871,21 +871,21 @@ namespace TepCommon
 
                 try
                 {
-                    doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
+                    doc = Edit(XmlUsers[Id.ToString()], Type.User, Id, Component.None, parComp);
                 }
                 catch (Exception e)
                 {
                     Logging.Logg().Exception(e, "HTepProfileXml: Ошибка редактирования атрибута с ИД="+ id_unit + ".", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
-                SaveXml(connSet, doc, Id, Type.User);
+                Save(connSet, doc, Id, Type.User);
             }
             /// <summary>
             /// Метод для добавления активной панели
             /// </summary>
             /// <param name="idPanel">ИД панели</param>
             /// <param name="connSet">ConnectionSettings для сохранения</param>
-            public static void AddActivePanel(int idPanel, ConnectionSettings connSet)
+            public static void AddPanel(int idPanel, ConnectionSettings connSet)
             {
                 ParamComponent parComp = new ParamComponent();
                 string value = DictUsers[Id.ToString()].Attributes["3"];
@@ -893,16 +893,16 @@ namespace TepCommon
                 parComp.ID_Unit = 3;
                 parComp.Value = value + ',' + idPanel.ToString();
 
-                XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
+                XmlDocument doc = Edit(XmlUsers[Id.ToString()], Type.User, Id, Component.None, parComp);
 
-                SaveXml(connSet, doc, Id, Type.User);
+                Save(connSet, doc, Id, Type.User);
             }
             /// <summary>
             /// Метод для удаления активной панели
             /// </summary>
             /// <param name="idPanel">ИД панели</param>
             /// <param name="connSet">ConnectionSettings для сохранения</param>
-            public static void DelActivePanel(int idPanel, ConnectionSettings connSet)
+            public static void RemovePanel(int idPanel, ConnectionSettings connSet)
             {
                 ParamComponent parComp = new ParamComponent();
                 string value = string.Empty;
@@ -917,9 +917,9 @@ namespace TepCommon
 
                 parComp.ID_Unit = 3;
                 parComp.Value = string.Join(",", add_pan);
-                XmlDocument doc = EditAttr(XmlUsers[Id.ToString()], Id, Type.User, Component.None, parComp);
+                XmlDocument doc = Edit(XmlUsers[Id.ToString()], Type.User, Id, Component.None, parComp);
 
-                SaveXml(connSet, doc, Id, Type.User);
+                Save(connSet, doc, Id, Type.User);
             }
             /// <summary>
             /// Метод для редактирования параметра в XML
@@ -930,7 +930,7 @@ namespace TepCommon
             /// <param name="comp">Тип изменяемого компонента</param>
             /// <param name="parComp">Структура с ИД компонентов и изменяемым значением</param>
             /// <returns>XML документ</returns>
-            public static XmlDocument EditAttr(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
+            public static XmlDocument Edit(XmlDocument doc, Type type, int id, Component comp, ParamComponent parComp)
             {
                 XmlAttribute edit_attr = null;
                 XmlNode edit_node = null;
@@ -1058,7 +1058,7 @@ namespace TepCommon
             /// <param name="comp">Тип изменяемого компонента</param>
             /// <param name="parComp">Структура с ИД компонентов и изменяемым значением</param>
             /// <returns>XML документ</returns>
-            public static XmlDocument AddElement(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
+            public static XmlDocument Add(XmlDocument doc, Type type, int id, Component comp, ParamComponent parComp)
             {
                 XmlElement newElement;
                 if (doc != null)
@@ -1094,15 +1094,55 @@ namespace TepCommon
                 return doc;
             }
             /// <summary>
+            /// Возвратить строку с внутренним текстом элемента
+            /// </summary>
+            /// <param name="doc">Исходный XML документ</param>
+            /// <param name="type">Тип XML (пользователь/роль)</param>
+            /// <param name="id">ИД пользователя/роли</param>
+            /// <param name="comp">Тип изменяемого компонента (уровень дерева)</param>
+            /// <param name="parComp">Структура с ИД компонентов и изменяемым значением</param>
+            /// <returns>Строка с внутренним текстом элемента</returns>
+            public static string Doc(XmlDocument doc, Type type, int id, Component comp, ParamComponent parComp)
+            {
+                string strRes = string.Empty;
+
+                if (doc != null)
+                    switch (comp) {
+                        case Component.Panel:
+                            strRes = doc[type.ToString()]
+                                        ["_" + id.ToString()]
+                                        ["_" + parComp.ID_Panel.ToString()].OuterXml;
+                            break;
+                        case Component.Item:
+                            strRes = doc[type.ToString()]
+                                        ["_" + id.ToString()]
+                                        ["_" + parComp.ID_Panel.ToString()]
+                                        ["_" + parComp.ID_Item.ToString()].OuterXml;
+                            break;
+                        case Component.Context:
+                            strRes = doc[type.ToString()]
+                                        ["_" + id.ToString()]
+                                        ["_" + parComp.ID_Panel.ToString()]
+                                        ["_" + parComp.ID_Item.ToString()]["_" + parComp.Context].OuterXml;
+                            break;
+                        default:
+                            break;
+                    }
+                else
+                    ;
+
+                return strRes;
+            }
+            /// <summary>
             /// Метод удаления компонента из XML
             /// </summary>
-            /// <param name="doc">XML документ</param>
+            /// <param name="doc">Исходный XML документ</param>
             /// <param name="id">ИД пользователя/роли</param>
             /// <param name="type">Тип XML (пользователь/роль)</param>
             /// <param name="comp">Тип изменяемого компонента</param>
             /// <param name="parComp">Структура с ИД компонентов и изменяемым значением</param>
             /// <returns>XML документ</returns>
-            public static XmlDocument DelElement(XmlDocument doc, int id, Type type, Component comp, ParamComponent parComp)
+            public static XmlDocument Remove(XmlDocument doc, Type type, int id, Component comp, ParamComponent parComp)
             {
                 if (doc != null)
                     switch (comp)
@@ -1111,28 +1151,29 @@ namespace TepCommon
                             doc[type.ToString()]
                                 ["_" + id.ToString()]
                                 ["_" + parComp.ID_Panel.ToString()]
-                                ["_" + parComp.ID_Item.ToString()].RemoveChild(doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                ["_" + parComp.ID_Panel.ToString()]
-                                ["_" + parComp.ID_Item.ToString()]["_" + parComp.Context]);
+                                ["_" + parComp.ID_Item.ToString()].RemoveChild(
+                                    doc[type.ToString()]
+                                        ["_" + id.ToString()]
+                                        ["_" + parComp.ID_Panel.ToString()]
+                                        ["_" + parComp.ID_Item.ToString()]["_" + parComp.Context]);
                                 
                             break;
                         case Component.Item:
                             doc[type.ToString()]
                                 ["_" + id.ToString()]
                                 ["_" + parComp.ID_Panel.ToString()].RemoveChild(
-                            doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                ["_" + parComp.ID_Panel.ToString()]
-                                ["_" + parComp.ID_Item.ToString()]);
+                                    doc[type.ToString()]
+                                        ["_" + id.ToString()]
+                                        ["_" + parComp.ID_Panel.ToString()]
+                                        ["_" + parComp.ID_Item.ToString()]);
 
                             break;
                         case Component.Panel:
                             doc[type.ToString()]
                                 ["_" + id.ToString()].RemoveChild(
-                            doc[type.ToString()]
-                                ["_" + id.ToString()]
-                                ["_" + parComp.ID_Panel.ToString()]);
+                                    doc[type.ToString()]
+                                        ["_" + id.ToString()]
+                                        ["_" + parComp.ID_Panel.ToString()]);
                             break;
                     }
 
@@ -1145,7 +1186,7 @@ namespace TepCommon
             /// <param name="doc">Сохраняемый документ</param>
             /// <param name="id">ИД пользователя/роли</param>
             /// <param name="type">Тип XML (пользователь/роль)</param>
-            public static void SaveXml(ConnectionSettings connSet, XmlDocument doc, int id, Type type)
+            public static void Save(ConnectionSettings connSet, XmlDocument doc, int id, Type type)
             {
                 dtProfiles_Edit = new DataTable();
                 dtProfiles_Edit = dtProfiles_Orig.Copy();
@@ -1158,7 +1199,7 @@ namespace TepCommon
                 }
 
                 int err = 0;
-                int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
+                int idListener = DbSources.Sources().Register(connSet, false, string.Format(@"Интерфейс: {0}", connSet.dbName));
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
                 DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, m_nameTableProfilesData, "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
@@ -1173,10 +1214,10 @@ namespace TepCommon
             /// <param name="connSet">ConnectionSettings для сохранения</param>
             /// <param name="arrDictOrig">Оригинальная таблица</param>
             /// <param name="arrDictEdit">Измененная таблица</param>
-            public static void SaveXml(ConnectionSettings connSet, Dictionary<string, XmlDocument>[] arrDictOrig, Dictionary<string, XmlDocument>[] arrDictEdit)
+            public static void Save(ConnectionSettings connSet, Dictionary<string, XmlDocument>[] arrDictOrig, Dictionary<string, XmlDocument>[] arrDictEdit)
             {
                 int err = 0;
-                int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
+                int idListener = DbSources.Sources().Register(connSet, false, string.Format(@"Интерфейс: {0}", connSet.dbName));
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
                 DataTable dtProfiles_Orig, dtProfiles_Edit;
@@ -1295,7 +1336,7 @@ namespace TepCommon
                 string query = string.Empty
                     , errMsg = string.Empty;
 
-                int idListener = DbSources.Sources().Register(connSet, false, "TEP_NTEC_5");
+                int idListener = DbSources.Sources().Register(connSet, false, string.Format(@"Интерфейс: {0}", connSet.dbName));
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
                 if (!(err == 0))

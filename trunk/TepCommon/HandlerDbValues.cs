@@ -32,6 +32,10 @@ namespace TepCommon
             , @"output"
             , @"outval"
             , @"ftable"
+            , @"plugins"
+            , @"task"
+            , @"fpanels"
+            ,
         };
 
         public HandlerDbValues()

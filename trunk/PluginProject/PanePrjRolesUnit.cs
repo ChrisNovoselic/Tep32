@@ -946,7 +946,6 @@ namespace PluginProject
         /// <summary>
         /// Идентификаторы для типов объектов
         /// </summary>
-        public enum ID_OBJ : int { Role = 0, User };
         private bool m_b_visible_context_menu;
         string m_warningReport;
 
@@ -956,7 +955,6 @@ namespace PluginProject
             public int id_user;
             public Type_Comp type;
         }
-
 
         ID_Comp m_selNode_id;
 
@@ -983,7 +981,6 @@ namespace PluginProject
         /// Идентификаторы для типов компонента ТЭЦ
         /// </summary>
         public enum ID_Menu : int { AddRole = 0, AddUser, Delete }
-
 
         List<string> m_open_node = new List<string>();
         string selected_user = string.Empty;
@@ -1229,10 +1226,10 @@ namespace PluginProject
             int id_newRole = 0;
             if (e.ClickedItem.Text == (string)getNameMode((int)ID_Menu.AddRole))
             {
-                this.Nodes.Add(Mass_NewVal_Comp((int)ID_OBJ.Role));
+                this.Nodes.Add(Mass_NewVal_Comp((int)Type_Comp.Role));
 
                 if (GetID != null)
-                    id_newRole = GetID(this, new GetIDEventArgs(m_selNode_id, (int)ID_OBJ.Role));
+                    id_newRole = GetID(this, new GetIDEventArgs(m_selNode_id, (int)Type_Comp.Role));
 
                 Nodes[Nodes.Count - 1].Name = Convert.ToString(id_newRole);
 
@@ -1266,7 +1263,7 @@ namespace PluginProject
                 id.id_user = -1;
 
                 if (GetID != null)
-                    id_newUser = GetID(this, new GetIDEventArgs(m_selNode_id, (int)ID_OBJ.User));
+                    id_newUser = GetID(this, new GetIDEventArgs(m_selNode_id, (int)Type_Comp.User));
 
                 id.id_role = m_selNode_id.id_role;
                 id.id_user = id_newUser;
@@ -1274,61 +1271,52 @@ namespace PluginProject
                 if (EditNode != null)
                     EditNode(this, new EditNodeEventArgs(id, ID_Operation.Insert, id.id_user));
 
-                foreach (TreeNode role in Nodes)
-                {
-                    if (Convert.ToInt32(role.Name) == m_selNode_id.id_role)
-                    {
-                        role.Nodes.Add(Mass_NewVal_Comp((int)ID_OBJ.User));
+                foreach (TreeNode role in Nodes) {
+                    if (Convert.ToInt32(role.Name) == m_selNode_id.id_role) {
+                        role.Nodes.Add(Mass_NewVal_Comp((int)Type_Comp.User));
                         role.Nodes[role.Nodes.Count - 1].Name = Convert.ToString(id.id_role) + ":" + Convert.ToString(id_newUser);
-                    }
+                    } else
+                        ;
                 }
-            }
-            else
-            {
-                if (e.ClickedItem.Text == (string)getNameMode((int)ID_Menu.Delete))//Удаление роли
-                {
-                    bool del = false;
+            } else {
+                if (e.ClickedItem.Text == (string)getNameMode((int)ID_Menu.Delete)) {
+                //Удаление роли 
+                    bool del = SelectedNode.FirstNode == null ? true : false;
 
-
-                    if (SelectedNode.FirstNode == null)
-                    {
-                        del = true;
-                    }
-                    if (del == true)
-                    {
-                        if (EditNode != null)
+                    if (del == true) {
+                        if (!(EditNode == null))
                             EditNode(this, new EditNodeEventArgs(m_selNode_id, ID_Operation.Delete, m_selNode_id.id_role));
+                        else
+                            ;
 
                         SelectedNode.Remove();
-                    }
-                    else
-                    {
-                        m_warningReport = "У роли " + SelectedNode.Text + " имеются пользователи!";
+                    } else {
+                        m_warningReport = string.Format("В составе роли {0} есть пользователи!", SelectedNode.Text);
+
                         if (Report != null)
                             Report(this, new ReportEventArgs(string.Empty, string.Empty, m_warningReport, false));
+                        else
+                            ;
+
                         //MessageBox.Show("Имеются не выведенные из состава компоненты в " + SelectedNode.Text,"Внимание!",MessageBoxButtons.OK,MessageBoxIcon.Warning);
                     }
                 }
             }
         }
-
         /// <summary>
         /// Обработчик удаления пользователя
         /// </summary>
         private void del_user(object sender, ToolStripItemClickedEventArgs e)
         {
-            if (Report != null)
-                Report(this, new ReportEventArgs(string.Empty, string.Empty, string.Empty, true));
+            Report?.Invoke(this, new ReportEventArgs(string.Empty, string.Empty, string.Empty, true));
 
             if (e.ClickedItem.Text == (string)getNameMode((int)ID_Menu.Delete))//Удаление роли
             {
-                if (EditNode != null)
-                    EditNode(this, new EditNodeEventArgs(m_selNode_id, ID_Operation.Delete, m_selNode_id.id_user));
+                EditNode?.Invoke(this, new EditNodeEventArgs(m_selNode_id, ID_Operation.Delete, m_selNode_id.id_user));
 
                 SelectedNode.Remove();
             }
         }
-
         /// <summary>
         /// Обработчик события нажатия на элемент в TreeView
         /// </summary>
@@ -1406,8 +1394,6 @@ namespace PluginProject
 
             #endregion
         }
-
-
         /// <summary>
         /// Класс для описания аргумента события - изменения компонента
         /// </summary>
@@ -1417,14 +1403,12 @@ namespace PluginProject
             /// Список ID компонента
             /// </summary>
             public ID_Comp PathComp;
-
             /// <summary>
             /// Тип производимой операции
             /// </summary>
             public ID_Operation Operation;
 
             public int IdComp;
-
             /// <summary>
             /// Значение изменяемого параметра
             /// </summary>

@@ -15,7 +15,6 @@ using InterfacePlugIn;
 using System.Xml;
 using System.Drawing;
 
-
 namespace PluginProject
 {
     public class PanelPrjRolesFPanels : HPanelEditTree
@@ -36,25 +35,15 @@ namespace PluginProject
         //DelegateStringFunc delegateActionReport;
         //DelegateBoolFunc delegateReportClear;
 
-        /// <summary>
-        /// Перечисление для индексироания уровней "дерева" параметров алгоритма
-        /// </summary>
-        protected enum ID_LEVEL
-        {
-            UNKNOWN = -1
-                , ROLE /*Роль*/, USER /*Пользователь*/
-        };
+        ///// <summary>
+        ///// Перечисление для индексироания уровней "дерева" параметров алгоритма
+        ///// </summary>
+        //protected enum ID_LEVEL
+        //{
+        //    UNKNOWN = -1
+        //        , ROLE /*Роль*/, USER /*Пользователь*/
+        //};
 
-        /// <summary>
-        /// Текущий(выбранный) уровень "дерева"
-        /// </summary>
-        private ID_LEVEL _Level;
-        protected ID_LEVEL m_Level
-        {
-            get { return _Level; }
-
-            set { _Level = value; }
-        }
         bool bIsRole = false;
         /// <summary>
         /// Идентификаторы объектов формы
@@ -84,7 +73,7 @@ namespace PluginProject
 
         private TreeView_Users.ID_Comp m_list_id;
         private DataTable m_table_TEC = new DataTable();
-        private DataTable[] m_ar_panel_table = new DataTable[3];
+        //private DataTable[] m_ar_panel_table = new DataTable[3];
         /// <summary>
         /// Массив оригинальных таблиц
         /// </summary>
@@ -113,14 +102,14 @@ namespace PluginProject
             return nameModes[(int)id];
         }
 
-        private Dictionary<string, XmlDocument>[] arrDictXml_Edit, arrDictXml_Orig;
-        private Dictionary<string, HTepUsers.DictElement>[] arrDictProfiles;
+        private Dictionary<string, XmlDocument>[] m_arrDictXml_Edit, m_arrDictXml_Orig;
+        private Dictionary<string, HTepUsers.DictElement>[] m_arrDictProfiles;
 
         private enum TypeName : int {Panel, Item, Context };
 
-        private XmlDocument selectedXml;
+        private XmlDocument m_selectedXml;
 
-        private HTepUsers.HTepProfilesXml.ParamComponent selectedComp;
+        private HTepUsers.HTepProfilesXml.ParamComponent m_selectedComp;
 
         private struct NewNameElement {
             public static int IdPanel = 999;
@@ -145,11 +134,11 @@ namespace PluginProject
             : base(iFunc)
         {
             InitializeComponent();
-            arrDictXml_Edit = new Dictionary<string, XmlDocument>[2];
-            arrDictXml_Orig = new Dictionary<string, XmlDocument>[2];
-            arrDictProfiles = new Dictionary<string, HTepUsers.DictElement>[2];
-            selectedXml = new XmlDocument();
-            selectedComp = new HTepUsers.HTepProfilesXml.ParamComponent();
+            m_arrDictXml_Edit = new Dictionary<string, XmlDocument>[2];
+            m_arrDictXml_Orig = new Dictionary<string, XmlDocument>[2];
+            m_arrDictProfiles = new Dictionary<string, HTepUsers.DictElement>[2];
+            m_selectedXml = new XmlDocument();
+            m_selectedComp = new HTepUsers.HTepProfilesXml.ParamComponent();
             //m_handlerDb = createHandlerDb();
             //arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.User] = HTepUsers.GetDicpXmlUsers;
             //arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.Role] = HTepUsers.GetDicpXmlRoles;
@@ -230,7 +219,6 @@ namespace PluginProject
             this.panel_Prop.RowStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
             this.panel_Prop.RowStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 34F));
 
-
             this.panel_Prop.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
 
             this.panel_Prop.Controls.Add(dgvProp, 0, 0);
@@ -282,14 +270,14 @@ namespace PluginProject
             int err = -1;
 
             HTepUsers.HTepProfilesXml.UpdateProfile(m_handlerDb.ConnectionSettings);
-            arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.User] = copyXml(HTepUsers.GetDicpXmlUsers);
-            arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.Role] = copyXml(HTepUsers.GetDicpXmlRoles);
+            m_arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.User] = copyXml(HTepUsers.GetDicpXmlUsers);
+            m_arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.Role] = copyXml(HTepUsers.GetDicpXmlRoles);
 
-            arrDictXml_Orig[(int)HTepUsers.HTepProfilesXml.Type.User] = copyXml(HTepUsers.GetDicpXmlUsers);
-            arrDictXml_Orig[(int)HTepUsers.HTepProfilesXml.Type.Role] = copyXml(HTepUsers.GetDicpXmlRoles);
+            m_arrDictXml_Orig[(int)HTepUsers.HTepProfilesXml.Type.User] = copyXml(HTepUsers.GetDicpXmlUsers);
+            m_arrDictXml_Orig[(int)HTepUsers.HTepProfilesXml.Type.Role] = copyXml(HTepUsers.GetDicpXmlRoles);
 
-            arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User] = HTepUsers.GetDicpUsersProfile;
-            arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role] = HTepUsers.GetDicpRolesProfile;
+            m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User] = HTepUsers.GetDicpUsersProfile;
+            m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role] = HTepUsers.GetDicpRolesProfile;
             
             m_handlerDb.RegisterDbConnection(out err);
 
@@ -309,16 +297,6 @@ namespace PluginProject
             HTepUsers.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
 
-            string query = "Select * from dbo.task";
-
-            m_ar_panel_table[0] = m_handlerDb.Select(query, out err);
-
-            query = "Select * from dbo.plugins";
-            m_ar_panel_table[1] = m_handlerDb.Select(query, out err);
-
-            query = "Select * from dbo.fpanels";
-            m_ar_panel_table[2] = m_handlerDb.Select(query, out err);
-
             m_handlerDb.UnRegisterDbConnection();
 
             resetDataTable();
@@ -328,11 +306,12 @@ namespace PluginProject
 
         private Dictionary<string, XmlDocument> copyXml(Dictionary<string, XmlDocument> dictXml)
         {
+            XmlDocument doc;
             Dictionary<string, XmlDocument> newXml = new Dictionary<string, XmlDocument>();
 
             foreach(string key in dictXml.Keys)
             {
-                XmlDocument doc = new XmlDocument();
+                doc = new XmlDocument();
                 doc.LoadXml(dictXml[key].InnerXml);
                 newXml.Add(key, doc);
             }
@@ -355,9 +334,9 @@ namespace PluginProject
         private void get_operation_tree(object sender, TreeView_Users.EditNodeEventArgs e)
         {
             if (e.Operation == TreeView_Users.ID_Operation.Select)
-            {
                 select(e.PathComp, e.IdComp);
-            }
+            else
+                ;
         }
 
         /// <summary>
@@ -387,10 +366,10 @@ namespace PluginProject
                 treeProfiles.Nodes.Clear();
                 bIsRole = false;
                 m_type_sel_node = TreeView_Users.Type_Comp.User;
-                selectedXml = arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.User][list_id.id_user.ToString()];
-                fillTreeProfiles(selectedXml);
+                m_selectedXml = m_arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.User][list_id.id_user.ToString()];
+                fillTreeProfiles(m_selectedXml);
 
-                dgvProp.Update_DGV(arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][list_id.id_user.ToString()].Attributes);
+                dgvProp.Update_DGV(m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][list_id.id_user.ToString()].Attributes);
             } else
                 ;
 
@@ -398,17 +377,17 @@ namespace PluginProject
                 treeProfiles.Nodes.Clear();
                 bIsRole = true;
                 m_type_sel_node = TreeView_Users.Type_Comp.Role;
-                selectedXml = arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.Role][list_id.id_role.ToString()];
-                fillTreeProfiles(selectedXml);
+                m_selectedXml = m_arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.Role][list_id.id_role.ToString()];
+                fillTreeProfiles(m_selectedXml);
 
-                dgvProp.Update_DGV(arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][list_id.id_role.ToString()].Attributes);
+                dgvProp.Update_DGV(m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][list_id.id_role.ToString()].Attributes);
             } else
                 ;
         }
 
         private void treeProfiles_SelectedNode(object sender, TreeViewEventArgs e)
         {
-            selectedComp = new HTepUsers.HTepProfilesXml.ParamComponent();
+            m_selectedComp = new HTepUsers.HTepProfilesXml.ParamComponent();
             string tag = e.Node.Tag.ToString();
             string[] tags = tag.Split(',');
             Dictionary<string, HTepUsers.DictElement> dict = new Dictionary<string, HTepUsers.DictElement>();
@@ -416,12 +395,12 @@ namespace PluginProject
             {
                 if (m_list_id.id_user.Equals(-1) == false)//User
                 {
-                    dict = arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][m_list_id.id_user.ToString()].Objects;
+                    dict = m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][m_list_id.id_user.ToString()].Objects;
                 }
 
                 if (m_list_id.id_user.Equals(-1) == true & m_list_id.id_role.Equals(-1) == false)//Role
                 {
-                    dict = arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][m_list_id.id_role.ToString()].Objects;
+                    dict = m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][m_list_id.id_role.ToString()].Objects;
                 }
                 switch ((TypeName)Int16.Parse(tags[0]))
                 {
@@ -432,19 +411,19 @@ namespace PluginProject
                         dgvProp_Context.Enabled = true;
                         dgvProp_Panel.Enabled = true;
 
-                        selectedComp.ID_Panel = Int32.Parse(e.Node.Parent.Parent.Tag.ToString().Split(',')[1]);
-                        selectedComp.ID_Item = Int32.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
-                        selectedComp.Context = tags[1];
+                        m_selectedComp.ID_Panel = Int32.Parse(e.Node.Parent.Parent.Tag.ToString().Split(',')[1]);
+                        m_selectedComp.ID_Item = Int32.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                        m_selectedComp.Context = tags[1];
 
-                        if (dict.ContainsKey(selectedComp.ID_Panel.ToString()) == true)
+                        if (dict.ContainsKey(m_selectedComp.ID_Panel.ToString()) == true)
                         {
-                            dgvProp_Panel.Update_DGV(dict[selectedComp.ID_Panel.ToString()].Attributes);
+                            dgvProp_Panel.Update_DGV(dict[m_selectedComp.ID_Panel.ToString()].Attributes);
 
-                            if (dict[selectedComp.ID_Panel.ToString()].Objects.ContainsKey(selectedComp.ID_Item.ToString()) == true)
+                            if (dict[m_selectedComp.ID_Panel.ToString()].Objects.ContainsKey(m_selectedComp.ID_Item.ToString()) == true)
                             {
-                                if (dict[selectedComp.ID_Panel.ToString()].Objects[selectedComp.ID_Item.ToString()].Objects.ContainsKey(selectedComp.Context.ToString()) == true)
+                                if (dict[m_selectedComp.ID_Panel.ToString()].Objects[m_selectedComp.ID_Item.ToString()].Objects.ContainsKey(m_selectedComp.Context.ToString()) == true)
                                 {
-                                    dgvProp_Context.Update_DGV(dict[selectedComp.ID_Panel.ToString()].Objects[selectedComp.ID_Item.ToString()].Objects[selectedComp.Context.ToString()].Attributes);
+                                    dgvProp_Context.Update_DGV(dict[m_selectedComp.ID_Panel.ToString()].Objects[m_selectedComp.ID_Item.ToString()].Objects[m_selectedComp.Context.ToString()].Attributes);
                                 }
                             }
                         }
@@ -457,11 +436,11 @@ namespace PluginProject
                         dgvProp_Context.Enabled = false;
                         dgvProp_Panel.Enabled = true;
 
-                        selectedComp.ID_Panel = Int32.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                        m_selectedComp.ID_Panel = Int32.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
 
-                        if (dict.ContainsKey(selectedComp.ID_Panel.ToString()) == true)
+                        if (dict.ContainsKey(m_selectedComp.ID_Panel.ToString()) == true)
                         {
-                            dgvProp_Panel.Update_DGV(dict[selectedComp.ID_Panel.ToString()].Attributes);
+                            dgvProp_Panel.Update_DGV(dict[m_selectedComp.ID_Panel.ToString()].Attributes);
                         }
                             break;
                         
@@ -473,173 +452,185 @@ namespace PluginProject
                         dgvProp_Context.Enabled = false;
                         dgvProp_Panel.Enabled = true;
 
-                        selectedComp.ID_Panel = Int32.Parse(tags[1]);
-                        if(dict.ContainsKey(selectedComp.ID_Panel.ToString()) ==true)
-                            dgvProp_Panel.Update_DGV(dict[selectedComp.ID_Panel.ToString()].Attributes);
+                        m_selectedComp.ID_Panel = Int32.Parse(tags[1]);
+                        if(dict.ContainsKey(m_selectedComp.ID_Panel.ToString()) ==true)
+                            dgvProp_Panel.Update_DGV(dict[m_selectedComp.ID_Panel.ToString()].Attributes);
                         break;
                 }
             }
         }
-
+        /// <summary>
+        /// Заполнить дерево элементами профиля выбранной роли/пользователя
+        /// </summary>
+        /// <param name="xmlProfile">Документ профиля</param>
         private void fillTreeProfiles(XmlDocument xmlProfile)
         {
             XmlNode node = xmlProfile.ChildNodes[1].ChildNodes[0];
-            int i = 0;
-            int level = 0;
-            foreach(XmlNode nodeChild in node.ChildNodes)
-            {
-                treeProfiles.Nodes.Add(new TreeNode(((TypeName)level).ToString()+' '+nodeChild.Name.Remove(0, 1)));
-                TreeNode tNode;
-                tNode = treeProfiles.Nodes[i];
+            TreeNode tNode;
+            int indx = -1;
+            // установить первоначальный уровень - панели
+            TypeName level = TypeName.Panel;
+
+            foreach(XmlNode nodeChild in node.ChildNodes) {
+                // добавить элемент - получить его индекс
+                indx = treeProfiles.Nodes.Add(new TreeNode(string.Format(@"{0} {1}", level.ToString(), nodeChild.Name.Remove(0, 1))));
+
+                tNode = treeProfiles.Nodes[indx];
                 tNode.Tag = ((int)((TypeName)level)).ToString() + ',' + nodeChild.Name.Remove(0, 1);
-                AddNodeToTree(nodeChild, tNode, level);
-                i++;
+
+                addNodeToTree(nodeChild, tNode, level);
             }
-
-
         }
-
-        private void AddNodeToTree(XmlNode inXmlNode, TreeNode inTreeNode, int level)
+        /// <summary>
+        /// Добавить (рекурсивно) элемент дерева со всеми дочерними элементам
+        /// </summary>
+        /// <param name="inXmlNode">Документ для формирования дочерних элементов</param>
+        /// <param name="inTreeNode">Родительский элемент дерева</param>
+        /// <param name="level">Уровень родительского элемента дерева</param>
+        private void addNodeToTree(XmlNode inXmlNode, TreeNode inTreeNode, TypeName level)
         {
-            XmlNode xNode;
             TreeNode tNode;
             XmlNodeList nodeList;
+            int indx = -1;
+            // понизить уровень элементов дерева
             level++;
-            int i = 0;
-            if (inXmlNode.HasChildNodes)
-            {
+            
+            if (inXmlNode.HasChildNodes == true) {
                 nodeList = inXmlNode.ChildNodes;
-                for (i = 0; i <= nodeList.Count - 1; i++)
-                {
-                    xNode = inXmlNode.ChildNodes[i];
-                    inTreeNode.Nodes.Add(new TreeNode(((TypeName)level).ToString() + ' ' + xNode.Name.Remove(0,1)));
-                    tNode = inTreeNode.Nodes[i];
-                    tNode.Tag = ((int)((TypeName)level)).ToString() + ',' + xNode.Name.Remove(0, 1);
-                    AddNodeToTree(xNode, tNode, level);
-                }
-            }
-            else
-            {
-                inTreeNode.Text = ((TypeName)(level-1)).ToString() + ' ' + inXmlNode.LocalName.ToString().Remove(0, 1);
-            }
-        }
 
+                foreach (XmlNode xNode in inXmlNode.ChildNodes) {
+                    indx = inTreeNode.Nodes.Add(new TreeNode(level.ToString() + ' ' + xNode.Name.Remove(0, 1)));
+
+                    tNode = inTreeNode.Nodes[indx];
+                    tNode.Tag = ((int)(level)).ToString() + ',' + xNode.Name.Remove(0, 1);
+
+                    addNodeToTree(xNode, tNode, level);
+                }
+            } else
+                inTreeNode.Text = ((TypeName)(level - 1)).ToString() + ' ' + inXmlNode.LocalName.ToString().Remove(0, 1);
+        }
+        /// <summary>
+        /// Обработчик события - редактирование наименования элемента дерева
+        /// </summary>
+        /// <param name="sender">Объект, инициировавший событие</param>
+        /// <param name="e">Аргумент события</param>
         private void treeView_NodeEdit(object sender, NodeLabelEditEventArgs e)
         {
-            if (e.Label != null)
-            {
-                HTepUsers.HTepProfilesXml.ParamComponent comp = new HTepUsers.HTepProfilesXml.ParamComponent();
-                Dictionary<string, HTepUsers.DictElement> dict = new Dictionary<string, HTepUsers.DictElement>();
+            HTepUsers.HTepProfilesXml.ParamComponent parComp;
+            Dictionary<string, HTepUsers.DictElement> dict;
+            HTepUsers.HTepProfilesXml.Type type;
+            XmlDocument xml;
+
+            if (e.Label != null) {
+                parComp = new HTepUsers.HTepProfilesXml.ParamComponent();
+                dict = new Dictionary<string, HTepUsers.DictElement>();
                 //HTepUsers.DictElement element = new HTepUsers.DictElement();
-                XmlDocument xml = new XmlDocument();
+                xml = new XmlDocument();
                 int id = -1;
-                HTepUsers.HTepProfilesXml.Type type = new HTepUsers.HTepProfilesXml.Type();
-                string tag = e.Node.Tag.ToString();
+                type = new HTepUsers.HTepProfilesXml.Type();
+                string tag = e.Node.Tag.ToString()
+                    , nameNode = string.Empty;
                 string[] tags = tag.Split(',');
 
-                if (m_list_id.id_user.Equals(-1) == false)//User
-                {
+                if (m_list_id.id_user.Equals(-1) == false) {
+                //User
                     type = HTepUsers.HTepProfilesXml.Type.User;
-                    dict = arrDictProfiles[(int)type][m_list_id.id_user.ToString()].Objects;
-                    xml = arrDictXml_Edit[(int)type][m_list_id.id_user.ToString()];
+                    dict = m_arrDictProfiles[(int)type][m_list_id.id_user.ToString()].Objects;
+                    xml = m_arrDictXml_Edit[(int)type][m_list_id.id_user.ToString()];
                     id = m_list_id.id_user;
-                    
-                }
+                } else
+                    ;
 
-                if (m_list_id.id_user.Equals(-1) == true & m_list_id.id_role.Equals(-1) == false)//Role
-                {
+                if (m_list_id.id_user.Equals(-1) == true & m_list_id.id_role.Equals(-1) == false) {
+                //Role
                     type = HTepUsers.HTepProfilesXml.Type.Role;
-                    dict = arrDictProfiles[(int)type][m_list_id.id_role.ToString()].Objects;
-                    xml = arrDictXml_Edit[(int)type][m_list_id.id_role.ToString()];
+                    dict = m_arrDictProfiles[(int)type][m_list_id.id_role.ToString()].Objects;
+                    xml = m_arrDictXml_Edit[(int)type][m_list_id.id_role.ToString()];
                     id = m_list_id.id_role;
-                }
+                } else
+                    ;
 
-                if (tags.Length > 1)
-                {
-                    switch ((TypeName)short.Parse(tags[0]))
-                    {
+                if (tags.Length > 1) {
+                    switch ((TypeName)short.Parse(tags[0])) {
                         case TypeName.Context:
-                            comp.ID_Item = int.Parse(e.Node.Parent.Text.Split(' ')[1]);
-                            comp.ID_Panel = int.Parse(e.Node.Parent.Parent.Text.Split(' ')[1]);
-                            if (e.Node.Nodes.Find("Context " + e.Label.Split(' ')[1], false).Length == 0)
-                            {
+                            parComp.ID_Item = int.Parse(e.Node.Parent.Text.Split(' ')[1]);
+                            parComp.ID_Panel = int.Parse(e.Node.Parent.Parent.Text.Split(' ')[1]);
+
+                            nameNode = string.Format(@"{0} {1}", NewNameElement.PrefixContext, e.Label.Split(' ')[1]);
+
+                            if (e.Node.Nodes.Find(nameNode, false).Length == 0) {
                                 #region XML
                                 XmlNode newNode = xml.CreateElement("_" + e.Label.Split(' ')[1]);
 
-                                foreach (XmlAttribute attr in xml.ChildNodes[1].ChildNodes[0]["_" + comp.ID_Panel.ToString()]["_" + comp.ID_Item.ToString()]["_" + e.Node.Text.Split(' ')[1]].Attributes)
+                                foreach (XmlAttribute attr in xml.ChildNodes[1].ChildNodes[0]["_" + parComp.ID_Panel.ToString()]["_" + parComp.ID_Item.ToString()]["_" + e.Node.Text.Split(' ')[1]].Attributes)
                                 {
                                     XmlAttribute new_attr = xml.CreateAttribute(attr.LocalName);
                                     new_attr.Value = attr.Value;
                                     newNode.Attributes.Append(new_attr);
                                 }
 
-                                foreach (XmlNode node in xml.ChildNodes[1].ChildNodes[0]["_" + comp.ID_Panel.ToString()]["_" + comp.ID_Item.ToString()]["_" + e.Node.Text.Split(' ')[1]])
+                                foreach (XmlNode node in xml.ChildNodes[1].ChildNodes[0]["_" + parComp.ID_Panel.ToString()]["_" + parComp.ID_Item.ToString()]["_" + e.Node.Text.Split(' ')[1]])
                                 {
                                     newNode.AppendChild(node.Clone());
                                 }
 
-                                xml.ChildNodes[1].ChildNodes[0]["_" + comp.ID_Panel.ToString()]["_" + comp.ID_Item.ToString()].ReplaceChild(newNode, xml.ChildNodes[1].ChildNodes[0]["_" + comp.ID_Panel.ToString()]["_" + comp.ID_Item.ToString()]["_" + e.Node.Text.Split(' ')[1]]);
+                                xml.ChildNodes[1].ChildNodes[0]["_" + parComp.ID_Panel.ToString()]["_" + parComp.ID_Item.ToString()].ReplaceChild(newNode, xml.ChildNodes[1].ChildNodes[0]["_" + parComp.ID_Panel.ToString()]["_" + parComp.ID_Item.ToString()]["_" + e.Node.Text.Split(' ')[1]]);
                                 #endregion
 
                                 #region DICT
 
-                                dict[comp.ID_Panel.ToString()].Objects[comp.ID_Item.ToString()].Objects.Add(e.Label.Split(' ')[1], dict[comp.ID_Panel.ToString()].Objects[comp.ID_Item.ToString()].Objects[e.Node.Text.Split(' ')[1]]);
-                                dict[comp.ID_Panel.ToString()].Objects[comp.ID_Item.ToString()].Objects.Remove(e.Node.Text.Split(' ')[1]);
+                                dict[parComp.ID_Panel.ToString()].Objects[parComp.ID_Item.ToString()].Objects.Add(e.Label.Split(' ')[1], dict[parComp.ID_Panel.ToString()].Objects[parComp.ID_Item.ToString()].Objects[e.Node.Text.Split(' ')[1]]);
+                                dict[parComp.ID_Panel.ToString()].Objects[parComp.ID_Item.ToString()].Objects.Remove(e.Node.Text.Split(' ')[1]);
 
                                 #endregion
 
                                 e.Node.Tag = (tag.Split(',')[0] + ',' + e.Label.Split(' ')[1]);
-                                e.Node.Name = "Context " + e.Label.Split(' ')[1];
+                                e.Node.Name = nameNode;
 
                                 ButtonSaveEnabled = true;
-                            }
-                            else
-                            {
-                                Logging.Logg().Action("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
-                            }
+                            } else
+                                Logging.Logg().Warning(string.Format("PanelPrjRolesFPanels:clickItemContext () - элемент с именем {0} уже существует", nameNode), Logging.INDEX_MESSAGE.NOT_SET);
                             break;
-
                         case TypeName.Item:
-                            comp.ID_Panel = int.Parse(e.Node.Parent.Text.Split(' ')[1]);
-                            if (e.Node.Nodes.Find("Item " + e.Label.Split(' ')[1], false).Length == 0)
-                            {
+                            parComp.ID_Panel = int.Parse(e.Node.Parent.Text.Split(' ')[1]);
+
+                            nameNode = string.Format(@"{0} {1}", NewNameElement.PrefixItem, e.Label.Split(' ')[1]);
+
+                            if (e.Node.Nodes.Find(nameNode, false).Length == 0) {
                                 #region XML
                                 XmlNode newNode = xml.CreateElement("_" + e.Label.Split(' ')[1]);
 
-                                foreach (XmlAttribute attr in xml.ChildNodes[1].ChildNodes[0]["_" + comp.ID_Panel.ToString()]["_" + e.Node.Text.Split(' ')[1]].Attributes)
+                                foreach (XmlAttribute attr in xml.ChildNodes[1].ChildNodes[0]["_" + parComp.ID_Panel.ToString()]["_" + e.Node.Text.Split(' ')[1]].Attributes)
                                 {
                                     newNode.Attributes.Append(attr);
                                 }
 
-                                foreach (XmlNode node in xml.ChildNodes[1].ChildNodes[0]["_" + comp.ID_Panel.ToString()]["_" + e.Node.Text.Split(' ')[1]])
+                                foreach (XmlNode node in xml.ChildNodes[1].ChildNodes[0]["_" + parComp.ID_Panel.ToString()]["_" + e.Node.Text.Split(' ')[1]])
                                 {
                                     newNode.AppendChild(node.Clone());
                                 }
 
-                                xml.ChildNodes[1].ChildNodes[0]["_" + comp.ID_Panel.ToString()].ReplaceChild(newNode, xml.ChildNodes[1].ChildNodes[0]["_" + comp.ID_Panel.ToString()]["_" + e.Node.Text.Split(' ')[1]]);
+                                xml.ChildNodes[1].ChildNodes[0]["_" + parComp.ID_Panel.ToString()].ReplaceChild(newNode, xml.ChildNodes[1].ChildNodes[0]["_" + parComp.ID_Panel.ToString()]["_" + e.Node.Text.Split(' ')[1]]);
                                 #endregion
 
                                 #region DICT
 
-                                dict[comp.ID_Panel.ToString()].Objects.Add(e.Label.Split(' ')[1], dict[comp.ID_Panel.ToString()].Objects[e.Node.Text.Split(' ')[1]]);
-                                dict[comp.ID_Panel.ToString()].Objects.Remove(e.Node.Text.Split(' ')[1]);
+                                dict[parComp.ID_Panel.ToString()].Objects.Add(e.Label.Split(' ')[1], dict[parComp.ID_Panel.ToString()].Objects[e.Node.Text.Split(' ')[1]]);
+                                dict[parComp.ID_Panel.ToString()].Objects.Remove(e.Node.Text.Split(' ')[1]);
 
                                 #endregion
 
                                 e.Node.Tag = (tag.Split(',')[0] + ',' + e.Label.Split(' ')[1]);
-                                e.Node.Name = "Item " + e.Label.Split(' ')[1];
+                                e.Node.Name = nameNode;
 
                                 ButtonSaveEnabled = true;
-                            }
-                            else
-                            {
-                                Logging.Logg().Action("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
-                            }
+                            } else
+                                Logging.Logg().Warning(string.Format("PanelPrjRolesFPanels:clickItemContext () - элемент с именем {0} уже существует", nameNode), Logging.INDEX_MESSAGE.NOT_SET);
                             break;
-
                         case TypeName.Panel:
-                            if (e.Node.Nodes.Find("Panel " + e.Label.Split(' ')[1], false).Length == 0)
-                            {
+                            nameNode = string.Format(@"{0} {1}", NewNameElement.PrefixPanel, e.Label.Split(' ')[1]);
+
+                            if (e.Node.Nodes.Find(nameNode, false).Length == 0)  {
                                 #region XML
                                 XmlNode newNode = xml.CreateElement("_"+ e.Label.Split(' ')[1]);
 
@@ -664,14 +655,11 @@ namespace PluginProject
                                 #endregion
 
                                 e.Node.Tag = (tag.Split(',')[0] + ',' + e.Label.Split(' ')[1]);
-                                e.Node.Name = "Panel " + e.Label.Split(' ')[1];
+                                e.Node.Name = nameNode;
 
                                 ButtonSaveEnabled = true;
-                            }
-                            else
-                            {
-                                Logging.Logg().Warning("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
-                            }
+                            } else
+                                Logging.Logg().Warning(string.Format("PanelPrjRolesFPanels:clickItemContext () - элемент с именем {0} уже существует", nameNode), Logging.INDEX_MESSAGE.NOT_SET);
                             break;
                     }
                 }
@@ -680,20 +668,24 @@ namespace PluginProject
 
         private void clickItemContext(object sender, TreeViewProfile.ClickItemEventArgs e)
         {
-            HTepUsers.HTepProfilesXml.ParamComponent comp = new HTepUsers.HTepProfilesXml.ParamComponent();
+            HTepUsers.HTepProfilesXml.ParamComponent parComp = new HTepUsers.HTepProfilesXml.ParamComponent();
             string tag = string.Empty;// e.Node.Tag.ToString();
             string[] tags = tag.Split(',');
-            XmlDocument xmlDoc = new XmlDocument();
-            int id = -1;
+            XmlDocument xmlDoc = new XmlDocument()
+                , clipboardDoc;
             HTepUsers.HTepProfilesXml.Type type = new HTepUsers.HTepProfilesXml.Type();
+            HTepUsers.HTepProfilesXml.Component comp;
+            int id = -1;            
             Dictionary<string, HTepUsers.DictElement> dict = new Dictionary<string, HTepUsers.DictElement>();
+            HTepUsers.DictElement dictEl;
 
             if (m_list_id.id_user.Equals(-1) == false) {
             //User                
                 id = m_list_id.id_user;
                 type = HTepUsers.HTepProfilesXml.Type.User;
             } else
-                if (m_list_id.id_user.Equals(-1) == true & m_list_id.id_role.Equals(-1) == false) {
+                if ((m_list_id.id_user.Equals(-1) == true)
+                    && (m_list_id.id_role.Equals(-1) == false)) {
                 //Role
                     id = m_list_id.id_role;
                     type = HTepUsers.HTepProfilesXml.Type.Role;
@@ -701,63 +693,57 @@ namespace PluginProject
                 else
                     throw new Exception (@"PanelPrjRolesFPanels::clickItemContext () - неизвестный тип профиля настроек...");
 
-            dict = arrDictProfiles[(int)type][id.ToString()].Objects;
-            xmlDoc = arrDictXml_Edit[(int)type][id.ToString()];
+            dict = m_arrDictProfiles[(int)type][id.ToString()].Objects;
+            xmlDoc = m_arrDictXml_Edit[(int)type][id.ToString()];
 
-            if (e.Node != null)
-            {
+            if (!(e.Node == null)) {
                 tag = e.Node.Tag.ToString();
                 tags = tag.Split(',');
 
-                switch (e.TypeItem)
-                {
+                switch (e.TypeItem) {
                     #region Add in element
                     case TreeViewProfile.TypeMenuContextItem.Add:
-                        switch ((TypeName)short.Parse(tags[0]))
-                        {
+                        switch ((TypeName)short.Parse(tags[0])) {
                             case TypeName.Item:
-                                comp.ID_Panel = int.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
-                                comp.ID_Item = int.Parse(e.Node.Tag.ToString().Split(',')[1]);
-                                comp.Context = ((int)NewNameElement.IdContext).ToString();
-                                if (e.Node.Nodes.Find(NewNameElement.Context, false).Length == 0)
-                                {
-                                    xmlDoc = HTepUsers.HTepProfilesXml.AddElement(xmlDoc, id, type, HTepUsers.HTepProfilesXml.Component.Context, comp);
+                                parComp.ID_Panel = int.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                                parComp.ID_Item = int.Parse(e.Node.Tag.ToString().Split(',')[1]);
+                                parComp.Context = ((int)NewNameElement.IdContext).ToString();
+
+                                if (e.Node.Nodes.Find(NewNameElement.Context, false).Length == 0) {
+                                    xmlDoc = HTepUsers.HTepProfilesXml.Add(xmlDoc, type, id, HTepUsers.HTepProfilesXml.Component.Context, parComp);
+
                                     e.Node.Nodes.Add(NewNameElement.Context, NewNameElement.Context);
                                     e.Node.Nodes[NewNameElement.Context].Tag = NewNameElement.TagContext;
 
-                                    HTepUsers.DictElement dictEl = new HTepUsers.DictElement();
+                                    dictEl = new HTepUsers.DictElement();
                                     dictEl.Attributes = new Dictionary<string, string>();
                                     dictEl.Objects = new Dictionary<string, HTepUsers.DictElement>();
-                                    dict[comp.ID_Panel.ToString()].Objects[comp.ID_Item.ToString()].Objects.Add(((int)NewNameElement.IdContext).ToString(), dictEl);
-                                    ButtonSaveEnabled = true;
+                                    dict[parComp.ID_Panel.ToString()].Objects[parComp.ID_Item.ToString()].Objects.Add(((int)NewNameElement.IdContext).ToString(), dictEl);
 
                                     ButtonSaveEnabled = true;
-                                }
-                                else
-                                {
-                                    Logging.Logg().Warning("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
-                                }
+                                } else
+                                    Logging.Logg().Warning(string.Format("PanelPrjRolesFPanels:clickItemContext () - элемент с именем {0} уже существует", NewNameElement.Item), Logging.INDEX_MESSAGE.NOT_SET);
 
                                 break;
                             case TypeName.Panel:
-                                comp.ID_Panel = int.Parse(tags[1]);
-                                comp.ID_Item = NewNameElement.IdItem;
+                                parComp.ID_Panel = int.Parse(tags[1]);
+                                parComp.ID_Item = NewNameElement.IdItem;
+
                                 if (e.Node.Nodes.Find(NewNameElement.Item, false).Length == 0)
                                 {
-                                    xmlDoc = HTepUsers.HTepProfilesXml.AddElement(xmlDoc, id, type, HTepUsers.HTepProfilesXml.Component.Item, comp);
+                                    xmlDoc = HTepUsers.HTepProfilesXml.Add(xmlDoc, type, id, HTepUsers.HTepProfilesXml.Component.Item, parComp);
+
                                     e.Node.Nodes.Add(NewNameElement.Item, NewNameElement.Item);
                                     e.Node.Nodes[NewNameElement.Item].Tag = NewNameElement.TagItem;
 
-                                    HTepUsers.DictElement dictEl = new HTepUsers.DictElement();
+                                    dictEl = new HTepUsers.DictElement();
                                     dictEl.Attributes = new Dictionary<string, string>();
                                     dictEl.Objects = new Dictionary<string, HTepUsers.DictElement>();
-                                    dict[comp.ID_Panel.ToString()].Objects.Add(((int)NewNameElement.IdItem).ToString(), dictEl);
+                                    dict[parComp.ID_Panel.ToString()].Objects.Add(((int)NewNameElement.IdItem).ToString(), dictEl);
+
                                     ButtonSaveEnabled = true;
-                                }
-                                else
-                                {
-                                    Logging.Logg().Warning("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
-                                }
+                                } else
+                                    Logging.Logg().Warning(string.Format("PanelPrjRolesFPanels:clickItemContext () - элемент с именем {0} уже существует", NewNameElement.Item), Logging.INDEX_MESSAGE.NOT_SET);
 
                                 break;
                             default:
@@ -771,66 +757,160 @@ namespace PluginProject
                         switch ((TypeName)short.Parse(tags[0]))
                         {
                             case TypeName.Context:
-                                comp.ID_Panel = int.Parse(e.Node.Parent.Parent.Tag.ToString().Split(',')[1]);
-                                comp.ID_Item = int.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
-                                comp.Context = tags[1];
-                                xmlDoc = HTepUsers.HTepProfilesXml.DelElement(xmlDoc,id, type, HTepUsers.HTepProfilesXml.Component.Context, comp);
-                                dict[comp.ID_Panel.ToString()].Objects[comp.ID_Item.ToString()].Objects.Remove(comp.Context.ToString());
-                                e.Node.Remove();
+                                parComp.ID_Panel = int.Parse(e.Node.Parent.Parent.Tag.ToString().Split(',')[1]);
+                                parComp.ID_Item = int.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                                parComp.Context = tags[1];
 
-                                ButtonSaveEnabled = true;
+                                xmlDoc = HTepUsers.HTepProfilesXml.Remove(xmlDoc, type, id, HTepUsers.HTepProfilesXml.Component.Context, parComp);
+
+                                dict[parComp.ID_Panel.ToString()].Objects[parComp.ID_Item.ToString()].Objects.Remove(parComp.Context.ToString());                                
 
                                 break;
                             case TypeName.Item:
-                                comp.ID_Panel = int.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
-                                comp.ID_Item = int.Parse(e.Node.Tag.ToString().Split(',')[1]);
-                                xmlDoc = HTepUsers.HTepProfilesXml.DelElement(xmlDoc, id, type, HTepUsers.HTepProfilesXml.Component.Item, comp);
-                                dict[comp.ID_Panel.ToString()].Objects.Remove(comp.ID_Item.ToString());
-                                e.Node.Remove();
+                                parComp.ID_Panel = int.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                                parComp.ID_Item = int.Parse(e.Node.Tag.ToString().Split(',')[1]);
 
-                                ButtonSaveEnabled = true;
+                                xmlDoc = HTepUsers.HTepProfilesXml.Remove(xmlDoc, type, id, HTepUsers.HTepProfilesXml.Component.Item, parComp);
+                                dict[parComp.ID_Panel.ToString()].Objects.Remove(parComp.ID_Item.ToString());
 
                                 break;
                             case TypeName.Panel:
-                                comp.ID_Panel = int.Parse(tags[1]);
-                                xmlDoc = HTepUsers.HTepProfilesXml.DelElement(xmlDoc, id, type, HTepUsers.HTepProfilesXml.Component.Panel, comp);
-                                dict.Remove(comp.ID_Panel.ToString());
-                                e.Node.Remove();
+                                parComp.ID_Panel = int.Parse(tags[1]);
 
-                                ButtonSaveEnabled = true;
+                                xmlDoc = HTepUsers.HTepProfilesXml.Remove(xmlDoc, type, id, HTepUsers.HTepProfilesXml.Component.Panel, parComp);
+
+                                dict.Remove(parComp.ID_Panel.ToString());
 
                                 break;
                             default:
                                 break;
                         }
+
+                        e.Node.Remove();
+
+                        ButtonSaveEnabled = true;
+
+                        break;
+                    #endregion
+
+                    #region Import
+                    case TreeViewProfile.TypeMenuContextItem.Import:
+                        // загрузить новое XML-содержимое из буфера
+                        try {
+                            clipboardDoc = new XmlDocument();
+                            clipboardDoc.LoadXml(Clipboard.GetText());
+
+                            // очистить все дочерние элементы дерева
+                            e.Node.Nodes.Clear();
+                            // удалить XML содержимое
+                            // ???
+                            // удалить объекты из словаря
+                            // ???
+                            // добавить элементы в словарь в соответствии с новым содержимым
+                            // ???
+                            // добавить новое XML содержимое
+                            xmlDoc = HTepUsers.HTepProfilesXml.Add(xmlDoc, type, id, HTepUsers.HTepProfilesXml.Component.Item, parComp);
+                            // добавить все дочерние элементы дерева
+                            addNodeToTree(clipboardDoc.FirstChild, e.Node, (TypeName)short.Parse(tags[0]));
+                        } catch (Exception ex) {
+                            Logging.Logg().Exception(ex
+                                , string.Format(@"PanelPrjRolesFPanels:clickItemContext () - ...")
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                        break;
+                    #endregion
+
+                    #region Export
+                    case TreeViewProfile.TypeMenuContextItem.Export:
+                        Clipboard.Clear();
+
+                        switch ((TypeName)short.Parse(tags[0]))
+                        {
+                            case TypeName.Context:
+                                comp = HTepUsers.HTepProfilesXml.Component.Context;
+
+                                parComp.ID_Panel = int.Parse(e.Node.Parent.Parent.Tag.ToString().Split(',')[1]);
+                                parComp.ID_Item = int.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                                parComp.Context = tags[1];
+
+                                break;
+                            case TypeName.Item:
+                                comp = HTepUsers.HTepProfilesXml.Component.Item;
+
+                                parComp.ID_Panel = int.Parse(e.Node.Parent.Tag.ToString().Split(',')[1]);
+                                parComp.ID_Item = int.Parse(e.Node.Tag.ToString().Split(',')[1]);
+
+                                break;
+                            case TypeName.Panel:
+                                comp = HTepUsers.HTepProfilesXml.Component.Panel;
+
+                                parComp.ID_Panel = int.Parse(tags[1]);
+
+                                break;
+                            default:
+                                comp = HTepUsers.HTepProfilesXml.Component.None;
+                                break;
+                        }
+
+                        if (!(comp == HTepUsers.HTepProfilesXml.Component.None))
+                            Clipboard.SetText(HTepUsers.HTepProfilesXml.Doc(xmlDoc, type, id, comp, parComp));
+                        else
+                            ;
+
                         break;
                     #endregion
                     default:
                         break;
                 }
-            }
-            else
-            {
+            } else {
+            // e.Node == null, значить добавляется элемент верхнего уровня (панель)
                 #region Add panel
-                switch (e.TypeItem)
-                {
+                switch (e.TypeItem) {                
                     case TreeViewProfile.TypeMenuContextItem.Add:
-                        comp.ID_Panel = (int)NewNameElement.IdPanel;
-                        if (treeProfiles.Nodes.Find(NewNameElement.Panel, false).Length == 0)
-                        {
-                            xmlDoc =HTepUsers.HTepProfilesXml.AddElement(xmlDoc, id, type, HTepUsers.HTepProfilesXml.Component.Panel, comp);
+                    // добавить
+                        parComp.ID_Panel = (int)NewNameElement.IdPanel;
+                        if (treeProfiles.Nodes.Find(NewNameElement.Panel, false).Length == 0) {
+                            xmlDoc = HTepUsers.HTepProfilesXml.Add(xmlDoc, type, id, HTepUsers.HTepProfilesXml.Component.Panel, parComp);
+
                             treeProfiles.Nodes.Add(NewNameElement.Panel, NewNameElement.Panel);
                             treeProfiles.Nodes[NewNameElement.Panel].Tag = NewNameElement.TagPanel;
-                            HTepUsers.DictElement dictEl = new HTepUsers.DictElement();
+
+                            dictEl = new HTepUsers.DictElement();
                             dictEl.Attributes = new Dictionary<string, string>();
                             dictEl.Objects = new Dictionary<string, HTepUsers.DictElement>();
                             dict.Add(((int)NewNameElement.IdPanel).ToString(), dictEl);
+
                             ButtonSaveEnabled = true;
+                        } else
+                            Logging.Logg().Warning(string.Format("PanelPrjRolesFPanels:clickItemContext () - элемент с именем {0} уже существует", NewNameElement.Panel), Logging.INDEX_MESSAGE.NOT_SET);
+
+                        break;
+                    case TreeViewProfile.TypeMenuContextItem.Import:
+                    // импорт(замещение текущего) всего дерева целиком
+                        // загрузить новое XML-содержимое из буфера
+                        try {
+                            xmlDoc.LoadXml(Clipboard.GetText());
+
+                            // очистить все дочерние элементы дерева
+                            e.Node.Nodes.Clear();
+                            // удалить объекты из словаря
+                            // ???
+                            // добавить элементы в словарь в соответствии с новым содержимым
+                            // ???
+                            // добавить все дочерние элементы дерева
+                            addNodeToTree(xmlDoc, e.Node, TypeName.Panel);
+                        } catch (Exception ex) {
+                            Logging.Logg().Exception(ex
+                                , string.Format(@"PanelPrjRolesFPanels:clickItemContext - ")
+                                , Logging.INDEX_MESSAGE.NOT_SET);
                         }
-                        else
-                        {
-                            Logging.Logg().Warning("PanelPrjRolesFPanels:clickItemContext - Элемент с таким именем уже существует", Logging.INDEX_MESSAGE.NOT_SET);
-                        }
+                        break;
+                    case TreeViewProfile.TypeMenuContextItem.Export:
+                    // экспорт всего дерева целиком в буфер
+                        System.Windows.Forms.Clipboard.Clear();
+                        System.Windows.Forms.Clipboard.SetText(xmlDoc.InnerXml);
+                        break;
+                    default:
                         break;
                 }
                 #endregion
@@ -872,7 +952,7 @@ namespace PluginProject
             string warning;
             string keys = string.Empty;
 
-            HTepUsers.HTepProfilesXml.SaveXml(m_handlerDb.ConnectionSettings,arrDictXml_Orig,arrDictXml_Edit);
+            HTepUsers.HTepProfilesXml.Save(m_handlerDb.ConnectionSettings,m_arrDictXml_Orig,m_arrDictXml_Edit);
 
             ButtonSaveEnabled = false;
             fillDataTable();
@@ -927,7 +1007,7 @@ namespace PluginProject
             parComp.Value = value;
             parComp.ID_Unit = Int32.Parse(e.m_Header_name);
 
-            selectedXml = HTepUsers.HTepProfilesXml.EditAttr(selectedXml, id, type, HTepUsers.HTepProfilesXml.Component.None, parComp);
+            m_selectedXml = HTepUsers.HTepProfilesXml.Edit(m_selectedXml, type, id, HTepUsers.HTepProfilesXml.Component.None, parComp);
 
             
             ButtonSaveEnabled = true;
@@ -961,16 +1041,15 @@ namespace PluginProject
                     break;
             }
 
-            parComp.ID_Panel = selectedComp.ID_Panel;
-            parComp.ID_Item = selectedComp.ID_Item;
-            parComp.Context= selectedComp.Context;
+            parComp.ID_Panel = m_selectedComp.ID_Panel;
+            parComp.ID_Item = m_selectedComp.ID_Item;
+            parComp.Context= m_selectedComp.Context;
             parComp.Value = value;
             parComp.ID_Unit = Int32.Parse(e.m_Header_name);
 
-            selectedXml = HTepUsers.HTepProfilesXml.EditAttr(selectedXml, id, type, HTepUsers.HTepProfilesXml.Component.Context, parComp);
+            m_selectedXml = HTepUsers.HTepProfilesXml.Edit(m_selectedXml, type, id, HTepUsers.HTepProfilesXml.Component.Context, parComp);
 
             ButtonSaveEnabled = true;
-
         }
 
         protected void dgvProp_Panel_CellEndEdit(object sender, DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventArgs e)
@@ -980,56 +1059,59 @@ namespace PluginProject
             int id = -1;
             HTepUsers.HTepProfilesXml.Type type = HTepUsers.HTepProfilesXml.Type.Role;
 
-            if (e.m_Value == "True")
+            if (e.m_Value == true.ToString())
                 value = 1.ToString();
             else
-                if (e.m_Value == "False")
-                value = 0.ToString();
-            else
-                value = e.m_Value;
+                if (e.m_Value == false.ToString())
+                    value = 0.ToString();
+                else
+                    value = e.m_Value;
 
-            switch (m_type_sel_node)
-            {
-                case TreeView_Users.Type_Comp.Role:
-                    id = m_list_id.id_role;
-                    type = HTepUsers.HTepProfilesXml.Type.Role;
-                    break;
-                case TreeView_Users.Type_Comp.User:
-                    id = m_list_id.id_user;
-                    type = HTepUsers.HTepProfilesXml.Type.User;
-                    break;
-            }
-
-            parComp.ID_Panel = selectedComp.ID_Panel;
-            parComp.Value = value;
-            parComp.ID_Unit = Int32.Parse(e.m_Header_name);
-
-            selectedXml = HTepUsers.HTepProfilesXml.EditAttr(selectedXml, id, type, HTepUsers.HTepProfilesXml.Component.Panel, parComp);
-
-            ButtonSaveEnabled = true;
-        }
-        /// <summary>
-        /// Проверка критичных параметров перед сохранением
-        /// </summary>
-        /// <param name="mass_table">Таблица для проверки</param>
-        /// <param name="warning">Строка с описанием ошибки</param>
-        /// <returns>Возвращает переменную показывающую наличие не введенных параметров</returns>
-        private bool validate_saving(DataTable table_profiles, out string warning)
-        {
-            bool have = false;
-            warning = string.Empty;
-            foreach (DataRow row in table_profiles.Rows)
-            {
-                for (int i = 0; i < table_profiles.Columns.Count; i++)
+                switch (m_type_sel_node)
                 {
-                    if (i != 3)
-                        if (Convert.ToString(row[i]) == "-1")
-                        {
-                            have = true;
-                            warning += "Для пользователя " + row["ID_EXT"] + " параметр " + table_profiles.Columns[i].ColumnName + " равен '-1'." + '\n';
-                        }
+                    case TreeView_Users.Type_Comp.Role:
+                        id = m_list_id.id_role;
+                        type = HTepUsers.HTepProfilesXml.Type.Role;
+                        break;
+                    case TreeView_Users.Type_Comp.User:
+                        id = m_list_id.id_user;
+                        type = HTepUsers.HTepProfilesXml.Type.User;
+                        break;
                 }
+
+                parComp.ID_Panel = m_selectedComp.ID_Panel;
+                parComp.Value = value;
+                parComp.ID_Unit = Int32.Parse(e.m_Header_name);
+
+                m_selectedXml = HTepUsers.HTepProfilesXml.Edit(m_selectedXml, type, id, HTepUsers.HTepProfilesXml.Component.Panel, parComp);
+
+                ButtonSaveEnabled = true;
             }
+            /// <summary>
+            /// Проверка критичных параметров перед сохранением
+            /// </summary>
+            /// <param name="mass_table">Таблица для проверки</param>
+            /// <param name="warning">Строка с описанием ошибки</param>
+            /// <returns>Возвращает признак наличия не введенных параметров</returns>
+            private bool validate_saving(DataTable table_profiles, out string warning)
+            {
+                bool have = false;
+                warning = string.Empty;
+
+                foreach (DataRow row in table_profiles.Rows)
+                    for (int i = 0; i < table_profiles.Columns.Count; i++)
+                        if (!(i == 3))
+                        if (Convert.ToString(row[i]) == "-1") {
+                            have = true;
+
+                            warning += string.Format("Для пользователя {0} параметр {1} равен '-1'.{2}"
+                                , row["ID_EXT"], table_profiles.Columns[i].ColumnName, Environment.NewLine);
+                        }
+                        else
+                            ;
+                    else
+                        ;
+
             return have;
         }
 
@@ -1050,8 +1132,8 @@ namespace PluginProject
 
             private static ContextMenuItem[] m_arContextMenuItem = new ContextMenuItem[] {
                 new ContextMenuItem () { type = TypeMenuContextItem.Add, name = "Добавить элемент" }
-                , new ContextMenuItem () { type = TypeMenuContextItem.Import, name = "Импортировать элемент" }
-                , new ContextMenuItem () { type = TypeMenuContextItem.Export, name = "Экспортировать элемент" }
+                , new ContextMenuItem () { type = TypeMenuContextItem.Import, name = "Вставить из буфера" }
+                , new ContextMenuItem () { type = TypeMenuContextItem.Export, name = "Копировать в буфер" }
                 , new ContextMenuItem () { type = TypeMenuContextItem.Delete, name = "Удалить элемент" }
             };
 
@@ -1085,9 +1167,8 @@ namespace PluginProject
                 this.ContextMenuStrip = m_dictMenuContext[TypeMenuContext.TREE];
 
                 ToolStripItemClickedEventHandler handlerContextItemClick = new ToolStripItemClickedEventHandler(contextItemClick);
-                m_dictMenuContext[TypeMenuContext.NODE].ItemClicked += handlerContextItemClick;
-                m_dictMenuContext[TypeMenuContext.TREE].ItemClicked += handlerContextItemClick;
-                m_dictMenuContext[TypeMenuContext.CONTEXT].ItemClicked += handlerContextItemClick;
+                foreach (TypeMenuContext key in Enum.GetValues(typeof(TypeMenuContext)))
+                    m_dictMenuContext[key].ItemClicked += handlerContextItemClick;
             }
 
             private void selectNode(object sender, TreeViewEventArgs e)
@@ -1148,10 +1229,19 @@ namespace PluginProject
                 //    else
                 //        ;
 
-                ClickItem?.Invoke(this
-                    , new ClickItemEventArgs((TypeMenuContextItem)e.ClickedItem.Tag
-                        , (TypeMenuContext)((ContextMenuStrip)sender).Tag == TypeMenuContext.TREE ? null : this.SelectedNode)
-                );
+                switch ((TypeMenuContextItem)e.ClickedItem.Tag) {
+                    case TypeMenuContextItem.Add:
+                    case TypeMenuContextItem.Delete:
+                    case TypeMenuContextItem.Import:
+                    case TypeMenuContextItem.Export:
+                        ClickItem?.Invoke(this
+                            , new ClickItemEventArgs((TypeMenuContextItem)e.ClickedItem.Tag
+                                , (TypeMenuContext)((ContextMenuStrip)sender).Tag == TypeMenuContext.TREE ? null : this.SelectedNode)
+                        );
+                        break;
+                    default:
+                        break;
+                }
             }
             /// <summary>
             /// Класс для описания аргумента события - изменения компонента
