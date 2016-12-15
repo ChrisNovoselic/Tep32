@@ -102,9 +102,6 @@ namespace PluginTaskAutobook
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            //DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC)
-            //    , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(0);
-            // привести дату/время к UTC
             DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(1).AddMinutes(-1 * _Session.m_curOffsetUTC)
                 , dtEnd = _Session.m_rangeDatetime.End.AddDays(1).AddMinutes(-1 * _Session.m_curOffsetUTC);
 
@@ -248,7 +245,7 @@ namespace PluginTaskAutobook
                             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p "
                             + @"ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + " "
                             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                            + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
+                                + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)idPeriod + " AND [ID_SOURCE] > 0 "
                             + @"AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone
@@ -259,11 +256,15 @@ namespace PluginTaskAutobook
                         bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
 
                     if (bEquDatetime == false)
-                        strRes += @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                      + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+                        strRes += @" AND NOT [DATE_TIME] < '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+                            + @" AND NOT [DATE_TIME] > '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+                    else
+                        ;
 
                     if (bLastItem == false)
                         strRes += @" UNION ALL ";
+                    else
+                        ;
                 }
 
                 strRes = " " + @"SELECT v.ID_PUT "
