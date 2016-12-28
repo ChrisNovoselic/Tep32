@@ -81,11 +81,11 @@ namespace TepCommon
         /// <summary>
         /// Объект от значений которого зависят значения текущего объекта
         /// </summary>
-        HDateTimePicker m_objLeading;
+        private HDateTimePicker m_objLeading;
         /// <summary>
         /// Смещение относительно ведущего (если он есть) элемента управления
         /// </summary>
-        TimeSpan m_tsLeading;
+        private TimeSpan m_tsLeading;
         /// <summary>
         /// События изменения значения
         /// </summary>
@@ -459,11 +459,30 @@ namespace TepCommon
                 , cntDayInMonth = -1;
 
             INDEX_CONTROL indx = (ev as EventDatePartArgs).m_index;
+
+            if ((indx == INDEX_CONTROL.MONTH)
+                || (indx == INDEX_CONTROL.YEAR)
+                ) {
+                if (_mode == MODE.MONTH) {
+                    m_tsLeading -=
+                        TimeSpan.FromDays(DateTime.DaysInMonth(objLeading._value[(int)INDEX_VALUE.PREVIOUS].Year, objLeading._value[(int)INDEX_VALUE.PREVIOUS].Month));
+
+                    m_tsLeading +=
+                        TimeSpan.FromDays(DateTime.DaysInMonth(objLeading._value[(int)INDEX_VALUE.CURRENT].Year, objLeading._value[(int)INDEX_VALUE.CURRENT].Month));
+                } else
+                    if (_mode == MODE.YEAR)
+                        m_tsLeading =
+                            TimeSpan.FromDays(DateTime.IsLeapYear(objLeading._value[(int)INDEX_VALUE.CURRENT].Year) == true ? 366 : 365);
+                else
+                    ;
+
+                m_tsLeading -= TimeSpan.FromDays(1);
+            } else
+                ;
+
             //??? учитывать значение в "ведущем" календаре
             iDiffYear = objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
             _value[(int)INDEX_VALUE.PREVIOUS] = _value[(int)INDEX_VALUE.CURRENT];
-            cbxYearMapping(indx);
-            //m_tsLeading = TimeSpan.FromDays(DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, objLeading.Value.Month));//
             _value[(int)INDEX_VALUE.CURRENT] = objLeading.Value + m_tsLeading;
             //??? учитывать значение в "ведущем" календаре
             iDiffYear -= objLeading.Value.Year - _value[(int)INDEX_VALUE.CURRENT].Year;
@@ -502,30 +521,30 @@ namespace TepCommon
             ValueChanged(this, EventArgs.Empty);
         }
 
-        /// <summary>
-        /// Кол-во дней с учетом високосные/не_високосные годы в режиме «ГОД».
-        /// </summary>
-        /// <param name="indx">индекс контрола</param>
-        private void cbxYearMapping(INDEX_CONTROL indx)
-        {
-            switch (indx)
-            {
-                case INDEX_CONTROL.DAY:
-                    break;
-                case INDEX_CONTROL.MONTH:
-                    break;
-                case INDEX_CONTROL.YEAR:
-                    if (DateTime.IsLeapYear(_value[(int)INDEX_VALUE.CURRENT].Year))
-                        m_tsLeading = TimeSpan.FromDays((double)INDEX_LEAP_YEAR.LEAP) - TimeSpan.FromDays(1);
-                    else
-                        m_tsLeading = TimeSpan.FromDays((double)INDEX_LEAP_YEAR.NOT_LEAP) - TimeSpan.FromDays(1);
-                    break;
-                case INDEX_CONTROL.HOUR:
-                    break;
-                default:
-                    break;
-            }
-        }
+        ///// <summary>
+        ///// Кол-во дней с учетом високосные/не_високосные годы в режиме «ГОД».
+        ///// </summary>
+        ///// <param name="indx">индекс контрола</param>
+        //private void cbxYearMapping(INDEX_CONTROL indx)
+        //{
+        //    switch (indx)
+        //    {
+        //        case INDEX_CONTROL.DAY:
+        //            break;
+        //        case INDEX_CONTROL.MONTH:
+        //            break;
+        //        case INDEX_CONTROL.YEAR:
+        //            if (DateTime.IsLeapYear(_value[(int)INDEX_VALUE.CURRENT].Year))
+        //                m_tsLeading = TimeSpan.FromDays((double)INDEX_LEAP_YEAR.LEAP) - TimeSpan.FromDays(1);
+        //            else
+        //                m_tsLeading = TimeSpan.FromDays((double)INDEX_LEAP_YEAR.NOT_LEAP) - TimeSpan.FromDays(1);
+        //            break;
+        //        case INDEX_CONTROL.HOUR:
+        //            break;
+        //        default:
+        //            break;
+        //    }
+        //}
 
         /// <summary>
         /// Изменить кол-во элементов в списке "Номер дня месяца", установить текущий номер дня в месяце
@@ -549,16 +568,20 @@ namespace TepCommon
             // добавить/удалить элементы в списке в соответствии с количеством дней в месяце
             if (cbx.Items.Count == cntDays)
                 ;
-            else
+            else {
+                // попытка учета разности при изменении кол-ва дней в месяце
+                //m_tsLeading -= TimeSpan.FromDays(cbx.Items.Count - cntDays);
+
                 if (cbx.Items.Count < cntDays)
                     while (cbx.Items.Count < cntDays)
                         cbx.Items.Add(cbx.Items.Count + 1);
                 else
                     if (cbx.Items.Count > cntDays)
-                        while (cbx.Items.Count > cntDays)
-                            cbx.Items.RemoveAt(cbx.Items.Count - 1);
-                    else
-                        ;
+                    while (cbx.Items.Count > cntDays)
+                        cbx.Items.RemoveAt(cbx.Items.Count - 1);
+                else
+                    ;
+            }
 
             cbx.SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Day - 1;
             if (bRegHandler == true)
