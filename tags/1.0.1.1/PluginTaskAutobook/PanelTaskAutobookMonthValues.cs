@@ -1870,8 +1870,7 @@ namespace PluginTaskAutobook
             {
                 HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
 
-                if (!(DateTimeRangeValue_Changed == null))
-                    DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
+                DateTimeRangeValue_Changed?.Invoke(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
             }
 
             /// <summary>
@@ -2234,7 +2233,7 @@ namespace PluginTaskAutobook
                     {
                         // в случае ошибки "обнулить" идентификатор сессии
                         deleteSession();
-                        throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                        throw new Exception(@"PanelTaskAutobookMonthValues::updatedataValues() - " + errMsg);
                     }
                 }
                 else
@@ -2286,7 +2285,7 @@ namespace PluginTaskAutobook
                 else
                 {
                     deleteSession();
-                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                    throw new Exception(@"PanelTaskAutobookMonthValues::updatedataValues() - " + errMsg);
                 }
             }
             else deleteSession();
@@ -2495,18 +2494,11 @@ namespace PluginTaskAutobook
                     (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
                 if ((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
-                        for (int j = (int)INDEX_GTP.CorGTP12; j < (int)INDEX_GTP.COUNT; j++)
-                            m_dgvAB.AddBRead(false, namePut.GetValue(j).ToString());
-              
-            }
-            catch(Exception)
-            {
+                    for (int j = (int)INDEX_GTP.CorGTP12; j < (int)INDEX_GTP.COUNT; j++)
+                        m_dgvAB.AddBRead(false, namePut.GetValue(j).ToString());
+                else
+                    ;
 
-            }
-
-
-            try
-            {
                 if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
                 {
                     if (int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE)
@@ -2516,17 +2508,10 @@ namespace PluginTaskAutobook
                 }
                 else
                     (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-            }
-            catch (Exception)
-            {
 
-            }
+                m_dgvAB.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
-            m_dgvAB.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
-
-            if (err == 0)
-            {
-                try
+                if (err == 0)
                 {
                     //Заполнить элемент управления с часовыми поясами
                     ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
@@ -2558,36 +2543,36 @@ namespace PluginTaskAutobook
                             , key, PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL)
                             , Logging.INDEX_MESSAGE.NOT_SET);
                 }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"PanelTaskAutoBook::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
+                else
+                    switch ((INDEX_TABLE_DICTPRJ)i)
+                    {
+                        case INDEX_TABLE_DICTPRJ.PERIOD:
+                            errMsg = @"Получение интервалов времени для периода расчета";
+                            break;
+                        case INDEX_TABLE_DICTPRJ.TIMEZONE:
+                            errMsg = @"Получение списка часовых поясов";
+                            break;
+                        case INDEX_TABLE_DICTPRJ.COMPONENT:
+                            errMsg = @"Получение списка компонентов станции";
+                            break;
+                        case INDEX_TABLE_DICTPRJ.PARAMETER:
+                            errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
+                            break;
+                        //case INDEX_TABLE_DICTPRJ.MODE_DEV:
+                        //    errMsg = @"Получение идентификаторов режимов работы оборудования";
+                        //    break;
+                        //case INDEX_TABLE_DICTPRJ.MEASURE:
+                        //    errMsg = @"Получение информации по единицам измерения";
+                        //    break;
+                        default:
+                            errMsg = @"Неизвестная ошибка";
+                            break;
+                    }
             }
-            else
-                switch ((INDEX_TABLE_DICTPRJ)i)
-                {
-                    case INDEX_TABLE_DICTPRJ.PERIOD:
-                        errMsg = @"Получение интервалов времени для периода расчета";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.TIMEZONE:
-                        errMsg = @"Получение списка часовых поясов";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.COMPONENT:
-                        errMsg = @"Получение списка компонентов станции";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.PARAMETER:
-                        errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
-                        break;
-                    //case INDEX_TABLE_DICTPRJ.MODE_DEV:
-                    //    errMsg = @"Получение идентификаторов режимов работы оборудования";
-                    //    break;
-                    //case INDEX_TABLE_DICTPRJ.MEASURE:
-                    //    errMsg = @"Получение информации по единицам измерения";
-                    //    break;
-                    default:
-                        errMsg = @"Неизвестная ошибка";
-                        break;
-                }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, @"PanelTaskAutobookMonthVakues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
 
         /// <summary>

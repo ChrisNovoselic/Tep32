@@ -465,10 +465,11 @@ namespace TepCommon
                 ) {
                 if (_mode == MODE.MONTH) {
                     m_tsLeading -=
-                        TimeSpan.FromDays(DateTime.DaysInMonth(objLeading._value[(int)INDEX_VALUE.PREVIOUS].Year, objLeading._value[(int)INDEX_VALUE.PREVIOUS].Month));
+                        (TimeSpan.FromDays(DateTime.DaysInMonth(objLeading._value[(int)INDEX_VALUE.PREVIOUS].Year, objLeading._value[(int)INDEX_VALUE.PREVIOUS].Month))
+                            - TimeSpan.FromDays(1));
 
                     m_tsLeading +=
-                        TimeSpan.FromDays(DateTime.DaysInMonth(objLeading._value[(int)INDEX_VALUE.CURRENT].Year, objLeading._value[(int)INDEX_VALUE.CURRENT].Month));
+                        (TimeSpan.FromDays(DateTime.DaysInMonth(objLeading._value[(int)INDEX_VALUE.CURRENT].Year, objLeading._value[(int)INDEX_VALUE.CURRENT].Month)));
                 } else
                     if (_mode == MODE.YEAR)
                         m_tsLeading =

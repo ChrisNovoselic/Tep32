@@ -1065,7 +1065,7 @@ namespace PluginTaskVedomostBl
                 else if (strId.Equals(INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED.ToString()) == true)
                     indxRes = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED;
                 else
-                    throw new Exception(@"PanelTaskTepValues::getIndexControl () - не найден объект 'CheckedListBox'...");
+                    throw new Exception(@"PanelTaskVedomostBl::getIndexControl () - не найден объект 'CheckedListBox'...");
 
                 return indxRes;
             }
@@ -2789,7 +2789,7 @@ namespace PluginTaskVedomostBl
                 {
                     // в случае ошибки "обнулить" идентификатор сессии
                     deleteSession();
-                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                    throw new Exception(@"PanelTaskVedomostBl::updatedataValues() - " + errMsg);
                 }
             }
             else
