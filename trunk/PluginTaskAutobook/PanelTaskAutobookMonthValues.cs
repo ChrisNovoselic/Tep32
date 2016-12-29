@@ -1938,8 +1938,7 @@ namespace PluginTaskAutobook
             {
                 HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
 
-                if (!(DateTimeRangeValue_Changed == null))
-                    DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
+                DateTimeRangeValue_Changed?.Invoke(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
             }
 
             /// <summary>
@@ -1987,16 +1986,16 @@ namespace PluginTaskAutobook
                             HDateTimePicker.MODE.DAY;
                         break;
                     case ID_PERIOD.MONTH:
+                        hdtpBtimePer.Mode =
+                        hdtpEndtimePer.Mode =
+                            HDateTimePicker.MODE.MONTH;
                         hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
                             , DateTime.Now.Month
                             , 1
                             , 0
                             , 0
                             , 0);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddDays(cntDays - 1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.MONTH;
+                        //hdtpEndtimePer.Value = hdtpBtimePer.Value.AddDays(cntDays - 1);                        
                         break;
                     case ID_PERIOD.YEAR:
                         hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
@@ -2354,7 +2353,7 @@ namespace PluginTaskAutobook
                 else
                 {
                     deleteSession();
-                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                    throw new Exception(@"PanelTaskAutobookMonthValues::updatedataValues() - " + errMsg);
                 }
             }
             else deleteSession();
@@ -2620,17 +2619,10 @@ namespace PluginTaskAutobook
                 }
                 else
                     (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-            }
-            catch (Exception)
-            {
 
-            }
+                m_dgvAB.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
-            m_dgvAB.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
-
-            if (err == 0)
-            {
-                try
+                if (err == 0)
                 {
                     //Заполнить элемент управления с часовыми поясами
                     ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
@@ -2663,36 +2655,36 @@ namespace PluginTaskAutobook
                             , key, PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL)
                             , Logging.INDEX_MESSAGE.NOT_SET);
                 }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"PanelTaskAutoBook::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
+                else
+                    switch ((INDEX_TABLE_DICTPRJ)i)
+                    {
+                        case INDEX_TABLE_DICTPRJ.PERIOD:
+                            errMsg = @"Получение интервалов времени для периода расчета";
+                            break;
+                        case INDEX_TABLE_DICTPRJ.TIMEZONE:
+                            errMsg = @"Получение списка часовых поясов";
+                            break;
+                        case INDEX_TABLE_DICTPRJ.COMPONENT:
+                            errMsg = @"Получение списка компонентов станции";
+                            break;
+                        case INDEX_TABLE_DICTPRJ.PARAMETER:
+                            errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
+                            break;
+                        //case INDEX_TABLE_DICTPRJ.MODE_DEV:
+                        //    errMsg = @"Получение идентификаторов режимов работы оборудования";
+                        //    break;
+                        //case INDEX_TABLE_DICTPRJ.MEASURE:
+                        //    errMsg = @"Получение информации по единицам измерения";
+                        //    break;
+                        default:
+                            errMsg = @"Неизвестная ошибка";
+                            break;
+                    }
             }
-            else
-                switch ((INDEX_TABLE_DICTPRJ)i)
-                {
-                    case INDEX_TABLE_DICTPRJ.PERIOD:
-                        errMsg = @"Получение интервалов времени для периода расчета";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.TIMEZONE:
-                        errMsg = @"Получение списка часовых поясов";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.COMPONENT:
-                        errMsg = @"Получение списка компонентов станции";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.PARAMETER:
-                        errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
-                        break;
-                    //case INDEX_TABLE_DICTPRJ.MODE_DEV:
-                    //    errMsg = @"Получение идентификаторов режимов работы оборудования";
-                    //    break;
-                    //case INDEX_TABLE_DICTPRJ.MEASURE:
-                    //    errMsg = @"Получение информации по единицам измерения";
-                    //    break;
-                    default:
-                        errMsg = @"Неизвестная ошибка";
-                        break;
-                }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, @"PanelTaskAutobookMonthVakues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
 
         /// <summary>
@@ -2794,23 +2786,23 @@ namespace PluginTaskAutobook
             int cntDays,
                 today = 0;
 
-            PanelManagementAB.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+            //PanelManagementAB.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
 
-            cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-              (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
-            today = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
+            //cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
+            //  (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
+            //today = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
 
-            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value =
-                (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
+            //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value =
+            //    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
 
-            cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-                (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
-            today = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
+            //cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
+            //    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
+            //today = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
 
-            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
-                (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(cntDays - today);
+            //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
+            //    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(cntDays - today);
 
-            PanelManagementAB.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
+            //PanelManagementAB.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
 
         }
 

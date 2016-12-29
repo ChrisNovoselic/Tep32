@@ -1995,7 +1995,7 @@ namespace PluginTaskBalTeplo
                 {
                     // в случае ошибки "обнулить" идентификатор сессии
                     deleteSession();
-                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                    throw new Exception(@"PanelTaskBalTeplo::updatedataValues() - " + errMsg);
                 }
                 //удалить сессию
                 //deleteSession();

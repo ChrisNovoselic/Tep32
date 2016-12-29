@@ -12,7 +12,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace PluginTaskReaktivka
 {
-    public class PanelTaskReaktivka : HPanelTepCommon
+    public partial class PanelTaskReaktivka : HPanelTepCommon
     {
         /// <summary>
         /// флаг очистки отображения
@@ -251,6 +251,7 @@ namespace PluginTaskReaktivka
             int i = -1
                 , id_comp = -1;
             Control ctrl = null;
+            ID_PERIOD idPeriod = ID_PERIOD.UNKNOWN;
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
@@ -307,16 +308,18 @@ namespace PluginTaskReaktivka
 
                 if (m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count + 2 > m_dgvReak.Columns.Count)
                     m_dgvReak.AddColumn(id_comp, strItem, strItem, true, arChecked[0]);
+                else
+                    ;
             }
             //возможность_редактирвоания_значений
             try
             {
-                if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                if ((m_dictProfile.Objects.ContainsKey(((int)ID_PERIOD.MONTH).ToString()) == true)
+                    && (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects.ContainsKey(((int)INDEX_CONTROL.DGV_DATA).ToString()) == true)
+                    && (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true))
                 {
-                    if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
-                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
-                    else
-                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+                    (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
+                        int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == 1;
                 }
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
@@ -326,45 +329,23 @@ namespace PluginTaskReaktivka
                 else
                     m_dgvReak.AddBRead(true);
 
-            }
-            catch (Exception exp)
-            {
-
-            }
-            //активность_кнопки_сохранения
-            try
-            {
                 if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
-                {
-                    if (int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE)
-                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = true;
-                    else
-                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-                }
+                    (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
+                        int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == 1;
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-            }
-            catch (Exception exp)
-            {
 
-            }
+                //Установить обработчик события - добавить параметр
+                //eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
+                // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
+                // компонента станции для элементов управления
+                (PanelManagementReak as PanelManagementReaktivka).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED });
+                //
+                m_dgvReak.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
 
-            //Установить обработчик события - добавить параметр
-            //eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
-            // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
-            // компонента станции для элементов управления
-            (PanelManagementReak as PanelManagementReaktivka).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED });
-            //
-            m_dgvReak.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
-
-            if (err == 0)
-            {
-                try
-                {
-                    if (m_bflgClear == false)
-                        m_bflgClear = true;
-                    else
-                        m_bflgClear = false;
+                if (err == 0)
+                {                
+                    //m_bflgClear = !m_bflgClear;
                     //Заполнить элемент управления с часовыми поясами
                     ctrl = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
@@ -379,43 +360,43 @@ namespace PluginTaskReaktivka
                     foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
+                    idPeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
-                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
-                    (PanelManagementReak as PanelManagementReaktivka).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
-                    (ctrl as ComboBox).Enabled = false;
-
+                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf((int)idPeriod);
+                    Session.SetCurrentPeriod(idPeriod);
+                    (PanelManagementReak as PanelManagementReaktivka).SetPeriod(idPeriod);
+                    (ctrl as ComboBox).Enabled = false;                
                 }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"PanelTaskAutoBook::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
+                else
+                    switch ((INDEX_TABLE_DICTPRJ)i)
+                    {
+                        case INDEX_TABLE_DICTPRJ.PERIOD:
+                            errMsg = @"Получение интервалов времени для периода расчета";
+                            break;
+                        case INDEX_TABLE_DICTPRJ.TIMEZONE:
+                            errMsg = @"Получение списка часовых поясов";
+                            break;
+                        case INDEX_TABLE_DICTPRJ.COMPONENT:
+                            errMsg = @"Получение списка компонентов станции";
+                            break;
+                        //case INDEX_TABLE_DICTPRJ.PARAMETER:
+                        //    errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
+                        //    break;
+                        //case INDEX_TABLE_DICTPRJ.MODE_DEV:
+                        //    errMsg = @"Получение идентификаторов режимов работы оборудования";
+                        //    break;
+                        //case INDEX_TABLE_DICTPRJ.MEASURE:
+                        //    errMsg = @"Получение информации по единицам измерения";
+                        //    break;
+                        default:
+                            errMsg = @"Неизвестная ошибка";
+                            break;
+                    }
             }
-            else
-                switch ((INDEX_TABLE_DICTPRJ)i)
-                {
-                    case INDEX_TABLE_DICTPRJ.PERIOD:
-                        errMsg = @"Получение интервалов времени для периода расчета";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.TIMEZONE:
-                        errMsg = @"Получение списка часовых поясов";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.COMPONENT:
-                        errMsg = @"Получение списка компонентов станции";
-                        break;
-                    //case INDEX_TABLE_DICTPRJ.PARAMETER:
-                    //    errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
-                    //    break;
-                    //case INDEX_TABLE_DICTPRJ.MODE_DEV:
-                    //    errMsg = @"Получение идентификаторов режимов работы оборудования";
-                    //    break;
-                    //case INDEX_TABLE_DICTPRJ.MEASURE:
-                    //    errMsg = @"Получение информации по единицам измерения";
-                    //    break;
-                    default:
-                        errMsg = @"Неизвестная ошибка";
-                        break;
-                }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, @"PanelTaskReaktivka::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
 
         /// <summary>
@@ -447,9 +428,9 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// 
+        /// Зарегистрировать/отменить обработчик события 'DateTimeRangeValue_Changed' от составного календаря
         /// </summary>
-        /// <param name="active"></param>
+        /// <param name="active">Признак регистрации/отмены обработчика</param>
         protected void activateDateTimeRangeValue_OnChanged(bool active)
         {
             if (!(PanelManagementReak == null))
@@ -457,9 +438,11 @@ namespace PluginTaskReaktivka
                     PanelManagementReak.DateTimeRangeValue_Changed += new PanelManagementReaktivka.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
                 else
                     if (active == false)
-                    PanelManagementReak.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-                else
-                    throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
+                        PanelManagementReak.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+                    else
+                        ;
+            else
+                throw new Exception(@"PanelTaskReaktivka::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
 
         /// <summary>
@@ -581,17 +564,16 @@ namespace PluginTaskReaktivka
             string n_alg = string.Empty;
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
-            settingDateRange();
+
             Session.SetRangeDatetime(dtBegin, dtEnd);
 
-            if (m_bflgClear)
+            if (m_bflgClear == true)
             {
                 clear();
                 dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
-                  , new int[] {
-                    m_id_panel
-                    , (int)Session.m_currIdPeriod }
-                  , out err);
+                    , new int[] { m_id_panel, (int)Session.m_currIdPeriod }
+                    , out err
+                );
 
                 IEnumerable<DataRow> listParameter = ListParameter.Select(x => x);
 
@@ -625,62 +607,27 @@ namespace PluginTaskReaktivka
                         m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
                         {
                             m_idAlg = id_alg
-                                    ,
-                            //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                            //,
-                            m_Value = dt.AddDays(i).ToShortDateString()
-                                    ,
-                            m_vsRatio = ratio
-                                    ,
-                            m_vsRound = round
+                            //, m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                            , m_Value = dt.AddDays(i).ToShortDateString()
+                            , m_vsRatio = ratio
+                            , m_vsRound = round
                         });
                     else
                         m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
                         {
                             m_idAlg = id_alg
-                            ,
-                            //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                            //,
-                            m_Value = "ИТОГО"
-                            ,
-                            m_vsRatio = ratio
-                            ,
-                            m_vsRound = round
+                            //, m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                            , m_Value = "ИТОГО"
+                            , m_vsRatio = ratio
+                            , m_vsRound = round
                         }
                         , DaysInMonth);
                 }
-            }
+            } else
+                ; //??? ничего очищать не надо, но и ничего не делать
 
             m_dgvReak.Rows[dtBegin.Day - 1].Selected = true;
             m_currentOffSet = Session.m_curOffsetUTC;
-        }
-
-        /// <summary>
-        /// Установка длительности периода 
-        /// </summary>
-        private void settingDateRange()
-        {
-            int cntDays,
-                today = 0;
-
-            PanelManagementReak.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-
-            cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-              (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
-            today = (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
-
-            (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value =
-                (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
-
-            cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-                (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
-            today = (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
-
-            (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
-                (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(cntDays - today);
-
-            PanelManagementReak.DateTimeRangeValue_Changed += new PanelManagementReaktivka.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
-
         }
 
         /// <summary>
@@ -824,1304 +771,6 @@ namespace PluginTaskReaktivka
             get
             {
                 return DateTime.DaysInMonth(Session.m_rangeDatetime.Begin.Year, Session.m_rangeDatetime.Begin.Month);
-            }
-        }
-
-        /// <summary>
-        /// Панель элементов управления
-        /// </summary>
-        protected class PanelManagementReaktivka : HPanelCommon
-        {
-            /// <summary>
-            /// 
-            /// </summary>
-            public enum INDEX_CONTROL_BASE
-            {
-                UNKNOWN = -1,
-                BUTTON_SEND, BUTTON_SAVE, BUTTON_LOAD, BUTTON_EXPORT,
-                TXTBX_EMAIL,
-                CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END,
-                MENUITEM_UPDATE, MENUITEM_HISTORY,
-                CLBX_COMP_VISIBLED, CLBX_COMP_CALCULATED,
-                CHKBX_EDIT,
-                COUNT
-            }
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="dtBegin"></param>
-            /// <param name="dtEnd"></param>
-            public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
-            /// <summary>
-            /// Класс аргумента для события - изменение выбора запрет/разрешение
-            ///  для компонента/параметра при участии_в_расчете/отображении
-            /// </summary>
-            public class ItemCheckedParametersEventArgs : EventArgs
-            {
-                /// <summary>
-                /// Индекс в списке идентификаторов
-                ///  для получения ключа в словаре со значениями
-                /// </summary>
-                public INDEX_ID m_indxIdDeny;
-                /// <summary>
-                /// Идентификатор в алгоритме расчета
-                /// </summary>
-                public int m_idItem;
-                /// <summary>
-                /// Состояние элемента, связанного с компонентом/параметром_расчета
-                /// </summary>
-                public CheckState m_newCheckState;
-
-                public ItemCheckedParametersEventArgs(int idItem, INDEX_ID indxIdDeny, CheckState newCheckState)
-                    : base()
-                {
-                    m_idItem = idItem;
-                    m_indxIdDeny = indxIdDeny;
-                    m_newCheckState = newCheckState;
-                }
-            }
-
-            public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
-            /// <summary>
-            /// Тип обработчика события - изменение выбора запрет/разрешение
-            ///  для компонента/параметра при участии_в_расчете/отображении
-            /// </summary>
-            /// <param name="ev">Аргумент события</param>
-            public delegate void ItemCheckedParametersEventHandler(ItemCheckedParametersEventArgs ev);
-            /// <summary>
-            /// Событие - изменение выбора запрет/разрешение
-            ///  для компонента/параметра при участии_в_расчете/отображении
-            /// </summary>
-            public event ItemCheckedParametersEventHandler ItemCheck;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
-
-            protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
-            {
-                initializeLayoutStyleEvenly();
-            }
-
-            public PanelManagementReaktivka()
-                : base(4, 3)
-            {
-                InitializeComponents();
-                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
-            }
-
-            private void InitializeComponents()
-            {
-                //initializeLayoutStyle();
-                Control ctrl = new Control(); ;
-                // переменные для инициализации кнопок "Добавить", "Удалить"
-                string strPartLabelButtonDropDownMenuItem = string.Empty;
-                int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
-                    , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
-                //int posColdgvTEPValues = 6;
-                SuspendLayout();
-                posRow = 0;
-                //Период расчета - подпись
-                Label lblCalcPer = new Label();
-                lblCalcPer.Text = "Период расчета";
-                //Период расчета - значение
-                ComboBox cbxCalcPer = new ComboBox();
-                cbxCalcPer.Name = INDEX_CONTROL_BASE.CBX_PERIOD.ToString();
-                cbxCalcPer.DropDownStyle = ComboBoxStyle.DropDownList;
-                cbxCalcPer.Enabled = false;
-                //Часовой пояс расчета - подпись
-                Label lblCalcTime = new Label();
-                lblCalcTime.Text = "Часовой пояс расчета";
-                //Часовой пояс расчета - значение
-                ComboBox cbxCalcTime = new ComboBox();
-                cbxCalcTime.Name = INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString();
-                cbxCalcTime.DropDownStyle = ComboBoxStyle.DropDownList;
-                cbxCalcTime.Enabled = false;
-                //
-                TableLayoutPanel tlp = new TableLayoutPanel();
-                tlp.AutoSize = true;
-                tlp.AutoSizeMode = AutoSizeMode.GrowOnly;
-                tlp.Controls.Add(lblCalcPer, 0, 0);
-                tlp.Controls.Add(cbxCalcPer, 0, 1);
-                tlp.Controls.Add(lblCalcTime, 1, 0);
-                tlp.Controls.Add(cbxCalcTime, 1, 1);
-                Controls.Add(tlp, 0, posRow);
-                SetColumnSpan(tlp, 4); this.SetRowSpan(tlp, 1);
-                //
-                TableLayoutPanel tlpValue = new TableLayoutPanel();
-                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-                tlpValue.Dock = DockStyle.Fill;
-                //tlpValue.AutoSize = true;
-                //tlpValue.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                ////Дата/время начала периода расчета - подпись
-                Label lBeginCalcPer = new Label();
-                lBeginCalcPer.Dock = DockStyle.Bottom;
-                lBeginCalcPer.Text = @"Дата/время начала периода расчета:";
-                ////Дата/время начала периода расчета - значения
-                int cntDays = DateTime.DaysInMonth(s_dtDefaultAU.Year, s_dtDefaultAU.Month);
-                int today = s_dtDefaultAU.Day;
-
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(-(today - 1)), null);
-                ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
-                tlpValue.Controls.Add(lBeginCalcPer, 0, 0);
-                tlpValue.Controls.Add(ctrl, 0, 1);
-                //Дата/время  окончания периода расчета - подпись
-                Label lEndPer = new Label();
-                lEndPer.Dock = DockStyle.Top;
-                lEndPer.Text = @"Дата/время окончания периода расчета:";
-                //Дата/время  окончания периода расчета - значение
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(cntDays - today)
-                    , tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
-                ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
-                //              
-                tlpValue.Controls.Add(lEndPer, 0, 2);
-                tlpValue.Controls.Add(ctrl, 0, 3);
-                this.Controls.Add(tlpValue, 0, posRow = posRow + 1);
-                SetColumnSpan(tlpValue, 4); SetRowSpan(tlpValue, 1);
-                //Кнопки обновления/сохранения, импорта/экспорта
-                //Кнопка - обновить
-                ctrl = new DropDownButton();
-                ctrl.Name = INDEX_CONTROL_BASE.BUTTON_LOAD.ToString();
-                ctrl.ContextMenuStrip = new ContextMenuStrip();
-                indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
-                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString();
-                indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
-                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString();
-                ctrl.Text = @"Загрузить";
-                ctrl.Dock = DockStyle.Top;
-                //Кнопка - сохранить
-                Button ctrlBsave = new Button();
-                ctrlBsave.Name = INDEX_CONTROL_BASE.BUTTON_SAVE.ToString();
-                ctrlBsave.Text = @"Сохранить";
-                ctrlBsave.Dock = DockStyle.Top;
-                //
-                Button ctrlExp = new Button();
-                ctrlExp.Name = INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString();
-                ctrlExp.Text = @"Экспорт";
-                ctrlExp.Dock = DockStyle.Top;
-
-                TableLayoutPanel tlpButton = new TableLayoutPanel();
-                tlpButton.Dock = DockStyle.Top;
-                tlpButton.AutoSize = true;
-                tlpButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-                tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-                tlpButton.Controls.Add(ctrl, 0, 0);
-                tlpButton.Controls.Add(ctrlBsave, 1, 0);
-                tlpButton.Controls.Add(ctrlExp, 0, 2);
-                this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
-                SetColumnSpan(tlpButton, 4); SetRowSpan(tlpButton, 2);
-
-                //Признаки включения/исключения для отображения
-                //Признак для включения/исключения для отображения компонента
-                ctrl = new Label();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as Label).Text = @"Включить/исключить компонент для отображения";
-                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
-                //
-                ctrl = new CheckedListBoxTaskReaktivka();
-                ctrl.Name = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED.ToString();
-                ctrl.Dock = DockStyle.Top;
-                (ctrl as CheckedListBoxTaskReaktivka).CheckOnClick = true;
-                Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 2);
-                //Признак Корректировка_включена/корректировка_отключена 
-                CheckBox cBox = new CheckBox();
-                cBox.Name = INDEX_CONTROL_BASE.CHKBX_EDIT.ToString();
-                cBox.Text = @"Корректировка значений разрешена";
-                cBox.Dock = DockStyle.Top;
-                cBox.Enabled = false;
-                cBox.Checked = true;
-                this.Controls.Add(cBox, 0, posRow = posRow + 1);
-                SetColumnSpan(cBox, 4); SetRowSpan(cBox, 1);
-
-                ResumeLayout(false);
-                PerformLayout();
-            }
-
-            /// <summary>
-            /// Обработчик события - изменение дата/время окончания периода
-            /// </summary>
-            /// <param name="obj">Составной объект - календарь</param>
-            /// <param name="ev">Аргумент события</param>
-            protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
-            {
-                m_bflgClear = true;
-                HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
-
-                if (!(DateTimeRangeValue_Changed == null))
-                    DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
-            }
-
-            /// <summary>
-            /// Установка периода
-            /// </summary>
-            /// <param name="idPeriod"></param>
-            public void SetPeriod(ID_PERIOD idPeriod)
-            {
-                HDateTimePicker hdtpBtimePer = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                , hdtpEndtimePer = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-
-                int cntDays = DateTime.DaysInMonth(hdtpBtimePer.Value.Year, hdtpBtimePer.Value.Month);
-                int today = hdtpBtimePer.Value.Day;
-
-                //Выполнить запрос на получение значений для заполнения 'DataGridView'
-                switch (idPeriod)
-                {
-                    case ID_PERIOD.HOUR:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , DateTime.Now.Day
-                            , DateTime.Now.Hour
-                            , 0
-                            , 0).AddHours(-1);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddHours(1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.HOUR;
-                        break;
-                    //case ID_PERIOD.SHIFTS:
-                    //    hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
-                    //    hdtpEnd.Mode = HDateTimePicker.MODE.HOUR;
-                    //    break;
-                    case ID_PERIOD.DAY:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , DateTime.Now.Day
-                            , 0
-                            , 0
-                            , 0);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddDays(1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.DAY;
-                        break;
-                    case ID_PERIOD.MONTH:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , 1
-                            , 0
-                            , 0
-                            , 0);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddDays(cntDays - 1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.MONTH;
-                        break;
-                    case ID_PERIOD.YEAR:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , 1
-                            , 1
-                            , 0
-                            , 0
-                            , 0).AddYears(-1);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddYears(1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.YEAR;
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            /// <summary>
-            /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
-            /// </summary>
-            protected class CheckedListBoxTaskReaktivka : CheckedListBox, IControl
-            {
-                int[] arItem;
-                /// <summary>
-                /// Список для хранения идентификаторов переменных
-                /// </summary>
-                private List<int> m_listId;
-
-                public CheckedListBoxTaskReaktivka()
-                    : base()
-                {
-                    m_listId = new List<int>();
-                }
-
-                /// <summary>
-                /// Идентификатор выбранного элемента списка
-                /// </summary>
-                public int SelectedId { get { return m_listId[SelectedIndex]; } }
-
-                /// <summary>
-                /// Добавить элемент в список
-                /// </summary>
-                /// <param name="text">Текст подписи элемента</param>
-                /// <param name="id">Идентификатор элемента</param>
-                /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
-                public void AddItem(int id, string text, bool bChecked)
-                {
-                    Items.Add(text, bChecked);
-                    m_listId.Add(id);
-                }
-
-                /// <summary>
-                /// Удалить все элементы в списке
-                /// </summary>
-                public void ClearItems()
-                {
-                    Items.Clear();
-                    m_listId.Clear();
-                }
-
-                /// <summary>
-                /// 
-                /// </summary>
-                /// <param name="id"></param>
-                /// <returns></returns>
-                public string GetNameItem(int id)
-                {
-                    string strRes = string.Empty;
-
-                    strRes = (string)Items[m_listId.IndexOf(id)];
-
-                    return strRes;
-                }
-            }
-
-            /// <summary>
-            /// Интерфейс для всех элементов управления с компонентами станции, параметрами расчета
-            /// </summary>
-            protected interface IControl
-            {
-                /// <summary>
-                /// Идентификатор выбранного элемента списка
-                /// </summary>
-                int SelectedId { get; }
-                ///// <summary>
-                ///// Добавить элемент в список
-                ///// </summary>
-                ///// <param name="text">Текст подписи элемента</param>
-                ///// <param name="id">Идентификатор элемента</param>
-                ///// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
-                //void AddItem(int id, string text, bool bChecked);
-                /// <summary>
-                /// Удалить все элементы в списке
-                /// </summary>
-                void ClearItems();
-            }
-
-            /// <summary>
-            /// Добавить элемент компонент станции в списки
-            /// , в соответствии с 'arIndexIdToAdd'
-            /// </summary>
-            /// <param name="id">Идентификатор компонента</param>
-            /// <param name="text">Текст подписи к компоненту</param>
-            /// <param name="arIndexIdToAdd">Массив индексов в списке </param>
-            /// <param name="arChecked">Массив признаков состояния для элементов</param>
-            public void AddComponent(int id_comp, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
-            {
-                Control ctrl = null;
-
-                for (int i = 0; i < arIndexIdToAdd.Length; i++)
-                {
-                    ctrl = find(arIndexIdToAdd[i]);
-
-                    if (!(ctrl == null))
-                        (ctrl as CheckedListBoxTaskReaktivka).AddItem(id_comp, text, arChecked[i]);
-                    else
-                        Logging.Logg().Error(@"PanelManagementTaskTepValues::AddComponent () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-
-            /// <summary>
-            /// Найти элемент управления на панели по индексу идентификатора
-            /// </summary>
-            /// <param name="id">Индекс идентификатора, используемого для заполнения элемента управления</param>
-            /// <returns>Дочерний элемент управления</returns>
-            protected Control find(INDEX_ID id)
-            {
-                Control ctrlRes = null;
-
-                ctrlRes = find(getIndexControlOfIndexID(id));
-
-                return ctrlRes;
-            }
-
-            /// <summary>
-            /// Найти элемент управления на панели идентификатору
-            /// </summary>
-            /// <param name="indxCtrl">Идентификатор элемента управления</param>
-            /// <returns>элемент панели</returns>
-            protected Control find(INDEX_CONTROL_BASE indxCtrl)
-            {
-                Control ctrlRes = null;
-
-                ctrlRes = Controls.Find(indxCtrl.ToString(), true)[0];
-
-                return ctrlRes;
-            }
-
-            /// <summary>
-            /// Возвратить идентификатор элемента управления по идентификатору
-            ///  , используемого для его заполнения
-            /// </summary>
-            /// <param name="indxId"></param>
-            /// <returns>индекс элемента панели</returns>
-            protected INDEX_CONTROL_BASE getIndexControlOfIndexID(INDEX_ID indxId)
-            {
-                INDEX_CONTROL_BASE indxRes = INDEX_CONTROL_BASE.UNKNOWN;
-
-                switch (indxId)
-                {
-                    case INDEX_ID.DENY_COMP_VISIBLED:
-                        indxRes = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED;
-                        break;
-                    default:
-                        break;
-                }
-
-                return indxRes;
-            }
-
-            /// <summary>
-            /// Очистить
-            /// </summary>
-            public void Clear()
-            {
-                INDEX_ID[] arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED };
-
-                ActivateCheckedHandler(false, arIndxIdToClear);
-
-                Clear(arIndxIdToClear);
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="arIdToClear"></param>
-            public void Clear(INDEX_ID[] arIdToClear)
-            {
-                for (int i = 0; i < arIdToClear.Length; i++)
-                    clear(arIdToClear[i]);
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="idToClear"></param>
-            private void clear(INDEX_ID idToClear)
-            {
-                (find(idToClear) as IControl).ClearItems();
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="bActive"></param>
-            /// <param name="arIdToActivate"></param>
-            public void ActivateCheckedHandler(bool bActive, INDEX_ID[] arIdToActivate)
-            {
-                for (int i = 0; i < arIdToActivate.Length; i++)
-                    activateCheckedHandler(bActive, arIdToActivate[i]);
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="bActive"></param>
-            /// <param name="idToActivate"></param>
-            protected virtual void activateCheckedHandler(bool bActive, INDEX_ID idToActivate)
-            {
-                INDEX_CONTROL_BASE indxCtrl = INDEX_CONTROL_BASE.UNKNOWN;
-                CheckedListBox clbx = null;
-
-                indxCtrl = getIndexControlOfIndexID(idToActivate);
-
-                if (!(indxCtrl == INDEX_CONTROL_BASE.UNKNOWN))
-                {
-                    clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
-
-                    if (bActive == true)
-                        clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
-                    else
-                        clbx.ItemCheck -= onItemCheck;
-                }
-            }
-
-            /// <summary>
-            /// Обработчик события - изменение состояния элемента списка
-            /// </summary>
-            /// <param name="obj">Объект, инициировавший событие (список)</param>
-            /// <param name="ev">Аргумент события</param>
-            protected void onItemCheck(object obj, ItemCheckEventArgs ev)
-            {
-                itemCheck((obj as IControl).SelectedId, getIndexIdOfControl(obj as Control), ev.NewValue);
-            }
-
-            /// <summary>
-            /// Получение ИД контрола
-            /// </summary>
-            /// <param name="ctrl">контрол</param>
-            /// <returns>индекс</returns>
-            protected INDEX_ID getIndexIdOfControl(Control ctrl)
-            {
-                INDEX_CONTROL_BASE id = INDEX_CONTROL_BASE.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
-                INDEX_ID indxRes = INDEX_ID.UNKNOWN;
-
-                try
-                {
-                    //Определить идентификатор
-                    id = getIndexControl(ctrl);
-                    // , соответствующий изменившему состояние элементу 'CheckedListBox'
-                    switch (id)
-                    {
-                        case INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED:
-                            indxRes = id == INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-
-                return indxRes;
-            }
-
-            /// <summary>
-            /// Получение индекса контрола
-            /// </summary>
-            /// <param name="ctrl">контрол</param>
-            /// <returns>имя индекса контрола на панели</returns>
-            protected INDEX_CONTROL_BASE getIndexControl(Control ctrl)
-            {
-                INDEX_CONTROL_BASE indxRes = INDEX_CONTROL_BASE.UNKNOWN;
-
-                string strId = (ctrl as Control).Name;
-
-                if (strId.Equals(INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED.ToString()) == true)
-                    indxRes = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED;
-                else
-                    throw new Exception(@"PanelTaskTepValues::getIndexControl () - не найден объект 'CheckedListBox'...");
-
-                return indxRes;
-            }
-
-            /// <summary>
-            /// Инициировать событие - изменение признака элемента
-            /// </summary>
-            /// <param name="address">Адрес элемента</param>
-            /// <param name="checkState">Значение признака элемента</param>
-            protected void itemCheck(int idItem, INDEX_ID indxIdDeny, CheckState checkState)
-            {
-                ItemCheck(new ItemCheckedParametersEventArgs(idItem, indxIdDeny, checkState));
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        protected class DGVReaktivka : DataGridView
-        {
-            /// <summary>
-            /// Перечисление для индексации столбцов со служебной информацией
-            /// </summary>
-            protected enum INDEX_SERVICE_COLUMN : uint { ALG, DATE, COUNT }
-            private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
-
-            /// <summary>
-            /// Конструктор
-            /// </summary>
-            /// <param name="nameDGV"></param>
-            public DGVReaktivka(string nameDGV)
-            {
-                InitializeComponents(nameDGV);
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="nameDGV"></param>
-            private void InitializeComponents(string nameDGV)
-            {
-                Name = nameDGV;
-                Dock = DockStyle.Fill;
-                //Запретить выделение "много" строк
-                MultiSelect = false;
-                //Установить режим выделения - "полная" строка
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                //Установить режим "невидимые" заголовки столбцов
-                ColumnHeadersVisible = true;
-                //Запрет изменения размера строк
-                AllowUserToResizeRows = false;
-                //Отменить возможность добавления строк
-                AllowUserToAddRows = false;
-                //Отменить возможность удаления строк
-                AllowUserToDeleteRows = false;
-                //Отменить возможность изменения порядка следования столбцов строк
-                AllowUserToOrderColumns = false;
-                //Не отображать заголовки строк
-                RowHeadersVisible = false;
-                //Ширина столбцов под видимую область
-                //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-
-                AddColumn(-2, string.Empty, "ALG", true, false);
-                AddColumn(-1, "Дата", "Date", true, true);
-            }
-
-            /// <summary>
-            /// Класс для описания дополнительных свойств столбца в отображении (таблице)
-            /// </summary>
-            private class HDataGridViewColumn : DataGridViewTextBoxColumn
-            {
-                /// <summary>
-                /// Идентификатор компонента
-                /// </summary>
-                public int m_iIdComp;
-                /// <summary>
-                /// Признак запрета участия в расчете
-                /// </summary>
-                public bool m_bCalcDeny;
-            }
-
-            /// <summary>
-            /// Структура для описания добавляемых строк
-            /// </summary>
-            public class ROW_PROPERTY
-            {
-                /// <summary>
-                /// Структура с дополнительными свойствами ячейки отображения
-                /// </summary>
-                public struct HDataGridViewCell //: DataGridViewCell
-                {
-                    public enum INDEX_CELL_PROPERTY : uint { IS_NAN }
-                    /// <summary>
-                    /// Признак отсутствия значения
-                    /// </summary>
-                    public int m_IdParameter;
-                    /// <summary>
-                    /// Признак качества значения в ячейке
-                    /// </summary>
-                    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
-
-                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
-                    {
-                        m_IdParameter = idParameter;
-                        m_iQuality = iQuality;
-                    }
-
-                    public bool IsNaN { get { return m_IdParameter < 0; } }
-                }
-
-                /// <summary>
-                /// Пояснения к параметру в алгоритме расчета
-                /// </summary>
-                public string m_strMeasure
-                    , m_Value;
-                /// <summary>
-                /// Идентификатор параметра в алгоритме расчета
-                /// </summary>
-                public int m_idAlg;
-                /// <summary>
-                /// Идентификатор множителя при отображении (визуальные установки) значений в строке
-                /// </summary>
-                public int m_vsRatio;
-                /// <summary>
-                /// Количество знаков после запятой при отображении (визуальные установки) значений в строке
-                /// </summary>
-                public int m_vsRound;
-
-                public HDataGridViewCell[] m_arPropertiesCells;
-
-                /// <summary>
-                /// 
-                /// </summary>
-                /// <param name="cntCols"></param>
-                public void InitCells(int cntCols)
-                {
-                    m_arPropertiesCells = new HDataGridViewCell[cntCols];
-                    for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
-                }
-            }
-
-            /// <summary>
-            /// Добавить столбец
-            /// </summary>
-            /// <param name="id_comp">номер компонента</param>
-            /// <param name="txtHeader">заголовок столбца</param>
-            /// <param name="nameCol">имя столбца</param>
-            /// <param name="bRead">"только чтение"</param>
-            /// <param name="bVisibled">видимость столбца</param>
-            public void AddColumn(int id_comp, string txtHeader, string nameCol, bool bRead, bool bVisibled)
-            {
-                int indxCol = -1; // индекс столбца при вставке
-                DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
-                DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-
-                try
-                {
-                    // найти индекс нового столбца
-                    // столбец для станции - всегда крайний
-                    foreach (HDataGridViewColumn col in Columns)
-                        if ((col.m_iIdComp > 0)
-                            && (col.m_iIdComp < 1000))
-                        {
-                            indxCol = Columns.IndexOf(col);
-
-                            break;
-                        }
-                        else
-                            ;
-
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp, m_bCalcDeny = false };
-                    alignText = DataGridViewContentAlignment.MiddleRight;
-                    autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
-
-                    if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
-                        ; // оставить значения по умолчанию
-                    else
-                    {// для добавлямых столбцов
-                        if (id_comp < 0)
-                        {// для служебных столбцов
-                            if (bVisibled == true)
-                            {// только для столбца с [SYMBOL]
-                                alignText = DataGridViewContentAlignment.MiddleLeft;
-                                autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
-                            }
-                            column.Frozen = true;
-                         
-                        }
-                    }
-
-                    column.HeaderText = txtHeader;
-                    column.ReadOnly = bRead;
-                    column.Name = nameCol;
-                    column.DefaultCellStyle.Alignment = alignText;
-                    column.AutoSizeMode = autoSzColMode;
-                    column.Visible = bVisibled;
-
-                    if (!(indxCol < 0))
-                        Columns.Insert(indxCol, column as DataGridViewTextBoxColumn);
-                    else
-                        Columns.Add(column as DataGridViewTextBoxColumn);
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"DataGridViewTEPValues::AddColumn (id_comp=" + id_comp + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-
-            /// <summary>
-            /// Добавить столбец
-            /// </summary>
-            /// <param name="text">Текст для заголовка столбца</param>
-            /// <param name="bRead">флаг изменения пользователем ячейки</param>
-            /// <param name="nameCol">имя столбца</param>
-            /// <param name="idPut">индентификатор источника</param>
-            public void AddColumn(string txtHeader, string nameCol, bool bRead, bool bVisibled)
-            {
-                DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
-                DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-
-                try
-                {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false };
-                    alignText = DataGridViewContentAlignment.MiddleRight;
-                    autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
-                    column.Frozen = true;
-                    column.ReadOnly = bRead;
-                    column.Name = nameCol;
-                    column.HeaderText = txtHeader;
-                    column.DefaultCellStyle.Alignment = alignText;
-                    column.AutoSizeMode = autoSzColMode;
-                    Columns.Add(column as DataGridViewTextBoxColumn);
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-
-            /// <summary>
-            /// Удаление набора строк
-            /// </summary>
-            public void ClearRows()
-            {
-                if (Rows.Count > 0)
-                    Rows.Clear();
-            }
-
-            /// <summary>
-            /// Установка возможности редактирования столбцов
-            /// </summary>
-            /// <param name="bRead">true/false</param>
-            public void AddBRead(bool bRead)
-            {
-                foreach (HDataGridViewColumn col in Columns)
-                    if (col.m_iIdComp > 0)
-                        col.ReadOnly = bRead;
-            }
-
-            /// <summary>
-            /// Очищение отображения от значений
-            /// </summary>
-            public void ClearValues()
-            {
-                //CellValueChanged -= onCellValueChanged;
-
-                foreach (DataGridViewRow r in Rows)
-                    foreach (DataGridViewCell c in r.Cells)
-                        if (r.Cells.IndexOf(c) > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) // нельзя удалять идентификатор параметра
-                            c.Value = string.Empty;
-
-                //??? если установить 'true' - редактирование невозможно
-                //ReadOnly = false;
-
-                //CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
-            }
-
-            /// <summary>
-            /// Добавить строку в таблицу
-            /// </summary>
-            public void AddRow(ROW_PROPERTY rowProp)
-            {
-                int i = -1;
-                // создать строку
-                DataGridViewRow row = new DataGridViewRow();
-                if (m_dictPropertiesRows == null)
-                    m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-
-                if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
-                    m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
-
-                // добавить строку
-                i = Rows.Add(row);
-                // установить значения в ячейках для служебной информации
-                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
-                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
-                // инициализировать значения в служебных ячейках
-                m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
-            }
-
-            /// <summary>
-            /// Добавить строку в таблицу
-            /// </summary>
-            public void AddRow(ROW_PROPERTY rowProp, int DaysInMonth)
-            {
-                int i = -1;
-                // создать строку
-                DataGridViewRow row = new DataGridViewRow();
-                if (m_dictPropertiesRows == null)
-                    m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-
-                if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
-                    m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
-
-                // добавить строку
-                i = Rows.Add(row);
-                // установить значения в ячейках для служебной информации
-                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
-                // инициализировать значения в служебных ячейках
-                //m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
-
-                if (i == DaysInMonth)
-                    foreach (HDataGridViewColumn col in Columns)
-                        Rows[i].Cells[col.Index].ReadOnly = true;//блокировка строк
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            protected struct RATIO
-            {
-                public int m_id;
-                public int m_value;
-                public string m_nameRU
-                    , m_nameEN
-                    , m_strDesc;
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            protected Dictionary<int, RATIO> m_dictRatio;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="tblRatio"></param>
-            public void SetRatio(DataTable tblRatio)
-            {
-                m_dictRatio = new Dictionary<int, RATIO>();
-
-                foreach (DataRow r in tblRatio.Rows)
-                    m_dictRatio.Add((int)r[@"ID"], new RATIO()
-                    {
-                        m_id = (int)r[@"ID"]
-                        ,
-                        m_value = (int)r[@"VALUE"]
-                        ,
-                        m_nameRU = (string)r[@"NAME_RU"]
-                        ,
-                        m_nameEN = (string)r[@"NAME_RU"]
-                        ,
-                        m_strDesc = (string)r[@"DESCRIPTION"]
-                    });
-            }
-
-            /// <summary>
-            /// Обновить структуру таблицы
-            /// </summary>
-            /// <param name="indxDeny">Индекс элемента в массиве списков с отмененными для расчета/отображения компонентами ТЭЦ/параметрами алгоритма расчета</param>
-            /// <param name="id">Идентификатор элемента (компонента/параметра)</param>
-            /// <param name="bCheckedItem">Признак участия в расчете/отображения</param>
-            public void UpdateStructure(PanelManagementReaktivka.ItemCheckedParametersEventArgs item)
-            {
-                Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
-                int indx = -1
-                    , cIndx = -1
-                    , rKey = -1;
-                bool bItemChecked = item.m_newCheckState == CheckState.Checked ? true :
-                    item.m_newCheckState == CheckState.Unchecked ? false :
-                        false;
-
-                //Поиск индекса элемента отображения
-                switch (item.m_indxIdDeny)
-                {
-                    case INDEX_ID.DENY_COMP_VISIBLED:
-                        // найти индекс столбца (компонента) - по идентификатору
-                        foreach (HDataGridViewColumn c in Columns)
-                            if (c.m_iIdComp == item.m_idItem)
-                            {
-                                indx = Columns.IndexOf(c);
-                                break;
-                            }
-                        break;
-                    default:
-                        break;
-                }
-
-                if (!(indx < 0))
-                {
-                    switch (item.m_indxIdDeny)
-                    {
-                        //case INDEX_ID.DENY_COMP_CALCULATED:
-                        //    cIndx = indx;
-                        //    // для всех ячеек в столбце
-                        //    foreach (DataGridViewRow r in Rows)
-                        //    {
-                        //        indx = Rows.IndexOf(r);
-                        //        if (getClrCellToComp(cIndx, indx, bItemChecked, out clrCell) == true)
-                        //            r.Cells[cIndx].Style.BackColor = clrCell;
-                        //        else
-                        //            ;
-                        //    }
-                        //    (Columns[cIndx] as HDataGridViewColumn).m_bCalcDeny = !bItemChecked;
-                        //    break;
-                        //case INDEX_ID.DENY_PARAMETER_CALCULATED:
-                        //    rKey = (int)Rows[indx].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
-                        //    // для всех ячеек в строке
-                        //    foreach (DataGridViewCell c in Rows[indx].Cells)
-                        //    {
-                        //        cIndx = Rows[indx].Cells.IndexOf(c);
-                        //        if (getClrCellToParameter(cIndx, indx, bItemChecked, out clrCell) == true)
-                        //            c.Style.BackColor = clrCell;
-                        //        else
-                        //            ;
-
-                        //        m_dictPropertiesRows[rKey].m_arPropertiesCells[cIndx].m_bCalcDeny = !bItemChecked;
-                        //    }
-                        //    break;
-                        case INDEX_ID.DENY_COMP_VISIBLED:
-                            cIndx = indx;
-                            // для всех ячеек в столбце
-                            Columns[cIndx].Visible = bItemChecked;
-                            break;
-                            //case INDEX_ID.DENY_PARAMETER_VISIBLED:
-                            //    // для всех ячеек в строке
-                            //    Rows[indx].Visible = bItemChecked;
-                            //    break;
-                            //default:
-                            //    break;
-                    }
-                }
-                else
-                    ; // нет элемента для изменения стиля
-            }
-
-
-            /// <summary>
-            /// Отображение значений
-            /// </summary>
-            /// <param name="source">таблица с даными</param>
-            public void ShowValues(DataTable source)
-            {
-                int idAlg = -1
-                   , idParameter = -1
-                   , iQuality = -1
-                   , iCol = 0, iRow = 0
-                   , vsRatioValue = -1;
-                double dblVal = -1F,
-                    dbSumVal = 0;
-                DataRow[] parameterRows = null;
-
-                var enumTime = (from r in source.AsEnumerable()
-                                orderby r.Field<DateTime>("WR_DATETIME")
-                                select new
-                                {
-                                    WR_DATETIME = r.Field<DateTime>("WR_DATETIME"),
-                                }).Distinct();
-
-                //if ((int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION == (int)typeValues)
-                //    ;
-
-                    foreach (HDataGridViewColumn col in Columns)
-                {
-                    if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
-                    {
-                        try
-                        {
-                            parameterRows = source.Select(string.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
-                        }
-                        catch (Exception e)
-                        {
-                            MessageBox.Show(e.ToString());
-                        }
-
-                        foreach (DataGridViewRow row in Rows)
-                        {
-                            if (row.Index != RowCount - 1)
-                            {
-                                try
-                                {
-                                    idAlg = (int)row.Cells["ALG"].Value;
-                                }
-                                catch (Exception exp)
-                                {
-                                    MessageBox.Show(exp.ToString());
-                                }
-
-                                for (int i = 0; i < parameterRows.Count(); i++)
-                                {
-                                    if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(m_currentOffSet).AddDays(-1).ToShortDateString() ==
-                                        row.Cells["Date"].Value.ToString())
-                                    {
-                                        idParameter = (int)parameterRows[i][@"ID_PUT"];
-                                        dblVal = ((double)parameterRows[i][@"VALUE"]);
-                                        iQuality = (int)parameterRows[i][@"QUALITY"];
-
-                                        row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
-                                        vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-
-                                        dblVal *= Math.Pow(10F, -1 * vsRatioValue);
-
-                                        row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                            CultureInfo.InvariantCulture);
-                                        dbSumVal += dblVal;
-                                    }
-                                }
-                            }
-                            else
-                                row.Cells[iCol].Value = dbSumVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                    CultureInfo.InvariantCulture);
-
-                            iRow++;
-                        }
-                    }
-                    iCol++;
-                    dbSumVal = 0;
-                }
-            }
-
-            /// <summary>
-            /// Перерасчет суммы по столбцу
-            /// </summary>
-            /// <param name="indxCol">индекс столбца</param>
-            /// <param name="indxRow">индекс строки</param>
-            /// <param name="newValue">новое значение</param>
-            public void SumValue(int indxCol, int indxRow)
-            {
-                int idAlg = -1;
-                double sumValue = 0F
-                    , value;
-
-                idAlg = (int)Rows[indxRow].Cells[0].Value;
-
-                foreach (DataGridViewRow row in Rows)
-                    if (row.Cells[indxCol].Value != null)
-                    {
-                        if (Rows.Count - 1 != row.Index)
-                        {
-                            value = AsParseToF(row.Cells[indxCol].Value.ToString());
-                            sumValue += value;
-                        }
-                        else
-                            row.Cells[indxCol].Value = sumValue.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                        CultureInfo.InvariantCulture);
-                        formatCell();
-                    }
-            }
-
-            /// <summary>
-            /// Формирование таблицы данных с отображения
-            /// </summary>
-            /// <param name="dtSourceOrg">таблица с оригинальными данными</param>
-            /// <param name="idSession">номер сессии пользователя</param>
-            /// <param name="typeValues">тип данных</param>
-            /// <returns>таблица с новыми данными с вьюхи</returns>
-            public DataTable GetValue(DataTable dtSourceOrg, int idSession, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
-            {
-                int i = 0,
-                    idAlg = -1,
-                     vsRatioValue = -1
-                     , quality = -1;
-                double valueToRes = 0;
-                DateTime dtVal;
-
-                DataTable dtSourceEdit = new DataTable();
-                dtSourceEdit.Columns.AddRange(new DataColumn[] {
-                        new DataColumn (@"ID_PUT", typeof (int))
-                        , new DataColumn (@"ID_SESSION", typeof (long))
-                        , new DataColumn (@"QUALITY", typeof (int))
-                        , new DataColumn (@"VALUE", typeof (float))
-                        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
-                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
-                    });
-
-                foreach (HDataGridViewColumn col in Columns)
-                {
-                    if (col.m_iIdComp > 0)
-                        foreach (DataGridViewRow row in Rows)
-                        {
-                            if (row.Index != row.DataGridView.RowCount - 1)
-                                if (row.Cells[col.Index].Value != null)
-                                    if (row.Cells[col.Index].Value.ToString() != "")
-                                    {
-                                        idAlg = (int)row.Cells["ALG"].Value;
-                                        valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
-                                        vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-
-                                        valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
-                                        dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
-
-                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i, idAlg, typeValues);
-
-                                        dtSourceEdit.Rows.Add(new object[]
-                                        {
-                                            col.m_iIdComp
-                                            , idSession
-                                            , quality
-                                            , valueToRes
-                                            , dtVal.AddMinutes(-m_currentOffSet).ToString("F",dtSourceEdit.Locale)
-                                            , i
-                                        });
-                                        i++;
-                                    }
-                        }
-                }
-
-                try
-                {
-                    dtSourceEdit = sortingTable(dtSourceEdit, "WR_DATETIME, ID_PUT");
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
-            
-                return dtSourceEdit;
-            }
-
-            /// <summary>
-            /// Форматирование значений
-            /// </summary>
-            private void formatCell()
-            {
-                int idAlg = -1
-                     , vsRatioValue = -1,
-                     iCol = 0;
-                //double dblVal = 1F;
-
-                foreach (HDataGridViewColumn column in Columns)
-                {
-                    if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
-                        foreach (DataGridViewRow row in Rows)
-                        {
-                            if (row.Index != row.DataGridView.RowCount - 1)
-                                if(row.Cells[iCol].Value != null)
-                                    if (row.Cells[iCol].Value.ToString() != "")
-                                    {
-                                        idAlg = (int)row.Cells["ALG"].Value;
-                                        vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
-                                        row.Cells[iCol].Value = AsParseToF(row.Cells[iCol].Value.ToString()).ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound,
-                                                    CultureInfo.InvariantCulture);
-                                    }
-                        }
-                    iCol++;
-                }
-            }
-
-            /// <summary>
-            /// соритровка таблицы по столбцу
-            /// </summary>
-            /// <param name="table">таблица для сортировки</param>
-            /// <param name="sortStr">имя столбца/ов для сортировки</param>
-            /// <returns>отсортированная таблица</returns>
-            private DataTable sortingTable(DataTable table, string colSort)
-            {
-                DataView dView = table.DefaultView;
-                string sortExpression = string.Format(colSort);
-                dView.Sort = sortExpression;
-                table = dView.ToTable();
-
-                return table;
-            }
-
-            /// <summary>
-            /// Проверка на изменение значений в двух таблицах
-            /// </summary>
-            /// <param name="origin">оригинальная таблица</param>
-            /// <param name="editValue">значение</param>
-            /// <param name="i">номер строки</param>
-            /// <param name="idAlg">номер алгоритма</param>
-            /// <param name="typeValues">тип данных</param>
-            /// <returns>показатель изменения</returns>
-            private int diffRowsInTables(DataTable origin, double editValue, int i,int idAlg, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
-            {
-                int quality = 1;
-                double originValues;
-
-                origin = sortingTable(origin, "ID_PUT, WR_DATETIME");
-
-                if (origin.Rows.Count - 1 < i)
-                    originValues = 0;
-                else
-                    originValues =
-                        AsParseToF(origin.Rows[i]["VALUE"].ToString());
-
-                switch (typeValues)
-                {
-                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE:
-                        if (originValues.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, CultureInfo.InvariantCulture) != editValue.ToString())
-                            quality = 2;
-                        break;
-                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION:
-                        quality = 1;
-                        break;
-                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT:
-                        break;
-                    default:
-                        break;
-                }
-
-                return quality;
             }
         }
 
@@ -2460,8 +1109,10 @@ namespace PluginTaskReaktivka
                         //
                         m_arTableEdit[(int)m_ViewValues] = valuesFence;
                     }
-                    else
+                    else {
                         deleteSession();
+                        throw new Exception(@"PanelTaskreaktivka::updatedataValues() - " + errMsg);
+                    }
                 }
                 else
                 {
