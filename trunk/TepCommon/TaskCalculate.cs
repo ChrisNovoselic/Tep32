@@ -30,14 +30,10 @@ namespace TepCommon
             public enum INDEX_DATATABLE : short
             {
                 UNKNOWN = -1
-                ,
-                FTABLE
-                    , IN_PARAMETER,
-                IN_VALUES
-                    , OUT_NORM_PARAMETER,
-                OUT_NORM_VALUES
-                    , OUT_PARAMETER,
-                OUT_VALUES
+                , FTABLE
+                , IN_PARAMETER, IN_VALUES
+                , OUT_NORM_PARAMETER, OUT_NORM_VALUES
+                , OUT_PARAMETER, OUT_VALUES
                     , COUNT
             }
             /// <summary>
@@ -183,9 +179,9 @@ namespace TepCommon
             /// <param name="type">Тип расчета</param>
             /// <param name="req">Тип рассчитываемых значений</param>
             /// <returns>Индекс таблицы БД в списке</returns>
-            public static INDEX_DBTABLE_NAME GetIndexNameDbTable(TYPE type, TABLE_CALCULATE_REQUIRED req)
+            public static ID_DBTABLE GetIdDbTable(TYPE type, TABLE_CALCULATE_REQUIRED req)
             {
-                INDEX_DBTABLE_NAME indxRes = INDEX_DBTABLE_NAME.UNKNOWN;
+                ID_DBTABLE idRes = ID_DBTABLE.UNKNOWN;
 
                 switch (type)
                 {
@@ -193,13 +189,13 @@ namespace TepCommon
                         switch (req)
                         {
                             case TABLE_CALCULATE_REQUIRED.ALG:
-                                indxRes = INDEX_DBTABLE_NAME.INALG;
+                                idRes = ID_DBTABLE.INALG;
                                 break;
                             case TABLE_CALCULATE_REQUIRED.PUT:
-                                indxRes = INDEX_DBTABLE_NAME.INPUT;
+                                idRes = ID_DBTABLE.INPUT;
                                 break;
                             case TABLE_CALCULATE_REQUIRED.VALUE:
-                                indxRes = INDEX_DBTABLE_NAME.INVALUES;
+                                idRes = ID_DBTABLE.INVALUES;
                                 break;
                             default:
                                 break;
@@ -210,13 +206,13 @@ namespace TepCommon
                         switch (req)
                         {
                             case TABLE_CALCULATE_REQUIRED.ALG:
-                                indxRes = INDEX_DBTABLE_NAME.OUTALG;
+                                idRes = ID_DBTABLE.OUTALG;
                                 break;
                             case TABLE_CALCULATE_REQUIRED.PUT:
-                                indxRes = INDEX_DBTABLE_NAME.OUTPUT;
+                                idRes = ID_DBTABLE.OUTPUT;
                                 break;
                             case TABLE_CALCULATE_REQUIRED.VALUE:
-                                indxRes = INDEX_DBTABLE_NAME.OUTVALUES;
+                                idRes = ID_DBTABLE.OUTVALUES;
                                 break;
                             default:
                                 break;
@@ -226,13 +222,13 @@ namespace TepCommon
                         switch (req)
                         {
                             case TABLE_CALCULATE_REQUIRED.ALG:
-                                indxRes = INDEX_DBTABLE_NAME.INALG;
+                                idRes = ID_DBTABLE.INALG;
                                 break;
                             case TABLE_CALCULATE_REQUIRED.PUT:
-                                indxRes = INDEX_DBTABLE_NAME.INPUT;
+                                idRes = ID_DBTABLE.INPUT;
                                 break;
                             case TABLE_CALCULATE_REQUIRED.VALUE:
-                                indxRes = INDEX_DBTABLE_NAME.INVALUES;
+                                idRes = ID_DBTABLE.INVALUES;
                                 break;
                             default:
                                 break;
@@ -242,7 +238,7 @@ namespace TepCommon
                         break;
                 }
 
-                return indxRes;
+                return idRes;
             }
             /// <summary>
             /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов

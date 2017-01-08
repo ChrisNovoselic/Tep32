@@ -426,11 +426,11 @@ namespace PluginTaskAutobook
         /// <returns>Наименование таблицы</returns>
         private static string getNameDbTable(TaskCalculate.TYPE type, TABLE_CALCULATE_REQUIRED req)
         {
-            INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
+            ID_DBTABLE id = ID_DBTABLE.UNKNOWN;
 
-            indx = TaskCalculate.GetIndexNameDbTable(type, req);
+            id = TaskCalculate.GetIdDbTable(type, req);
 
-            return s_NameDbTables[(int)indx];
+            return s_dictDbTables[(int)indx];
         }
 
         /// <summary>
@@ -466,7 +466,7 @@ namespace PluginTaskAutobook
                 arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                    + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
+                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                 arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
@@ -489,7 +489,7 @@ namespace PluginTaskAutobook
             Type[] arTypeColumns = null;
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @" (";
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];
@@ -557,7 +557,7 @@ namespace PluginTaskAutobook
 
             strBaseQuery =
             strQuery =
-                @"INSERT INTO " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @" VALUES ";
+                @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @" VALUES ";
 
             if (true)
             {
@@ -669,7 +669,7 @@ namespace PluginTaskAutobook
         {
             string strQuery;
             strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"]"
+                + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
                 + @" WHERE [ID_SESSION]=" + _Session.m_Id;
 
             return Select(strQuery, out err);
@@ -897,7 +897,7 @@ namespace PluginTaskAutobook
                 arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                    + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
+                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                 arTableValues[(int)INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
@@ -918,7 +918,7 @@ namespace PluginTaskAutobook
             Type[] arTypeColumns = null;
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strQuery = @"INSERT INTO " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+            strQuery = @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @" (";
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];
@@ -985,7 +985,7 @@ namespace PluginTaskAutobook
 
             strBaseQuery =
             strQuery =
-                @"INSERT INTO " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @" VALUES ";
+                @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @" VALUES ";
 
             if (true)
             {
@@ -1041,10 +1041,10 @@ namespace PluginTaskAutobook
         /// <returns>Наименование таблицы</returns>
         private static string getNameDbTable(TaskCalculate.TYPE type, TABLE_CALCULATE_REQUIRED req)
         {
-            INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
-            indx = TaskCalculate.GetIndexNameDbTable(type, req);
+            ID_DBTABLE id = ID_DBTABLE.UNKNOWN;
+            id = TaskCalculate.GetIdDbTable(type, req);
 
-            return s_NameDbTables[(int)indx];
+            return s_dictDbTables[id].m_name;
         }
 
         /// <summary>

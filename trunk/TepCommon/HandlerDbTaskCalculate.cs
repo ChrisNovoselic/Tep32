@@ -19,21 +19,21 @@ namespace TepCommon
         ///  , собранных в автоматическом режиме
         ///  , "по умолчанию"
         /// </summary>
-        public enum INDEX_TABLE_VALUES : int
-        {
-            UNKNOWN = -1, ARCHIVE, SESSION,
-            DEFAULT,
-            COUNT
+        public enum INDEX_TABLE_VALUES : int {
+            UNKNOWN = -1
+            , ARCHIVE, SESSION
+            , DEFAULT
+                , COUNT
         }
         /// <summary>
         /// Перечисление - индексы (идентификаторы) типов значений, требующихся для расчета
         ///  в той или иной задаче
         /// </summary>
-        public enum TABLE_CALCULATE_REQUIRED : short
-        {
-            UNKNOWN = -1, ALG, PUT,
-            VALUE,
-            COUNT
+        public enum TABLE_CALCULATE_REQUIRED : short {
+            UNKNOWN = -1
+            , ALG, PUT
+            , VALUE
+                , COUNT
         }
         /// <summary>
         /// Перечисление - идентификаторы состояния полученных из БД значений
@@ -152,12 +152,12 @@ namespace TepCommon
                 m_Id = HMath.GetRandomNumber();
             }
 
-            public void SetRangeDatetime(DateTimeRange dtRange)
+            public void SetDatetimeRange(DateTimeRange dtRange)
             {
-                SetRangeDatetime(dtRange.Begin, dtRange.End);
+                SetDatetimeRange(dtRange.Begin, dtRange.End);
             }
 
-            public void SetRangeDatetime(DateTime dtBegin, DateTime dtEnd)
+            public void SetDatetimeRange(DateTime dtBegin, DateTime dtEnd)
             {
                 m_rangeDatetime.Set(dtBegin, dtEnd);
             }
@@ -286,7 +286,7 @@ namespace TepCommon
                 arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
-                    + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
+                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                 arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
@@ -312,7 +312,7 @@ namespace TepCommon
             string strQuery = string.Empty;
 
             // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
-            strQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
+            strQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.SESSION].m_name + @" ("
                 + @"[ID_CALCULATE]"
                 + @", [ID_FPANEL]"
                 + @", [ID_USER]"
@@ -354,7 +354,7 @@ namespace TepCommon
             int iCntToInsert = -1; // кол-во строк обработанных для вставки
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strBaseQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+            strBaseQuery = @"INSERT INTO " + HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @" (";
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];
@@ -449,7 +449,7 @@ namespace TepCommon
 
             strBaseQuery =
             strQuery =
-                @"INSERT INTO " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @" VALUES ";
+                @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @" VALUES ";
 
             iRowCounterToInsert = 0;
             foreach (DataRow rPar in tableParameters.Rows)
@@ -518,7 +518,7 @@ namespace TepCommon
 
                 if (!(iRegDbConn < 0))
                 {
-                    strQuery = @"DELETE FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"]"
+                    strQuery = @"DELETE FROM [dbo].[" + HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.SESSION].m_name + @"]"
                         + @" WHERE [ID_CALCULATE]=" + _Session.m_Id;
 
                     DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
@@ -548,14 +548,14 @@ namespace TepCommon
         /// <param name="tableOriginValues">Таблица с исходными значениями</param>
         /// <param name="tableEditValues">Таблица с измененными значениями</param>
         /// <param name="err">Идентификатор ошибки при выполнении операции</param>
-        public void UpdateSession(INDEX_DBTABLE_NAME indxDbTable
+        public void UpdateSession(ID_DBTABLE idDbTable
             , DataTable tableOriginValues
             , DataTable tableEditValues
             , out int err)
         {
             err = -1;
 
-            RecUpdateInsertDelete(s_NameDbTables[(int)indxDbTable], @"ID_PUT, ID_SESSION", string.Empty, tableOriginValues, tableEditValues, out err);
+            RecUpdateInsertDelete(s_dictDbTables[idDbTable].m_name, @"ID_PUT, ID_SESSION", string.Empty, tableOriginValues, tableEditValues, out err);
         }
         /// <summary>
         /// Условие выбора строки с парметрами сессии (панель, пользователь, идентификатор интервала, идентификатор часового пояса)
@@ -572,7 +572,7 @@ namespace TepCommon
         private string querySession
         {
             get {
-                return @"SELECT s.*, tz.[OFFSET_UTC] FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @"] as s"
+                return @"SELECT s.*, tz.[OFFSET_UTC] FROM [" + s_dictDbTables[ID_DBTABLE.SESSION].m_name + @"] as s"
                     + @" JOIN [timezones] tz ON s.ID_TIMEZONE = tz.ID"
                     +
                         //@" WHERE [ID_USER]=" + HTepUsers.Id
@@ -693,7 +693,7 @@ namespace TepCommon
                     + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
                         + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask
                         + whereParameters
-                        + @" JOIN [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
+                        + @" JOIN [dbo].[" + s_dictDbTables[ID_DBTABLE.MEASURE].m_name + @"] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::GetQueryParameters () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -708,11 +708,11 @@ namespace TepCommon
         /// <returns>Наименование таблицы</returns>
         private static string getNameDbTable(TaskCalculate.TYPE type, TABLE_CALCULATE_REQUIRED req)
         {
-            INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
+            ID_DBTABLE id = ID_DBTABLE.UNKNOWN;
 
-            indx = TaskCalculate.GetIndexNameDbTable(type, req);
+            id = TaskCalculate.GetIdDbTable(type, req);
 
-            return s_NameDbTables[(int)indx];
+            return s_dictDbTables[id].m_name;
         }
         ///// <summary>
         ///// Возвратить наименование таблицы 
@@ -785,7 +785,7 @@ namespace TepCommon
 
             strRes = @"SELECT"
                 + @" *"
-                + @" FROM [dbo].[" + HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVAL_DEF] + @"] v"
+                + @" FROM [dbo].[" + HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVAL_DEF].m_name + @"] v"
                 + @" WHERE [ID_TIME] = " + (int)idPeriod //(int)_currIdPeriod
                     ;
 
@@ -1012,7 +1012,7 @@ namespace TepCommon
                 if (_Session.m_Id > 0)
                 {
                     // получить таблицу со значеняими нормативных графиков
-                    tableVal = GetDataTable(INDEX_DBTABLE_NAME.FTABLE, out err);
+                    tableVal = GetDataTable(ID_DBTABLE.FTABLE, out err);
                     listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.FTABLE, m_table = tableVal.Copy() });
                     // получить описание входных парметров в алгоритме расчета
                     tableVal = Select(GetQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err);
@@ -1128,7 +1128,7 @@ namespace TepCommon
                     ; //??? ошибка
             }
 
-            RecUpdateInsertDelete(s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES], @"ID_PUT", string.Empty, tableOrigin, tableEdit, out err);
+            RecUpdateInsertDelete(s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name, @"ID_PUT", string.Empty, tableOrigin, tableEdit, out err);
         }
     }
 }

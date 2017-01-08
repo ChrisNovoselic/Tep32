@@ -60,7 +60,7 @@ namespace PluginTaskVedomostBl
                 arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                    + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
+                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                 arTableValues[(int)INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
@@ -86,7 +86,7 @@ namespace PluginTaskVedomostBl
             string strQuery = string.Empty;
 
             // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
-            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
+            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.SESSION].m_name + @" ("
                 + @"[ID_CALCULATE]"
                 + @", [ID_TASK]"
                 + @", [ID_USER]"
@@ -132,7 +132,7 @@ namespace PluginTaskVedomostBl
             for (int i = 0; i < cntRow; i++)
             {
                 // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-                strQuery = @"INSERT INTO " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+                strQuery = @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @" (";
 
                 arTypeColumns = new Type[tableInValues.Columns.Count];
                 arNameColumns = new string[tableInValues.Columns.Count];
@@ -413,7 +413,7 @@ namespace PluginTaskVedomostBl
             string strRes = string.Empty;
 
             strRes = @"SELECT l.[ID] , l.[ID_COMP], l.[DESCRIPTION] "
-            + @"FROM  [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] l "
+            + @"FROM  [" + s_dictDbTables[ID_DBTABLE.COMP_LIST].m_name + @"] l "
             + @"LEFT JOIN [comp] c "
             + @"ON c.ID = l.ID_COMP "
             + @"WHERE c.ID > 500 AND c.ID < 2000";
@@ -492,7 +492,7 @@ namespace PluginTaskVedomostBl
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
 
-            strRes = s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }
@@ -509,7 +509,7 @@ namespace PluginTaskVedomostBl
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
 
-            strRes = HandlerDbValues.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = HandlerDbValues.s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }
@@ -522,11 +522,11 @@ namespace PluginTaskVedomostBl
         /// <returns>Наименование таблицы</returns>
         private static string getNameDbTable(TaskCalculate.TYPE type, TABLE_CALCULATE_REQUIRED req)
         {
-            INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
+            ID_DBTABLE id = ID_DBTABLE.UNKNOWN;
 
-            indx = TaskCalculate.GetIndexNameDbTable(type, req);
+            id = TaskCalculate.GetIdDbTable(type, req);
 
-            return s_NameDbTables[(int)indx];
+            return s_dictDbTables[id].m_name;
         }
 
         /// <summary>

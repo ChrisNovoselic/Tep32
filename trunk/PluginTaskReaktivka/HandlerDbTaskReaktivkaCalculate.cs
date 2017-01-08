@@ -38,7 +38,7 @@ namespace PluginTaskReaktivka
             + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
             + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
             + @"ON a.ID = p.ID_ALG "
-            + @"LEFT JOIN " + "[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] cl "
+            + @"LEFT JOIN " + "[" + s_dictDbTables[ID_DBTABLE.COMP_LIST].m_name + @"] cl "
             + @"ON cl.ID = p.ID_COMP "
             + @"WHERE a.ID_TASK  = " + (int)IdTask;
 
@@ -53,11 +53,11 @@ namespace PluginTaskReaktivka
         /// <returns>Наименование таблицы</returns>
         private static string getNameDbTable(TaskCalculate.TYPE type, TABLE_CALCULATE_REQUIRED req)
         {
-            INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
+            ID_DBTABLE id = ID_DBTABLE.UNKNOWN;
 
-            indx = TaskCalculate.GetIndexNameDbTable(type, req);
+            id = TaskCalculate.GetIdDbTable(type, req);
 
-            return s_NameDbTables[(int)indx];
+            return s_dictDbTables[id].m_name;
         }
 
         /// <summary>
@@ -296,7 +296,7 @@ namespace PluginTaskReaktivka
                 arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                    + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
+                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                 arTableValues[(int)INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
@@ -319,7 +319,7 @@ namespace PluginTaskReaktivka
             Type[] arTypeColumns = null;
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strQuery = @"INSERT INTO " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+            strQuery = @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @" (";
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];

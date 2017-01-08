@@ -70,18 +70,6 @@ namespace PluginTaskAutobook
             COUNT
         }
         /// <summary>
-        /// Перечисление - индексы таблиц со словарными величинами и проектными данными
-        /// </summary>
-        protected enum INDEX_TABLE_DICTPRJ : int
-        {
-            UNKNOWN = -1,
-            PERIOD, TIMEZONE, COMPONENT,
-            PARAMETER, //_IN, PARAMETER_OUT
-            MODE_DEV/*, MEASURE*/,
-            RATIO,
-            COUNT
-        }
-        /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
         protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.MONTH : Session.m_currIdPeriod; } }
@@ -89,10 +77,10 @@ namespace PluginTaskAutobook
         /// Признак отображаемых на текущий момент значений
         /// </summary>
         protected INDEX_VIEW_VALUES m_ViewValues;
-        /// <summary>
-        /// Таблицы со значениями словарных, проектных данных
-        /// </summary>
-        protected DataTable[] m_arTableDictPrjs;
+        ///// <summary>
+        ///// Таблицы со значениями словарных, проектных данных
+        ///// </summary>
+        //protected DataTable[] m_dictTableDictPrj;
         /// <summary>
         /// Массив списков параметров
         /// </summary>
@@ -105,10 +93,10 @@ namespace PluginTaskAutobook
         /// Отображение значений в табличном представлении(план)
         /// </summary>
         protected DGVAutoBook m_dgvYear;
-        /// <summary>
-        /// 
-        /// </summary>
-        public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, 1, 1);
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, 1, 1);
         /// <summary>
         /// Метод для создания панели с активными объектами управления
         /// </summary>
@@ -764,7 +752,7 @@ namespace PluginTaskAutobook
 
             InitializeComponent();
 
-            Session.SetRangeDatetime(s_dtDefaultAU, s_dtDefaultAU.AddMonths(1));
+            Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddMonths(1));
         }
 
         /// <summary>
@@ -870,7 +858,7 @@ namespace PluginTaskAutobook
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
-            m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
+            m_dictTableDictPrj = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
             int role = HTepUsers.Role;
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
@@ -895,13 +883,13 @@ namespace PluginTaskAutobook
             string[] arQueryDictPrj = getQueryDictPrj();
             for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
             {
-                m_arTableDictPrjs[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
+                m_dictTableDictPrj[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
 
                 if (!(err == 0))
                     break;
             }
 
-            foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Rows)
             {
                 id_comp = (int)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
@@ -909,7 +897,7 @@ namespace PluginTaskAutobook
                 m_dgvYear.AddIdComp(id_comp, "Output");
             }
 
-            m_dgvYear.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+            m_dgvYear.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
             try
             {
@@ -949,7 +937,7 @@ namespace PluginTaskAutobook
                 {
                     //Заполнить элемент управления с часовыми поясами
                     ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
+                    foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
@@ -958,7 +946,7 @@ namespace PluginTaskAutobook
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
+                    foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.PERIOD].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
@@ -1142,7 +1130,7 @@ namespace PluginTaskAutobook
                     // ,получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
                         , CountBasePeriod
-                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                        , m_dictTableDictPrj[ID_DBTABLE.PARAMETER]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                         , out err, out strErr);
@@ -1351,7 +1339,7 @@ namespace PluginTaskAutobook
             int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
 
             Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
-                , (int)m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
 
         /// <summary>
@@ -1379,7 +1367,7 @@ namespace PluginTaskAutobook
             {
                 List<DataRow> listRes;
 
-                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Select().ToList<DataRow>();
+                listRes = m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Select().ToList<DataRow>();
 
                 return listRes;
             }
@@ -1395,7 +1383,7 @@ namespace PluginTaskAutobook
             // очистить содержание представления
             clear();
             //settingDateRange();
-            Session.SetRangeDatetime(dtBegin, dtEnd);
+            Session.SetDatetimeRange(dtBegin, dtEnd);
             ////заполнение представления
             //changeDateInGrid(dtBegin);
         }
@@ -1412,14 +1400,14 @@ namespace PluginTaskAutobook
 
             deleteSession();
             //??? повторная проверка
-            if (bClose == true)
-            {
-                if (!(m_arTableDictPrjs == null))
-                    for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-                        if (!(m_arTableDictPrjs[i] == null))
-                        {
-                            m_arTableDictPrjs[i].Clear();
-                            m_arTableDictPrjs[i] = null;
+            if (bClose == true) {
+            // очистить таблицы со слварно-проектными данными
+                if (!(m_dictTableDictPrj == null))
+                    foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE)))
+                        if ((m_dictTableDictPrj.Keys.Contains(id) == true)
+                            && (!(m_dictTableDictPrj[id] == null))) {
+                            m_dictTableDictPrj[id].Clear();
+                            m_dictTableDictPrj[id] = null;
                         }
                         else
                             ;
@@ -1524,7 +1512,7 @@ namespace PluginTaskAutobook
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
 
-            strRes = HandlerDbValues.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = HandlerDbValues.s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }

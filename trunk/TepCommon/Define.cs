@@ -5,9 +5,9 @@ using System.Text;
 
 namespace TepCommon
 {
-    public enum INDEX_DBTABLE_NAME : short { UNKNOWN = -1
-        , TIME
-        , TIMEZONE
+    [Flags]
+    public enum ID_DBTABLE : short { UNKNOWN = -1
+        , TIME, TIMEZONE
         , COMP_LIST
         , MODE_DEV
         , RATIO
@@ -16,14 +16,17 @@ namespace TepCommon
         , INALG
         , INPUT
         , INVALUES
-        , INVAL_DEF
-        , OUTALG
+        , INVAL_DEF // 10
+        , OUTALG // 11
         , OUTPUT
         , OUTVALUES
+        , PERIOD
         , FTABLE
         , PLUGINS
         , TASK
         , FPANELS
+        , IN_PARAMETER // сводная таблица для [INALG], [INPUT]
+        , OUT_PARAMETER // сводная таблица для [OUTALG], [OUTPUT]
             , COUNT
     };    
 

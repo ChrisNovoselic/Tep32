@@ -59,13 +59,13 @@ namespace PluginTaskTepMain
         {
             err = -1;
 
-            //m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES]
+            //m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_dictDbTables[(int)INDEX_DBTABLE_NAME.INVALUES]
             //    , @"ID_PUT, ID_TIME"
             //    , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
             //    , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
             //    , out err);
 
-            m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVAL_DEF]
+            m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVAL_DEF].m_name
                 , @"ID_PUT, ID_TIME"
                 , string.Empty
                 , m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
@@ -107,8 +107,8 @@ namespace PluginTaskTepMain
                 HandlerDb.GetValuesVar(Type, ActualIdPeriod, CountBasePeriod, arQueryRanges, out err) :
                     Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
                         , Session.m_Id
-                        , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
-                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]
+                        , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_dictTableDictPrj[ID_DBTABLE.PARAMETER]
+                        , m_dictTableDictPrj[ID_DBTABLE.RATIO]
                         , out err) :
                             new DataTable();
             //Проверить признак выполнения запроса
@@ -122,7 +122,7 @@ namespace PluginTaskTepMain
                     // , получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
                         , CountBasePeriod
-                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                        , m_dictTableDictPrj[ID_DBTABLE.PARAMETER]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                         , out err, out strErr);
@@ -216,7 +216,7 @@ namespace PluginTaskTepMain
                 if ((!(m_TableOrigin == null))
                     && (!(m_TableEdit == null))) {
                     // обновить входные значения для расчета
-                    HandlerDb.UpdateSession(INDEX_DBTABLE_NAME.INVALUES
+                    HandlerDb.UpdateSession(ID_DBTABLE.INVALUES
                         , m_TableOrigin
                         , m_TableEdit
                         , out err);
@@ -241,7 +241,7 @@ namespace PluginTaskTepMain
         /// Создать объект - панель с управляющими элементами управления
         /// </summary>
         /// <returns></returns>
-        protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()
+        protected override PanelTaskTepCalculate.PanelManagementTaskCalculate createPanelManagement()
         {
             return new PanelManagementTaskTepInval();
         }

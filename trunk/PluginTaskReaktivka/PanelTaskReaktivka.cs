@@ -54,19 +54,6 @@ namespace PluginTaskReaktivka
         /// </summary>
         protected HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         /// <summary>
-        /// Перечисление - индексы таблиц со словарными величинами и проектными данными
-        /// </summary>
-        protected enum INDEX_TABLE_DICTPRJ : int
-        {
-            UNKNOWN = -1,
-            PERIOD, TIMEZONE,
-            COMPONENT,
-            //PARAMETER, 
-            //, MODE_DEV/*, MEASURE*/,
-            RATIO,
-            COUNT
-        }
-        /// <summary>
         /// Значения параметров сессии
         /// </summary>
         protected TepCommon.HandlerDbTaskCalculate.SESSION Session { get { return HandlerDb._Session; } }
@@ -95,10 +82,10 @@ namespace PluginTaskReaktivka
         /// Признак отображаемых на текущий момент значений
         /// </summary>
         protected HandlerDbTaskCalculate.INDEX_TABLE_VALUES m_ViewValues;
-        /// <summary>
-        /// Таблицы со значениями словарных, проектных данных
-        /// </summary>
-        protected DataTable[] m_arTableDictPrjs;
+        ///// <summary>
+        ///// Таблицы со значениями словарных, проектных данных
+        ///// </summary>
+        //protected DataTable[] m_dictTableDictPrj;
         /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
         ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
@@ -159,7 +146,7 @@ namespace PluginTaskReaktivka
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponent();
-            Session.SetRangeDatetime(PanelManagementReaktivka.s_dtDefaultAU, PanelManagementReaktivka.s_dtDefaultAU.AddDays(1));
+            Session.SetDatetimeRange(PanelManagementReaktivka.s_dtDefaultAU, PanelManagementReaktivka.s_dtDefaultAU.AddDays(1));
         }
 
         /// <summary>
@@ -255,7 +242,7 @@ namespace PluginTaskReaktivka
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
-            m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
+            m_dictTableDictPrj = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
             int role = (int)HTepUsers.Role;
 
             INDEX_ID[] arIndxIdToAdd = new INDEX_ID[] {
@@ -287,14 +274,14 @@ namespace PluginTaskReaktivka
             //Заполнить элементы управления с компонентами станции
             for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
             {
-                m_arTableDictPrjs[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
+                m_dictTableDictPrj[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
 
                 if (!(err == 0))
                     break;
             }
             (PanelManagementReak as PanelManagementReaktivka).Clear();
 
-            foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Rows)
             {
                 id_comp = (int)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
@@ -306,7 +293,7 @@ namespace PluginTaskReaktivka
                     , arIndxIdToAdd
                     , arChecked);
 
-                if (m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count + 2 > m_dgvReak.Columns.Count)
+                if (m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Rows.Count + 2 > m_dgvReak.Columns.Count)
                     m_dgvReak.AddColumn(id_comp, strItem, strItem, true, arChecked[0]);
                 else
                     ;
@@ -341,14 +328,14 @@ namespace PluginTaskReaktivka
                 // компонента станции для элементов управления
                 (PanelManagementReak as PanelManagementReaktivka).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED });
                 //
-                m_dgvReak.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+                m_dgvReak.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
                 if (err == 0)
                 {                
                     //m_bflgClear = !m_bflgClear;
                     //Заполнить элемент управления с часовыми поясами
                     ctrl = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
+                    foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
@@ -357,7 +344,7 @@ namespace PluginTaskReaktivka
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     ctrl = Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
+                    foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.PERIOD].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     idPeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
@@ -424,7 +411,7 @@ namespace PluginTaskReaktivka
             int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
 
             Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
-                , (int)m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
 
         /// <summary>
@@ -513,13 +500,13 @@ namespace PluginTaskReaktivka
             {
                 //(PanelManagementReak as PanelManagmentReaktivka).Clear();
 
-                if (!(m_arTableDictPrjs == null))
+                if (!(m_dictTableDictPrj == null))
                     for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
                     {
-                        if (!(m_arTableDictPrjs[i] == null))
+                        if (!(m_dictTableDictPrj[i] == null))
                         {
-                            m_arTableDictPrjs[i].Clear();
-                            m_arTableDictPrjs[i] = null;
+                            m_dictTableDictPrj[i].Clear();
+                            m_dictTableDictPrj[i] = null;
                         }
                     }
 
@@ -565,7 +552,7 @@ namespace PluginTaskReaktivka
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
 
-            Session.SetRangeDatetime(dtBegin, dtEnd);
+            Session.SetDatetimeRange(dtBegin, dtEnd);
 
             if (m_bflgClear == true)
             {
@@ -639,7 +626,7 @@ namespace PluginTaskReaktivka
             {
                 List<DataRow> listRes;
 
-                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Select().ToList<DataRow>();
+                listRes = m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Select().ToList<DataRow>();
 
                 return listRes;
             }
@@ -1200,7 +1187,7 @@ namespace PluginTaskReaktivka
                     //, получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
                         , CountBasePeriod
-                        , m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT]
+                        , m_dictTableDictPrj[ID_DBTABLE.COMPONENT]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                         , out err, out strErr);
@@ -1245,7 +1232,7 @@ namespace PluginTaskReaktivka
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
 
-            strRes = HandlerDbValues.s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = HandlerDbValues.s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }

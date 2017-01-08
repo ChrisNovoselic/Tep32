@@ -52,7 +52,7 @@ namespace PluginTaskBalTeplo
                     + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
                         + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask
                         + whereParameters
-                        + @" JOIN [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
+                        + @" JOIN [dbo].[" + s_dictDbTables[ID_DBTABLE.MEASURE].m_name + @"] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::GetQueryParameters () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -167,7 +167,7 @@ namespace PluginTaskBalTeplo
                     ; //??? ошибка
             }
 
-            RecUpdateInsertDelete(s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES], @"ID_PUT, ID_SESSION", string.Empty, tableOrigin, tableEdit, out err);
+            RecUpdateInsertDelete(s_dictDbTables[ID_DBTABLE.INVALUES].m_name, @"ID_PUT, ID_SESSION", string.Empty, tableOrigin, tableEdit, out err);
         }
 
         private const int MAX_ROWCOUNT_TO_INSERT = 666;
@@ -334,20 +334,24 @@ namespace PluginTaskBalTeplo
         /// <param name="idPeriod">Идентификатор </param>
         /// <param name="err">Признак выполнения функции</param>
         /// <returns>Объект-таблица со значенями по умолчанию</returns>
-        public DataTable GetValuesDefAll(ID_PERIOD idPeriod, INDEX_DBTABLE_NAME db_type, out int err)
+        public DataTable GetValuesDefAll(ID_PERIOD idPeriod, ID_DBTABLE idTableDb, out int err)
         {
             DataTable tableRes = new DataTable();
             string query = string.Empty;
-            if (db_type == INDEX_DBTABLE_NAME.INVALUES)
-            {
+
+            if (idTableDb == ID_DBTABLE.INVALUES) {
                 query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] FROM [inalg] a LEFT JOIN [input] i on a.id=i.ID_ALG INNER JOIN inval_def d on d.ID_PUT=i.ID WHERE a.ID_TASK=2 and d.[ID_TIME] = " + (int)idPeriod;
-            }
-            if (db_type == INDEX_DBTABLE_NAME.OUTVALUES)
-            {
+            } else
+                ;
+
+            if (idTableDb == ID_DBTABLE.OUTVALUES) {
                 query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] "
 + @"FROM [outalg] a LEFT JOIN [output] i on a.id=i.ID_ALG INNER JOIN inval_def d on d.ID_PUT=i.ID "
 + @"WHERE a.ID_TASK = 2 AND d.[ID_TIME] = " + (int)idPeriod;
-            }
+            } else
+                ;
+
+
             err = -1;
 
             tableRes = DbTSQLInterface.Select(ref _dbConnection, query, null, null, out err);
@@ -355,11 +359,11 @@ namespace PluginTaskBalTeplo
             return tableRes;
         }
 
-        public DataTable GetValuesArch(INDEX_DBTABLE_NAME type, out int err)
+        public DataTable GetValuesArch(ID_DBTABLE idTableDb, out int err)
         {
             string strRes = string.Empty;
             DataTable res = new DataTable();
-            string from = s_NameDbTables[(int)type] + @"_" + _Session.m_rangeDatetime.Begin.Year.ToString() + _Session.m_rangeDatetime.Begin.Month.ToString(@"00");
+            string from = s_dictDbTables[idTableDb].m_name + @"_" + _Session.m_rangeDatetime.Begin.Year.ToString() + _Session.m_rangeDatetime.Begin.Month.ToString(@"00");
             DateTimeRange[] dt_range = GetDateTimeRangeValuesVar();
             strRes = "SELECT * FROM "
                 + from
@@ -449,11 +453,11 @@ namespace PluginTaskBalTeplo
         /// <returns>Наименование таблицы</returns>
         private static string getNameDbTable(TaskCalculate.TYPE type, TABLE_CALCULATE_REQUIRED req)
         {
-            INDEX_DBTABLE_NAME indx = INDEX_DBTABLE_NAME.UNKNOWN;
+            ID_DBTABLE id = ID_DBTABLE.UNKNOWN;
 
-            indx = TaskCalculate.GetIndexNameDbTable(type, req);
+            id = TaskCalculate.GetIdDbTable(type, req);
 
-            return s_NameDbTables[(int)indx];
+            return s_dictDbTables[id].m_name;
         }
 
         /// <summary>
@@ -522,7 +526,7 @@ namespace PluginTaskBalTeplo
                 arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                    + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
+                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                 arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
 
@@ -536,7 +540,7 @@ namespace PluginTaskBalTeplo
                     arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                     // получить входные для расчета значения для возможности редактирования
                     strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
-                        + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"]"
+                        + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
                         + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                     arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
                 }
@@ -600,7 +604,7 @@ namespace PluginTaskBalTeplo
                 arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                    + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
+                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                 arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
@@ -617,7 +621,7 @@ namespace PluginTaskBalTeplo
                     arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                     // получить входные для расчета значения для возможности редактирования
                     strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                        + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"]"
+                        + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                         + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                     arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
                 }
@@ -635,7 +639,7 @@ namespace PluginTaskBalTeplo
                 arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
-                    + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"]"
+                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                 arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
             }
@@ -650,7 +654,7 @@ namespace PluginTaskBalTeplo
                     arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
                     // получить входные для расчета значения для возможности редактирования
                     strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
-                        + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"]"
+                        + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
                         + @" WHERE [ID_SESSION]=" + _Session.m_Id;
                     arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
 
@@ -694,7 +698,7 @@ namespace PluginTaskBalTeplo
         //    string strQuery = string.Empty;
 
         //    // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
-        //    strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
+        //    strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_dictDbTables[(int)INDEX_DBTABLE_NAME.SESSION] + @" ("
         //        + @"[ID_CALCULATE]"
         //        + @", [ID_TASK]"
         //        + @", [ID_USER]"
@@ -739,7 +743,7 @@ namespace PluginTaskBalTeplo
       ,"EXTENDED_DEFINITION"};
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @" (";
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];
@@ -804,7 +808,7 @@ namespace PluginTaskBalTeplo
             string[] col_name = { "ID_SESSION", "ID_PUT", "QUALITY", "VALUE", "WR_DATETIME", "EXTENDED_DEFINITION" };
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @" (";
+            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @" (";
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];
@@ -887,7 +891,7 @@ namespace PluginTaskBalTeplo
 
             strBaseQuery =
             strQuery =
-                @"INSERT INTO " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @" VALUES ";
+                @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @" VALUES ";
 
             if (true)
             {
@@ -956,7 +960,7 @@ namespace PluginTaskBalTeplo
             string[] col_name = { "ID_SESSION", "ID_PUT", "QUALITY", "VALUE", "WR_DATETIME" };
 
             // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @" (";
+            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @" (";
 
             arTypeColumns = new Type[tableOutValues.Columns.Count];
             arNameColumns = new string[tableOutValues.Columns.Count];
@@ -1060,7 +1064,7 @@ namespace PluginTaskBalTeplo
         {
             string strQuery;
             strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                + @" FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"]"
+                + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
                 + @" WHERE [ID_SESSION]=" + _Session.m_Id;
 
             return Select(strQuery, out err);
@@ -1252,7 +1256,7 @@ namespace PluginTaskBalTeplo
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"]";
+            strRes = @"SELECT * FROM [" + s_dictDbTables[ID_DBTABLE.COMP_LIST].m_name + @"]";
 
             return strRes;
         }
@@ -1261,7 +1265,7 @@ namespace PluginTaskBalTeplo
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.INALG] + " where ID_TASK=2";
+            strRes = @"SELECT * FROM " + s_dictDbTables[ID_DBTABLE.INALG].m_name + " where ID_TASK=2";
 
             return strRes;
         }
@@ -1270,7 +1274,7 @@ namespace PluginTaskBalTeplo
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM " + s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTALG] + " where ID_TASK=2";
+            strRes = @"SELECT * FROM " + s_dictDbTables[ID_DBTABLE.OUTALG].m_name + " where ID_TASK=2";
 
             return strRes;
         }

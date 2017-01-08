@@ -50,10 +50,10 @@ namespace PluginTaskVedomostBl
         /// флаг очистки отображения
         /// </summary>
         private bool m_bflgClear = false;
-        /// <summary>
-        /// 
-        /// </summary>
-        public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
         /// <summary>
         /// Массив словарей для составления хидеров каждого блока(ТГ)
         /// </summary>
@@ -109,18 +109,6 @@ namespace PluginTaskVedomostBl
             BLOCK_VISIBLED, HGRID_VISIBLE,
             //DENY_PARAMETER_CALCULATED, // запрещенных для расчета
             //DENY_PARAMETER_VISIBLED // запрещенных для отображения
-            COUNT
-        }
-        /// <summary>
-        /// Перечисление - индексы таблиц со словарными величинами и проектными данными
-        /// </summary>
-        protected enum INDEX_TABLE_DICTPRJ : int
-        {
-            UNKNOWN = -1,
-            PERIOD, TIMEZONE,
-            COMPONENT, PARAMETER,
-            //, MODE_DEV/*, MEASURE*/,
-            RATIO,
             COUNT
         }
         /// <summary>
@@ -319,10 +307,10 @@ namespace PluginTaskVedomostBl
             ///  для компонента/параметра при участии_в_расчете/отображении
             /// </summary>
             public event ItemCheckedParametersEventHandler ItemCheck;
-            /// <summary>
-            /// 
-            /// </summary>
-            public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
+            ///// <summary>
+            ///// 
+            ///// </summary>
+            //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
             /// <summary>
             /// конструктор класса
             /// </summary>
@@ -2043,8 +2031,8 @@ namespace PluginTaskVedomostBl
                         {
                             try
                             {
-                                parameterRows = s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].
-                                    Select(string.Format(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Locale, "ID_ALG = " + col.m_IdAlg + " AND ID_COMP = " + m_idCompDGV));
+                                parameterRows = s_arTableDictPrjs[ID_DBTABLE.PARAMETER].
+                                    Select(string.Format(s_arTableDictPrjs[ID_DBTABLE.PARAMETER].Locale, "ID_ALG = " + col.m_IdAlg + " AND ID_COMP = " + m_idCompDGV));
                                 editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + (int)parameterRows[0]["ID"]));
                             }
                             catch (Exception)
@@ -3046,7 +3034,7 @@ namespace PluginTaskVedomostBl
         {
             s_VedCalculate = new VedomostBlCalculate();
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
-            Session.SetRangeDatetime(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
+            Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
             m_dict = new Dictionary<int, List<string[]>> { };
 
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
@@ -3322,13 +3310,13 @@ namespace PluginTaskVedomostBl
                 INDEX_ID.BLOCK_VISIBLED
             };
             //инициализация массивов
-            bool[] arChecked = new bool[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
+            bool[] arChecked = new bool[s_arTableDictPrjs[ID_DBTABLE.COMPONENT].Rows.Count];
             List<CheckState> arGroup = new List<CheckState>();
-            arRadioBtn = new PanelManagementVedomost.RadioButtonBl[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
-            arId_comp = new int[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
-            arstrItem = new string[s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows.Count];
+            arRadioBtn = new PanelManagementVedomost.RadioButtonBl[s_arTableDictPrjs[ID_DBTABLE.COMPONENT].Rows.Count];
+            arId_comp = new int[s_arTableDictPrjs[ID_DBTABLE.COMPONENT].Rows.Count];
+            arstrItem = new string[s_arTableDictPrjs[ID_DBTABLE.COMPONENT].Rows.Count];
             //создание списка гридов по блокам
-            foreach (DataRow r in s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
+            foreach (DataRow r in s_arTableDictPrjs[ID_DBTABLE.COMPONENT].Rows)
             {
                 if (arGroup.Count > 0)
                     arGroup.Clear();
@@ -3387,7 +3375,7 @@ namespace PluginTaskVedomostBl
             {
                 ctrl = new DGVVedomostBl(namePut.GetValue(j).ToString());
                 ctrl.Name = namePut.GetValue(j).ToString();
-                (ctrl as DGVVedomostBl).m_idCompDGV = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows[j]["ID"].ToString());
+                (ctrl as DGVVedomostBl).m_idCompDGV = int.Parse(s_arTableDictPrjs[ID_DBTABLE.COMPONENT].Rows[j]["ID"].ToString());
                 (ctrl as DGVVedomostBl).m_CountBL = j + 1;
 
                 filingDictHeader(dtComponentId, (ctrl as DGVVedomostBl).m_idCompDGV);
@@ -3396,9 +3384,9 @@ namespace PluginTaskVedomostBl
 
                 for (int k = 0; k < m_dict[(ctrl as DGVVedomostBl).m_idCompDGV].Count; k++)
                 {
-                    int idPar = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["ID_ALG"].ToString());
-                    int _avg = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["AVG"].ToString());
-                    int _idComp = int.Parse(s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["ID"].ToString());
+                    int idPar = int.Parse(s_arTableDictPrjs[ID_DBTABLE.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["ID_ALG"].ToString());
+                    int _avg = int.Parse(s_arTableDictPrjs[ID_DBTABLE.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["AVG"].ToString());
+                    int _idComp = int.Parse(s_arTableDictPrjs[ID_DBTABLE.PARAMETER].Select("ID_COMP = " + (ctrl as DGVVedomostBl).m_idCompDGV)[k]["ID"].ToString());
 
                     (ctrl as DGVVedomostBl).AddColumns(idPar, new DGVVedomostBl.COLUMN_PROPERTY
                     {
@@ -3577,7 +3565,7 @@ namespace PluginTaskVedomostBl
                         m_bflgClear = false;
                     //Заполнить элемент управления с часовыми поясами
                     ctrl = Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
-                    foreach (DataRow r in s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
+                    foreach (DataRow r in s_arTableDictPrjs[ID_DBTABLE.TIMEZONE].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
@@ -3586,7 +3574,7 @@ namespace PluginTaskVedomostBl
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     ctrl = Controls.Find(PanelManagementVedomost.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
-                    foreach (DataRow r in s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
+                    foreach (DataRow r in s_arTableDictPrjs[ID_DBTABLE.PERIOD].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
@@ -3627,7 +3615,7 @@ namespace PluginTaskVedomostBl
                         break;
                 }
 
-            //m_dgvReak.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+            //m_dgvReak.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
         }
 
         /// <summary>
@@ -3729,7 +3717,7 @@ namespace PluginTaskVedomostBl
             int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
 
             Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
-                , (int)s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)s_arTableDictPrjs[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
 
         /// <summary>
@@ -3782,7 +3770,7 @@ namespace PluginTaskVedomostBl
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
 
             settingDateRange();
-            Session.SetRangeDatetime(dtBegin, dtEnd);
+            Session.SetDatetimeRange(dtBegin, dtEnd);
 
             if (m_bflgClear)
             {
@@ -3856,7 +3844,7 @@ namespace PluginTaskVedomostBl
             {
                 List<DataRow> listRes;
 
-                listRes = s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select().ToList();
+                listRes = s_arTableDictPrjs[ID_DBTABLE.PARAMETER].Select().ToList();
 
                 return listRes;
             }
@@ -3966,7 +3954,7 @@ namespace PluginTaskVedomostBl
                     //, получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
                         , CountBasePeriod
-                        , s_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT]
+                        , s_arTableDictPrjs[ID_DBTABLE.COMPONENT]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                         , out err, out strErr);

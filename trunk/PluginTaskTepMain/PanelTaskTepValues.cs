@@ -67,8 +67,6 @@ namespace PluginTaskTepMain
             InitializeComponents();
             // назначить обработчики для кнопок 'Результат'
             (Controls.Find(INDEX_CONTROL.BUTTON_RUN_RES.ToString(), true)[0] as Button).Click += new EventHandler(btnRunRes_onClick);
-            //Обязательно наличие объекта - панели управления
-            activateDateTimeRangeValue_OnChanged(true);
             (m_dgvValues as DataGridViewTEPValues).EventCellValueChanged += new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventHandler(onEventCellValueChanged);
             (m_dgvValues as DataGridViewTEPValues).SelectionChanged += new EventHandler(m_dgvValues_SelectionChanged);
         }
@@ -124,7 +122,7 @@ namespace PluginTaskTepMain
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
 
             //Заполнить элементы управления с компонентами станции
-            foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.COMPONENT].Rows)
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Rows)
             {
                 id_comp = (Int16)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
@@ -146,7 +144,7 @@ namespace PluginTaskTepMain
             // компонента станции для элементов управления
             (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_CALCULATED, INDEX_ID.DENY_COMP_VISIBLED });
 
-            m_dgvValues.SetRatio(m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+            m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
         }
 
         /// <summary>
@@ -155,11 +153,10 @@ namespace PluginTaskTepMain
         /// <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
         ///  для возвращения предыдущего значения, при отказе пользователя от очистки</param>
         /// <param name="bClose">Признак полной/частичной очистки</param>
-        protected override void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
+        protected override void clear(bool bClose = false)
         {
-            INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
             // в базовом классе 'indxCtrl' все равно не известен
-            base.clear(iCtrl, bClose);
+            base.clear(bClose);
 
             if (bClose == true)
             {
@@ -191,7 +188,7 @@ namespace PluginTaskTepMain
         /// </summary>
         public override void Stop()
         {
-            clear((int)INDEX_CONTROL.UNKNOWN, true);
+            clear(true);
 
             base.Stop();
         }
@@ -250,7 +247,7 @@ namespace PluginTaskTepMain
                     // создать копии для возможности сохранения изменений
                     setValues();
                     // отобразить значения
-                    m_dgvValues.ShowValues(m_TableEdit, m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER]);
+                    m_dgvValues.ShowValues(m_TableEdit, m_dictTableDictPrj[ID_DBTABLE.PARAMETER]);
                 }
                 else
                 {
@@ -364,7 +361,7 @@ namespace PluginTaskTepMain
             {
                 List<DataRow> listRes;
 
-                listRes = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select(/*@"ID_TIME=" + CurrIdPeriod*/).ToList<DataRow>();
+                listRes = m_dictTableDictPrj[ID_DBTABLE.PARAMETER].Select(/*@"ID_TIME=" + CurrIdPeriod*/).ToList<DataRow>();
                 listRes.Sort(compareNAlg);
 
                 return listRes;
@@ -375,7 +372,7 @@ namespace PluginTaskTepMain
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        protected override void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
+        protected override void panelManagement_onPeriodChanged(object obj, EventArgs ev)
         {
             ComboBox cbx = obj as ComboBox;
             int err = -1
@@ -396,7 +393,7 @@ namespace PluginTaskTepMain
             m_arListIds[(int)INDEX_ID.ALL_NALG].Clear();
             //??? проверить сохранены ли значения
             m_dgvValues.ClearRows();
-            //Список параметров для отображения            
+            //Список параметров для отображения
             IEnumerable<DataRow> listParameter =
                 // в каждой строке значения полей, относящихся к параметру алгоритма расчета одинаковые, т.к. 'ListParameter' объединение 2-х таблиц
                 //ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]
@@ -410,83 +407,60 @@ namespace PluginTaskTepMain
                     , (int)Session.m_currIdPeriod }
                 , out err);
             //Заполнить элементы управления с компонентами станции 
-            foreach (DataRow r in listParameter)
-            {
+            foreach (DataRow r in listParameter) {
                 id_alg = (int)r[@"ID_ALG"];
                 n_alg = r[@"N_ALG"].ToString().Trim();
                 // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
-                if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
-                {
-                    // добавить в список идентификатор параметра алгоритма расчета
+                if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0) {
+                // добавить в список идентификатор параметра алгоритма расчета
                     m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
 
-                    strItem = ((string)r[@"N_ALG"]).Trim() + @" (" + ((string)r[@"NAME_SHR"]).Trim() + @")";
-                    eventAddNAlgParameter(new PanelManagementTaskTepValues.ADDING_PARAMETER()
-                    {
+                    strItem = string.Format(@"{0} ({1})", ((string)r[@"N_ALG"]).Trim(), ((string)r[@"NAME_SHR"]).Trim());
+                    eventAddNAlgParameter(new PanelManagementTaskTepValues.ADDING_PARAMETER() {
                         m_idNAlg = id_alg
-                        ,
-                        m_idComp = (int)r[@"ID_COMP"]
-                        ,
-                        m_idPut = (int)r[@"ID"]
-                        ,
-                        m_strText = strItem
-                        ,
-                        m_arIndexIdToAdd = arIndexIdToAdd
-                        ,
-                        m_arChecked = new bool[] {
-                                m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
-                                , m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0
-                            }
+                        , m_idComp = (int)r[@"ID_COMP"]
+                        , m_idPut = (int)r[@"ID"]
+                        , m_strText = strItem
+                        , m_arIndexIdToAdd = arIndexIdToAdd
+                        , m_arChecked = new bool[] {
+                            m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
+                            , m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0
+                        }
                     });
                     // получить значения для настройки визуального отображения
-                    if (dictVisualSettings.ContainsKey(n_alg) == true)
-                    {// установленные в проекте
+                    if (dictVisualSettings.ContainsKey(n_alg) == true) {
+                    // установленные в проекте
                         ratio = dictVisualSettings[n_alg].m_ratio;
                         round = dictVisualSettings[n_alg].m_round;
-                    }
-                    else
-                    {// по умолчанию
+                    } else {
+                    // по умолчанию
                         ratio = HTepUsers.s_iRatioDefault;
                         round = HTepUsers.s_iRoundDefault;
                     }
                     // добавить свойства для строки таблицы со значениями
-                    m_dgvValues.AddRow(new DataGridViewTEPValues.ROW_PROPERTY()
-                    {
+                    m_dgvValues.AddRow(new DataGridViewTEPValues.ROW_PROPERTY() {
                         m_idAlg = id_alg
-                        ,
-                        m_strHeaderText = ((string)r[@"N_ALG"]).Trim()
-                        ,
-                        m_strToolTipText = ((string)r[@"NAME_SHR"]).Trim()
-                        ,
-                        m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                        ,
-                        m_strSymbol = !(r[@"SYMBOL"] is DBNull) ? ((string)r[@"SYMBOL"]).Trim() : string.Empty
-                            //, m_bVisibled = bVisibled
-                        ,
-                        m_vsRatio = ratio
-                        ,
-                        m_vsRound = round
+                        , m_strHeaderText = ((string)r[@"N_ALG"]).Trim()
+                        , m_strToolTipText = ((string)r[@"NAME_SHR"]).Trim()
+                        , m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                        , m_strSymbol = !(r[@"SYMBOL"] is DBNull) ? ((string)r[@"SYMBOL"]).Trim() : string.Empty
+                        //, m_bVisibled = bVisibled
+                        , m_vsRatio = ratio
+                        , m_vsRound = round
                         //, m_ratio = (int)r[@"ID_RATIO"]
                     });
-                }
-                else
+                } else
                     // параметр уже был добавлен
                     if (!(eventAddCompParameter == null))
                         // только, если назначенн обработчик в 'PanelTaskTepOutVal'
-                        eventAddCompParameter(new PanelManagementTaskTepValues.ADDING_PARAMETER()
-                        {
+                        eventAddCompParameter(new PanelManagementTaskTepValues.ADDING_PARAMETER() {
                             m_idNAlg = id_alg
-                            ,
-                            m_idComp = (int)r[@"ID_COMP"]
-                            ,
-                            m_idPut = (int)r[@"ID"]
-                            ,
-                            m_strText = strItem
-                            ,
-                            m_arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED }
-                            ,
-                            m_arChecked = new bool[] {
-                                    m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
+                            , m_idComp = (int)r[@"ID_COMP"]
+                            , m_idPut = (int)r[@"ID"]
+                            , m_strText = strItem
+                            , m_arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED }
+                            , m_arChecked = new bool[] {
+                                m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
                             }
                         });
                     else
@@ -495,7 +469,7 @@ namespace PluginTaskTepMain
             //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
             (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(true, arIndexIdToAdd);
 
-            base.cbxPeriod_SelectedIndexChanged(obj, ev);
+            base.panelManagement_onPeriodChanged(obj, ev);
         }
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
@@ -550,7 +524,7 @@ namespace PluginTaskTepMain
 
         protected void m_dgvValues_SelectionChanged(object sender, EventArgs ev)
         {
-            DataTable inalg = m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PARAMETER];
+            DataTable inalg = m_dictTableDictPrj[ID_DBTABLE.PARAMETER];
             if (inalg != null)
                 foreach (DataRow r in inalg.Rows)
                     if ((m_dgvValues.SelectedCells.Count == 1)
@@ -1199,7 +1173,7 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected class PanelManagementTaskTepValues : PanelManagementTaskTepCalculate
+        protected class PanelManagementTaskTepValues : PanelManagementTaskCalculate
         {
             ///// <summary>
             ///// Структура для хранения координат элемента расчета
@@ -1298,10 +1272,7 @@ namespace PluginTaskTepMain
                 //this.Controls.Add(ctrl, 0, posRow);
                 //SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
                 //Период расчета - значение
-                ctrl = Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
-                this.Controls.Remove(ctrl);
-                this.Controls.Add(ctrl, 0, posRow);
-                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
 
                 //Часовой пояс расчета
                 ////Часовой пояс - подпись
@@ -1311,39 +1282,14 @@ namespace PluginTaskTepMain
                 //this.Controls.Add(ctrl, 0, posRow);
                 //SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
                 //Часовой пояс расчета
-                ctrl = Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
-                this.Controls.Remove(ctrl);
-                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
 
                 //Расчет - выполнить - макет
                 //Расчет - выполнить - норматив
                 posRow = addButtonRun(posRow);
 
                 //Дата/время начала периода расчета
-                //Дата/время начала периода расчета - подпись
-                ctrl = new System.Windows.Forms.Label();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Дата/время начала периода расчета";
-                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
-                //Дата/время начала периода расчета - значения
-                ctrl = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker;
-                this.Controls.Remove(ctrl);
-                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
-                //Дата/время  окончания периода расчета
-                //Дата/время  окончания периода расчета - подпись
-                ctrl = new System.Windows.Forms.Label();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Дата/время  окончания периода расчета:";
-                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
-                //Дата/время  окончания периода расчета - значения
-                ctrl = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-                this.Controls.Remove(ctrl);
-                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
+                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
 
                 //Признаки включения/исключения из расчета
                 //Признаки включения/исключения из расчета - подпись

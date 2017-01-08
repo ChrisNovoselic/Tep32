@@ -77,11 +77,10 @@ namespace PluginTaskReaktivka
             ///  для компонента/параметра при участии_в_расчете/отображении
             /// </summary>
             public event ItemCheckedParametersEventHandler ItemCheck;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
+            ///// <summary>
+            ///// 
+            ///// </summary>
+            //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
 
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
             {

@@ -42,32 +42,6 @@ namespace PluginTaskBalTeplo
         /// </summary>
         protected TaskBTCalculate BTCalc;
         /// <summary>
-        /// Перечисление - индексы таблиц со словарными величинами и проектными данными
-        /// </summary>
-        protected enum INDEX_TABLE_DICTPRJ : int
-        {
-            UNKNOWN = -1
-            ,
-            PERIOD
-                ,
-            TIMEZONE
-                ,
-            COMPONENT
-                ,
-            PARAMETER //_IN
-                ,
-            PARAMETER_OUT
-                ,
-            MODE_DEV/*, MEASURE*/
-                ,
-            RATIO
-                ,
-            N_ALG
-                ,
-            N_ALG_OUT
-                , COUNT
-        }
-        /// <summary>
         /// 
         /// </summary>
         public enum INDEX_CALC : int
@@ -133,18 +107,18 @@ namespace PluginTaskBalTeplo
         /// 
         /// </summary>
         protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
-        /// <summary>
-        /// 
-        /// </summary>
-        public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
-        /// <summary>
-        /// Таблицы со значениями словарных, проектных данных входные
-        /// </summary>
-        protected DataTable[] m_arTableDictPrjs_in;
-        /// <summary>
-        /// Таблицы со значениями словарных, проектных данных
-        /// </summary>
-        protected DataTable[] m_arTableDictPrjs_out;
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
+        ///// <summary>
+        ///// Таблицы со значениями словарных, проектных данных входные
+        ///// </summary>
+        //protected DataTable[] m_arTableDictPrjs_in;
+        ///// <summary>
+        ///// Таблицы со значениями словарных, проектных данных
+        ///// </summary>
+        //protected DataTable[] m_arTableDictPrjs_out;
         /// <summary>
         /// Метод для создания панели с активными объектами управления
         /// </summary>
@@ -432,7 +406,7 @@ namespace PluginTaskBalTeplo
                     if (col.Index != 0)
                         foreach (DataGridViewRow row in Rows)
                         {
-                            DataRow[] row_comp = arr_tb_param_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("N_ALG="
+                            DataRow[] row_comp = arr_tb_param_in[ID_DBTABLE.PARAMETER].Select("N_ALG="
                                 + col.m_N_ALG
                                 + " and ID_COMP=" + row.HeaderCell.Value.ToString());
 
@@ -449,7 +423,7 @@ namespace PluginTaskBalTeplo
                             }
                             else
                             {
-                                row_comp = arr_tb_param_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("N_ALG="
+                                row_comp = arr_tb_param_in[ID_DBTABLE.PARAMETER_OUT].Select("N_ALG="
                                     + col.m_N_ALG.ToString()
                                     + " and ID_COMP=" + row.HeaderCell.Value.ToString());
                                 if (row_comp.Length > 0)
@@ -1213,7 +1187,7 @@ namespace PluginTaskBalTeplo
 
             InitializeComponent();
 
-            Session.SetRangeDatetime(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
+            Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
             PanelManagement.CheckedChangedRadioBtnEvent += new PanelManagementBalTeplo.CheckedChangedRadioBtnEventHandler(CheckedChangedRadioBtn);
         }
 
@@ -1771,39 +1745,37 @@ namespace PluginTaskBalTeplo
 
             if ((((DGVAutoBook)sender).Columns[e.ColumnIndex] as DGVAutoBook.HDataGridViewColumn).m_bInPut == true)
             {
-                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
+                DataRow[] rows = m_arTableDictPrjs_in[ID_DBTABLE.PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
                 if (rows.Length == 1)
                     id_put = Convert.ToInt32(rows[0]["ID"]);
                 m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
             }
             else
             {
-                DataRow[] rows = m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER_OUT].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
+                DataRow[] rows = m_arTableDictPrjs_in[ID_DBTABLE.PARAMETER_OUT].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
                 if (rows.Length == 1)
                     id_put = Convert.ToInt32(rows[0]["ID"]);
                 m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
             }
             HandlerDb.RegisterDbConnection(out err);
             HandlerDb.RecUpdateInsertDelete(
-                TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES]
+                TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVALUES].m_name
                 , "ID_PUT,ID_SESSION"
                 , null
                 , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                 , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
                 , out err
-                );
+            );
             //HandlerDb.insertInValues(m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
             HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
-            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
-                (
-                TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES,
-                out err
-                );
-            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
-                            (
-                            TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES,
-                            out err
-                            );
+            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar (
+                TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
+                , out err
+            );
+            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar(
+                TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+                , out err
+            );
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] 
                 = m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
             m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] 
@@ -1857,7 +1829,7 @@ namespace PluginTaskBalTeplo
             //        , arQueryRanges[0].End.AddDays(DayIsMonth - arQueryRanges[0].End.Day));
             
             //Запрос для получения архивных данных
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetValuesArch(INDEX_DBTABLE_NAME.INVALUES, out err);
+            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetValuesArch(ID_DBTABLE.INVALUES, out err);
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
@@ -1877,9 +1849,9 @@ namespace PluginTaskBalTeplo
                 ));
 
             //Получение значений по-умолчанию input
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, INDEX_DBTABLE_NAME.INVALUES, out err);
+            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, ID_DBTABLE.INVALUES, out err);
 
-            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetValuesArch(INDEX_DBTABLE_NAME.OUTVALUES, out err);
+            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = HandlerDb.GetValuesArch(ID_DBTABLE.OUTVALUES, out err);
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
                 (
@@ -1889,7 +1861,7 @@ namespace PluginTaskBalTeplo
                 , arQueryRanges
                , out err
                 );
-            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, INDEX_DBTABLE_NAME.OUTVALUES, out err);
+            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, ID_DBTABLE.OUTVALUES, out err);
 
             //Проверить признак выполнения запроса
             if (err == 0)
@@ -1900,7 +1872,7 @@ namespace PluginTaskBalTeplo
                     //, получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
                         , CountBasePeriod
-                        , m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PARAMETER]
+                        , m_arTableDictPrjs_in[ID_DBTABLE.PARAMETER]
                         , ref m_arTableOrigin_in
                         , ref m_arTableOrigin_out
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
@@ -2176,7 +2148,7 @@ namespace PluginTaskBalTeplo
                     //initialize();
                     //Заполнить элемент управления с часовыми поясами
                     ctrl = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
+                    foreach (DataRow r in m_arTableDictPrjs_in[ID_DBTABLE.TIMEZONE].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
                     // порядок именно такой (установить 0, назначить обработчик)
                     //, чтобы исключить повторное обновление отображения
@@ -2186,7 +2158,7 @@ namespace PluginTaskBalTeplo
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     ctrl = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
+                    foreach (DataRow r in m_arTableDictPrjs_in[ID_DBTABLE.PERIOD].Rows)
                         (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
 
                     (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
@@ -2305,7 +2277,7 @@ namespace PluginTaskBalTeplo
         {
             // очистить содержание представления
             clear();
-            Session.SetRangeDatetime(dtBegin, dtEnd);
+            Session.SetDatetimeRange(dtBegin, dtEnd);
             //заполнение представления
             //fillDaysGrid(dtBegin, dtBegin.Month);
         }
@@ -2405,7 +2377,7 @@ namespace PluginTaskBalTeplo
             int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
 
             Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
-                , (int)m_arTableDictPrjs_in[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)m_arTableDictPrjs_in[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
 
         /// <summary>
@@ -2575,7 +2547,7 @@ namespace PluginTaskBalTeplo
             else
                 ;
 
-            strRes = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.OUTVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }
@@ -2594,7 +2566,7 @@ namespace PluginTaskBalTeplo
             else
                 ;
 
-            strRes = TepCommon.HandlerDbTaskCalculate.s_NameDbTables[(int)INDEX_DBTABLE_NAME.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }

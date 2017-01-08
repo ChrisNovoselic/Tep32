@@ -13,28 +13,34 @@ namespace TepCommon
 {
     public partial class HandlerDbValues : HHandlerDb
     {
+        public struct DB_TABLE
+        {
+            public string m_name;
+
+            public string m_description;
+        }
         /// <summary>
         /// Наименования таблиц в БД, необходимых для расчета (длина = INDEX_DBTABLE_NAME.COUNT)
         /// </summary>
-        public static string[] s_NameDbTables = {
-            @"time"
-            , @"timezones"
-            , @"comp_list"
-            , @"mode_dev"
-            , @"ratio"
-            , @"measure"
-            , @"session"
-            , @"inalg"
-            , @"input"
-            , @"inval"
-            , @"inval_def"
-            , @"outalg"
-            , @"output"
-            , @"outval"
-            , @"ftable"
-            , @"plugins"
-            , @"task"
-            , @"fpanels"
+        public static Dictionary<ID_DBTABLE, DB_TABLE> s_dictDbTables = new Dictionary<ID_DBTABLE, DB_TABLE> () {
+            { ID_DBTABLE.TIME,         new DB_TABLE () { m_name = @"time",         m_description = @"" } }
+            , { ID_DBTABLE.TIMEZONE,   new DB_TABLE () { m_name = @"timezones",    m_description = @"" } }
+            , { ID_DBTABLE.COMP_LIST,  new DB_TABLE () { m_name = @"comp_list",    m_description = @"" } }
+            , { ID_DBTABLE.MODE_DEV,   new DB_TABLE () { m_name = @"mode_dev",     m_description = @"" } }
+            , { ID_DBTABLE.RATIO,      new DB_TABLE () { m_name = @"ratio",        m_description = @"" } }
+            , { ID_DBTABLE.MEASURE,    new DB_TABLE () { m_name = @"measure",      m_description = @"" } }
+            , { ID_DBTABLE.SESSION,    new DB_TABLE () { m_name = @"session",      m_description = @"" } }
+            , { ID_DBTABLE.INALG,      new DB_TABLE () { m_name = @"inalg",        m_description = @"" } }
+            , { ID_DBTABLE.INPUT,      new DB_TABLE () { m_name = @"input",        m_description = @"" } }
+            , { ID_DBTABLE.INVALUES,   new DB_TABLE () { m_name = @"inval",        m_description = @"" } }
+            , { ID_DBTABLE.INVAL_DEF,  new DB_TABLE () { m_name = @"inval_def",    m_description = @"" } }
+            , { ID_DBTABLE.OUTALG,     new DB_TABLE () { m_name = @"outalg",       m_description = @"" } }
+            , { ID_DBTABLE.OUTPUT,     new DB_TABLE () { m_name = @"output",       m_description = @"" } }
+            , { ID_DBTABLE.OUTVALUES,  new DB_TABLE () { m_name = @"outval",       m_description = @"" } }
+            , { ID_DBTABLE.FTABLE,     new DB_TABLE () { m_name = @"ftable",       m_description = @"" } }
+            , { ID_DBTABLE.PLUGINS,    new DB_TABLE () { m_name = @"plugins",      m_description = @"" } }
+            , { ID_DBTABLE.TASK,       new DB_TABLE () { m_name = @"task",         m_description = @"" } }
+            , { ID_DBTABLE.FPANELS,    new DB_TABLE () { m_name = @"fpanels",      m_description = @"" } }
             ,
         };
 
@@ -186,12 +192,12 @@ namespace TepCommon
         /// <summary>
         /// Возвратить значения одной таблицы по индексу
         /// </summary>
-        /// <param name="indxTable">Индекс таблицы в перечне таблиц БД</param>
+        /// <param name="idTableDb">Индекс таблицы в перечне таблиц БД</param>
         /// <param name="err">Идентификатор ошибки при выполнении функции</param>
         /// <returns>Таблица - результат запроса - значения таблицы БД</returns>
-        public DataTable GetDataTable(INDEX_DBTABLE_NAME indxTable, out int err)
+        public DataTable GetDataTable(ID_DBTABLE idTableDb, out int err)
         {
-            return GetDataTable(s_NameDbTables[(int)indxTable], out err);
+            return GetDataTable(s_dictDbTables[idTableDb].m_name, out err);
         }
 
         /// <summary>
@@ -231,7 +237,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.TIME] + @"] WHERE [ID] IN (" + strIds + @")";
+            strRes = @"SELECT * FROM [" + s_dictDbTables[ID_DBTABLE.TIME].m_name + @"] WHERE [ID] IN (" + strIds + @")";
 
             return strRes;
         }
@@ -240,7 +246,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.TIMEZONE] + @"] WHERE [ID] IN (" + strIds + @")";
+            strRes = @"SELECT * FROM [" + s_dictDbTables[ID_DBTABLE.TIMEZONE].m_name + @"] WHERE [ID] IN (" + strIds + @")";
 
             return strRes;
         }
@@ -249,7 +255,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM [" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.COMP_LIST] + @"] "
+            strRes = @"SELECT * FROM [" + s_dictDbTables[ID_DBTABLE.COMP_LIST].m_name + @"] "
                     + @"WHERE ([ID] = 5 AND [ID_COMP] = 1)"
                         + @" OR ([ID_COMP] = 1000)";
 
@@ -260,7 +266,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MODE_DEV] + @"]";
+            strRes = @"SELECT * FROM [dbo].[" + s_dictDbTables[ID_DBTABLE.MODE_DEV].m_name + @"]";
 
             return strRes;
         }
@@ -269,7 +275,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.MEASURE] + @"]";
+            strRes = @"SELECT * FROM [dbo].[" + s_dictDbTables[ID_DBTABLE.MEASURE].m_name + @"]";
 
             return strRes;
         }
@@ -278,7 +284,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM [dbo].[" + s_NameDbTables[(int)INDEX_DBTABLE_NAME.RATIO] + @"]";
+            strRes = @"SELECT * FROM [dbo].[" + s_dictDbTables[ID_DBTABLE.RATIO].m_name + @"]";
 
             return strRes;
         }

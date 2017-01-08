@@ -9,6 +9,7 @@ using System.Data.Common;
 using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
+using System.Drawing;
 
 namespace PluginTaskTepMain
 {
@@ -20,8 +21,6 @@ namespace PluginTaskTepMain
             InitializeComponent();
 
             (Controls.Find(INDEX_CONTROL.BUTTON_RUN.ToString(), true)[0] as Button).Click += new EventHandler(btnRunRes_onClick);
-            //Обязательно наличие объекта - панели управления
-            activateDateTimeRangeValue_OnChanged(true);
         }
         /// <summary>
         /// Создание, размещение элементов управления
@@ -62,7 +61,7 @@ namespace PluginTaskTepMain
         /// Заполнение значениями элементов управления
         /// </summary>
         protected override void initialize()
-        {            
+        {
         }
 
         protected override void recUpdateInsertDelete(out int err)
@@ -160,12 +159,12 @@ namespace PluginTaskTepMain
             //}
         }
 
-        protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()
+        protected override PanelTaskTepCalculate.PanelManagementTaskCalculate createPanelManagement()
         {
             return new PanelManagementTaskTepRealTime ();
         }
 
-        private class PanelManagementTaskTepRealTime : PanelManagementTaskTepCalculate
+        private class PanelManagementTaskTepRealTime : PanelManagementTaskCalculate
         {
             public PanelManagementTaskTepRealTime()
                 : base()
@@ -183,16 +182,10 @@ namespace PluginTaskTepMain
 
                 posRow = 0;
                 //Период расчета - значение
-                ctrl = Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
-                this.Controls.Remove(ctrl);
-                this.Controls.Add(ctrl, 0, posRow);
-                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
 
                 //Период расчета - значение
-                ctrl = Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
-                this.Controls.Remove(ctrl);
-                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
 
                 //Расчет - выполнить
                 ctrl = new Button();
@@ -203,29 +196,7 @@ namespace PluginTaskTepMain
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 2);
 
                 //Дата/время начала периода расчета
-                //Дата/время начала периода расчета - подпись
-                ctrl = new System.Windows.Forms.Label();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Дата/время начала периода расчета";
-                this.Controls.Add(ctrl, 0, posRow = posRow + 2);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
-                //Дата/время начала периода расчета - значения
-                ctrl = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker;
-                this.Controls.Remove(ctrl);
-                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
-                //Дата/время  окончания периода расчета
-                //Дата/время  окончания периода расчета - подпись
-                ctrl = new System.Windows.Forms.Label();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Дата/время  окончания периода расчета:";
-                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
-                //Дата/время  окончания периода расчета - значения
-                ctrl = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-                this.Controls.Remove(ctrl);
-                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
+                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
 
                 ResumeLayout(false);
                 PerformLayout();

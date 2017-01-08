@@ -14,7 +14,7 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public abstract class HPanelTepCommon : HPanelCommon, IObjectDbEdit
+    public abstract partial class HPanelTepCommon : HPanelCommon, IObjectDbEdit
     {
         /// <summary>
         /// Дополнительные действия при сохранении значений
@@ -29,6 +29,34 @@ namespace TepCommon
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
+        private HMark _markTableDictPrj;
+        /// <summary>
+        /// Совокупность признаков наличия/отсутствия заполненых таблиц в словаре 'm_dictTableDictPrj'
+        /// </summary>
+        protected HMark m_markTableDictPrj
+        {
+            set {
+                if (!(_markTableDictPrj == null)) {
+                    Logging.Logg().Warning(@"HPanelTepCommon::m_markTableDictPrj.Set - повторная инициализация словарно-проектных таблиц ...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                    clearTableDictPrj();
+
+                    m_dictTableDictPrj = null;
+                    _markTableDictPrj = null;
+                } else
+                    ;
+
+                _markTableDictPrj = value;
+                m_dictTableDictPrj = new Dictionary<ID_DBTABLE, DataTable>();
+
+                initTableDictPrj();
+            }
+        }
+        /// <summary>
+        /// Словарь с таблицами словарно-проектных значений
+        /// </summary>
+        protected Dictionary<ID_DBTABLE, DataTable> m_dictTableDictPrj;
+
         #region Apelgans
 
         protected int m_id_panel;
@@ -37,12 +65,11 @@ namespace TepCommon
 
         protected HTepUsers.DictElement m_dictProfile;
 
-        public enum ID_TABLE
+        public enum ID_AREA
         {
-            MAIN = 1//Главная
-            ,
-            PROP = 2//Свойства
-                , DESC = 3
+            MAIN = 1 //Главная
+            , PROP = 2 //Свойства
+                , DESC = 3 //Описание
         };
 
         /// <summary>
@@ -84,7 +111,7 @@ namespace TepCommon
 
             m_id_panel = findMyID();
 
-            m_handlerDb = createHandlerDb();            
+            m_handlerDb = createHandlerDb();
 
             m_dictProfile = new HTepUsers.DictElement();
         }
@@ -145,6 +172,25 @@ namespace TepCommon
             return iRes;
         }
 
+        private void initTableDictPrj()
+        {
+            int err = -1;
+
+            foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE))) {
+                if (_markTableDictPrj.IsMarked((int)id) == true)
+                    m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
+                else
+                    ;
+            }
+        }
+
+        private void clearTableDictPrj()
+        {
+            foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE))) {
+
+            }
+        }
+
         protected void initializeDescPanel()
         {
             int err = -1;
@@ -202,7 +248,7 @@ namespace TepCommon
 
                     if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE") < 0))
                     {
-                        rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
+                        rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.MAIN);
                         if (rows.Length == 1)
                         {
                             Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
@@ -211,19 +257,19 @@ namespace TepCommon
                         //DataRow[] rows = null;
                         if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0))
                         {
-                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.MAIN);
+                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.MAIN);
                             if (rows.Length == 1)
                             {
                                 ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                             }
 
-                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.PROP);
+                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.PROP);
                             if (rows.Length == 1)
                             {
                                 ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                             }
 
-                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_TABLE.DESC);
+                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.DESC);
                             if (rows.Length == 1)
                             {
                                 ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };

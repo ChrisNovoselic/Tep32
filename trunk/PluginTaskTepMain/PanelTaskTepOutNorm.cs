@@ -47,7 +47,7 @@ namespace PluginTaskTepMain
             throw new NotImplementedException();
         }
 
-        protected override PanelTaskTepCalculate.PanelManagementTaskTepCalculate createPanelManagement()
+        protected override PanelTaskTepCalculate.PanelManagementTaskCalculate createPanelManagement()
         {
             return new PanelManagementTaskTepOutNorm();
         }

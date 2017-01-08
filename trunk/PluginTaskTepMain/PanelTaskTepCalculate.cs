@@ -20,16 +20,6 @@ namespace PluginTaskTepMain
         /// Массив списков идентификаторов компонентов ТЭЦ/параметров
         /// </summary>
         protected List<int>[] m_arListIds;
-        /// <summary>
-        /// Перечисление - индексы таблиц со словарными величинами и проектными данными
-        /// </summary>
-        protected enum INDEX_TABLE_DICTPRJ : int
-        {
-            UNKNOWN = -1
-            , PERIOD, TIMEZONE, COMPONENT, PARAMETER //_IN, PARAMETER_OUT
-            , MODE_DEV/*, MEASURE*/, RATIO
-                , COUNT
-        }
         ///// <summary>
         ///// Индекс используесмых на панели значений
         ///// </summary>
@@ -51,13 +41,13 @@ namespace PluginTaskTepMain
         /// Метод для создания панели с активными объектами управления
         /// </summary>
         /// <returns>Панель управления</returns>
-        protected abstract PanelManagementTaskTepCalculate createPanelManagement();
+        protected abstract PanelManagementTaskCalculate createPanelManagement();
         
-        private PanelManagementTaskTepCalculate _panelManagement;
+        private PanelManagementTaskCalculate _panelManagement;
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
-        protected PanelManagementTaskTepCalculate PanelManagement
+        protected PanelManagementTaskCalculate PanelManagement
         {
             get
             {
@@ -135,10 +125,10 @@ namespace PluginTaskTepMain
         }
 
         protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
-        /// <summary>
-        /// Таблицы со значениями словарных, проектных данных
-        /// </summary>
-        protected DataTable[] m_arTableDictPrjs;
+        ///// <summary>
+        ///// Таблицы со значениями словарных, проектных данных
+        ///// </summary>
+        //protected DataTable[] m_dictTableDictPrj;
         /// <summary>
         /// Индексы массива списков идентификаторов
         /// </summary>
@@ -169,7 +159,7 @@ namespace PluginTaskTepMain
             InitializeComponents();
 
             Session.m_IdFpanel = m_id_panel;
-            Session.SetRangeDatetime(PanelManagementTaskTepCalculate.s_dtDefault, PanelManagementTaskTepCalculate.s_dtDefault.AddHours(1));
+            Session.SetDatetimeRange(PanelManagementTaskCalculate.s_dtDefault, PanelManagementTaskCalculate.s_dtDefault.AddHours(1));
         }
 
         protected TepCommon.HandlerDbTaskCalculate HandlerDb { get { return m_handlerDb as TepCommon.HandlerDbTaskCalculate; } }
@@ -204,9 +194,7 @@ namespace PluginTaskTepMain
                         break;
                 }
 
-            m_arTableDictPrjs = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
-
-            HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
+            //HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
 
             Control ctrl = null;
             string strItem = string.Empty;
@@ -215,7 +203,7 @@ namespace PluginTaskTepMain
             string[] arQueryDictPrj = getQueryDictPrj();
             for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
             {
-                m_arTableDictPrjs[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
+                m_dictTableDictPrj[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
 
                 if (!(err == 0))
                     break;
@@ -224,42 +212,25 @@ namespace PluginTaskTepMain
             }
 
             if (err == 0)
-            {
-                try
-                {
+                try {
                     m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
 
                     initialize();
 
-                    //Заполнить элемент управления с часовыми поясами
-                    ctrl = Controls.Find(PanelTaskTepCalculate.PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Rows)
-                        (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
-                    // порядок именно такой (установить 0, назначить обработчик)
-                    //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = 2; //??? требуется прочитать из [profile]
-                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
-                    setCurrentTimeZone(ctrl as ComboBox);
-
                     //Заполнить элемент управления с периодами расчета
-                    ctrl = Controls.Find(PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
-                    foreach (DataRow r in m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.PERIOD].Rows)
-                        (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
-
-                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = 0; //??? требуется прочитать из [profile]
+                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.PERIOD], ID_PERIOD.HOUR); //??? активный период требуется прочитать из [profile]
+                    Session.SetCurrentPeriod(PanelManagement.IdPeriod);
+                    //Заполнить элемент управления с часовыми поясами
+                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], ID_TIMEZONE.NSK); //??? активный пояс требуется прочитать из [profile]                    
+                    setCurrentTimeZone(PanelManagement.IdTimezone);
 
                     //// отобразить значения
                     //updateDataValues();
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelTaskTepValues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
-            }
             else
-                switch ((INDEX_TABLE_DICTPRJ)i)
-                {
+                switch ((INDEX_TABLE_DICTPRJ)i) {
                     case INDEX_TABLE_DICTPRJ.PERIOD:
                         errMsg = @"Получение интервалов времени для периода расчета";
                         break;
@@ -301,22 +272,37 @@ namespace PluginTaskTepMain
 
             return bRes;
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="active"></param>
-        protected void activateDateTimeRangeValue_OnChanged (bool active)
+
+        protected virtual void panelManagement_onBaseValueChanged()
         {
-            if (! (PanelManagement == null))
-                if (active == true)
-                    PanelManagement.DateTimeRangeValue_Changed += new PanelManagementTaskTepCalculate.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
-                else
-                    if (active == false)
-                        PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-                    else
-                        ;
-            else
-                throw new Exception(@"PanelTaskTepCalculate::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
+            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
+            setCurrentTimeZone(PanelManagement.IdTimezone);
+            //??? перед очисткой или после (не требуются ли предыдущий диапазон даты/времени)
+            Session.SetDatetimeRange(PanelManagement.DatetimeRange);
+
+            // очистить содержание представления
+            clear();
+            //// при наличии признака - загрузить/отобразить значения из БД
+            //if (s_bAutoUpdateValues == true)
+            //    updateDataValues();
+            //else ;
+        }
+        /// <summary>
+        /// Обработчик события при изменении периода расчета
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
+        protected virtual void panelManagement_onPeriodChanged(object obj, EventArgs ev)
+        {
+        }
+        /// <summary>
+        /// Установить новое значение для текущего периода
+        /// </summary>
+        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны даты/времени</param>
+        protected void setCurrentTimeZone(ID_TIMEZONE idTimezone)
+        {
+            Session.SetCurrentTimeZone(idTimezone
+                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
         /// <summary>
         /// Массив запросов к БД по получению словарных и проектных значений
@@ -347,77 +333,6 @@ namespace PluginTaskTepMain
 
             return arRes;
         }
-
-        /// <summary>
-        /// Обработчик события при изменении периода расчета
-        /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        protected virtual void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
-        {
-            //Отменить обработку события - изменение начала/окончания даты/времени
-            activateDateTimeRangeValue_OnChanged(false);
-            //Установить новые режимы для "календарей"
-            PanelManagement.SetPeriod(Session.m_currIdPeriod);
-            Session.SetRangeDatetime(PanelManagement.RangeDateTime);
-            //Возобновить обработку события - изменение начала/окончания даты/времени
-            activateDateTimeRangeValue_OnChanged(true);
-
-            // очистить содержание представления
-            clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
-        }
-
-        /// <summary>
-        /// Обработчик события - изменение часового пояса
-        /// </summary>
-        /// <param name="obj">Объект, инициировавший события (список с перечислением часовых поясов)</param>
-        /// <param name="ev">Аргумент события</param>
-        protected void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
-        {
-            //Установить новое значение для текущего периода
-            setCurrentTimeZone(obj as ComboBox);
-            // очистить содержание представления
-            clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
-        }
-
-        /// <summary>
-        /// Установить новое значение для текущего периода
-        /// </summary>
-        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны даты/времени</param>
-        protected void setCurrentTimeZone(ComboBox cbxTimezone)
-        {
-            int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
-
-            Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
-                , (int)m_arTableDictPrjs[(int)INDEX_TABLE_DICTPRJ.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
-        }
-
-        /// <summary>
-        /// Обработчик события - изменение интервала (диапазона между нач. и оконч. датой/временем) расчета
-        /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
-        {
-            //??? перед очисткой или после (не требуются ли предыдущий диапазон даты/времени)
-            Session.SetRangeDatetime(dtBegin, dtEnd);
-
-            // очистить содержание представления
-            clear();
-
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
-        }
         /// <summary>
         /// Удалить сессию (+ очистить реквизиты сессии)
         /// </summary>
@@ -433,36 +348,26 @@ namespace PluginTaskTepMain
         /// <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
         ///  для возвращения предыдущего значения, при отказе пользователя от очистки</param>
         /// <param name="bClose">Признак полной/частичной очистки</param>
-        protected virtual void clear(int iCtrl = (int)PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.UNKNOWN, bool bClose = false)
+        protected virtual void clear(bool bClose = false)
         {
-            ComboBox cbx = null;
-            PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE indxCtrl = (PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE)iCtrl;
-
             deleteSession();
             //??? повторная проверка
-            if (bClose == true)
-            {
-                if (!(m_arTableDictPrjs == null))
+            if (bClose == true) {
+                PanelManagement.Clear(); // прежде удаления элементов из списка отменить регистрацию обработки событий "изменение текущ./индекса"
+
+                if (!(m_dictTableDictPrj == null))
                     for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
                     {
-                        if (!(m_arTableDictPrjs[i] == null))
+                        if (!(m_dictTableDictPrj[i] == null))
                         {
-                            m_arTableDictPrjs[i].Clear();
-                            m_arTableDictPrjs[i] = null;
+                            m_dictTableDictPrj[i].Clear();
+                            m_dictTableDictPrj[i] = null;
                         }
                         else
                             ;
                     }
                 else
                     ;
-
-                cbx = Controls.Find(PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
-                cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
-                cbx.Items.Clear();
-
-                cbx = Controls.Find(PanelManagementTaskTepCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
-                cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
-                cbx.Items.Clear();
 
                 m_dgvValues.ClearRows();
                 m_dgvValues.ClearColumns();
@@ -651,183 +556,6 @@ namespace PluginTaskTepMain
             public abstract void ClearValues();
 
             //public abstract void UpdateStructure(int id_item/*, int id_par*/, PanelTaskTepValues.INDEX_ID indxDeny, bool bItemChecked);
-        }
-        /// <summary>
-        /// Класс для размещения управляющих элементов управления
-        /// </summary>
-        protected class PanelManagementTaskTepCalculate : HPanelCommon
-        {
-            public enum INDEX_CONTROL_BASE
-            {
-                UNKNOWN = -1
-                , CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END
-                    , COUNT
-            }
-
-            public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
-
-            public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
-
-            public static DateTime s_dtDefault = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, 0, 0, 0);
-
-            public PanelManagementTaskTepCalculate()
-                : base(8, 21)
-            {
-                InitializeComponents();
-
-                //HDateTimePicker hdtpEnd = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-                //m_dtRange = new DateTimeRange((Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value
-                //    , hdtpEnd.Value);
-                ////Назначить обработчик события - изменение дата/время начала периода
-                //hdtpBegin.ValueChanged += new EventHandler(hdtpBegin_onValueChanged);
-                //Назначить обработчик события - изменение дата/время окончания периода
-                // при этом отменить обработку события - изменение дата/время начала периода
-                // т.к. при изменении дата/время начала периода изменяется и дата/время окончания периода
-                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
-            }
-
-            private void InitializeComponents()
-            {
-                Control ctrl = null;         
-
-                SuspendLayout();
-
-                initializeLayoutStyle();
-
-                ctrl = new ComboBox();
-                ctrl.Name = INDEX_CONTROL_BASE.CBX_PERIOD.ToString();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
-                //??? точное размещенеие в коде целевого класса
-                this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска
-
-                ctrl = new ComboBox();
-                ctrl.Name = INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
-                //??? точное (столбец, строка) размещенеие в коде целевого класса
-                this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска (без указания столбца, строки)
-
-                ctrl = new HDateTimePicker(s_dtDefault, null);
-                ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
-                //??? точное (столбец, строка) размещенеие в коде целевого класса
-                this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска (без указания столбца, строки)
-
-                ctrl = new HDateTimePicker(s_dtDefault.AddHours(1), Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
-                ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
-                //??? точное (столбец, строка) размещенеие в коде целевого класса
-                this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска (без указания столбца, строки)
-
-                ResumeLayout(false);
-                PerformLayout();
-            }
-
-            protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
-            {
-                initializeLayoutStyleEvenly();
-            }
-
-            ///// <summary>
-            ///// Обработчик события - изменение дата/время начала периода
-            ///// </summary>
-            ///// <param name="obj">Составной объект - календарь</param>
-            ///// <param name="ev">Аргумент события</param>
-            //private void hdtpBegin_onValueChanged(object obj, EventArgs ev)
-            //{
-            //    m_dtRange.Set((obj as HDateTimePicker).Value, m_dtRange.End);
-
-            //    DateTimeRangeValue_Changed(this, EventArgs.Empty);
-            //}
-
-            /// <summary>
-            /// Обработчик события - изменение дата/время окончания периода
-            /// </summary>
-            /// <param name="obj">Составной объект - календарь</param>
-            /// <param name="ev">Аргумент события</param>
-            protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
-            {
-                HDateTimePicker hdtpEnd = obj as HDateTimePicker;
-                //m_dtRange.Set(hdtpEnd.LeadingValue, hdtpEnd.Value);
-
-                if (!(DateTimeRangeValue_Changed == null))
-                    DateTimeRangeValue_Changed(hdtpEnd.LeadingValue, hdtpEnd.Value);
-                else
-                    ;
-            }
-
-            public DateTimeRange RangeDateTime
-            {
-                get {
-                    return new DateTimeRange((Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value
-                        , (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value);
-                }
-            }
-
-            public void SetPeriod(ID_PERIOD idPeriod)
-            {
-                HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                    , hdtpEnd = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-                //Выполнить запрос на получение значений для заполнения 'DataGridView'
-                switch (idPeriod)
-                {
-                    case ID_PERIOD.HOUR:
-                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , DateTime.Now.Day
-                            , DateTime.Now.Hour
-                            , 0
-                            , 0).AddHours(-1);
-                        hdtpEnd.Value = hdtpBegin.Value.AddHours(1);
-                        hdtpBegin.Mode =
-                        hdtpEnd.Mode =
-                            HDateTimePicker.MODE.HOUR;
-                        break;
-                    //case ID_PERIOD.SHIFTS:
-                    //    hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
-                    //    hdtpEnd.Mode = HDateTimePicker.MODE.HOUR;
-                    //    break;
-                    case ID_PERIOD.DAY:
-                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , DateTime.Now.Day
-                            , 0
-                            , 0
-                            , 0).AddDays(-1);
-                        hdtpEnd.Value = hdtpBegin.Value.AddDays(1);
-                        hdtpBegin.Mode =
-                        hdtpEnd.Mode =
-                            HDateTimePicker.MODE.DAY;
-                        break;
-                    case ID_PERIOD.MONTH:
-                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , 1
-                            , 0
-                            , 0
-                            , 0).AddMonths(-1);
-                        hdtpEnd.Value = hdtpBegin.Value.AddMonths(1);
-                        hdtpBegin.Mode =
-                        hdtpEnd.Mode =
-                            HDateTimePicker.MODE.MONTH;
-                        break;
-                    case ID_PERIOD.YEAR:
-                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
-                            , 1
-                            , 1
-                            , 0
-                            , 0
-                            , 0).AddYears(-1);
-                        hdtpEnd.Value = hdtpBegin.Value.AddYears(1);
-                        hdtpBegin.Mode =
-                        hdtpEnd.Mode =
-                            HDateTimePicker.MODE.YEAR;
-                        break;
-                    default:
-                        break;
-                }
-            }
         }
     }
 }

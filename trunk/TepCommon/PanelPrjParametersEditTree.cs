@@ -354,7 +354,6 @@ namespace TepCommon
 
             m_arTableOrigin = new DataTable[(int)INDEX_PARAMETER.COUNT];
             m_arTableEdit = new DataTable[(int)INDEX_PARAMETER.COUNT];
-            m_arTableDictPrj = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
 
             InitializeComponent();
         }
@@ -466,37 +465,6 @@ namespace TepCommon
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]).Click += new System.EventHandler(btnDelete_onClick);
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
-        }
-
-        private void fillTableDictPrj(out int err, out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-
-            string[] arNameTableKey = new string[(int)INDEX_TABLE_DICTPRJ.COUNT] { /*@"time"
-                                                                                        ,*/ @"comp_list"
-                                                                                        , @"task" }
-                    , arErrKey = new string[(int)INDEX_TABLE_DICTPRJ.COUNT] { /*@"словарь 'интервалы времени'"
-                                                                                        ,*/ @"словарь 'компоненты станции'"
-                                                                                        , @"проект 'список задач ИРС'" };
-            for (int i = 0; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-            {
-                m_arTableDictPrj[(int)i] = m_handlerDb.GetDataTable (arNameTableKey[(int)i], out err);
-
-                if (!(m_arTableDictPrj[(int)i].Rows.Count > 0))
-                    err = -1;
-                else
-                    ;
-
-                if (!(err == 0))
-                {
-                    strErr = @"HPanelEditTree::initialize () - заполнение таблицы " + arErrKey[i] + @"...";
-
-                    break;
-                }
-                else
-                    ;
-            }
         }
 
         private void fillTableEdits(out int err, out string strErr)
@@ -731,11 +699,13 @@ namespace TepCommon
             err = 0;
             strErr = string.Empty;
 
+            m_markTableDictPrj = new HMark(new int[] { (int)ID_DBTABLE.COMP_LIST, (int)ID_DBTABLE.TASK });
+
             //Заполнить редактируемые "оригинальные" таблицы из БД...
             fillTableEdits(out err, out strErr);
 
             if (err == 0)
-                fillTableDictPrj(out err, out strErr);
+                ;
             else
                 ; //Строка с описанием ошибки заполнена
 
@@ -967,11 +937,9 @@ namespace TepCommon
     partial class PanelPrjParametersEditTree
     {
         protected enum INDEX_PARAMETER {UNKNOWN = -1, ALGORITM, PUT, COUNT};
-        protected enum INDEX_TABLE_DICTPRJ { /*TIME,*/ COMP_LIST, TASK, COUNT };
         string[] m_arNameTables;
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
-        protected DataTable [] m_arTableDictPrj;
 
         protected override void recUpdateInsertDelete(out int err)
         {
@@ -1082,14 +1050,14 @@ namespace TepCommon
             switch (m_Level)
             {
                 case ID_LEVEL.TASK: //Задача
-                    iRes = nodeAfterSelect(ev.Node, m_arTableDictPrj[(int)INDEX_TABLE_DICTPRJ.TASK], m_Level, false);
+                    iRes = nodeAfterSelect(ev.Node, m_dictTableDictPrj[ID_DBTABLE.TASK], m_Level, false);
                     break;
                 case ID_LEVEL.N_ALG: //Параметр алгоритма
                     iRes = nodeAfterSelect(ev.Node, m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], m_Level, false);
                     if ((iRes == 0)
                         && (m_idAlg > 0))
                         //nodeAfterSelectDetail(INDEX_TABLE_KEY.TIME, strIdAlg, @"ID_TIME=")
-                        nodeAfterSelectDetail(INDEX_TABLE_DICTPRJ.COMP_LIST, strIdAlg, @"ID_COMP=")
+                        nodeAfterSelectDetail(ID_DBTABLE.COMP_LIST, strIdAlg, @"ID_COMP=")
                         ;
                     else
                         switch (iRes)
@@ -1177,10 +1145,10 @@ namespace TepCommon
         /// <param name="key">Индекс таблицы</param>
         /// <param name="strIdAlg">Значение идентификатора - прямое условие отбора записей в таблице</param>
         /// <param name="where">Дополнительное условие отбора записей в таблице</param>        
-        private void nodeAfterSelectDetail(INDEX_TABLE_DICTPRJ key, string strIdAlg, string where)
+        private void nodeAfterSelectDetail(ID_DBTABLE key, string strIdAlg, string where)
         {
             DataRow[] rowsPut;
-            bool bUpdate = m_dgvPrjDetail.Rows.Count == m_arTableDictPrj[(int)key].Rows.Count;
+            bool bUpdate = m_dgvPrjDetail.Rows.Count == m_dictTableDictPrj[key].Rows.Count;
             int indxRow = -1;
 
             //Отменить обработку события
@@ -1188,11 +1156,11 @@ namespace TepCommon
             m_dgvPrjDetail.CellValueChanged -= dgvPrjDetail_onCellValueChanged;
             //else ;
 
-            foreach (DataRow rDetail in m_arTableDictPrj[(int)key].Rows)
+            foreach (DataRow rDetail in m_dictTableDictPrj[key].Rows)
             {
                 //rowsPut = getDetailRows(Int32.Parse(strIdAlg), where, Convert.ToInt32(rDetail[@"ID"]));
                 rowsPut = m_arTableEdit[(int)INDEX_PARAMETER.PUT].Select(@"ID_ALG=" + Int32.Parse(strIdAlg)
-                                + @" AND " + where + rDetail[@"ID"]);
+                    + @" AND " + where + rDetail[@"ID"]);
 
                 //if (!(m_Level == prevLevel))
                 //if (indxRow < dgv.Rows.Count)
@@ -1316,8 +1284,8 @@ namespace TepCommon
                 string strDetail = string.Empty
                     , strIdDetail = string.Empty
                     , strErr = @"НЕТ ДАННЫХ";
-                int iKey = -1
-                    , id = -1
+                ID_DBTABLE iKey = ID_DBTABLE.UNKNOWN;
+                int id = -1
                     , idPut = -1
                     , err = -1;
 
@@ -1327,7 +1295,7 @@ namespace TepCommon
                 switch (m_Level)
                 {
                     case ID_LEVEL.N_ALG:
-                        iKey = (int)INDEX_TABLE_DICTPRJ.COMP_LIST;
+                        iKey = ID_DBTABLE.COMP_LIST;
                         strErr = @"компонента станции";
                         idPut = 0;
                         break;
@@ -1342,7 +1310,7 @@ namespace TepCommon
 
                 strDetail = dgv.Rows[ev.RowIndex].Cells[0].Value.ToString().Trim();
                 //???используется поиск по описанию
-                rowsDetail = m_arTableDictPrj[iKey].Select(@"DESCRIPTION='" + strDetail + @"'");
+                rowsDetail = m_dictTableDictPrj[iKey].Select(@"DESCRIPTION='" + strDetail + @"'");
                 //Проверить кол-во строк (д.б. ОДНа и ТОЬКО ОДНа)
                 if (rowsDetail.Length == 1)
                 {
