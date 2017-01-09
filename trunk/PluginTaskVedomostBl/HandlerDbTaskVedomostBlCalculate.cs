@@ -515,21 +515,6 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// Возвратить наименование таблицы 
-        /// </summary>
-        /// <param name="type">Тип панели/расчета</param>
-        /// <param name="req">Индекс таблицы, требуемой при расчете</param>
-        /// <returns>Наименование таблицы</returns>
-        private static string getNameDbTable(TaskCalculate.TYPE type, TABLE_CALCULATE_REQUIRED req)
-        {
-            ID_DBTABLE id = ID_DBTABLE.UNKNOWN;
-
-            id = TaskCalculate.GetIdDbTable(type, req);
-
-            return s_dictDbTables[id].m_name;
-        }
-
-        /// <summary>
         /// Получение вых.знач.
         /// </summary>
         /// <param name="dtRange">диапазон временной</param>

@@ -31,10 +31,10 @@ namespace PluginTaskReaktivka
                 COUNT
             }
             /// <summary>
-            /// 
+            /// Тип делегата(обработчик события) - изменение диапазона дат/времени
             /// </summary>
-            /// <param name="dtBegin"></param>
-            /// <param name="dtEnd"></param>
+            /// <param name="dtBegin">Начало интервала</param>
+            /// <param name="dtEnd">Окончание интервала</param>
             public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
             /// <summary>
             /// Класс аргумента для события - изменение выбора запрет/разрешение
@@ -64,7 +64,9 @@ namespace PluginTaskReaktivka
                     m_newCheckState = newCheckState;
                 }
             }
-
+            /// <summary>
+            /// Событие(делегат) изменения диапазона дат/времени для внешних объектов
+            /// </summary>
             public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
             /// <summary>
             /// Тип обработчика события - изменение выбора запрет/разрешение

@@ -146,7 +146,8 @@ namespace PluginTaskReaktivka
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
 
             InitializeComponent();
-            Session.SetDatetimeRange(PanelManagementReaktivka.s_dtDefaultAU, PanelManagementReaktivka.s_dtDefaultAU.AddDays(1));
+
+            Session.SetDatetimeRange(_panelManagement.DatetimeRange);
         }
 
         /// <summary>
