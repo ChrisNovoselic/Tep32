@@ -4109,40 +4109,6 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// Строка для запроса информации по периодам расчетов
-        /// </summary>        
-        protected string m_strIdPeriods
-        {
-            get
-            {
-                string strRes = string.Empty;
-
-                for (int i = 0; i < m_arListIds[(int)INDEX_ID.PERIOD].Count; i++)
-                    strRes += m_arListIds[(int)INDEX_ID.PERIOD][i] + @",";
-                strRes = strRes.Substring(0, strRes.Length - 1);
-
-                return strRes;
-            }
-        }
-
-        /// <summary>
-        /// Строка для запроса информации по часовым поясам
-        /// </summary>        
-        protected string m_strIdTimezones
-        {
-            get
-            {
-                string strRes = string.Empty;
-
-                for (int i = 0; i < m_arListIds[(int)INDEX_ID.TIMEZONE].Count; i++)
-                    strRes += m_arListIds[(int)INDEX_ID.TIMEZONE][i] + @",";
-                strRes = strRes.Substring(0, strRes.Length - 1);
-
-                return strRes;
-            }
-        }
-
-        /// <summary>
         /// 
         /// </summary>
         /// <param name="err">номер ошибки</param>

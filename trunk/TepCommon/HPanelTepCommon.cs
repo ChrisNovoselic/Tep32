@@ -57,6 +57,16 @@ namespace TepCommon
         /// </summary>
         protected Dictionary<ID_DBTABLE, DataTable> m_dictTableDictPrj;
 
+        /// <summary>
+        /// Удалить сессию (+ очистить реквизиты сессии)
+        /// </summary>
+        protected virtual void deleteSession()
+        {
+            int err = -1;
+
+            (m_handlerDb as HandlerDbTaskCalculate).DeleteSession(out err);
+        }
+
         #region Apelgans
 
         protected int m_id_panel;
@@ -131,11 +141,11 @@ namespace TepCommon
         /// Объект для обмена данными с БД
         /// </summary>
         protected HandlerDbValues m_handlerDb;
-
-        protected virtual HandlerDbValues createHandlerDb()
-        {
-            return new HandlerDbValues();
-        }
+        /// <summary>
+        /// Создать объект для обмена данными с БД
+        /// </summary>
+        /// <returns>Объект для обмена данными с БД</returns>
+        protected abstract HandlerDbValues createHandlerDb();
         /// <summary>
         /// Найти идентификатор типа текущей панели
         ///  , зарегистрированного в библиотеке
@@ -404,6 +414,16 @@ namespace TepCommon
         }
 
         protected abstract void initialize(out int err, out string errMsg);
+
+        protected virtual void initialize(ID_DBTABLE[] arIdTableDictPrj, out int err, out string errMsg)
+        {
+            err = 0;
+            errMsg = string.Empty;
+
+            foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE))) {
+                m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
+            }
+        }
 
         //protected abstract void Activate(bool activate);
         /// <summary>

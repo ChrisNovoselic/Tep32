@@ -14,7 +14,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Панель элементов управления
         /// </summary>
-        protected class PanelManagementReaktivka : HPanelCommon
+        protected class PanelManagementReaktivka : HPanelTepCommon.PanelManagementTaskCalculate
         {
             /// <summary>
             /// 
@@ -30,12 +30,6 @@ namespace PluginTaskReaktivka
                 CHKBX_EDIT,
                 COUNT
             }
-            /// <summary>
-            /// Тип делегата(обработчик события) - изменение диапазона дат/времени
-            /// </summary>
-            /// <param name="dtBegin">Начало интервала</param>
-            /// <param name="dtEnd">Окончание интервала</param>
-            public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
             /// <summary>
             /// Класс аргумента для события - изменение выбора запрет/разрешение
             ///  для компонента/параметра при участии_в_расчете/отображении
@@ -64,10 +58,6 @@ namespace PluginTaskReaktivka
                     m_newCheckState = newCheckState;
                 }
             }
-            /// <summary>
-            /// Событие(делегат) изменения диапазона дат/времени для внешних объектов
-            /// </summary>
-            public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
             /// <summary>
             /// Тип обработчика события - изменение выбора запрет/разрешение
             ///  для компонента/параметра при участии_в_расчете/отображении

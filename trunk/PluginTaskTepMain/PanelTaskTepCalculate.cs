@@ -91,39 +91,6 @@ namespace PluginTaskTepMain
             }
         }
 
-        /// <summary>
-        /// Строка для запроса информации по периодам расчетов
-        /// </summary>        
-        protected string m_strIdPeriods
-        {
-            get
-            {
-                string strRes = string.Empty;
-
-                for (int i = 0; i < m_arListIds[(int)INDEX_ID.PERIOD].Count; i++)
-                    strRes += m_arListIds[(int)INDEX_ID.PERIOD][i] + @",";
-                strRes = strRes.Substring(0, strRes.Length - 1);
-
-                return strRes;
-            }
-        }
-        /// <summary>
-        /// Строка для запроса информации по часовым поясам
-        /// </summary>        
-        protected string m_strIdTimezones
-        {
-            get
-            {
-                string strRes = string.Empty;
-
-                for (int i = 0; i < m_arListIds[(int)INDEX_ID.TIMEZONE].Count; i++)
-                    strRes += m_arListIds[(int)INDEX_ID.TIMEZONE][i] + @",";
-                strRes = strRes.Substring(0, strRes.Length - 1);
-
-                return strRes;
-            }
-        }
-
         protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         ///// <summary>
         ///// Таблицы со значениями словарных, проектных данных
@@ -201,15 +168,8 @@ namespace PluginTaskTepMain
             int i = -1;
             //Заполнить таблицы со словарными, проектными величинами
             string[] arQueryDictPrj = getQueryDictPrj();
-            for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-            {
-                m_dictTableDictPrj[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
-
-                if (!(err == 0))
-                    break;
-                else
-                    ;
-            }
+            // PERIOD, TIMEZONE, COMP_LIST, PARAMETERS(Type), MODE_DEV, RATIO
+            initialize(new ID_DBTABLE[] { }, out err, out errMsg);
 
             if (err == 0)
                 try {
@@ -332,16 +292,7 @@ namespace PluginTaskTepMain
             };
 
             return arRes;
-        }
-        /// <summary>
-        /// Удалить сессию (+ очистить реквизиты сессии)
-        /// </summary>
-        protected virtual void deleteSession()
-        {
-            int err = -1;
-
-            HandlerDb.DeleteSession(out err);
-        }
+        }        
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
         /// </summary>

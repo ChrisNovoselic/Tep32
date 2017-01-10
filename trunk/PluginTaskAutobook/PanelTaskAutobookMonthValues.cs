@@ -2526,14 +2526,8 @@ namespace PluginTaskAutobook
                 }
 
             //Заполнить таблицы со словарными, проектными величинами
-            string[] arQueryDictPrj = getQueryDictPrj();
-            for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-            {
-                m_dictTableDictPrj[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
-
-                if (!(err == 0))
-                    break;
-            }
+            // PERIOD, TIMEZONE, COMP, MEASURE, RATIO
+            init
 
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
             Array namePut = Enum.GetValues(typeof(INDEX_GTP));
@@ -2910,71 +2904,37 @@ namespace PluginTaskAutobook
                     throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
 
-        /// <summary>
-        /// формирование запросов 
-        /// для справочных данных
-        /// </summary>
-        /// <returns>запрос</returns>
-        private string[] getQueryDictPrj()
-        {
-            string[] arRes = null;
+        ///// <summary>
+        ///// формирование запросов 
+        ///// для справочных данных
+        ///// </summary>
+        ///// <returns>запрос</returns>
+        //private string[] getQueryDictPrj()
+        //{
+        //    string[] arRes = null;
 
-            arRes = new string[]
-            {
-                //PERIOD
-                HandlerDb.GetQueryTimePeriods(m_strIdPeriods)
-                //TIMEZONE
-                , HandlerDb.GetQueryTimezones(m_strIdTimezones)
-                // список компонентов
-                , HandlerDb.GetQueryComp(Type)
-                // параметры расчета
-                //, HandlerDb.GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
-                //// настройки визуального отображения значений
-                //, @""
-                // режимы работы
-                //, HandlerDb.GetQueryModeDev()
-                //// единицы измерения
-                , m_handlerDb.GetQueryMeasures()
-                // коэффициенты для единиц измерения
-                , HandlerDb.GetQueryRatio()
-            };
+        //    arRes = new string[]
+        //    {
+        //        //PERIOD
+        //        HandlerDb.GetQueryTimePeriods(m_strIdPeriods)
+        //        //TIMEZONE
+        //        , HandlerDb.GetQueryTimezones(m_strIdTimezones)
+        //        // список компонентов
+        //        , HandlerDb.GetQueryComp(Type)
+        //        // параметры расчета
+        //        //, HandlerDb.GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+        //        //// настройки визуального отображения значений
+        //        //, @""
+        //        // режимы работы
+        //        //, HandlerDb.GetQueryModeDev()
+        //        //// единицы измерения
+        //        , m_handlerDb.GetQueryMeasures()
+        //        // коэффициенты для единиц измерения
+        //        , HandlerDb.GetQueryRatio()
+        //    };
 
-            return arRes;
-        }
-
-        /// <summary>
-        /// Строка для запроса информации по периодам расчетов
-        /// </summary>        
-        protected string m_strIdPeriods
-        {
-            get
-            {
-                string strRes = string.Empty;
-
-                for (int i = 0; i < m_arListIds[(int)INDEX_ID.PERIOD].Count; i++)
-                    strRes += m_arListIds[(int)INDEX_ID.PERIOD][i] + @",";
-                strRes = strRes.Substring(0, strRes.Length - 1);
-
-                return strRes;
-            }
-        }
-
-        /// <summary>
-        /// Строка для запроса информации по часовым поясам
-        /// </summary>        
-        protected string m_strIdTimezones
-        {
-            get
-            {
-                string strRes = string.Empty;
-
-                for (int i = 0; i < m_arListIds[(int)INDEX_ID.TIMEZONE].Count; i++)
-                    strRes += m_arListIds[(int)INDEX_ID.TIMEZONE][i] + @",";
-                strRes = strRes.Substring(0, strRes.Length - 1);
-
-                return strRes;
-            }
-        }
+        //    return arRes;
+        //}
 
         /// <summary>
         /// Сохранение значений в БД

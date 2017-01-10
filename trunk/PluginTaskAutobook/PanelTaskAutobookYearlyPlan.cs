@@ -880,14 +880,8 @@ namespace PluginTaskAutobook
                 }
 
             //Заполнить таблицы со словарными, проектными величинами
-            string[] arQueryDictPrj = getQueryDictPrj();
-            for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-            {
-                m_dictTableDictPrj[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
-
-                if (!(err == 0))
-                    break;
-            }
+            // PERIOD, TIMIZONE, COMP, PARAMETER(OUT_VALUES), MEASURE, RATIO
+            initialize(new ID_DBTABLE[] { ID_DBTABLE.PERIOD }, out err, out errMsg);
 
             foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Rows)
             {
@@ -1154,37 +1148,37 @@ namespace PluginTaskAutobook
                 m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
         }
 
-        /// <summary>
-        /// формирование запросов 
-        /// для справочных данных
-        /// </summary>
-        /// <returns>запрос</returns>
-        private string[] getQueryDictPrj()
-        {
-            string[] arRes = null;
+        ///// <summary>
+        ///// формирование запросов 
+        ///// для справочных данных
+        ///// </summary>
+        ///// <returns>запрос</returns>
+        //private string[] getQueryDictPrj()
+        //{
+        //    string[] arRes = null;
 
-            arRes = new string[]
-            {
-                //PERIOD
-                HandlerDb.GetQueryTimePeriods(m_strIdPeriods)
-                //TIMEZONE
-                , HandlerDb.GetQueryTimezones(m_strIdTimezones)
-                // список компонентов
-                , HandlerDb.GetQueryComp(Type)
-                // параметры расчета
-                , HandlerDb.GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
-                //// настройки визуального отображения значений
-                //, @""
-                // режимы работы
-                //, HandlerDb.GetQueryModeDev()
-                //// единицы измерения
-                , m_handlerDb.GetQueryMeasures()
-                // коэффициенты для единиц измерения
-                , HandlerDb.GetQueryRatio()
-            };
+        //    arRes = new string[]
+        //    {
+        //        //PERIOD
+        //        HandlerDb.GetQueryTimePeriods(m_strIdPeriods)
+        //        //TIMEZONE
+        //        , HandlerDb.GetQueryTimezones(m_strIdTimezones)
+        //        // список компонентов
+        //        , HandlerDb.GetQueryComp(Type)
+        //        // параметры расчета
+        //        , HandlerDb.GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+        //        //// настройки визуального отображения значений
+        //        //, @""
+        //        // режимы работы
+        //        //, HandlerDb.GetQueryModeDev()
+        //        //// единицы измерения
+        //        , m_handlerDb.GetQueryMeasures()
+        //        // коэффициенты для единиц измерения
+        //        , HandlerDb.GetQueryRatio()
+        //    };
 
-            return arRes;
-        }
+        //    return arRes;
+        //}
 
         ///// <summary>
         ///// Установка длительности периода 
@@ -1205,40 +1199,6 @@ namespace PluginTaskAutobook
 
         //    PanelManagementYear.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
         //}
-
-        /// <summary>
-        /// Строка для запроса информации по периодам расчетов
-        /// </summary>        
-        protected string m_strIdPeriods
-        {
-            get
-            {
-                string strRes = string.Empty;
-
-                for (int i = 0; i < m_arListIds[(int)INDEX_ID.PERIOD].Count; i++)
-                    strRes += m_arListIds[(int)INDEX_ID.PERIOD][i] + @",";
-                strRes = strRes.Substring(0, strRes.Length - 1);
-
-                return strRes;
-            }
-        }
-
-        /// <summary>
-        /// Строка для запроса информации по часовым поясам
-        /// </summary>        
-        protected string m_strIdTimezones
-        {
-            get
-            {
-                string strRes = string.Empty;
-
-                for (int i = 0; i < m_arListIds[(int)INDEX_ID.TIMEZONE].Count; i++)
-                    strRes += m_arListIds[(int)INDEX_ID.TIMEZONE][i] + @",";
-                strRes = strRes.Substring(0, strRes.Length - 1);
-
-                return strRes;
-            }
-        }
 
         /// <summary>
         /// Обработчик события при изменении периода расчета

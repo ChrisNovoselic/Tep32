@@ -37,6 +37,8 @@ namespace TepCommon
             , { ID_DBTABLE.OUTALG,     new DB_TABLE () { m_name = @"outalg",       m_description = @"" } }
             , { ID_DBTABLE.OUTPUT,     new DB_TABLE () { m_name = @"output",       m_description = @"" } }
             , { ID_DBTABLE.OUTVALUES,  new DB_TABLE () { m_name = @"outval",       m_description = @"" } }
+            , { ID_DBTABLE.IN_PARAMETER, new DB_TABLE () { m_name = @"???",       m_description = @"" } }
+            , { ID_DBTABLE.OUT_PARAMETER, new DB_TABLE () { m_name = @"???",      m_description = @"" } }
             , { ID_DBTABLE.FTABLE,     new DB_TABLE () { m_name = @"ftable",       m_description = @"" } }
             , { ID_DBTABLE.PLUGINS,    new DB_TABLE () { m_name = @"plugins",      m_description = @"" } }
             , { ID_DBTABLE.TASK,       new DB_TABLE () { m_name = @"task",         m_description = @"" } }
@@ -201,7 +203,7 @@ namespace TepCommon
         }
 
         /// <summary>
-        /// 
+        /// Обновить значения в БД в соответствии с внесенными изменениями (различия между оригинальной и редактируемой таблицой)
         /// </summary>
         /// <param name="nameTable">имя таблицы в бд</param>
         /// <param name="strKeyFields">ключевые поля для вставки</param>
@@ -209,8 +211,11 @@ namespace TepCommon
         /// <param name="tblOrigin">оригинальная таблица</param>
         /// <param name="tblEdit">отредактированная таблица</param>
         /// <param name="err">номер ошибки</param>
-        public void RecUpdateInsertDelete(string nameTable, string strKeyFields, string unchangeableColumn
-            , DataTable tblOrigin, DataTable tblEdit, out int err)
+        public void RecUpdateInsertDelete(string nameTable
+            , string strKeyFields
+            , string unchangeableColumn
+            , DataTable tblOrigin, DataTable tblEdit
+            , out int err)
         {
             err = -1;
 
@@ -233,7 +238,7 @@ namespace TepCommon
                 ;
         }
 
-        public string GetQueryTimePeriods(string strIds)
+        protected virtual string getQueryTimePeriods(params int[]ids)
         {
             string strRes = string.Empty;
 
@@ -242,7 +247,7 @@ namespace TepCommon
             return strRes;
         }
 
-        public string GetQueryTimezones(string strIds)
+        protected virtual string getQueryTimezones(params int[] ids)
         {
             string strRes = string.Empty;
 
@@ -251,7 +256,7 @@ namespace TepCommon
             return strRes;
         }
 
-        public virtual string GetQueryCompList()
+        protected virtual string getQueryCompList()
         {
             string strRes = string.Empty;
 
@@ -262,7 +267,7 @@ namespace TepCommon
             return strRes;
         }
 
-        public string GetQueryModeDev()
+        protected virtual string getQueryModeDev()
         {
             string strRes = string.Empty;
 
@@ -271,7 +276,7 @@ namespace TepCommon
             return strRes;
         }
 
-        public string GetQueryMeasures()
+        protected virtual string getQueryMeasures()
         {
             string strRes = string.Empty;
 
@@ -280,7 +285,7 @@ namespace TepCommon
             return strRes;
         }
 
-        public string GetQueryRatio()
+        protected virtual string getQueryRatio()
         {
             string strRes = string.Empty;
 

@@ -203,7 +203,7 @@ namespace TepCommon
                 //Отменить обработку события - изменение начала/окончания даты/времени
                 activateDateTimeRangeValue_OnChanged(false);
                 //Установить новые режимы для "календарей"
-                setModeRangeDatetime();
+                SetModeDatetimeRange();
                 //Возобновить обработку события - изменение начала/окончания даты/времени
                 activateDateTimeRangeValue_OnChanged(true);
 
@@ -313,7 +313,7 @@ namespace TepCommon
                 ctrl.SelectedIndexChanged += new EventHandler(handler);
             }
 
-            public void setModeRangeDatetime()
+            public void SetModeDatetimeRange()
             {
                 ID_PERIOD idPeriod = IdPeriod;
 
