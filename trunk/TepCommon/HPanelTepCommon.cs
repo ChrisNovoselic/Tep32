@@ -132,7 +132,11 @@ namespace TepCommon
 
             initializeLayoutStyle();
         }
-
+        /// <summary>
+        /// Инициализация размеров/стилей макета для размещения элементов управления
+        /// </summary>
+        /// <param name="cols">Количество столбцов в макете</param>
+        /// <param name="rows">Количество строк в макете</param>
         protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
         {
             initializeLayoutStyleEvenly(cols, rows);
@@ -419,6 +423,14 @@ namespace TepCommon
         {
             err = 0;
             errMsg = string.Empty;
+
+            if (m_dictTableDictPrj == null)
+                m_dictTableDictPrj = new Dictionary<ID_DBTABLE, DataTable>();
+            else {
+                Logging.Logg().Warning(@"HPanelTepCommon::initialize () - соварно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                m_dictTableDictPrj.Clear();
+            }
 
             foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE))) {
                 m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));

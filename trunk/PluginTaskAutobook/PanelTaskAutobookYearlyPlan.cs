@@ -560,7 +560,11 @@ namespace PluginTaskAutobook
             public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
 
             public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
-
+            /// <summary>
+            /// Инициализация размеров/стилей макета для размещения элементов управления
+            /// </summary>
+            /// <param name="cols">Количество столбцов в макете</param>
+            /// <param name="rows">Количество строк в макете</param>
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
             {
                 throw new NotImplementedException();
@@ -883,7 +887,7 @@ namespace PluginTaskAutobook
             // PERIOD, TIMIZONE, COMP, PARAMETER(OUT_VALUES), MEASURE, RATIO
             initialize(new ID_DBTABLE[] { ID_DBTABLE.PERIOD }, out err, out errMsg);
 
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Rows)
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows)
             {
                 id_comp = (int)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
@@ -1327,7 +1331,7 @@ namespace PluginTaskAutobook
             {
                 List<DataRow> listRes;
 
-                listRes = m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Select().ToList<DataRow>();
+                listRes = m_dictTableDictPrj[ID_DBTABLE.COMP].Select().ToList<DataRow>();
 
                 return listRes;
             }
@@ -1389,17 +1393,6 @@ namespace PluginTaskAutobook
             else
                 // очистить содержание представления
                 m_dgvYear.ClearValues();
-        }
-
-        /// <summary>
-        /// удаление сессии и очистка таблиц 
-        /// с временными данными
-        /// </summary>
-        protected void deleteSession()
-        {
-            int err = -1;
-
-            HandlerDb.DeleteSession(out err);
         }
 
         /// <summary>

@@ -244,7 +244,7 @@ namespace TepCommon
         
     }
 
-    public partial class HPanelEditList : HPanelEditListCommon
+    public abstract partial class HPanelEditList : HPanelEditListCommon
     {
         protected string m_nameDescField;
 

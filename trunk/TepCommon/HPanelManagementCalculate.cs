@@ -84,7 +84,11 @@ namespace TepCommon
                 ResumeLayout(false);
                 PerformLayout();
             }
-
+            /// <summary>
+            /// Инициализация размеров/стилей макета для размещения элементов управления
+            /// </summary>
+            /// <param name="cols">Количество столбцов в макете</param>
+            /// <param name="rows">Количество строк в макете</param>
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
             {
                 initializeLayoutStyleEvenly();

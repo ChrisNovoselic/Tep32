@@ -131,7 +131,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Экземпляр класса отображения данных
         /// </summary>
-        DGVReaktivka m_dgvReak;
+        DGVReaktivka m_dgvValues;
 
         /// <summary>
         /// Конструктор
@@ -155,9 +155,9 @@ namespace PluginTaskReaktivka
         /// </summary>
         private void InitializeComponent()
         {
-            m_dgvReak = new DGVReaktivka(INDEX_CONTROL.DGV_DATA.ToString());
+            m_dgvValues = new DGVReaktivka(INDEX_CONTROL.DGV_DATA.ToString());
 
-            foreach (DataGridViewColumn column in m_dgvReak.Columns)
+            foreach (DataGridViewColumn column in m_dgvValues.Columns)
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
 
             Control ctrl = new Control(); ;
@@ -171,8 +171,8 @@ namespace PluginTaskReaktivka
             Controls.Add(PanelManagementReak, 0, posRow);
             SetColumnSpan(PanelManagementReak, 4); SetRowSpan(PanelManagementReak, 9);
 
-            Controls.Add(m_dgvReak, 5, posRow);
-            SetColumnSpan(m_dgvReak, 9); SetRowSpan(m_dgvReak, 10);
+            Controls.Add(m_dgvValues, 5, posRow);
+            SetColumnSpan(m_dgvValues, 9); SetRowSpan(m_dgvValues, 10);
 
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 
@@ -189,7 +189,7 @@ namespace PluginTaskReaktivka
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskReaktivka_ClickExport;
             (PanelManagementReak as PanelManagementReaktivka).ItemCheck += new PanelManagementReaktivka.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
-            m_dgvReak.CellEndEdit += m_dgvReak_CellEndEdit;
+            m_dgvValues.CellEndEdit += m_dgvReak_CellEndEdit;
             //m_dgvReak.CellParsing += m_dgvReak_CellParsing;
         }
 
@@ -200,7 +200,7 @@ namespace PluginTaskReaktivka
         /// <param name="ev">Аргумент события</param>
         void m_dgvReak_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            m_dgvReak.SumValue(e.ColumnIndex, e.RowIndex);
+            m_dgvValues.SumValue(e.ColumnIndex, e.RowIndex);
             if(m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] != null)
             m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = valuesFence;
         }
@@ -223,7 +223,7 @@ namespace PluginTaskReaktivka
         void PanelTaskReaktivka_ClickExport(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();//
-            m_rptExcel.CreateExcel(m_dgvReak, Session.m_rangeDatetime);
+            m_rptExcel.CreateExcel(m_dgvValues, Session.m_rangeDatetime);
         }
 
         /// <summary>
@@ -243,7 +243,6 @@ namespace PluginTaskReaktivka
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
-            m_dictTableDictPrj = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
             int role = (int)HTepUsers.Role;
 
             INDEX_ID[] arIndxIdToAdd = new INDEX_ID[] {
@@ -271,18 +270,13 @@ namespace PluginTaskReaktivka
                 }
 
             //Заполнить таблицы со словарными, проектными величинами
-            string[] arQueryDictPrj = getQueryDictPrj();
-            //Заполнить элементы управления с компонентами станции
-            for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-            {
-                m_dictTableDictPrj[i] = m_handlerDb.Select(arQueryDictPrj[i], out err);
+            // PERIOD, COMP, TIMEZONE, RATIO
+            initialize(new ID_DBTABLE[] { ID_DBTABLE.PERIOD, ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP, ID_DBTABLE.RATIO }
+                , out err, out errMsg);
 
-                if (!(err == 0))
-                    break;
-            }
             (PanelManagementReak as PanelManagementReaktivka).Clear();
 
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Rows)
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows)
             {
                 id_comp = (int)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
@@ -294,8 +288,8 @@ namespace PluginTaskReaktivka
                     , arIndxIdToAdd
                     , arChecked);
 
-                if (m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Rows.Count + 2 > m_dgvReak.Columns.Count)
-                    m_dgvReak.AddColumn(id_comp, strItem, strItem, true, arChecked[0]);
+                if (m_dictTableDictPrj[ID_DBTABLE.COMP].Rows.Count + 2 > m_dgvValues.Columns.Count)
+                    m_dgvValues.AddColumn(id_comp, strItem, strItem, true, arChecked[0]);
                 else
                     ;
             }
@@ -313,9 +307,9 @@ namespace PluginTaskReaktivka
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
                 if ((Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
-                    m_dgvReak.AddBRead(false);
+                    m_dgvValues.AddBRead(false);
                 else
-                    m_dgvReak.AddBRead(true);
+                    m_dgvValues.AddBRead(true);
 
                 if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
@@ -329,7 +323,7 @@ namespace PluginTaskReaktivka
                 // компонента станции для элементов управления
                 (PanelManagementReak as PanelManagementReaktivka).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED });
                 //
-                m_dgvReak.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
                 if (err == 0)
                 {                
@@ -354,35 +348,9 @@ namespace PluginTaskReaktivka
                     Session.SetCurrentPeriod(idPeriod);
                     (PanelManagementReak as PanelManagementReaktivka).SetPeriod(idPeriod);
                     (ctrl as ComboBox).Enabled = false;                
-                }
-                else
-                    switch ((INDEX_TABLE_DICTPRJ)i)
-                    {
-                        case INDEX_TABLE_DICTPRJ.PERIOD:
-                            errMsg = @"Получение интервалов времени для периода расчета";
-                            break;
-                        case INDEX_TABLE_DICTPRJ.TIMEZONE:
-                            errMsg = @"Получение списка часовых поясов";
-                            break;
-                        case INDEX_TABLE_DICTPRJ.COMPONENT:
-                            errMsg = @"Получение списка компонентов станции";
-                            break;
-                        //case INDEX_TABLE_DICTPRJ.PARAMETER:
-                        //    errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
-                        //    break;
-                        //case INDEX_TABLE_DICTPRJ.MODE_DEV:
-                        //    errMsg = @"Получение идентификаторов режимов работы оборудования";
-                        //    break;
-                        //case INDEX_TABLE_DICTPRJ.MEASURE:
-                        //    errMsg = @"Получение информации по единицам измерения";
-                        //    break;
-                        default:
-                            errMsg = @"Неизвестная ошибка";
-                            break;
-                    }
-            }
-            catch (Exception e)
-            {
+                } else                    
+                    errMsg = @"Неизвестная ошибка";
+            } catch (Exception e) {
                 Logging.Logg().Exception(e, @"PanelTaskReaktivka::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
@@ -453,37 +421,37 @@ namespace PluginTaskReaktivka
                 clear();
         }
 
-        /// <summary>
-        /// формирование запросов 
-        /// для справочных данных
-        /// </summary>
-        /// <returns>запрос</returns>
-        private string[] getQueryDictPrj()
-        {
-            string[] arRes = null;
+        ///// <summary>
+        ///// формирование запросов 
+        ///// для справочных данных
+        ///// </summary>
+        ///// <returns>запрос</returns>
+        //private string[] getQueryDictPrj()
+        //{
+        //    string[] arRes = null;
 
-            arRes = new string[]
-            {
-                //PERIOD
-                HandlerDb.GetQueryTimePeriods(m_strIdPeriods)
-                //TIMEZONE
-                , HandlerDb.GetQueryTimezones(m_strIdTimezones)
-                // список компонентов
-                , HandlerDb.GetQueryComp(Type)
-                // параметры расчета
-                //, HandlerDb.GetQueryParameters(Type)
-                //// настройки визуального отображения значений
-                //, @""
-                // режимы работы
-                //, HandlerDb.GetQueryModeDev()
-                //// единицы измерения
-                //, m_handlerDb.GetQueryMeasures()
-                // коэффициенты для единиц измерения
-                , HandlerDb.GetQueryRatio()
-            };
+        //    arRes = new string[]
+        //    {
+        //        //PERIOD
+        //        HandlerDb.GetQueryTimePeriods(m_strIdPeriods)
+        //        //TIMEZONE
+        //        , HandlerDb.GetQueryTimezones(m_strIdTimezones)
+        //        // список компонентов
+        //        , HandlerDb.GetQueryComp(Type)
+        //        // параметры расчета
+        //        //, HandlerDb.GetQueryParameters(Type)
+        //        //// настройки визуального отображения значений
+        //        //, @""
+        //        // режимы работы
+        //        //, HandlerDb.GetQueryModeDev()
+        //        //// единицы измерения
+        //        //, m_handlerDb.GetQueryMeasures()
+        //        // коэффициенты для единиц измерения
+        //        , HandlerDb.GetQueryRatio()
+        //    };
 
-            return arRes;
-        }
+        //    return arRes;
+        //}
 
         /// <summary>
         /// очистка грида
@@ -519,23 +487,12 @@ namespace PluginTaskReaktivka
                 cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
                 cbx.Items.Clear();
 
-                m_dgvReak.ClearRows();
+                m_dgvValues.ClearRows();
                 //dgvReak.ClearColumns();
             }
             else
                 // очистить содержание представления
-                m_dgvReak.ClearValues();
-        }
-
-        /// <summary>
-        /// удаление сессии и очистка таблиц 
-        /// с временными данными
-        /// </summary>
-        protected void deleteSession()
-        {
-            int err = -1;
-
-            HandlerDb.DeleteSession(out err);
+                m_dgvValues.ClearValues();
         }
 
         /// <summary>
@@ -587,12 +544,12 @@ namespace PluginTaskReaktivka
                     round = HTepUsers.s_iRoundDefault;
                 }
 
-                m_dgvReak.ClearRows();
+                m_dgvValues.ClearRows();
 
                 for (int i = 0; i < DaysInMonth + 1; i++)
                 {
-                    if (m_dgvReak.Rows.Count != DaysInMonth)
-                        m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
+                    if (m_dgvValues.Rows.Count != DaysInMonth)
+                        m_dgvValues.AddRow(new DGVReaktivka.ROW_PROPERTY()
                         {
                             m_idAlg = id_alg
                             //, m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
@@ -601,7 +558,7 @@ namespace PluginTaskReaktivka
                             , m_vsRound = round
                         });
                     else
-                        m_dgvReak.AddRow(new DGVReaktivka.ROW_PROPERTY()
+                        m_dgvValues.AddRow(new DGVReaktivka.ROW_PROPERTY()
                         {
                             m_idAlg = id_alg
                             //, m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
@@ -614,7 +571,7 @@ namespace PluginTaskReaktivka
             } else
                 ; //??? ничего очищать не надо, но и ничего не делать
 
-            m_dgvReak.Rows[dtBegin.Day - 1].Selected = true;
+            m_dgvValues.Rows[dtBegin.Day - 1].Selected = true;
             m_currentOffSet = Session.m_curOffsetUTC;
         }
 
@@ -627,7 +584,7 @@ namespace PluginTaskReaktivka
             {
                 List<DataRow> listRes;
 
-                listRes = m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Select().ToList<DataRow>();
+                listRes = m_dictTableDictPrj[ID_DBTABLE.COMP].Select().ToList<DataRow>();
 
                 return listRes;
             }
@@ -1015,7 +972,7 @@ namespace PluginTaskReaktivka
             //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
             // или в этом же плюгИне измененить/сохраннить индивидуальные настройки
             //Изменить структуру 'DataGridView'          
-            (m_dgvReak as DGVReaktivka).UpdateStructure(ev);
+            (m_dgvValues as DGVReaktivka).UpdateStructure(ev);
         }
 
         /// <summary>
@@ -1059,7 +1016,7 @@ namespace PluginTaskReaktivka
                         // создать копии для возможности сохранения изменений
                         setValues();
                         // отобразить значения
-                        m_dgvReak.ShowValues(m_arTableOrigin[(int)m_ViewValues]);
+                        m_dgvValues.ShowValues(m_arTableOrigin[(int)m_ViewValues]);
                         //
                         m_arTableEdit[(int)m_ViewValues] = valuesFence;
                     }
@@ -1154,7 +1111,7 @@ namespace PluginTaskReaktivka
                     //, получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
                         , CountBasePeriod
-                        , m_dictTableDictPrj[ID_DBTABLE.COMPONENT]
+                        , m_dictTableDictPrj[ID_DBTABLE.COMP]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                         , out err, out strErr);
@@ -1183,7 +1140,7 @@ namespace PluginTaskReaktivka
         {
             get
             { //сохранить вх. знач. в DataTable
-                return m_dgvReak.GetValue(m_TableOrigin, (int)Session.m_Id,m_ViewValues);
+                return m_dgvValues.GetValue(m_TableOrigin, (int)Session.m_Id,m_ViewValues);
             }
         }
 

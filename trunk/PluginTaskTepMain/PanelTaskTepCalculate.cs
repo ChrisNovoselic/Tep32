@@ -167,9 +167,20 @@ namespace PluginTaskTepMain
             string strItem = string.Empty;
             int i = -1;
             //Заполнить таблицы со словарными, проектными величинами
-            string[] arQueryDictPrj = getQueryDictPrj();
             // PERIOD, TIMEZONE, COMP_LIST, PARAMETERS(Type), MODE_DEV, RATIO
-            initialize(new ID_DBTABLE[] { }, out err, out errMsg);
+            initialize(new ID_DBTABLE[] {
+                    ID_DBTABLE.PERIOD
+                    , ID_DBTABLE.TIMEZONE
+                    , ID_DBTABLE.COMP_LIST
+                    , Type == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.IN_PARAMETER :
+                        Type == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES ? ID_DBTABLE.OUT_PARAMETER :
+                            Type == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES ? ID_DBTABLE.OUT_PARAMETER :
+                                Type == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME ? ID_DBTABLE.OUT_PARAMETER :
+                                    ID_DBTABLE.UNKNOWN
+                    , ID_DBTABLE.MODE_DEV
+                    , ID_DBTABLE.RATIO }
+                , out err, out errMsg
+            );
 
             if (err == 0)
                 try {
@@ -264,35 +275,35 @@ namespace PluginTaskTepMain
             Session.SetCurrentTimeZone(idTimezone
                 , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
-        /// <summary>
-        /// Массив запросов к БД по получению словарных и проектных значений
-        /// </summary>
-        private string[] getQueryDictPrj()
-        {
-            string[] arRes = null;
+        ///// <summary>
+        ///// Массив запросов к БД по получению словарных и проектных значений
+        ///// </summary>
+        //private string[] getQueryDictPrj()
+        //{
+        //    string[] arRes = null;
 
-            arRes = new string[]
-            {
-                //PERIOD
-                HandlerDb.GetQueryTimePeriods (m_strIdPeriods)
-                //TIMEZONE
-                , HandlerDb.GetQueryTimezones (m_strIdTimezones)
-                // список компонентов
-                , HandlerDb.GetQueryCompList ()
-                // параметры расчета
-                , HandlerDb.GetQueryParameters (Type)
-                //// настройки визуального отображения значений
-                //, @""
-                // режимы работы
-                , HandlerDb.GetQueryModeDev ()
-                //// единицы измерения
-                //, m_handlerDb.GetQueryMeasures ()
-                // коэффициенты для единиц измерения
-                , HandlerDb.GetQueryRatio ()
-            };
+        //    arRes = new string[]
+        //    {
+        //        //PERIOD
+        //        HandlerDb.GetQueryTimePeriods (m_strIdPeriods)
+        //        //TIMEZONE
+        //        , HandlerDb.GetQueryTimezones (m_strIdTimezones)
+        //        // список компонентов
+        //        , HandlerDb.GetQueryCompList ()
+        //        // параметры расчета
+        //        , HandlerDb.GetQueryParameters (Type)
+        //        //// настройки визуального отображения значений
+        //        //, @""
+        //        // режимы работы
+        //        , HandlerDb.GetQueryModeDev ()
+        //        //// единицы измерения
+        //        //, m_handlerDb.GetQueryMeasures ()
+        //        // коэффициенты для единиц измерения
+        //        , HandlerDb.GetQueryRatio ()
+        //    };
 
-            return arRes;
-        }        
+        //    return arRes;
+        //}        
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
         /// </summary>

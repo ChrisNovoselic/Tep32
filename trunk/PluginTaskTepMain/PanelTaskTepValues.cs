@@ -122,7 +122,7 @@ namespace PluginTaskTepMain
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
 
             //Заполнить элементы управления с компонентами станции
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMPONENT].Rows)
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows)
             {
                 id_comp = (Int16)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
@@ -1370,7 +1370,11 @@ namespace PluginTaskTepMain
                 ResumeLayout(false);
                 PerformLayout();
             }
-
+            /// <summary>
+            /// Инициализация размеров/стилей макета для размещения элементов управления
+            /// </summary>
+            /// <param name="cols">Количество столбцов в макете</param>
+            /// <param name="rows">Количество строк в макете</param>
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
             {
                 initializeLayoutStyleEvenly();

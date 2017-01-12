@@ -8,7 +8,7 @@ namespace TepCommon
     [Flags]
     public enum ID_DBTABLE : short { UNKNOWN = -1
         , TIME, TIMEZONE
-        , COMP_LIST
+        , COMP, COMP_LIST
         , MODE_DEV
         , RATIO
         , MEASURE

@@ -19,12 +19,11 @@ namespace PluginTaskReaktivka
             /// <summary>
             /// 
             /// </summary>
-            public enum INDEX_CONTROL_BASE
+            public enum INDEX_CONTROL
             {
                 UNKNOWN = -1,
                 BUTTON_SEND, BUTTON_SAVE, BUTTON_LOAD, BUTTON_EXPORT,
                 TXTBX_EMAIL,
-                CBX_PERIOD, CBX_TIMEZONE, HDTP_BEGIN, HDTP_END,
                 MENUITEM_UPDATE, MENUITEM_HISTORY,
                 CLBX_COMP_VISIBLED, CLBX_COMP_CALCULATED,
                 CHKBX_EDIT,
@@ -73,14 +72,18 @@ namespace PluginTaskReaktivka
             ///// 
             ///// </summary>
             //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
-
+            /// <summary>
+            /// Инициализация размеров/стилей макета для размещения элементов управления
+            /// </summary>
+            /// <param name="cols">Количество столбцов в макете</param>
+            /// <param name="rows">Количество строк в макете</param>
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
             {
                 initializeLayoutStyleEvenly();
             }
 
             public PanelManagementReaktivka()
-                : base(4, 3)
+                : base()
             {
                 InitializeComponents();
                 (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
@@ -219,19 +222,6 @@ namespace PluginTaskReaktivka
 
                 ResumeLayout(false);
                 PerformLayout();
-            }
-
-            /// <summary>
-            /// Обработчик события - изменение дата/время окончания периода
-            /// </summary>
-            /// <param name="obj">Составной объект - календарь</param>
-            /// <param name="ev">Аргумент события</param>
-            protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
-            {
-                m_bflgClear = true;
-                HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
-
-                DateTimeRangeValue_Changed?.Invoke(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
             }
 
             /// <summary>
