@@ -6,6 +6,7 @@ using System.Windows.Forms;
 
 using HClassLibrary;
 using TepCommon;
+using System.Drawing;
 
 namespace PluginTaskReaktivka
 {
@@ -30,40 +31,6 @@ namespace PluginTaskReaktivka
                 COUNT
             }
             /// <summary>
-            /// Класс аргумента для события - изменение выбора запрет/разрешение
-            ///  для компонента/параметра при участии_в_расчете/отображении
-            /// </summary>
-            public class ItemCheckedParametersEventArgs : EventArgs
-            {
-                /// <summary>
-                /// Индекс в списке идентификаторов
-                ///  для получения ключа в словаре со значениями
-                /// </summary>
-                public INDEX_ID m_indxIdDeny;
-                /// <summary>
-                /// Идентификатор в алгоритме расчета
-                /// </summary>
-                public int m_idItem;
-                /// <summary>
-                /// Состояние элемента, связанного с компонентом/параметром_расчета
-                /// </summary>
-                public CheckState m_newCheckState;
-
-                public ItemCheckedParametersEventArgs(int idItem, INDEX_ID indxIdDeny, CheckState newCheckState)
-                    : base()
-                {
-                    m_idItem = idItem;
-                    m_indxIdDeny = indxIdDeny;
-                    m_newCheckState = newCheckState;
-                }
-            }
-            /// <summary>
-            /// Тип обработчика события - изменение выбора запрет/разрешение
-            ///  для компонента/параметра при участии_в_расчете/отображении
-            /// </summary>
-            /// <param name="ev">Аргумент события</param>
-            public delegate void ItemCheckedParametersEventHandler(ItemCheckedParametersEventArgs ev);
-            /// <summary>
             /// Событие - изменение выбора запрет/разрешение
             ///  для компонента/параметра при участии_в_расчете/отображении
             /// </summary>
@@ -86,7 +53,6 @@ namespace PluginTaskReaktivka
                 : base()
             {
                 InitializeComponents();
-                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
             }
 
             private void InitializeComponents()
@@ -99,88 +65,36 @@ namespace PluginTaskReaktivka
                     , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
                                  //int posColdgvTEPValues = 6;
                 SuspendLayout();
-                posRow = 0;
-                //Период расчета - подпись
-                Label lblCalcPer = new Label();
-                lblCalcPer.Text = "Период расчета";
-                //Период расчета - значение
-                ComboBox cbxCalcPer = new ComboBox();
-                cbxCalcPer.Name = INDEX_CONTROL_BASE.CBX_PERIOD.ToString();
-                cbxCalcPer.DropDownStyle = ComboBoxStyle.DropDownList;
-                cbxCalcPer.Enabled = false;
-                //Часовой пояс расчета - подпись
-                Label lblCalcTime = new Label();
-                lblCalcTime.Text = "Часовой пояс расчета";
-                //Часовой пояс расчета - значение
-                ComboBox cbxCalcTime = new ComboBox();
-                cbxCalcTime.Name = INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString();
-                cbxCalcTime.DropDownStyle = ComboBoxStyle.DropDownList;
-                cbxCalcTime.Enabled = false;
-                //
-                TableLayoutPanel tlp = new TableLayoutPanel();
-                tlp.AutoSize = true;
-                tlp.AutoSizeMode = AutoSizeMode.GrowOnly;
-                tlp.Controls.Add(lblCalcPer, 0, 0);
-                tlp.Controls.Add(cbxCalcPer, 0, 1);
-                tlp.Controls.Add(lblCalcTime, 1, 0);
-                tlp.Controls.Add(cbxCalcTime, 1, 1);
-                Controls.Add(tlp, 0, posRow);
-                SetColumnSpan(tlp, 4); this.SetRowSpan(tlp, 1);
-                //
-                TableLayoutPanel tlpValue = new TableLayoutPanel();
-                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-                tlpValue.Dock = DockStyle.Fill;
-                //tlpValue.AutoSize = true;
-                //tlpValue.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                ////Дата/время начала периода расчета - подпись
-                Label lBeginCalcPer = new Label();
-                lBeginCalcPer.Dock = DockStyle.Bottom;
-                lBeginCalcPer.Text = @"Дата/время начала периода расчета:";
-                ////Дата/время начала периода расчета - значения
-                int cntDays = DateTime.DaysInMonth(s_dtDefaultAU.Year, s_dtDefaultAU.Month);
-                int today = s_dtDefaultAU.Day;
 
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(-(today - 1)), null);
-                ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
-                tlpValue.Controls.Add(lBeginCalcPer, 0, 0);
-                tlpValue.Controls.Add(ctrl, 0, 1);
-                //Дата/время  окончания периода расчета - подпись
-                Label lEndPer = new Label();
-                lEndPer.Dock = DockStyle.Top;
-                lEndPer.Text = @"Дата/время окончания периода расчета:";
-                //Дата/время  окончания периода расчета - значение
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(cntDays - today)
-                    , tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
-                ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
-                //              
-                tlpValue.Controls.Add(lEndPer, 0, 2);
-                tlpValue.Controls.Add(ctrl, 0, 3);
-                this.Controls.Add(tlpValue, 0, posRow = posRow + 1);
-                SetColumnSpan(tlpValue, 4); SetRowSpan(tlpValue, 1);
+                posRow = 0;
+                //Период расчета - подпись, значение                
+                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
+
+                //Период расчета - подпись, значение
+                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
+
+                //Дата/время начала периода расчета
+                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
+
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
                 ctrl = new DropDownButton();
-                ctrl.Name = INDEX_CONTROL_BASE.BUTTON_LOAD.ToString();
+                ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
                 ctrl.ContextMenuStrip = new ContextMenuStrip();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
-                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString();
+                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_UPDATE.ToString();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
-                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString();
+                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
                 ctrl.Dock = DockStyle.Top;
                 //Кнопка - сохранить
                 Button ctrlBsave = new Button();
-                ctrlBsave.Name = INDEX_CONTROL_BASE.BUTTON_SAVE.ToString();
+                ctrlBsave.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
                 ctrlBsave.Text = @"Сохранить";
                 ctrlBsave.Dock = DockStyle.Top;
                 //
                 Button ctrlExp = new Button();
-                ctrlExp.Name = INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString();
+                ctrlExp.Name = INDEX_CONTROL.BUTTON_EXPORT.ToString();
                 ctrlExp.Text = @"Экспорт";
                 ctrlExp.Dock = DockStyle.Top;
 
@@ -205,14 +119,14 @@ namespace PluginTaskReaktivka
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
                 //
                 ctrl = new CheckedListBoxTaskReaktivka();
-                ctrl.Name = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED.ToString();
+                ctrl.Name = INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString();
                 ctrl.Dock = DockStyle.Top;
                 (ctrl as CheckedListBoxTaskReaktivka).CheckOnClick = true;
                 Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 2);
                 //Признак Корректировка_включена/корректировка_отключена 
                 CheckBox cBox = new CheckBox();
-                cBox.Name = INDEX_CONTROL_BASE.CHKBX_EDIT.ToString();
+                cBox.Name = INDEX_CONTROL.CHKBX_EDIT.ToString();
                 cBox.Text = @"Корректировка значений разрешена";
                 cBox.Dock = DockStyle.Top;
                 cBox.Enabled = false;
@@ -222,46 +136,6 @@ namespace PluginTaskReaktivka
 
                 ResumeLayout(false);
                 PerformLayout();
-            }
-
-            /// <summary>
-            /// Установка периода
-            /// </summary>
-            /// <param name="idPeriod"></param>
-            public DateTimeRange SetPeriod(ID_PERIOD idPeriod)
-            {
-                DateTimeRange rangeRes = new DateTimeRange();
-
-                HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                    , hdtpEnd = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-
-                //Выполнить запрос на получение значений для заполнения 'DataGridView'
-                switch (idPeriod)
-                {
-                    case ID_PERIOD.HOUR:
-                        break;
-                    case ID_PERIOD.DAY:
-                        break;
-                    case ID_PERIOD.MONTH:
-                        hdtpBegin.Mode =
-                        hdtpEnd.Mode =
-                            HDateTimePicker.MODE.MONTH;
-                        hdtpBegin.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , 1
-                            , 0
-                            , 0
-                            , 0);
-                        break;
-                    case ID_PERIOD.YEAR:
-                        break;
-                    default:
-                        break;
-                }
-
-                rangeRes.Set(hdtpBegin.Value, hdtpEnd.Value);
-
-                return rangeRes;
             }
 
             /// <summary>
@@ -386,7 +260,7 @@ namespace PluginTaskReaktivka
             /// </summary>
             /// <param name="indxCtrl">Идентификатор элемента управления</param>
             /// <returns>элемент панели</returns>
-            protected Control find(INDEX_CONTROL_BASE indxCtrl)
+            protected Control find(INDEX_CONTROL indxCtrl)
             {
                 Control ctrlRes = null;
 
@@ -401,14 +275,14 @@ namespace PluginTaskReaktivka
             /// </summary>
             /// <param name="indxId"></param>
             /// <returns>индекс элемента панели</returns>
-            protected INDEX_CONTROL_BASE getIndexControlOfIndexID(INDEX_ID indxId)
+            protected INDEX_CONTROL getIndexControlOfIndexID(INDEX_ID indxId)
             {
-                INDEX_CONTROL_BASE indxRes = INDEX_CONTROL_BASE.UNKNOWN;
+                INDEX_CONTROL indxRes = INDEX_CONTROL.UNKNOWN;
 
                 switch (indxId)
                 {
                     case INDEX_ID.DENY_COMP_VISIBLED:
-                        indxRes = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED;
+                        indxRes = INDEX_CONTROL.CLBX_COMP_VISIBLED;
                         break;
                     default:
                         break;
@@ -420,11 +294,13 @@ namespace PluginTaskReaktivka
             /// <summary>
             /// Очистить
             /// </summary>
-            public void Clear()
+            public override void Clear()
             {
+                base.Clear();
+
                 INDEX_ID[] arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED };
 
-                ActivateCheckedHandler(false, arIndxIdToClear);
+                activateCheckedHandler(false, arIndxIdToClear);
 
                 Clear(arIndxIdToClear);
             }
@@ -453,7 +329,7 @@ namespace PluginTaskReaktivka
             /// </summary>
             /// <param name="bActive"></param>
             /// <param name="arIdToActivate"></param>
-            public void ActivateCheckedHandler(bool bActive, INDEX_ID[] arIdToActivate)
+            public void activateCheckedHandler(bool bActive, INDEX_ID[] arIdToActivate)
             {
                 for (int i = 0; i < arIdToActivate.Length; i++)
                     activateCheckedHandler(bActive, arIdToActivate[i]);
@@ -466,12 +342,12 @@ namespace PluginTaskReaktivka
             /// <param name="idToActivate"></param>
             protected virtual void activateCheckedHandler(bool bActive, INDEX_ID idToActivate)
             {
-                INDEX_CONTROL_BASE indxCtrl = INDEX_CONTROL_BASE.UNKNOWN;
+                INDEX_CONTROL indxCtrl = INDEX_CONTROL.UNKNOWN;
                 CheckedListBox clbx = null;
 
                 indxCtrl = getIndexControlOfIndexID(idToActivate);
 
-                if (!(indxCtrl == INDEX_CONTROL_BASE.UNKNOWN))
+                if (!(indxCtrl == INDEX_CONTROL.UNKNOWN))
                 {
                     clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
 
@@ -499,7 +375,7 @@ namespace PluginTaskReaktivka
             /// <returns>индекс</returns>
             protected INDEX_ID getIndexIdOfControl(Control ctrl)
             {
-                INDEX_CONTROL_BASE id = INDEX_CONTROL_BASE.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
+                INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
                 INDEX_ID indxRes = INDEX_ID.UNKNOWN;
 
                 try
@@ -509,8 +385,8 @@ namespace PluginTaskReaktivka
                     // , соответствующий изменившему состояние элементу 'CheckedListBox'
                     switch (id)
                     {
-                        case INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED:
-                            indxRes = id == INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
+                        case INDEX_CONTROL.CLBX_COMP_VISIBLED:
+                            indxRes = id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
                             break;
                         default:
                             break;
@@ -529,14 +405,14 @@ namespace PluginTaskReaktivka
             /// </summary>
             /// <param name="ctrl">контрол</param>
             /// <returns>имя индекса контрола на панели</returns>
-            protected INDEX_CONTROL_BASE getIndexControl(Control ctrl)
+            protected INDEX_CONTROL getIndexControl(Control ctrl)
             {
-                INDEX_CONTROL_BASE indxRes = INDEX_CONTROL_BASE.UNKNOWN;
+                INDEX_CONTROL indxRes = INDEX_CONTROL.UNKNOWN;
 
                 string strId = (ctrl as Control).Name;
 
-                if (strId.Equals(INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED.ToString()) == true)
-                    indxRes = INDEX_CONTROL_BASE.CLBX_COMP_VISIBLED;
+                if (strId.Equals(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString()) == true)
+                    indxRes = INDEX_CONTROL.CLBX_COMP_VISIBLED;
                 else
                     throw new Exception(@"PanelTaskReaktivka::getIndexControl () - не найден объект 'CheckedListBox'...");
 

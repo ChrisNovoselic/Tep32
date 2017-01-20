@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -58,16 +59,6 @@ namespace PluginTaskAutobook
             COUNT
         }
         /// <summary>
-        /// Перечисление - признак типа загруженных из БД значений
-        ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
-        /// </summary>
-        public enum INDEX_VIEW_VALUES : short
-        {
-            UNKNOWN = -1,
-            ARCHIVE, SOURCE,
-            COUNT
-        }
-        /// <summary>
         /// Набор элементов
         /// </summary>
         protected enum INDEX_CONTROL { UNKNOWN = -1, LABEL_DESC = 1, DGV_DATA = 3 }
@@ -84,10 +75,6 @@ namespace PluginTaskAutobook
             DENY_COMP_VISIBLED, //DENY_PARAMETER_VISIBLED // запрещенных для отображения
             COUNT
         }
-        /// <summary>
-        /// Значения параметров сессии
-        /// </summary>
-        protected HandlerDbTaskCalculate.SESSION Session { get { return HandlerDb._Session; } }
         /// <summary>
         /// 
         /// </summary>
@@ -116,7 +103,7 @@ namespace PluginTaskAutobook
         /// Метод для создания панели с активными объектами управления
         /// </summary>
         /// <returns>Панель управления</returns>
-        private PanelManagementAutobook createPanelManagement()
+        protected override PanelManagementTaskCalculate createPanelManagement()
         {
             return new PanelManagementAutobook();
         }
@@ -133,20 +120,16 @@ namespace PluginTaskAutobook
         /// </summary>
         protected ReportExcel m_rptExcel;
         /// <summary>
-        /// Панель на которой размещаются активные элементы управления
-        /// </summary>
-        private PanelManagementAutobook _panelManagement;
-        /// <summary>
         /// Создание панели управления
         /// </summary>
-        protected PanelManagementAutobook PanelManagementAB
+        protected PanelManagementAutobook PanelManagement
         {
             get
             {
                 if (_panelManagement == null)
                     _panelManagement = createPanelManagement();
 
-                return _panelManagement;
+                return _panelManagement as PanelManagementAutobook;
             }
         }
 
@@ -1742,23 +1725,17 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Панель элементов
         /// </summary>
-        protected class PanelManagementAutobook : HPanelCommon
+        protected class PanelManagementAutobook : PanelManagementTaskCalculate //HPanelCommon
         {
-            public enum INDEX_CONTROL_BASE
+            public enum INDEX_CONTROL
             {
                 UNKNOWN = -1,
                 BUTTON_SEND, BUTTON_SAVE, BUTTON_LOAD, BUTTON_EXPORT,
                 TXTBX_EMAIL, CALENDAR,
-                CBX_PERIOD, CBX_TIMEZONE,
-                HDTP_BEGIN, HDTP_END,
                 MENUITEM_UPDATE, MENUITEM_HISTORY,
                 CHKBX_EDIT,
                 COUNT
             }
-
-            public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
-
-            public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
             /// <summary>
             /// Инициализация размеров/стилей макета для размещения элементов управления
             /// </summary>
@@ -1770,13 +1747,12 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            /// Конструктор - основной (без параметров)
             /// </summary>
             public PanelManagementAutobook()
-                : base(4, 3)
+                : base() //4, 3
             {
                 InitializeComponents();
-                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
             }
 
             /// <summary>
@@ -1791,104 +1767,50 @@ namespace PluginTaskAutobook
                     , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
                 SuspendLayout();
                 posRow = 0;
-                //Период расчета - подпись
-                Label lblCalcPer = new Label();
-                lblCalcPer.Text = "Период расчета";
-                //Период расчета - значение
-                ComboBox cbxCalcPer = new ComboBox();
-                cbxCalcPer.Name = INDEX_CONTROL_BASE.CBX_PERIOD.ToString();
-                cbxCalcPer.DropDownStyle = ComboBoxStyle.DropDownList;
-                //Часовой пояс расчета - подпись
-                Label lblCalcTime = new Label();
-                lblCalcTime.Text = "Часовой пояс расчета";
-                //Часовой пояс расчета - значение
-                ComboBox cbxCalcTime = new ComboBox();
-                cbxCalcTime.Name = INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString();
-                cbxCalcTime.DropDownStyle = ComboBoxStyle.DropDownList;
-                cbxCalcTime.Enabled = false;
-                //
-                TableLayoutPanel tlp = new TableLayoutPanel();
-                tlp.AutoSize = true;
-                tlp.AutoSizeMode = AutoSizeMode.GrowOnly;
-                tlp.Controls.Add(lblCalcPer, 0, 0);
-                tlp.Controls.Add(cbxCalcPer, 0, 1);
-                tlp.Controls.Add(lblCalcTime, 1, 0);
-                tlp.Controls.Add(cbxCalcTime, 1, 1);
-                tlp.AutoSize = true;
-                tlp.Dock = DockStyle.Fill;
-                this.Controls.Add(tlp, 0, posRow);
-                SetColumnSpan(tlp, 4); this.SetRowSpan(tlp, 1);
-                //
-                TableLayoutPanel tlpValue = new TableLayoutPanel();
-                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(SizeType.Absolute, 35F));
-                tlpValue.Dock = DockStyle.Fill;
-                tlpValue.AutoSize = true;
-                //tlpValue.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                ////Дата/время начала периода расчета - подпись
-                Label lBeginCalcPer = new Label();
-                lBeginCalcPer.Dock = DockStyle.Bottom;
-                lBeginCalcPer.Text = @"Дата/время начала периода расчета:";
-                ////Дата/время начала периода расчета - значения
-                int cntDays = DateTime.DaysInMonth(s_dtDefaultAU.Year, s_dtDefaultAU.Month);
-                int today = s_dtDefaultAU.Day;
+                //Период расчета - подпись, значение                
+                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
 
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(-(today - 1)), null);
-                ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
-                tlpValue.Controls.Add(lBeginCalcPer, 0, 0);
-                tlpValue.Controls.Add(ctrl, 0, 1);
-                //Дата/время  окончания периода расчета - подпись
-                Label lEndPer = new Label();
-                lEndPer.Dock = DockStyle.Top;
-                lEndPer.Text = @"Дата/время окончания периода расчета:";
-                //Дата/время  окончания периода расчета - значение
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(cntDays - today)
-                    , tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
-                ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
-                ctrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-                //              
-                tlpValue.Controls.Add(lEndPer, 0, 2);
-                tlpValue.Controls.Add(ctrl, 0, 3);
-                Controls.Add(tlpValue, 0, posRow = posRow + 1);
-                this.SetColumnSpan(tlpValue, 4); this.SetRowSpan(tlpValue, 1);
+                //Период расчета - подпись, значение
+                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
+
+                //Дата/время начала периода расчета
+                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
+
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
                 ctrl = new DropDownButton();
-                ctrl.Name = INDEX_CONTROL_BASE.BUTTON_LOAD.ToString();
+                ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
                 ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
-                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString();
+                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_UPDATE.ToString();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
-                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString();
+                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
                 ctrl.Dock = DockStyle.Top;
                 //Кнопка - Отправить
                 Button ctrlBSend = new Button();
-                ctrlBSend.Name = INDEX_CONTROL_BASE.BUTTON_SEND.ToString();
+                ctrlBSend.Name = INDEX_CONTROL.BUTTON_SEND.ToString();
                 ctrlBSend.Text = @"Отправить";
                 ctrlBSend.Dock = DockStyle.Top;
                 //ctrlBSend.Enabled = false;
                 //Кнопка - сохранить
                 Button ctrlBsave = new Button();
-                ctrlBsave.Name = INDEX_CONTROL_BASE.BUTTON_SAVE.ToString();
+                ctrlBsave.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
                 ctrlBsave.Text = @"Сохранить";
                 ctrlBsave.Dock = DockStyle.Top;
                 //Кнопка - Экспорт
                 Button ctrlExp = new Button();
-                ctrlExp.Name = INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString();
+                ctrlExp.Name = INDEX_CONTROL.BUTTON_EXPORT.ToString();
                 ctrlExp.Text = @"Экспорт";
                 ctrlExp.Dock = DockStyle.Top;
                 //Поле с почтой
                 TextBox ctrlTxt = new TextBox();
-                ctrlTxt.Name = INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString();
+                ctrlTxt.Name = INDEX_CONTROL.TXTBX_EMAIL.ToString();
                 //ctrlTxt.Text = @"Pasternak_AS@sibeco.su";
                 ctrlTxt.Dock = DockStyle.Top;
                 //Календарь
                 DateTimePicker dtPickerCalendar = new DateTimePicker();
-                dtPickerCalendar.Name = INDEX_CONTROL_BASE.CALENDAR.ToString();
+                dtPickerCalendar.Name = INDEX_CONTROL.CALENDAR.ToString();
                 dtPickerCalendar.Dock = DockStyle.Fill;
                 dtPickerCalendar.DropDownAlign = LeftRightAlignment.Right;
                 dtPickerCalendar.Format = DateTimePickerFormat.Custom;
@@ -1911,7 +1833,7 @@ namespace PluginTaskAutobook
                 SetColumnSpan(tlpButton, 4); SetRowSpan(tlpButton, 3);
                 //Признак Корректировка_включена/корректировка_отключена 
                 CheckBox cBox = new CheckBox();
-                cBox.Name = INDEX_CONTROL_BASE.CHKBX_EDIT.ToString();
+                cBox.Name = INDEX_CONTROL.CHKBX_EDIT.ToString();
                 cBox.Text = @"Корректировка значений разрешена";
                 cBox.Dock = DockStyle.Top;
                 cBox.Enabled = false;
@@ -1933,79 +1855,6 @@ namespace PluginTaskAutobook
                 HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
 
                 DateTimeRangeValue_Changed?.Invoke(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
-            }
-
-            /// <summary>
-            /// Установка периода
-            /// </summary>
-            /// <param name="idPeriod"></param>
-            public void SetPeriod(ID_PERIOD idPeriod)
-            {
-                HDateTimePicker hdtpBtimePer = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                , hdtpEndtimePer = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-
-                int cntDays = DateTime.DaysInMonth(hdtpBtimePer.Value.Year,
-                   hdtpBtimePer.Value.Month);
-                int today = hdtpBtimePer.Value.Day;
-
-                //Выполнить запрос на получение значений для заполнения 'DataGridView'
-                switch (idPeriod)
-                {
-                    case ID_PERIOD.HOUR:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , DateTime.Now.Day
-                            , DateTime.Now.Hour
-                            , 0
-                            , 0).AddHours(-1);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddHours(1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.HOUR;
-                        break;
-                    //case ID_PERIOD.SHIFTS:
-                    //    hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
-                    //    hdtpEnd.Mode = HDateTimePicker.MODE.HOUR;
-                    //    break;
-                    case ID_PERIOD.DAY:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , DateTime.Now.Day
-                            , 0
-                            , 0
-                            , 0);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddDays(1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.DAY;
-                        break;
-                    case ID_PERIOD.MONTH:
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.MONTH;
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , 1
-                            , 0
-                            , 0
-                            , 0);
-                        //hdtpEndtimePer.Value = hdtpBtimePer.Value.AddDays(cntDays - 1);                        
-                        break;
-                    case ID_PERIOD.YEAR:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , 1
-                            , 1
-                            , 0
-                            , 0
-                            , 0).AddYears(-1);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddYears(1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.YEAR;
-                        break;
-                    default:
-                        break;
-                }
             }
         }
 
@@ -2040,29 +1889,29 @@ namespace PluginTaskAutobook
             Controls.Add(m_dgvAB, 4, posRow);
             SetColumnSpan(m_dgvAB, 9); SetRowSpan(m_dgvAB, 10);
             //
-            Controls.Add(PanelManagementAB, 0, posRow);
-            SetColumnSpan(PanelManagementAB, posColdgvTEPValues);
-            SetRowSpan(PanelManagementAB, RowCount);
+            Controls.Add(PanelManagement, 0, posRow);
+            SetColumnSpan(PanelManagement, posColdgvTEPValues);
+            SetRowSpan(PanelManagement, RowCount);
 
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 
             ResumeLayout(false);
             PerformLayout();
 
-            Button btn = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_LOAD.ToString(), true)[0] as Button);
+            Button btn = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button);
             btn.Click += // действие по умолчанию
                 new EventHandler(HPanelTepCommon_btnUpdate_Click);
-            (btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
+            (btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(HPanelTepCommon_btnUpdate_Click);
-            (btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(HPanelAutobook_btnHistory_Click);
-            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
+            (btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
+                new EventHandler(btnHistory_OnClick);
+            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
                 new EventHandler(HPanelTepCommon_btnSave_Click);
-            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SEND.ToString(), true)[0] as Button).Click +=
-                new EventHandler(PanelTaskAutobookMonthValue_btnsend_Click);
-            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
-                 new EventHandler(PanelTaskAutobookMonthValues_btnexport_Click);
-            //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CALENDAR.ToString(), true)[0] as Button).
+            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.BUTTON_SEND.ToString(), true)[0] as Button).Click +=
+                new EventHandler(btnSend_OnClick);
+            (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
+                 new EventHandler(btnExport_OnClick);
+            //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CALENDAR.ToString(), true)[0] as Button).
 
             m_dgvAB.CellParsing += dgvAB_CellParsing;
             //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
@@ -2087,11 +1936,19 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
+        /// Обработчик события при изменении периода расчета
+        /// </summary>
+        /// <param name="obj">Аргумент события</param>
+        protected override void panelManagement_OnEventBaseValueChanged(object obj)
+        {
+        }
+
+        /// <summary>
         /// обработка ЭКСПОРТА(временно)
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие</param>
         /// <param name="e">данные события</param>
-        void PanelTaskAutobookMonthValues_btnexport_Click(object sender, EventArgs e)
+        private void btnExport_OnClick(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();
             m_rptExcel.CreateExcel(m_dgvAB, Session.m_rangeDatetime);
@@ -2102,12 +1959,12 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие</param>
         /// <param name="e">данные события</param>
-        void PanelTaskAutobookMonthValue_btnsend_Click(object sender, EventArgs e)
+        private void btnSend_OnClick(object sender, EventArgs e)
         {
             m_rptsNSS = new ReportsToNSS();
 
-            string toSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
-            DateTime dtSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CALENDAR.ToString(), true)[0] as DateTimePicker).Value;
+            string toSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
+            DateTime dtSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CALENDAR.ToString(), true)[0] as DateTimePicker).Value;
             m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = m_dgvAB.FillTableValueDay();
             //
             m_rptsNSS.SendMailToNSS(m_TableEdit, dtSend, toSend);
@@ -2122,7 +1979,7 @@ namespace PluginTaskAutobook
         /// <param name="e">данные события</param>
         void dgvAB_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
-            int numMonth = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month
+            int numMonth = PanelManagement.DatetimeRange.Begin.Month
                 , day = m_dgvAB.Rows.Count;
             DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
@@ -2198,7 +2055,7 @@ namespace PluginTaskAutobook
                     //, получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
                         , CountBasePeriod
-                        , m_dictTableDictPrj[ID_DBTABLE.PARAMETER]
+                        , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                         , out err, out strErr);
@@ -2396,7 +2253,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        private void HPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
+        private void btnHistory_OnClick(object obj, EventArgs ev)
         {
             try
             {
@@ -2508,14 +2365,13 @@ namespace PluginTaskAutobook
                         INDEX_ID.DENY_COMP_VISIBLED
                 };
 
-            m_dictTableDictPrj = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
+            m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
             int role = HTepUsers.Role;
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
-                switch (id)
-                {
+                switch (id) {
                     case INDEX_ID.PERIOD:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
+                        m_arListIds[(int)id] = new List<int> { /*(int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY,*/ (int)ID_PERIOD.MONTH };
                         break;
                     case INDEX_ID.TIMEZONE:
                         m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
@@ -2537,8 +2393,7 @@ namespace PluginTaskAutobook
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
             Array namePut = Enum.GetValues(typeof(INDEX_GTP));
 
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows)
-            {
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows) {
                 id_comp = (int)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
 
@@ -2546,132 +2401,56 @@ namespace PluginTaskAutobook
                 tCount++;
             }
             //возможность_редактирвоания_значений
-            try
-            {
+            try {
                 if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
-                {
                     if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
-                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
                     else
-                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-                }
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
                 else
-                    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-            }
-            catch (Exception e)
-            { }
-            try
-            {
-                if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
-                {
-                    if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
-                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
-                    else
-                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-                }
-                else
-                    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-
-            }
-            catch (Exception exp)
-            {
-                MessageBox.Show(exp.ToString());
+                    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+            } catch (Exception e) {
             }
             //активность_кнопки_сохранения
-            try
-            {
+            try {
                 if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
-                {
                     if (int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE)
-                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = true;
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = true;
                     else
-                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-                }
+                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
                 else
-                    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-            }
-            catch (Exception exp)
-            {
+                    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+            } catch (Exception exp) {
                 Logging.Logg().Exception(exp, @"PanelTaskAutoBook::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 MessageBox.Show(exp.ToString());
             }
 
-
-            try
-            {
-                if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
-                {
-                    if (int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE)
-                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = true;
-                    else
-                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-                }
-                else
-                    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-
+            try {
                 m_dgvAB.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
                 if (err == 0)
                 {
                     //Заполнить элемент управления с часовыми поясами
-                    ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
-                    foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Rows)
-                        (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
-                    // порядок именно такой (установить 0, назначить обработчик)
-                    //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
-                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
+                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]));                    
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
-                    ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
+                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.PERIOD], (ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()])));
+                    Session.SetCurrentPeriod(PanelManagement.IdPeriod);
+                    PanelManagement.SetModeDatetimeRange();
 
-                    foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.PERIOD].Rows)
-                        (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
-
-                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
-                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
-                    (PanelManagementAB as PanelManagementAutobook).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
-                    (ctrl as ComboBox).Enabled = false;
-
-                    ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL.ToString(), true)[0];
+                    ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0];
                     //из profiles
-                    key = ((int)PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL).ToString();
+                    key = ((int)PanelManagementAutobook.INDEX_CONTROL.TXTBX_EMAIL).ToString();
                     if (m_dictProfile.Objects.Keys.Contains(key) == true)
                         ctrl.Text = m_dictProfile.Objects[key].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.MAIL).ToString()];
                     else
                         Logging.Logg().Warning(string.Format(@"PanelTaskAutoBook::initialize () - в словаре 'm_dictProfile' не определен ключ [{0:1}]..."
-                            , key, PanelManagementAutobook.INDEX_CONTROL_BASE.TXTBX_EMAIL)
+                            , key, PanelManagementAutobook.INDEX_CONTROL.TXTBX_EMAIL)
                             , Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 else
-                    switch ((INDEX_TABLE_DICTPRJ)i)
-                    {
-                        case INDEX_TABLE_DICTPRJ.PERIOD:
-                            errMsg = @"Получение интервалов времени для периода расчета";
-                            break;
-                        case INDEX_TABLE_DICTPRJ.TIMEZONE:
-                            errMsg = @"Получение списка часовых поясов";
-                            break;
-                        case INDEX_TABLE_DICTPRJ.COMPONENT:
-                            errMsg = @"Получение списка компонентов станции";
-                            break;
-                        case INDEX_TABLE_DICTPRJ.PARAMETER:
-                            errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
-                            break;
-                        //case INDEX_TABLE_DICTPRJ.MODE_DEV:
-                        //    errMsg = @"Получение идентификаторов режимов работы оборудования";
-                        //    break;
-                        //case INDEX_TABLE_DICTPRJ.MEASURE:
-                        //    errMsg = @"Получение информации по единицам измерения";
-                        //    break;
-                        default:
-                            errMsg = @"Неизвестная ошибка";
-                            break;
-                    }
-            }
-            catch (Exception e)
-            {
+                    Logging.Logg().Error(MethodBase.GetCurrentMethod(), errMsg, Logging.INDEX_MESSAGE.NOT_SET);
+            } catch (Exception e) {
                 Logging.Logg().Exception(e, @"PanelTaskAutobookMonthVakues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
@@ -2813,41 +2592,19 @@ namespace PluginTaskAutobook
         /// <summary>
         /// очистка грида
         /// </summary>
-        /// <param name="iCtrl"></param>
         /// <param name="bClose"></param>
-        protected void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
+        protected override void clear(bool bClose = false)
         {
-            ComboBox cbx = null;
-            INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
-
-            deleteSession();
             //??? повторная проверка
             if (bClose == true)
             {
-                if (!(m_dictTableDictPrj == null))
-                    for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-                    {
-                        if (!(m_dictTableDictPrj[i] == null))
-                        {
-                            m_dictTableDictPrj[i].Clear();
-                            m_dictTableDictPrj[i] = null;
-                        }
-                    }
-
-                cbx = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
-                cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
-                cbx.Items.Clear();
-
-                cbx = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
-                cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
-                cbx.Items.Clear();
-
                 m_dgvAB.ClearRows();
                 //dgvAB.ClearColumns();
-            }
-            else
+            } else
                 // очистить содержание представления
                 m_dgvAB.ClearValues();
+
+            base.clear(bClose);
         }
 
         /// <summary>
@@ -2870,11 +2627,11 @@ namespace PluginTaskAutobook
         protected virtual void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
         {
             //Установить новое значение для текущего периода
-            Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][(Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox).SelectedIndex]);
+            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
             //Отменить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(false);
             //Установить новые режимы для "календарей"
-            (PanelManagementAB as PanelManagementAutobook).SetPeriod(Session.m_currIdPeriod);
+            PanelManagement.SetModeDatetimeRange();
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
 
@@ -2888,12 +2645,12 @@ namespace PluginTaskAutobook
         /// <param name="active"></param>
         protected void activateDateTimeRangeValue_OnChanged(bool active)
         {
-            if (!(PanelManagementAB == null))
+            if (!(PanelManagement == null))
                 if (active == true)
-                    PanelManagementAB.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
+                    PanelManagement.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
                 else
                     if (active == false)
-                    PanelManagementAB.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+                    PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
                 else
                     throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
@@ -2944,7 +2701,7 @@ namespace PluginTaskAutobook
             Control ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
 
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(
-                GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value), out err);
+                GetNameTableOut(PanelManagement.DatetimeRange.Begin), out err);
 
             m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
             HandlerDb.SaveResOut(m_TableOrigin, m_TableEdit, (ctrl as ComboBox).SelectedIndex, out err);
@@ -2987,7 +2744,7 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// Получение имени таблицы вх.зн. в БД
+        /// ??? Получение имени таблицы вх.зн. в БД
         /// </summary>
         /// <param name="dtInsert">дата</param>
         /// <returns>имя таблицы</returns>
@@ -2998,7 +2755,7 @@ namespace PluginTaskAutobook
             if (dtInsert == null)
                 throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
 
-            strRes = HandlerDbValues.s_dictDbTables[(int)ID_DBTABLE.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+            strRes = HandlerDbValues.s_dictDbTables[ID_DBTABLE.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
         }
@@ -3013,7 +2770,7 @@ namespace PluginTaskAutobook
             //
             sortingDataToTable(HandlerDb.GetDataOutval(HandlerDb.getDateTimeRangeExtremeVal(), out err)
                 , m_TableEdit
-                , GetNameTableOut((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value)
+                , GetNameTableOut(PanelManagement.DatetimeRange.Begin)
                 , @""
                 , out err);
         }

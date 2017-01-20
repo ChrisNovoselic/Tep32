@@ -150,12 +150,9 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
         /// </summary>
-        /// <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
-        ///  для возвращения предыдущего значения, при отказе пользователя от очистки</param>
         /// <param name="bClose">Признак полной/частичной очистки</param>
         protected override void clear(bool bClose = false)
         {
-            // в базовом классе 'indxCtrl' все равно не известен
             base.clear(bClose);
 
             if (bClose == true)
@@ -195,7 +192,7 @@ namespace PluginTaskTepMain
 
         private void btnImport_Click(object sender, EventArgs e)
         {
-            Session.m_LoadValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE_IMPORT;
+            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE_IMPORT;
 
             onButtonLoadClick();            
         }
@@ -247,7 +244,7 @@ namespace PluginTaskTepMain
                     // создать копии для возможности сохранения изменений
                     setValues();
                     // отобразить значения
-                    m_dgvValues.ShowValues(m_TableEdit, m_dictTableDictPrj[ID_DBTABLE.PARAMETER]);
+                    m_dgvValues.ShowValues(m_TableEdit, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]);
                 }
                 else
                 {
@@ -273,7 +270,7 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            Session.m_LoadValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE;
+            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE;
 
             onButtonLoadClick();
         }
@@ -285,7 +282,7 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
-            Session.m_LoadValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.ARCHIVE;
+            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.ARCHIVE;
 
             onButtonLoadClick();
         }
@@ -361,7 +358,7 @@ namespace PluginTaskTepMain
             {
                 List<DataRow> listRes;
 
-                listRes = m_dictTableDictPrj[ID_DBTABLE.PARAMETER].Select(/*@"ID_TIME=" + CurrIdPeriod*/).ToList<DataRow>();
+                listRes = m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select(/*@"ID_TIME=" + CurrIdPeriod*/).ToList<DataRow>();
                 listRes.Sort(compareNAlg);
 
                 return listRes;
@@ -496,13 +493,13 @@ namespace PluginTaskTepMain
             //            throw new Exception(@"PanelTaskTepValues::panelManagement_ItemCheck () - ...");
 
             //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
-            if (ev.m_newCheckState == CheckState.Unchecked)
+            if (ev.NewCheckState == CheckState.Unchecked)
                 if (m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0)
                     m_arListIds[(int)ev.m_indxIdDeny].Add(idItem);
                 else
                     ; //throw new Exception (@"");
             else
-                if (ev.m_newCheckState == CheckState.Checked)
+                if (ev.NewCheckState == CheckState.Checked)
                     if (!(m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0))
                         m_arListIds[(int)ev.m_indxIdDeny].Remove(idItem);
                     else
@@ -524,7 +521,7 @@ namespace PluginTaskTepMain
 
         protected void m_dgvValues_SelectionChanged(object sender, EventArgs ev)
         {
-            DataTable inalg = m_dictTableDictPrj[ID_DBTABLE.PARAMETER];
+            DataTable inalg = m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER];
             if (inalg != null)
                 foreach (DataRow r in inalg.Rows)
                     if ((m_dgvValues.SelectedCells.Count == 1)
@@ -932,8 +929,8 @@ namespace PluginTaskTepMain
                 int indx = -1
                     , cIndx = -1
                     , rKey = -1;
-                bool bItemChecked = item.m_newCheckState == CheckState.Checked ? true :
-                    item.m_newCheckState == CheckState.Unchecked ? false :
+                bool bItemChecked = item.NewCheckState == CheckState.Checked ? true :
+                    item.NewCheckState == CheckState.Unchecked ? false :
                         false;
 
                 //Поиск индекса элемента отображения
@@ -1173,70 +1170,8 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected class PanelManagementTaskTepValues : PanelManagementTaskCalculate
+        protected class PanelManagementTaskTepValues : HPanelTepCommon.PanelManagementTaskCalculate
         {
-            ///// <summary>
-            ///// Структура для хранения координат элемента расчета
-            ///// </summary>
-            //public struct ADDRESS_CALC
-            //{
-            //    public ADDRESS_CALC(ADDRESS_CALC src)
-            //    {
-            //        m_idItem = src.m_idItem;
-            //        m_indxIdDeny = src.m_indxIdDeny;
-            //    }
-            //    ///// <summary>
-            //    ///// Идентификатор компонента ТЭЦ
-            //    ///// </summary>
-            //    //public int m_idComp;
-            //    /// <summary>
-            //    /// Идентификатор в алгоритме расчета
-            //    /// </summary>
-            //    public int m_idItem;
-            //    ///// <summary>
-            //    ///// Идентификатор в алгоритме расчета для компонента ТЭЦ
-            //    ///// </summary>
-            //    //public int m_idPut;
-            //    /// <summary>
-            //    /// Индекс типа идентификаторов
-            //    /// </summary>
-            //    public INDEX_ID m_indxIdDeny;
-            //}
-            /// <summary>
-            /// Класс аргумента для события - изменение выбора запрет/разрешение
-            ///  для компонента/параметра при участии_в_расчете/отображении
-            /// </summary>
-            public class ItemCheckedParametersEventArgs : EventArgs
-            {
-                /// <summary>
-                /// Индекс в списке идентификаторов
-                ///  для получения ключа в словаре со значениями
-                /// </summary>
-                public INDEX_ID m_indxIdDeny;
-                /// <summary>
-                /// Идентификатор в алгоритме расчета
-                /// </summary>
-                public int m_idItem;
-                /// <summary>
-                /// Состояние элемента, связанного с компонентом/параметром_расчета
-                /// </summary>
-                public CheckState m_newCheckState;
-
-                public ItemCheckedParametersEventArgs(int idItem, INDEX_ID indxIdDeny, CheckState newCheckState)
-                    : base()
-                {
-                    m_idItem = idItem;
-                    m_indxIdDeny = indxIdDeny;
-                    m_newCheckState = newCheckState;
-                }
-            }
-
-            /// <summary>
-            /// Тип обработчика события - изменение выбора запрет/разрешение
-            ///  для компонента/параметра при участии_в_расчете/отображении
-            /// </summary>
-            /// <param name="ev">Аргумент события</param>
-            public delegate void ItemCheckedParametersEventHandler(ItemCheckedParametersEventArgs ev);
             /// <summary>
             /// Событие - изменение выбора запрет/разрешение
             ///  для компонента/параметра при участии_в_расчете/отображении
@@ -1421,8 +1356,10 @@ namespace PluginTaskTepMain
             /// <summary>
             /// Очистить
             /// </summary>
-            public void Clear()
+            public override void Clear()
             {
+                base.Clear();
+
                 INDEX_ID[] arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_COMP_CALCULATED, INDEX_ID.DENY_COMP_VISIBLED };
 
                 ActivateCheckedHandler(false, arIndxIdToClear);

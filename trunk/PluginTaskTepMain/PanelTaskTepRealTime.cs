@@ -164,7 +164,7 @@ namespace PluginTaskTepMain
             return new PanelManagementTaskTepRealTime ();
         }
 
-        private class PanelManagementTaskTepRealTime : PanelManagementTaskCalculate
+        private class PanelManagementTaskTepRealTime : HPanelTepCommon.PanelManagementTaskCalculate
         {
             public PanelManagementTaskTepRealTime()
                 : base()
@@ -181,10 +181,10 @@ namespace PluginTaskTepMain
                 SuspendLayout();
 
                 posRow = 0;
-                //Период расчета - значение
+                //Период расчета - подпись, значение
                 SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
 
-                //Период расчета - значение
+                //Период расчета - подпись, значение
                 SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
 
                 //Расчет - выполнить

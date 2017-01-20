@@ -12,6 +12,7 @@ using TepCommon;
 using InterfacePlugIn;
 using System.Drawing;
 using System.Data;
+using System.Reflection;
 
 namespace PluginTaskBalTeplo
 {
@@ -92,13 +93,9 @@ namespace PluginTaskBalTeplo
             ID_CON = 10
         }
         /// <summary>
-        /// Значения параметров сессии
-        /// </summary>
-        protected TepCommon.HandlerDbTaskCalculate.SESSION Session { get { return HandlerDb._Session; } }
-        /// <summary>
         /// 
         /// </summary>
-        protected TaskBalTeploCalculate HandlerDb { get { return m_handlerDb as TaskBalTeploCalculate; } }
+        protected HandlerDbTaskBalTeploCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskBalTeploCalculate; } }
         /// <summary>
         /// Массив списков параметров
         /// </summary>
@@ -123,7 +120,7 @@ namespace PluginTaskBalTeplo
         /// Метод для создания панели с активными объектами управления
         /// </summary>
         /// <returns>Панель управления</returns>
-        private PanelManagementBalTeplo createPanelManagement()
+        protected override PanelManagementTaskCalculate createPanelManagement()
         {
             return new PanelManagementBalTeplo();
         }
@@ -137,7 +134,7 @@ namespace PluginTaskBalTeplo
             dgvPromPlozsh,
             dgvParam;
         /// <summary>
-        /// 
+        /// ???
         /// </summary>
         protected ReportsToNSS rptsNSS = new ReportsToNSS();
         /// <summary>
@@ -145,7 +142,6 @@ namespace PluginTaskBalTeplo
         /// </summary>
         protected ReportExcel rptExcel = new ReportExcel();
 
-        private PanelManagementBalTeplo _panelManagement;
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
@@ -158,7 +154,7 @@ namespace PluginTaskBalTeplo
                 else
                     ;
 
-                return _panelManagement;
+                return _panelManagement as PanelManagementBalTeplo;
             }
         }
 
@@ -169,7 +165,7 @@ namespace PluginTaskBalTeplo
 
         protected override HandlerDbValues createHandlerDb()
         {
-            return new TaskBalTeploCalculate();
+            return new HandlerDbTaskBalTeploCalculate();
         }
 
         /// <summary>
@@ -406,9 +402,9 @@ namespace PluginTaskBalTeplo
                     if (col.Index != 0)
                         foreach (DataGridViewRow row in Rows)
                         {
-                            DataRow[] row_comp = dict_tb_param_in[ID_DBTABLE.PARAMETER].Select("N_ALG="
+                            DataRow[] row_comp = dict_tb_param_in[ID_DBTABLE.IN_PARAMETER].Select("N_ALG="
                                 + col.m_N_ALG
-                                + " and ID_COMP=" + row.HeaderCell.Value.ToString());
+                                + " AND ID_COMP=" + row.HeaderCell.Value.ToString());
 
                             if (col.m_bInPut == true)
                             {
@@ -423,7 +419,7 @@ namespace PluginTaskBalTeplo
                             }
                             else
                             {
-                                row_comp = dict_tb_param_in[ID_DBTABLE.PARAMETER_OUT].Select("N_ALG="
+                                row_comp = dict_tb_param_in[ID_DBTABLE.OUT_PARAMETER].Select("N_ALG="
                                     + col.m_N_ALG.ToString()
                                     + " and ID_COMP=" + row.HeaderCell.Value.ToString());
                                 if (row_comp.Length > 0)
@@ -1239,19 +1235,15 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// Панель элементов
         /// </summary>
-        protected class PanelManagementBalTeplo : HPanelCommon
+        protected class PanelManagementBalTeplo : PanelManagementTaskCalculate //HPanelCommon
         {
-            public enum INDEX_CONTROL_BASE
+            public enum INDEX_CONTROL
             {
                 UNKNOWN = -1
                     , BUTTON_SEND, BUTTON_SAVE,
                 BUTTON_LOAD,
                 BUTTON_EXPORT,
                 TXTBX_EMAIL,
-                CBX_PERIOD,
-                CBX_TIMEZONE,
-                HDTP_BEGIN,
-                HDTP_END,
                 MENUITEM_UPDATE,
                 MENUITEM_HISTORY,
                 RADIO_BLOCK,
@@ -1262,9 +1254,6 @@ namespace PluginTaskBalTeplo
 
             public enum TypeRadioBtn { Block, Teplo, PromPlozsh };
 
-            public delegate void DateTimeRangeValueChangedEventArgs(DateTime dtBegin, DateTime dtEnd);
-
-            public /*event */DateTimeRangeValueChangedEventArgs DateTimeRangeValue_Changed;
             /// <summary>
             /// Инициализация размеров/стилей макета для размещения элементов управления
             /// </summary>
@@ -1276,13 +1265,13 @@ namespace PluginTaskBalTeplo
             }
 
             public PanelManagementBalTeplo()
-                : base(6, 8)
+                : base() //6, 8
             {
                 InitializeComponents();
-                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
-                (Controls.Find(INDEX_CONTROL_BASE.RADIO_BLOCK.ToString(), true)[0] as RadioButton_BalTask).CheckedChanged += new EventHandler(CheckedChangedRadioBtn);
-                (Controls.Find(INDEX_CONTROL_BASE.RADIO_TEPLO.ToString(), true)[0] as RadioButton_BalTask).CheckedChanged += new EventHandler(CheckedChangedRadioBtn);
-                (Controls.Find(INDEX_CONTROL_BASE.RADIO_PROM_PLOZSH.ToString(), true)[0] as RadioButton_BalTask).CheckedChanged += new EventHandler(CheckedChangedRadioBtn);
+
+                (Controls.Find(INDEX_CONTROL.RADIO_BLOCK.ToString(), true)[0] as RadioButton_BalTask).CheckedChanged += new EventHandler(CheckedChangedRadioBtn);
+                (Controls.Find(INDEX_CONTROL.RADIO_TEPLO.ToString(), true)[0] as RadioButton_BalTask).CheckedChanged += new EventHandler(CheckedChangedRadioBtn);
+                (Controls.Find(INDEX_CONTROL.RADIO_PROM_PLOZSH.ToString(), true)[0] as RadioButton_BalTask).CheckedChanged += new EventHandler(CheckedChangedRadioBtn);
 
             }
 
@@ -1295,92 +1284,44 @@ namespace PluginTaskBalTeplo
                     , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
                 //int posColdgvTEPValues = 6;
                 SuspendLayout();
+
                 posRow = 0;
-                //Период расчета - подпись
-                Label lblCalcPer = new Label();
-                lblCalcPer.Text = "Период расчета";
-                //Период расчета - значение
-                ComboBox cbxCalcPer = new ComboBox();
-                cbxCalcPer.Name = INDEX_CONTROL_BASE.CBX_PERIOD.ToString();
-                cbxCalcPer.DropDownStyle = ComboBoxStyle.DropDownList;
-                //Часовой пояс расчета - подпись
-                Label lblCalcTime = new Label();
-                lblCalcTime.Text = "Часовой пояс расчета";
-                //Часовой пояс расчета - значение
-                ComboBox cbxCalcTime = new ComboBox();
-                cbxCalcTime.Name = INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString();
-                cbxCalcTime.DropDownStyle = ComboBoxStyle.DropDownList;
-                cbxCalcTime.Enabled = false;
-                //
-                TableLayoutPanel tlp = new TableLayoutPanel();
-                tlp.AutoSize = true;
-                tlp.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                tlp.Controls.Add(lblCalcPer, 0, 0);
-                tlp.Controls.Add(cbxCalcPer, 0, 1);
-                tlp.Controls.Add(lblCalcTime, 1, 0);
-                tlp.Controls.Add(cbxCalcTime, 1, 1);
-                this.Controls.Add(tlp, 0, posRow);
-                this.SetColumnSpan(tlp, 4); this.SetRowSpan(tlp, 1);
-                //
-                TableLayoutPanel tlpValue = new TableLayoutPanel();
-                //tlpValue.ColumnStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-                tlpValue.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-                tlpValue.Dock = DockStyle.Fill;
-                tlpValue.AutoSize = true;
-                tlpValue.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                ////Дата/время начала периода расчета - подпись
-                Label lBeginCalcPer = new Label();
-                lBeginCalcPer.Dock = DockStyle.Bottom;
-                lBeginCalcPer.Text = @"Дата/время начала периода расчета:";
-                ////Дата/время начала периода расчета - значения
-                ctrl = new HDateTimePicker(s_dtDefaultAU, null);
-                ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
-                tlpValue.Controls.Add(lBeginCalcPer, 0, 0);
-                tlpValue.Controls.Add(ctrl, 0, 1);
-                //Дата/время  окончания периода расчета - подпись
-                Label lEndPer = new Label();
-                lEndPer.Dock = DockStyle.Top;
-                lEndPer.Text = @"Дата/время  окончания периода расчета:";
-                //Дата/время  окончания периода расчета - значение
-                ctrl = new HDateTimePicker(s_dtDefaultAU.AddDays(1)
-                    , tlpValue.Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
-                ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
-                //              
-                tlpValue.Controls.Add(lEndPer, 0, 2);
-                tlpValue.Controls.Add(ctrl, 0, 3);
-                this.Controls.Add(tlpValue, 0, posRow = posRow + 1);
-                this.SetColumnSpan(tlpValue, 4); this.SetRowSpan(tlpValue, 1);
+                //Период расчета
+                //Период расчета - подпись, значение
+                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
+
+                //Период расчета - подпись, значение
+                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
+
+                //Дата/время начала периода расчета
+                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
+
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
                 ctrl = new DropDownButton();
-                ctrl.Name = INDEX_CONTROL_BASE.BUTTON_LOAD.ToString();
+                ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
                 ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
-                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString();
+                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_UPDATE.ToString();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
-                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString();
+                ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
                 ctrl.Dock = DockStyle.Top;
                 //Кнопка - импортировать
                 Button ctrlBSend = new Button();
-                ctrlBSend.Name = INDEX_CONTROL_BASE.BUTTON_SEND.ToString();
+                ctrlBSend.Name = INDEX_CONTROL.BUTTON_SEND.ToString();
                 ctrlBSend.Text = @"Отправить";
                 ctrlBSend.Dock = DockStyle.Top;
                 ctrlBSend.Visible = false;
                 //ctrlBSend.Enabled = false;
                 //Кнопка - сохранить
                 Button ctrlBsave = new Button();
-                ctrlBsave.Name = INDEX_CONTROL_BASE.BUTTON_SAVE.ToString();
+                ctrlBsave.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
                 ctrlBsave.Text = @"Сохранить";
                 ctrlBsave.Dock = DockStyle.Top;
                 //
                 Button ctrlExp = new Button();
-                ctrlExp.Name = INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString();
+                ctrlExp.Name = INDEX_CONTROL.BUTTON_EXPORT.ToString();
                 ctrlExp.Text = @"Экспорт";
                 ctrlExp.Dock = DockStyle.Top;
                 ctrlExp.Visible = false;
@@ -1407,20 +1348,20 @@ namespace PluginTaskBalTeplo
 
                 //
                 RadioButton_BalTask ctrlRadioBlock = new RadioButton_BalTask();
-                ctrlRadioBlock.Name = INDEX_CONTROL_BASE.RADIO_BLOCK.ToString();
+                ctrlRadioBlock.Name = INDEX_CONTROL.RADIO_BLOCK.ToString();
                 ctrlRadioBlock.Text = @"По блокам";
                 ctrlRadioBlock.Type = TypeRadioBtn.Block.ToString();
                 ctrlRadioBlock.Dock = DockStyle.Top;
                 ctrlRadioBlock.Checked = true;
                 //
                 RadioButton_BalTask ctrlRadioTeplo = new RadioButton_BalTask();
-                ctrlRadioTeplo.Name = INDEX_CONTROL_BASE.RADIO_TEPLO.ToString();
+                ctrlRadioTeplo.Name = INDEX_CONTROL.RADIO_TEPLO.ToString();
                 ctrlRadioTeplo.Text = @"По выводам";
                 ctrlRadioTeplo.Type = TypeRadioBtn.Teplo.ToString();
                 ctrlRadioTeplo.Dock = DockStyle.Top;
                 //
                 RadioButton_BalTask ctrlRadioProm = new RadioButton_BalTask();
-                ctrlRadioProm.Name = INDEX_CONTROL_BASE.RADIO_PROM_PLOZSH.ToString();
+                ctrlRadioProm.Name = INDEX_CONTROL.RADIO_PROM_PLOZSH.ToString();
                 ctrlRadioProm.Text = @"Пром. площадки";
                 ctrlRadioProm.Type = TypeRadioBtn.PromPlozsh.ToString();
                 ctrlRadioProm.Dock = DockStyle.Top;
@@ -1456,74 +1397,6 @@ namespace PluginTaskBalTeplo
                     DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
                 else
                     ;
-            }
-
-            /// <summary>
-            /// Установка периода
-            /// </summary>
-            /// <param name="idPeriod"></param>
-            public void SetPeriod(ID_PERIOD idPeriod)
-            {
-                HDateTimePicker hdtpBtimePer = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                , hdtpEndtimePer = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
-                //Выполнить запрос на получение значений для заполнения 'DataGridView'
-                switch (idPeriod)
-                {
-                    case ID_PERIOD.HOUR:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , DateTime.Now.Day
-                            , DateTime.Now.Hour
-                            , 0
-                            , 0).AddHours(-1);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddHours(1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.HOUR;
-                        break;
-                    //case ID_PERIOD.SHIFTS:
-                    //    hdtpBegin.Mode = HDateTimePicker.MODE.HOUR;
-                    //    hdtpEnd.Mode = HDateTimePicker.MODE.HOUR;
-                    //    break;
-                    case ID_PERIOD.DAY:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , DateTime.Now.Day
-                            , 0
-                            , 0
-                            , 0);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddDays(1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.DAY;
-                        break;
-                    case ID_PERIOD.MONTH:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , DateTime.Now.Month
-                            , 1
-                            , 0
-                            , 0
-                            , 0);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddMonths(1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.MONTH;
-                        break;
-                    case ID_PERIOD.YEAR:
-                        hdtpBtimePer.Value = new DateTime(DateTime.Now.Year
-                            , 1
-                            , 1
-                            , 0
-                            , 0
-                            , 0).AddYears(-1);
-                        hdtpEndtimePer.Value = hdtpBtimePer.Value.AddYears(1);
-                        hdtpBtimePer.Mode =
-                        hdtpEndtimePer.Mode =
-                            HDateTimePicker.MODE.YEAR;
-                        break;
-                    default:
-                        break;
-                }
             }
 
             private void CheckedChangedRadioBtn(object obj, EventArgs e)
@@ -1684,18 +1557,18 @@ namespace PluginTaskBalTeplo
             ResumeLayout(false);
             PerformLayout();
 
-            Button btn = (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.BUTTON_LOAD.ToString(), true)[0] as Button);
+            Button btn = (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button);
             btn.Click += // действие по умолчанию
                 new EventHandler(HPanelTepCommon_btnUpdate_Click);
-            (btn.ContextMenuStrip.Items.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
+            (btn.ContextMenuStrip.Items.Find(PanelManagementBalTeplo.INDEX_CONTROL.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(HPanelTepCommon_btnUpdate_Click);
-            (btn.ContextMenuStrip.Items.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(HPanelAutobook_btnHistory_Click);
-            (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
+            (btn.ContextMenuStrip.Items.Find(PanelManagementBalTeplo.INDEX_CONTROL.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
+                new EventHandler(btnHistory_OnClick);
+            (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
                 new EventHandler(HPanelTepCommon_btnSave_Click);
-            (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.BUTTON_SEND.ToString(), true)[0] as Button).Click +=
+            (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_SEND.ToString(), true)[0] as Button).Click +=
                 new EventHandler(PanelTaskAutobookMonthValue_btnsend_Click);
-            (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
+            (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
                  new EventHandler(PanelTaskAutobookMonthValues_btnexport_Click);
 
 
@@ -1749,14 +1622,14 @@ namespace PluginTaskBalTeplo
 
             if ((((DGVAutoBook)sender).Columns[e.ColumnIndex] as DGVAutoBook.HDataGridViewColumn).m_bInPut == true)
             {
-                DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
+                DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
                 if (rows.Length == 1)
                     id_put = Convert.ToInt32(rows[0]["ID"]);
                 m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
             }
             else
             {
-                DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.PARAMETER_OUT].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
+                DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.OUT_PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
                 if (rows.Length == 1)
                     id_put = Convert.ToInt32(rows[0]["ID"]);
                 m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
@@ -1877,7 +1750,7 @@ namespace PluginTaskBalTeplo
                     //, получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
                         , CountBasePeriod
-                        , m_dictTableDictPrj[ID_DBTABLE.PARAMETER]
+                        , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , ref m_arTableOrigin_in
                         , ref m_arTableOrigin_out
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
@@ -2013,9 +1886,9 @@ namespace PluginTaskBalTeplo
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="ev"></param>
-        private void HPanelAutobook_btnHistory_Click(object obj, EventArgs ev)
+        private void btnHistory_OnClick(object obj, EventArgs ev)
         {
-            HandlerDb.m_ViewValues = TaskBalTeploCalculate.INDEX_VIEW_VALUES.ARCHIVE;
+            Session.m_ViewValues = HandlerDbTaskBalTeploCalculate.SESSION.INDEX_VIEW_VALUES.ARCHIVE;
 
             onButtonLoadClick();
         }
@@ -2036,7 +1909,7 @@ namespace PluginTaskBalTeplo
         /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            HandlerDb.m_ViewValues = TaskBalTeploCalculate.INDEX_VIEW_VALUES.SOURCE;
+            Session.m_ViewValues = HandlerDbTaskBalTeploCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE;
 
             onButtonLoadClick();
 
@@ -2078,25 +1951,6 @@ namespace PluginTaskBalTeplo
 
             return bRes;
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void get_m_arrDictPrj()
-        {
-            int err = 0;
-            int i = -1;
-            //Заполнить таблицы со словарными, проектными величинами
-            string[] arQueryDictPrj_in = getQueryDictPrj();
-            for (i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-            {
-                m_dictTableDictPrj[i] = m_handlerDb.Select(arQueryDictPrj_in[i], out err);
-                if (!(err == 0))
-                    break;
-                else
-                    ;
-            }
-        }
         /// <summary>
         /// 
         /// </summary>
@@ -2123,57 +1977,35 @@ namespace PluginTaskBalTeplo
                         break;
                 }
 
-            m_dictTableDictPrj = new DataTable[(int)INDEX_TABLE_DICTPRJ.COUNT];
+            m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
             HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
 
             Control ctrl = null;
             int i = -1;
             string strItem = string.Empty;
-            get_m_arrDictPrj();
+            initialize(new ID_DBTABLE[] {
+                ID_DBTABLE.PERIOD, ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP_LIST, ID_DBTABLE.MEASURE, ID_DBTABLE.RATIO
+                , ID_DBTABLE.INALG, ID_DBTABLE.OUTALG, }
+                , out err, out errMsg
+            );
 
-            m_dt_profile = HandlerDb.GetProfilesContext(m_id_panel);
-            dgvBlock.InitializeStruct(m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvBlock.Type_DGV), m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.RATIO]);
-            dgvOutput.InitializeStruct(m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvOutput.Type_DGV), m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.RATIO]);
-            dgvTeploBL.InitializeStruct(m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvTeploBL.Type_DGV), m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.RATIO]);
-            dgvTeploOP.InitializeStruct(m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvTeploOP.Type_DGV), m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.RATIO]);
-            dgvPromPlozsh.InitializeStruct(m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvPromPlozsh.Type_DGV), m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.RATIO]);
-            dgvParam.InitializeStruct(m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.N_ALG_OUT], m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.COMPONENT], GetProfileDGV((int)dgvParam.Type_DGV), m_dictTableDictPrj[(int)INDEX_TABLE_DICTPRJ.RATIO]);
+            if (err == 0) {
+                try {
+                    //??? m_dt_profile = HandlerDb.GetProfilesContext(m_id_panel);
+                    dgvBlock.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvBlock.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvOutput.InitializeStruct(m_dictTableDictPrj[(ID_DBTABLE.INALG)], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvOutput.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvTeploBL.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvTeploBL.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvTeploOP.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvTeploOP.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvPromPlozsh.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvPromPlozsh.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvParam.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvParam.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
-            ////Назначить обработчик события - изменение дата/время начала периода
-            //hdtpBegin.ValueChanged += new EventHandler(hdtpBegin_onValueChanged);
-            //Назначить обработчик события - изменение дата/время окончания периода
-            // при этом отменить обработку события - изменение дата/время начала периода
-            // т.к. при изменении дата/время начала периода изменяется и дата/время окончания периода
-            // (Controls.Find(INDEX_CONTROL.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
-
-            if (err == 0)
-            {
-                try
-                {
-                    //initialize();
                     //Заполнить элемент управления с часовыми поясами
-                    ctrl = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
-                    foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Rows)
-                        (ctrl as ComboBox).Items.Add(r[@"NAME_SHR"]);
-                    // порядок именно такой (установить 0, назначить обработчик)
-                    //, чтобы исключить повторное обновление отображения
-                    (ctrl as ComboBox).SelectedIndex = int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
-
-                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxTimezone_SelectedIndexChanged);
+                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]));
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
-                    ctrl = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0];
-                    foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.PERIOD].Rows)
-                        (ctrl as ComboBox).Items.Add(r[@"DESCRIPTION"]);
-
-                    (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
-                    (ctrl as ComboBox).SelectedIndex = m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()])); //??? требуется прочитать из [profile]
+                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.PERIOD], (ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]))); //??? требуется прочитать из [profile]
                     Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
-                    (PanelManagement as PanelManagementBalTeplo).SetPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
-                    (ctrl as ComboBox).Enabled = false;
-
-                    //ctrl = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0];
-                    //(ctrl as ComboBox).SelectedIndexChanged += new EventHandler(cbxPeriod_SelectedIndexChanged);
+                    PanelManagement.SetDatetimeRange();
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
                     //из profiles
@@ -2187,30 +2019,7 @@ namespace PluginTaskBalTeplo
                 }
             }
             else
-                switch ((INDEX_TABLE_DICTPRJ)i)
-                {
-                    case INDEX_TABLE_DICTPRJ.PERIOD:
-                        errMsg = @"Получение интервалов времени для периода расчета";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.TIMEZONE:
-                        errMsg = @"Получение списка часовых поясов";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.COMPONENT:
-                        errMsg = @"Получение списка компонентов станции";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.PARAMETER:
-                        errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
-                        break;
-                    //case INDEX_TABLE_DICTPRJ.MODE_DEV:
-                    //    errMsg = @"Получение идентификаторов режимов работы оборудования";
-                    //    break;
-                    //case INDEX_TABLE_DICTPRJ.MEASURE:
-                    //    errMsg = @"Получение информации по единицам измерения";
-                    //    break;
-                    default:
-                        errMsg = @"Неизвестная ошибка";
-                        break;
-                }
+                Logging.Logg().Error(MethodBase.GetCurrentMethod(), errMsg, Logging.INDEX_MESSAGE.NOT_SET);
         }
         
         private Dictionary<int, object[]> GetProfileDGV(int id_dgv)
@@ -2309,49 +2118,18 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="iCtrl"></param>
         /// <param name="bClose"></param>
-        protected void clear(int iCtrl = (int)INDEX_CONTROL.UNKNOWN, bool bClose = false)
+        protected override void clear(bool bClose = false)
         {
-            ComboBox cbx = null;
-            INDEX_CONTROL indxCtrl = (INDEX_CONTROL)iCtrl;
-
-            deleteSession();
             //??? повторная проверка
-            if (bClose == true)
-            {
-                if (!(m_dictTableDictPrj == null))
-                    for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-                    {
-                        if (!(m_dictTableDictPrj[i] == null))
-                        {
-                            m_dictTableDictPrj[i].Clear();
-                            m_dictTableDictPrj[i] = null;
-                        }
-                        else
-                            ;
-                    }
-                else
-                    ;
-
-                cbx = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox;
-                cbx.SelectedIndexChanged -= cbxPeriod_SelectedIndexChanged;
-                cbx.Items.Clear();
-
-                cbx = Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0] as ComboBox;
-                cbx.SelectedIndexChanged -= cbxTimezone_SelectedIndexChanged;
-                cbx.Items.Clear();
-
+            if (bClose == true) {
                 dgvBlock.ClearRows();
                 dgvOutput.ClearRows();
                 dgvTeploBL.ClearRows();
                 dgvTeploOP.ClearRows();
                 dgvParam.ClearRows();
                 dgvPromPlozsh.ClearRows();
-                //dgvAB.ClearColumns();
-            }
-            else
-            {
+            } else {
                 // очистить содержание представления
                 dgvBlock.ClearValues();
                 dgvOutput.ClearValues();
@@ -2360,6 +2138,8 @@ namespace PluginTaskBalTeplo
                 dgvParam.ClearValues();
                 dgvPromPlozsh.ClearValues();
             }
+
+            base.clear(bClose);
         }
 
         /// <summary>
@@ -2377,16 +2157,15 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// Обработчик события при изменении периода расчета
         /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        protected virtual void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
+        /// <param name="obj">Аргумент события</param>
+        protected override void panelManagement_OnEventBaseValueChanged(object obj)
         {
             //Установить новое значение для текущего периода
-            Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][(Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0] as ComboBox).SelectedIndex]);
+            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
             //Отменить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(false);
             //Установить новые режимы для "календарей"
-            (PanelManagement as PanelManagementBalTeplo).SetPeriod(Session.m_currIdPeriod);
+            PanelManagement.SetDatetimeRange();
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
 
@@ -2414,42 +2193,6 @@ namespace PluginTaskBalTeplo
                         ;
             else
                 throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
-        }
-
-        /// <summary>
-        /// формирование запросов 
-        /// для справочных данных
-        /// </summary>
-        /// <returns>запрос</returns>
-        private string[] getQueryDictPrj()
-        {
-            string[] arRes = null;
-
-            arRes = new string[]
-            {
-                //PERIOD
-                HandlerDb.GetQueryTimePeriods(m_strIdPeriods)
-                //TIMEZONE
-                , HandlerDb.GetQueryTimezones(m_strIdTimezones)
-                // список компонентов
-                , HandlerDb.GetQueryCompList()
-                // параметры расчета
-                , HandlerDb.GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
-                , HandlerDb.GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
-                //// настройки визуального отображения значений
-                //, @""
-                // режимы работы
-                //, HandlerDb.GetQueryModeDev()
-                //// единицы измерения
-                , m_handlerDb.GetQueryMeasures()
-                // коэффициенты для единиц измерения
-                , HandlerDb.GetQueryRatio()
-                //входные параметры
-                ,HandlerDb.GetQueryNAlgList()
-                ,HandlerDb.GetQueryNAlgOutList()
-            };
-
-            return arRes;
         }
 
         /// <summary>
@@ -2485,7 +2228,7 @@ namespace PluginTaskBalTeplo
             DataTable res = new DataTable();
 
             strRes = "SELECT * FROM "
-                + GetNameTableOut((Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value);
+                + GetNameTableOut(PanelManagement.DatetimeRange.Begin);
 
             res = HandlerDb.Select(strRes, out err).Clone();
             res.Columns.Remove("ID");
@@ -2538,21 +2281,23 @@ namespace PluginTaskBalTeplo
         {
             err = -1;
 
-            m_handlerDb.RecUpdateInsertDelete(GetNameTableIn((Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
-           , true)[0] as HDateTimePicker).Value)
-           , @"ID_PUT, DATE_TIME, ID_USER, ID_SOURCE"
-           , @""
-           , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
-           , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-           , out err);
+            m_handlerDb.RecUpdateInsertDelete(GetNameTableIn(
+                PanelManagement.DatetimeRange.Begin)
+                , @"ID_PUT, DATE_TIME, ID_USER, ID_SOURCE"
+                , @""
+                , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
+                , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                , out err
+            );
 
-            m_handlerDb.RecUpdateInsertDelete(GetNameTableOut((Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
-           , true)[0] as HDateTimePicker).Value)
-           , @"ID_PUT, DATE_TIME, ID_USER, ID_SOURCE"
-           , @""
-           , m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
-           , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-           , out err);
+            m_handlerDb.RecUpdateInsertDelete(
+                GetNameTableOut(PanelManagement.DatetimeRange.Begin)
+                , @"ID_PUT, DATE_TIME, ID_USER, ID_SOURCE"
+                , @""
+                , m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
+                , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                , out err
+            );
         }
 
         /// <summary>
@@ -2571,13 +2316,14 @@ namespace PluginTaskBalTeplo
             HandlerDb.saveResInval(m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
             , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], out err);
 
-            m_handlerDb.RecUpdateInsertDelete(GetNameTableIn((Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()
-                     , true)[0] as HDateTimePicker).Value)
-                     , @"ID_PUT, DATE_TIME"
-                     , @"ID"
-                     , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
-                     , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
-                     , out err);
+            m_handlerDb.RecUpdateInsertDelete(
+                GetNameTableIn(PanelManagement.DatetimeRange.Begin)
+                , @"ID_PUT, DATE_TIME"
+                , @"ID"
+                , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                , out err
+            );
         }
 
         /// <summary>

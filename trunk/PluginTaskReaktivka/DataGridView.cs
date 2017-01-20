@@ -380,8 +380,8 @@ namespace PluginTaskReaktivka
                 int indx = -1
                     , cIndx = -1
                     , rKey = -1;
-                bool bItemChecked = item.m_newCheckState == CheckState.Checked ? true :
-                    item.m_newCheckState == CheckState.Unchecked ? false :
+                bool bItemChecked = item.NewCheckState == CheckState.Checked ? true :
+                    item.NewCheckState == CheckState.Unchecked ? false :
                         false;
 
                 //Поиск индекса элемента отображения

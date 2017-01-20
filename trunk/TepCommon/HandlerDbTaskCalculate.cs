@@ -99,7 +99,7 @@ namespace TepCommon
             /// Перечисление - признак типа загруженных из БД значений
             ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
             /// </summary>
-            public enum INDEX_LOAD_VALUES : short
+            public enum INDEX_VIEW_VALUES : short
             {
                 SOURCE_IMPORT = -11
                 , UNKNOWN = -1, SOURCE, ARCHIVE
@@ -108,7 +108,7 @@ namespace TepCommon
             /// <summary>
             /// Признак отображаемых на текущий момент значений
             /// </summary>
-            public INDEX_LOAD_VALUES m_LoadValues;
+            public INDEX_VIEW_VALUES m_ViewValues;
 
             private long _id;
             /// <summary>
@@ -189,7 +189,7 @@ namespace TepCommon
         {
             _Session = new SESSION() { m_Id = -1
                 , m_IdFpanel = -1
-                , m_LoadValues = SESSION.INDEX_LOAD_VALUES.UNKNOWN
+                , m_ViewValues = SESSION.INDEX_VIEW_VALUES.UNKNOWN
                 , m_currIdPeriod = ID_PERIOD.UNKNOWN
                 , m_currIdTimezone = ID_TIMEZONE.UNKNOWN
                 , m_curOffsetUTC = int.MinValue

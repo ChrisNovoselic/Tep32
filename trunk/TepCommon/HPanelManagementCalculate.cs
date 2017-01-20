@@ -31,6 +31,48 @@ namespace TepCommon
 
             public static DateTime s_dtDefault = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, 0, 0, 0);
 
+            /// <summary>
+            /// Класс аргумента для события - изменение выбора запрет/разрешение
+            ///  для компонента/параметра при участии_в_расчете/отображении
+            /// </summary>
+            public class ItemCheckedParametersEventArgs : EventArgs
+            {
+                /// <summary>
+                /// Индекс в списке идентификаторов
+                ///  для получения ключа в словаре со значениями
+                /// </summary>
+                public INDEX_ID m_indxIdDeny;
+                /// <summary>
+                /// Идентификатор в алгоритме расчета
+                /// </summary>
+                public int m_idItem;
+
+                private CheckState _newCheckState;
+                /// <summary>
+                /// Состояние элемента, связанного с компонентом/параметром_расчета
+                /// </summary>
+                public CheckState NewCheckState
+                {
+                    get { return _newCheckState; }
+                    set { _newCheckState = value; }
+                }
+
+                public ItemCheckedParametersEventArgs(int idItem, INDEX_ID indxIdDeny, CheckState newCheckState)
+                    : base()
+                {
+                    m_idItem = idItem;
+                    m_indxIdDeny = indxIdDeny;
+                    _newCheckState = newCheckState;
+                }
+            }
+
+            /// <summary>
+            /// Тип обработчика события - изменение выбора запрет/разрешение
+            ///  для компонента/параметра при участии_в_расчете/отображении
+            /// </summary>
+            /// <param name="ev">Аргумент события</param>
+            public delegate void ItemCheckedParametersEventHandler(ItemCheckedParametersEventArgs ev);
+
             public PanelManagementTaskCalculate()
                 : base(8, 21)
             {
@@ -44,7 +86,7 @@ namespace TepCommon
                 //Назначить обработчик события - изменение дата/время окончания периода
                 // при этом отменить обработку события - изменение дата/время начала периода
                 // т.к. при изменении дата/время начала периода изменяется и дата/время окончания периода
-                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);
+                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);                
             }
 
             private void InitializeComponents()
@@ -111,7 +153,7 @@ namespace TepCommon
             /// </summary>
             /// <param name="obj">Составной объект - календарь</param>
             /// <param name="ev">Аргумент события</param>
-            protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
+            private void hdtpEnd_onValueChanged(object obj, EventArgs ev)
             {
                 HDateTimePicker hdtpEnd = obj as HDateTimePicker;
                 //m_dtRange.Set(hdtpEnd.LeadingValue, hdtpEnd.Value);
@@ -177,7 +219,7 @@ namespace TepCommon
                 }
             }
 
-            public void Clear()
+            public virtual void Clear()
             {
                 activateComboBoxSelectedIndex_onChanged(PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_PERIOD, cbxPeriod_SelectedIndexChanged);
 

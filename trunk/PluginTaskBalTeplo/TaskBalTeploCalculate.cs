@@ -11,22 +11,22 @@ using TepCommon;
 
 namespace PluginTaskBalTeplo
 {
-    public class TaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate
+    public class HandlerDbTaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate
     {
-        /// <summary>
-        /// Перечисление - признак типа загруженных из БД значений
-        ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
-        /// </summary>
-        public enum INDEX_VIEW_VALUES : short
-        {
-            UNKNOWN = -1, SOURCE,
-            ARCHIVE, COUNT
-        }
+        ///// <summary>
+        ///// Перечисление - признак типа загруженных из БД значений
+        /////  "сырые" - от источников информации, "архивные" - сохраненные в БД
+        ///// </summary>
+        //public enum INDEX_VIEW_VALUES : short
+        //{
+        //    UNKNOWN = -1, SOURCE,
+        //    ARCHIVE, COUNT
+        //}
 
-        /// <summary>
-        /// Признак отображаемых на текущий момент значений
-        /// </summary>
-        public INDEX_VIEW_VALUES m_ViewValues;
+        ///// <summary>
+        ///// Признак отображаемых на текущий момент значений
+        ///// </summary>
+        //public INDEX_VIEW_VALUES m_ViewValues;
 
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
@@ -1222,47 +1222,38 @@ namespace PluginTaskBalTeplo
             return tableEdit;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="IdTab"></param>
-        /// <returns></returns>
-        public DataTable GetProfilesContext(int IdTab)
-        {
-            string query = string.Empty;
-            int err = -1;
-            DataTable dt = new DataTable();
-            //dt = HTepUsers.GetProfileUser_Tab(IdTab);????
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <param name="IdTab"></param>
+        ///// <returns></returns>
+        //public DataTable GetProfilesContext(int IdTab)
+        //{
+        //    string query = string.Empty;
+        //    int err = -1;
+        //    DataTable dt = new DataTable();
+        //    //dt = HTepUsers.GetProfileUser_Tab(IdTab);????
 
-            return dt;
-        }
+        //    return dt;
+        //}
 
-        public override string GetQueryCompList()
-        {
-            string strRes = string.Empty;
+        //public string GetQueryNAlgList()
+        //{
+        //    string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM [" + s_dictDbTables[ID_DBTABLE.COMP_LIST].m_name + @"]";
+        //    strRes = @"SELECT * FROM " + s_dictDbTables[ID_DBTABLE.INALG].m_name + " where ID_TASK=2";
 
-            return strRes;
-        }
+        //    return strRes;
+        //}
 
-        public string GetQueryNAlgList()
-        {
-            string strRes = string.Empty;
+        //public string GetQueryNAlgOutList()
+        //{
+        //    string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM " + s_dictDbTables[ID_DBTABLE.INALG].m_name + " where ID_TASK=2";
+        //    strRes = @"SELECT * FROM " + s_dictDbTables[ID_DBTABLE.OUTALG].m_name + " where ID_TASK=2";
 
-            return strRes;
-        }
-
-        public string GetQueryNAlgOutList()
-        {
-            string strRes = string.Empty;
-
-            strRes = @"SELECT * FROM " + s_dictDbTables[ID_DBTABLE.OUTALG].m_name + " where ID_TASK=2";
-
-            return strRes;
-        }
+        //    return strRes;
+        //}
 
     }
 

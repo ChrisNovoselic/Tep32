@@ -57,6 +57,19 @@ namespace TepCommon
         /// </summary>
         protected Dictionary<ID_DBTABLE, DataTable> m_dictTableDictPrj;
 
+        private PanelManagementTaskCalculate __panelManagement;
+
+        protected PanelManagementTaskCalculate _panelManagement {
+            get { return __panelManagement; }
+
+            set {
+                __panelManagement = value;
+                __panelManagement.EventBaseValueChanged += new DelegateObjectFunc(panelManagement_OnEventBaseValueChanged);
+            }
+        }
+
+        protected abstract PanelManagementTaskCalculate createPanelManagement();
+
         /// <summary>
         /// Удалить сессию (+ очистить реквизиты сессии)
         /// </summary>
@@ -65,6 +78,39 @@ namespace TepCommon
             int err = -1;
 
             (m_handlerDb as HandlerDbTaskCalculate).DeleteSession(out err);
+        }
+
+        /// <summary>
+        /// Значения параметров сессии
+        /// </summary>
+        protected HandlerDbTaskCalculate.SESSION Session { get { return (m_handlerDb as HandlerDbTaskCalculate)._Session; } }
+
+        /// <summary>
+        /// Обработчик события при изменении периода расчета
+        /// </summary>
+        /// <param name="obj">Аргумент события</param>
+        protected abstract void panelManagement_OnEventBaseValueChanged(object obj);
+
+        /// <summary>
+        /// Очистить объекты, элементы управления от текущих данных
+        /// </summary>
+        /// <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
+        ///  для возвращения предыдущего значения, при отказе пользователя от очистки</param>
+        /// <param name="bClose">Признак полной/частичной очистки</param>
+        protected virtual void clear(bool bClose = false)
+        {
+            deleteSession();
+            //??? повторная проверка
+            if (bClose == true) {
+                clearTableDictPrj();
+
+                //_panelManagement.Clear(bClose);
+
+                // ??? - д.б. общий метод полной очистки всех представлений
+            }
+            else
+            //??? очистить содержание всех представлений - д.б. общий метод
+                ;
         }
 
         #region Apelgans

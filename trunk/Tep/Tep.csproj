@@ -88,8 +88,8 @@
     <Reference Include="GemBox.Spreadsheet">
       <HintPath>..\..\externaldll\GemBox.Spreadsheet.dll</HintPath>
     </Reference>
-    <Reference Include="HClassLibrary, Version=2.0.4.3, Culture=neutral, PublicKeyToken=2f5f95fc94cb3397, processorArchitecture=MSIL">
-      <HintPath>..\..\externaldll\HClassLibrary.dll</HintPath>
+    <Reference Include="HClassLibrary">
+      <HintPath>..\..\ExternalDLL\HClassLibrary.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

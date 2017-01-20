@@ -11,6 +11,7 @@ using System.Drawing;
 using HClassLibrary;
 using InterfacePlugIn;
 using TepCommon;
+using System.Reflection;
 
 namespace PluginTaskTepMain
 {
@@ -28,22 +29,18 @@ namespace PluginTaskTepMain
         ///// <summary>
         ///// Составной признак, указывающий на индексы, используемых на панели значений
         ///// </summary>
-        //HMark m_markUseValues;        
-        /// <summary>
-        /// Значения параметров сессии
-        /// </summary>
-        protected TepCommon.HandlerDbTaskCalculate.SESSION Session { get { return HandlerDb._Session; } }
+        //HMark m_markUseValues;
         /// <summary>
         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
         /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return Session.m_LoadValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_LOAD_VALUES.SOURCE ? ID_PERIOD.HOUR : Session.m_currIdPeriod; } }        
-        /// <summary>
-        /// Метод для создания панели с активными объектами управления
-        /// </summary>
-        /// <returns>Панель управления</returns>
-        protected abstract PanelManagementTaskCalculate createPanelManagement();
+        protected ID_PERIOD ActualIdPeriod { get { return Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : Session.m_currIdPeriod; } }        
+        ///// <summary>
+        ///// Метод для создания панели с активными объектами управления
+        ///// </summary>
+        ///// <returns>Панель управления</returns>
+        //protected abstract PanelManagementTaskCalculate createPanelManagement();
         
-        private PanelManagementTaskCalculate _panelManagement;
+        //private PanelManagementTaskCalculate _panelManagement;
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
@@ -201,29 +198,7 @@ namespace PluginTaskTepMain
                     Logging.Logg().Exception(e, @"PanelTaskTepValues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             else
-                switch ((INDEX_TABLE_DICTPRJ)i) {
-                    case INDEX_TABLE_DICTPRJ.PERIOD:
-                        errMsg = @"Получение интервалов времени для периода расчета";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.TIMEZONE:
-                        errMsg = @"Получение списка часовых поясов";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.COMPONENT:
-                        errMsg = @"Получение списка компонентов станции";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.PARAMETER:
-                        errMsg = @"Получение строковых идентификаторов параметров в алгоритме расчета";
-                        break;
-                    case INDEX_TABLE_DICTPRJ.MODE_DEV:
-                        errMsg = @"Получение идентификаторов режимов работы оборудования";
-                        break;
-                    //case INDEX_TABLE_DICTPRJ.MEASURE:
-                    //    errMsg = @"Получение информации по единицам измерения";
-                    //    break;
-                    default:
-                        errMsg = @"Неизвестная ошибка";
-                        break;
-                }
+                Logging.Logg().Error(MethodBase.GetCurrentMethod(), errMsg, Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         protected abstract void initialize();
@@ -243,8 +218,11 @@ namespace PluginTaskTepMain
 
             return bRes;
         }
-
-        protected virtual void panelManagement_onBaseValueChanged()
+        /// <summary>
+        /// Обработчик события при изменении периода расчета
+        /// </summary>
+        /// <param name="obj">Аргумент события</param>
+        protected override void panelManagement_OnEventBaseValueChanged(object obj)
         {
             Session.SetCurrentPeriod(PanelManagement.IdPeriod);
             setCurrentTimeZone(PanelManagement.IdTimezone);
@@ -310,26 +288,12 @@ namespace PluginTaskTepMain
         /// <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
         ///  для возвращения предыдущего значения, при отказе пользователя от очистки</param>
         /// <param name="bClose">Признак полной/частичной очистки</param>
-        protected virtual void clear(bool bClose = false)
+        protected override void clear(bool bClose = false)
         {
             deleteSession();
             //??? повторная проверка
             if (bClose == true) {
                 PanelManagement.Clear(); // прежде удаления элементов из списка отменить регистрацию обработки событий "изменение текущ./индекса"
-
-                if (!(m_dictTableDictPrj == null))
-                    for (int i = (int)INDEX_TABLE_DICTPRJ.PERIOD; i < (int)INDEX_TABLE_DICTPRJ.COUNT; i++)
-                    {
-                        if (!(m_dictTableDictPrj[i] == null))
-                        {
-                            m_dictTableDictPrj[i].Clear();
-                            m_dictTableDictPrj[i] = null;
-                        }
-                        else
-                            ;
-                    }
-                else
-                    ;
 
                 m_dgvValues.ClearRows();
                 m_dgvValues.ClearColumns();
@@ -337,6 +301,8 @@ namespace PluginTaskTepMain
             else
             // очистить содержание представления
                 m_dgvValues.ClearValues();
+
+            base.clear(bClose);
         }
 
         /// <summary>
