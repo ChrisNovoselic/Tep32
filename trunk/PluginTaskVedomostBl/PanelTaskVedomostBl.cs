@@ -595,8 +595,8 @@ namespace PluginTaskVedomostBl
                 /// <summary>
                 /// Обработчик события - переключение блока(ТГ)
                 /// </summary>
-                /// <param name="sender"></param>
-                /// <param name="e"></param>
+                /// <param name="sender">Объект, инициатор события (??? TableLayoutPanel)</param>
+                /// <param name="e">Аргумент события (не используется)</param>
                 public void TableLayoutPanelkVed_CheckedChanged(object sender, EventArgs e)
                 {
                     int id = SelectedId,
@@ -615,7 +615,7 @@ namespace PluginTaskVedomostBl
 
                     if ((sender as RadioButtonBl).Checked == true)
                     {
-                        pictrure = GetPictureOfIdComp(id); //GetPictureOfIdComp
+                        pictrure = s_getPicture(id); //GetPictureOfIdComp
                         pictrure.Visible = true;
                         pictrure.Enabled = true;
                         Checked(getListCheckedGroup());
@@ -1800,7 +1800,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="tableOrigin">таблица с данными</param>
             /// <param name="typeValues">тип загружаемых данных</param>
-            public void ShowValues(DataTable tableOrigin, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
+            public void ShowValues(DataTable tableOrigin, DataTable tableInParameter, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
             {
                 DataTable _dtOriginVal = new DataTable(),
                     _dtEditVal = new DataTable();
@@ -1829,7 +1829,7 @@ namespace PluginTaskVedomostBl
                     foreach (HDataGridViewColumn col in Columns) {
                         if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) {
                             try {
-                                parameterRows = m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select(string.Format(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Locale
+                                parameterRows = tableInParameter.Select(string.Format(tableInParameter.Locale
                                     , "ID_ALG = " + col.m_IdAlg + " AND ID_COMP = " + m_idCompDGV));
                                 editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + (int)parameterRows[0]["ID"]));
                             } catch (Exception) {
@@ -2829,7 +2829,7 @@ namespace PluginTaskVedomostBl
         {
             s_VedCalculate = new VedomostBlCalculate();
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
-            Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
+            //Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
             m_dict = new Dictionary<int, List<string[]>> { };
 
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
@@ -3643,7 +3643,7 @@ namespace PluginTaskVedomostBl
                         // создать копии для возможности сохранения изменений
                         setValues();
                         // отобразить значения
-                        (getActiveView() as DGVVedomostBl).ShowValues(m_arTableOrigin[(int)m_ViewValues], m_ViewValues);
+                        (getActiveView() as DGVVedomostBl).ShowValues(m_arTableOrigin[(int)m_ViewValues], m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER], m_ViewValues);
                         //сохранить готовые значения в таблицу
                         m_arTableEdit[(int)m_ViewValues] = valuesFence();
                     }

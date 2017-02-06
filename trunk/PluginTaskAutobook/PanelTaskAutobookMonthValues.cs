@@ -1656,7 +1656,7 @@ namespace PluginTaskAutobook
 
             InitializeComponent();
 
-            Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
+            //Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
         }
 
         /// <summary>
@@ -1917,23 +1917,23 @@ namespace PluginTaskAutobook
             //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
         }
 
-        /// <summary>
-        /// обработка события - Выбор строки
-        /// </summary>
-        /// <param name="sender">Объект, инициировавший событие</param>
-        /// <param name="e">Аргумент события</param>
-        void dgvAB_SelectionChanged(object sender, EventArgs e)
-        {
-            for (int i = 0; i < (sender as DataGridView).SelectedRows.Count; i++)
-                if ((sender as DataGridView).SelectedRows[i].Cells["Date"].Value != null)
-                {
-                    DateTime dtRow = Convert.ToDateTime((sender as DataGridView).SelectedRows[i].Cells["Date"].Value);
-                    HDateTimePicker datetimePicker =
-                        (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
-                    m_bflgClear = false;
-                    datetimePicker.Value = dtRow;
-                }
-        }
+        ///// <summary>
+        ///// обработка события - Выбор строки
+        ///// </summary>
+        ///// <param name="sender">Объект, инициировавший событие</param>
+        ///// <param name="e">Аргумент события</param>
+        //void dgvAB_SelectionChanged(object sender, EventArgs e)
+        //{
+        //    for (int i = 0; i < (sender as DataGridView).SelectedRows.Count; i++)
+        //        if ((sender as DataGridView).SelectedRows[i].Cells["Date"].Value != null)
+        //        {
+        //            DateTime dtRow = Convert.ToDateTime((sender as DataGridView).SelectedRows[i].Cells["Date"].Value);
+        //            HDateTimePicker datetimePicker =
+        //                (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
+        //            m_bflgClear = false;
+        //            datetimePicker.Value = dtRow;
+        //        }
+        //}
 
         /// <summary>
         /// Обработчик события при изменении периода расчета
@@ -2365,7 +2365,7 @@ namespace PluginTaskAutobook
                         INDEX_ID.DENY_COMP_VISIBLED
                 };
 
-            m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
+            //m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
             int role = HTepUsers.Role;
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
@@ -2698,17 +2698,16 @@ namespace PluginTaskAutobook
             string errMsg = string.Empty;
             //сбор значений
             valuesFence();
-            Control ctrl = Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0];
 
             m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurOutval(
                 GetNameTableOut(PanelManagement.DatetimeRange.Begin), out err);
 
             m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-            HandlerDb.SaveResOut(m_TableOrigin, m_TableEdit, (ctrl as ComboBox).SelectedIndex, out err);
+                HandlerDb.SaveResOut(m_TableOrigin, m_TableEdit, out err);
 
             if (m_TableEdit.Rows.Count > 0)
                 //save вх. значений
-                saveInvalValue((ctrl as ComboBox).SelectedIndex, out err);
+                saveInvalValue(out err);
         }
 
         /// <summary>
@@ -2868,8 +2867,8 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Сохранение входных знчений(корр. величины)
         /// </summary>
-        /// <param name="err"></param>
-        private void saveInvalValue(int timeZone, out int err)
+        /// <param name="err">Признак выполнения операций внутри метода</param>
+        private void saveInvalValue(out int err)
         {
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
 
@@ -2878,7 +2877,8 @@ namespace PluginTaskAutobook
 
             m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
             HandlerDb.SaveResInval(m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
-            , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], timeZone, out err);
+                , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                , out err);
 
             sortingDataToTable(m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
                 , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]

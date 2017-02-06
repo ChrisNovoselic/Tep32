@@ -668,7 +668,7 @@ namespace PluginTaskAutobook
         /// <param name="idTZ">timezone</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
-        public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes, int idTZ, out int err)
+        public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes/*, ID_TIMEZONE idTimezone*/, out int err)
         {
             err = -1;
             DataTable tableEdit = new DataTable();
@@ -689,7 +689,7 @@ namespace PluginTaskAutobook
                         , 0.ToString()
                         , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , idTZ
+                        , _Session.m_currIdTimezone //??? точно ли значение идентификатора
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]
                         , DateTime.Now
@@ -707,7 +707,7 @@ namespace PluginTaskAutobook
         /// <param name="tableRes">таблица с параметрами</param>
         /// <param name="err">Индентификатор ошибки</param>
         /// <returns>таблицу значений</returns>
-        public DataTable SaveResInval(DataTable tableOrigin, DataTable tableRes, int timezone, out int err)
+        public DataTable SaveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
         {
             err = -1;
             DataTable tableEdit = new DataTable();
@@ -730,7 +730,7 @@ namespace PluginTaskAutobook
                         , 0.ToString()
                         , dtRes.ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , timezone
+                        , _Session.m_currIdTimezone
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]
                         , DateTime.Now.ToString(CultureInfo.InvariantCulture)

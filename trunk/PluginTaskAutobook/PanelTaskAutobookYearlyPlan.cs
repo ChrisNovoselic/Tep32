@@ -660,7 +660,7 @@ namespace PluginTaskAutobook
 
             InitializeComponent();
 
-            Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddMonths(1));
+            //Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddMonths(1));
         }
 
         /// <summary>
