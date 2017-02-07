@@ -929,13 +929,13 @@ namespace PluginTaskReaktivka
 
             //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
             if (ev.NewCheckState == CheckState.Unchecked)
-                if (m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0)
-                    m_arListIds[(int)ev.m_indxIdDeny].Add(idItem);
+                if (m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0)
+                    m_arListIds[(int)ev.m_indxId].Add(idItem);
                 else; //throw new Exception (@"");
             else
                 if (ev.NewCheckState == CheckState.Checked)
-                if (!(m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0))
-                    m_arListIds[(int)ev.m_indxIdDeny].Remove(idItem);
+                if (!(m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0))
+                    m_arListIds[(int)ev.m_indxId].Remove(idItem);
                 else; //throw new Exception (@"");
             else;
             //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек

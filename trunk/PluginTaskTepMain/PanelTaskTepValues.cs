@@ -494,14 +494,14 @@ namespace PluginTaskTepMain
 
             //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
             if (ev.NewCheckState == CheckState.Unchecked)
-                if (m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0)
-                    m_arListIds[(int)ev.m_indxIdDeny].Add(idItem);
+                if (m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0)
+                    m_arListIds[(int)ev.m_indxId].Add(idItem);
                 else
                     ; //throw new Exception (@"");
             else
                 if (ev.NewCheckState == CheckState.Checked)
-                    if (!(m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0))
-                        m_arListIds[(int)ev.m_indxIdDeny].Remove(idItem);
+                    if (!(m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0))
+                        m_arListIds[(int)ev.m_indxId].Remove(idItem);
                     else
                         ; //throw new Exception (@"");
                 else
@@ -934,7 +934,7 @@ namespace PluginTaskTepMain
                         false;
 
                 //Поиск индекса элемента отображения
-                switch (item.m_indxIdDeny)
+                switch ((INDEX_ID)item.m_indxId)
                 {
                     case INDEX_ID.DENY_COMP_CALCULATED:
                     case INDEX_ID.DENY_COMP_VISIBLED:
@@ -966,7 +966,7 @@ namespace PluginTaskTepMain
 
                 if (!(indx < 0))
                 {
-                    switch (item.m_indxIdDeny)
+                    switch ((INDEX_ID)item.m_indxId)
                     {
                         case INDEX_ID.DENY_COMP_CALCULATED:
                             cIndx = indx;
@@ -1634,9 +1634,9 @@ namespace PluginTaskTepMain
             /// </summary>
             /// <param name="address">Адрес элемента</param>
             /// <param name="checkState">Значение признака элемента</param>
-            protected void itemCheck(int idItem, INDEX_ID indxIdDeny, CheckState checkState)
+            protected void itemCheck(int idItem, INDEX_ID indxId, CheckState checkState)
             {
-                ItemCheck(new ItemCheckedParametersEventArgs(idItem, indxIdDeny, checkState));
+                ItemCheck(new ItemCheckedParametersEventArgs(idItem, (int)indxId, checkState));
             }
 
             /// <summary>

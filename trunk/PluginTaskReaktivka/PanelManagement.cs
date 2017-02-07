@@ -424,9 +424,9 @@ namespace PluginTaskReaktivka
             /// </summary>
             /// <param name="address">Адрес элемента</param>
             /// <param name="checkState">Значение признака элемента</param>
-            protected void itemCheck(int idItem, INDEX_ID indxIdDeny, CheckState checkState)
+            protected void itemCheck(int idItem, INDEX_ID indxId, CheckState checkState)
             {
-                ItemCheck(new ItemCheckedParametersEventArgs(idItem, indxIdDeny, checkState));
+                ItemCheck(new ItemCheckedParametersEventArgs(idItem, (int)indxId, checkState));
             }
         }
     }

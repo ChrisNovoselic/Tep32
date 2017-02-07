@@ -1183,7 +1183,7 @@ namespace PluginTaskBalTeplo
 
             InitializeComponent();
 
-            Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
+            Session.SetDatetimeRange(PanelManagement.DatetimeRange);
             PanelManagement.CheckedChangedRadioBtnEvent += new PanelManagementBalTeplo.CheckedChangedRadioBtnEventHandler(CheckedChangedRadioBtn);
         }
 
@@ -1977,7 +1977,7 @@ namespace PluginTaskBalTeplo
                         break;
                 }
 
-            m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
+            //m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
             HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
 
             Control ctrl = null;

@@ -1022,9 +1022,9 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="address">Адрес элемента</param>
             /// <param name="checkState">Значение признака элемента</param>
-            protected void itemCheck(int idItem, INDEX_ID indxIdDeny, CheckState checkState)
+            protected void itemCheck(int idItem, INDEX_ID indxId, CheckState checkState)
             {
-                ItemCheck(new ItemCheckedParametersEventArgs(idItem, indxIdDeny, checkState));
+                ItemCheck(new ItemCheckedParametersEventArgs(idItem, (int)indxId, checkState));
             }
         }
 
@@ -2908,13 +2908,13 @@ namespace PluginTaskVedomostBl
 
             //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
             if (ev.NewCheckState == CheckState.Unchecked)
-                if (m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0)
-                    m_arListIds[(int)ev.m_indxIdDeny].Add(idItem);
+                if (m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0)
+                    m_arListIds[(int)ev.m_indxId].Add(idItem);
                 else; //throw new Exception (@"");
             else
                 if (ev.NewCheckState == CheckState.Checked)
-                if (!(m_arListIds[(int)ev.m_indxIdDeny].IndexOf(idItem) < 0))
-                    m_arListIds[(int)ev.m_indxIdDeny].Remove(idItem);
+                if (!(m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0))
+                    m_arListIds[(int)ev.m_indxId].Remove(idItem);
                 else; //throw new Exception (@"");
             else;
             //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
@@ -2943,7 +2943,7 @@ namespace PluginTaskVedomostBl
                   item.NewCheckState == CheckState.Unchecked ? false : false;
             DGVVedomostBl cntrl = (getActiveView() as DGVVedomostBl);
             //Поиск индекса элемента отображения
-            switch (item.m_indxIdDeny)
+            switch ((INDEX_ID)item.m_indxId)
             {
                 case INDEX_ID.HGRID_VISIBLE:
                     cntrl.HideColumns(cntrl as DataGridView, s_listHeader[item.m_idItem], bItemChecked);

@@ -107,7 +107,7 @@ namespace PluginTaskTepMain
                 HandlerDb.GetValuesVar(Type, ActualIdPeriod, CountBasePeriod, arQueryRanges, out err) :
                     Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
                         , Session.m_Id
-                        , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_dictTableDictPrj[ID_DBTABLE.PARAMETER]
+                        , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , m_dictTableDictPrj[ID_DBTABLE.RATIO]
                         , out err) :
                             new DataTable();
@@ -122,7 +122,7 @@ namespace PluginTaskTepMain
                     // , получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
                         , CountBasePeriod
-                        , m_dictTableDictPrj[ID_DBTABLE.PARAMETER]
+                        , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
                         , out err, out strErr);

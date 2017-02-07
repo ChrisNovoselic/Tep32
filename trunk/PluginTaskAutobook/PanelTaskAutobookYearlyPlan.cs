@@ -766,7 +766,7 @@ namespace PluginTaskAutobook
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
-            m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
+            //m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
             int role = HTepUsers.Role;
 
             for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
@@ -880,12 +880,13 @@ namespace PluginTaskAutobook
         {
             err = -1;
 
-            m_handlerDb.RecUpdateInsertDelete(GetNameTableIn(s_dtDefaultAU)
-            , @"DATE_TIME"
-            , @"ID"
-            , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-            , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-            , out err);
+            m_handlerDb.RecUpdateInsertDelete(GetNameTableIn(PanelManagement.DatetimeRange.Begin) //??? почему 'Begin', а не 'End'
+                , @"DATE_TIME"
+                , @"ID"
+                , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                , out err
+            );
         }
 
         /// <summary>
@@ -1138,7 +1139,7 @@ namespace PluginTaskAutobook
             }
 
             m_dgvYear.ClearRows();
-            DateTime dtNew = new DateTime(s_dtDefaultAU.Year, 1, 1);
+            DateTime dtNew = new DateTime(PanelManagement.DatetimeRange.Begin.Year, 1, 1); //??? почему 'Begin', а не 'End'
             //m_dgvAB.SelectionChanged -= dgvAB_SelectionChanged;
             //заполнение представления
             for (int i = 0; i < GetMonth.Count(); i++)
@@ -1269,7 +1270,7 @@ namespace PluginTaskAutobook
                     m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
                         HandlerDb.SavePlanValue(m_TableOrigin, dr_saveValue, (int)Session.m_currIdTimezone, out err);
 
-                    s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
+                    //s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
                     base.HPanelTepCommon_btnSave_Click(obj, ev);
                 }
                 else

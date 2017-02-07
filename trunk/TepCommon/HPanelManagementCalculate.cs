@@ -41,7 +41,7 @@ namespace TepCommon
                 /// Индекс в списке идентификаторов
                 ///  для получения ключа в словаре со значениями
                 /// </summary>
-                public INDEX_ID m_indxIdDeny;
+                public int m_indxId;
                 /// <summary>
                 /// Идентификатор в алгоритме расчета
                 /// </summary>
@@ -57,11 +57,11 @@ namespace TepCommon
                     set { _newCheckState = value; }
                 }
 
-                public ItemCheckedParametersEventArgs(int idItem, INDEX_ID indxIdDeny, CheckState newCheckState)
+                public ItemCheckedParametersEventArgs(int idItem, int indxId, CheckState newCheckState)
                     : base()
                 {
                     m_idItem = idItem;
-                    m_indxIdDeny = indxIdDeny;
+                    m_indxId = indxId;
                     _newCheckState = newCheckState;
                 }
             }

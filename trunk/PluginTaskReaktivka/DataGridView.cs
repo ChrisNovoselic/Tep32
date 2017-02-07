@@ -385,7 +385,7 @@ namespace PluginTaskReaktivka
                         false;
 
                 //Поиск индекса элемента отображения
-                switch (item.m_indxIdDeny)
+                switch ((INDEX_ID)item.m_indxId)
                 {
                     case INDEX_ID.DENY_COMP_VISIBLED:
                         // найти индекс столбца (компонента) - по идентификатору
@@ -402,7 +402,7 @@ namespace PluginTaskReaktivka
 
                 if (!(indx < 0))
                 {
-                    switch (item.m_indxIdDeny)
+                    switch ((INDEX_ID)item.m_indxId)
                     {
                         //case INDEX_ID.DENY_COMP_CALCULATED:
                         //    cIndx = indx;
