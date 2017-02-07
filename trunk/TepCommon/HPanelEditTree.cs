@@ -23,7 +23,7 @@ namespace TepCommon
 
         protected override HandlerDbValues createHandlerDb()
         {
-            throw new NotImplementedException();
+            return new HandlerDbValues();
         }
     }
 }

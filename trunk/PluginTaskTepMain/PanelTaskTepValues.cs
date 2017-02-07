@@ -1170,7 +1170,7 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected class PanelManagementTaskTepValues : HPanelTepCommon.PanelManagementTaskCalculate
+        protected abstract class PanelManagementTaskTepValues : HPanelTepCommon.PanelManagementTaskCalculate
         {
             /// <summary>
             /// Событие - изменение выбора запрет/разрешение
@@ -1217,14 +1217,14 @@ namespace PluginTaskTepMain
                 //this.Controls.Add(ctrl, 0, posRow);
                 //SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
                 //Часовой пояс расчета
-                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
+                SetPositionTimezone(new Point(0, posRow = posRow + 2), new Size(this.ColumnCount / 2, 1));
 
                 //Расчет - выполнить - макет
                 //Расчет - выполнить - норматив
-                posRow = addButtonRun(posRow);
+                posRow = addButtonRun(0);
 
                 //Дата/время начала периода расчета
-                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
+                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 3), new Size(this.ColumnCount, 4));
 
                 //Признаки включения/исключения из расчета
                 //Признаки включения/исключения из расчета - подпись
@@ -1347,12 +1347,7 @@ namespace PluginTaskTepMain
             /// </summary>
             /// <param name="posRow">Позиция по горизонтали для размещения 1-ой (вверху) кнопки</param>
             /// <returns>Позиция по горизонтали для размещения следующего элемента</returns>
-            protected virtual int addButtonRun(int posRow)
-            {
-                int iRes = posRow;
-
-                return iRes;
-            }
+            protected abstract int addButtonRun(int posRow);
             /// <summary>
             /// Очистить
             /// </summary>

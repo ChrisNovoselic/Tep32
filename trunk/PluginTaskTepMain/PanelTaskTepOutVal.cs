@@ -162,12 +162,12 @@ namespace PluginTaskTepMain
                     base.activateCheckedHandler(bActive, idToActivate);
             }
 
-            //private void onNodeSelect(int id_item)
-            //{
-            //    m_address.m_idItem = id_item;
-            //    //m_address.m_idAlg = id_par;
-            //    m_address.m_indxIdDeny = INDEX_ID.DENY_PARAMETER_CALCULATED;
-            //}
+            protected override int addButtonRun(int posRow)
+            {
+                int iRes = posRow;
+
+                return iRes;
+            }
 
             protected void onItemCheck(int idItem, int iChecked)
             {

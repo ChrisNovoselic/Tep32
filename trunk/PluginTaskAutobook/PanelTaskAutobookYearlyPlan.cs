@@ -544,7 +544,7 @@ namespace PluginTaskAutobook
             /// <param name="rows">Количество строк в макете</param>
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
             {
-                throw new NotImplementedException();
+                initializeLayoutStyleEvenly(cols, rows);
             }
             /// <summary>
             /// Конструктор - основной (без параметров)

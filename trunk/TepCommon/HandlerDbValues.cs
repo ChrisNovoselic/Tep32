@@ -199,6 +199,11 @@ namespace TepCommon
         /// <returns>Таблица - результат запроса - значения таблицы БД</returns>
         public DataTable GetDataTable(ID_DBTABLE idTableDb, out int err)
         {
+            if (s_dictDbTables.ContainsKey(idTableDb) == false)
+                throw new Exception(string.Format(@"HandlerDbValues::GetDataTable (тип={0}) - не известный тип таблицы...", idTableDb));
+            else
+                ;
+
             return GetDataTable(s_dictDbTables[idTableDb].m_name, out err);
         }
 
