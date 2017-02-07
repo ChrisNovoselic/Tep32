@@ -20,42 +20,38 @@ namespace PluginPrjTepFTable
     /// <summary>
     /// Панель для "ведения" таблицы со значениями нормативных графиков
     /// </summary>
-    public class PanelPrjTepFTable : HPanelTepCommon //HPanelEditListCommon
+    public class PanelPrjTepFTable : TepCommon.HPanelCommon //HPanelEditListCommon
     {
         DataTable m_tblOrigin
             , m_tblEdit;
         ZedGraphFTable m_zGraph_fTABLE; // график фукнции
+
         /// <summary>
         /// Набор элементов
         /// </summary>
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1
-            , BUTTON_ADD,
-            BUTTON_DELETE
-                , BUTTON_SAVE,
-            BUTTON_UPDATE
-                , MENUITEM_ADD_POINT, MENUITEM_ADD_FUNCTION, MENUITEM_DELETE_POINT,
-            MENUITEM_DELETE_FUNCTION
-                , DGV_NALG,
-            DGV_VALUES
-                , LABEL_DESC,
-            INDEX_CONTROL_COUNT
-                , ZGRAPH_fTABLE
-                , TEXTBOX_FIND, LABEL_FIND,
-            PANEL_FIND
-                ,
-            TABLELAYOUTPANEL_CALC /*BUTTON_CALC,*/
-                // обязательно должны следовать один за другим, т.к. используются в цикле
-                , TEXTBOX_A1, TEXTBOX_A2, TEXTBOX_A3,
-            TEXTBOX_F
-                , /*TEXTBOX_REZULT,*/ GRPBOX_CALC,
-            COMBOBOX_PARAM
+            , BUTTON_ADD, BUTTON_DELETE , BUTTON_SAVE, BUTTON_UPDATE
+            , MENUITEM_ADD_POINT, MENUITEM_ADD_FUNCTION, MENUITEM_DELETE_POINT, MENUITEM_DELETE_FUNCTION
+            , DGV_NALG, DGV_VALUES
+            , LABEL_DESC
+                , INDEX_CONTROL_COUNT
+            , ZGRAPH_fTABLE
+                , TEXTBOX_FIND, LABEL_FIND, PANEL_FIND
+            , TABLELAYOUTPANEL_CALC /*BUTTON_CALC,*/
+            // обязательно должны следовать один за другим, т.к. используются в цикле
+            , TEXTBOX_A1, TEXTBOX_A2, TEXTBOX_A3
+                , TEXTBOX_F
+            , /*TEXTBOX_REZULT,*/ GRPBOX_CALC
+            , COMBOBOX_PARAM
         };
+
         /// <summary>
         /// Набор текстов для подписей для кнопок
         /// </summary>
         protected static string[] m_arButtonText = { @"Добавить", @"Удалить", @"Сохранить", @"Обновить" };
+
         /// <summary>
         /// Установить признак активности текущему объекту
         /// </summary>
@@ -74,8 +70,8 @@ namespace PluginPrjTepFTable
         /// <summary>
         /// Инициализация
         /// </summary>
-        /// <param name="err"></param>
-        /// <param name="errMsg"></param>
+        /// <param name="err">Признак ошибки при выполнении инициализации</param>
+        /// <param name="errMsg">Строкаа с сообщением об ошибке (при наличии)</param>
         protected override void initialize(out int err, out string errMsg)
         {
             err = 0;
@@ -113,6 +109,15 @@ namespace PluginPrjTepFTable
 
             Logging.Logg().Debug(@"PluginTepPrjFTable::initialize () - усПех ...", Logging.INDEX_MESSAGE.NOT_SET);
 
+        }
+
+        /// <summary>
+        /// Создать объект для взаимодействия с БД
+        /// </summary>
+        /// <returns>Панель управления</returns>
+        protected override HandlerDbValues createHandlerDb()
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -211,27 +216,6 @@ namespace PluginPrjTepFTable
             else
                 ;
         }
-
-        ///// <summary>
-        ///// Обработчик события - 
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событий (отображение таблицы функций)</param>
-        ///// <param name="ev">Аргумент события</param>
-        //private void dgvnALG_OnRowEnter(object obj, DataGridViewCellEventArgs ev)
-        //{
-        //    //btnAddDeleteEnabled(true);
-        //    (obj as DataGridView).BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-        //    (Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView).BorderStyle = System.Windows.Forms.BorderStyle.None;
-        //}
-        ///// <summary>
-        ///// Обработчик события - 
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событий (отображение таблицы функций)</param>
-        ///// <param name="ev">Аргумент события</param>
-        //private void dgvnALG_OnLeave(object obj, EventArgs ev)
-        //{
-        //    btnAddDeleteEnabled(false);
-        //}
 
         /// <summary>
         /// Обработчик события - изменение выбранной строки
@@ -802,32 +786,6 @@ namespace PluginPrjTepFTable
             else
                 ;
         }
-
-        ///// <summary>
-        ///// Возвратить отображение с фокусом ввода
-        ///// </summary>
-        ///// <returns>Отображение с фокусом ввода</returns>
-        //private DataGridView getViewValusFocused()
-        //{
-        //    DataGridView dgv = null;
-        //    Control []arControls = null;
-
-        //    arControls = Controls.Find(INDEX_CONTROL.DGV_NALG.ToString(), true);
-
-        //    if (arControls.Length == 1)
-        //        dgv = arControls[0] as DataGridView;
-        //    else
-        //    {
-        //        arControls = Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true);
-
-        //        if (arControls.Length == 1)
-        //            dgv = arControls[0] as DataGridView;
-        //        else
-        //            ;
-        //    }
-
-        //    return dgv;
-        //}
 
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Добавить" (точку)

@@ -37,6 +37,30 @@ namespace PluginTaskEJournal
         {
             throw new NotImplementedException();
         }
+        /// <summary>
+        /// Создать объект для взаимодействия с БД
+        /// </summary>
+        /// <returns>Панель управления</returns>
+        protected override HandlerDbValues createHandlerDb()
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Создать панель с активными элементами управления
+        /// </summary>
+        /// <returns>Панель управления</returns>
+        protected override PanelManagementTaskCalculate createPanelManagement()
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Обработчик события - изменение значения в одном из базовых активных элементов на панели управления
+        /// </summary>
+        /// <param name="obj">Аргумент события</param>
+        protected override void panelManagement_OnEventBaseValueChanged(object obj)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class PlugIn : HFuncDbEdit

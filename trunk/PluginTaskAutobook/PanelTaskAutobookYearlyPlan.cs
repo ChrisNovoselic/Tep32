@@ -60,14 +60,6 @@ namespace PluginTaskAutobook
             //DENY_PARAMETER_VISIBLED // запрещенных для отображения
             COUNT
         }
-        /// <summary>
-        /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
-        /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return m_ViewValues == HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.MONTH : Session.m_currIdPeriod; } }
-        /// <summary>
-        /// Признак отображаемых на текущий момент значений
-        /// </summary>
-        protected HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES m_ViewValues;
         ///// <summary>
         ///// Таблицы со значениями словарных, проектных данных
         ///// </summary>
@@ -655,8 +647,8 @@ namespace PluginTaskAutobook
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
 
-            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
 
             InitializeComponent();
 
@@ -732,11 +724,11 @@ namespace PluginTaskAutobook
         /// </summary>
         protected DataTable m_TableOrigin
         {
-            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]; }
         }
         protected DataTable m_TableEdit
         {
-            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]; }
         }
 
         /// <summary>
@@ -746,7 +738,7 @@ namespace PluginTaskAutobook
         /// <param name="e">данные события</param>
         void dgvYear_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+            m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
                 m_dgvYear.FillTableEdit((int)Session.m_Id);
         }
 
@@ -868,8 +860,8 @@ namespace PluginTaskAutobook
         /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-              m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Copy();
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
+              m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
         }
 
         /// <summary>
@@ -883,31 +875,10 @@ namespace PluginTaskAutobook
             m_handlerDb.RecUpdateInsertDelete(GetNameTableIn(PanelManagement.DatetimeRange.Begin) //??? почему 'Begin', а не 'End'
                 , @"DATE_TIME"
                 , @"ID"
-                , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
-                , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+                , m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
+                , m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
                 , out err
             );
-        }
-
-        /// <summary>
-        /// Количество базовых периодов
-        /// </summary>
-        protected int CountBasePeriod
-        {
-            get
-            {
-                int iRes = -1;
-                ID_PERIOD idPeriod = ActualIdPeriod;
-
-                iRes =
-                    idPeriod == ID_PERIOD.HOUR ?
-                        (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalHours - 0 :
-                        idPeriod == ID_PERIOD.DAY ?
-                            (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalDays - 0 :
-                            24;
-
-                return iRes;
-            }
         }
 
         /// <summary>
@@ -916,7 +887,7 @@ namespace PluginTaskAutobook
         private void updateDataValues()
         {
             int err = -1
-                , cnt = CountBasePeriod
+                , cnt = Session.CountBasePeriod
                 , iRegDbConn = -1;
             string errMsg = string.Empty;
             DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
@@ -931,12 +902,12 @@ namespace PluginTaskAutobook
 
                 if (err == 0)
                 {
-                    if (m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0)
+                    if (m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0)
                     {
                         // создать копии для возможности сохранения изменений
                         setValues();
 
-                        m_dgvYear.ShowValues(m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]);
+                        m_dgvYear.ShowValues(m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]);
                     }
                 }
                 else
@@ -985,13 +956,13 @@ namespace PluginTaskAutobook
             //Создание сессии
             Session.New();
             //Запрос для получения архивных данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = new DataTable();
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = HandlerDb.GetValuesVar
+            m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
                 (
                 Type
-                , ActualIdPeriod
-                , CountBasePeriod
+                , Session.ActualIdPeriod
+                , Session.CountBasePeriod
                 , arQueryRanges
                , out err
                 );
@@ -1004,7 +975,7 @@ namespace PluginTaskAutobook
                     //Начать новую сессию расчета
                     // ,получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
-                        , CountBasePeriod
+                        , Session.CountBasePeriod
                         , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
@@ -1023,10 +994,10 @@ namespace PluginTaskAutobook
         /// </summary>
         private void setValues()
         {
-            //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-            //         m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
-            m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
-                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Clone();
+            //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
+            //         m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Clone();
+            m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Clone();
         }
 
         ///// <summary>
@@ -1263,11 +1234,11 @@ namespace PluginTaskAutobook
 
             for (int i = 0; i < m_dgvYear.Rows.Count; i++)
             {
-                m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = getStructurInval(dtrPer[i], out err);
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = getStructurInval(dtrPer[i], out err);
                 dr_saveValue = valuesFence.Select(string.Format(m_TableEdit.Locale, "WR_DATETIME = '{0:o}'", m_dgvYear.Rows[i].Cells["DATE"].Value));
 
                 if (dr_saveValue.Count() > 0) {
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] =
+                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
                         HandlerDb.SavePlanValue(m_TableOrigin, dr_saveValue, (int)Session.m_currIdTimezone, out err);
 
                     //s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
@@ -1302,7 +1273,7 @@ namespace PluginTaskAutobook
 
             strRes += "SELECT * FROM "
                 + GetNameTableIn(arQueryRanges.End)
-                + " WHERE ID_TIME = " + (int)ActualIdPeriod;
+                + " WHERE ID_TIME = " + (int)Session.ActualIdPeriod;
 
             return HandlerDb.Select(strRes, out err);
         }
@@ -1340,7 +1311,7 @@ namespace PluginTaskAutobook
         /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            m_ViewValues = HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE;
+            Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE;
 
             onButtonLoadClick();
         }

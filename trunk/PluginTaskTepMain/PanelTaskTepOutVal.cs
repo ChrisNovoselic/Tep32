@@ -75,7 +75,7 @@ namespace PluginTaskTepMain
             err = 0;
             strErr = string.Empty;
             //Запрос для получения ранее учтенных (сохраненных) данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] =
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] =
                 //HandlerDb.GetValuesVar(Type
                 //    , Session.m_currIdPeriod
                 //    , CountBasePeriod
@@ -84,8 +84,8 @@ namespace PluginTaskTepMain
                 new DataTable()
                     ;
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE ?
-                HandlerDb.GetValuesVar(Type, out err) : Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE ?
+                HandlerDb.GetValuesVar(Type, out err) : Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
                     , Session.m_Id
                     , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                     , m_dictTableDictPrj[ID_DBTABLE.RATIO]

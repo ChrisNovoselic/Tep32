@@ -471,7 +471,7 @@ namespace PluginTaskReaktivka
                                     WR_DATETIME = r.Field<DateTime>("WR_DATETIME"),
                                 }).Distinct();
 
-                //if ((int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION == (int)typeValues)
+                //if ((int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE == (int)typeValues)
                 //    ;
 
                 foreach (HDataGridViewColumn col in Columns)
@@ -568,7 +568,7 @@ namespace PluginTaskReaktivka
             /// <param name="idSession">номер сессии пользователя</param>
             /// <param name="typeValues">тип данных</param>
             /// <returns>таблица с новыми данными с вьюхи</returns>
-            public DataTable GetValue(DataTable dtSourceOrg, int idSession, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
+            public DataTable GetValue(DataTable dtSourceOrg, int idSession, HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
             {
                 int i = 0,
                     idAlg = -1,
@@ -685,7 +685,7 @@ namespace PluginTaskReaktivka
             /// <param name="idAlg">номер алгоритма</param>
             /// <param name="typeValues">тип данных</param>
             /// <returns>показатель изменения</returns>
-            private int diffRowsInTables(DataTable origin, double editValue, int i, int idAlg, HandlerDbTaskCalculate.INDEX_TABLE_VALUES typeValues)
+            private int diffRowsInTables(DataTable origin, double editValue, int i, int idAlg, HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
             {
                 int quality = 1;
                 double originValues;
@@ -700,14 +700,14 @@ namespace PluginTaskReaktivka
 
                 switch (typeValues)
                 {
-                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE:
+                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE:
                         if (originValues.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, CultureInfo.InvariantCulture) != editValue.ToString())
                             quality = 2;
                         break;
-                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION:
+                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE:
                         quality = 1;
                         break;
-                    case HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT:
+                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT:
                         break;
                     default:
                         break;

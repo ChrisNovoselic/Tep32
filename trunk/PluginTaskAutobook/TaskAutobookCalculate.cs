@@ -440,20 +440,20 @@ namespace PluginTaskAutobook
             strErr = string.Empty;
             string strQuery = string.Empty;
 
-            if ((arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
-                && (arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
+            if ((arTableValues[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Columns.Count > 0)
+                && (arTableValues[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0))
             {
                 //Вставить строку с идентификатором новой сессии
                 insertIdSession(idFPanel, cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
+                insertInValues(arTableValues[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], out err);
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                arTableValues[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
                     + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValues[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                arTableValues[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
             }
             else
                 Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -870,21 +870,21 @@ namespace PluginTaskAutobook
             strErr = string.Empty;
             string strQuery = string.Empty;
 
-            if ((arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
-                && (arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
+            if ((arTableValues[(int)ID_VIEW_VALUES.SOURCE].Columns.Count > 0)
+                && (arTableValues[(int)ID_VIEW_VALUES.SOURCE].Rows.Count > 0))
             {
                 //Вставить строку с идентификатором новой сессии
                 insertIdSession(idFPanel, cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValues[(int)INDEX_TABLE_VALUES.SESSION], out err);
+                insertInValues(arTableValues[(int)ID_VIEW_VALUES.SOURCE], out err);
 
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValues[(int)INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                arTableValues[(int)ID_VIEW_VALUES.SOURCE].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
                     + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValues[(int)INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                arTableValues[(int)ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
             }
         }
 

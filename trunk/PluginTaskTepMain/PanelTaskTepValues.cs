@@ -35,16 +35,16 @@ namespace PluginTaskTepMain
 
         protected System.Data.DataTable m_TableOrigin
         {
-            get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]; }
 
-            //set { m_arTableOrigin[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
+            //set { m_arTableOrigin[(int)ID_VIEW_VALUES.SOURCE] = value.Copy(); }
         }
 
         protected System.Data.DataTable m_TableEdit
         {
-            get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+            get { return m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]; }
 
-            //set { m_arTableEdit[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
+            //set { m_arTableEdit[(int)ID_VIEW_VALUES.SOURCE] = value.Copy(); }
         }
         /// <summary>
         /// Событие для добавления основного параметра для панели управления
@@ -61,8 +61,8 @@ namespace PluginTaskTepMain
         protected PanelTaskTepValues(IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc, type)
         {
-            m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT];
+            m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
+            m_arTableEdit = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
 
             InitializeComponents();
             // назначить обработчики для кнопок 'Результат'
@@ -192,7 +192,7 @@ namespace PluginTaskTepMain
 
         private void btnImport_Click(object sender, EventArgs e)
         {
-            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE_IMPORT;
+            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT;
 
             onButtonLoadClick();            
         }
@@ -207,8 +207,8 @@ namespace PluginTaskTepMain
         /// </summary>
         protected void setValues()
         {
-            for (TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES indx = (TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN + 1);
-                indx < TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT;
+            for (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES indx = (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.UNKNOWN + 1);
+                indx < TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT;
                 indx++)
                 if (!(m_arTableOrigin[(int)indx] == null))
                     m_arTableEdit[(int)indx] =
@@ -270,7 +270,7 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE;
+            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE;
 
             onButtonLoadClick();
         }
@@ -282,7 +282,7 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.ARCHIVE;
+            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE;
 
             onButtonLoadClick();
         }

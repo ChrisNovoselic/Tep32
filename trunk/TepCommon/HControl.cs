@@ -11,7 +11,7 @@ using HClassLibrary;
 
 namespace TepCommon
 {
-    public partial class HDateTimePicker : HPanelCommon
+    public partial class HDateTimePicker : HClassLibrary.HPanelCommon
     {
         /// <summary>
         /// Перечисление для режимов группового элемента управления

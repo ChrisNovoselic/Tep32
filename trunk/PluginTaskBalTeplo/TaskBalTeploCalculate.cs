@@ -13,27 +13,6 @@ namespace PluginTaskBalTeplo
 {
     public class HandlerDbTaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate
     {
-        ///// <summary>
-        ///// Перечисление - признак типа загруженных из БД значений
-        /////  "сырые" - от источников информации, "архивные" - сохраненные в БД
-        ///// </summary>
-        //public enum INDEX_VIEW_VALUES : short
-        //{
-        //    UNKNOWN = -1, SOURCE,
-        //    ARCHIVE, COUNT
-        //}
-
-        ///// <summary>
-        ///// Признак отображаемых на текущий момент значений
-        ///// </summary>
-        //public INDEX_VIEW_VALUES m_ViewValues;
-
-        /// <summary>
-        /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
-        /// </summary>
-        public ID_PERIOD ActualIdPeriod { get { return m_ViewValues == INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.DAY : _Session.m_currIdPeriod; } }
-
-
         public override string GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
         {
             string strRes = string.Empty
@@ -469,7 +448,7 @@ namespace PluginTaskBalTeplo
             strErr = string.Empty;
             string strQuery = string.Empty;
 
-            if (m_ViewValues == INDEX_VIEW_VALUES.SOURCE)
+            if (_Session.m_ViewValues == ID_VIEW_VALUES.SOURCE)
                 CS_Source(idFPanel
                     , cntBasePeriod
                     , tablePars
@@ -477,7 +456,7 @@ namespace PluginTaskBalTeplo
                     , ref arTableValuesOut
                     , dtRange, out err
                     , out strErr);
-            if (m_ViewValues == INDEX_VIEW_VALUES.ARCHIVE)
+            if (_Session.m_ViewValues == ID_VIEW_VALUES.ARCHIVE)
                 CS_Archive(idFPanel
                     , cntBasePeriod
                     , tablePars
@@ -499,35 +478,35 @@ namespace PluginTaskBalTeplo
             strErr = string.Empty;
             string strQuery = string.Empty;
 
-            if ((arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE].Columns.Count > 0)
-                && (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE].Rows.Count > 0))
+            if ((arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Columns.Count > 0)
+                && (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Rows.Count > 0))
             {
                 //Вставить строку с идентификатором новой сессии
                 insertIdSession(idFPanel, cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE], out err);
+                insertInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE], out err);
 
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
                     + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
 
-                if ((arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE].Columns.Count > 0)
-                    && (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE].Rows.Count > 0))
+                if ((arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Columns.Count > 0)
+                    && (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Rows.Count > 0))
                 {
                     //Вставить строки в таблицу БД со входными значениями для расчета
-                    insertOutValues(out err, arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]);
+                    insertOutValues(out err, arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]);
 
                     // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
                     // получить входные для расчета значения для возможности редактирования
                     strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
                         + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
                         + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
                 }
             }
             else
@@ -574,78 +553,78 @@ namespace PluginTaskBalTeplo
             string strQuery = string.Empty;
 
 
-            if ((arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
-                && (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
+            if ((arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Columns.Count > 0)
+                && (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0))
             {
                 //Вставить строку с идентификатором новой сессии
                 insertIdSession(idFPanel, cntBasePeriod, out err);
 
-                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = mergeSessionDefault(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]);
+                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = mergeSessionDefault(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]);
 
                 //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
+                insertInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], out err);
 
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
                     + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
             }
             else
             {
-                if (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count > 0)
+                if (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows.Count > 0)
                 {
                     //Вставить строку с идентификатором новой сессии
                     insertIdSession(idFPanel, cntBasePeriod, out err);
                     //Вставить строки в таблицу БД со входными значениями для расчета
-                    insertDefInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], out err);
+                    insertDefInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT], out err);
 
                     // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                    arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                    arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
                     // получить входные для расчета значения для возможности редактирования
                     strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
                         + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                         + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                    arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                    arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
                 }
                 else
                     Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
-            if ((arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
-                && (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
+            if ((arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Columns.Count > 0)
+                && (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0))
             {
                 //Вставить строки в таблицу БД со входными значениями для расчета
-                insertOutValues(out err, arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]);
+                insertOutValues(out err, arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]);
 
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
                     + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
             }
             else
             {
-                if (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Count > 0)
+                if (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows.Count > 0)
                 {
                     //Вставить строки в таблицу БД со входными значениями для расчета
-                    insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], out err);
+                    insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT], out err);
 
                     // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
                     // получить входные для расчета значения для возможности редактирования
                     strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
                         + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
                         + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
 
                 }
                 else
-                    if (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count == 0)
+                    if (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count == 0)
                 {
                     string strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
                         + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
@@ -656,9 +635,9 @@ namespace PluginTaskBalTeplo
                     DataTable param = Select(strRes, out err);
                     foreach (DataRow r in param.Rows)
                     {
-                        arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Add(new object[] { r["ID"], "19", "0", "0", DateTime.Now });
+                        arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows.Add(new object[] { r["ID"], "19", "0", "0", DateTime.Now });
                     }
-                    insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT], out err);
+                    insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT], out err);
 
                 }
                 Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);

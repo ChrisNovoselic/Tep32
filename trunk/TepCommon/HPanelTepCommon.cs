@@ -14,7 +14,7 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public abstract partial class HPanelTepCommon : HPanelCommon, IObjectDbEdit
+    public abstract partial class HPanelCommon : HClassLibrary.HPanelCommon, IObjectDbEdit
     {
         /// <summary>
         /// Дополнительные действия при сохранении значений
@@ -56,20 +56,6 @@ namespace TepCommon
         /// Словарь с таблицами словарно-проектных значений
         /// </summary>
         protected Dictionary<ID_DBTABLE, DataTable> m_dictTableDictPrj;
-
-        private PanelManagementTaskCalculate __panelManagement;
-
-        protected PanelManagementTaskCalculate _panelManagement {
-            get { return __panelManagement; }
-
-            set {
-                __panelManagement = value;
-                __panelManagement.EventBaseValueChanged += new DelegateObjectFunc(panelManagement_OnEventBaseValueChanged);
-            }
-        }
-
-        protected abstract PanelManagementTaskCalculate createPanelManagement();
-
         /// <summary>
         /// Удалить сессию (+ очистить реквизиты сессии)
         /// </summary>
@@ -79,18 +65,10 @@ namespace TepCommon
 
             (m_handlerDb as HandlerDbTaskCalculate).DeleteSession(out err);
         }
-
         /// <summary>
         /// Значения параметров сессии
         /// </summary>
-        protected HandlerDbTaskCalculate.SESSION Session { get { return (m_handlerDb as HandlerDbTaskCalculate)._Session; } }
-
-        /// <summary>
-        /// Обработчик события при изменении периода расчета
-        /// </summary>
-        /// <param name="obj">Аргумент события</param>
-        protected abstract void panelManagement_OnEventBaseValueChanged(object obj);
-
+        protected HandlerDbTaskCalculate.SESSION Session { get { return (m_handlerDb as HandlerDbTaskCalculate)._Session; } }        
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
         /// </summary>
@@ -116,7 +94,9 @@ namespace TepCommon
         #region Apelgans
 
         protected int m_id_panel;
+
         public enum ID_DT_DESC { TABLE, PROP };
+
         public DataTable[] Descriptions = new DataTable[] { new DataTable(), new DataTable() };
 
         protected HTepUsers.DictElement m_dictProfile;
@@ -127,12 +107,10 @@ namespace TepCommon
             , PROP = 2 //Свойства
                 , DESC = 3 //Описание
         };
-
         /// <summary>
         /// Список групп
         /// </summary>
         string[] m_arr_name_group_panel = { "Настройка", "Проект", "Задача" };
-
         /// <summary>
         /// Строки для описания групп вкладок
         /// </summary>
@@ -155,7 +133,7 @@ namespace TepCommon
             base.Dispose(disposing);
         }
 
-        public HPanelTepCommon(IPlugIn plugIn)
+        public HPanelCommon(IPlugIn plugIn)
             : base(13, 13)
         {
             this._iFuncPlugin = plugIn;
@@ -190,12 +168,7 @@ namespace TepCommon
         /// <summary>
         /// Объект для обмена данными с БД
         /// </summary>
-        protected HandlerDbValues m_handlerDb;
-        /// <summary>
-        /// Создать объект для обмена данными с БД
-        /// </summary>
-        /// <returns>Объект для обмена данными с БД</returns>
-        protected abstract HandlerDbValues createHandlerDb();
+        protected HandlerDbValues m_handlerDb;        
         /// <summary>
         /// Найти идентификатор типа текущей панели
         ///  , зарегистрированного в библиотеке
@@ -372,53 +345,6 @@ namespace TepCommon
             m_dictProfile = HTepUsers.HTepProfilesXml.GetProfileUserPanel(HTepUsers.Id, HTepUsers.Role, m_id_panel);
 
         }
-        ///// <summary>
-        ///// Инициализация с заданными параметрами соединения с БД 
-        ///// </summary>
-        ///// <param name="obj">Аргумент (параметры соединения с БД)</param>
-        //private void initialize(object obj)
-        //{
-        //    int err = -1;
-        //    string errMsg = string.Empty;
-
-        //    if (((EventArgsDataHost)obj).par[0] is ConnectionSettings)
-        //    {
-        //        m_connSett = (ConnectionSettings)((EventArgsDataHost)obj).par[0];
-
-        //        err = 0;
-        //    }
-        //    else
-        //        errMsg = @"не корректен тип объекта с параметрами соедиения";
-
-        //    if (err == 0)
-        //    {
-        //        initialize(out err, out errMsg);
-        //    }
-        //    else
-        //        ;
-
-        //    if (!(err == 0))
-        //    {
-        //        throw new Exception(@"HPanelEdit::initialize () - " + errMsg);
-        //    }
-        //    else
-        //    {
-        //    }
-        //}
-        ///// <summary>
-        ///// Инициализация с предустановленными параметрами соединения с БД
-        ///// </summary>
-        ///// <param name="err">Признак результатат выполнения функции</param>
-        ///// <param name="errMsg">Пояснение в случае возникновения ошибки</param>
-        //private void initialize(out int err, out string errMsg)
-        //{
-        //    int iListenerId = -1;
-
-        //    err = -1;
-        //    errMsg = string.Empty;
-
-        //    initialize(out err, out errMsg);            
-        //}
 
         public override bool Activate(bool active)
         {
@@ -482,7 +408,11 @@ namespace TepCommon
                 m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
             }
         }
-
+        /// <summary>
+        /// Создать объект для обмена данными с БД
+        /// </summary>
+        /// <returns>Объект для обмена данными с БД</returns>
+        protected abstract HandlerDbValues createHandlerDb();
         //protected abstract void Activate(bool activate);
         /// <summary>
         /// Добавить область оперативного описания выбранного объекта на вкладке
@@ -602,6 +532,32 @@ namespace TepCommon
         }
     }
 
+    public abstract partial class HPanelTepCommon : HPanelCommon
+    {
+        public HPanelTepCommon(IPlugIn plugIn) : base (plugIn)
+        {
+        }
+
+        private PanelManagementTaskCalculate __panelManagement;
+
+        protected PanelManagementTaskCalculate _panelManagement
+        {
+            get { return __panelManagement; }
+
+            set
+            {
+                __panelManagement = value;
+                __panelManagement.EventBaseValueChanged += new DelegateObjectFunc(panelManagement_OnEventBaseValueChanged);
+            }
+        }
+
+        protected abstract PanelManagementTaskCalculate createPanelManagement();
+        /// <summary>
+        /// Обработчик события при изменении периода расчета
+        /// </summary>
+        /// <param name="obj">Аргумент события</param>
+        protected abstract void panelManagement_OnEventBaseValueChanged(object obj);        
+    }
 
     public class HPanelDesc : TableLayoutPanel
     {

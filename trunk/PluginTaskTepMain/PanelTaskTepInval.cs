@@ -34,16 +34,16 @@ namespace PluginTaskTepMain
 
         //protected override System.Data.DataTable m_TableOrigin
         //{
-        //    get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+        //    get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]; }
 
-        //    //set { m_arTableOrigin[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
+        //    //set { m_arTableOrigin[(int)ID_VIEW_VALUES.SOURCE] = value.Copy(); }
         //}
 
         //protected override System.Data.DataTable m_TableEdit
         //{
-        //    get { return m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]; }
+        //    get { return m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]; }
 
-        //    //set { m_arTableEdit[(int)INDEX_TABLE_VALUES.SESSION] = value.Copy(); }
+        //    //set { m_arTableEdit[(int)ID_VIEW_VALUES.SOURCE] = value.Copy(); }
         //}
 
         protected override HandlerDbValues createHandlerDb()
@@ -61,15 +61,15 @@ namespace PluginTaskTepMain
 
             //m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_dictDbTables[(int)INDEX_DBTABLE_NAME.INVALUES]
             //    , @"ID_PUT, ID_TIME"
-            //    , m_arTableOrigin[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
-            //    , m_arTableEdit[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE]
+            //    , m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]
+            //    , m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]
             //    , out err);
 
             m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVAL_DEF].m_name
                 , @"ID_PUT, ID_TIME"
                 , string.Empty
-                , m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
-                , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT]
+                , m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
+                , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
                 , out err);
         }
         /// <summary>
@@ -77,8 +77,8 @@ namespace PluginTaskTepMain
         /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] =
-                m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Copy();
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
+                m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Copy();
         }
         /// <summary>
         /// Освободить (при закрытии), связанные с функционалом ресурсы
@@ -101,11 +101,11 @@ namespace PluginTaskTepMain
 
             Session.New();
             //Запрос для получения архивных данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.ARCHIVE] = new DataTable();
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = new DataTable();
             //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE ?
-                HandlerDb.GetValuesVar(Type, ActualIdPeriod, CountBasePeriod, arQueryRanges, out err) :
-                    Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
+            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE ?
+                HandlerDb.GetValuesVar(Type, Session.ActualIdPeriod, Session.CountBasePeriod, arQueryRanges, out err) :
+                    Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
                         , Session.m_Id
                         , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , m_dictTableDictPrj[ID_DBTABLE.RATIO]
@@ -115,13 +115,13 @@ namespace PluginTaskTepMain
             if (err == 0)
             {
                 //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
-                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT] = HandlerDb.GetValuesDef(ActualIdPeriod, out err);
+                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = HandlerDb.GetValuesDef(Session.ActualIdPeriod, out err);
                 //Проверить признак выполнения запроса
                 if (err == 0)
                     //Начать новую сессию расчета
                     // , получить входные для расчета значения для возможности редактирования
                     HandlerDb.CreateSession(m_id_panel
-                        , CountBasePeriod
+                        , Session.CountBasePeriod
                         , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , ref m_arTableOrigin
                         , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
@@ -144,11 +144,11 @@ namespace PluginTaskTepMain
         {
             DataRow[] rowsParameter = null;
 
-            for (TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES indx = (TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.UNKNOWN + 1);
-                indx < TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.COUNT;
+            for (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES indx = (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.UNKNOWN + 1);
+                indx < TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT;
                 indx++)
-                if (!(indx == TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT)
-                    || ((indx == TepCommon.HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT) && (ev.m_iQuality == TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT)))
+                if (!(indx == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT)
+                    || ((indx == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT) && (ev.m_iQuality == TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT)))
                 {
                     if ((!(m_arTableEdit[(int)indx] == null))
                         && (m_arTableEdit[(int)indx].Columns.Contains(@"ID_PUT") == true))

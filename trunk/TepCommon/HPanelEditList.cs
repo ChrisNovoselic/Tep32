@@ -14,7 +14,7 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public abstract class HPanelEditListCommon : HPanelTepCommon
+    public abstract class HPanelEditListCommon : HPanelCommon
     {
         protected DataTable m_tblEdit
             , m_tblOrigin;
@@ -35,6 +35,11 @@ namespace TepCommon
             m_tblOrigin.Clear();
 
             base.reinit();
+        }
+
+        protected override HandlerDbValues createHandlerDb()
+        {
+            return new HandlerDbValues();
         }
 
         protected override void recUpdateInsertDelete(out int err)
@@ -239,9 +244,7 @@ namespace TepCommon
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
         }
 
-        #endregion
-
-        
+        #endregion      
     }
 
     public abstract partial class HPanelEditList : HPanelEditListCommon

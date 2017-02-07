@@ -16,7 +16,7 @@ namespace TepCommon
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected class PanelManagementTaskCalculate : HPanelCommon
+        protected class PanelManagementTaskCalculate : HClassLibrary.HPanelCommon
         {
             private enum INDEX_CONTROL_BASE
             {

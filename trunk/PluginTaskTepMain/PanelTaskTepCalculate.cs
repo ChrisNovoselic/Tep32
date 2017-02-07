@@ -21,26 +21,6 @@ namespace PluginTaskTepMain
         /// Массив списков идентификаторов компонентов ТЭЦ/параметров
         /// </summary>
         protected List<int>[] m_arListIds;
-        ///// <summary>
-        ///// Индекс используесмых на панели значений
-        ///// </summary>
-        //protected enum INDEX_USE_VALUES { UNKNOWN = -1, IN, OUT_NORM, OUT_MKT
-        //    , COUNT }
-        ///// <summary>
-        ///// Составной признак, указывающий на индексы, используемых на панели значений
-        ///// </summary>
-        //HMark m_markUseValues;
-        /// <summary>
-        /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
-        /// </summary>
-        protected ID_PERIOD ActualIdPeriod { get { return Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.SESSION.INDEX_VIEW_VALUES.SOURCE ? ID_PERIOD.HOUR : Session.m_currIdPeriod; } }        
-        ///// <summary>
-        ///// Метод для создания панели с активными объектами управления
-        ///// </summary>
-        ///// <returns>Панель управления</returns>
-        //protected abstract PanelManagementTaskCalculate createPanelManagement();
-        
-        //private PanelManagementTaskCalculate _panelManagement;
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
@@ -56,37 +36,10 @@ namespace PluginTaskTepMain
                 return _panelManagement;
             }
         }
-
         /// <summary>
         /// Отображение значений в табличном представлении
         /// </summary>
-        protected DataGridViewTEPCalculate m_dgvValues;
-        /// <summary>
-        /// Количество базовых периодов
-        /// </summary>
-        protected int CountBasePeriod
-        {
-            get
-            {
-                int iRes = -1;
-                ID_PERIOD idPeriod = ActualIdPeriod;
-
-                iRes =
-                    //_currIdPeriod == ID_PERIOD.HOUR ?
-                    //    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0 :
-                    //_currIdPeriod == ID_PERIOD.DAY ?
-                    //    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalDays - 0 :
-                    //    24
-                    idPeriod == ID_PERIOD.HOUR ?
-                        (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalHours - 0 :
-                        idPeriod == ID_PERIOD.DAY ?
-                            (int)(Session.m_rangeDatetime.End - Session.m_rangeDatetime.Begin).TotalDays - 0 :
-                            24
-                            ;
-
-                return iRes;                    
-            }
-        }
+        protected DataGridViewTEPCalculate m_dgvValues;        
 
         protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         ///// <summary>

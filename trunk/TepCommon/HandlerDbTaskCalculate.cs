@@ -15,14 +15,13 @@ namespace TepCommon
     public abstract partial class HandlerDbTaskCalculate : HandlerDbValues
     {
         /// <summary>
-        /// Перечисление - индексы таблиц для значений
-        ///  , собранных в автоматическом режиме
-        ///  , "по умолчанию"
+        /// Перечисление - признак типа загруженных из БД значений
+        ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
         /// </summary>
-        public enum INDEX_TABLE_VALUES : int {
-            UNKNOWN = -1
-            , ARCHIVE, SESSION
-            , DEFAULT
+        public enum ID_VIEW_VALUES : short
+        {
+            SOURCE_IMPORT = -11
+            , UNKNOWN = -1, SOURCE, ARCHIVE, DEFAULT
                 , COUNT
         }
         /// <summary>
@@ -94,21 +93,11 @@ namespace TepCommon
 
             //        return typeRes;
             //    }
-            //}
-            /// <summary>
-            /// Перечисление - признак типа загруженных из БД значений
-            ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
-            /// </summary>
-            public enum INDEX_VIEW_VALUES : short
-            {
-                SOURCE_IMPORT = -11
-                , UNKNOWN = -1, SOURCE, ARCHIVE
-                , COUNT
-            }
+            //}            
             /// <summary>
             /// Признак отображаемых на текущий момент значений
             /// </summary>
-            public INDEX_VIEW_VALUES m_ViewValues;
+            public ID_VIEW_VALUES m_ViewValues;
 
             private long _id;
             /// <summary>
@@ -121,13 +110,43 @@ namespace TepCommon
             /// </summary>
             public ID_PERIOD m_currIdPeriod;
             /// <summary>
+            /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
+            /// </summary>
+            public ID_PERIOD ActualIdPeriod { get { return m_ViewValues == ID_VIEW_VALUES.SOURCE ? ID_PERIOD.DAY : m_currIdPeriod; } }
+            /// <summary>
             /// Идентификатор текущий выбранного часового пояса
             /// </summary>
             public ID_TIMEZONE m_currIdTimezone;
 
             public int m_curOffsetUTC;
 
-            public DateTimeRange m_rangeDatetime; 
+            public DateTimeRange m_rangeDatetime;
+            /// <summary>
+            /// Количество базовых периодов
+            /// </summary>
+            public int CountBasePeriod
+            {
+                get
+                {
+                    int iRes = -1;
+                    ID_PERIOD idPeriod = ActualIdPeriod;
+
+                    iRes =
+                        //_currIdPeriod == ID_PERIOD.HOUR ?
+                        //    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0 :
+                        //_currIdPeriod == ID_PERIOD.DAY ?
+                        //    (int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalDays - 0 :
+                        //    24
+                        idPeriod == ID_PERIOD.HOUR ?
+                            (int)(m_rangeDatetime.End - m_rangeDatetime.Begin).TotalHours - 0 :
+                            idPeriod == ID_PERIOD.DAY ?
+                                (int)(m_rangeDatetime.End - m_rangeDatetime.Begin).TotalDays - 0 :
+                                24
+                                ;
+
+                    return iRes;
+                }
+            }
 
             public void Initialize(DataRow r)
             {
@@ -189,7 +208,7 @@ namespace TepCommon
         {
             _Session = new SESSION() { m_Id = -1
                 , m_IdFpanel = -1
-                , m_ViewValues = SESSION.INDEX_VIEW_VALUES.UNKNOWN
+                , m_ViewValues = ID_VIEW_VALUES.UNKNOWN
                 , m_currIdPeriod = ID_PERIOD.UNKNOWN
                 , m_currIdTimezone = ID_TIMEZONE.UNKNOWN
                 , m_curOffsetUTC = int.MinValue
@@ -238,21 +257,21 @@ namespace TepCommon
             DataRow[] rowsSel = null;
 
             // удалить строки из таблицы со значениями "по умолчанию"
-            foreach (DataRow rValVar in arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows)
+            foreach (DataRow rValVar in arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows)
             {
-                rowsSel = arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Select(@"ID_PUT=" + rValVar[@"ID_PUT"]);
+                rowsSel = arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Select(@"ID_PUT=" + rValVar[@"ID_PUT"]);
                 foreach (DataRow rToRemove in rowsSel)
-                    arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows.Remove(rToRemove);
+                    arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows.Remove(rToRemove);
             }
             // вставить строки из таблицы со значениями "по умолчанию"
-            foreach (DataRow rValDef in arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.DEFAULT].Rows)
+            foreach (DataRow rValDef in arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows)
             {
                 rowsSel = tablePars.Select(@"ID=" + rValDef[@"ID_PUT"]);
                 if (rowsSel.Length == 1)
                 {
                     iAVG = (Int16)rowsSel[0][@"AVG"];
 
-                    arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Add(new object[]
+                    arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Add(new object[]
                         {
                             rValDef[@"ID_PUT"]
                             //, HUsers.Id //ID_USER
@@ -269,26 +288,26 @@ namespace TepCommon
                     ; // по идентификатору найден не единственный параметр расчета
             }
 
-            correctValues(ref arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION]
+            correctValues(ref arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
                 , ref tablePars);
 
-            if ((arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Columns.Count > 0)
-                && (arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Count > 0))
+            if ((arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Columns.Count > 0)
+                && (arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0))
             {
                 //Вставить строку с идентификатором новой сессии
                 insertIdSession(idFPanel, cntBasePeriod, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION], out err);
+                insertInValues(arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], out err);
                 //Вставить строки в таблицу БД со выходными значениями для расчета
                 insertOutValues(out err);
 
                 // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION].Rows.Clear();
+                arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
                 // получить входные для расчета значения для возможности редактирования
                 strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
                     + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValues[(int)HandlerDbTaskCalculate.INDEX_TABLE_VALUES.SESSION] = Select(strQuery, out err);
+                arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);

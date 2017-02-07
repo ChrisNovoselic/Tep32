@@ -14,11 +14,16 @@ using InterfacePlugIn;
 
 namespace TepCommon
 {
-    public abstract class HPanelEditTree : HPanelTepCommon
+    public abstract class HPanelEditTree : HPanelCommon
     {
         public HPanelEditTree(IPlugIn plugIn)
             : base(plugIn)
         {
+        }
+
+        protected override HandlerDbValues createHandlerDb()
+        {
+            throw new NotImplementedException();
         }
     }
 }
