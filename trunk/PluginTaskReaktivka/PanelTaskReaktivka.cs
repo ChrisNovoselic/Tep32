@@ -129,7 +129,7 @@ namespace PluginTaskReaktivka
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
 
-            InitializeComponent();
+            InitializeComponents();
 
             Session.SetDatetimeRange(_panelManagement.DatetimeRange);
         }
@@ -137,7 +137,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Конструктор
         /// </summary>
-        private void InitializeComponent()
+        private void InitializeComponents()
         {
             m_dgvValues = new DGVReaktivka(INDEX_CONTROL.DGV_DATA.ToString());
 
@@ -148,15 +148,17 @@ namespace PluginTaskReaktivka
             // переменные для инициализации кнопок "Добавить", "Удалить"
             string strPartLabelButtonDropDownMenuItem = string.Empty;
             int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
-                , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
+                , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"
+            int posColdgvValues = 4
+                , heightRowdgvValues = 10;
 
             SuspendLayout();
 
-            Controls.Add(PanelManagement, 0, posRow);
-            SetColumnSpan(PanelManagement, 4); SetRowSpan(PanelManagement, 9);
+            Controls.Add(PanelManagement, 0, posRow = posRow + 1);
+            SetColumnSpan(PanelManagement, posColdgvValues); SetRowSpan(PanelManagement, RowCount);
 
-            Controls.Add(m_dgvValues, 5, posRow);
-            SetColumnSpan(m_dgvValues, 9); SetRowSpan(m_dgvValues, 10);
+            Controls.Add(m_dgvValues, posColdgvValues, posRow);
+            SetColumnSpan(m_dgvValues, this.ColumnCount - posColdgvValues); SetRowSpan(m_dgvValues, heightRowdgvValues);
 
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 

@@ -67,15 +67,27 @@ namespace TepCommon
             }
 
             /// <summary>
+            /// Признаки порядка размещения элементов управления (последовательно - один над другим, одновременно - на одной строке, наличие подписей)
+            /// </summary>
+            [Flags]
+            public enum ModeTimeControlPlacement { Unknown, Queue = 0x1, Twin = 0x2, Labels = 0x4 }
+
+            private ModeTimeControlPlacement _timeControlPlacement;
+
+            public ModeTimeControlPlacement TimeControlPlacement { get { return _timeControlPlacement; } set { _timeControlPlacement = value; replacementTimeControl(); } }
+
+            /// <summary>
             /// Тип обработчика события - изменение выбора запрет/разрешение
             ///  для компонента/параметра при участии_в_расчете/отображении
             /// </summary>
             /// <param name="ev">Аргумент события</param>
             public delegate void ItemCheckedParametersEventHandler(ItemCheckedParametersEventArgs ev);
 
-            public PanelManagementTaskCalculate()
+            public PanelManagementTaskCalculate(ModeTimeControlPlacement timeControlPlacement)
                 : base(8, 21)
             {
+                TimeControlPlacement = timeControlPlacement;
+
                 InitializeComponents();
 
                 //HDateTimePicker hdtpEnd = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
@@ -92,40 +104,94 @@ namespace TepCommon
             private void InitializeComponents()
             {
                 Control ctrl = null;
+                int posRow = -1;
 
                 SuspendLayout();
 
                 initializeLayoutStyle();
 
+                //CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
+
+                //Базовый период отображения данных
+                //Базовый период отображения данных - Подпись
+                if ((TimeControlPlacement & ModeTimeControlPlacement.Labels) == ModeTimeControlPlacement.Labels) {
+                    ctrl = new System.Windows.Forms.Label();
+                    //ctrl.Dock = DockStyle.Bottom;
+                    ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Bottom);
+                    (ctrl as System.Windows.Forms.Label).Text = @"Период расчета";
+                    this.Controls.Add(ctrl, 0, posRow = posRow + 1); //posRow = posRow + 1
+                    SetColumnSpan(ctrl, this.ColumnCount / 2);
+                } else
+                    ;
+                //Базовый период отображения данных - Значение
                 ctrl = new ComboBox();
                 ctrl.Name = INDEX_CONTROL_BASE.CBX_PERIOD.ToString();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                 //??? точное размещенеие в коде целевого класса
-                this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1); //??? добавлять для возможности последующего поиска
+                SetColumnSpan(ctrl, this.ColumnCount / 2);
+                //Часовой пояс
+                //Часовой пояс - Подпись
+                if ((TimeControlPlacement & ModeTimeControlPlacement.Labels) == ModeTimeControlPlacement.Labels) {
+                    posRow = -1;
 
+                    ctrl = new System.Windows.Forms.Label();
+                    //ctrl.Dock = DockStyle.Bottom;
+                    ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Bottom);
+                    (ctrl as System.Windows.Forms.Label).Text = @"Часовой пояс";
+                    this.Controls.Add(ctrl
+                        , (TimeControlPlacement & ModeTimeControlPlacement.Queue) == ModeTimeControlPlacement.Queue ? 0 : ColumnCount / 2
+                        , posRow = posRow + 1); //
+                    SetColumnSpan(ctrl, this.ColumnCount / 2);
+                } else
+                    ;                
+                //Часовой пояс - Значение
                 ctrl = new ComboBox();
                 ctrl.Name = INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                 //??? точное (столбец, строка) размещенеие в коде целевого класса
-                this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска (без указания столбца, строки)
+                this.Controls.Add(ctrl
+                    , (TimeControlPlacement & ModeTimeControlPlacement.Queue) == ModeTimeControlPlacement.Queue ? 0 : ColumnCount / 2
+                    , posRow = posRow + 1); //??? добавлять для возможности последующего поиска (без указания столбца, строки)
+                SetColumnSpan(ctrl, this.ColumnCount / 2);
 
+                //Дата/время начала периода расчета
+                //Дата/время начала периода расчета - подпись
+                ctrl = new System.Windows.Forms.Label();
+                ctrl.Dock = DockStyle.Bottom;
+                (ctrl as System.Windows.Forms.Label).Text = @"Дата/время начала периода расчета";
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1); //posRow = posRow + 1
+                SetColumnSpan(ctrl, this.ColumnCount);
+                //Дата/время начала периода расчета - значения
                 ctrl = new HDateTimePicker(s_dtDefault, null);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_BEGIN.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
+                ctrl.Dock = DockStyle.Top;
+                //ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 //??? точное (столбец, строка) размещенеие в коде целевого класса
-                this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска (без указания столбца, строки)
-
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1); //posRow = posRow + 1 //??? добавлять для возможности последующего поиска (без указания столбца, строки)
+                SetColumnSpan(ctrl, this.ColumnCount);
+                //Дата/время  окончания периода расчета
+                //Дата/время  окончания периода расчета - подпись
+                ctrl = new System.Windows.Forms.Label();
+                ctrl.Dock = DockStyle.Bottom;
+                (ctrl as System.Windows.Forms.Label).Text = @"Дата/время  окончания периода расчета:";
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1); //posRow = posRow + 1
+                SetColumnSpan(ctrl, this.ColumnCount);
+                //Дата/время  окончания периода расчета - значения
                 ctrl = new HDateTimePicker(s_dtDefault.AddHours(1), Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
                 ctrl.Name = INDEX_CONTROL_BASE.HDTP_END.ToString();
-                ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
+                ctrl.Dock = DockStyle.Top;
+                //ctrl.Anchor = (AnchorStyles)(AnchorStyles.Left | AnchorStyles.Right);
                 //??? точное (столбец, строка) размещенеие в коде целевого класса
-                this.Controls.Add(ctrl); //??? добавлять для возможности последующего поиска (без указания столбца, строки)
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1); //posRow = posRow + 1 //??? добавлять для возможности последующего поиска (без указания столбца, строки)                
+                SetColumnSpan(ctrl, this.ColumnCount); SetRowSpan(ctrl, 1);
 
                 ResumeLayout(false);
                 PerformLayout();
             }
+
             /// <summary>
             /// Инициализация размеров/стилей макета для размещения элементов управления
             /// </summary>
@@ -164,50 +230,11 @@ namespace TepCommon
                     ;
             }
 
-            public int SetPositionPeriod(Point ptPos, Size sz)
+            /// <summary>
+            /// Изменить размещение элементов управления датой/временем
+            /// </summary>
+            private void replacementTimeControl()
             {
-                return setPositionControl(INDEX_CONTROL_BASE.CBX_PERIOD, ptPos, sz);
-            }
-
-            public int SetPositionTimezone(Point ptPos, Size sz)
-            {
-                return setPositionControl(INDEX_CONTROL_BASE.CBX_TIMEZONE, ptPos, sz);
-            }
-
-            public int SetPositionDateTimePicker(Point ptPos, Size sz)
-            {
-                int iRow = ptPos.X;
-
-                //Дата/время начала периода расчета
-                //Дата/время начала периода расчета - подпись
-                Control ctrl = new System.Windows.Forms.Label();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Дата/время начала периода расчета";
-                this.Controls.Add(ctrl, 0, iRow = iRow + 1);
-                SetColumnSpan(ctrl, this.ColumnCount); SetRowSpan(ctrl, 1);
-                //Дата/время начала периода расчета - значения
-                iRow = setPositionControl(INDEX_CONTROL_BASE.HDTP_BEGIN, new Point(0, iRow = iRow + 1), new Size(this.ColumnCount, 1));
-                //Дата/время  окончания периода расчета
-                //Дата/время  окончания периода расчета - подпись
-                ctrl = new System.Windows.Forms.Label();
-                ctrl.Dock = DockStyle.Bottom;
-                (ctrl as System.Windows.Forms.Label).Text = @"Дата/время  окончания периода расчета:";
-                this.Controls.Add(ctrl, 0, iRow = iRow + 1);
-                SetColumnSpan(ctrl, this.ColumnCount); SetRowSpan(ctrl, 1);
-                //Дата/время  окончания периода расчета - значения
-                iRow = setPositionControl(INDEX_CONTROL_BASE.HDTP_END, new Point(0, iRow = iRow + 1), new Size(this.ColumnCount, 1));
-
-                return iRow;
-            }
-
-            private int  setPositionControl(INDEX_CONTROL_BASE indx, Point ptPos, Size sz)
-            {
-                Control ctrl = Controls.Find(indx.ToString(), true)[0];
-                this.Controls.Remove(ctrl);
-                this.Controls.Add(ctrl, ptPos.Y, ptPos.X);
-                SetColumnSpan(ctrl, sz.Width); SetRowSpan(ctrl, sz.Height);
-
-                return ptPos.X;
             }
 
             public DateTimeRange DatetimeRange

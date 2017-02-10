@@ -18,7 +18,7 @@ namespace PluginTaskAutobook
     public class PanelTaskAutobookMonthValues : HPanelTepCommon
     {
         /// <summary>
-        /// 
+        /// ???
         /// </summary>
         public static int vsRatio;
         /// <summary>
@@ -34,7 +34,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Объект для производства расчетов
         /// </summary>
-        protected TaskAutobookCalculate AutoBookCalc;
+        protected TaskAutobookCalculate m_AutoBookCalculate;
         /// <summary>
         /// Перечисление - режимы работы вкладки
         /// </summary>
@@ -102,7 +102,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Отображение значений в табличном представлении(значения)
         /// </summary>
-        public DGVAutoBook m_dgvAB;
+        public DataGridViewAutobook m_dgvValues;
         /// <summary>
         /// to Outlook
         /// </summary>
@@ -126,10 +126,6 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// Набор текстов для подписей для кнопок
-        /// </summary>
-        protected static string[] m_arButtonText = { @"Отправить", @"Сохранить", @"Загрузить" };
-        /// <summary>
         /// 
         /// </summary>
         /// <returns>экземпляр класса</returns>
@@ -141,7 +137,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Класс для грида
         /// </summary>
-        public class DGVAutoBook : DataGridView
+        public class DataGridViewAutobook : DataGridView
         {
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
@@ -212,7 +208,7 @@ namespace PluginTaskAutobook
             /// 
             /// </summary>
             /// <param name="nameDGV">имя вьюхи</param>
-            public DGVAutoBook(string nameDGV)
+            public DataGridViewAutobook(string nameDGV)
             {
                 InitializeComponents(nameDGV);
             }
@@ -1641,7 +1637,7 @@ namespace PluginTaskAutobook
             : base(iFunc)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
-            AutoBookCalc = new TaskAutobookCalculate();
+            m_AutoBookCalculate = new TaskAutobookCalculate();
 
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
@@ -1735,14 +1731,14 @@ namespace PluginTaskAutobook
             /// <param name="rows">Количество строк в макете</param>
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
             {
-                initializeLayoutStyleEvenly();
+                initializeLayoutStyleEvenly(cols, rows);
             }
 
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
             public PanelManagementAutobook()
-                : base() //4, 3
+                : base(ModeTimeControlPlacement.Twin | ModeTimeControlPlacement.Labels) //4, 3
             {
                 InitializeComponents();
             }
@@ -1756,18 +1752,11 @@ namespace PluginTaskAutobook
                 // переменные для инициализации кнопок "Добавить", "Удалить"
                 string strPartLabelButtonDropDownMenuItem = string.Empty;
                 int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
-                    , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
+                    , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"
+
                 SuspendLayout();
-                posRow = 0;
-                //Период расчета - подпись, значение                
-                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
 
-                //Период расчета - подпись, значение
-                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
-
-                //Дата/время начала периода расчета
-                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
-
+                posRow = 6;
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
                 ctrl = new DropDownButton();
@@ -1778,28 +1767,43 @@ namespace PluginTaskAutobook
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
                 ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
-                ctrl.Dock = DockStyle.Top;
+                //ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 0, posRow);
+                SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //Кнопка - Отправить
-                Button ctrlBSend = new Button();
-                ctrlBSend.Name = INDEX_CONTROL.BUTTON_SEND.ToString();
-                ctrlBSend.Text = @"Отправить";
-                ctrlBSend.Dock = DockStyle.Top;
+                ctrl = new Button();
+                ctrl.Name = INDEX_CONTROL.BUTTON_SEND.ToString();
+                ctrl.Text = @"Отправить";
                 //ctrlBSend.Enabled = false;
+                //ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, ColumnCount / 2, posRow);
+                SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
                 //Кнопка - сохранить
                 Button ctrlBsave = new Button();
                 ctrlBsave.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
                 ctrlBsave.Text = @"Сохранить";
-                ctrlBsave.Dock = DockStyle.Top;
+                //ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
+                SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
                 //Кнопка - Экспорт
-                Button ctrlExp = new Button();
-                ctrlExp.Name = INDEX_CONTROL.BUTTON_EXPORT.ToString();
-                ctrlExp.Text = @"Экспорт";
-                ctrlExp.Dock = DockStyle.Top;
+                ctrl = new Button();
+                ctrl.Name = INDEX_CONTROL.BUTTON_EXPORT.ToString();
+                ctrl.Text = @"Экспорт";
+                //ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, ColumnCount / 2, posRow);
+                SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
                 //Поле с почтой
-                TextBox ctrlTxt = new TextBox();
-                ctrlTxt.Name = INDEX_CONTROL.TXTBX_EMAIL.ToString();
+                ctrl = new TextBox();
+                ctrl.Name = INDEX_CONTROL.TXTBX_EMAIL.ToString();
                 //ctrlTxt.Text = @"Pasternak_AS@sibeco.su";
-                ctrlTxt.Dock = DockStyle.Top;
+                //ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, ColumnCount / 2, posRow);
+                SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
                 //Календарь
                 DateTimePicker dtPickerCalendar = new DateTimePicker();
                 dtPickerCalendar.Name = INDEX_CONTROL.CALENDAR.ToString();
@@ -1807,31 +1811,16 @@ namespace PluginTaskAutobook
                 dtPickerCalendar.DropDownAlign = LeftRightAlignment.Right;
                 dtPickerCalendar.Format = DateTimePickerFormat.Custom;
                 dtPickerCalendar.Width = 125;
-                dtPickerCalendar.CustomFormat = "dd MMM, yyyy";
-                //табло кнопок
-                TableLayoutPanel tlpButton = new TableLayoutPanel();
-                tlpButton.Dock = DockStyle.Fill;
-                tlpButton.AutoSize = true;
-                tlpButton.AutoSizeMode = AutoSizeMode.GrowOnly;
-                tlpButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
-                tlpButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
-                tlpButton.Controls.Add(ctrl, 0, 0);
-                tlpButton.Controls.Add(ctrlBsave, 0, 1);
-                tlpButton.Controls.Add(ctrlTxt, 1, 0);
-                tlpButton.Controls.Add(ctrlBSend, 1, 2);
-                tlpButton.Controls.Add(ctrlExp, 0, 2);
-                tlpButton.Controls.Add(dtPickerCalendar, 1, 1);
-                Controls.Add(tlpButton, 0, posRow = posRow + 2);
-                SetColumnSpan(tlpButton, 4); SetRowSpan(tlpButton, 3);
+                dtPickerCalendar.CustomFormat = "dd MMM, yyyy";                
                 //Признак Корректировка_включена/корректировка_отключена 
-                CheckBox cBox = new CheckBox();
-                cBox.Name = INDEX_CONTROL.CHKBX_EDIT.ToString();
-                cBox.Text = @"Корректировка значений разрешена";
-                cBox.Dock = DockStyle.Top;
-                cBox.Enabled = false;
-                cBox.Checked = true;
-                Controls.Add(cBox, 0, posRow = posRow + 1);
-                SetColumnSpan(cBox, 4); SetRowSpan(cBox, 1);
+                ctrl = new CheckBox();
+                ctrl.Name = INDEX_CONTROL.CHKBX_EDIT.ToString();
+                ctrl.Text = @"Корректировка значений разрешена";
+                ctrl.Dock = DockStyle.Top;
+                ctrl.Enabled = false;
+                (ctrl as CheckBox).Checked = true;
+                Controls.Add(ctrl, 0, posRow = posRow + 1);
+                SetColumnSpan(ctrl, ColumnCount / 2); SetRowSpan(ctrl, 1);
 
                 ResumeLayout(false);
                 PerformLayout();
@@ -1865,21 +1854,21 @@ namespace PluginTaskAutobook
             SuspendLayout();
 
             posRow = 0;
-            m_dgvAB = new DGVAutoBook(INDEX_CONTROL.DGV_DATA.ToString());
-            m_dgvAB.Dock = DockStyle.Fill;
-            m_dgvAB.Name = INDEX_CONTROL.DGV_DATA.ToString();
-            m_dgvAB.AllowUserToResizeRows = false;
-            m_dgvAB.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            m_dgvAB.AddColumn("Корректировка ПТО,\r\nБлоки 1-2", true, INDEX_GTP.CorGTP12.ToString());
-            m_dgvAB.AddColumn("Корректировка ПТО,\r\nБлоки 3-6", true, INDEX_GTP.CorGTP36.ToString());
-            m_dgvAB.AddColumn("Блоки 1-2", true, INDEX_GTP.GTP12.ToString());
-            m_dgvAB.AddColumn("Блоки 3-6", true, INDEX_GTP.GTP36.ToString());
-            m_dgvAB.AddColumn("Станция,\r\nсутки", true, INDEX_GTP.TEC.ToString());
-            m_dgvAB.AddColumn("Станция,\r\nнараст.", true, "StSwen");
-            m_dgvAB.AddColumn("План нараст.", true, "PlanSwen");
-            m_dgvAB.AddColumn("Отклонение от плана", true, "DevOfPlan");
-            Controls.Add(m_dgvAB, 4, posRow);
-            SetColumnSpan(m_dgvAB, 9); SetRowSpan(m_dgvAB, 10);
+            m_dgvValues = new DataGridViewAutobook(INDEX_CONTROL.DGV_DATA.ToString());
+            m_dgvValues.Dock = DockStyle.Fill;
+            m_dgvValues.Name = INDEX_CONTROL.DGV_DATA.ToString();
+            m_dgvValues.AllowUserToResizeRows = false;
+            m_dgvValues.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            m_dgvValues.AddColumn("Корректировка ПТО,\r\nБлоки 1-2", true, INDEX_GTP.CorGTP12.ToString());
+            m_dgvValues.AddColumn("Корректировка ПТО,\r\nБлоки 3-6", true, INDEX_GTP.CorGTP36.ToString());
+            m_dgvValues.AddColumn("Блоки 1-2", true, INDEX_GTP.GTP12.ToString());
+            m_dgvValues.AddColumn("Блоки 3-6", true, INDEX_GTP.GTP36.ToString());
+            m_dgvValues.AddColumn("Станция,\r\nсутки", true, INDEX_GTP.TEC.ToString());
+            m_dgvValues.AddColumn("Станция,\r\nнараст.", true, "StSwen");
+            m_dgvValues.AddColumn("План нараст.", true, "PlanSwen");
+            m_dgvValues.AddColumn("Отклонение от плана", true, "DevOfPlan");
+            Controls.Add(m_dgvValues, 4, posRow);
+            SetColumnSpan(m_dgvValues, 9); SetRowSpan(m_dgvValues, 10);
             //
             Controls.Add(PanelManagement, 0, posRow);
             SetColumnSpan(PanelManagement, posColdgvTEPValues);
@@ -1905,7 +1894,7 @@ namespace PluginTaskAutobook
                  new EventHandler(btnExport_OnClick);
             //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CALENDAR.ToString(), true)[0] as Button).
 
-            m_dgvAB.CellParsing += dgvAB_CellParsing;
+            m_dgvValues.CellParsing += dgvAB_CellParsing;
             //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
         }
 
@@ -1943,7 +1932,7 @@ namespace PluginTaskAutobook
         private void btnExport_OnClick(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();
-            m_rptExcel.CreateExcel(m_dgvAB, Session.m_rangeDatetime);
+            m_rptExcel.CreateExcel(m_dgvValues, Session.m_rangeDatetime);
         }
 
         /// <summary>
@@ -1957,7 +1946,7 @@ namespace PluginTaskAutobook
 
             string toSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
             DateTime dtSend = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CALENDAR.ToString(), true)[0] as DateTimePicker).Value;
-            m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = m_dgvAB.FillTableValueDay();
+            m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = m_dgvValues.FillTableValueDay();
             //
             m_rptsNSS.SendMailToNSS(m_TableEdit, dtSend, toSend);
         }
@@ -1972,26 +1961,26 @@ namespace PluginTaskAutobook
         void dgvAB_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
             int numMonth = PanelManagement.DatetimeRange.Begin.Month
-                , day = m_dgvAB.Rows.Count;
+                , day = m_dgvValues.Rows.Count;
             DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
-            switch (m_dgvAB.Columns[e.ColumnIndex].Name)
+            switch (m_dgvValues.Columns[e.ColumnIndex].Name)
             {
                 case "CorGTP12":
                     //корректировка значений
-                    m_dgvAB.editCells(e, INDEX_GTP.GTP12.ToString());
+                    m_dgvValues.editCells(e, INDEX_GTP.GTP12.ToString());
                     //сбор корр.значений
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = m_dgvAB.FillTableCorValue(Session.m_curOffsetUTC, e);
+                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = m_dgvValues.FillTableCorValue(Session.m_curOffsetUTC, e);
                     //сбор значений
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = m_dgvAB.FillTableValueDay();
+                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = m_dgvValues.FillTableValueDay();
                     break;
                 case "CorGTP36":
                     //корректировка значений
-                    m_dgvAB.editCells(e, INDEX_GTP.GTP36.ToString());
+                    m_dgvValues.editCells(e, INDEX_GTP.GTP36.ToString());
                     //сбор корр.значений
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = m_dgvAB.FillTableCorValue(Session.m_curOffsetUTC, e);
+                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = m_dgvValues.FillTableCorValue(Session.m_curOffsetUTC, e);
                     //сбор значений
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = m_dgvAB.FillTableValueDay();
+                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = m_dgvValues.FillTableValueDay();
                     break;
                 default:
                     break;
@@ -2121,14 +2110,14 @@ namespace PluginTaskAutobook
                         // создать копии для возможности сохранения изменений
                         setValues();
                         //вычисление значений
-                        AutoBookCalc.getTable(m_arTableOrigin, HandlerDb.GetOutPut(out err));
+                        m_AutoBookCalculate.getTable(m_arTableOrigin, HandlerDb.GetOutPut(out err));
                         //
                         m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-                            AutoBookCalc.calcTable[(int)INDEX_GTP.TEC].Copy();
+                            m_AutoBookCalculate.calcTable[(int)INDEX_GTP.TEC].Copy();
                         //запись выходных значений во временную таблицу
-                        HandlerDb.insertOutValues(out err, AutoBookCalc.calcTable[(int)INDEX_GTP.TEC]);
+                        HandlerDb.insertOutValues(out err, m_AutoBookCalculate.calcTable[(int)INDEX_GTP.TEC]);
                         // отобразить значения
-                        m_dgvAB.ShowValues(m_arTableOrigin
+                        m_dgvValues.ShowValues(m_arTableOrigin
                             , HandlerDb.GetPlanOnMonth(Type
                             , HandlerDb.GetDateTimeRangeValuesVarPlanMonth()
                             , Session.ActualIdPeriod
@@ -2182,7 +2171,7 @@ namespace PluginTaskAutobook
                         //запись выходных значений во временную таблицу
                         //HandlerDb.insertOutValues(out err, m_arTableOrigin[(int)typeValues]);
                         // отобразить значения
-                        m_dgvAB.ShowValues(m_arTableOrigin
+                        m_dgvValues.ShowValues(m_arTableOrigin
                             , HandlerDb.GetPlanOnMonth(Type
                             , HandlerDb.GetDateTimeRangeValuesVarPlanMonth()
                             , Session.ActualIdPeriod
@@ -2213,10 +2202,10 @@ namespace PluginTaskAutobook
             DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
             //сохранить вых. знач. в DataTable
             m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-                m_dgvAB.FillTableValueDay();
+                m_dgvValues.FillTableValueDay();
             //сохранить вх.корр. знач. в DataTable
             m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-                m_dgvAB.FillTableCorValue(Session.m_curOffsetUTC);
+                m_dgvValues.FillTableCorValue(Session.m_curOffsetUTC);
         }
 
         /// <summary>
@@ -2368,7 +2357,7 @@ namespace PluginTaskAutobook
                 id_comp = (int)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
 
-                m_dgvAB.AddIdComp(id_comp, namePut.GetValue(tCount).ToString());
+                m_dgvValues.AddIdComp(id_comp, namePut.GetValue(tCount).ToString());
                 tCount++;
             }
             //возможность_редактирвоания_значений
@@ -2397,7 +2386,7 @@ namespace PluginTaskAutobook
             }
 
             try {
-                m_dgvAB.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
                 if (err == 0)
                 {
@@ -2492,12 +2481,12 @@ namespace PluginTaskAutobook
                     round = HTepUsers.s_iRoundDefault;
                 }
 
-                m_dgvAB.ClearRows();
+                m_dgvValues.ClearRows();
                 //m_dgvAB.SelectionChanged -= dgvAB_SelectionChanged;
                 //заполнение представления
                 for (int i = 0; i < DaysInMonth; i++)
                 {
-                    m_dgvAB.AddRow(new DGVAutoBook.ROW_PROPERTY()
+                    m_dgvValues.AddRow(new DataGridViewAutobook.ROW_PROPERTY()
                     {
                         m_idAlg = id_alg
                                 ,
@@ -2569,11 +2558,11 @@ namespace PluginTaskAutobook
             //??? повторная проверка
             if (bClose == true)
             {
-                m_dgvAB.ClearRows();
+                m_dgvValues.ClearRows();
                 //dgvAB.ClearColumns();
             } else
                 // очистить содержание представления
-                m_dgvAB.ClearValues();
+                m_dgvValues.ClearValues();
 
             base.clear(bClose);
         }

@@ -18,13 +18,9 @@ namespace PluginTaskBalTeplo
 {
     public class PanelTaskBalTeplo : HPanelTepCommon
     {
-        private string m_type_dgv;
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="i"></param>
-        /// <param name="dgvView"></param>
-        delegate void delDeviation(int i, DataGridView dgvView);
+        public enum INDEX_VIEW_VALUES { Block, Vyvod, PromPlozsh };
+
+        private INDEX_VIEW_VALUES m_ViewValues;
         /// <summary>
         /// Таблицы со значениями для редактирования входные
         /// </summary>
@@ -32,6 +28,7 @@ namespace PluginTaskBalTeplo
             , m_arTableEdit_in;
 
         protected DataTable m_dt_profile;
+
         /// <summary>
         /// Таблицы со значениями для редактирования выходные
         /// </summary>
@@ -39,9 +36,10 @@ namespace PluginTaskBalTeplo
             , m_arTableEdit_out;
         
         /// <summary>
-        /// 
+        /// ???
         /// </summary>
-        protected TaskBTCalculate BTCalc;
+        protected TaskBalTeploCalculate m_calculate;
+
         /// <summary>
         /// 
         /// </summary>
@@ -64,8 +62,7 @@ namespace PluginTaskBalTeplo
             DGV_TeploBL,
             DGV_TeploOP,
             DGV_PromPlozsh,
-            DGV_Param,
-            DGV_PLANEYAR
+            DGV_Param
                 , LABEL_DESC
         }
         /// <summary>
@@ -127,20 +124,12 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// Отображение значений в табличном представлении(значения)
         /// </summary>
-        protected DGVAutoBook dgvBlock,
+        protected DataGridViewBalTeploValues dgvBlock,
             dgvOutput,
             dgvTeploBL,
             dgvTeploOP,
             dgvPromPlozsh,
             dgvParam;
-        /// <summary>
-        /// ???
-        /// </summary>
-        protected ReportsToNSS rptsNSS = new ReportsToNSS();
-        /// <summary>
-        /// 
-        /// </summary>
-        protected ReportExcel rptExcel = new ReportExcel();
 
         /// <summary>
         /// Панель на которой размещаются активные элементы управления
@@ -158,11 +147,6 @@ namespace PluginTaskBalTeplo
             }
         }
 
-        /// <summary>
-        /// Набор текстов для подписей для кнопок
-        /// </summary>
-        protected static string[] m_arButtonText = { @"Отправить", @"Сохранить", @"Загрузить" };
-
         protected override HandlerDbValues createHandlerDb()
         {
             return new HandlerDbTaskBalTeploCalculate();
@@ -171,32 +155,18 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// Класс для грида
         /// </summary>
-        protected class DGVAutoBook : DataGridView
+        protected class DataGridViewBalTeploValues : DataGridView
         {
-            private int m_id_dgv;
-
             private Dictionary<string, HTepUsers.DictElement> m_dict_ProfileNALG_IN
                 , m_dict_ProfileNALG_OUT;
 
             private DataTable m_dbRatio;
 
-            public enum INDEX_TYPE_DGV { Block = 2001, Output = 2002, TeploBL = 2003, TeploOP = 2004, Param = 2005, PromPlozsh = 2006 };
+            public enum INDEX_VIEW_VALUES { Block = 2001, Output = 2002, TeploBL = 2003, TeploOP = 2004, Param = 2005, PromPlozsh = 2006 };
             
-            private INDEX_TYPE_DGV m_type_dgv;
+            public INDEX_VIEW_VALUES m_ViewValues;
 
-            public INDEX_TYPE_DGV Type_DGV
-            {
-                get
-                {
-                    return m_type_dgv;
-                }
-                set
-                {
-                    m_type_dgv = value;
-                }
-            }
-
-            public DGVAutoBook(string nameDGV)
+            public DataGridViewBalTeploValues(string nameDGV)
             {
                 m_dict_ProfileNALG_IN = new Dictionary<string, HTepUsers.DictElement>();
                 m_dict_ProfileNALG_OUT = new Dictionary<string, HTepUsers.DictElement>();
@@ -356,7 +326,7 @@ namespace PluginTaskBalTeplo
             }
 
             /// <summary>
-            /// 
+            /// Удалить строки
             /// </summary>
             public void ClearRows()
             {
@@ -369,7 +339,7 @@ namespace PluginTaskBalTeplo
             }
 
             /// <summary>
-            /// 
+            /// Очистить значения
             /// </summary>
             public void ClearValues()
             {
@@ -441,270 +411,6 @@ namespace PluginTaskBalTeplo
                 }
             }
 
-            /// <summary>
-            ///Корректировка знач.
-            /// </summary>
-            /// <param name="rowValue">значение</param>
-            /// <param name="namecol">имя столбца</param>
-            /// <param name="rowcount">номер строки</param>
-            /// <param name="dgv">тек.представление</param>
-            /// <returns></returns>
-            private double correctingValues(object rowValue
-                , string namecol
-                , ref bool bflg
-                , int rowcount
-                , DataGridView dgv)
-            {
-                double valRes = 0;
-
-                switch (namecol)
-                {
-                    case "GTP12":
-                        valRes = Convert.ToDouble(dgv.Rows[rowcount].Cells["CorGTP12"].Value) + (double)rowValue;
-                        bflg = true;
-                        break;
-                    case "GTP36":
-                        valRes = Convert.ToDouble(dgv.Rows[rowcount].Cells["CorGTP36"].Value) + (double)rowValue;
-                        bflg = true;
-                        break;
-                    case "TEC":
-                        if (bflg)
-                        {
-                            valRes = Convert.ToDouble(dgv.Rows[rowcount].Cells["GTP12"].Value) +
-                               Convert.ToDouble(dgv.Rows[rowcount].Cells["GTP36"].Value);
-                            bflg = false;
-                        }
-                        else
-                            valRes = (double)rowValue;
-                        break;
-                    default:
-                        break;
-                }
-
-                return valRes;
-            }
-
-            /// <summary>
-            /// Вычисление месячного плана
-            /// </summary>
-            /// <param name="value">значение</param>
-            /// <param name="month">номер месяца</param>
-            private void planInMonth(string value, DateTime date, DataGridView dgvAB)
-            {
-                float planDay = (Convert.ToSingle(value)
-                    / DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month)) / (float)Math.Pow(10, 6);
-                int increment = 0;
-                planDay = Convert.ToInt32(planDay.ToString("####"));
-
-                for (int i = 0; i < dgvAB.Rows.Count - 1; i++)
-                {
-                    increment = increment + Convert.ToInt32(planDay);
-                    dgvAB.Rows[i].Cells["PlanSwen"].Value = increment.ToString("####");
-                }
-                dgvAB.Rows[DateTime.DaysInMonth(date.Year, date.Month - 1) - 1].Cells["PlanSwen"].Value =
-                    (Convert.ToSingle(value) / Math.Pow(10, 6)).ToString("####");
-            }
-
-            /// <summary>
-            /// Редактирование занчений ввиду новых корр. значений
-            /// </summary>
-            /// <param name="row">номер строки</param>
-            /// <param name="value">значение</param>
-            /// <param name="view">грид</param>
-            /// <param name="col">имя столбца</param>
-            public void editCells(int row, int value, DataGridView view, string col)
-            {
-
-            }
-
-            /// <summary>
-            /// Вычисление параметров нараст.ст.
-            /// и заполнение грида
-            /// </summary>
-            /// <param name="i">номер строки</param>
-            /// <param name="dgvView">отображение</param>
-            private void fillCells(int i, DataGridView dgvView)
-            {
-
-            }
-
-            /// <summary>
-            /// Вычисление отклонения от плана
-            /// </summary>
-            /// <param name="i">номер строки</param>
-            /// <param name="dgvView">отображение</param>
-            public void countDeviation(int i, DataGridView dgvView)
-            {
-                if (dgvView.Rows[i].Cells["StSwen"].Value == null)
-                    dgvView.Rows[i].Cells["DevOfPlan"].Value = "";
-                else
-                    dgvView.Rows[i].Cells["DevOfPlan"].Value =
-                        Convert.ToSingle(dgvView.Rows[i].Cells["StSwen"].Value) - Convert.ToInt32(dgvView.Rows[i].Cells["PlanSwen"].Value);
-            }
-
-            /// <summary>
-            /// Корректировочные значения
-            /// </summary>
-            /// <param name="dtOrigin">таблица</param>
-            /// <param name="date">дата</param>
-            private DataRow[] formingCorrValue(DataTable[] dtOrigin, string date)
-            {
-                DataRow[] dr_idCorPut = new DataRow[dtOrigin.Count()];
-
-                var m_enumResIDPUT = (from r in dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].AsEnumerable()
-                                      orderby r.Field<DateTime>("WR_DATETIME")
-                                      select new
-                                      {
-                                          DATE_TIME = r.Field<DateTime>("WR_DATETIME"),
-                                      }).Distinct();
-
-                for (int i = 0; i < m_enumResIDPUT.Count(); i++)
-                {
-                    if (date == m_enumResIDPUT.ElementAt(i).DATE_TIME.ToShortDateString())
-                    {
-                        dr_idCorPut = dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Select(
-                         String.Format(dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Locale
-                         , "WR_DATETIME = '{0:o}'", m_enumResIDPUT.ElementAt(i).DATE_TIME));
-                        break;
-                    }
-                    else ;
-
-                }
-                return dr_idCorPut;
-            }
-
-            /// <summary>
-            /// Формирование таблицы корр. значений
-            /// </summary>
-            /// <param name="editTable">таблица значений</param>
-            /// <param name="dgvView">отображение</param>
-            /// <param name="value">значение</param>
-            /// <param name="column">столбец</param>
-            /// <param name="row">строка</param>
-            public DataTable FillTableCorValue(DataTable editTable
-                , DataGridView dgvView
-                , object value
-                , int column
-                , int row)
-            {
-                double valueToRes;
-                string N_ALG = "";
-                editTable.Rows.Clear();
-                HDataGridViewColumn cols = (HDataGridViewColumn)dgvView.Columns[column];
-
-                for (int i = 0; i < dgvView.Rows.Count; i++)
-                {
-                    foreach (HDataGridViewColumn col in Columns)
-                    {
-                        if (double.Parse(col.m_N_ALG) > 0)
-                        {
-                            if (cols.m_N_ALG == col.m_N_ALG &&
-                                dgvView.Rows[i].Cells["Date"].Value == dgvView.Rows[row].Cells["Date"].Value)
-                            {
-                                valueToRes = Convert.ToDouble(value) * Math.Pow(10, 6);
-                                N_ALG = cols.m_N_ALG;
-                            }
-                            else
-                                if (dgvView.Rows[i].Cells[col.Index].Value != null)
-                                {
-                                    valueToRes = Convert.ToDouble(dgvView.Rows[i].Cells[col.Index].Value) * Math.Pow(10, 6);
-                                    N_ALG = col.m_N_ALG;
-                                }
-                                else
-                                    valueToRes = -1;
-
-                            //-1 не нужно записывать значение в таблицу
-                            if (valueToRes > -1)
-                                editTable.Rows.Add(new object[] 
-                                {
-                                    N_ALG
-                                    , -1
-                                    , 1.ToString()
-                                    , valueToRes                
-                                    , Convert.ToDateTime(dgvView.Rows[i].Cells["Date"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
-                                    , i
-                                });
-                        }
-                    }
-                }
-                return editTable;
-            }
-
-            /// <summary>
-            /// Формирование таблицы корр. значений
-            /// </summary>
-            /// <param name="editTable">таблица</param>
-            /// <param name="dgvView">отображение</param>
-            /// <returns>таблица значений</returns>
-            public DataTable FillTableCorValue(DataTable editTable, DataGridView dgvView)
-            {
-                //double valueToRes;
-                //editTable.Rows.Clear();
-
-                //for (int i = 0; i < dgvView.Rows.Count; i++)
-                //{
-                //    foreach (HDataGridViewColumn col in Columns)
-                //    {
-                //        if (col.m_iIdComp > 0)
-                //        {
-                //            if (dgvView.Rows[i].Cells[col.Index].Value != null)
-                //                valueToRes = Convert.ToDouble(dgvView.Rows[i].Cells[col.Index].Value) * Math.Pow(10, 6);
-                //            else
-                //                valueToRes = -1;
-
-                //            if (valueToRes > -1)
-                //                editTable.Rows.Add(new object[] 
-                //                {
-                //                    col.m_iIdComp
-                //                    , -1
-                //                    , 1.ToString()
-                //                    , valueToRes                
-                //                    , Convert.ToDateTime(dgvView.Rows[i].Cells["Date"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
-                //                    , i
-                //                });
-                //        }
-                //    }
-                //}
-                return editTable;
-            }
-
-            /// <summary>
-            /// Формирование таблицы вых. значений
-            /// </summary>
-            /// <param name="editTable">таблица</param>
-            /// <param name="dgvView">отображение</param>
-            /// <param name="dtOut">таблица с вых.зн.</param>
-            public DataTable FillTableValueDay(DataTable editTable, DataGridView dgvView, DataTable dtOut)
-            {
-                //Array namePut = Enum.GetValues(typeof(INDEX_GTP));
-                //string put;
-                //double valueToRes;
-                //editTable.Rows.Clear();
-
-                //foreach (DataGridViewRow row in dgvView.Rows)
-                //{
-                //    if (Convert.ToDateTime(row.Cells["Date"].Value) < DateTime.Now.Date)
-                //    {
-                //        for (int i = (int)INDEX_GTP.GTP12; i < (int)INDEX_GTP.CorGTP12; i++)
-                //        {
-                //            put = dtOut.Rows[i]["ID"].ToString();
-                //            valueToRes = Convert.ToDouble(row.Cells[namePut.GetValue(i).ToString()].Value) * Math.Pow(10, 6);
-
-                //            editTable.Rows.Add(new object[] 
-                //            {
-                //                put
-                //                , -1
-                //                , 1.ToString()
-                //                , valueToRes                
-                //                , Convert.ToDateTime(row.Cells["Date"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
-                //                , i
-                //            });
-                //        }
-                //    }
-                //}
-                return editTable;
-            }
-
             public void InitializeStruct(DataTable nAlgTable, DataTable nAlgOutTable, DataTable compTable, Dictionary<int, object[]> dict_profile, DataTable db_ratio)
             {
                 this.CellValueChanged -= new DataGridViewCellEventHandler(cellEndEdit);
@@ -716,33 +422,33 @@ namespace PluginTaskBalTeplo
                 List<DataRow> col_in = new List<DataRow>();
                 List<DataRow> col_out = new List<DataRow>();
                 m_dbRatio = db_ratio.Copy();
-                switch (m_type_dgv)
+                switch (m_ViewValues)
                 {
-                    case INDEX_TYPE_DGV.Block:
+                    case INDEX_VIEW_VALUES.Block:
 
                         rows = compTable.Select("ID_COMP=1000 or ID_COMP=1");
                         break;
-                    case INDEX_TYPE_DGV.Output:
+                    case INDEX_VIEW_VALUES.Output:
                         //colums_in = nAlgTable.Select("N_ALG='2'");
                         //colums_out = nAlgOutTable.Select("N_ALG='2'");
                         rows = compTable.Select("ID_COMP=2000 or ID_COMP=1");
                         break;
-                    case INDEX_TYPE_DGV.TeploBL:
+                    case INDEX_VIEW_VALUES.TeploBL:
                         //colums_in = nAlgTable.Select("N_ALG='3'");
                         //colums_out = nAlgOutTable.Select("N_ALG='3'");
                         rows = compTable.Select("ID_COMP=1");
                         break;
-                    case INDEX_TYPE_DGV.TeploOP:
+                    case INDEX_VIEW_VALUES.TeploOP:
                         //colums_in = nAlgTable.Select("N_ALG='4'");
                         //colums_out = nAlgOutTable.Select("N_ALG='4'");
                         rows = compTable.Select("ID_COMP=1");
                         break;
-                    case INDEX_TYPE_DGV.Param:
+                    case INDEX_VIEW_VALUES.Param:
                         //colums_in = nAlgTable.Select("N_ALG='5'");
                         //colums_out = nAlgOutTable.Select("N_ALG='5'");
                         rows = compTable.Select("ID_COMP=1");
                         break;
-                    case INDEX_TYPE_DGV.PromPlozsh:
+                    case INDEX_VIEW_VALUES.PromPlozsh:
                         //colums_in = nAlgTable.Select("N_ALG='6'");
                         //colums_out = nAlgOutTable.Select("N_ALG='6'");
                         rows = compTable.Select("ID_COMP=3000 or ID_COMP=1");
@@ -754,7 +460,7 @@ namespace PluginTaskBalTeplo
                         break;
                 }
 
-                foreach (object[] list in dict_profile[(int)m_type_dgv])
+                foreach (object[] list in dict_profile[(int)m_ViewValues])
                 {
                     if (list[1].ToString() == "in")
                     {
@@ -805,105 +511,55 @@ namespace PluginTaskBalTeplo
                 }
                 this.CellValueChanged += new DataGridViewCellEventHandler(cellEndEdit);
             }
+
+            /// <summary>
+            /// ??? Формирование таблицы вых. значений
+            /// </summary>
+            /// <param name="editTable">таблица</param>
+            /// <param name="dgvView">отображение</param>
+            /// <param name="dtOut">таблица с вых.зн.</param>
+            public DataTable FillTableValueDay(DataTable editTable, DataGridView dgvView, DataTable dtOut)
+            {
+                //Array namePut = Enum.GetValues(typeof(INDEX_GTP));
+                //string put;
+                //double valueToRes;
+                //editTable.Rows.Clear();
+
+                //foreach (DataGridViewRow row in dgvView.Rows)
+                //{
+                //    if (Convert.ToDateTime(row.Cells["Date"].Value) < DateTime.Now.Date)
+                //    {
+                //        for (int i = (int)INDEX_GTP.GTP12; i < (int)INDEX_GTP.CorGTP12; i++)
+                //        {
+                //            put = dtOut.Rows[i]["ID"].ToString();
+                //            valueToRes = Convert.ToDouble(row.Cells[namePut.GetValue(i).ToString()].Value) * Math.Pow(10, 6);
+
+                //            editTable.Rows.Add(new object[] 
+                //            {
+                //                put
+                //                , -1
+                //                , 1.ToString()
+                //                , valueToRes                
+                //                , Convert.ToDateTime(row.Cells["Date"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
+                //                , i
+                //            });
+                //        }
+                //    }
+                //}
+                return editTable;
+            }
         }
 
         /// <summary>
         /// калькулятор значений
         /// </summary>
-        public class TaskBTCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
+        public class TaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
             /// <summary>
-            /// 
+            /// Конструктор основной (без аргументов)
             /// </summary>
-            public DataTable[] calcTable;
-            /// <summary>
-            /// выходные значения
-            /// </summary>
-            public List<string> value;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public TaskBTCalculate()
+            public TaskBalTeploCalculate()
             {
-                calcTable = new DataTable[(int)INDEX_CALC.COUNT];
-                value = new List<string>((int)INDEX_CALC.COUNT);
-            }
-
-            /// <summary>
-            /// Суммирование значений ТГ
-            /// </summary>
-            /// <param name="tb_gtp">таблица с данными</param>
-            /// <returns>отредактированое значение</returns>
-            private float sumTG(DataTable tb_gtp)
-            {
-                float value = 0;
-                int pow = 10;
-
-                foreach (DataRow item in tb_gtp.Rows)
-                    value = value + Convert.ToSingle(item[@"VALUE"].ToString());
-
-                value = value / (float)Math.Pow(pow, 6);
-
-                return value;
-            }
-
-            /// <summary>
-            /// разбор данных по гтп
-            /// </summary>
-            /// <param name="dtOrigin">таблица с данными</param>
-            /// /// <param name="dtOut">таблица с параметрами</param>
-            public void getTable(DataTable[] dtOrigin, DataTable dtOut)
-            {
-                int i = 0
-                , count = 0;
-
-                calcTable[(int)INDEX_CALC.CALC] = dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Clone();
-                //
-                var m_enumDT = (from r in dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].AsEnumerable()
-                                orderby r.Field<DateTime>("WR_DATETIME")
-                                select new
-                                {
-                                    DATE_TIME = r.Field<DateTime>("WR_DATETIME"),
-                                }).Distinct();
-
-                for (int j = 0; j < m_enumDT.Count(); j++)
-                {
-                    i = 0;
-                    calcTable[(int)INDEX_CALC.CALC].Rows.Clear();
-
-                    DataRow[] drOrigin =
-                        dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].
-                        Select(String.Format(dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Locale
-                        , "WR_DATETIME = '{0:o}'", m_enumDT.ElementAt(j).DATE_TIME));
-
-                    foreach (DataRow row in drOrigin)
-                    {
-                        if (i < 2)
-                        {
-                            calcTable[(int)INDEX_CALC.CALC].Rows.Add(new object[]
-                            {
-                                row["ID_PUT"]
-                                ,row["ID_SESSION"]
-                                ,row["QUALITY"]
-                                ,row["VALUE"]
-                                ,m_enumDT.ElementAt(j).DATE_TIME
-                            });
-                        }
-                        i++;
-                    }
-
-                    calculate(calcTable);
-                }
-            }
-
-            /// <summary>
-            /// Вычисление парамтеров ГТП и ТЭЦ
-            /// </summary>
-            /// <param name="tb_gtp">таблица с данными</param>
-            private void calculate(DataTable[] tb_gtp)
-            {
-
             }
 
             /// <summary>
@@ -917,262 +573,14 @@ namespace PluginTaskBalTeplo
         }
 
         /// <summary>
-        /// Класс по работе с формированием 
-        /// и отправкой отчета NSS
+        /// Конструктор - основной
         /// </summary>
-        public class ReportsToNSS
-        {
-            //CreateMessage m_crtMsg;
-
-            //public ReportsToNSS()
-            //{
-            //    m_crtMsg = new CreateMessage();
-            //}
-
-            ///// <summary>
-            ///// Класс создания письма
-            ///// </summary>
-            //private class CreateMessage
-            //{
-            //    /// <summary>
-            //    /// 
-            //    /// </summary>
-            //    Outlook.Application oApp;
-            //    /// <summary>
-            //    /// конструктор(основной)
-            //    /// </summary>
-            //    public CreateMessage()
-            //    {
-            //        oApp = new Outlook.Application();
-            //    }
-
-            //    /// <summary>
-            //    /// Формирование письма
-            //    /// </summary>
-            //    /// <param name="subject">тема письма</param>
-            //    /// <param name="body">тело сообщения</param>
-            //    /// <param name="to">кому/куда</param>
-            //    public void FormingMessage(string subject, string body, string to)
-            //    {
-            //        try
-            //        {
-            //            Outlook.MailItem newMail = (Outlook.MailItem)oApp.CreateItem(Outlook.OlItemType.olMailItem);
-            //            newMail.To = to;
-            //            newMail.Subject = subject;
-            //            newMail.Body = body;
-            //            newMail.Importance = Outlook.OlImportance.olImportanceNormal;
-            //            newMail.Display(false);
-            //            sendMail(newMail);
-            //        }
-            //        catch (Exception)
-            //        {
-
-            //        }
-
-            //    }
-
-            //    /// <summary>
-            //    /// 
-            //    /// </summary>
-            //    /// <param name="mail"></param>
-            //    private void sendMail(Outlook.MailItem mail)
-            //    {
-            //        //отправка
-            //        ((Outlook._MailItem)mail).Send();
-            //    }
-
-            //    /// <summary>
-            //    /// Прикрепление файла к письму
-            //    /// </summary>
-            //    /// <param name="mail"></param>
-            //    private void AddAttachment(Outlook.MailItem mail)
-            //    {
-            //        OpenFileDialog attachment = new OpenFileDialog();
-
-            //        attachment.Title = "Select a file to send";
-            //        attachment.ShowDialog();
-
-            //        if (attachment.FileName.Length > 0)
-            //        {
-            //            mail.Attachments.Add(
-            //                attachment.FileName,
-            //                Outlook.OlAttachmentType.olByValue,
-            //                1,
-            //                attachment.FileName);
-            //        }
-            //    }
-            //}
-
-            ///// <summary>
-            ///// Содание тела сообщения
-            ///// </summary>
-            ///// <param name="sourceTable">таблица с данными</param>
-            ///// <param name="dtRange">выбранный промежуток</param>
-            //private void createBodyToSend(ref string sbjct
-            //    , ref string bodyMsg
-            //    , DataTable sourceTable
-            //    , DateTimeRange[] dtRange)
-            //{
-            //    DataRow[] drReportDay;
-            //    DateTime reportDate;
-
-            //    for (int i = 0; i < dtRange.Length; i++)
-            //    {
-            //        reportDate = dtRange[i].Begin.AddHours(6).Date;
-            //        drReportDay =
-            //            sourceTable.Select(String.Format(sourceTable.Locale, @"WR_DATETIME = '{0:o}'", reportDate));
-
-            //        if ((double)drReportDay.Length != 0)
-            //        {
-            //            bodyMsg = @"BEGIN " + "\r\n"
-            //                + @"(DATE):" + reportDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) + "\r\n"
-            //                + @"(01): " + fewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ":\r\n"
-            //                + @"(02): " + fewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ":\r\n"
-            //                + @"(03): " + fewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]) + ":\r\n"
-            //                + @"END ";
-            //            /*bodyMsg = @"Дата " + reportDate.ToShortDateString() + ".\r\n"
-            //                + @"Станция, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ";\r\n"
-            //                + @"Блоки 1-2, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ";\r\n"
-            //                + @"Блоки 3-6, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]);*/
-
-            //            sbjct = @"Отчет о выработке электроэнергии НТЭЦ-5 за " + reportDate.ToShortDateString();
-            //        }
-            //    }
-            //}
-
-            ///// <summary>
-            ///// Редактирование знчения
-            ///// </summary>
-            ///// <param name="val">значение</param>
-            ///// <returns>измененное знач.</returns>
-            //private string fewerValue(double val)
-            //{
-            //    return Convert.ToString(val / Math.Pow(10, 6)).ToString();
-            //}
-
-            ///// <summary>
-            ///// Создание. Подготвока. Отправка письма.
-            ///// </summary>
-            ///// <param name="sourceTable">таблица с данными</param>
-            ///// <param name="dtRange">выбранный промежуток</param>
-            ///// /// <param name="to">получатель</param>
-            //public void SendMailToNSS(DataTable sourceTable, DateTimeRange[] dtRange, string to)
-            //{
-            //    string bodyMsg = string.Empty
-            //     , sbjct = string.Empty;
-
-            //    createBodyToSend(ref sbjct, ref bodyMsg, sourceTable, dtRange);
-
-            //    if (sbjct != "")
-            //        m_crtMsg.FormingMessage(sbjct, bodyMsg, to);
-            //    else ;
-            //}
-        }
-
-        /// <summary>
-        /// Класс формирования отчета Excel 
-        /// </summary>
-        public class ReportExcel
-        {
-            ///// <summary>
-            ///// Экземпляр класса
-            ///// </summary>
-            //ExcelFile efNSS;
-            ///// <summary>
-            ///// 
-            ///// </summary>
-            //protected enum INDEX_DIVISION : int
-            //{
-            //    UNKNOW = -1,
-            //    SEPARATE_CELL,
-            //    ADJACENT_CELL
-            //}
-            ///// <summary>
-            ///// конструктор(основной)
-            ///// </summary>
-            //public ReportExcel()
-            //{
-            //    efNSS = new ExcelFile();
-            //}
-
-            //public void CreateExcel(DataGridView dgView)
-            //{
-            //    efNSS.LoadXls(@"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xls");
-            //    ExcelWorksheet wrkSheets = efNSS.Worksheets["Autobook"];
-
-            //    for (int i = 0; i < wrkSheets.Columns.Count; i++)
-            //    {
-            //        int indxRow = 0;
-            //        bool bflag = false;
-
-            //        foreach (ExcelCell cell in wrkSheets.Columns[i].Cells)
-            //        {
-            //            for (int j = 0; j < dgView.Columns.Count; j++)
-            //            {
-            //                if (Convert.ToString(cell.Value) == splitString(dgView.Columns[j].HeaderText))
-            //                {
-            //                    fillSheetExcel(wrkSheets, dgView, j, indxRow, i);
-            //                    bflag = true;
-            //                    break;
-            //                }
-            //                else
-            //                    ;
-            //            }
-            //            indxRow++;
-            //            if (bflag == true)
-            //                break;
-            //        }
-            //    }
-            //    //wrkSheets.
-            //    //efNSS.SaveXls("");
-            //    //efNSS.
-            //    // Select active worksheet.
-            //    //efNSS = wrkSheets.Worksheets.ActiveWorksheet;
-            //    //efNSS.Worksheets.ActiveWorksheet;
-            //}
-
-            ///// <summary>
-            ///// 
-            ///// </summary>
-            ///// <param name="headerTxt"></param>
-            ///// <returns></returns>
-            //private string splitString(string headerTxt)
-            //{
-            //    string[] spltHeader = headerTxt.Split(',');
-
-            //    if (spltHeader.Length > (int)INDEX_DIVISION.ADJACENT_CELL)
-            //        return spltHeader[(int)INDEX_DIVISION.ADJACENT_CELL];
-            //    else
-            //        return spltHeader[(int)INDEX_DIVISION.SEPARATE_CELL];
-            //}
-
-            //private void fillSheetExcel(ExcelWorksheet wrkSheet
-            //    , DataGridView dgv
-            //    , int indxColDgv
-            //    , int indxRowExcel
-            //    , int indxColExcel)
-            //{
-            //    CellRange cellRange = wrkSheet.Columns[indxColExcel].Cells;
-
-            //    for (int i = 0; i < dgv.Rows.Count; i++)
-            //    {
-            //        for (int j = indxRowExcel + 2; j < wrkSheet.Rows.Count; j++)
-            //        {
-            //            cellRange[j].Value = dgv.Rows[i].Cells[indxColDgv].Value;
-            //        }
-            //    }
-            //}
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="iFunc"></param>
+        /// <param name="iFunc">Объект для взаимодействия с вызывающим приложением</param>
         public PanelTaskBalTeplo(IPlugIn iFunc)
             : base(iFunc)
         {
             HandlerDb.IdTask = ID_TASK.BAL_TEPLO;
-            BTCalc = new TaskBTCalculate();
+            m_calculate = new TaskBalTeploCalculate();
             m_dt_profile = new DataTable();
 
             m_arTableOrigin_in = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
@@ -1181,41 +589,45 @@ namespace PluginTaskBalTeplo
             m_arTableOrigin_out = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
             m_arTableEdit_out = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
 
-            InitializeComponent();
+            InitializeComponents();
 
             Session.SetDatetimeRange(PanelManagement.DatetimeRange);
-            PanelManagement.CheckedChangedRadioBtnEvent += new PanelManagementBalTeplo.CheckedChangedRadioBtnEventHandler(CheckedChangedRadioBtn);
+            PanelManagement.EventCheckedChangedIndexViewValues += new EventHandler(onCheckedChangedIndexViewValues);
         }
 
-        private void CheckedChangedRadioBtn(object sender, PanelManagementBalTeplo.CheckedChangedRadioBtnEventArgs e)
+        private void onCheckedChangedIndexViewValues(object sender, EventArgs e)
         {
-            m_type_dgv = ((PanelManagementBalTeplo.RadioButton_BalTask)(sender)).Type;
-            if (m_type_dgv == PanelManagementBalTeplo.TypeRadioBtn.Block.ToString())
-            {
-                dgvOutput.Visible = false;
-                dgvTeploOP.Visible = false;
-                dgvParam.Visible = false;
-                dgvPromPlozsh.Visible = false;
-                dgvBlock.Visible = true;
-                dgvTeploBL.Visible = true;
-            }
-            if (m_type_dgv == PanelManagementBalTeplo.TypeRadioBtn.Teplo.ToString())
-            {
-                dgvBlock.Visible = false;
-                dgvTeploBL.Visible = false;
-                dgvParam.Visible = false;
-                dgvPromPlozsh.Visible = false;
-                dgvTeploOP.Visible = true;
-                dgvOutput.Visible = true;
-            }
-            if (m_type_dgv == PanelManagementBalTeplo.TypeRadioBtn.PromPlozsh.ToString())
-            {
-                dgvBlock.Visible = false;
-                dgvOutput.Visible = false;
-                dgvTeploBL.Visible = false;
-                dgvTeploOP.Visible = false;
-                dgvParam.Visible = true;
-                dgvPromPlozsh.Visible = true;
+            PanelManagementBalTeplo.CheckedChangedIndexViewValuesEventArgs ev = e as PanelManagementBalTeplo.CheckedChangedIndexViewValuesEventArgs;
+
+            m_ViewValues = (INDEX_VIEW_VALUES)((Control)sender).Tag;
+
+            switch (m_ViewValues) {
+                case INDEX_VIEW_VALUES.Block:
+                    dgvOutput.Visible = false;
+                    dgvTeploOP.Visible = false;
+                    dgvParam.Visible = false;
+                    dgvPromPlozsh.Visible = false;
+                    dgvBlock.Visible = true;
+                    dgvTeploBL.Visible = true;
+                    break;
+                case INDEX_VIEW_VALUES.Vyvod:
+                    dgvBlock.Visible = false;
+                    dgvTeploBL.Visible = false;
+                    dgvParam.Visible = false;
+                    dgvPromPlozsh.Visible = false;
+                    dgvTeploOP.Visible = true;
+                    dgvOutput.Visible = true;
+                    break;
+                case INDEX_VIEW_VALUES.PromPlozsh:
+                    dgvBlock.Visible = false;
+                    dgvOutput.Visible = false;
+                    dgvTeploBL.Visible = false;
+                    dgvTeploOP.Visible = false;
+                    dgvParam.Visible = true;
+                    dgvPromPlozsh.Visible = true;
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -1240,19 +652,16 @@ namespace PluginTaskBalTeplo
             public enum INDEX_CONTROL
             {
                 UNKNOWN = -1
-                    , BUTTON_SEND, BUTTON_SAVE,
+                    , BUTTON_IMPORT, BUTTON_SAVE,
                 BUTTON_LOAD,
                 BUTTON_EXPORT,
-                TXTBX_EMAIL,
                 MENUITEM_UPDATE,
                 MENUITEM_HISTORY,
                 RADIO_BLOCK,
-                RADIO_TEPLO,
+                RADIO_VYVOD,
                 RADIO_PROM_PLOZSH,
                 COUNT
             }
-
-            public enum TypeRadioBtn { Block, Teplo, PromPlozsh };
 
             /// <summary>
             /// Инициализация размеров/стилей макета для размещения элементов управления
@@ -1261,18 +670,16 @@ namespace PluginTaskBalTeplo
             /// <param name="rows">Количество строк в макете</param>
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
             {
-                throw new NotImplementedException();
+                initializeLayoutStyleEvenly(cols, rows);
             }
 
             public PanelManagementBalTeplo()
-                : base() //6, 8
+                : base(ModeTimeControlPlacement.Twin | ModeTimeControlPlacement.Labels) //6, 8
             {
                 InitializeComponents();
 
-                (Controls.Find(INDEX_CONTROL.RADIO_BLOCK.ToString(), true)[0] as RadioButton_BalTask).CheckedChanged += new EventHandler(CheckedChangedRadioBtn);
-                (Controls.Find(INDEX_CONTROL.RADIO_TEPLO.ToString(), true)[0] as RadioButton_BalTask).CheckedChanged += new EventHandler(CheckedChangedRadioBtn);
-                (Controls.Find(INDEX_CONTROL.RADIO_PROM_PLOZSH.ToString(), true)[0] as RadioButton_BalTask).CheckedChanged += new EventHandler(CheckedChangedRadioBtn);
-
+                for (INDEX_CONTROL indx = INDEX_CONTROL.RADIO_BLOCK; !(indx > INDEX_CONTROL.RADIO_PROM_PLOZSH); indx ++)
+                    (Controls.Find(indx.ToString(), true)[0] as RadioButton).CheckedChanged += new EventHandler(onCheckedChangedIndexViewValues);
             }
 
             private void InitializeComponents()
@@ -1281,21 +688,13 @@ namespace PluginTaskBalTeplo
                 // переменные для инициализации кнопок "Добавить", "Удалить"
                 string strPartLabelButtonDropDownMenuItem = string.Empty;
                 int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
-                    , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
-                //int posColdgvTEPValues = 6;
+                    , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"
+
+                //CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
+                
                 SuspendLayout();
 
-                posRow = 0;
-                //Период расчета
-                //Период расчета - подпись, значение
-                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
-
-                //Период расчета - подпись, значение
-                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
-
-                //Дата/время начала периода расчета
-                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
-
+                posRow = 6;
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
                 ctrl = new DropDownButton();
@@ -1306,79 +705,66 @@ namespace PluginTaskBalTeplo
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
                 ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
-                ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 0, posRow);
+                SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //Кнопка - импортировать
-                Button ctrlBSend = new Button();
-                ctrlBSend.Name = INDEX_CONTROL.BUTTON_SEND.ToString();
-                ctrlBSend.Text = @"Отправить";
-                ctrlBSend.Dock = DockStyle.Top;
-                ctrlBSend.Visible = false;
+                ctrl = new Button();
+                ctrl.Name = INDEX_CONTROL.BUTTON_IMPORT.ToString();
+                ctrl.Text = @"Импорт";
+                ctrl.Dock = DockStyle.Top;
+                ctrl.Visible = true;
+                ctrl.Enabled = false;
                 //ctrlBSend.Enabled = false;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, ColumnCount / 2, posRow);
+                SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //Кнопка - сохранить
-                Button ctrlBsave = new Button();
-                ctrlBsave.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
-                ctrlBsave.Text = @"Сохранить";
-                ctrlBsave.Dock = DockStyle.Top;
+                ctrl = new Button();
+                ctrl.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
+                ctrl.Text = @"Сохранить";
+                //ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
+                SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //
-                Button ctrlExp = new Button();
-                ctrlExp.Name = INDEX_CONTROL.BUTTON_EXPORT.ToString();
-                ctrlExp.Text = @"Экспорт";
-                ctrlExp.Dock = DockStyle.Top;
-                ctrlExp.Visible = false;
-                //Поле с почтой
-                TextBox ctrlTxt = new TextBox();
-                ctrlTxt.Name = INDEX_CONTEXT.ID_CON.ToString();
-                //ctrlTxt.Text = @"Pasternak_AS@sibeco.su";
-                ctrlTxt.Dock = DockStyle.Top;
-                ctrlTxt.Visible = false;
-
-                TableLayoutPanel tlpButton = new TableLayoutPanel();
-                tlpButton.Dock = DockStyle.Fill;
-                tlpButton.AutoSize = true;
-                tlpButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-                tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-                tlpButton.Controls.Add(ctrl, 0, 0);
-                tlpButton.Controls.Add(ctrlBSend, 1, 0);
-                tlpButton.Controls.Add(ctrlBsave, 0, 1);
-                tlpButton.Controls.Add(ctrlTxt, 1, 1);
-                tlpButton.Controls.Add(ctrlExp, 0, 2);
-                this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
-                this.SetColumnSpan(tlpButton, 4); this.SetRowSpan(tlpButton, 3);
-
+                ctrl = new Button();
+                ctrl.Name = INDEX_CONTROL.BUTTON_EXPORT.ToString();
+                ctrl.Text = @"Экспорт";                
+                ctrl.Visible = true;
+                ctrl.Enabled = false;
+                //ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, ColumnCount / 2, posRow);
+                SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //
-                RadioButton_BalTask ctrlRadioBlock = new RadioButton_BalTask();
-                ctrlRadioBlock.Name = INDEX_CONTROL.RADIO_BLOCK.ToString();
-                ctrlRadioBlock.Text = @"По блокам";
-                ctrlRadioBlock.Type = TypeRadioBtn.Block.ToString();
-                ctrlRadioBlock.Dock = DockStyle.Top;
-                ctrlRadioBlock.Checked = true;
+                ctrl = new RadioButton();
+                ctrl.Name = INDEX_CONTROL.RADIO_BLOCK.ToString();
+                ctrl.Text = @"По блокам";
+                ctrl.Tag = INDEX_VIEW_VALUES.Block;                
+                (ctrl as RadioButton).Checked = true;
+                //ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
+                SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
                 //
-                RadioButton_BalTask ctrlRadioTeplo = new RadioButton_BalTask();
-                ctrlRadioTeplo.Name = INDEX_CONTROL.RADIO_TEPLO.ToString();
-                ctrlRadioTeplo.Text = @"По выводам";
-                ctrlRadioTeplo.Type = TypeRadioBtn.Teplo.ToString();
-                ctrlRadioTeplo.Dock = DockStyle.Top;
+                ctrl = new RadioButton();
+                ctrl.Name = INDEX_CONTROL.RADIO_VYVOD.ToString();
+                ctrl.Text = @"По выводам";
+                ctrl.Tag = INDEX_VIEW_VALUES.Vyvod;
+                //ctrlRadioTeplo.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
+                SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
                 //
-                RadioButton_BalTask ctrlRadioProm = new RadioButton_BalTask();
-                ctrlRadioProm.Name = INDEX_CONTROL.RADIO_PROM_PLOZSH.ToString();
-                ctrlRadioProm.Text = @"Пром. площадки";
-                ctrlRadioProm.Type = TypeRadioBtn.PromPlozsh.ToString();
-                ctrlRadioProm.Dock = DockStyle.Top;
-
-                TableLayoutPanel tlpRadioBtn = new TableLayoutPanel();
-                tlpRadioBtn.Dock = DockStyle.Fill;
-                tlpRadioBtn.AutoSize = true;
-                tlpRadioBtn.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                tlpRadioBtn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-                tlpRadioBtn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-
-                tlpRadioBtn.Controls.Add(ctrlRadioBlock, 0, 0);
-                tlpRadioBtn.Controls.Add(ctrlRadioTeplo, 0, 1);
-                tlpRadioBtn.Controls.Add(ctrlRadioProm, 0, 2);
-
-                this.Controls.Add(tlpRadioBtn, 0, posRow = posRow + 3);
-                this.SetColumnSpan(tlpRadioBtn, 4); this.SetRowSpan(tlpRadioBtn, 3);
+                ctrl = new RadioButton();
+                ctrl.Name = INDEX_CONTROL.RADIO_PROM_PLOZSH.ToString();
+                ctrl.Text = @"Пром. площадки";
+                ctrl.Tag = INDEX_VIEW_VALUES.PromPlozsh;
+                //ctrlRadioProm.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
+                SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
 
                 ResumeLayout(false);
                 PerformLayout();
@@ -1399,33 +785,30 @@ namespace PluginTaskBalTeplo
                     ;
             }
 
-            private void CheckedChangedRadioBtn(object obj, EventArgs e)
+            private void onCheckedChangedIndexViewValues(object obj, EventArgs e)
             {
-                if ((obj as RadioButton_BalTask).Checked == true)
-                    if (CheckedChangedRadioBtnEvent != null)
-                    {
-                        CheckedChangedRadioBtnEvent(obj, new CheckedChangedRadioBtnEventArgs());
-                    }
+                if ((obj as RadioButton).Checked == true)
+                    EventCheckedChangedIndexViewValues?.Invoke(obj, new CheckedChangedIndexViewValuesEventArgs());
             }
 
             /// <summary>
             /// Класс для описания аргумента события - изменения значения ячейки
             /// </summary>
-            public class CheckedChangedRadioBtnEventArgs : EventArgs
+            public class CheckedChangedIndexViewValuesEventArgs : EventArgs
             {
                 /// <summary>
                 /// Компонента
                 /// </summary>
                 public object m_Comp;
 
-                public CheckedChangedRadioBtnEventArgs()
+                public CheckedChangedIndexViewValuesEventArgs()
                     : base()
                 {
                     m_Comp = null;
 
                 }
 
-                public CheckedChangedRadioBtnEventArgs(int comp)
+                public CheckedChangedIndexViewValuesEventArgs(int comp)
                     : this()
                 {
                     m_Comp = comp;
@@ -1433,103 +816,82 @@ namespace PluginTaskBalTeplo
             }
 
             /// <summary>
-            /// Тип делегата для обработки события - изменение значения в ячейке
-            /// </summary>
-            public delegate void CheckedChangedRadioBtnEventHandler(object obj, CheckedChangedRadioBtnEventArgs e);
-
-            /// <summary>
             /// Событие - изменение значения ячейки
             /// </summary>
-            public CheckedChangedRadioBtnEventHandler CheckedChangedRadioBtnEvent;
-
-            public class RadioButton_BalTask : RadioButton
-            {
-                protected string m_type;
-                public string Type
-                {
-                    get
-                    {
-                        return m_type;
-                    }
-                    set
-                    {
-                        m_type = value;
-                    }
-                }
-            }
+            public EventHandler EventCheckedChangedIndexViewValues;            
         }
 
         /// <summary>
         /// инициализация объектов
         /// </summary>
-        private void InitializeComponent()
+        private void InitializeComponents()
         {
             Control ctrl = new Control(); ;
             // переменные для инициализации кнопок "Добавить", "Удалить"
             string strPartLabelButtonDropDownMenuItem = string.Empty;
             int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
                 , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
-            int posColdgvTEPValues = 4;
+            int posColdgvValues = 4;
 
             SuspendLayout();
 
             posRow = 0;
 
             #region DGV
-            dgvBlock = new DGVAutoBook(INDEX_CONTROL.DGV_Block.ToString());
+            dgvBlock = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_Block.ToString());
             dgvBlock.Dock = DockStyle.Fill;
             dgvBlock.Name = INDEX_CONTROL.DGV_Block.ToString();
-            dgvBlock.Type_DGV = DGVAutoBook.INDEX_TYPE_DGV.Block;
+            dgvBlock.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.Block;
             dgvBlock.AllowUserToResizeRows = false;
             dgvBlock.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvBlock.Visible = true;
             this.Controls.Add(dgvBlock, 4, posRow);
             this.SetColumnSpan(dgvBlock, 9); this.SetRowSpan(dgvBlock, 5);
             //
-            dgvOutput = new DGVAutoBook(INDEX_CONTROL.DGV_Output.ToString());
+            dgvOutput = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_Output.ToString());
             dgvOutput.Dock = DockStyle.Fill;
             dgvOutput.Name = INDEX_CONTROL.DGV_Output.ToString();
             dgvOutput.AllowUserToResizeRows = false;
-            dgvOutput.Type_DGV = DGVAutoBook.INDEX_TYPE_DGV.Output;
+            dgvOutput.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.Output;
             dgvOutput.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvOutput.Visible = false;
             this.Controls.Add(dgvOutput, 4, posRow);
             this.SetColumnSpan(dgvOutput, 9); this.SetRowSpan(dgvOutput, 5);
             //
-            dgvTeploBL = new DGVAutoBook(INDEX_CONTROL.DGV_TeploBL.ToString());
+            dgvTeploBL = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_TeploBL.ToString());
             dgvTeploBL.Dock = DockStyle.Fill;
             dgvTeploBL.Name = INDEX_CONTROL.DGV_TeploBL.ToString();
-            dgvTeploBL.Type_DGV = DGVAutoBook.INDEX_TYPE_DGV.TeploBL;
+            dgvTeploBL.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.TeploBL;
             dgvTeploBL.AllowUserToResizeRows = false;
             dgvTeploBL.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvTeploBL.Visible = true;
             this.Controls.Add(dgvTeploBL, 4, posRow + 5);
             this.SetColumnSpan(dgvTeploBL, 9); this.SetRowSpan(dgvTeploBL, 5);
             //
-            dgvTeploOP = new DGVAutoBook(INDEX_CONTROL.DGV_TeploOP.ToString());
+            dgvTeploOP = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_TeploOP.ToString());
             dgvTeploOP.Dock = DockStyle.Fill;
             dgvTeploOP.Name = INDEX_CONTROL.DGV_TeploOP.ToString();
-            dgvTeploOP.Type_DGV = DGVAutoBook.INDEX_TYPE_DGV.TeploOP;
+            dgvTeploOP.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.TeploOP;
             dgvTeploOP.AllowUserToResizeRows = false;
             dgvTeploOP.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvTeploOP.Visible = false;
             this.Controls.Add(dgvTeploOP, 4, posRow + 5);
             this.SetColumnSpan(dgvTeploOP, 9); this.SetRowSpan(dgvTeploOP, 5);
             //
-            dgvPromPlozsh = new DGVAutoBook(INDEX_CONTROL.DGV_PromPlozsh.ToString());
+            dgvPromPlozsh = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_PromPlozsh.ToString());
             dgvPromPlozsh.Dock = DockStyle.Fill;
             dgvPromPlozsh.Name = INDEX_CONTROL.DGV_PromPlozsh.ToString();
-            dgvPromPlozsh.Type_DGV = DGVAutoBook.INDEX_TYPE_DGV.PromPlozsh;
+            dgvPromPlozsh.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.PromPlozsh;
             dgvPromPlozsh.AllowUserToResizeRows = false;
             dgvPromPlozsh.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvPromPlozsh.Visible = false;
             this.Controls.Add(dgvPromPlozsh, 4, posRow);
             this.SetColumnSpan(dgvPromPlozsh, 9); this.SetRowSpan(dgvPromPlozsh, 5);
             //
-            dgvParam = new DGVAutoBook(INDEX_CONTROL.DGV_Param.ToString());
+            dgvParam = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_Param.ToString());
             dgvParam.Dock = DockStyle.Fill;
             dgvParam.Name = INDEX_CONTROL.DGV_Param.ToString();
-            dgvParam.Type_DGV = DGVAutoBook.INDEX_TYPE_DGV.Param;
+            dgvParam.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.Param;
             dgvParam.AllowUserToResizeRows = false;
             dgvParam.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvParam.Visible = false;
@@ -1538,8 +900,8 @@ namespace PluginTaskBalTeplo
             #endregion
             //
             this.Controls.Add(PanelManagement, 0, posRow);
-            this.SetColumnSpan(PanelManagement, posColdgvTEPValues);
-            this.SetRowSpan(PanelManagement, posRow = posRow + 9);//this.RowCount);     
+            this.SetColumnSpan(PanelManagement, posColdgvValues);
+            this.SetRowSpan(PanelManagement, RowCount);//this.RowCount);     
 
             ////
             //TableLayoutPanel tlpYear = new TableLayoutPanel();
@@ -1566,11 +928,10 @@ namespace PluginTaskBalTeplo
                 new EventHandler(btnHistory_OnClick);
             (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
                 new EventHandler(HPanelTepCommon_btnSave_Click);
-            (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_SEND.ToString(), true)[0] as Button).Click +=
-                new EventHandler(PanelTaskAutobookMonthValue_btnsend_Click);
+            (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_IMPORT.ToString(), true)[0] as Button).Click +=
+                new EventHandler(PanelTaskBalTeplo_btnimport_Click);
             (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
-                 new EventHandler(PanelTaskAutobookMonthValues_btnexport_Click);
-
+                 new EventHandler(PanelTaskbalTeplo_btnexport_Click);
 
             dgvBlock.CellParsing += dgvCellParsing;
             dgvOutput.CellParsing += dgvCellParsing;
@@ -1581,11 +942,11 @@ namespace PluginTaskBalTeplo
         }
 
         /// <summary>
-        /// 
+        /// Обработчик события - нажатие на кнопку "Экспорт"
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void PanelTaskAutobookMonthValues_btnexport_Click(object sender, EventArgs e)
+        /// <param name="sender">Объект - инициатор события (кнопка)</param>
+        /// <param name="e">Аргумент события</param>
+        void PanelTaskbalTeplo_btnexport_Click(object sender, EventArgs e)
         {
             //rptExcel.CreateExcel(dgvAB);
         }
@@ -1593,9 +954,9 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// Оброботчик события клика кнопки отправить
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void PanelTaskAutobookMonthValue_btnsend_Click(object sender, EventArgs e)
+        /// <param name="sender">Объект - инициатор события (кнопка "Отправить")</param>
+        /// <param name="e">Аргумент события</param>
+        void PanelTaskBalTeplo_btnimport_Click(object sender, EventArgs e)
         {
             int err = -1;
             string toSend = (Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0] as TextBox).Text;
@@ -1611,16 +972,16 @@ namespace PluginTaskBalTeplo
         /// редактирвание значений.
         /// сохранение изменений в DataTable
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Объект - инициатор события (представление)</param>
+        /// <param name="e">Аргумент события</param>
         void dgvCellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
             int err = -1;
             int id_put = -1;
-            string N_ALG = (((DGVAutoBook)sender).Columns[e.ColumnIndex] as DGVAutoBook.HDataGridViewColumn).m_N_ALG;
-            int id_comp = Convert.ToInt32(((DGVAutoBook)sender).Rows[e.RowIndex].HeaderCell.Value);
+            string N_ALG = (((DataGridViewBalTeploValues)sender).Columns[e.ColumnIndex] as DataGridViewBalTeploValues.HDataGridViewColumn).m_N_ALG;
+            int id_comp = Convert.ToInt32(((DataGridViewBalTeploValues)sender).Rows[e.RowIndex].HeaderCell.Value);
 
-            if ((((DGVAutoBook)sender).Columns[e.ColumnIndex] as DGVAutoBook.HDataGridViewColumn).m_bInPut == true)
+            if ((((DataGridViewBalTeploValues)sender).Columns[e.ColumnIndex] as DataGridViewBalTeploValues.HDataGridViewColumn).m_bInPut == true)
             {
                 DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
                 if (rows.Length == 1)
@@ -1672,7 +1033,7 @@ namespace PluginTaskBalTeplo
                 , m_dictTableDictPrj);
             dgvPromPlozsh.ShowValues(m_arTableEdit_in, m_arTableEdit_out
                 , m_dictTableDictPrj);
-            ((DGVAutoBook)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = e.Value;
+            ((DataGridViewBalTeploValues)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = e.Value;
         }
         
         /// <summary>
@@ -1961,6 +1322,7 @@ namespace PluginTaskBalTeplo
             Control ctrl = null;
             int i = -1;
             string strItem = string.Empty;
+
             initialize(new ID_DBTABLE[] {
                 ID_DBTABLE.PERIOD, ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP_LIST, ID_DBTABLE.MEASURE, ID_DBTABLE.RATIO
                 , ID_DBTABLE.INALG, ID_DBTABLE.OUTALG, }
@@ -1970,12 +1332,12 @@ namespace PluginTaskBalTeplo
             if (err == 0) {
                 try {
                     //??? m_dt_profile = HandlerDb.GetProfilesContext(m_id_panel);
-                    dgvBlock.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvBlock.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvOutput.InitializeStruct(m_dictTableDictPrj[(ID_DBTABLE.INALG)], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvOutput.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvTeploBL.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvTeploBL.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvTeploOP.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvTeploOP.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvPromPlozsh.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvPromPlozsh.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvParam.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvParam.Type_DGV), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvBlock.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvBlock.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvOutput.InitializeStruct(m_dictTableDictPrj[(ID_DBTABLE.INALG)], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvOutput.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvTeploBL.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvTeploBL.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvTeploOP.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvTeploOP.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvPromPlozsh.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvPromPlozsh.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvParam.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvParam.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
                     //Заполнить элемент управления с часовыми поясами
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]));

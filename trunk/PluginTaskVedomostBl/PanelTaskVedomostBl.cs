@@ -243,7 +243,7 @@ namespace PluginTaskVedomostBl
             /// конструктор класса
             /// </summary>
             public PanelManagementVedomostBl()
-                : base()
+                : base(ModeTimeControlPlacement.Twin | ModeTimeControlPlacement.Labels)
             {
                 try
                 {
@@ -276,14 +276,14 @@ namespace PluginTaskVedomostBl
                 SuspendLayout();
 
                 posRow = 0;
-                //Период расчета - подпись, значение
-                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
+                ////Период расчета - подпись, значение
+                //SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
 
-                //Часовой пояс расчета - подпись, значение
-                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
+                ////Часовой пояс расчета - подпись, значение
+                //SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
 
-                //Дата/время начала периода расчета
-                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
+                ////Дата/время начала периода расчета
+                //posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
 
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить

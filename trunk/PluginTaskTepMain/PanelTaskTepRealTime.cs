@@ -167,7 +167,7 @@ namespace PluginTaskTepMain
         private class PanelManagementTaskTepRealTime : HPanelTepCommon.PanelManagementTaskCalculate
         {
             public PanelManagementTaskTepRealTime()
-                : base()
+                : base(ModeTimeControlPlacement.Queue)
             {
                 InitializeComponents();
             }
@@ -181,11 +181,15 @@ namespace PluginTaskTepMain
                 SuspendLayout();
 
                 posRow = 0;
-                //Период расчета - подпись, значение
-                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
+                ////Период расчета - подпись, значение
+                //SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
 
-                //Период расчета - подпись, значение
-                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
+                ////Период расчета - подпись, значение
+                //SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
+
+                ////??? значение для 'posRow'
+                ////Дата/время начала периода расчета
+                //posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
 
                 //Расчет - выполнить
                 ctrl = new Button();
@@ -194,9 +198,6 @@ namespace PluginTaskTepMain
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 4, posRow = 0);
                 SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 2);
-
-                //Дата/время начала периода расчета
-                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
 
                 ResumeLayout(false);
                 PerformLayout();

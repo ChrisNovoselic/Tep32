@@ -355,10 +355,10 @@ namespace TepCommon
             m_arTableOrigin = new DataTable[(int)INDEX_PARAMETER.COUNT];
             m_arTableEdit = new DataTable[(int)INDEX_PARAMETER.COUNT];
 
-            InitializeComponent();
+            InitializeComponents();
         }
 
-        private void InitializeComponent()
+        private void InitializeComponents()
         {
             Control ctrl = null;
 

@@ -76,20 +76,20 @@ namespace PluginTaskTepMain
         private void InitializeComponents()
         {
             m_dgvValues = new DataGridViewTEPValues();
-            int posColdgvTEPValues = 4
-                , heightRowdgvTEPValues = 10;
+            int posColdgvValues = 4
+                , heightRowdgvValues = 10;
 
             SuspendLayout();
 
             //initializeLayoutStyle ();
 
             Controls.Add(PanelManagement, 0, 0);
-            SetColumnSpan(PanelManagement, posColdgvTEPValues); SetRowSpan(PanelManagement, this.RowCount);
+            SetColumnSpan(PanelManagement, posColdgvValues); SetRowSpan(PanelManagement, this.RowCount);
 
-            Controls.Add(m_dgvValues, posColdgvTEPValues, 0);
-            SetColumnSpan(m_dgvValues, this.ColumnCount - posColdgvTEPValues); SetRowSpan(m_dgvValues, heightRowdgvTEPValues);
+            Controls.Add(m_dgvValues, posColdgvValues, 0);
+            SetColumnSpan(m_dgvValues, this.ColumnCount - posColdgvValues); SetRowSpan(m_dgvValues, heightRowdgvValues);
 
-            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), posColdgvTEPValues, heightRowdgvTEPValues);
+            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), posColdgvValues, heightRowdgvValues);
 
             ResumeLayout(false);
             PerformLayout();
@@ -1183,7 +1183,7 @@ namespace PluginTaskTepMain
             /// Конструктор - основной (без параметров)
             /// </summary>
             public PanelManagementTaskTepValues()
-                : base()
+                : base(ModeTimeControlPlacement.Queue)
             {
                 InitializeComponents();
             }
@@ -1196,55 +1196,30 @@ namespace PluginTaskTepMain
 
                 SuspendLayout();
 
-                //initializeLayoutStyle();
-
-                posRow = 0;
-                //Период расчета
-                ////Период расчета - подпись
-                //ctrl = new System.Windows.Forms.Label();
-                //ctrl.Dock = DockStyle.Bottom;
-                //(ctrl as System.Windows.Forms.Label).Text = @"Период:";
-                //this.Controls.Add(ctrl, 0, posRow);
-                //SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
-                //Период расчета - значение
-                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
-
-                //Часовой пояс расчета
-                ////Часовой пояс - подпись
-                //ctrl = new System.Windows.Forms.Label();
-                //ctrl.Dock = DockStyle.Bottom;
-                //(ctrl as System.Windows.Forms.Label).Text = @"Часовой пояс:";
-                //this.Controls.Add(ctrl, 0, posRow);
-                //SetColumnSpan(ctrl, 2); SetRowSpan(ctrl, 1);
-                //Часовой пояс расчета
-                SetPositionTimezone(new Point(0, posRow = posRow + 2), new Size(this.ColumnCount / 2, 1));
-
                 //Расчет - выполнить - макет
                 //Расчет - выполнить - норматив
-                posRow = addButtonRun(0);
+                addButtonRun(0);
 
-                //Дата/время начала периода расчета
-                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 3), new Size(this.ColumnCount, 4));
-
+                posRow = 5;
                 //Признаки включения/исключения из расчета
                 //Признаки включения/исключения из расчета - подпись
                 ctrl = new System.Windows.Forms.Label();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as System.Windows.Forms.Label).Text = @"Включить/исключить из расчета";
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
+                SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
                 //Признак для включения/исключения из расчета компонента
                 ctrl = new CheckedListBoxTaskTepValues();
                 ctrl.Name = INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 3);
+                SetColumnSpan(ctrl, ColumnCount); SetRowSpan(ctrl, 3);
                 //Признак для включения/исключения из расчета параметра
                 ctrl = createControlParameterCalculated();
                 ctrl.Name = INDEX_CONTROL.CLBX_PARAMETER_CALCULATED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 3);
-                SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 3);
+                SetColumnSpan(ctrl, ColumnCount); SetRowSpan(ctrl, 3);
 
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить

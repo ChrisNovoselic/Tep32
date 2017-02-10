@@ -22,13 +22,13 @@ namespace PluginTaskTepMain
         public PanelTaskTepInval(IPlugIn iFunc)
             : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {            
-            InitializeComponent();
+            InitializeComponents();
             // назначить обработчики для кнопок 'К нормативу', 'К макету'
             (Controls.Find (INDEX_CONTROL.BUTTON_RUN_PREV.ToString(), true)[0] as Button).Click += new EventHandler (btnRunPrev_onClick);
             // обработчик 'К макету' - см. в базовом классе
         }
 
-        private void InitializeComponent()
+        private void InitializeComponents()
         {
         }
 

@@ -550,7 +550,7 @@ namespace PluginTaskAutobook
             /// Конструктор - основной (без параметров)
             /// </summary>
             public PanelManagementAutobook()
-                : base() //4, 3
+                : base(ModeTimeControlPlacement.Twin | ModeTimeControlPlacement.Labels) //4, 3
             {
                 InitializeComponents();
             }
@@ -565,14 +565,14 @@ namespace PluginTaskAutobook
                 //int posColdgvTEPValues = 6;
                 SuspendLayout();
                 posRow = 0;
-                //Период расчета - подпись
-                SetPositionPeriod(new System.Drawing.Point(0, posRow), new Size(this.ColumnCount / 2, 1));
+                ////Период расчета - подпись
+                //SetPositionPeriod(new System.Drawing.Point(0, posRow), new Size(this.ColumnCount / 2, 1));
 
-                //Период расчета - значение
-                SetPositionTimezone(new System.Drawing.Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
+                ////Период расчета - значение
+                //SetPositionTimezone(new System.Drawing.Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
 
-                //Дата/время начала периода расчета
-                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
+                ////Дата/время начала периода расчета
+                //posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
 
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить

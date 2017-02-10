@@ -50,7 +50,7 @@ namespace PluginTaskReaktivka
             }
 
             public PanelManagementReaktivka()
-                : base()
+                : base(ModeTimeControlPlacement.Twin | ModeTimeControlPlacement.Labels)
             {
                 InitializeComponents();
             }
@@ -66,16 +66,9 @@ namespace PluginTaskReaktivka
                                  //int posColdgvTEPValues = 6;
                 SuspendLayout();
 
-                posRow = 0;
-                //Период расчета - подпись, значение                
-                SetPositionPeriod(new Point(0, posRow), new Size(this.ColumnCount / 2, 1));
+                //CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
 
-                //Период расчета - подпись, значение
-                SetPositionTimezone(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount / 2, 1));
-
-                //Дата/время начала периода расчета
-                posRow = SetPositionDateTimePicker(new Point(0, posRow = posRow + 1), new Size(this.ColumnCount, 4));
-
+                posRow = 6;
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
                 ctrl = new DropDownButton();
@@ -86,29 +79,23 @@ namespace PluginTaskReaktivka
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
                 ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
-                ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 0, posRow);
+                SetColumnSpan(ctrl, ColumnCount / 2); SetRowSpan(ctrl, 1);
                 //Кнопка - сохранить
-                Button ctrlBsave = new Button();
-                ctrlBsave.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
-                ctrlBsave.Text = @"Сохранить";
-                ctrlBsave.Dock = DockStyle.Top;
+                ctrl = new Button();
+                ctrl.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
+                ctrl.Text = @"Сохранить";
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, ColumnCount / 2, posRow);
+                SetColumnSpan(ctrl, ColumnCount / 2); SetRowSpan(ctrl, 1);
                 //
-                Button ctrlExp = new Button();
-                ctrlExp.Name = INDEX_CONTROL.BUTTON_EXPORT.ToString();
-                ctrlExp.Text = @"Экспорт";
-                ctrlExp.Dock = DockStyle.Top;
-
-                TableLayoutPanel tlpButton = new TableLayoutPanel();
-                tlpButton.Dock = DockStyle.Top;
-                tlpButton.AutoSize = true;
-                tlpButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
-                tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-                tlpButton.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-                tlpButton.Controls.Add(ctrl, 0, 0);
-                tlpButton.Controls.Add(ctrlBsave, 1, 0);
-                tlpButton.Controls.Add(ctrlExp, 0, 2);
-                this.Controls.Add(tlpButton, 0, posRow = posRow + 2);
-                SetColumnSpan(tlpButton, 4); SetRowSpan(tlpButton, 2);
+                ctrl = new Button();
+                ctrl.Name = INDEX_CONTROL.BUTTON_EXPORT.ToString();
+                ctrl.Text = @"Экспорт";
+                ctrl.Dock = DockStyle.Fill;
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
+                SetColumnSpan(ctrl, 4); //SetRowSpan(ctrl, 1);
 
                 //Признаки включения/исключения для отображения
                 //Признак для включения/исключения для отображения компонента
@@ -116,23 +103,23 @@ namespace PluginTaskReaktivka
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as Label).Text = @"Включить/исключить компонент для отображения";
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 1);
+                SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
                 //
                 ctrl = new CheckedListBoxTaskReaktivka();
                 ctrl.Name = INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString();
-                ctrl.Dock = DockStyle.Top;
+                ctrl.Dock = DockStyle.Fill;
                 (ctrl as CheckedListBoxTaskReaktivka).CheckOnClick = true;
                 Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, 4); SetRowSpan(ctrl, 2);
+                SetColumnSpan(ctrl, ColumnCount); SetRowSpan(ctrl, 4);
                 //Признак Корректировка_включена/корректировка_отключена 
-                CheckBox cBox = new CheckBox();
-                cBox.Name = INDEX_CONTROL.CHKBX_EDIT.ToString();
-                cBox.Text = @"Корректировка значений разрешена";
-                cBox.Dock = DockStyle.Top;
-                cBox.Enabled = false;
-                cBox.Checked = true;
-                this.Controls.Add(cBox, 0, posRow = posRow + 1);
-                SetColumnSpan(cBox, 4); SetRowSpan(cBox, 1);
+                ctrl = new CheckBox();
+                ctrl.Name = INDEX_CONTROL.CHKBX_EDIT.ToString();
+                ctrl.Text = @"Корректировка значений разрешена";
+                ctrl.Dock = DockStyle.Fill;
+                ctrl.Enabled = false;
+                (ctrl as CheckBox).Checked = true;
+                this.Controls.Add(ctrl, 0, posRow = posRow + 4);
+                SetColumnSpan(ctrl, ColumnCount); SetRowSpan(ctrl, 1);
 
                 ResumeLayout(false);
                 PerformLayout();
