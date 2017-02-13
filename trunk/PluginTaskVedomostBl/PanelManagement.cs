@@ -245,11 +245,11 @@ namespace PluginTaskVedomostBl
             public class RadioButtonBlock : System.Windows.Forms.RadioButton
             {
                 /// <summary>
-                /// номер радиобаттона
+                /// Индекс элемента
                 /// </summary>
                 private int _indx;
                 /// <summary>
-                /// номер радиобаттона
+                /// Индекс элемента
                 /// </summary>
                 public int Index
                 {
@@ -257,10 +257,10 @@ namespace PluginTaskVedomostBl
 
                     set { _indx = value; }
                 }
-
                 /// <summary>
-                /// Конструктор(основной)
+                /// Конструктор - основной (с параметром)
                 /// </summary>
+                /// <param name="nameItem">Текст-подпись для элемента</param>
                 public RadioButtonBlock(string nameItem) : base()
                 {
                     initialize(nameItem);
@@ -268,7 +268,7 @@ namespace PluginTaskVedomostBl
                 /// <summary>
                 /// Инициализация объекта
                 /// </summary>
-                /// <param name="nameItem"></param>
+                /// <param name="nameItem">Текст-подпись для элемента</param>
                 private void initialize(string nameItem)
                 {
                     Name = nameItem;

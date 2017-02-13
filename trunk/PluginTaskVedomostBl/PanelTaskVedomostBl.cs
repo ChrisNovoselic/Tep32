@@ -1251,10 +1251,11 @@ namespace PluginTaskVedomostBl
             arId_comp = new int[m_dictTableDictPrj[ID_DBTABLE.COMP].Rows.Count];
             arstrItem = new string[m_dictTableDictPrj[ID_DBTABLE.COMP].Rows.Count];
             //создание списка гридов по блокам
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows)
-            {
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows) {
                 if (arGroup.Count > 0)
                     arGroup.Clear();
+                else
+                    ;
                 //инициализация радиобаттанов
                 arRadioBtn[rbCnt - (int)INDEX_CONTROL.RADIOBTN_BLK1] = new PanelManagementVedomostBl.RadioButtonBlock(namePut.GetValue(rbCnt).ToString());
 
@@ -1272,16 +1273,15 @@ namespace PluginTaskVedomostBl
             for (int i = 0; i < s_listHeader.Count; i++)
                 arGroup.Add(CheckState.Checked);
 
-            try
-            {
+            try {
                 //if (arId_comp[rbCnt] != 0)
                 //добавление радиобатонов на форму
                 PanelManagement.AddComponentRB(arId_comp
-                          , arstrItem
-                          , arIndxIdToAdd
-                          , arChecked
-                          , arRadioBtn
-                          , arGroup);
+                    , arstrItem
+                    , arIndxIdToAdd
+                    , arChecked
+                    , arRadioBtn
+                    , arGroup);
 
             } catch (Exception e) {
                 Logging.Logg().Exception(e, @"PanelTaskVedomostBl::initializeRB () - ...", Logging.INDEX_MESSAGE.NOT_SET);
