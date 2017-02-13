@@ -68,6 +68,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataGridViewAutobookMonthValues.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="DataGridViewAutobookYearlyPlan.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PanelTaskAutobookMonthValues.cs">
       <SubType>Component</SubType>
     </Compile>

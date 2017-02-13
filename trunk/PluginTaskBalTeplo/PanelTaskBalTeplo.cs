@@ -97,10 +97,6 @@ namespace PluginTaskBalTeplo
         /// Массив списков параметров
         /// </summary>
         protected List<int>[] m_arListIds;
-        /// <summary>
-        /// 
-        /// </summary>
-        protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
         ///// <summary>
         ///// 
         ///// </summary>
@@ -1072,7 +1068,7 @@ namespace PluginTaskBalTeplo
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
                 (
-                Type
+                TaskCalculateType
                 , Session.ActualIdPeriod
                 , Session.CountBasePeriod
                 , arQueryRanges
@@ -1080,7 +1076,7 @@ namespace PluginTaskBalTeplo
                 );
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Merge(HandlerDb.GetValuesDayVar
                 (
-                Type
+                TaskCalculateType
                 , Session.ActualIdPeriod
                 , Session.CountBasePeriod
                 , arQueryRanges
@@ -1650,7 +1646,7 @@ namespace PluginTaskBalTeplo
             DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
 
             m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-                HandlerDb.getInPut(Type, dtrPer, Session.ActualIdPeriod, out err);
+                HandlerDb.getInPut(TaskCalculateType, dtrPer, Session.ActualIdPeriod, out err);
 
             m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
             HandlerDb.saveResInval(m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]

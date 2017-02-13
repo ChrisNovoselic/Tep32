@@ -52,10 +52,6 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// 
         /// </summary>
-        protected HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
-        /// <summary>
-        /// 
-        /// </summary>
         protected HandlerDbTaskReaktivkaCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskReaktivkaCalculate; } }
         /// <summary>
         /// Таблицы со значениями для редактирования
@@ -1034,11 +1030,11 @@ namespace PluginTaskReaktivka
             Session.New();
             if (Session.m_ViewValues == HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE)
                 //Запрос для получения архивных данных
-                m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = HandlerDb.GetDataOutvalArch(Type, HandlerDb.GetDateTimeRangeValuesVarArchive(), out err);
+                m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = HandlerDb.GetDataOutvalArch(TaskCalculateType, HandlerDb.GetDateTimeRangeValuesVarArchive(), out err);
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
                 (
-                Type
+                TaskCalculateType
                 , Session.ActualIdPeriod
                 , Session.CountBasePeriod
                 , arQueryRanges

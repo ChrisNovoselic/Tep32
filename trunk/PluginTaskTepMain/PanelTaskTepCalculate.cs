@@ -39,9 +39,8 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Отображение значений в табличном представлении
         /// </summary>
-        protected DataGridViewTEPCalculate m_dgvValues;        
-
-        protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE Type;
+        protected DataGridViewTEPCalculate m_dgvValues;
+        
         ///// <summary>
         ///// Таблицы со значениями словарных, проектных данных
         ///// </summary>
@@ -69,7 +68,7 @@ namespace PluginTaskTepMain
         protected PanelTaskTepCalculate(IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc)
         {
-            Type = type;
+            TaskCalculateType = type;
 
             HandlerDb.IdTask = ID_TASK.TEP;
 
@@ -122,10 +121,10 @@ namespace PluginTaskTepMain
                     ID_DBTABLE.PERIOD
                     , ID_DBTABLE.TIMEZONE
                     , ID_DBTABLE.COMP_LIST
-                    , Type == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.IN_PARAMETER :
-                        Type == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES ? ID_DBTABLE.OUT_PARAMETER :
-                            Type == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES ? ID_DBTABLE.OUT_PARAMETER :
-                                Type == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME ? ID_DBTABLE.OUT_PARAMETER :
+                    , TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.IN_PARAMETER :
+                        TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES ? ID_DBTABLE.OUT_PARAMETER :
+                            TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES ? ID_DBTABLE.OUT_PARAMETER :
+                                TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME ? ID_DBTABLE.OUT_PARAMETER :
                                     ID_DBTABLE.UNKNOWN
                     , ID_DBTABLE.MODE_DEV
                     , ID_DBTABLE.RATIO }
@@ -282,7 +281,7 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
         /// </summary>
-        protected abstract class DataGridViewTEPCalculate : DataGridView
+        protected abstract class DataGridViewTEPCalculate : DataGridViewValues
         {
             public DataGridViewTEPCalculate()
             {
@@ -395,34 +394,6 @@ namespace PluginTaskTepMain
                 , Color.Red //LIMIT
                 , Color.White //USER
             };
-
-            protected struct RATIO
-            {
-                public int m_id;
-
-                public int m_value;
-
-                public string m_nameRU
-                    , m_nameEN
-                    , m_strDesc;
-            }
-
-            protected Dictionary<int, RATIO> m_dictRatio;
-
-            public void SetRatio(DataTable tblRatio)
-            {
-                m_dictRatio = new Dictionary<int, RATIO>();
-
-                foreach (DataRow r in tblRatio.Rows)
-                    m_dictRatio.Add((int)r[@"ID"], new RATIO()
-                    {
-                        m_id = (int)r[@"ID"]
-                        , m_value = (int)r[@"VALUE"]
-                        , m_nameRU = (string)r[@"NAME_RU"]
-                        , m_nameEN = (string)r[@"NAME_RU"]
-                        , m_strDesc = (string)r[@"DESCRIPTION"]
-                    });
-            }
 
             public abstract void AddColumn(int id_comp, string text, bool bVisibled);
 

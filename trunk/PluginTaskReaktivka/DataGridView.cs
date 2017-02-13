@@ -17,7 +17,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// 
         /// </summary>
-        protected class DGVReaktivka : DataGridView
+        protected class DGVReaktivka : DataGridViewValues
         {
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
@@ -326,46 +326,6 @@ namespace PluginTaskReaktivka
                 if (i == DaysInMonth)
                     foreach (HDataGridViewColumn col in Columns)
                         Rows[i].Cells[col.Index].ReadOnly = true;//блокировка строк
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            protected struct RATIO
-            {
-                public int m_id;
-                public int m_value;
-                public string m_nameRU
-                    , m_nameEN
-                    , m_strDesc;
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            protected Dictionary<int, RATIO> m_dictRatio;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="tblRatio"></param>
-            public void SetRatio(DataTable tblRatio)
-            {
-                m_dictRatio = new Dictionary<int, RATIO>();
-
-                foreach (DataRow r in tblRatio.Rows)
-                    m_dictRatio.Add((int)r[@"ID"], new RATIO()
-                    {
-                        m_id = (int)r[@"ID"]
-                        ,
-                        m_value = (int)r[@"VALUE"]
-                        ,
-                        m_nameRU = (string)r[@"NAME_RU"]
-                        ,
-                        m_nameEN = (string)r[@"NAME_RU"]
-                        ,
-                        m_strDesc = (string)r[@"DESCRIPTION"]
-                    });
             }
 
             /// <summary>

@@ -29,6 +29,8 @@ namespace TepCommon
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
+        protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE TaskCalculateType;
+
         private HMark _markTableDictPrj;
         /// <summary>
         /// Совокупность признаков наличия/отсутствия заполненых таблиц в словаре 'm_dictTableDictPrj'
@@ -524,6 +526,7 @@ namespace TepCommon
         }
 
         protected abstract void recUpdateInsertDelete(out int err);
+
         protected abstract void successRecUpdateInsertDelete();
 
         protected virtual void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)

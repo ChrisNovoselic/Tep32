@@ -85,7 +85,7 @@ namespace PluginTaskTepMain
                     ;
             //Запрос для получения автоматически собираемых данных
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE ?
-                HandlerDb.GetValuesVar(Type, out err) : Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(Type
+                HandlerDb.GetValuesVar(TaskCalculateType, out err) : Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(TaskCalculateType
                     , Session.m_Id
                     , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                     , m_dictTableDictPrj[ID_DBTABLE.RATIO]
