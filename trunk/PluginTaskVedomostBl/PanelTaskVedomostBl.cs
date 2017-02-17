@@ -212,7 +212,7 @@ namespace PluginTaskVedomostBl
                 int _drwH = (viewActive.Rows.Count) * viewActive.Rows[0].Height + 70;
 
                 Size = new Size(viewActive.Width - 10, _drwH);
-                m_idCompPicture = viewActive.m_idCompDGV;
+                m_idCompPicture = (int)viewActive.Tag;
                 Controls.Add(viewActive);
             }
         }
@@ -361,7 +361,7 @@ namespace PluginTaskVedomostBl
                 int indxCol = 0,
                     colSheetBegin = 2, colSheetEnd = 1,
                     rowSheet = 2,
-                    idDgv = (dgvActive as DataGridViewVedomostBl).m_idCompDGV;
+                    idDgv = (int)(dgvActive as DataGridViewVedomostBl).Tag;
                 //m_excApp.Visible = true;
                 //получаем диапазон
                 Excel.Range colRange = (m_wrkSheet.Cells[2, colSheetBegin - 1] as Excel.Range);
@@ -1133,7 +1133,7 @@ namespace PluginTaskVedomostBl
             int _drwW = cntCol * viewActive.Columns[2].Width + 10
                 , _drwH = (viewActive.Rows.Count) * viewActive.Rows[0].Height + 70;
 
-            GetPictureOfIdComp((viewActive as DataGridViewVedomostBl).m_idCompDGV).Size = new Size(_drwW + 2, _drwH);
+            GetPictureOfIdComp((int)(viewActive as DataGridViewVedomostBl).Tag).Size = new Size(_drwW + 2, _drwH);
             viewActive.Size = new Size(_drwW + 2, _drwH);
         }
 
@@ -1211,7 +1211,7 @@ namespace PluginTaskVedomostBl
                 if (picture.Visible == true)
                     foreach (DataGridViewVedomostBl item in picture.Controls)
                         if (item.Visible == true)
-                            _idComp = item.m_idCompDGV;
+                            _idComp = (int)item.Tag;
 
             return _idComp;
         }
@@ -1220,9 +1220,9 @@ namespace PluginTaskVedomostBl
         /// Настройка размеров формы отображения данных
         /// </summary>
         /// <param name="dgv">активное окно отображения данных</param>
-        public void SizeDgv(object dgv)
+        public void ConfigureDataGridView(DataGridView dgv)
         {
-            (dgv as DataGridViewVedomostBl).dgvConfigCol(dgv as DataGridView);
+            (dgv as DataGridViewVedomostBl).ConfigureColumns(dgv as DataGridView);
         }
 
         /// <summary>
@@ -1231,7 +1231,7 @@ namespace PluginTaskVedomostBl
         /// <param name="namePut">массив имен элементов</param>
         /// <param name="err">номер ошибки</param>
         /// <param name="errMsg">текст ошибки</param>
-        private void initializeRB(Array namePut, out int err, out string errMsg)
+        private void initializeRadioButtonBlock(Array namePut, out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
@@ -1284,7 +1284,7 @@ namespace PluginTaskVedomostBl
                     , arGroup);
 
             } catch (Exception e) {
-                Logging.Logg().Exception(e, @"PanelTaskVedomostBl::initializeRB () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Exception(e, @"PanelTaskVedomostBl::initializeRadioButtonBlock () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
         }
@@ -1295,68 +1295,72 @@ namespace PluginTaskVedomostBl
         /// <param name="namePut">массив имен элементов</param>
         /// <param name="err">номер ошибки</param>
         /// <param name="errMsg">текст ошибки</param>
-        private void initializeDGV(Array namePut, out int err, out string errMsg)
+        private void initializeDataGridView(Array namePut, out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
-            Control ctrl = null;
+            int idPar = -1
+                , _avg = -1
+                , _idComp = -1;
+            DataGridViewVedomostBl dgv = null;
             DateTime _dtRow = PanelManagement.DatetimeRange.Begin;
             DataTable dtComponentId = HandlerDb.GetHeaderDGV();//получение ид компонентов    
 
             //создание грида со значениями
             for (int j = (int)INDEX_CONTROL.DGV_DATA_B1; j < (int)INDEX_CONTROL.RADIOBTN_BLK1; j++)
             {
-                ctrl = new DataGridViewVedomostBl(namePut.GetValue(j).ToString());
-                ctrl.Name = namePut.GetValue(j).ToString();
-                (ctrl as DataGridViewVedomostBl).m_idCompDGV = int.Parse(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows[j]["ID"].ToString());
-                (ctrl as DataGridViewVedomostBl).m_CountBL = j + 1;
+                dgv = new DataGridViewVedomostBl(namePut.GetValue(j).ToString());
+                dgv.Name = namePut.GetValue(j).ToString();
+                dgv.Tag = int.Parse(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows[j]["ID"].ToString());
+                dgv.m_CountBL = j + 1;
 
-                filingDictHeader(dtComponentId, (ctrl as DataGridViewVedomostBl).m_idCompDGV);
+                filingDictHeader(dtComponentId, (int)dgv.Tag);
 
-                Dictionary<string, List<int>> _dictVisualSett = visualSettingsCol((ctrl as DataGridViewVedomostBl).m_idCompDGV);
+                Dictionary<string, List<int>> _dictVisualSett = visualSettingsCol((int)dgv.Tag);
 
-                for (int k = 0; k < m_dict[(ctrl as DataGridViewVedomostBl).m_idCompDGV].Count; k++)
+                for (int k = 0; k < m_dict[(int)dgv.Tag].Count; k++)
                 {
-                    int idPar = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (ctrl as DataGridViewVedomostBl).m_idCompDGV)[k]["ID_ALG"].ToString());
-                    int _avg = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (ctrl as DataGridViewVedomostBl).m_idCompDGV)[k]["AVG"].ToString());
-                    int _idComp = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (ctrl as DataGridViewVedomostBl).m_idCompDGV)[k]["ID"].ToString());
+                    idPar = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (int)dgv.Tag)[k]["ID_ALG"].ToString());
+                    _avg = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (int)dgv.Tag)[k]["AVG"].ToString());
+                    _idComp = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (int)dgv.Tag)[k]["ID"].ToString());
 
-                    (ctrl as DataGridViewVedomostBl).AddColumns(idPar, new DataGridViewVedomostBl.COLUMN_PROPERTY
-                    {
-                        topHeader = m_dict[(ctrl as DataGridViewVedomostBl).m_idCompDGV][k][(int)DataGridViewVedomostBl.INDEX_HEADER.TOP].ToString(),
-                        nameCol = m_dict[(ctrl as DataGridViewVedomostBl).m_idCompDGV][k][(int)DataGridViewVedomostBl.INDEX_HEADER.MIDDLE].ToString(),
-                        hdrText = m_dict[(ctrl as DataGridViewVedomostBl).m_idCompDGV][k][(int)DataGridViewVedomostBl.INDEX_HEADER.LOW].ToString(),
-                        m_idAlg = idPar,
-                        m_IdComp = _idComp,
-                        m_vsRatio = _dictVisualSett["ratio"][k],
-                        m_vsRound = _dictVisualSett["round"][k],
-                        m_Avg = _avg
-                    }
+                    dgv.AddColumns(idPar
+                        , new DataGridViewVedomostBl.COLUMN_PROPERTY {
+                            topHeader = m_dict[(int)dgv.Tag][k][(int)DataGridViewVedomostBl.INDEX_HEADER.TOP].ToString(),
+                            nameCol = m_dict[(int)dgv.Tag][k][(int)DataGridViewVedomostBl.INDEX_HEADER.MIDDLE].ToString(),
+                            hdrText = m_dict[(int)dgv.Tag][k][(int)DataGridViewVedomostBl.INDEX_HEADER.LOW].ToString(),
+                            m_idAlg = idPar,
+                            m_IdComp = _idComp,
+                            m_vsRatio = _dictVisualSett["ratio"][k],
+                            m_vsRound = _dictVisualSett["round"][k],
+                            m_Avg = _avg
+                        }
                        , true);
                 }
 
                 for (int i = 0; i < DaysInMonth + 1; i++)
-                    if ((ctrl as DataGridViewVedomostBl).Rows.Count != DaysInMonth)
-                        (ctrl as DataGridViewVedomostBl).AddRow(new DataGridViewVedomostBl.ROW_PROPERTY()
+                    if (dgv.Rows.Count != DaysInMonth)
+                        dgv.AddRow(new DataGridViewVedomostBl.ROW_PROPERTY()
                         {
                             //m_idAlg = id_alg
                             //,
                             m_Value = _dtRow.AddDays(i).ToShortDateString()
                         });
-                    else
-                    {
-                        (ctrl as DataGridViewVedomostBl).RowsAdded += DGVVedomostBl_RowsAdded;
-                        (ctrl as DataGridViewVedomostBl).AddRow(new DataGridViewVedomostBl.ROW_PROPERTY()
-                        {
-                            //m_idAlg = id_alg
-                            //,
-                            m_Value = "ИТОГО"
-                        }
-                       , DaysInMonth);
+                    else {
+                        dgv.RowsAdded += DGVVedomostBl_RowsAdded;
+
+                        dgv.AddRow(
+                            new DataGridViewVedomostBl.ROW_PROPERTY() {
+                                //m_idAlg = id_alg
+                                //,
+                                m_Value = "ИТОГО"
+                            }
+                            , DaysInMonth
+                        );
                     }
 
-                SizeDgv(ctrl);
-                m_pictureVedBl = new PictureVedBl(ctrl as DataGridViewVedomostBl);
+                ConfigureDataGridView(dgv);
+                m_pictureVedBl = new PictureVedBl(dgv);
                 (Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).Controls.Add(m_pictureVedBl);
                 //возможность_редактирвоания_значений
                 try
@@ -1372,8 +1376,8 @@ namespace PluginTaskVedomostBl
                         (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
                     if ((Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
-                        for (int t = 0; t < (ctrl as DataGridViewVedomostBl).RowCount; t++)
-                            (ctrl as DataGridViewVedomostBl).AddBRead(false);
+                        for (int t = 0; t < dgv.RowCount; t++)
+                            dgv.ReadOnlyColumns = false;
                 } catch (Exception exp) {
                     MessageBox.Show("???" + "Ошибки проверки возможности редактирования ячеек " + exp.ToString());
                 }
@@ -1385,7 +1389,7 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="err">номер ошибки</param>
         /// <param name="errMsg">текст ошибки</param>
-        private void initializeGroup(out int err, out string errMsg)
+        private void initializeGroupHeaders(out int err, out string errMsg)
         {
             err = 0;
             errMsg = string.Empty;
@@ -1459,11 +1463,11 @@ namespace PluginTaskVedomostBl
 
             PanelManagement.Clear();
             //Dgv's
-            initializeDGV(namePut, out err, out errMsg);//???
+            initializeDataGridView(namePut, out err, out errMsg);//???
             //groupHeader                                        
-            initializeGroup(out err, out errMsg);
+            initializeGroupHeaders(out err, out errMsg);
             //радиобаттаны
-            initializeRB(namePut, out err, out errMsg);
+            initializeRadioButtonBlock(namePut, out err, out errMsg);
             PanelManagement.ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
             //активность_кнопки_сохранения
             try

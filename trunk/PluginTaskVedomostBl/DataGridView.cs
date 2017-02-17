@@ -48,10 +48,6 @@ namespace PluginTaskVedomostBl
                 TOP, MIDDLE, LOW,
                 COUNT
             }
-            /// <summary>
-            /// ИдГрида
-            /// </summary>
-            private int _idCompDGV;
             private int _CountBL;
             /// <summary>
             /// 
@@ -60,14 +56,6 @@ namespace PluginTaskVedomostBl
             {
                 get { return _CountBL; }
                 set { _CountBL = value; }
-            }
-            /// <summary>
-            /// ИдГрида
-            /// </summary>
-            public int m_idCompDGV
-            {
-                get { return _idCompDGV; }
-                set { _idCompDGV = value; }
             }
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
@@ -452,25 +440,26 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Установка возможности редактирования столбцов
             /// </summary>
-            /// <param name="bRead">true/false</param>
-            /// <param name="nameCol">имя стобца</param>
-            public void AddBRead(bool bRead)
+            /// <param name="bReadOnly">true/false</param>
+            public bool ReadOnlyColumns
             {
-                foreach (HDataGridViewColumn col in Columns)
-                    //if (col.Name == nameCol)
-                    col.ReadOnly = bRead;
+                set {
+                    foreach (HDataGridViewColumn col in Columns)
+                        //if (col.Name == nameCol)
+                        col.ReadOnly = value;
+                }
             }
 
             /// <summary>
             /// Подготовка параметров к рисовке хидера
             /// </summary>
             /// <param name="dgv">активное окно отображения данных</param>
-            public void dgvConfigCol(DataGridView dgv)
+            public void ConfigureColumns(DataGridView dgv)
             {
                 int cntCol = 0;
-                formingTitleLists((dgv as DataGridViewVedomostBl).m_idCompDGV);
+                formingTitleLists((int)dgv.Tag);
 
-                formRelationsHeading((dgv as DataGridViewVedomostBl).m_idCompDGV);
+                formRelationsHeading((int)dgv.Tag);
 
                 foreach (DataGridViewColumn col in dgv.Columns)
                     if (col.Visible == true)
@@ -592,8 +581,7 @@ namespace PluginTaskVedomostBl
             /// <param name="isCheck">проверка чека</param>
             public void HideColumns(DataGridView dgv, List<string> listHeaderTop, bool isCheck)
             {
-                try
-                {
+                try {
                     foreach (var item in listHeaderTop)
                         foreach (HDataGridViewColumn col in Columns)
                             if (col.m_topHeader == item)
@@ -601,14 +589,9 @@ namespace PluginTaskVedomostBl
                                     col.Visible = true;
                                 else
                                     col.Visible = false;
-                }
-                catch (Exception)
-                {
+                } catch (Exception) { }
 
-                }
-
-
-                dgvConfigCol(dgv);
+                ConfigureColumns(dgv);
             }
 
             /// <summary>
@@ -618,11 +601,15 @@ namespace PluginTaskVedomostBl
             /// <param name="ev">Аргумент события</param>
             void dataGridView1_Paint(object sender, PaintEventArgs e)
             {
-                int _indxCol = 0;
-                Rectangle _r1 = new Rectangle();
-                Rectangle _r2 = new Rectangle();
-                Pen pen = new Pen(Color.Black);
-                StringFormat format = new StringFormat();
+                int indxCol = 0
+                    , idComp = -1;
+                Rectangle r1 = new Rectangle()
+                    , r2 = new Rectangle();
+                Pen pen;
+                StringFormat format;
+
+                pen = new Pen(Color.Black);
+                format = new StringFormat();
                 format.Alignment = StringAlignment.Center;
                 format.LineAlignment = StringAlignment.Center;
 
@@ -632,58 +619,59 @@ namespace PluginTaskVedomostBl
                     if (GetCellDisplayRectangle(i, -1, true).Height > 0 & GetCellDisplayRectangle(i, -1, true).X > 0)
                     {
                         recParentCol = GetCellDisplayRectangle(i, -1, true);
-                        _r1 = recParentCol;
-                        _r2 = recParentCol;
+                        r1 = recParentCol;
+                        r2 = recParentCol;
                         break;
                     }
 
-                s_drwH = _r1.Height / s_drwH;
+                s_drwH = r1.Height / s_drwH;
 
-                foreach (var item in m_headerMiddle[(sender as DataGridViewVedomostBl).m_idCompDGV])
+                idComp = (int)(sender as DataGridViewVedomostBl).Tag;
+                foreach (var item in m_headerMiddle[idComp])
                 {
                     //get the column header cell
-                    _r1.Width = m_arMiddleCol[(sender as DataGridViewVedomostBl).m_idCompDGV][m_headerMiddle[(sender as DataGridViewVedomostBl).m_idCompDGV].ToList().IndexOf(item)]
+                    r1.Width = m_arMiddleCol[idComp][m_headerMiddle[idComp].ToList().IndexOf(item)]
                         * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
-                    _r1.Height = s_drwH + 3;//??? 
+                    r1.Height = s_drwH + 3;//??? 
 
-                    if (m_headerMiddle[(sender as DataGridViewVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1 > -1)
-                        _r1.X = _r1.X + m_arMiddleCol[(sender as DataGridViewVedomostBl).m_idCompDGV][m_headerMiddle[(sender as DataGridViewVedomostBl).m_idCompDGV].ToList().IndexOf(item) - 1]
+                    if (m_headerMiddle[idComp].ToList().IndexOf(item) - 1 > -1)
+                        r1.X = r1.X + m_arMiddleCol[idComp][m_headerMiddle[idComp].ToList().IndexOf(item) - 1]
                             * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
                     else
                     {
-                        _r1.X += Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
-                        _r1.Y = _r1.Y + _r1.Height;
+                        r1.X += Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                        r1.Y = r1.Y + r1.Height;
                     }
 
-                    e.Graphics.FillRectangle(new SolidBrush(ColumnHeadersDefaultCellStyle.BackColor), _r1);
+                    e.Graphics.FillRectangle(new SolidBrush(ColumnHeadersDefaultCellStyle.BackColor), r1);
                     e.Graphics.DrawString(item, ColumnHeadersDefaultCellStyle.Font,
                       new SolidBrush(ColumnHeadersDefaultCellStyle.ForeColor),
-                      _r1,
+                      r1,
                       format);
-                    e.Graphics.DrawRectangle(pen, _r1);
+                    e.Graphics.DrawRectangle(pen, r1);
                 }
 
-                foreach (var item in m_headerTop[(sender as DataGridViewVedomostBl).m_idCompDGV])
+                foreach (var item in m_headerTop[idComp])
                 {
                     //get the column header cell
-                    _r2.Width = m_arIntTopHeader[(sender as DataGridViewVedomostBl).m_idCompDGV][_indxCol] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
-                    _r2.Height = s_drwH + 2;//??? 
+                    r2.Width = m_arIntTopHeader[idComp][indxCol] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                    r2.Height = s_drwH + 2;//??? 
 
-                    if (_indxCol - 1 > -1)
-                        _r2.X = _r2.X + m_arIntTopHeader[(sender as DataGridViewVedomostBl).m_idCompDGV][_indxCol - 1] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                    if (indxCol - 1 > -1)
+                        r2.X = r2.X + m_arIntTopHeader[idComp][indxCol - 1] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
                     else
                     {
-                        _r2.X += Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
-                        _r2.Y += _r2.Y;
+                        r2.X += Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                        r2.Y += r2.Y;
                     }
 
-                    e.Graphics.FillRectangle(new SolidBrush(ColumnHeadersDefaultCellStyle.BackColor), _r2);
+                    e.Graphics.FillRectangle(new SolidBrush(ColumnHeadersDefaultCellStyle.BackColor), r2);
                     e.Graphics.DrawString(item, ColumnHeadersDefaultCellStyle.Font,
                       new SolidBrush(ColumnHeadersDefaultCellStyle.ForeColor),
-                      _r2,
+                      r2,
                       format);
-                    e.Graphics.DrawRectangle(pen, _r2);
-                    _indxCol++;
+                    e.Graphics.DrawRectangle(pen, r2);
+                    indxCol++;
                 }
 
                 //(sender as DGVVedomostBl).Paint -= new PaintEventHandler(dataGridView1_Paint);
@@ -746,7 +734,7 @@ namespace PluginTaskVedomostBl
                             try
                             {
                                 parameterRows = tableInParameter.Select(string.Format(tableInParameter.Locale
-                                    , "ID_ALG = " + col.m_IdAlg + " AND ID_COMP = " + m_idCompDGV));
+                                    , "ID_ALG = " + col.m_IdAlg + " AND ID_COMP = " + (int)Tag));
                                 editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + (int)parameterRows[0]["ID"]));
                             }
                             catch (Exception)
