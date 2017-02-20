@@ -694,7 +694,7 @@ namespace PluginProject
             HTepUsers.HTepProfilesXml.Component comp;
             int id = -1;            
             Dictionary<string, HTepUsers.DictionaryProfileItem> dict = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
-            HTepUsers.DictionaryProfileItem dictEl;
+            HTepUsers.DictionaryProfileItem dictItem;
 
             if (m_list_id.id_user.Equals(-1) == false) {
             //User                
@@ -732,10 +732,10 @@ namespace PluginProject
                                     e.Node.Nodes.Add(NewNameElement.Context, NewNameElement.Context);
                                     e.Node.Nodes[NewNameElement.Context].Tag = NewNameElement.TagContext;
 
-                                    dictEl = new HTepUsers.DictionaryProfileItem();
-                                    dictEl.Attributes = new Dictionary<string, string>();
-                                    dictEl = new HTepUsers.DictionaryProfileItem();
-                                    dict[parComp.ID_Panel.ToString()][parComp.ID_Item.ToString()].Add(((int)NewNameElement.IdContext).ToString(), dictEl);
+                                    dictItem = new HTepUsers.DictionaryProfileItem();
+                                    dictItem.Attributes = new Dictionary<string, string>();
+                                    dictItem = new HTepUsers.DictionaryProfileItem();
+                                    dict[parComp.ID_Panel.ToString()][parComp.ID_Item.ToString()].Add(((int)NewNameElement.IdContext).ToString(), dictItem);
 
                                     ButtonSaveEnabled = true;
                                 } else
@@ -753,10 +753,10 @@ namespace PluginProject
                                     e.Node.Nodes.Add(NewNameElement.Item, NewNameElement.Item);
                                     e.Node.Nodes[NewNameElement.Item].Tag = NewNameElement.TagItem;
 
-                                    dictEl = new HTepUsers.DictionaryProfileItem();
-                                    dictEl.Attributes = new Dictionary<string, string>();
-                                    dictEl = new HTepUsers.DictionaryProfileItem();
-                                    dict[parComp.ID_Panel.ToString()].Add(((int)NewNameElement.IdItem).ToString(), dictEl);
+                                    dictItem = new HTepUsers.DictionaryProfileItem();
+                                    dictItem.Attributes = new Dictionary<string, string>();
+                                    dictItem = new HTepUsers.DictionaryProfileItem();
+                                    dict[parComp.ID_Panel.ToString()].Add(((int)NewNameElement.IdItem).ToString(), dictItem);
 
                                     ButtonSaveEnabled = true;
                                 } else
@@ -892,10 +892,10 @@ namespace PluginProject
                             treeProfiles.Nodes.Add(NewNameElement.Panel, NewNameElement.Panel);
                             treeProfiles.Nodes[NewNameElement.Panel].Tag = NewNameElement.TagPanel;
 
-                            dictEl = new HTepUsers.DictionaryProfileItem();
-                            dictEl.Attributes = new Dictionary<string, string>();
-                            dictEl = new HTepUsers.DictionaryProfileItem();
-                            dict.Add(((int)NewNameElement.IdPanel).ToString(), dictEl);
+                            dictItem = new HTepUsers.DictionaryProfileItem();
+                            dictItem.Attributes = new Dictionary<string, string>();
+                            dictItem = new HTepUsers.DictionaryProfileItem();
+                            dict.Add(((int)NewNameElement.IdPanel).ToString(), dictItem);
 
                             ButtonSaveEnabled = true;
                         } else
