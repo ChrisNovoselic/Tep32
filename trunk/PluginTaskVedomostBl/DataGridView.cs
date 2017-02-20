@@ -867,14 +867,16 @@ namespace PluginTaskVedomostBl
                 DateTime dtVal;
 
                 DataTable dtSourceEdit = new DataTable();
-                dtSourceEdit.Columns.AddRange(new DataColumn[] {
+                dtSourceEdit.Columns.AddRange(
+                    new DataColumn[] {
                         new DataColumn (@"ID_PUT", typeof (int))
                         , new DataColumn (@"ID_SESSION", typeof (long))
                         , new DataColumn (@"QUALITY", typeof (int))
                         , new DataColumn (@"VALUE", typeof (float))
                         , new DataColumn (@"WR_DATETIME", typeof (DateTime))
                         , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
-                    });
+                    }
+                );
 
                 if (s_flagBl)
                     _hoursOffSet = 1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);

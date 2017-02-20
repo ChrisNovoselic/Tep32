@@ -18,10 +18,6 @@ namespace PluginTaskTepMain
     public abstract partial class PanelTaskTepCalculate : HPanelTepCommon
     {
         /// <summary>
-        /// Массив списков идентификаторов компонентов ТЭЦ/параметров
-        /// </summary>
-        protected List<int>[] m_arListIds;
-        /// <summary>
         /// Панель на которой размещаются активные элементы управления
         /// </summary>
         protected PanelManagementTaskCalculate PanelManagement

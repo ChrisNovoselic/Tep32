@@ -123,7 +123,11 @@ namespace PluginProject
             m_arr_editTable = new DataTable[(int)ID_Table.Count];
 
         }
-
+        /// <summary>
+        /// Установить признак активности панель при выборе ее пользователем
+        /// </summary>
+        /// <param name="activate">Признак активности</param>
+        /// <returns>Результат выполнения - был ли установлен признак</returns>
         public override bool Activate(bool active)
         {
             fillDataTable();

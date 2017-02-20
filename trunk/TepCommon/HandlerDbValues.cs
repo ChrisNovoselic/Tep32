@@ -23,26 +23,28 @@ namespace TepCommon
         /// Наименования таблиц в БД, необходимых для расчета (длина = INDEX_DBTABLE_NAME.COUNT)
         /// </summary>
         public static Dictionary<ID_DBTABLE, DB_TABLE> s_dictDbTables = new Dictionary<ID_DBTABLE, DB_TABLE> () {
-            { ID_DBTABLE.TIME,         new DB_TABLE () { m_name = @"time",         m_description = @"" } }
-            , { ID_DBTABLE.TIMEZONE,   new DB_TABLE () { m_name = @"timezones",    m_description = @"" } }
-            , { ID_DBTABLE.COMP_LIST,  new DB_TABLE () { m_name = @"comp_list",    m_description = @"" } }
-            , { ID_DBTABLE.MODE_DEV,   new DB_TABLE () { m_name = @"mode_dev",     m_description = @"" } }
-            , { ID_DBTABLE.RATIO,      new DB_TABLE () { m_name = @"ratio",        m_description = @"" } }
-            , { ID_DBTABLE.MEASURE,    new DB_TABLE () { m_name = @"measure",      m_description = @"" } }
-            , { ID_DBTABLE.SESSION,    new DB_TABLE () { m_name = @"session",      m_description = @"" } }
-            , { ID_DBTABLE.INALG,      new DB_TABLE () { m_name = @"inalg",        m_description = @"" } }
-            , { ID_DBTABLE.INPUT,      new DB_TABLE () { m_name = @"input",        m_description = @"" } }
-            , { ID_DBTABLE.INVALUES,   new DB_TABLE () { m_name = @"inval",        m_description = @"" } }
-            , { ID_DBTABLE.INVAL_DEF,  new DB_TABLE () { m_name = @"inval_def",    m_description = @"" } }
-            , { ID_DBTABLE.OUTALG,     new DB_TABLE () { m_name = @"outalg",       m_description = @"" } }
-            , { ID_DBTABLE.OUTPUT,     new DB_TABLE () { m_name = @"output",       m_description = @"" } }
-            , { ID_DBTABLE.OUTVALUES,  new DB_TABLE () { m_name = @"outval",       m_description = @"" } }
-            , { ID_DBTABLE.IN_PARAMETER, new DB_TABLE () { m_name = @"???",       m_description = @"" } }
-            , { ID_DBTABLE.OUT_PARAMETER, new DB_TABLE () { m_name = @"???",      m_description = @"" } }
-            , { ID_DBTABLE.FTABLE,     new DB_TABLE () { m_name = @"ftable",       m_description = @"" } }
-            , { ID_DBTABLE.PLUGINS,    new DB_TABLE () { m_name = @"plugins",      m_description = @"" } }
-            , { ID_DBTABLE.TASK,       new DB_TABLE () { m_name = @"task",         m_description = @"" } }
-            , { ID_DBTABLE.FPANELS,    new DB_TABLE () { m_name = @"fpanels",      m_description = @"" } }
+            { ID_DBTABLE.TIME           , new DB_TABLE () { m_name = @"time"        , m_description = @"" } }
+            , { ID_DBTABLE.TIMEZONE     , new DB_TABLE () { m_name = @"timezones"   , m_description = @"" } }
+            , { ID_DBTABLE.PERIOD       , new DB_TABLE () { m_name = @"period"      , m_description = @"" } }
+            , { ID_DBTABLE.COMP_LIST    , new DB_TABLE () { m_name = @"comp_list"   , m_description = @"" } }
+            , { ID_DBTABLE.COMP         , new DB_TABLE () { m_name = @"comp"        , m_description = @"" } }
+            , { ID_DBTABLE.MODE_DEV     , new DB_TABLE () { m_name = @"mode_dev"    , m_description = @"" } }
+            , { ID_DBTABLE.RATIO        , new DB_TABLE () { m_name = @"ratio"       , m_description = @"" } }
+            , { ID_DBTABLE.MEASURE      , new DB_TABLE () { m_name = @"measure"     , m_description = @"" } }
+            , { ID_DBTABLE.SESSION      , new DB_TABLE () { m_name = @"session"     , m_description = @"" } }
+            , { ID_DBTABLE.INALG        , new DB_TABLE () { m_name = @"inalg"       , m_description = @"" } }
+            , { ID_DBTABLE.INPUT        , new DB_TABLE () { m_name = @"input"       , m_description = @"" } }
+            , { ID_DBTABLE.INVALUES     , new DB_TABLE () { m_name = @"inval"       , m_description = @"" } }
+            , { ID_DBTABLE.INVAL_DEF    , new DB_TABLE () { m_name = @"inval_def"   , m_description = @"" } }
+            , { ID_DBTABLE.OUTALG       , new DB_TABLE () { m_name = @"outalg"      , m_description = @"" } }
+            , { ID_DBTABLE.OUTPUT       , new DB_TABLE () { m_name = @"output"      , m_description = @"" } }
+            , { ID_DBTABLE.OUTVALUES    , new DB_TABLE () { m_name = @"outval"      , m_description = @"" } }
+            , { ID_DBTABLE.IN_PARAMETER , new DB_TABLE () { m_name = @"???"         , m_description = @"" } }
+            , { ID_DBTABLE.OUT_PARAMETER, new DB_TABLE () { m_name = @"???"         , m_description = @"" } }
+            , { ID_DBTABLE.FTABLE       , new DB_TABLE () { m_name = @"ftable"      , m_description = @"" } }
+            , { ID_DBTABLE.PLUGINS      , new DB_TABLE () { m_name = @"plugins"     , m_description = @"" } }
+            , { ID_DBTABLE.TASK         , new DB_TABLE () { m_name = @"task"        , m_description = @"" } }
+            , { ID_DBTABLE.FPANELS      , new DB_TABLE () { m_name = @"fpanels"     , m_description = @"" } }
             ,
         };
 
@@ -199,14 +201,33 @@ namespace TepCommon
         /// <returns>Таблица - результат запроса - значения таблицы БД</returns>
         public DataTable GetDataTable(ID_DBTABLE idTableDb, out int err)
         {
-            if (s_dictDbTables.ContainsKey(idTableDb) == false)
-                throw new Exception(string.Format(@"HandlerDbValues::GetDataTable (тип={0}) - не известный тип таблицы...", idTableDb));
+            err = 0; // успех
+
+            DataTable tblRes = null;
+
+            switch (idTableDb) {
+                case ID_DBTABLE.UNKNOWN:
+                case ID_DBTABLE.PERIOD:
+                    err = -1;
+                    break;                
+                default:
+                    if (s_dictDbTables.ContainsKey(idTableDb) == false) {
+                        err = -2;
+                    } else
+                        if (!(s_dictDbTables[idTableDb].m_name.IndexOf(@"?") < 0)) {
+                            err = -3;
+                        } else
+                            tblRes = GetDataTable(s_dictDbTables[idTableDb].m_name, out err);                        
+                    break;                
+            }
+
+            if (err < 0)
+                tblRes = new DataTable();
             else
                 ;
 
-            return GetDataTable(s_dictDbTables[idTableDb].m_name, out err);
+            return tblRes;
         }
-
         /// <summary>
         /// Обновить значения в БД в соответствии с внесенными изменениями (различия между оригинальной и редактируемой таблицой)
         /// </summary>

@@ -72,10 +72,6 @@ namespace PluginTaskAutobook
         /// </summary>
         protected HandlerDbTaskAutobookMonthValuesCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskAutobookMonthValuesCalculate; } }
         /// <summary>
-        /// Массив списков параметров
-        /// </summary>
-        protected List<int>[] m_arListIds;
-        /// <summary>
         /// Часовой пояс(часовой сдвиг)
         /// </summary>
         protected static int m_currentOffSet;
@@ -1304,10 +1300,10 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// Активация/Деактивация вкладки
+        /// Установить признак активности панель при выборе ее пользователем
         /// </summary>
-        /// <param name="activate"></param>
-        /// <returns></returns>
+        /// <param name="activate">Признак активности</param>
+        /// <returns>Результат выполнения - был ли установлен признак</returns>
         public override bool Activate(bool activate)
         {
             bool bRes = false;
@@ -1384,8 +1380,8 @@ namespace PluginTaskAutobook
             }
             //возможность_редактирвоания_значений
             try {
-                if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
-                    if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                if (m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)INDEX_CONTROL.DGV_DATA).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                    if (int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)INDEX_CONTROL.DGV_DATA).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
                         (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
                     else
                         (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
@@ -1423,8 +1419,8 @@ namespace PluginTaskAutobook
                     ctrl = Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0];
                     //из profiles
                     key = ((int)PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL).ToString();
-                    if (m_dictProfile.Objects.Keys.Contains(key) == true)
-                        ctrl.Text = m_dictProfile.Objects[key].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.MAIL).ToString()];
+                    if (m_dictProfile.Keys.Contains(key) == true)
+                        ctrl.Text = m_dictProfile.GetObjects(key).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.MAIL).ToString()];
                     else
                         Logging.Logg().Warning(string.Format(@"PanelTaskAutoBook::initialize () - в словаре 'm_dictProfile' не определен ключ [{0:1}]..."
                             , key, PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL)

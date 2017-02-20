@@ -30,30 +30,34 @@ namespace TepCommon
         private System.ComponentModel.IContainer components = null;
 
         protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE TaskCalculateType;
-
-        private HMark _markTableDictPrj;
         /// <summary>
-        /// Совокупность признаков наличия/отсутствия заполненых таблиц в словаре 'm_dictTableDictPrj'
+        /// Массив списков параметров
         /// </summary>
-        protected HMark m_markTableDictPrj
-        {
-            set {
-                if (!(_markTableDictPrj == null)) {
-                    Logging.Logg().Warning(@"HPanelTepCommon::m_markTableDictPrj.Set - повторная инициализация словарно-проектных таблиц ...", Logging.INDEX_MESSAGE.NOT_SET);
+        protected List<int>[] m_arListIds;
 
-                    clearTableDictPrj();
+        //private HMark _markTableDictPrj;
+        ///// <summary>
+        ///// Совокупность признаков наличия/отсутствия заполненых таблиц в словаре 'm_dictTableDictPrj'
+        ///// </summary>
+        //protected HMark m_markTableDictPrj
+        //{
+        //    set {
+        //        if (!(_markTableDictPrj == null)) {
+        //            Logging.Logg().Warning(@"HPanelTepCommon::m_markTableDictPrj.Set - повторная инициализация словарно-проектных таблиц ...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                    m_dictTableDictPrj = null;
-                    _markTableDictPrj = null;
-                } else
-                    ;
+        //            clearTableDictPrj();
 
-                _markTableDictPrj = value;
-                m_dictTableDictPrj = new Dictionary<ID_DBTABLE, DataTable>();
+        //            m_dictTableDictPrj = null;
+        //            _markTableDictPrj = null;
+        //        } else
+        //            ;
 
-                initTableDictPrj();
-            }
-        }
+        //        _markTableDictPrj = value;
+        //        m_dictTableDictPrj = new Dictionary<ID_DBTABLE, DataTable>();
+
+        //        initTableDictPrj();
+        //    }
+        //}
         /// <summary>
         /// Словарь с таблицами словарно-проектных значений
         /// </summary>
@@ -101,7 +105,7 @@ namespace TepCommon
 
         public DataTable[] Descriptions = new DataTable[] { new DataTable(), new DataTable() };
 
-        protected HTepUsers.DictElement m_dictProfile;
+        protected HTepUsers.DictionaryProfileItem m_dictProfile;
 
         public enum ID_AREA
         {
@@ -149,7 +153,7 @@ namespace TepCommon
 
             m_handlerDb = createHandlerDb();
 
-            m_dictProfile = new HTepUsers.DictElement();
+            m_dictProfile = new HTepUsers.DictionaryProfileItem();
         }
 
         private void InitializeComponent()
@@ -207,17 +211,17 @@ namespace TepCommon
             return iRes;
         }
 
-        private void initTableDictPrj()
-        {
-            int err = -1;
+        //private void initTableDictPrj(/*out int err*/)
+        //{
+        //    int err = -1;
 
-            foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE))) {
-                if (_markTableDictPrj.IsMarked((int)id) == true)
-                    m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
-                else
-                    ;
-            }
-        }
+        //    foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE))) {
+        //        if (_markTableDictPrj.IsMarked((int)id) == true)
+        //            m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
+        //        else
+        //            ;
+        //    }
+        //}
 
         private void clearTableDictPrj()
         {
@@ -401,14 +405,36 @@ namespace TepCommon
             if (m_dictTableDictPrj == null)
                 m_dictTableDictPrj = new Dictionary<ID_DBTABLE, DataTable>();
             else {
-                Logging.Logg().Warning(@"HPanelTepCommon::initialize () - соварно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Warning(@"HPanelTepCommon::initialize () - словарно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 m_dictTableDictPrj.Clear();
             }
 
-            foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE))) {
+            foreach (ID_DBTABLE id in /*Enum.GetValues(typeof(ID_DBTABLE))*/arIdTableDictPrj) {
                 m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
+
+                if (err < 0) {
+                    switch (err) {
+                        case -3: // наименовавние таблицы
+                            errMsg = @"не известное наименовнаие таблицы";
+                            break;
+                        case -2: // неизвестный тип
+                            errMsg = @"не известный тип таблицы";
+                            break;
+                        case -1:
+                        default:
+                            errMsg = @"неопределенная ошибка";
+                            break;
+                    }
+
+                    errMsg = string.Format(@"{0}{1}", string.Format(@"HPanelTepCommon::initialize (тип={0}) - ...", id), errMsg);
+
+                    break;
+                } else
+                    ;
             }
+
+            //m_markTableDictPrj = new HMark(arIdTableDictPrj as int[]);
         }
         /// <summary>
         /// Создать объект для обмена данными с БД

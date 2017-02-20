@@ -94,22 +94,6 @@ namespace PluginTaskBalTeplo
         /// </summary>
         protected HandlerDbTaskBalTeploCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskBalTeploCalculate; } }
         /// <summary>
-        /// Массив списков параметров
-        /// </summary>
-        protected List<int>[] m_arListIds;
-        ///// <summary>
-        ///// 
-        ///// </summary>
-        //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
-        ///// <summary>
-        ///// Таблицы со значениями словарных, проектных данных входные
-        ///// </summary>
-        //protected DataTable[] m_dictTableDictPrj;
-        ///// <summary>
-        ///// Таблицы со значениями словарных, проектных данных
-        ///// </summary>
-        //protected DataTable[] m_arTableDictPrjs_out;
-        /// <summary>
         /// Метод для создания панели с активными объектами управления
         /// </summary>
         /// <returns>Панель управления</returns>
@@ -153,7 +137,7 @@ namespace PluginTaskBalTeplo
         /// </summary>
         protected class DataGridViewBalTeploValues : DataGridView
         {
-            private Dictionary<string, HTepUsers.DictElement> m_dict_ProfileNALG_IN
+            private Dictionary<string, HTepUsers.DictionaryProfileItem> m_dict_ProfileNALG_IN
                 , m_dict_ProfileNALG_OUT;
 
             private DataTable m_dbRatio;
@@ -164,8 +148,8 @@ namespace PluginTaskBalTeplo
 
             public DataGridViewBalTeploValues(string nameDGV)
             {
-                m_dict_ProfileNALG_IN = new Dictionary<string, HTepUsers.DictElement>();
-                m_dict_ProfileNALG_OUT = new Dictionary<string, HTepUsers.DictElement>();
+                m_dict_ProfileNALG_IN = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
+                m_dict_ProfileNALG_OUT = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
                 m_dbRatio = new DataTable();
 
                 InitializeComponents(nameDGV);
@@ -407,7 +391,7 @@ namespace PluginTaskBalTeplo
                 }
             }
 
-            public void InitializeStruct(DataTable nAlgTable, DataTable nAlgOutTable, DataTable compTable, Dictionary<int, object[]> dict_profile, DataTable db_ratio)
+            public void InitializeStruct(DataTable tableInNAlg, DataTable tableOutNAlg, DataTable tableComp, Dictionary<int, object[]> dict_profile, DataTable tableRatio)
             {
                 this.CellValueChanged -= new DataGridViewCellEventHandler(cellEndEdit);
                 this.Rows.Clear();
@@ -417,66 +401,64 @@ namespace PluginTaskBalTeplo
                 DataRow[] rows;
                 List<DataRow> col_in = new List<DataRow>();
                 List<DataRow> col_out = new List<DataRow>();
-                m_dbRatio = db_ratio.Copy();
+                m_dbRatio = tableRatio.Copy();
+
                 switch (m_ViewValues)
                 {
                     case INDEX_VIEW_VALUES.Block:
 
-                        rows = compTable.Select("ID_COMP=1000 or ID_COMP=1");
+                        rows = tableComp.Select("ID_COMP=1000 or ID_COMP=1");
                         break;
                     case INDEX_VIEW_VALUES.Output:
                         //colums_in = nAlgTable.Select("N_ALG='2'");
                         //colums_out = nAlgOutTable.Select("N_ALG='2'");
-                        rows = compTable.Select("ID_COMP=2000 or ID_COMP=1");
+                        rows = tableComp.Select("ID_COMP=2000 or ID_COMP=1");
                         break;
                     case INDEX_VIEW_VALUES.TeploBL:
                         //colums_in = nAlgTable.Select("N_ALG='3'");
                         //colums_out = nAlgOutTable.Select("N_ALG='3'");
-                        rows = compTable.Select("ID_COMP=1");
+                        rows = tableComp.Select("ID_COMP=1");
                         break;
                     case INDEX_VIEW_VALUES.TeploOP:
                         //colums_in = nAlgTable.Select("N_ALG='4'");
                         //colums_out = nAlgOutTable.Select("N_ALG='4'");
-                        rows = compTable.Select("ID_COMP=1");
+                        rows = tableComp.Select("ID_COMP=1");
                         break;
                     case INDEX_VIEW_VALUES.Param:
                         //colums_in = nAlgTable.Select("N_ALG='5'");
                         //colums_out = nAlgOutTable.Select("N_ALG='5'");
-                        rows = compTable.Select("ID_COMP=1");
+                        rows = tableComp.Select("ID_COMP=1");
                         break;
                     case INDEX_VIEW_VALUES.PromPlozsh:
                         //colums_in = nAlgTable.Select("N_ALG='6'");
                         //colums_out = nAlgOutTable.Select("N_ALG='6'");
-                        rows = compTable.Select("ID_COMP=3000 or ID_COMP=1");
+                        rows = tableComp.Select("ID_COMP=3000 or ID_COMP=1");
                         break;
                     default:
                         //colums_in = nAlgTable.Select();
                         //colums_out = nAlgOutTable.Select();
-                        rows = compTable.Select();
+                        rows = tableComp.Select();
                         break;
                 }
 
                 foreach (object[] list in dict_profile[(int)m_ViewValues])
                 {
-                    if (list[1].ToString() == "in")
-                    {
+                    if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES) {
 
-                        m_dict_ProfileNALG_IN = (Dictionary<string,HTepUsers.DictElement>)list[2];
-
-                        foreach (Double id in (double[])list[0])
-                        {
-                            col_in.Add(nAlgTable.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
-                        }
-                    }
-                    if (list[1].ToString() == "out")
-                    {
-                        m_dict_ProfileNALG_OUT = (Dictionary<string, HTepUsers.DictElement>)list[2];
+                        m_dict_ProfileNALG_IN = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
 
                         foreach (Double id in (double[])list[0])
-                        {
-                            col_out.Add(nAlgOutTable.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
-                        }
-                    }
+                            col_in.Add(tableInNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
+                    } else
+                        ;
+
+                    if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES) {
+                        m_dict_ProfileNALG_OUT = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
+
+                        foreach (Double id in (double[])list[0])
+                            col_out.Add(tableOutNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
+                    } else
+                        ;
                 }
                 colums_in = col_in.ToArray();
                 colums_out = col_out.ToArray();
@@ -494,17 +476,19 @@ namespace PluginTaskBalTeplo
 
                 foreach (DataRow r in rows)
                 {
-                        this.Rows.Add(new object[this.ColumnCount]);
-                        this.Rows[Rows.Count - 1].Cells[0].Value = r["DESCRIPTION"].ToString().Trim();
-                        this.Rows[Rows.Count - 1].HeaderCell.Value = r["ID"];
+                    this.Rows.Add(new object[this.ColumnCount]);
+                    this.Rows[Rows.Count - 1].Cells[0].Value = r["DESCRIPTION"].ToString().Trim();
+                    this.Rows[Rows.Count - 1].HeaderCell.Value = r["ID"];
                 }
-                if (Rows.Count > 1)
-                {
+
+                if (Rows.Count > 1) {
                     Rows.RemoveAt(0);
                     this.Rows.Add();
                     this.Rows[Rows.Count - 1].Cells[0].Value = "Итого";
                     this.Rows[Rows.Count - 1].HeaderCell.Value = rows[0]["ID"].ToString().Trim();
-                }
+                } else
+                    ;
+
                 this.CellValueChanged += new DataGridViewCellEventHandler(cellEndEdit);
             }
 
@@ -1263,10 +1247,10 @@ namespace PluginTaskBalTeplo
         }
 
         /// <summary>
-        /// 
+        /// Установить признак активности панель при выборе ее пользователем
         /// </summary>
-        /// <param name="activate"></param>
-        /// <returns></returns>
+        /// <param name="activate">Признак активности</param>
+        /// <returns>Результат выполнения - был ли установлен признак</returns>
         public override bool Activate(bool activate)
         {
             bool bRes = false;
@@ -1328,12 +1312,12 @@ namespace PluginTaskBalTeplo
             if (err == 0) {
                 try {
                     //??? m_dt_profile = HandlerDb.GetProfilesContext(m_id_panel);
-                    dgvBlock.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvBlock.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvOutput.InitializeStruct(m_dictTableDictPrj[(ID_DBTABLE.INALG)], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvOutput.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvTeploBL.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvTeploBL.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvTeploOP.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvTeploOP.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvPromPlozsh.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvPromPlozsh.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvParam.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDGV((int)dgvParam.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvBlock.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvBlock.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvOutput.InitializeStruct(m_dictTableDictPrj[(ID_DBTABLE.INALG)], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvOutput.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvTeploBL.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploBL.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvTeploOP.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploOP.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvPromPlozsh.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvPromPlozsh.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvParam.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvParam.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
                     //Заполнить элемент управления с часовыми поясами
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]));
@@ -1357,48 +1341,40 @@ namespace PluginTaskBalTeplo
             else
                 Logging.Logg().Error(MethodBase.GetCurrentMethod(), errMsg, Logging.INDEX_MESSAGE.NOT_SET);
         }
-        
-        private Dictionary<int, object[]> GetProfileDGV(int id_dgv)
+        /// <summary>
+        /// Возвратить настроки профиля для указанного ДатаГридВью на текущей вкладке
+        /// </summary>
+        /// <param name="tag">Идентификатор ДатаГридВью</param>
+        /// <returns>Словарь со значениями параметров профиля ДатаГридВью</returns>
+        private Dictionary<int, object[]> GetProfileDataGridView(int tag)
         {
-            Dictionary<int, object[]> dict_profile = new Dictionary<int, object[]>();
+            Dictionary<int, object[]> dictProfileRes = new Dictionary<int, object[]>();
             string value = string.Empty;
+            //???
             string[] contexts = {"33","34"};
-            string[] id;
+            //string[] id;
             List<double> ids = new List<double>();
-            string type = string.Empty;
+            TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.UNKNOWN;
                         
             List<object> obj = new List<object>();
 
             foreach (string context in contexts)
             {
-                Dictionary<string, HTepUsers.DictElement> dictParamNALG = new Dictionary<string, HTepUsers.DictElement>();
-                value = m_dictProfile.Objects[id_dgv.ToString()].Objects[context].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.INPUT_PARAM).ToString()];
+                value = m_dictProfile.GetObjects(tag.ToString(), context).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.INPUT_PARAM).ToString()];
 
-                id = value.Trim().Split(';');
                 ids.Clear();
-                if (id.Length > 0)
-                {
-                    foreach (string str in id)
-                    {
-                        ids.Add(Convert.ToDouble(str.Replace('.', ',')));
-                    }
-                }
+                value.Trim().Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Cast<string>().ToList().ForEach(val => { ids.Add(HMath.doubleParse(val)); });
 
-                if (Convert.ToInt32(context) == 33)
-                {
-                    type = "in";
-                }
-                if (Convert.ToInt32(context) == 34)
-                {
-                    type = "out";
-                }
+                type = context.Equals(contexts[0]) == true ? TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES : //??? 33
+                    context.Equals(contexts[1]) == true ? TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES : //??? 34
+                        TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.UNKNOWN;
 
-                obj.Add(new object[] { ids.ToArray(), type, m_dictProfile.Objects[context].Objects });
+                obj.Add(new object[] { ids.ToArray(), type, m_dictProfile.GetObjects(context) });
             }
-            dict_profile.Add(id_dgv, obj.ToArray());
 
+            dictProfileRes.Add(tag, obj.ToArray());
 
-            return dict_profile;
+            return dictProfileRes;
         }
 
         /// <summary>

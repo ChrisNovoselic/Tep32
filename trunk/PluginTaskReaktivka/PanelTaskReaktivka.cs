@@ -59,10 +59,6 @@ namespace PluginTaskReaktivka
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
         /// <summary>
-        /// Массив списков параметров
-        /// </summary>
-        protected List<int>[] m_arListIds;
-        /// <summary>
         /// 
         /// </summary>
         protected ReportExcel m_reportExcel;
@@ -278,12 +274,12 @@ namespace PluginTaskReaktivka
             //возможность_редактирвоания_значений
             try
             {
-                if ((m_dictProfile.Objects.ContainsKey(((int)ID_PERIOD.MONTH).ToString()) == true)
-                    && (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects.ContainsKey(((int)INDEX_CONTROL.DGV_DATA).ToString()) == true)
-                    && (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true))
+                if ((m_dictProfile.ContainsKey(((int)ID_PERIOD.MONTH).ToString()) == true)
+                    && (m_dictProfile[((int)ID_PERIOD.MONTH).ToString()].ContainsKey(((int)INDEX_CONTROL.DGV_DATA).ToString()) == true)
+                    && (m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)INDEX_CONTROL.DGV_DATA).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true))
                 {
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
-                        int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)INDEX_CONTROL.DGV_DATA).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == 1;
+                        int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)INDEX_CONTROL.DGV_DATA).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == 1;
                 }
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;

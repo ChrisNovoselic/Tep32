@@ -60,14 +60,6 @@ namespace PluginTaskAutobook
             //DENY_PARAMETER_VISIBLED // запрещенных для отображения
             COUNT
         }
-        ///// <summary>
-        ///// Таблицы со значениями словарных, проектных данных
-        ///// </summary>
-        //protected DataTable[] m_dictTableDictPrj;
-        /// <summary>
-        /// Массив списков параметров
-        /// </summary>
-        protected List<int>[] m_arListIds;
         /// <summary>
         /// Отображение значений в табличном представлении(план)
         /// </summary>
@@ -354,9 +346,9 @@ namespace PluginTaskAutobook
 
             try
             {
-                if (m_dictProfile.Objects[((int)ID_PERIOD.YEAR).ToString()].Objects[((int)INDEX_CONTROL.DGV_PLANEYAR).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                if (m_dictProfile.GetObjects(((int)ID_PERIOD.YEAR).ToString(), ((int)INDEX_CONTROL.DGV_PLANEYAR).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
                 {
-                    if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.YEAR).ToString()].Objects[((int)INDEX_CONTROL.DGV_PLANEYAR).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                    if (int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.YEAR).ToString(), ((int)INDEX_CONTROL.DGV_PLANEYAR).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
                         (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
                     else
                         (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;

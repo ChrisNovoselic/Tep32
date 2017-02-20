@@ -118,10 +118,6 @@ namespace PluginTaskVedomostBl
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
         /// <summary>
-        /// Массив списков параметров
-        /// </summary>
-        protected List<int>[] m_arListIds;
-        /// <summary>
         /// Объект для обращения к БД
         /// </summary>
         protected HandlerDbTaskVedomostBlCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskVedomostBlCalculate; } }
@@ -1365,9 +1361,9 @@ namespace PluginTaskVedomostBl
                 //возможность_редактирвоания_значений
                 try
                 {
-                    if (m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()].Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                    if (m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
                     {
-                        if (int.Parse(m_dictProfile.Objects[((int)ID_PERIOD.MONTH).ToString()].Objects[((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()].Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
+                        if (int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
                             (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
                         else
                             (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
@@ -1453,7 +1449,9 @@ namespace PluginTaskVedomostBl
                 }
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMWZONE, COMP, PARAMETER, RATIO
-            initialize(new ID_DBTABLE[] { ID_DBTABLE.PERIOD
+            initialize
+            //m_markTableDictPrj = new HMark
+                (new ID_DBTABLE[] { ID_DBTABLE.PERIOD
                     , ID_DBTABLE.TIMEZONE
                     , ID_DBTABLE.COMP
                     , TaskCalculateType == HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.IN_PARAMETER : ID_DBTABLE.UNKNOWN

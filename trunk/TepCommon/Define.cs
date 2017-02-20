@@ -27,7 +27,7 @@ namespace TepCommon
         , FPANELS
         , IN_PARAMETER // сводная таблица для [INALG], [INPUT]
         , OUT_PARAMETER // сводная таблица для [OUTALG], [OUTPUT]
-            , COUNT
+            //, COUNT
     };    
 
     public enum ID_START_RECORD : uint { ALG = 10001, ALG_NORMATIVE = 15001, PUT = 20001 }

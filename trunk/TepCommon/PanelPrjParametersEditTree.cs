@@ -699,7 +699,13 @@ namespace TepCommon
             err = 0;
             strErr = string.Empty;
 
-            m_markTableDictPrj = new HMark(new int[] { (int)ID_DBTABLE.COMP_LIST, (int)ID_DBTABLE.TASK });
+            initialize 
+            //m_markTableDictPrj = new HMark
+                (
+                    new ID_DBTABLE[] { ID_DBTABLE.COMP_LIST, ID_DBTABLE.TASK }
+                    , out err
+                    , out strErr 
+            );
 
             //Заполнить редактируемые "оригинальные" таблицы из БД...
             fillTableEdits(out err, out strErr);
@@ -727,7 +733,11 @@ namespace TepCommon
             else
                 ; //Строка с описанием ошибки заполнена
         }
-
+        /// <summary>
+        /// Установить признак активности панель при выборе ее пользователем
+        /// </summary>
+        /// <param name="activate">Признак активности</param>
+        /// <returns>Результат выполнения - был ли установлен признак</returns>
         public override bool Activate(bool activate)
         {
             bool bRes = base.Activate(activate);

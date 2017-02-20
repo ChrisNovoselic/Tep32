@@ -103,7 +103,7 @@ namespace PluginProject
         }
 
         private Dictionary<string, XmlDocument>[] m_arrDictXml_Edit, m_arrDictXml_Orig;
-        private Dictionary<string, HTepUsers.DictElement>[] m_arrDictProfiles;
+        private Dictionary<string, HTepUsers.DictionaryProfileItem>[] m_arrDictProfiles;
 
         private enum TypeName : int {Panel, Item, Context };
 
@@ -136,7 +136,7 @@ namespace PluginProject
             InitializeComponent();
             m_arrDictXml_Edit = new Dictionary<string, XmlDocument>[2];
             m_arrDictXml_Orig = new Dictionary<string, XmlDocument>[2];
-            m_arrDictProfiles = new Dictionary<string, HTepUsers.DictElement>[2];
+            m_arrDictProfiles = new Dictionary<string, HTepUsers.DictionaryProfileItem>[2];
             m_selectedXml = new XmlDocument();
             m_selectedComp = new HTepUsers.HTepProfilesXml.ParamComponent();
             //m_handlerDb = createHandlerDb();
@@ -177,7 +177,11 @@ namespace PluginProject
             treeProfiles.AfterLabelEdit += new NodeLabelEditEventHandler(treeView_NodeEdit);
             treeProfiles.ClickItem += new TreeViewProfile.ClickItemEventHandler(clickItemContext);
         }
-
+        /// <summary>
+        /// Установить признак активности панель при выборе ее пользователем
+        /// </summary>
+        /// <param name="activate">Признак активности</param>
+        /// <returns>Результат выполнения - был ли установлен признак</returns>
         public override bool Activate(bool active)
         {
             fillDataTable();
@@ -369,7 +373,7 @@ namespace PluginProject
                 m_selectedXml = m_arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.User][list_id.id_user.ToString()];
                 fillTreeProfiles(m_selectedXml);
 
-                dgvProp.Update_DGV(m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][list_id.id_user.ToString()].Attributes);
+                dgvProp.UpdateDataGridView(m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][list_id.id_user.ToString()].Attributes);
             } else
                 ;
 
@@ -380,7 +384,7 @@ namespace PluginProject
                 m_selectedXml = m_arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.Role][list_id.id_role.ToString()];
                 fillTreeProfiles(m_selectedXml);
 
-                dgvProp.Update_DGV(m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][list_id.id_role.ToString()].Attributes);
+                dgvProp.UpdateDataGridView(m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][list_id.id_role.ToString()].Attributes);
             } else
                 ;
         }
@@ -390,18 +394,19 @@ namespace PluginProject
             m_selectedComp = new HTepUsers.HTepProfilesXml.ParamComponent();
             string tag = e.Node.Tag.ToString();
             string[] tags = tag.Split(',');
-            Dictionary<string, HTepUsers.DictElement> dict = new Dictionary<string, HTepUsers.DictElement>();
+            Dictionary<string, HTepUsers.DictionaryProfileItem> dict = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
             if (tags.Length > 1)
             {
-                if (m_list_id.id_user.Equals(-1) == false)//User
-                {
-                    dict = m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][m_list_id.id_user.ToString()].Objects;
-                }
+                if (m_list_id.id_user.Equals(-1) == false) //User
+                    dict = m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User][m_list_id.id_user.ToString()];
+                else
+                    ;
 
-                if (m_list_id.id_user.Equals(-1) == true & m_list_id.id_role.Equals(-1) == false)//Role
-                {
-                    dict = m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][m_list_id.id_role.ToString()].Objects;
-                }
+                if (m_list_id.id_user.Equals(-1) == true & m_list_id.id_role.Equals(-1) == false) //Role
+                    dict = m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role][m_list_id.id_role.ToString()];
+                else
+                    ;
+
                 switch ((TypeName)Int16.Parse(tags[0]))
                 {
                     case TypeName.Context:
@@ -417,13 +422,13 @@ namespace PluginProject
 
                         if (dict.ContainsKey(m_selectedComp.ID_Panel.ToString()) == true)
                         {
-                            dgvProp_Panel.Update_DGV(dict[m_selectedComp.ID_Panel.ToString()].Attributes);
+                            dgvProp_Panel.UpdateDataGridView(dict[m_selectedComp.ID_Panel.ToString()].Attributes);
 
-                            if (dict[m_selectedComp.ID_Panel.ToString()].Objects.ContainsKey(m_selectedComp.ID_Item.ToString()) == true)
+                            if (dict[m_selectedComp.ID_Panel.ToString()].ContainsKey(m_selectedComp.ID_Item.ToString()) == true)
                             {
-                                if (dict[m_selectedComp.ID_Panel.ToString()].Objects[m_selectedComp.ID_Item.ToString()].Objects.ContainsKey(m_selectedComp.Context.ToString()) == true)
+                                if (dict[m_selectedComp.ID_Panel.ToString()][m_selectedComp.ID_Item.ToString()].ContainsKey(m_selectedComp.Context.ToString()) == true)
                                 {
-                                    dgvProp_Context.Update_DGV(dict[m_selectedComp.ID_Panel.ToString()].Objects[m_selectedComp.ID_Item.ToString()].Objects[m_selectedComp.Context.ToString()].Attributes);
+                                    dgvProp_Context.UpdateDataGridView(dict[m_selectedComp.ID_Panel.ToString()][m_selectedComp.ID_Item.ToString()][m_selectedComp.Context.ToString()].Attributes);
                                 }
                             }
                         }
@@ -440,7 +445,7 @@ namespace PluginProject
 
                         if (dict.ContainsKey(m_selectedComp.ID_Panel.ToString()) == true)
                         {
-                            dgvProp_Panel.Update_DGV(dict[m_selectedComp.ID_Panel.ToString()].Attributes);
+                            dgvProp_Panel.UpdateDataGridView(dict[m_selectedComp.ID_Panel.ToString()].Attributes);
                         }
                             break;
                         
@@ -454,7 +459,7 @@ namespace PluginProject
 
                         m_selectedComp.ID_Panel = Int32.Parse(tags[1]);
                         if(dict.ContainsKey(m_selectedComp.ID_Panel.ToString()) ==true)
-                            dgvProp_Panel.Update_DGV(dict[m_selectedComp.ID_Panel.ToString()].Attributes);
+                            dgvProp_Panel.UpdateDataGridView(dict[m_selectedComp.ID_Panel.ToString()].Attributes);
                         break;
                 }
             }
@@ -517,13 +522,13 @@ namespace PluginProject
         private void treeView_NodeEdit(object sender, NodeLabelEditEventArgs e)
         {
             HTepUsers.HTepProfilesXml.ParamComponent parComp;
-            Dictionary<string, HTepUsers.DictElement> dict;
+            Dictionary<string, HTepUsers.DictionaryProfileItem> dict;
             HTepUsers.HTepProfilesXml.Type type;
             XmlDocument xml;
 
             if (e.Label != null) {
                 parComp = new HTepUsers.HTepProfilesXml.ParamComponent();
-                dict = new Dictionary<string, HTepUsers.DictElement>();
+                dict = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
                 //HTepUsers.DictElement element = new HTepUsers.DictElement();
                 xml = new XmlDocument();
                 int id = -1;
@@ -535,7 +540,7 @@ namespace PluginProject
                 if (m_list_id.id_user.Equals(-1) == false) {
                 //User
                     type = HTepUsers.HTepProfilesXml.Type.User;
-                    dict = m_arrDictProfiles[(int)type][m_list_id.id_user.ToString()].Objects;
+                    dict = m_arrDictProfiles[(int)type][m_list_id.id_user.ToString()];
                     xml = m_arrDictXml_Edit[(int)type][m_list_id.id_user.ToString()];
                     id = m_list_id.id_user;
                 } else
@@ -544,7 +549,7 @@ namespace PluginProject
                 if (m_list_id.id_user.Equals(-1) == true & m_list_id.id_role.Equals(-1) == false) {
                 //Role
                     type = HTepUsers.HTepProfilesXml.Type.Role;
-                    dict = m_arrDictProfiles[(int)type][m_list_id.id_role.ToString()].Objects;
+                    dict = m_arrDictProfiles[(int)type][m_list_id.id_role.ToString()];
                     xml = m_arrDictXml_Edit[(int)type][m_list_id.id_role.ToString()];
                     id = m_list_id.id_role;
                 } else
@@ -578,9 +583,13 @@ namespace PluginProject
                                 #endregion
 
                                 #region DICT
-
-                                dict[parComp.ID_Panel.ToString()].Objects[parComp.ID_Item.ToString()].Objects.Add(e.Label.Split(' ')[1], dict[parComp.ID_Panel.ToString()].Objects[parComp.ID_Item.ToString()].Objects[e.Node.Text.Split(' ')[1]]);
-                                dict[parComp.ID_Panel.ToString()].Objects[parComp.ID_Item.ToString()].Objects.Remove(e.Node.Text.Split(' ')[1]);
+                                // добавить элемент
+                                dict[parComp.ID_Panel.ToString()][parComp.ID_Item.ToString()].Add(
+                                    e.Label.Split(' ')[1]
+                                    , dict[parComp.ID_Panel.ToString()][parComp.ID_Item.ToString()][e.Node.Text.Split(' ')[1]]
+                                );
+                                // удалить
+                                dict[parComp.ID_Panel.ToString()][parComp.ID_Item.ToString()].Remove(e.Node.Text.Split(' ')[1]);
 
                                 #endregion
 
@@ -614,9 +623,13 @@ namespace PluginProject
                                 #endregion
 
                                 #region DICT
-
-                                dict[parComp.ID_Panel.ToString()].Objects.Add(e.Label.Split(' ')[1], dict[parComp.ID_Panel.ToString()].Objects[e.Node.Text.Split(' ')[1]]);
-                                dict[parComp.ID_Panel.ToString()].Objects.Remove(e.Node.Text.Split(' ')[1]);
+                                // добавить элемент
+                                dict[parComp.ID_Panel.ToString()].Add(
+                                    e.Label.Split(' ')[1]
+                                    , dict[parComp.ID_Panel.ToString()][e.Node.Text.Split(' ')[1]]
+                                );
+                                // удалить
+                                dict[parComp.ID_Panel.ToString()].Remove(e.Node.Text.Split(' ')[1]);
 
                                 #endregion
 
@@ -648,8 +661,12 @@ namespace PluginProject
                                 #endregion
 
                                 #region DICT
-
-                                dict.Add(e.Label.Split(' ')[1],dict[e.Node.Text.Split(' ')[1]]);
+                                // добавить элемент
+                                dict.Add(
+                                    e.Label.Split(' ')[1]
+                                    , dict[e.Node.Text.Split(' ')[1]]
+                                );
+                                // удалить
                                 dict.Remove(e.Node.Text.Split(' ')[1]);
 
                                 #endregion
@@ -676,8 +693,8 @@ namespace PluginProject
             HTepUsers.HTepProfilesXml.Type type = new HTepUsers.HTepProfilesXml.Type();
             HTepUsers.HTepProfilesXml.Component comp;
             int id = -1;            
-            Dictionary<string, HTepUsers.DictElement> dict = new Dictionary<string, HTepUsers.DictElement>();
-            HTepUsers.DictElement dictEl;
+            Dictionary<string, HTepUsers.DictionaryProfileItem> dict = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
+            HTepUsers.DictionaryProfileItem dictEl;
 
             if (m_list_id.id_user.Equals(-1) == false) {
             //User                
@@ -693,7 +710,7 @@ namespace PluginProject
                 else
                     throw new Exception (@"PanelPrjRolesFPanels::clickItemContext () - неизвестный тип профиля настроек...");
 
-            dict = m_arrDictProfiles[(int)type][id.ToString()].Objects;
+            dict = m_arrDictProfiles[(int)type][id.ToString()];
             xmlDoc = m_arrDictXml_Edit[(int)type][id.ToString()];
 
             if (!(e.Node == null)) {
@@ -715,10 +732,10 @@ namespace PluginProject
                                     e.Node.Nodes.Add(NewNameElement.Context, NewNameElement.Context);
                                     e.Node.Nodes[NewNameElement.Context].Tag = NewNameElement.TagContext;
 
-                                    dictEl = new HTepUsers.DictElement();
+                                    dictEl = new HTepUsers.DictionaryProfileItem();
                                     dictEl.Attributes = new Dictionary<string, string>();
-                                    dictEl.Objects = new Dictionary<string, HTepUsers.DictElement>();
-                                    dict[parComp.ID_Panel.ToString()].Objects[parComp.ID_Item.ToString()].Objects.Add(((int)NewNameElement.IdContext).ToString(), dictEl);
+                                    dictEl = new HTepUsers.DictionaryProfileItem();
+                                    dict[parComp.ID_Panel.ToString()][parComp.ID_Item.ToString()].Add(((int)NewNameElement.IdContext).ToString(), dictEl);
 
                                     ButtonSaveEnabled = true;
                                 } else
@@ -736,10 +753,10 @@ namespace PluginProject
                                     e.Node.Nodes.Add(NewNameElement.Item, NewNameElement.Item);
                                     e.Node.Nodes[NewNameElement.Item].Tag = NewNameElement.TagItem;
 
-                                    dictEl = new HTepUsers.DictElement();
+                                    dictEl = new HTepUsers.DictionaryProfileItem();
                                     dictEl.Attributes = new Dictionary<string, string>();
-                                    dictEl.Objects = new Dictionary<string, HTepUsers.DictElement>();
-                                    dict[parComp.ID_Panel.ToString()].Objects.Add(((int)NewNameElement.IdItem).ToString(), dictEl);
+                                    dictEl = new HTepUsers.DictionaryProfileItem();
+                                    dict[parComp.ID_Panel.ToString()].Add(((int)NewNameElement.IdItem).ToString(), dictEl);
 
                                     ButtonSaveEnabled = true;
                                 } else
@@ -763,7 +780,7 @@ namespace PluginProject
 
                                 xmlDoc = HTepUsers.HTepProfilesXml.Remove(xmlDoc, type, id, HTepUsers.HTepProfilesXml.Component.Context, parComp);
 
-                                dict[parComp.ID_Panel.ToString()].Objects[parComp.ID_Item.ToString()].Objects.Remove(parComp.Context.ToString());                                
+                                dict[parComp.ID_Panel.ToString()][parComp.ID_Item.ToString()].Remove(parComp.Context.ToString());                                
 
                                 break;
                             case TypeName.Item:
@@ -771,7 +788,7 @@ namespace PluginProject
                                 parComp.ID_Item = int.Parse(e.Node.Tag.ToString().Split(',')[1]);
 
                                 xmlDoc = HTepUsers.HTepProfilesXml.Remove(xmlDoc, type, id, HTepUsers.HTepProfilesXml.Component.Item, parComp);
-                                dict[parComp.ID_Panel.ToString()].Objects.Remove(parComp.ID_Item.ToString());
+                                dict[parComp.ID_Panel.ToString()].Remove(parComp.ID_Item.ToString());
 
                                 break;
                             case TypeName.Panel:
@@ -875,9 +892,9 @@ namespace PluginProject
                             treeProfiles.Nodes.Add(NewNameElement.Panel, NewNameElement.Panel);
                             treeProfiles.Nodes[NewNameElement.Panel].Tag = NewNameElement.TagPanel;
 
-                            dictEl = new HTepUsers.DictElement();
+                            dictEl = new HTepUsers.DictionaryProfileItem();
                             dictEl.Attributes = new Dictionary<string, string>();
-                            dictEl.Objects = new Dictionary<string, HTepUsers.DictElement>();
+                            dictEl = new HTepUsers.DictionaryProfileItem();
                             dict.Add(((int)NewNameElement.IdPanel).ToString(), dictEl);
 
                             ButtonSaveEnabled = true;
@@ -1334,7 +1351,7 @@ namespace PluginProject
             this.CellValueChanged += cell_EndEdit;
         }
 
-        public void Update_DGV(Dictionary<string, string> dict)
+        public void UpdateDataGridView(Dictionary<string, string> attributes)
         {
             this.CellValueChanged -= cell_EndEdit;
             
@@ -1342,9 +1359,9 @@ namespace PluginProject
             {
                 if (row.Cells[0] is DataGridViewCheckBoxCell)
                 {
-                    if (dict.ContainsKey(row.Tag.ToString()) == true)
+                    if (attributes.ContainsKey(row.Tag.ToString()) == true)
                     {
-                        if (Convert.ToInt32(dict[row.Tag.ToString()]) == 0)
+                        if (Convert.ToInt32(attributes[row.Tag.ToString()]) == 0)
                             row.Cells[0].Value = false;
                         else
                             row.Cells[0].Value = true;
@@ -1354,9 +1371,9 @@ namespace PluginProject
                 }
                 else
                 {
-                    if (dict.ContainsKey(row.Tag.ToString()) == true)
+                    if (attributes.ContainsKey(row.Tag.ToString()) == true)
                     {
-                        row.Cells[0].Value = dict[row.Tag.ToString()];
+                        row.Cells[0].Value = attributes[row.Tag.ToString()];
                     }
                 }
             }

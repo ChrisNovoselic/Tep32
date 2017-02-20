@@ -217,7 +217,7 @@ namespace TepCommon
 
             //HTepProfilesXml.UpdateProfile(connSett);
 
-            DictElement dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
+            DictionaryProfileItem dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
 
             Dictionary<string, string> dictAttr = dictElement.Attributes;
 
@@ -280,17 +280,35 @@ namespace TepCommon
         /// <summary>
         /// Структура содержащая в себе атрибуты выбранного объекта и словарь с вложенными в него элементами
         /// </summary>
-        public struct DictElement
+        public class DictionaryProfileItem : Dictionary <string, DictionaryProfileItem>
         {
-            /// <summary>
-            /// Словарь с вложенными объектами
-            /// </summary>
-            public Dictionary<string, DictElement> Objects;
+            ///// <summary>
+            ///// Словарь с вложенными объектами
+            ///// </summary>
+            //private Dictionary<string, DictionaryProfileItem> _objects;
+
+            public DictionaryProfileItem GetObjects(params string[]keys)
+            {
+                DictionaryProfileItem dictProfileItemRes = new DictionaryProfileItem();
+
+                if (keys.Length > 0)
+                    foreach (string key in keys)
+                        if (dictProfileItemRes.ObjectCount == 0)
+                            dictProfileItemRes = this[key];
+                        else
+                            dictProfileItemRes = dictProfileItemRes[key];
+                else
+                    ;
+
+                return dictProfileItemRes;
+            }
 
             /// <summary>
             /// Словарь с атрибутами объекта
             /// </summary>
             public Dictionary<string, string> Attributes;
+
+            public int ObjectCount { get { return this.Count; } }
         }
         /// <summary>
         /// Получить таблицу с установками для отображения значений
@@ -318,14 +336,14 @@ namespace TepCommon
             if (fields.Length == (int)INDEX_VISUALSETTINGS_PARAMS.COUNT)
             {
                 //Получения элемента со словарями атрибутов и вложенных элементов для панели
-                DictElement dictElement = HTepProfilesXml.GetProfileUserPanel(Id, Role, fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]);
-                
-                Dictionary<string, DictElement> dictProfile = new Dictionary<string, DictElement>();
+                DictionaryProfileItem dictElement = HTepProfilesXml.GetProfileUserPanel(Id, Role, fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]);
+
+                Dictionary<string, DictionaryProfileItem> dictProfile = new Dictionary<string, DictionaryProfileItem>();
                 //Перебор Item'ов в панели
-                if (dictElement.Objects.ContainsKey(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()) == true)
+                if (dictElement.ContainsKey(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()) == true)
                 {
                     //Словарь с объектами в Item
-                    dictProfile = dictElement.Objects[fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()].Objects;
+                    dictProfile = dictElement.GetObjects(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString());
                     
                     foreach (string rAlg in dictProfile.Keys)
                     {
@@ -434,22 +452,22 @@ namespace TepCommon
         /// <summary>
         /// Получение словаря с Profile для ролей
         /// </summary>
-        public static Dictionary<string, DictElement> GetDicpRolesProfile
+        public static Dictionary<string, DictionaryProfileItem> GetDicpRolesProfile
         {
             get
             {
-                Dictionary<string, DictElement> dictRoles = HTepProfilesXml.DictRoles;
+                Dictionary<string, DictionaryProfileItem> dictRoles = HTepProfilesXml.DictRoles;
                 return dictRoles;
             }
         }
         /// <summary>
         /// Получение словаря с Profile для пользователей
         /// </summary>
-        public static Dictionary<string, DictElement> GetDicpUsersProfile
+        public static Dictionary<string, DictionaryProfileItem> GetDicpUsersProfile
         {
             get
             {
-                Dictionary<string, DictElement> dictUsers = HTepProfilesXml.DictUsers;
+                Dictionary<string, DictionaryProfileItem> dictUsers = HTepProfilesXml.DictUsers;
                 return dictUsers;
             }
         }
@@ -613,11 +631,11 @@ namespace TepCommon
             /// <summary>
             /// Словарь с Профайлом для ролей
             /// </summary>
-            public static Dictionary<string, DictElement> DictRoles;
+            public static Dictionary<string, DictionaryProfileItem> DictRoles;
             /// <summary>
             /// Словарь с Профайлом для пользователей
             /// </summary>
-            public static Dictionary<string, DictElement> DictUsers;
+            public static Dictionary<string, DictionaryProfileItem> DictUsers;
             /// <summary>
             /// Словарь с XML для каждой роли
             /// </summary>
@@ -681,12 +699,12 @@ namespace TepCommon
                 string query = "IS_ROLE=1";
                 DataRow[] dtUnic = dtProfiles_Orig.Select(query);
 
-                DictRoles = new Dictionary<string, DictElement>();
+                DictRoles = new Dictionary<string, DictionaryProfileItem>();
                 XmlRoles = new Dictionary<string, XmlDocument>();
 
                 for (int i = 0; i < dtUnic.Length; i++)
                 {
-                    Dictionary<string, DictElement> dict = new Dictionary<string, DictElement>();
+                    Dictionary<string, DictionaryProfileItem> dict = new Dictionary<string, DictionaryProfileItem>();
                     XmlDocument xml = new XmlDocument();
                     xml.LoadXml(dtUnic[i]["XML"].ToString());
                     dict = getDictFromXml(xml["Role"]);
@@ -705,12 +723,12 @@ namespace TepCommon
                 string query = "IS_ROLE=0";
                 DataRow[] dtUnic = dtProfiles_Orig.Select(query);
 
-                DictUsers = new Dictionary<string, DictElement>();
+                DictUsers = new Dictionary<string, DictionaryProfileItem>();
                 XmlUsers = new Dictionary<string, XmlDocument>();
 
                 for (int i = 0; i < dtUnic.Length; i++)
                 {
-                    Dictionary<string, DictElement> dict = new Dictionary<string, DictElement>();
+                    Dictionary<string, DictionaryProfileItem> dict = new Dictionary<string, DictionaryProfileItem>();
                     XmlDocument xml = new XmlDocument();
                     xml.LoadXml(dtUnic[i]["XML"].ToString());
                     dict = getDictFromXml(xml["User"]);
@@ -723,21 +741,22 @@ namespace TepCommon
             /// </summary>
             /// <param name="node">Node для разбора</param>
             /// <returns>Словарь полученный из XML</returns>
-            private static Dictionary<string, DictElement> getDictFromXml(XmlNode node)
+            private static DictionaryProfileItem getDictFromXml(XmlNode node)
             {
-                Dictionary<string, DictElement> dict = new Dictionary<string, DictElement>();
-
-                Dictionary<string, DictElement> dictChild = new Dictionary<string, DictElement>();
+                DictionaryProfileItem dictProfileRes = new DictionaryProfileItem();
+                Dictionary<string, DictionaryProfileItem> dictChild = new Dictionary<string, DictionaryProfileItem>();
+                DictionaryProfileItem dictElemChild = null;
+                Dictionary<string, string> dictAttrChild = null;
 
                 if (node.ChildNodes.Count != 0)
                 {
                     foreach (XmlNode child in node.ChildNodes)
                     {
-                        DictElement dictElemChild = new DictElement();
-                        Dictionary<string, string> dictAttrChild = new Dictionary<string, string>();
+                        dictElemChild = new DictionaryProfileItem();
+                        dictAttrChild = new Dictionary<string, string>();
 
                         dictElemChild.Attributes = dictAttrChild;
-                        dictElemChild.Objects = new Dictionary<string, DictElement>();
+                        dictElemChild = new DictionaryProfileItem();
 
                         foreach (XmlAttribute attr in child.Attributes)
                         {
@@ -748,14 +767,15 @@ namespace TepCommon
 
                         if (child.ChildNodes.Count != 0)
                         {
-                            dictElemChild.Objects = getDictFromXml(child);
+                            dictElemChild = getDictFromXml(child);
                         }
 
-                        dict.Add(child.LocalName.Replace('_', ' ').Trim(), dictElemChild);
+                        dictProfileRes.Add(child.LocalName.Replace('_', ' ').Trim(), dictElemChild);
                     }
-                }
+                } else
+                    ;
 
-                return dict;
+                return dictProfileRes;
             }
             /// <summary>
             /// Получить профайл для конкретного пользователя
@@ -763,9 +783,9 @@ namespace TepCommon
             /// <param name="id_user">ИД пользователя</param>
             /// <param name="id_role">ИД роли</param>
             /// <returns></returns>
-            public static DictElement GetProfileUser(int id_user, int id_role)
+            public static DictionaryProfileItem GetProfileUser(int id_user, int id_role)
             {
-                DictElement profileUser = getDictElement(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
+                DictionaryProfileItem profileUser = getDictProfileItem(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
 
                 return profileUser;
             }
@@ -776,15 +796,15 @@ namespace TepCommon
             /// <param name="id_role">ИД роли</param>
             /// <param name="id_panel">ИД панели (вкладки)</param>
             /// <returns></returns>
-            public static DictElement GetProfileUserPanel(int id_user, int id_role, int id_panel)
+            public static DictionaryProfileItem GetProfileUserPanel(int id_user, int id_role, int id_panel)
             {
-                DictElement profileUser = getDictElement(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
+                DictionaryProfileItem profileUser = getDictProfileItem(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
 
-                DictElement profilePanel = new DictElement();
+                DictionaryProfileItem profilePanel = new DictionaryProfileItem();
 
-                if (profileUser.Objects.ContainsKey(id_panel.ToString()) == true)
+                if (profileUser.ContainsKey(id_panel.ToString()) == true)
                 {
-                    profilePanel = profileUser.Objects[id_panel.ToString()];
+                    profilePanel = profileUser[id_panel.ToString()];
                 }
 
                 return profilePanel;
@@ -795,14 +815,14 @@ namespace TepCommon
             /// <param name="dictObject_Role">Структура с данными роли</param>
             /// <param name="dictObject_User">Структура с данными пользователя</param>
             /// <returns>Структура с объединенными данными</returns>
-            private static DictElement getDictElement(DictElement dictObject_Role, DictElement dictObject_User)
+            private static DictionaryProfileItem getDictProfileItem(DictionaryProfileItem dictObject_Role, DictionaryProfileItem dictObject_User)
             {
-                DictElement profileUser = new DictElement();
+                DictionaryProfileItem profileUser = new DictionaryProfileItem();
                 profileUser.Attributes = new Dictionary<string, string>();
-                profileUser.Objects = new Dictionary<string, DictElement>();
+                profileUser = new DictionaryProfileItem();
 
-                DictElement dict_role = dictObject_Role;
-                DictElement dict_user = dictObject_User;
+                DictionaryProfileItem dict_role = dictObject_Role;
+                DictionaryProfileItem dict_user = dictObject_User;
 
                 foreach (string attr in dict_role.Attributes.Keys)
                 {
@@ -814,14 +834,14 @@ namespace TepCommon
                         profileUser.Attributes.Add(attr, dict_user.Attributes[attr]);
                 }
 
-                foreach (string attr in dict_role.Objects.Keys)
+                foreach (string attr in dict_role.Keys)
                 {
-                    if (dict_user.Objects.ContainsKey(attr) == false)
+                    if (dict_user.ContainsKey(attr) == false)
                     {
-                        profileUser.Objects.Add(attr, dict_role.Objects[attr]);
+                        profileUser.Add(attr, dict_role[attr]);
                     }
                     else
-                        profileUser.Objects.Add(attr, getDictElement(dict_role.Objects[attr], dict_user.Objects[attr]));
+                        profileUser.Add(attr, getDictProfileItem(dict_role[attr], dict_user[attr]));
                 }
 
                 return profileUser;
