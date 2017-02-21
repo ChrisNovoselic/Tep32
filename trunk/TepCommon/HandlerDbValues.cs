@@ -25,7 +25,7 @@ namespace TepCommon
         public static Dictionary<ID_DBTABLE, DB_TABLE> s_dictDbTables = new Dictionary<ID_DBTABLE, DB_TABLE> () {
             { ID_DBTABLE.TIME           , new DB_TABLE () { m_name = @"time"        , m_description = @"" } }
             , { ID_DBTABLE.TIMEZONE     , new DB_TABLE () { m_name = @"timezones"   , m_description = @"" } }
-            , { ID_DBTABLE.PERIOD       , new DB_TABLE () { m_name = @"period"      , m_description = @"" } }
+            //, { ID_DBTABLE.PERIOD       , new DB_TABLE () { m_name = @"period"      , m_description = @"" } }
             , { ID_DBTABLE.COMP_LIST    , new DB_TABLE () { m_name = @"comp_list"   , m_description = @"" } }
             , { ID_DBTABLE.COMP         , new DB_TABLE () { m_name = @"comp"        , m_description = @"" } }
             , { ID_DBTABLE.MODE_DEV     , new DB_TABLE () { m_name = @"mode_dev"    , m_description = @"" } }
@@ -45,6 +45,8 @@ namespace TepCommon
             , { ID_DBTABLE.PLUGINS      , new DB_TABLE () { m_name = @"plugins"     , m_description = @"" } }
             , { ID_DBTABLE.TASK         , new DB_TABLE () { m_name = @"task"        , m_description = @"" } }
             , { ID_DBTABLE.FPANELS      , new DB_TABLE () { m_name = @"fpanels"     , m_description = @"" } }
+            , { ID_DBTABLE.ROLES_UNIT   , new DB_TABLE () { m_name = @"roles_unit"  , m_description = @"" } }
+            , { ID_DBTABLE.USERS        , new DB_TABLE () { m_name = @"users"       , m_description = @"" } }
             ,
         };
 
@@ -203,13 +205,17 @@ namespace TepCommon
         {
             err = 0; // успех
 
-            DataTable tblRes = null;
+            DataTable tblRes = null;            
 
             switch (idTableDb) {
                 case ID_DBTABLE.UNKNOWN:
-                case ID_DBTABLE.PERIOD:
+                //case ID_DBTABLE.PERIOD:
                     err = -1;
-                    break;                
+                    break;
+                case ID_DBTABLE.IN_PARAMETER:
+                case ID_DBTABLE.OUT_PARAMETER:
+                    err = 1;
+                    break;
                 default:
                     if (s_dictDbTables.ContainsKey(idTableDb) == false) {
                         err = -2;

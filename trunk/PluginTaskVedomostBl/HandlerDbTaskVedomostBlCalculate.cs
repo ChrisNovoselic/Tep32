@@ -383,26 +383,26 @@ namespace PluginTaskVedomostBl
             return strRes;
         }
 
-        /// <summary>
-        /// Формирование запроса на получение
-        /// имен заголовков
-        /// </summary>
-        /// <returns>строка запроса</returns>
-        public DataTable GetHeaderDGV()
-        {
-            string query = string.Empty;
-            int err = -1;
+        ///// <summary>
+        ///// Формирование запроса на получение
+        ///// имен заголовков
+        ///// </summary>
+        ///// <returns>строка запроса</returns>
+        //public DataTable GetHeaderDGV()
+        //{
+        //    string query = string.Empty;
+        //    int err = -1;
 
-            query = @"SELECT * "
-                + @"FROM [inalg] a "
-                + @"LEFT JOIN [input] p "
-                + @"ON a.ID = p.ID_ALG "
-                + @"WHERE a.ID_TASK = " + (int)IdTask
-                + @" ORDER BY p.ID"
-                ;
+        //    query = @"SELECT * "
+        //        + @"FROM [inalg] a "
+        //        + @"LEFT JOIN [input] p "
+        //        + @"ON a.ID = p.ID_ALG "
+        //        + @"WHERE a.ID_TASK = " + (int)IdTask
+        //        + @" ORDER BY p.ID"
+        //        ;
 
-            return Select(query, out err);
-        }
+        //    return Select(query, out err);
+        //}
 
         /// <summary>
         /// Формирование запроса на получение компонентов

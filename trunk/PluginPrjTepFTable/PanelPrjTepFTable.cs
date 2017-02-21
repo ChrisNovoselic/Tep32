@@ -79,7 +79,7 @@ namespace PluginPrjTepFTable
             DataGridView dgv = null;
             List<string> listNAlg;
             string strItem = string.Empty;
-            m_tblOrigin = m_handlerDb.GetDataTable(@"ftable", out err);
+            m_tblOrigin = m_handlerDb.GetDataTable(ID_DBTABLE.FTABLE, out err);
 
             if (err == 0)
             {

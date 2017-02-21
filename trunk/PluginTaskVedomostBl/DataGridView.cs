@@ -13,7 +13,133 @@ namespace PluginTaskVedomostBl
 {
     partial class PanelTaskVedomostBl
     {
+        /// <summary>
+        /// Индекс уровней заголовков представлений
+        /// </summary>
+        protected enum LEVEL_HEADER
+        {
+            UNKNOW = -1
+            , TOP, MIDDLE, LOW
+                , COUNT
+        }
+        /// <summary>
+        /// Возвратить список с заголовками представления для отображения значений
+        /// </summary>
+        /// <param name="arlistStr">лист парамтеров</param>
+        /// <param name="rowPars">таблица с данными</param>
+        /// <returns>Список массивов строк-заговков</returns>
+        public List<string[]> GetListHeaders(DataTable tableSource, int id)
+        {
+            List<List<string>> arlistStr;
+            DataRow[] rowPars;
+            int cntHeader = 0;
+            string[] arStrHeader;
+            List<string[]> listHeader = new List<string[]> { };
 
+            using (ListStringHeaderParseer parser = new ListStringHeaderParseer(tableSource, id)) { arlistStr = parser.m_ListParam; }
+
+            rowPars = tableSource.Select("ID_COMP = " + id);
+
+            var enumHeader = (from r in rowPars.AsEnumerable()
+                              orderby r.Field<int>("ID")
+                              select new
+                              {
+                                  NAME_SHR = r.Field<string>("NAME_SHR"),
+                              }).Distinct();
+
+            listHeader.Clear();
+
+            for (int j = 0; j < arlistStr.Count; j++) {
+                if (arlistStr[j].Count < 3)
+                    arStrHeader = new string[arlistStr[j].Count + 1];
+                else
+                    arStrHeader = new string[arlistStr[j].Count];
+
+                cntHeader = 0;
+
+                for (int level = arlistStr[j].Count - 1; level > -1; level--) {
+                    switch (level) {
+                        case (int)LEVEL_HEADER.TOP:
+                            for (int t = 0; t < s_listGroupHeaders.Count; t++) {
+                                for (int n = 0; n < s_listGroupHeaders[t].Count; n++) {
+                                    cntHeader++;
+                                    if (int.Parse(arlistStr[j].ElementAt((int)LEVEL_HEADER.TOP)) == cntHeader) {
+                                        arStrHeader[level] = s_listGroupHeaders[t][n];
+                                        listHeader.Add(arStrHeader);
+
+                                        t = s_listGroupHeaders.Count; // прервать внешний цикл
+                                        break;
+                                    } else
+                                        ;
+                                }
+                            }
+                            break;
+                        case (int)LEVEL_HEADER.MIDDLE:
+                            // ??? почему < 3
+                            if (arlistStr[j].Count < 3)
+                                arStrHeader[level + 1] = "";
+                            else
+                                ;
+
+                            arStrHeader[(int)LEVEL_HEADER.MIDDLE] = rowPars[j]["NAME_SHR"].ToString().Trim();
+                            break;
+                        case (int)LEVEL_HEADER.LOW:
+                            arStrHeader[level] = rowPars[j]["DESCRIPTION"].ToString().Trim();
+                            break;
+                        default:
+                            break;
+                    }
+                } // for - level
+            }
+
+            return listHeader;
+        }
+
+        /// <summary>
+        /// класс для формирования листа с параметрами 
+        /// для формирования заголовков
+        /// </summary>
+        private class ListStringHeaderParseer : IDisposable
+        {
+            /// <summary>
+            /// набор листов с параметрами группировки
+            /// </summary>
+            public List<List<string>> m_ListParam;
+
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="table">таблица с данными</param>
+            /// <param name="id_comp">параметр для выборки</param>
+            public ListStringHeaderParseer(DataTable table, int id_comp)
+            {
+                parse(table.Select("ID_COMP = " + id_comp));
+            }
+
+            /// <summary>
+            /// формирование листа параметров вида x.y.z,
+            /// где x - TopHeader, y - MiddleHeader, y - LowHeader
+            /// </summary>
+            /// <param name="tablePars">таблица с данными</param>
+            private void parse(DataRow[] tablePars)
+            {
+                m_ListParam = new List<List<string>>(tablePars.Count());
+
+                List<string> list;
+
+                foreach (DataRow row in tablePars)
+                {
+                    list = new List<string>();
+
+                    list = row["N_ALG"].ToString().Split('.', ',').ToList();
+                    m_ListParam.Add(list);
+                }
+            }
+
+            public void Dispose()
+            {
+            }
+        }
         /// <summary>
         /// класс вьюхи
         /// </summary>
@@ -23,7 +149,7 @@ namespace PluginTaskVedomostBl
             /// ширина и высота
             /// </summary>
             static int s_drwW,
-                s_drwH = s_listHeader.Count;
+                s_drwH = s_listGroupHeaders.Count;
             /// <summary>
             /// 
             /// </summary>
@@ -71,18 +197,20 @@ namespace PluginTaskVedomostBl
             /// Конструктор
             /// </summary>
             /// <param name="nameDGV">имя грида</param>
-            public DataGridViewVedomostBl(string nameDGV)
+            public DataGridViewVedomostBl(INDEX_CONTROL tag)
             {
-                InitializeComponents(nameDGV);
+                Tag = tag;
+
+                InitializeComponents();
             }
 
             /// <summary>
             /// Инициализация компонента
             /// </summary>
             /// <param name="nameDGV">имя окна отображения данных</param>
-            private void InitializeComponents(string nameDGV)
+            private void InitializeComponents()
             {
-                Name = nameDGV;
+                Name = ((INDEX_CONTROL)Tag).ToString();
                 Dock = DockStyle.None;
                 //Запретить выделение "много" строк
                 MultiSelect = false;
@@ -466,7 +594,7 @@ namespace PluginTaskVedomostBl
                         cntCol++;
 
                 s_drwW = cntCol * dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width +
-                    dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width / s_listHeader.Count;
+                    dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width / s_listGroupHeaders.Count;
 
                 dgv.Paint += new PaintEventHandler(dataGridView1_Paint);
             }

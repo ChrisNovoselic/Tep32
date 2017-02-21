@@ -71,7 +71,7 @@ namespace PluginTaskVedomostBl
                 try
                 {
                     InitializeComponents();
-                    toolTipText = new string[s_listHeader.Count];
+                    toolTipText = new string[s_listGroupHeaders.Count];
                 }
                 catch (Exception e)
                 {
@@ -248,6 +248,7 @@ namespace PluginTaskVedomostBl
                 /// Индекс элемента
                 /// </summary>
                 private int _indx;
+
                 /// <summary>
                 /// Индекс элемента
                 /// </summary>
@@ -261,17 +262,20 @@ namespace PluginTaskVedomostBl
                 /// Конструктор - основной (с параметром)
                 /// </summary>
                 /// <param name="nameItem">Текст-подпись для элемента</param>
-                public RadioButtonBlock(string nameItem) : base()
+                public RadioButtonBlock(PanelTaskVedomostBl.INDEX_CONTROL tag)
                 {
-                    initialize(nameItem);
+                    Tag = tag;
+
+                    InitializeComponents();
                 }
+
                 /// <summary>
                 /// Инициализация объекта
                 /// </summary>
                 /// <param name="nameItem">Текст-подпись для элемента</param>
-                private void initialize(string nameItem)
+                private void InitializeComponents()
                 {
-                    Name = nameItem;
+                    Name = ((INDEX_CONTROL)Tag).ToString();
                 }
             }
 
@@ -605,11 +609,11 @@ namespace PluginTaskVedomostBl
             /// <param name="text">Текст подписи к компоненту</param>
             /// <param name="arIndexIdToAdd">Массив индексов в списке </param>
             /// <param name="arChecked">Массив признаков состояния для элементов</param>
-            public void AddComponentRB(int[] id_comp,
+            public void AddComponentRadioButton(int[] id_comp,
                 string[] text,
                 INDEX_ID[] arIndexIdToAdd,
                 bool[] arChecked,
-                RadioButtonBlock[] rb
+                RadioButtonBlock[] arControl
                 , List<CheckState> checkedGroup)
             {
                 Control ctrl = null;
@@ -619,7 +623,7 @@ namespace PluginTaskVedomostBl
                     ctrl = find(arIndexIdToAdd[i]);
 
                     if (!(ctrl == null))
-                        (ctrl as TableLayoutPanelkVed).AddItems(id_comp, text, arChecked, rb, checkedGroup);
+                        (ctrl as TableLayoutPanelkVed).AddItems(id_comp, text, arChecked, arControl, checkedGroup);
                     else
                         Logging.Logg().Error(@"PanelManagementTaskVed::AddComponentRB () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 }

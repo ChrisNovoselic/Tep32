@@ -13,20 +13,18 @@ namespace TepCommon
         , RATIO
         , MEASURE
         , SESSION
-        , INALG
-        , INPUT
-        , INVALUES
+        , INALG, INPUT, INVALUES
         , INVAL_DEF // 10
-        , OUTALG // 11
-        , OUTPUT
-        , OUTVALUES
-        , PERIOD
+        , OUTALG /*11*/, OUTPUT, OUTVALUES
+        //, PERIOD
         , FTABLE
         , PLUGINS
         , TASK
         , FPANELS
         , IN_PARAMETER // сводная таблица для [INALG], [INPUT]
         , OUT_PARAMETER // сводная таблица для [OUTALG], [OUTPUT]
+        , ROLES_UNIT
+        , USERS
             //, COUNT
     };    
 

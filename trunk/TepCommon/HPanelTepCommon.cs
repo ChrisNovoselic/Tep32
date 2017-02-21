@@ -358,17 +358,14 @@ namespace TepCommon
             int err = -1;
             string strErrMsg = string.Empty;
 
-            try
-            {
+            try {
                 if ((bRes == true)
                     && (active == true)
                     && (IsFirstActivated == true))
                         initialize(out err, out strErrMsg);
                 else
                     ;
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 Logging.Logg().Exception(e, @"HPanelTepCommon::Activate () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
@@ -411,9 +408,22 @@ namespace TepCommon
             }
 
             foreach (ID_DBTABLE id in /*Enum.GetValues(typeof(ID_DBTABLE))*/arIdTableDictPrj) {
-                m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
+                switch (id) {
+                    case ID_DBTABLE.IN_PARAMETER:
+                        m_dictTableDictPrj.Add(id
+                            , m_handlerDb.Select((m_handlerDb as HandlerDbTaskCalculate).GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES), out err));
+                        break;
+                    case ID_DBTABLE.OUT_PARAMETER:
+                        m_dictTableDictPrj.Add(id
+                            , m_handlerDb.Select((m_handlerDb as HandlerDbTaskCalculate).GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES), out err));
+                        break;
+                    default:
+                        m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
+                        break;
+                }
 
                 if (err < 0) {
+                    // ошибка
                     switch (err) {
                         case -3: // наименовавние таблицы
                             errMsg = @"не известное наименовнаие таблицы";
@@ -427,11 +437,21 @@ namespace TepCommon
                             break;
                     }
 
-                    errMsg = string.Format(@"{0}{1}", string.Format(@"HPanelTepCommon::initialize (тип={0}) - ...", id), errMsg);
+                    errMsg = string.Format(@"HPanelTepCommon::initialize (тип={0}) - {1}...", id, errMsg);
 
                     break;
                 } else
-                    ;
+                    if (err > 0)
+                    // предупреждение
+                        switch(err) {
+                            case 1: // идентификатор указан прежде, чем его можно инициализировать объект для него
+                                break;
+                            default:
+                                break;
+                        }
+                    else
+                    // ошибок, предупреждений нет
+                        ;
             }
 
             //m_markTableDictPrj = new HMark(arIdTableDictPrj as int[]);

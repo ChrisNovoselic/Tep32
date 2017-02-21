@@ -280,7 +280,7 @@ namespace TepCommon
                 //Возобновить обработку события - изменение начала/окончания даты/времени
                 activateDateTimeRangeValue_OnChanged(true);
 
-                EventBaseValueChanged?.Invoke(ID_DBTABLE.PERIOD);
+                EventBaseValueChanged?.Invoke(ID_DBTABLE.TIME);
             }
 
             /// <summary>
@@ -327,14 +327,14 @@ namespace TepCommon
                 return objRes;
             }
 
-            public void FillValuePeriod(DataTable tableValues, ID_PERIOD idSelected)
+            public void FillValuePeriod(DataTable tableValues, IEnumerable<int>ids, ID_PERIOD idSelected)
             {
-                fillComboBoxValues(tableValues, INDEX_CONTROL_BASE.CBX_PERIOD, (int)idSelected, @"DESCRIPTION", cbxPeriod_SelectedIndexChanged);
+                fillComboBoxValues(tableValues.Select(string.Format(@"ID IN ({0})", ids)), INDEX_CONTROL_BASE.CBX_PERIOD, (int)idSelected, @"DESCRIPTION", cbxPeriod_SelectedIndexChanged);
             }
 
-            public void FillValueTimezone(DataTable tableValues, ID_TIMEZONE idSelected)
+            public void FillValueTimezone(DataTable tableValues, IEnumerable<int> ids, ID_TIMEZONE idSelected)
             {
-                fillComboBoxValues(tableValues, INDEX_CONTROL_BASE.CBX_TIMEZONE, (int)idSelected, @"NAME_SHR", cbxTimezone_SelectedIndexChanged);
+                fillComboBoxValues(tableValues.Select(string.Format(@"ID IN ({0})", ids)), INDEX_CONTROL_BASE.CBX_TIMEZONE, (int)idSelected, @"NAME_SHR", cbxTimezone_SelectedIndexChanged);
             }
 
             //private struct COMBOBOX_ITEM
@@ -344,7 +344,7 @@ namespace TepCommon
             //    public object m_Id;
             //}
 
-            private void fillComboBoxValues(DataTable tableValues
+            private void fillComboBoxValues(IEnumerable<DataRow> rowValues
                 , INDEX_CONTROL_BASE indxCtrl
                 , int idSelected
                 , string nameFieldTextValue
@@ -354,6 +354,7 @@ namespace TepCommon
                     , indxSelected = -1;
                 ComboBox ctrl = null;
                 //COMBOBOX_ITEM cbxItem;
+                DataTable tableValues;
 
                 ctrl = Controls.Find(indxCtrl.ToString(), true)[0] as ComboBox;
                 //// вариант №1
@@ -376,6 +377,8 @@ namespace TepCommon
                 // вариант №2
                 ctrl.ValueMember = @"ID";
                 ctrl.DisplayMember = nameFieldTextValue;
+                tableValues = new DataTable();
+                rowValues.ToList().ForEach(r => { tableValues.Rows.Add(r); });
                 ctrl.DataSource = tableValues;
 
                 //if (!(indxSelected < 0))

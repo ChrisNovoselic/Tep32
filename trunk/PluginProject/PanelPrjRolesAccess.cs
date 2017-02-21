@@ -167,8 +167,8 @@ namespace PluginProject
             m_handlerDb.RegisterDbConnection(out err);
             m_tblOrigin = null;
             m_tblOrigin = User.GetProfiles(m_handlerDb.DbConnection, out err);
-            m_arr_UserRolesTable[(int)ID_Table.Role] = m_handlerDb.GetDataTable(@"roles_unit", out err);
-            m_arr_UserRolesTable[(int)ID_Table.User] = m_handlerDb.GetDataTable(@"users", out err);
+            m_arr_UserRolesTable[(int)ID_Table.Role] = m_handlerDb.GetDataTable(ID_DBTABLE.ROLES_UNIT, out err);
+            m_arr_UserRolesTable[(int)ID_Table.User] = m_handlerDb.GetDataTable(ID_DBTABLE.USERS, out err);
             m_arr_UserRolesTable[(int)ID_Table.Panels] = User.GetRolesPanels(m_handlerDb.DbConnection, out err);
 
             if (m_table_TEC.Columns.Count == 0)
@@ -193,23 +193,17 @@ namespace PluginProject
             resetDataTable();
 
 
-            if (node == null)
-            {
+            if (node == null) {
                 tree.SelectedNode = tree.Nodes[1];
                 tree.SelectedNode = tree.Nodes[0];
-            }
-            else
-            {
+            } else {
                 tree.SelectedNode = tree.Nodes[0];
                 tree.SelectedNode = tree.Nodes[1];
+
                 if (par_node != null)
-                {
                     tree.SelectedNode = tree.Nodes[par_node.Index].Nodes[node.Index];
-                }
                 else
-                {
                     tree.SelectedNode = tree.Nodes[node.Index];
-                }
             }
         }
 
@@ -233,14 +227,15 @@ namespace PluginProject
             int ID = 0;
             int err = 0;
 
-            if (e.IdComp == (int)ID_Table.Role)
-            {
+            if (e.IdComp == (int)ID_Table.Role) {
                 ID = DbTSQLInterface.GetIdNext(m_arr_UserRolesTable[(int)ID_Table.Role], out err);
-            }
-            if (e.IdComp == (int)ID_Table.User)
-            {
+            } else
+                ;
+
+            if (e.IdComp == (int)ID_Table.User) {
                 ID = DbTSQLInterface.GetIdNext(m_arr_UserRolesTable[(int)ID_Table.User], out err);
-            }
+            } else
+                ;
 
             return ID;
         }

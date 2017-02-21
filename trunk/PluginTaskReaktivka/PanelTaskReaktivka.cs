@@ -36,8 +36,8 @@ namespace PluginTaskReaktivka
         protected enum INDEX_ID
         {
             UNKNOWN = -1,
-            PERIOD, // идентификаторы периодов расчетов, использующихся на форме
-            TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов
+            /*PERIOD, // идентификаторы периодов расчетов, использующихся на форме
+            TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов*/
             ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров
             //DENY_COMP_CALCULATED, 
             DENY_COMP_VISIBLED,
@@ -213,6 +213,9 @@ namespace PluginTaskReaktivka
         {
             err = 0;
             errMsg = string.Empty;
+
+            ID_PERIOD idProfilePeriod;
+            ID_TIMEZONE idProfileTimezone;
             string strItem = string.Empty;
             int i = -1
                 , id_comp = -1;
@@ -229,15 +232,15 @@ namespace PluginTaskReaktivka
                     };
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
 
-            for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
+            for (INDEX_ID id = INDEX_ID.ALL_COMPONENT; id < INDEX_ID.COUNT; id++)
                 switch (id)
                 {
-                    case INDEX_ID.PERIOD:
+                    /*case INDEX_ID.PERIOD:
                         m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
                         break;
                     case INDEX_ID.TIMEZONE:
                         m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-                        break;
+                        break;*/
                     case INDEX_ID.ALL_COMPONENT:
                         m_arListIds[(int)id] = new List<int> { };
                         break;
@@ -249,7 +252,7 @@ namespace PluginTaskReaktivka
 
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, COMP, TIMEZONE, RATIO
-            initialize(new ID_DBTABLE[] { ID_DBTABLE.PERIOD, ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP, ID_DBTABLE.RATIO }
+            initialize(new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD, */ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP, ID_DBTABLE.RATIO }
                 , out err, out errMsg);
 
             (PanelManagement as PanelManagementReaktivka).Clear();
@@ -304,14 +307,19 @@ namespace PluginTaskReaktivka
                 m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
                 if (err == 0)
-                {                
+                {
                     //m_bflgClear = !m_bflgClear;
                     //Заполнить элемент управления с часовыми поясами
-                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]));
+                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
+                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
+                        , new int[] { (int)ID_TIMEZONE.MSK }
+                        , idProfileTimezone);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     idPeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
-                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.PERIOD], idPeriod);
+                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
+                        , new int[] { (int)ID_PERIOD.MONTH }
+                        , idPeriod);
                     Session.SetCurrentPeriod(idPeriod);
                     PanelManagement.SetModeDatetimeRange();               
                 } else                    
@@ -343,9 +351,12 @@ namespace PluginTaskReaktivka
         /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны даты/времени</param>
         protected void setCurrentTimeZone(ComboBox cbxTimezone)
         {
-            int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
+            ID_TIMEZONE idTimezone =                
+                //m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex]
+                PanelManagement.IdTimezone
+                ;
 
-            Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
+            Session.SetCurrentTimeZone(idTimezone
                 , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
 

@@ -302,6 +302,9 @@ namespace PluginTaskAutobook
         {
             err = 0;
             errMsg = string.Empty;
+
+            ID_PERIOD idProfilePeriod;
+            ID_TIMEZONE idProfileTimezone;
             string strItem = string.Empty;
             int i = -1
                 , id_comp = -1;
@@ -332,7 +335,7 @@ namespace PluginTaskAutobook
 
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMIZONE, COMP, PARAMETER(OUT_VALUES), MEASURE, RATIO
-            initialize(new ID_DBTABLE[] { ID_DBTABLE.PERIOD }, out err, out errMsg);
+            initialize(new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD*/ }, out err, out errMsg);
 
             foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows)
             {
@@ -381,10 +384,16 @@ namespace PluginTaskAutobook
                 try
                 {
                     //Заполнить элемент управления с часовыми поясами
-                    PanelManagement.FillValueTimezone (m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]));                    
+                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
+                    PanelManagement.FillValueTimezone (m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
+                        , new int[] { (int)ID_TIMEZONE.MSK }
+                        , (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]));                    
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
-                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.PERIOD], (ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()])));
+                    idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
+                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
+                        , new int[] { (int)ID_PERIOD.MONTH }
+                        , (ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()])));
                     Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
                     PanelManagement.SetModeDatetimeRange();
 

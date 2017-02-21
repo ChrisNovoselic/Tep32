@@ -114,8 +114,8 @@ namespace PluginTaskTepMain
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMEZONE, COMP_LIST, PARAMETERS(Type), MODE_DEV, RATIO
             initialize(new ID_DBTABLE[] {
-                    ID_DBTABLE.PERIOD
-                    , ID_DBTABLE.TIMEZONE
+                    /*ID_DBTABLE.PERIOD
+                    , */ID_DBTABLE.TIMEZONE
                     , ID_DBTABLE.COMP_LIST
                     , TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.IN_PARAMETER :
                         TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES ? ID_DBTABLE.OUT_PARAMETER :
@@ -134,10 +134,14 @@ namespace PluginTaskTepMain
                     initialize();
 
                     //Заполнить элемент управления с периодами расчета
-                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.PERIOD], ID_PERIOD.HOUR); //??? активный период требуется прочитать из [profile]
+                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
+                        , new int[] { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH }
+                        , ID_PERIOD.HOUR); //??? активный период требуется прочитать из [profile]
                     Session.SetCurrentPeriod(PanelManagement.IdPeriod);
                     //Заполнить элемент управления с часовыми поясами
-                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], ID_TIMEZONE.NSK); //??? активный пояс требуется прочитать из [profile]                    
+                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
+                        , new int[] { (int)ID_TIMEZONE.MSK }
+                        , ID_TIMEZONE.MSK); //??? активный пояс требуется прочитать из [profile]                    
                     setCurrentTimeZone(PanelManagement.IdTimezone);
 
                     //// отобразить значения

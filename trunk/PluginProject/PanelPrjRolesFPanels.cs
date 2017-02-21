@@ -733,8 +733,6 @@ namespace PluginProject
                                     e.Node.Nodes[NewNameElement.Context].Tag = NewNameElement.TagContext;
 
                                     dictItem = new HTepUsers.DictionaryProfileItem();
-                                    dictItem.Attributes = new Dictionary<string, string>();
-                                    dictItem = new HTepUsers.DictionaryProfileItem();
                                     dict[parComp.ID_Panel.ToString()][parComp.ID_Item.ToString()].Add(((int)NewNameElement.IdContext).ToString(), dictItem);
 
                                     ButtonSaveEnabled = true;
@@ -753,8 +751,6 @@ namespace PluginProject
                                     e.Node.Nodes.Add(NewNameElement.Item, NewNameElement.Item);
                                     e.Node.Nodes[NewNameElement.Item].Tag = NewNameElement.TagItem;
 
-                                    dictItem = new HTepUsers.DictionaryProfileItem();
-                                    dictItem.Attributes = new Dictionary<string, string>();
                                     dictItem = new HTepUsers.DictionaryProfileItem();
                                     dict[parComp.ID_Panel.ToString()].Add(((int)NewNameElement.IdItem).ToString(), dictItem);
 
@@ -892,8 +888,6 @@ namespace PluginProject
                             treeProfiles.Nodes.Add(NewNameElement.Panel, NewNameElement.Panel);
                             treeProfiles.Nodes[NewNameElement.Panel].Tag = NewNameElement.TagPanel;
 
-                            dictItem = new HTepUsers.DictionaryProfileItem();
-                            dictItem.Attributes = new Dictionary<string, string>();
                             dictItem = new HTepUsers.DictionaryProfileItem();
                             dict.Add(((int)NewNameElement.IdPanel).ToString(), dictItem);
 

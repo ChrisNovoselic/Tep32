@@ -217,13 +217,11 @@ namespace TepCommon
 
             //HTepProfilesXml.UpdateProfile(connSett);
 
-            DictionaryProfileItem dictElement = HTepProfilesXml.GetProfileUser(Id, Role);
+            DictionaryProfileItem dictProfileItem = HTepProfilesXml.GetProfileUser(Id, Role);
 
-            Dictionary<string, string> dictAttr = dictElement.Attributes;
-
-            if (dictAttr.ContainsKey(id.ToString()) == true)
+            if (dictProfileItem.Attributes.ContainsKey(id.ToString()) == true)
             {
-                strRes = dictAttr[id.ToString()];
+                strRes = dictProfileItem.Attributes[id.ToString()];
             }
 
             return strRes;
@@ -282,11 +280,52 @@ namespace TepCommon
         /// </summary>
         public class DictionaryProfileItem : Dictionary <string, DictionaryProfileItem>
         {
+            /// <summary>
+            /// Метод для получения словаря из XML
+            /// </summary>
+            /// <param name="node">Node для разбора</param>
+            /// <returns>Словарь полученный из XML</returns>
+            public static DictionaryProfileItem FromXml(XmlNode node)
+            {
+                DictionaryProfileItem dictProfileItemRes = new DictionaryProfileItem();
+
+                DictionaryProfileItem dictProfileItemChild = null;
+
+                if (node.ChildNodes.Count > 0) {
+                    foreach (XmlNode childNode in node.ChildNodes) {
+                        dictProfileItemChild = new DictionaryProfileItem();
+
+                        foreach (XmlAttribute attr in childNode.Attributes)
+                            dictProfileItemChild.Attributes.Add(attr.Name.Replace('_', ' ').Trim(), attr.Value);
+
+                        if (childNode.ChildNodes.Count > 0)
+                            dictProfileItemChild.SetObjects(childNode);
+                        else
+                        // нет элементов для добавления
+                            ;
+
+                        dictProfileItemRes.Add(childNode.LocalName.Replace('_', ' ').Trim(), dictProfileItemChild);
+                    }
+                } else
+                // нет элементов для добавления
+                    ;
+
+                return dictProfileItemRes;
+            }
             ///// <summary>
             ///// Словарь с вложенными объектами
             ///// </summary>
             //private Dictionary<string, DictionaryProfileItem> _objects;
 
+            public DictionaryProfileItem() : base ()
+            {
+                Attributes = new Dictionary<string, string>();
+            }
+            /// <summary>
+            /// Возвратить значение объекта по ключу, если ключ сложный возвратиь значения вложенных объектов
+            /// </summary>
+            /// <param name="keys">Клюс словаря для получения значения</param>
+            /// <returns>Значение словаря</returns>
             public DictionaryProfileItem GetObjects(params string[]keys)
             {
                 DictionaryProfileItem dictProfileItemRes = new DictionaryProfileItem();
@@ -302,13 +341,29 @@ namespace TepCommon
 
                 return dictProfileItemRes;
             }
+            /// <summary>
+            /// Установить значение для текущего объекта
+            /// </summary>
+            /// <param name="node">Источник значений</param>
+            public void SetObjects(XmlNode node)
+            {
+                DictionaryProfileItem objects = FromXml(node);
 
+                foreach (KeyValuePair<string, DictionaryProfileItem> pair in objects)
+                    this.Add(pair.Key, pair.Value);
+            }
             /// <summary>
             /// Словарь с атрибутами объекта
             /// </summary>
             public Dictionary<string, string> Attributes;
-
+            /// <summary>
+            /// Количество значений в текущем объекте
+            /// </summary>
             public int ObjectCount { get { return this.Count; } }
+            /// <summary>
+            /// Количество аттрибутов в текущем объекте
+            /// </summary>
+            public int AttributesCount { get { return Attributes.Count; } }
         }
         /// <summary>
         /// Получить таблицу с установками для отображения значений
@@ -320,6 +375,9 @@ namespace TepCommon
         public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(ConnectionSettings connSett, int[] fields, out int err)
         {
             err = -1; //Обшая ошибка
+
+            DictionaryProfileItem dictProfileItem = null
+                , objects = null;
             string strQuery = string.Empty;
             int id_unit = -1 // идентификатор параметра настроек при отображении значения [profiles_unit]
                 , ratio = -1 // коэффициент
@@ -336,29 +394,29 @@ namespace TepCommon
             if (fields.Length == (int)INDEX_VISUALSETTINGS_PARAMS.COUNT)
             {
                 //Получения элемента со словарями атрибутов и вложенных элементов для панели
-                DictionaryProfileItem dictElement = HTepProfilesXml.GetProfileUserPanel(Id, Role, fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]);
+                dictProfileItem = HTepProfilesXml.GetProfileUserPanel(Id, Role, fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]);
 
-                Dictionary<string, DictionaryProfileItem> dictProfile = new Dictionary<string, DictionaryProfileItem>();
+                objects = null;
                 //Перебор Item'ов в панели
-                if (dictElement.ContainsKey(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()) == true)
+                if (dictProfileItem.ContainsKey(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()) == true)
                 {
                     //Словарь с объектами в Item
-                    dictProfile = dictElement.GetObjects(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString());
+                    objects = dictProfileItem.GetObjects(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString());
                     
-                    foreach (string rAlg in dictProfile.Keys)
+                    foreach (string rAlg in objects.Keys)
                     {
                         ratio = 0;
                         round = 0;
 
-                        foreach (string idUnit in dictProfile[rAlg].Attributes.Keys)
+                        foreach (string idUnit in objects[rAlg].Attributes.Keys)
                         {
                             switch ((ID_ALLOWED)short.Parse(idUnit))
                             {
                                 case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
-                                    ratio = int.Parse(dictProfile[rAlg].Attributes[idUnit]);
+                                    ratio = int.Parse(objects[rAlg].Attributes[idUnit]);
                                     break;
                                 case ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND:
-                                    round = int.Parse(dictProfile[rAlg].Attributes[idUnit]);
+                                    round = int.Parse(objects[rAlg].Attributes[idUnit]);
                                     break;
                                 default:
                                     break;
@@ -456,7 +514,7 @@ namespace TepCommon
         {
             get
             {
-                Dictionary<string, DictionaryProfileItem> dictRoles = HTepProfilesXml.DictRoles;
+                Dictionary<string, DictionaryProfileItem> dictRoles = HTepProfilesXml.ProfileRoles;
                 return dictRoles;
             }
         }
@@ -467,7 +525,7 @@ namespace TepCommon
         {
             get
             {
-                Dictionary<string, DictionaryProfileItem> dictUsers = HTepProfilesXml.DictUsers;
+                Dictionary<string, DictionaryProfileItem> dictUsers = HTepProfilesXml.ProfileUsers;
                 return dictUsers;
             }
         }
@@ -631,11 +689,11 @@ namespace TepCommon
             /// <summary>
             /// Словарь с Профайлом для ролей
             /// </summary>
-            public static Dictionary<string, DictionaryProfileItem> DictRoles;
+            public static Dictionary<string, DictionaryProfileItem> ProfileRoles;
             /// <summary>
             /// Словарь с Профайлом для пользователей
             /// </summary>
-            public static Dictionary<string, DictionaryProfileItem> DictUsers;
+            public static Dictionary<string, DictionaryProfileItem> ProfileUsers;
             /// <summary>
             /// Словарь с XML для каждой роли
             /// </summary>
@@ -699,17 +757,20 @@ namespace TepCommon
                 string query = "IS_ROLE=1";
                 DataRow[] dtUnic = dtProfiles_Orig.Select(query);
 
-                DictRoles = new Dictionary<string, DictionaryProfileItem>();
+                DictionaryProfileItem dictProfileItem = new DictionaryProfileItem();
+                XmlDocument xml = new XmlDocument();
+
+                ProfileRoles = new Dictionary<string, DictionaryProfileItem>();
                 XmlRoles = new Dictionary<string, XmlDocument>();
 
                 for (int i = 0; i < dtUnic.Length; i++)
                 {
-                    Dictionary<string, DictionaryProfileItem> dict = new Dictionary<string, DictionaryProfileItem>();
-                    XmlDocument xml = new XmlDocument();
+                    dictProfileItem = new DictionaryProfileItem();
+                    xml = new XmlDocument();
                     xml.LoadXml(dtUnic[i]["XML"].ToString());
-                    dict = getDictFromXml(xml["Role"]);
+                    dictProfileItem = DictionaryProfileItem.FromXml(xml["Role"]);
 
-                    DictRoles.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), dict[dtUnic[i]["ID_EXT"].ToString().Trim()]);
+                    ProfileRoles.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), dictProfileItem[dtUnic[i]["ID_EXT"].ToString().Trim()]);
 
                     XmlRoles.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), xml);
                 }
@@ -723,60 +784,22 @@ namespace TepCommon
                 string query = "IS_ROLE=0";
                 DataRow[] dtUnic = dtProfiles_Orig.Select(query);
 
-                DictUsers = new Dictionary<string, DictionaryProfileItem>();
+                DictionaryProfileItem dictProfileItem;
+                XmlDocument xml;
+
+                ProfileUsers = new Dictionary<string, DictionaryProfileItem>();
                 XmlUsers = new Dictionary<string, XmlDocument>();
 
-                for (int i = 0; i < dtUnic.Length; i++)
-                {
-                    Dictionary<string, DictionaryProfileItem> dict = new Dictionary<string, DictionaryProfileItem>();
-                    XmlDocument xml = new XmlDocument();
+                for (int i = 0; i < dtUnic.Length; i++) {
+                    xml = new XmlDocument();
+
                     xml.LoadXml(dtUnic[i]["XML"].ToString());
-                    dict = getDictFromXml(xml["User"]);
-                    DictUsers.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), dict[dtUnic[i]["ID_EXT"].ToString().Trim()]);
+                    dictProfileItem = DictionaryProfileItem.FromXml(xml["User"]);
+
+                    ProfileUsers.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), dictProfileItem[dtUnic[i]["ID_EXT"].ToString().Trim()]);
                     XmlUsers.Add(dtUnic[i]["ID_EXT"].ToString().Trim(), xml);
                 }
-            }
-            /// <summary>
-            /// Метод для получения словаря из XML
-            /// </summary>
-            /// <param name="node">Node для разбора</param>
-            /// <returns>Словарь полученный из XML</returns>
-            private static DictionaryProfileItem getDictFromXml(XmlNode node)
-            {
-                DictionaryProfileItem dictProfileRes = new DictionaryProfileItem();
-                Dictionary<string, DictionaryProfileItem> dictChild = new Dictionary<string, DictionaryProfileItem>();
-                DictionaryProfileItem dictElemChild = null;
-                Dictionary<string, string> dictAttrChild = null;
-
-                if (node.ChildNodes.Count != 0)
-                {
-                    foreach (XmlNode child in node.ChildNodes)
-                    {
-                        dictElemChild = new DictionaryProfileItem();
-                        dictAttrChild = new Dictionary<string, string>();
-
-                        dictElemChild.Attributes = dictAttrChild;
-                        dictElemChild = new DictionaryProfileItem();
-
-                        foreach (XmlAttribute attr in child.Attributes)
-                        {
-                            dictAttrChild.Add(attr.Name.Replace('_', ' ').Trim(), attr.Value);
-                        }
-
-                        dictElemChild.Attributes = dictAttrChild;
-
-                        if (child.ChildNodes.Count != 0)
-                        {
-                            dictElemChild = getDictFromXml(child);
-                        }
-
-                        dictProfileRes.Add(child.LocalName.Replace('_', ' ').Trim(), dictElemChild);
-                    }
-                } else
-                    ;
-
-                return dictProfileRes;
-            }
+            }            
             /// <summary>
             /// Получить профайл для конкретного пользователя
             /// </summary>
@@ -785,7 +808,7 @@ namespace TepCommon
             /// <returns></returns>
             public static DictionaryProfileItem GetProfileUser(int id_user, int id_role)
             {
-                DictionaryProfileItem profileUser = getDictProfileItem(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
+                DictionaryProfileItem profileUser = getDictionaryProfileItem(ProfileRoles[id_role.ToString()], ProfileUsers[id_user.ToString()]);
 
                 return profileUser;
             }
@@ -798,7 +821,7 @@ namespace TepCommon
             /// <returns></returns>
             public static DictionaryProfileItem GetProfileUserPanel(int id_user, int id_role, int id_panel)
             {
-                DictionaryProfileItem profileUser = getDictProfileItem(DictRoles[id_role.ToString()], DictUsers[id_user.ToString()]);
+                DictionaryProfileItem profileUser = getDictionaryProfileItem(ProfileRoles[id_role.ToString()], ProfileUsers[id_user.ToString()]);
 
                 DictionaryProfileItem profilePanel = new DictionaryProfileItem();
 
@@ -815,11 +838,9 @@ namespace TepCommon
             /// <param name="dictObject_Role">Структура с данными роли</param>
             /// <param name="dictObject_User">Структура с данными пользователя</param>
             /// <returns>Структура с объединенными данными</returns>
-            private static DictionaryProfileItem getDictProfileItem(DictionaryProfileItem dictObject_Role, DictionaryProfileItem dictObject_User)
+            private static DictionaryProfileItem getDictionaryProfileItem(DictionaryProfileItem dictObject_Role, DictionaryProfileItem dictObject_User)
             {
                 DictionaryProfileItem profileUser = new DictionaryProfileItem();
-                profileUser.Attributes = new Dictionary<string, string>();
-                profileUser = new DictionaryProfileItem();
 
                 DictionaryProfileItem dict_role = dictObject_Role;
                 DictionaryProfileItem dict_user = dictObject_User;
@@ -841,7 +862,7 @@ namespace TepCommon
                         profileUser.Add(attr, dict_role[attr]);
                     }
                     else
-                        profileUser.Add(attr, getDictProfileItem(dict_role[attr], dict_user[attr]));
+                        profileUser.Add(attr, getDictionaryProfileItem(dict_role[attr], dict_user[attr]));
                 }
 
                 return profileUser;
@@ -908,7 +929,7 @@ namespace TepCommon
             public static void AddPanel(int idPanel, ConnectionSettings connSet)
             {
                 ParamComponent parComp = new ParamComponent();
-                string value = DictUsers[Id.ToString()].Attributes["3"];
+                string value = ProfileUsers[Id.ToString()].Attributes["3"];
 
                 parComp.ID_Unit = 3;
                 parComp.Value = value + ',' + idPanel.ToString();
@@ -927,7 +948,7 @@ namespace TepCommon
                 ParamComponent parComp = new ParamComponent();
                 string value = string.Empty;
                 string[] panels;
-                value = DictUsers[Id.ToString()].Attributes["3"];
+                value = ProfileUsers[Id.ToString()].Attributes["3"];
                 panels = value.Split(',');
                 string[] add_pan = new string[panels.Length - 1];
 

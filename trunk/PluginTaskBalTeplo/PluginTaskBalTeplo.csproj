@@ -44,6 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataGridView.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PanelTaskBalTeplo.cs">
       <SubType>Component</SubType>
     </Compile>
