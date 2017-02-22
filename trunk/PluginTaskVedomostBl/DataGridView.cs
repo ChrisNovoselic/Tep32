@@ -146,25 +146,25 @@ namespace PluginTaskVedomostBl
         protected class DataGridViewVedomostBl : DataGridView
         {
             /// <summary>
-            /// ширина и высота
+            /// Количество строк/столбцов(уровней) с заголовках столбцов
             /// </summary>
-            static int s_drwW,
-                s_drwH = s_listGroupHeaders.Count;
+            static int s_iCountColumn,
+                s_GroupHeaderCount = s_listGroupHeaders.Count;
             /// <summary>
-            /// 
+            /// Область, занятая родительским заголовком столбца
             /// </summary>
-            Rectangle recParentCol;
+            private Rectangle rectParentColumn;
             /// <summary>
             /// словарь названий заголовков 
             /// верхнего и среднего уровней
             /// </summary>
-            public Dictionary<int, List<string>> m_headerTop = new Dictionary<int, List<string>>(),
-                m_headerMiddle = new Dictionary<int, List<string>>();
+            public Dictionary<int, List<string>> m_headerTop = new Dictionary<int, List<string>>()
+                , m_headerMiddle = new Dictionary<int, List<string>>();
             /// <summary>
             /// словарь соотношения заголовков
             /// </summary>
-            public Dictionary<int, int[]> m_arIntTopHeader = new Dictionary<int, int[]> { },
-            m_arMiddleCol = new Dictionary<int, int[]> { };
+            public Dictionary<int, int[]> m_arIntTopHeader = new Dictionary<int, int[]> { }
+                , m_arMiddleCol = new Dictionary<int, int[]> { };
             /// <summary>
             /// перечисление уровней заголовка грида
             /// </summary>
@@ -174,30 +174,25 @@ namespace PluginTaskVedomostBl
                 TOP, MIDDLE, LOW,
                 COUNT
             }
-            private int _CountBL;
             /// <summary>
-            /// 
+            /// ??? зачем Количество блоков
             /// </summary>
-            public int m_CountBL
-            {
-                get { return _CountBL; }
-                set { _CountBL = value; }
-            }
+            public int BlockCount;
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
             /// </summary>
             public enum INDEX_SERVICE_COLUMN : uint { ALG = 0, DATE, COUNT }
             /// <summary>
-            /// словарь настроечных данных
+            /// Словарь настроечных данных
             /// </summary>
             private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
             private Dictionary<int, COLUMN_PROPERTY> m_dictPropertyColumns;
 
             /// <summary>
-            /// Конструктор
+            /// Конструктор - основной (с параметром)
             /// </summary>
-            /// <param name="nameDGV">имя грида</param>
-            public DataGridViewVedomostBl(INDEX_CONTROL tag)
+            /// <param name="nameDGV">Идентификатор оборудования - блока, данные которого отображаются в текущем представлении</param>
+            public DataGridViewVedomostBl(int tag)
             {
                 Tag = tag;
 
@@ -232,7 +227,7 @@ namespace PluginTaskVedomostBl
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
                 AllowUserToResizeColumns = false;
                 ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.BottomCenter;
-                ColumnHeadersHeight = ColumnHeadersHeight * s_drwH;//высота от нижнего(headerText)
+                ColumnHeadersHeight = ColumnHeadersHeight * s_GroupHeaderCount;//высота от нижнего(headerText)
                 ScrollBars = ScrollBars.None;
 
                 AddColumns(-2, "ALG", string.Empty, false);
@@ -593,7 +588,7 @@ namespace PluginTaskVedomostBl
                     if (col.Visible == true)
                         cntCol++;
 
-                s_drwW = cntCol * dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width +
+                s_iCountColumn = cntCol * dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width +
                     dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width / s_listGroupHeaders.Count;
 
                 dgv.Paint += new PaintEventHandler(dataGridView1_Paint);
@@ -730,7 +725,8 @@ namespace PluginTaskVedomostBl
             void dataGridView1_Paint(object sender, PaintEventArgs e)
             {
                 int indxCol = 0
-                    , idComp = -1;
+                    , idComp = -1
+                    , height = -1;
                 Rectangle r1 = new Rectangle()
                     , r2 = new Rectangle();
                 Pen pen;
@@ -741,18 +737,17 @@ namespace PluginTaskVedomostBl
                 format.Alignment = StringAlignment.Center;
                 format.LineAlignment = StringAlignment.Center;
 
-                s_drwH = 3;
                 //
                 for (int i = 0; i < Columns.Count; i++)
                     if (GetCellDisplayRectangle(i, -1, true).Height > 0 & GetCellDisplayRectangle(i, -1, true).X > 0)
                     {
-                        recParentCol = GetCellDisplayRectangle(i, -1, true);
-                        r1 = recParentCol;
-                        r2 = recParentCol;
+                        rectParentColumn = GetCellDisplayRectangle(i, -1, true);
+                        r1 = rectParentColumn;
+                        r2 = rectParentColumn;
                         break;
                     }
 
-                s_drwH = r1.Height / s_drwH;
+                height = r1.Height / s_GroupHeaderCount;
 
                 idComp = (int)(sender as DataGridViewVedomostBl).Tag;
                 foreach (var item in m_headerMiddle[idComp])
@@ -760,7 +755,7 @@ namespace PluginTaskVedomostBl
                     //get the column header cell
                     r1.Width = m_arMiddleCol[idComp][m_headerMiddle[idComp].ToList().IndexOf(item)]
                         * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
-                    r1.Height = s_drwH + 3;//??? 
+                    r1.Height = height + 3;//??? 
 
                     if (m_headerMiddle[idComp].ToList().IndexOf(item) - 1 > -1)
                         r1.X = r1.X + m_arMiddleCol[idComp][m_headerMiddle[idComp].ToList().IndexOf(item) - 1]
@@ -783,7 +778,7 @@ namespace PluginTaskVedomostBl
                 {
                     //get the column header cell
                     r2.Width = m_arIntTopHeader[idComp][indxCol] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
-                    r2.Height = s_drwH + 2;//??? 
+                    r2.Height = height + 2;//??? 
 
                     if (indxCol - 1 > -1)
                         r2.X = r2.X + m_arIntTopHeader[idComp][indxCol - 1] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
@@ -817,8 +812,8 @@ namespace PluginTaskVedomostBl
                     e.PaintBackground(e.CellBounds, false);
 
                     Rectangle r2 = e.CellBounds;
-                    r2.Y += e.CellBounds.Height / s_drwH;
-                    r2.Height = e.CellBounds.Height / s_drwH;
+                    r2.Y += e.CellBounds.Height / s_GroupHeaderCount;
+                    r2.Height = e.CellBounds.Height / s_GroupHeaderCount;
                     e.PaintContent(r2);
                     e.Handled = true;
                 }
@@ -1043,30 +1038,30 @@ namespace PluginTaskVedomostBl
                         indexPut++;
                     }
                 }
-                dtSourceEdit = sortingTable(dtSourceEdit, "WR_DATETIME");
+                dtSourceEdit = sortDataTable(dtSourceEdit, "WR_DATETIME");
                 return dtSourceEdit;
             }
 
             /// <summary>
-            /// соритровка таблицы по столбцу
+            /// ??? Сортировка таблицы по столбцу
             /// </summary>
             /// <param name="table">таблица для сортировки</param>
             /// <param name="sortStr">имя столбца/ов для сортировки</param>
             /// <returns>отсортированная таблица</returns>
-            private DataTable sortingTable(DataTable table, string colSort)
+            private DataTable sortDataTable(DataTable table, string colSort)
             {
-                try
-                {
-                    DataView dView = table.DefaultView;
-                    string sortExpression = string.Format(colSort);
+                DataView dView = null;
+                string sortExpression = string.Empty;
+
+                try {
+                    dView = table.DefaultView;
+                    sortExpression = string.Format(colSort);
+
                     dView.Sort = sortExpression;
                     table = dView.ToTable();
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, @"DataGridViewVedomostBl::sortDataTable () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
-                catch (Exception e)
-                {
-                    MessageBox.Show("???" + "Ошибка сортировки таблицы! " + e.ToString());
-                }
-
 
                 return table;
             }
@@ -1085,7 +1080,7 @@ namespace PluginTaskVedomostBl
                 int quality = 1;
                 double originValues;
 
-                origin = sortingTable(origin, "ID_PUT, WR_DATETIME");
+                origin = sortDataTable(origin, "ID_PUT, WR_DATETIME");
 
                 if (origin.Rows.Count - 1 < i)
                     originValues = 0;

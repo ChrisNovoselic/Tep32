@@ -24,29 +24,29 @@ namespace PluginTaskVedomostBl
         /// Для обозначения выбора 1 или 6 блоков
         /// </summary>
         static bool s_flagBl = true;
-        /// <summary>
-        /// ??? Делегат (возврат пикчи по Ид)
-        /// </summary>
-        /// <param name="id">ид грида</param>
-        /// <returns>picture</returns>
-        public delegate PictureBox DelgetPictureOfIdComp(int id);
-        /// <summary>
-        /// ??? Делегат 
-        /// </summary>
-        /// <returns>грид</returns>
-        public delegate DataGridView DelgetDataGridViewActivate();
+        ///// <summary>
+        ///// ??? Делегат (возврат пикчи по Ид)
+        ///// </summary>
+        ///// <param name="id">ид грида</param>
+        ///// <returns>picture</returns>
+        //public delegate PictureBox PictureBoxDelegateIntFunc(int id);
+        ///// <summary>
+        ///// ??? Делегат 
+        ///// </summary>
+        ///// <returns>грид</returns>
+        //public delegate DataGridView DataGridViewDelegateFunc();
         /// <summary>
         /// ??? экземпляр делегата(возврат пикчи по Ид)
         /// </summary>
-        static public DelgetPictureOfIdComp s_getPicture;
+        static public Func<int, PictureBox> s_getPicture;
         /// <summary>
         /// ??? экземпляр делегата(возврат отображения активного)
         /// </summary>
-        static public DelgetDataGridViewActivate s_getDGV;
+        static public Func<DataGridView> s_getDGV;
         /// <summary>
         /// ??? экземпляр делегата(возврат Ид)
         /// </summary>
-        static public IntDelegateFunc s_getIdComp;
+        static public Func<int> s_getIdComp;
         /// <summary>
         /// флаг очистки отображения
         /// </summary>
@@ -78,8 +78,8 @@ namespace PluginTaskVedomostBl
             UNKNOWN = -1
             /*, DGV_DATA_B1, DGV_DATA_B2, DGV_DATA_B3, DGV_DATA_B4, DGV_DATA_B5, DGV_DATA_B6
             , RADIOBTN_BLK1, RADIOBTN_BLK2, RADIOBTN_BLK3, RADIOBTN_BLK4, RADIOBTN_BLK5, RADIOBTN_BLK6*/
-            , LABEL_DESC, TBLP_HGRID, PICTURE_BOXDGV, PANEL_PICTUREDGV,
-            COUNT
+            , LABEL_DESC, TBLP_HGRID, PICTURE_BOXDGV, PANEL_PICTUREDGV
+                , COUNT
         }
         /// <summary>
         /// Перечисление - режимы работы вкладки
@@ -578,7 +578,7 @@ namespace PluginTaskVedomostBl
             {
                 //Excel.Range exclTEC = exclWrksht.get_Range("B2");
                 Excel.Range exclRMonth = exclWrksht.get_Range("R1");
-                exclRMonth.Value2 = "Ведомость блока №" + (dgv as DataGridViewVedomostBl).m_CountBL + " за " + HDateTime.NameMonths[dtRange.Begin.Month - 1] + " месяц " + dtRange.Begin.Year + " года";
+                exclRMonth.Value2 = "Ведомость блока №" + (dgv as DataGridViewVedomostBl).BlockCount + " за " + HDateTime.NameMonths[dtRange.Begin.Month - 1] + " месяц " + dtRange.Begin.Year + " года";
                 exclRMonth.Font.Bold = true;
                 //HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
             }
@@ -800,16 +800,19 @@ namespace PluginTaskVedomostBl
             : base(iFunc)
         {
             s_VedCalculate = new VedomostBlCalculate();
+
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
             //Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
             m_dictHeaderBlock = new Dictionary<int, List<string[]>> { };
 
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
+
             InitializeComponent();
-            s_getPicture = new DelgetPictureOfIdComp(GetPictureOfIdComp);
-            s_getDGV = new DelgetDataGridViewActivate(GetDGVOfIdComp);
-            s_getIdComp = new IntDelegateFunc(GetIdComp);
+
+            s_getPicture = new Func <int, PictureBox> (GetPictureOfIdComp);
+            s_getDGV = new Func<DataGridView>(GetDGVOfIdComp);
+            s_getIdComp = new Func<int>(GetIdComp);
         }
 
         /// <summary>
@@ -1072,51 +1075,25 @@ namespace PluginTaskVedomostBl
         {
             err = 0;
             errMsg = string.Empty;
-            string[] arstrItem;
-            int[] arId_comp;
-            //int indxRadioButton = (int)INDEX_CONTROL.RADIOBTN_BLK1;
-
-            INDEX_ID[] arIndxIdToAdd = new INDEX_ID[]
-            {
-                INDEX_ID.BLOCK_VISIBLED
-            };
-            //инициализация массивов
-            bool[] arChecked = new bool[m_dictTableDictPrj[ID_DBTABLE.COMP].Rows.Count];
-            List<CheckState> arGroup = new List<CheckState>();
-
-            arRadioBtn = new PanelManagementVedomostBl.RadioButtonBlock[m_dictTableDictPrj[ID_DBTABLE.COMP].Rows.Count];
-            arId_comp = new int[m_dictTableDictPrj[ID_DBTABLE.COMP].Rows.Count];
-            arstrItem = new string[m_dictTableDictPrj[ID_DBTABLE.COMP].Rows.Count];
-
-            //создание списка гридов по блокам
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows) {
-                //инициализация радиобаттанов
-                arRadioBtn[indxRadioButton - (int)INDEX_CONTROL.RADIOBTN_BLK1] = new PanelManagementVedomostBl.RadioButtonBlock((INDEX_CONTROL)indxRadioButton);
-
-                arId_comp[indxRadioButton - (int)INDEX_CONTROL.RADIOBTN_BLK1] = int.Parse(r[@"ID"].ToString());
-                m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(int.Parse(r[@"ID"].ToString()));
-                arstrItem[indxRadioButton - (int)INDEX_CONTROL.RADIOBTN_BLK1] = ((string)r[@"DESCRIPTION"]).Trim();
-                if (indxRadioButton == (int)INDEX_CONTROL.RADIOBTN_BLK1)
-                    arChecked[0] = true;
-                else
-                    arChecked[indxRadioButton - (int)INDEX_CONTROL.RADIOBTN_BLK1] = false;
-
-                indxRadioButton++;
-            }
-
-            for (int i = 0; i < s_listGroupHeaders.Count; i++)
-                arGroup.Add(CheckState.Checked);
-
+            
             try {
                 //if (arId_comp[rbCnt] != 0)
                 //добавление радиобатонов на форму
-                PanelManagement.AddComponentRadioButton(arId_comp
-                    , arstrItem
-                    , arIndxIdToAdd
-                    , arChecked
-                    , arRadioBtn
-                    , arGroup);
+                PanelManagement.AddComponentRadioButton(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST]);
 
+            } catch (Exception e) {
+                Logging.Logg().Exception(e, @"PanelTaskVedomostBl::initializeRadioButtonBlock () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
+        }
+
+        private void initializeCheckBoxGroupHeaders(out int err, out string errMsg)
+        {
+            err = 0;
+            errMsg = string.Empty;
+
+            try {
+                //??? добавить элементы управления (а подписи к группам)
+                PanelManagement.AddComponentCheckBoxGroupHeaders(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST]);
             } catch (Exception e) {
                 Logging.Logg().Exception(e, @"PanelTaskVedomostBl::initializeRadioButtonBlock () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
@@ -1132,7 +1109,9 @@ namespace PluginTaskVedomostBl
         {
             err = 0;
             errMsg = string.Empty;
-            int idPar = -1
+
+            int i = -1
+                , idPar = -1
                 , avg = -1
                 , idComp = -1;
             DataGridViewVedomostBl dgv = null;
@@ -1143,12 +1122,11 @@ namespace PluginTaskVedomostBl
             //tableComponentId = HandlerDb.GetHeaderDGV(); // получение ид компонентов
 
             //создание грида со значениями
-            for (int j = (int)INDEX_CONTROL.DGV_DATA_B1; j < (int)INDEX_CONTROL.RADIOBTN_BLK1; j++)
+            for (i = 0; i < m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows.Count; i++)
             {
-                dgv = new DataGridViewVedomostBl((INDEX_CONTROL)j);
-                dgv.Name = ((INDEX_CONTROL)j).ToString();
-                dgv.Tag = int.Parse(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows[j]["ID"].ToString());
-                dgv.m_CountBL = j + 1;
+                dgv = new DataGridViewVedomostBl(int.Parse(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows[i]["ID"].ToString()));
+                dgv.Name = string.Format(@"DGV_DATA_B{0}", i);
+                dgv.BlockCount = i + 1;
 
                 m_dictHeaderBlock.Add((int)dgv.Tag, GetListHeaders(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER], (int)dgv.Tag)); // cловарь заголовков
 
@@ -1174,7 +1152,7 @@ namespace PluginTaskVedomostBl
                        , true);
                 }
 
-                for (int i = 0; i < DaysInMonth + 1; i++)
+                for (i = 0; i < DaysInMonth + 1; i++)
                     if (dgv.Rows.Count != DaysInMonth)
                         dgv.AddRow(new DataGridViewVedomostBl.ROW_PROPERTY()
                         {
@@ -1199,21 +1177,20 @@ namespace PluginTaskVedomostBl
                 m_pictureVedBl = new PictureVedBl(dgv);
                 (Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).Controls.Add(m_pictureVedBl);
                 //возможность_редактирвоания_значений
-                try
-                {
-                    if (m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
-                    {
+                try {
+                    if (m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true) {
                         if (int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
                             (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
                         else
                             (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-                    }
-                    else
+                    } else
                         (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
                     if ((Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
                         for (int t = 0; t < dgv.RowCount; t++)
                             dgv.ReadOnlyColumns = false;
+                    else
+                        ;
                 } catch (Exception exp) {
                     MessageBox.Show("???" + "Ошибки проверки возможности редактирования ячеек " + exp.ToString());
                 }
@@ -1307,6 +1284,7 @@ namespace PluginTaskVedomostBl
             initializeGroupHeaders(out err, out errMsg);
             //радиобаттаны
             initializeRadioButtonBlock(out err, out errMsg);
+            // активировать обработчик событий по индексу идентификатора
             PanelManagement.ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
             //активность_кнопки_сохранения
             try

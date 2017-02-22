@@ -14,6 +14,27 @@ namespace TepCommon
     partial class HPanelTepCommon
     {
         /// <summary>
+        /// Интерфейс для всех элементов управления с компонентами станции, параметрами расчета
+        /// </summary>
+        public interface IControl
+        {
+            /// <summary>
+            /// Идентификатор выбранного элемента списка
+            /// </summary>
+            int SelectedId { get; }
+            ///// <summary>
+            ///// Добавить элемент в список
+            ///// </summary>
+            ///// <param name="text">Текст подписи элемента</param>
+            ///// <param name="id">Идентификатор элемента</param>
+            ///// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
+            //void AddItem(int id, string text, bool bChecked);
+            /// <summary>
+            /// Удалить все элементы в списке
+            /// </summary>
+            void ClearItems();
+        }
+        /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
         protected class PanelManagementTaskCalculate : HClassLibrary.HPanelCommon

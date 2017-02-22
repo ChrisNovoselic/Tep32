@@ -169,10 +169,10 @@ namespace PluginTaskReaktivka
                 }
 
                 /// <summary>
-                /// 
+                /// Возвратить наименование элемента по идентификатору
                 /// </summary>
-                /// <param name="id"></param>
-                /// <returns></returns>
+                /// <param name="id"><Идентификатор элемента/param>
+                /// <returns>Наименованеи элемента</returns>
                 public string GetNameItem(int id)
                 {
                     string strRes = string.Empty;
@@ -181,28 +181,6 @@ namespace PluginTaskReaktivka
 
                     return strRes;
                 }
-            }
-
-            /// <summary>
-            /// Интерфейс для всех элементов управления с компонентами станции, параметрами расчета
-            /// </summary>
-            protected interface IControl
-            {
-                /// <summary>
-                /// Идентификатор выбранного элемента списка
-                /// </summary>
-                int SelectedId { get; }
-                ///// <summary>
-                ///// Добавить элемент в список
-                ///// </summary>
-                ///// <param name="text">Текст подписи элемента</param>
-                ///// <param name="id">Идентификатор элемента</param>
-                ///// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
-                //void AddItem(int id, string text, bool bChecked);
-                /// <summary>
-                /// Удалить все элементы в списке
-                /// </summary>
-                void ClearItems();
             }
 
             /// <summary>
