@@ -58,10 +58,93 @@ namespace TepCommon
         //        initTableDictPrj();
         //    }
         //}
+
+        protected class DictianaryTableDictProject : Dictionary<ID_DBTABLE, DataTable>
+        {
+            [Flags]
+            public enum DBTABLE_FILTER { NOT_SET = 0x0
+                , COMP_LIST_TG = 0x1
+            }
+
+            public virtual int SetDbTableFilter(ID_DBTABLE idDBTable, int []filter)
+            {
+                int iRes = -1; // ошибка
+
+                if (ContainsKey(idDBTable) == true) {
+                    switch (idDBTable) {
+                        case ID_DBTABLE.COMP_LIST:
+                            iRes = 0; // Ok
+                            break;
+                        default:
+                            iRes = 1; // фильтр не применен
+                            break;
+                    }                    
+                } else
+                    ;
+
+                return iRes;
+            }
+
+            public virtual int SetDbTableFilter(DBTABLE_FILTER dbTableFilter)
+            {
+                int iRes = -1; // ошибка
+
+                ID_DBTABLE idDbTable = ID_DBTABLE.UNKNOWN;
+                string filter = string.Empty;
+                List<DataRow> rowsToDelete = new List<DataRow>();
+
+                try {
+                    switch (dbTableFilter) {
+                        case DBTABLE_FILTER.COMP_LIST_TG:                            
+                            idDbTable = ID_DBTABLE.COMP_LIST;
+
+                            filter = string.Format(@"ID_COMP<{0} OR ID_COMP>{0}", 1000);                            
+                            break;
+                        default:
+                            break;
+                    }
+
+                    if ((!(idDbTable == ID_DBTABLE.UNKNOWN))
+                        && (string.IsNullOrEmpty(filter) == false))
+                        if (ContainsKey(idDbTable) == true) {
+                            rowsToDelete = this[idDbTable].Select(filter).ToList();
+
+                            iRes = 0; // Ok
+                        } else
+                            iRes = -2;
+                    else
+                        iRes = 1; // фильтр не применен - не найден обработчик
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}) - ID_DBTABLE={1}, filter='{2}'..."
+                        , dbTableFilter, idDbTable, filter)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+
+                    iRes = -11; // исключение при поиске строк для удаления
+                }
+
+                try {
+                    if (iRes == 0) {
+                        foreach (DataRow row in rowsToDelete)
+                            this[idDbTable].Rows.Remove(row);
+                    } else
+                        ;
+
+                    this[idDbTable].AcceptChanges();
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}) - ID_DBTABLE={1}, filter='{2}', строк для удаления={3}..."
+                        , dbTableFilter, idDbTable, filter, rowsToDelete.Count)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+
+                    iRes = -12; // исключение при удалении строк
+                }
+
+                return iRes;
+            }
+        }
         /// <summary>
         /// Словарь с таблицами словарно-проектных значений
         /// </summary>
-        protected Dictionary<ID_DBTABLE, DataTable> m_dictTableDictPrj;
+        protected DictianaryTableDictProject m_dictTableDictPrj;
         /// <summary>
         /// Удалить сессию (+ очистить реквизиты сессии)
         /// </summary>
@@ -400,7 +483,7 @@ namespace TepCommon
             errMsg = string.Empty;
 
             if (m_dictTableDictPrj == null)
-                m_dictTableDictPrj = new Dictionary<ID_DBTABLE, DataTable>();
+                m_dictTableDictPrj = new DictianaryTableDictProject();
             else {
                 Logging.Logg().Warning(@"HPanelTepCommon::initialize () - словарно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
 

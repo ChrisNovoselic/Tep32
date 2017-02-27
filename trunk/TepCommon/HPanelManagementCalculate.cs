@@ -348,14 +348,14 @@ namespace TepCommon
                 return objRes;
             }
 
-            public void FillValuePeriod(DataTable tableValues, IEnumerable<int>ids, ID_PERIOD idSelected)
+            public void FillValuePeriod(DataTable tableValues, ID_PERIOD idSelected)
             {
-                fillComboBoxValues(tableValues.Select(string.Format(@"ID IN ({0})", ids)), INDEX_CONTROL_BASE.CBX_PERIOD, (int)idSelected, @"DESCRIPTION", cbxPeriod_SelectedIndexChanged);
+                fillComboBoxValues(tableValues.Rows.Cast<DataRow>(), INDEX_CONTROL_BASE.CBX_PERIOD, (int)idSelected, @"DESCRIPTION", cbxPeriod_SelectedIndexChanged);
             }
 
-            public void FillValueTimezone(DataTable tableValues, IEnumerable<int> ids, ID_TIMEZONE idSelected)
+            public void FillValueTimezone(DataTable tableValues, ID_TIMEZONE idSelected)
             {
-                fillComboBoxValues(tableValues.Select(string.Format(@"ID IN ({0})", ids)), INDEX_CONTROL_BASE.CBX_TIMEZONE, (int)idSelected, @"NAME_SHR", cbxTimezone_SelectedIndexChanged);
+                fillComboBoxValues(tableValues.Rows.Cast<DataRow>(), INDEX_CONTROL_BASE.CBX_TIMEZONE, (int)idSelected, @"NAME_SHR", cbxTimezone_SelectedIndexChanged);
             }
 
             //private struct COMBOBOX_ITEM

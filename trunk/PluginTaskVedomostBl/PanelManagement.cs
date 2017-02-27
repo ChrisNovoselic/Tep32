@@ -39,7 +39,7 @@ namespace PluginTaskVedomostBl
                 TXTBX_EMAIL,
                 MENUITEM_UPDATE, MENUITEM_HISTORY,
                 CLBX_COMP_VISIBLED, CLBX_COMP_CALCULATED, CLBX_COL_VISIBLED,
-                CHKBX_EDIT, TBLP_BLK, TOOLTIP_GRP,
+                CHKBX_EDIT = 14, TBLP_BLK, TOOLTIP_GRP,
                 PICTURE_BOXDGV, PANEL_PICTUREDGV,
                 COUNT
             }
@@ -322,51 +322,55 @@ namespace PluginTaskVedomostBl
                 {
                     int indx = -1
                        , col = -1
-                       , row = -1;                    
+                       , row = -1;
+                    // добавить стиль для нового столбца/строки
+                    Action actionChangeStyles = () => {
+                        if (ColumnCount > RowCount) {
+                            RowCount++;
+                            RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+                        } else {
+                            ColumnCount++;
+                            ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
+                        }
+                    };
+                    // добавить элемент
+                    Action<RadioButton> actionAddRadioButton = (radioButton) => {
+                        Controls.Add(radioButton, col, row);
+                        if (AutoScroll == false)
+                            AutoScroll = true;
+                        else
+                            ;
+                    };
 
                     if (m_arRadioButtonBlock == null)
                         m_arRadioButtonBlock = arRadioButton;
+                    else
+                        ;
 
                     for (int i = 0; i < m_arRadioButtonBlock.Length; i++) {
                         m_arRadioButtonBlock[i].CheckedChanged += TableLayoutPanelkVed_CheckedChanged;                        
                         m_arRadioButtonBlock[i].Index = i;
 
-                        if (RowCount * ColumnCount < m_arRadioButtonBlock.Length)
-                        {
-                            if (InvokeRequired)
-                            {
-                                Invoke(new Action(() => RowCount++));
-                                Invoke(new Action(() => RowStyles.Add(new RowStyle(SizeType.Percent, 20F))));
+                        if (RowCount * ColumnCount < m_arRadioButtonBlock.Length) {
+                            if (InvokeRequired == true) {
+                                Invoke(actionChangeStyles);
+                            } else {
+                                actionChangeStyles();
                             }
-                            else
-                            {
-                                if (ColumnCount > RowCount)
-                                {
-                                    RowCount++;
-                                    RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-                                }
-                                else
-                                {
-                                    ColumnCount++;
-                                    ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
-                                }
-                            }
-                        }
+                        } else
+                            ;
 
                         indx = i;
-                        if (!(indx < m_arRadioButtonBlock.Length))
-                            //indx += (int)(indx / RowCount);
+                        //if (!(indx < m_arRadioButtonBlock.Length))
+                        //    //indx += (int)(indx / RowCount);
 
-                            row = indx / RowCount;
-                        col = indx % (RowCount - 0);
+                        row = indx / (RowCount + 1);
+                        col = indx % (RowCount + 1);
 
-                        if (InvokeRequired)
-                        {
-                            Invoke(new Action(() => Controls.Add(m_arRadioButtonBlock[i], col, row)));
-                            Invoke(new Action(() => AutoScroll = true));
-                        }
+                        if (InvokeRequired == true)
+                            Invoke(actionAddRadioButton, m_arRadioButtonBlock[i]);
                         else
-                            Controls.Add(m_arRadioButtonBlock[i], col, row);
+                            actionAddRadioButton(m_arRadioButtonBlock[i]);
                     }
                 }
 

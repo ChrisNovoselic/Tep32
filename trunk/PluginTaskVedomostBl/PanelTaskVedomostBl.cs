@@ -1125,7 +1125,8 @@ namespace PluginTaskVedomostBl
             for (i = 0; i < m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows.Count; i++)
             {
                 dgv = new DataGridViewVedomostBl(int.Parse(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows[i]["ID"].ToString()));
-                dgv.Name = string.Format(@"DGV_DATA_B{0}", i);
+                //??? исключить такое имя (ориентироваться на Tag)
+                dgv.Name = string.Format(@"DGV_DATA_B{0}", (i + 1));
                 dgv.BlockCount = i + 1;
 
                 m_dictHeaderBlock.Add((int)dgv.Tag, GetListHeaders(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER], (int)dgv.Tag)); // cловарь заголовков
@@ -1178,12 +1179,10 @@ namespace PluginTaskVedomostBl
                 (Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).Controls.Add(m_pictureVedBl);
                 //возможность_редактирвоания_значений
                 try {
-                    if (m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true) {
-                        if (int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
-                            (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
-                        else
-                            (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-                    } else
+                    if (m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                        (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
+                            int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE;
+                    else
                         (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
                     if ((Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
@@ -1191,8 +1190,9 @@ namespace PluginTaskVedomostBl
                             dgv.ReadOnlyColumns = false;
                     else
                         ;
-                } catch (Exception exp) {
-                    MessageBox.Show("???" + "Ошибки проверки возможности редактирования ячеек " + exp.ToString());
+                } catch (Exception e) {
+                //???
+                    Logging.Logg().Exception (e, string.Format(@"PanelVedomostBl::InitializeDataGridView () - ошибки проверки возможности редактирования ячеек..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
         }
@@ -1277,6 +1277,8 @@ namespace PluginTaskVedomostBl
                 , out err, out errMsg
             );
 
+            m_dictTableDictPrj.SetDbTableFilter(DictianaryTableDictProject.DBTABLE_FILTER.COMP_LIST_TG);
+
             PanelManagement.Clear();
             //Dgv's
             initializeDataGridView(out err, out errMsg); //???
@@ -1287,26 +1289,21 @@ namespace PluginTaskVedomostBl
             // активировать обработчик событий по индексу идентификатора
             PanelManagement.ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
             //активность_кнопки_сохранения
-            try
-            {
+            try {
                 if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
-                {
-                    if (int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE)
-                        (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = true;
-                    else
-                        (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-                }
+                    (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
+                        int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE;
                 else
                     (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-            } catch (Exception exp) {
-            // ???
-                MessageBox.Show("???" + exp.ToString());
+            } catch (Exception e) {
+                // ???
+                Logging.Logg().Exception(e, string.Format(@"PanelTaskVedomostBl::initialize () - BUTTON_SAVE.Enabled..."), Logging.INDEX_MESSAGE.NOT_SET);
+
+                err = -2;
             }
 
-            if (err == 0)
-            {
-                try
-                {
+            if (err == 0) {
+                try {
                     if (m_bflgClear == false)
                         m_bflgClear = true;
                     else

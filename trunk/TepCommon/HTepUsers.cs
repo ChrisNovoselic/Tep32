@@ -330,14 +330,18 @@ namespace TepCommon
             {
                 DictionaryProfileItem dictProfileItemRes = new DictionaryProfileItem();
 
-                if (keys.Length > 0)
-                    foreach (string key in keys)
-                        if (dictProfileItemRes.ObjectCount == 0)
-                            dictProfileItemRes = this[key];
-                        else
-                            dictProfileItemRes = dictProfileItemRes[key];
-                else
-                    ;
+                try {
+                    if (keys.Length > 0)
+                        foreach (string key in keys)
+                            if (dictProfileItemRes.ObjectCount == 0)
+                                dictProfileItemRes = ContainsKey(key) == true ? this[key] : new DictionaryProfileItem();
+                            else
+                                dictProfileItemRes = dictProfileItemRes.ContainsKey(key) == true ? dictProfileItemRes[key] : new DictionaryProfileItem();
+                    else
+                        ;
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, string.Format(@"DictionaryProfileItem::GetObjects () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
+                }
 
                 return dictProfileItemRes;
             }
