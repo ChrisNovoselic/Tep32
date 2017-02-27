@@ -51,8 +51,8 @@ namespace PluginTaskAutobook
         protected enum INDEX_ID
         {
             UNKNOWN = -1,
-            PERIOD, // идентификаторы периодов расчетов, использующихся на форме
-            TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов
+            /*PERIOD, // идентификаторы периодов расчетов, использующихся на форме
+            TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов*/
             ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров
             //    , DENY_COMP_CALCULATED,
             //DENY_PARAMETER_CALCULATED // запрещенных для расчета
@@ -315,15 +315,14 @@ namespace PluginTaskAutobook
             //m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
             int role = HTepUsers.Role;
 
-            for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
-                switch (id)
-                {
-                    case INDEX_ID.PERIOD:
+            for (INDEX_ID id = INDEX_ID.ALL_COMPONENT; id < INDEX_ID.COUNT; id++)
+                switch (id) {
+                    /*case INDEX_ID.PERIOD:
                         m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH, (int)ID_PERIOD.YEAR };
                         break;
                     case INDEX_ID.TIMEZONE:
                         m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-                        break;
+                        break;*/
                     case INDEX_ID.ALL_COMPONENT:
                         m_arListIds[(int)id] = new List<int> { };
                         break;
@@ -337,8 +336,11 @@ namespace PluginTaskAutobook
             // PERIOD, TIMIZONE, COMP, PARAMETER(OUT_VALUES), MEASURE, RATIO
             initialize(new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD*/ }, out err, out errMsg);
 
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows)
-            {
+            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
+            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.MONTH });
+            m_dictTableDictPrj.SetDbTableFilter(DictianaryTableDictProject.DBTABLE_FILTER.COMP_LIST_ELECTRO);
+
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows) {
                 id_comp = (int)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
 
@@ -347,15 +349,12 @@ namespace PluginTaskAutobook
 
             m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
-            try
-            {
+            try{
                 if (m_dictProfile.GetObjects(((int)ID_PERIOD.YEAR).ToString(), ((int)INDEX_CONTROL.DGV_PLANEYAR).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
-                {
                     if (int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.YEAR).ToString(), ((int)INDEX_CONTROL.DGV_PLANEYAR).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE)
                         (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
                     else
                         (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-                }
                 else
                     (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
@@ -365,35 +364,27 @@ namespace PluginTaskAutobook
                     m_dgvValues.AddBRead(true);
 
                 if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
-                {
                     if (int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE)
                         (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = true;
                     else
                         (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-                }
                 else
                     (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 Logging.Logg().Exception(e, @"PanelTaskAutoBookYarlyPlan::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
-            if (err == 0)
-            {
-                try
-                {
+            if (err == 0) {
+                try {
                     //Заполнить элемент управления с часовыми поясами
                     idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
                     PanelManagement.FillValueTimezone (m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
-                        , new int[] { (int)ID_TIMEZONE.MSK }
-                        , (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]));                    
+                        , (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]));
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
-                        , new int[] { (int)ID_PERIOD.MONTH }
-                        , (ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD].IndexOf(int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()])));
+                        , (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
                     Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
                     PanelManagement.SetModeDatetimeRange();
 

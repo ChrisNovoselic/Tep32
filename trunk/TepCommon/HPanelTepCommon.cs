@@ -64,6 +64,7 @@ namespace TepCommon
             [Flags]
             public enum DBTABLE_FILTER { NOT_SET = 0x0
                 , COMP_LIST_TG = 0x1
+                , COMP_LIST_ELECTRO = 0x2
             }
 
             public virtual int SetDbTableFilter(ID_DBTABLE idDBTable, int []filter)
@@ -72,13 +73,19 @@ namespace TepCommon
 
                 if (ContainsKey(idDBTable) == true) {
                     switch (idDBTable) {
+                        case ID_DBTABLE.TIME:
+                            iRes = 0; // Ok
+                            break;
+                        case ID_DBTABLE.TIMEZONE:
+                            iRes = 0; // Ok
+                            break;
                         case ID_DBTABLE.COMP_LIST:
                             iRes = 0; // Ok
                             break;
                         default:
                             iRes = 1; // фильтр не применен
                             break;
-                    }                    
+                    }
                 } else
                     ;
 
@@ -95,10 +102,10 @@ namespace TepCommon
 
                 try {
                     switch (dbTableFilter) {
-                        case DBTABLE_FILTER.COMP_LIST_TG:                            
+                        case DBTABLE_FILTER.COMP_LIST_TG:
                             idDbTable = ID_DBTABLE.COMP_LIST;
 
-                            filter = string.Format(@"ID_COMP<{0} OR ID_COMP>{0}", 1000);                            
+                            filter = string.Format(@"ID_COMP<{0} OR ID_COMP>{0}", 1000);
                             break;
                         default:
                             break;
