@@ -255,6 +255,9 @@ namespace PluginTaskReaktivka
             initialize(new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD, */ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP, ID_DBTABLE.RATIO }
                 , out err, out errMsg);
 
+            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
+            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.MONTH });
+
             (PanelManagement as PanelManagementReaktivka).Clear();
 
             foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows)
@@ -274,16 +277,13 @@ namespace PluginTaskReaktivka
                 else
                     ;
             }
-            //возможность_редактирвоания_значений
-            try
-            {
+            // возможность_редактирвоания_значений
+            try {
                 if ((m_dictProfile.ContainsKey(((int)ID_PERIOD.MONTH).ToString()) == true)
                     && (m_dictProfile[((int)ID_PERIOD.MONTH).ToString()].ContainsKey(((int)INDEX_CONTROL.DGV_DATA).ToString()) == true)
                     && (m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)INDEX_CONTROL.DGV_DATA).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true))
-                {
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
                         int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)INDEX_CONTROL.DGV_DATA).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == 1;
-                }
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
@@ -312,16 +312,14 @@ namespace PluginTaskReaktivka
                     //Заполнить элемент управления с часовыми поясами
                     idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
-                        , new int[] { (int)ID_TIMEZONE.MSK }
                         , idProfileTimezone);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     idPeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
-                        , new int[] { (int)ID_PERIOD.MONTH }
                         , idPeriod);
                     Session.SetCurrentPeriod(idPeriod);
-                    PanelManagement.SetModeDatetimeRange();               
+                    PanelManagement.SetModeDatetimeRange();
                 } else                    
                     errMsg = @"Неизвестная ошибка";
             } catch (Exception e) {

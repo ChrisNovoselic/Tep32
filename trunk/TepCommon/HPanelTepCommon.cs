@@ -61,11 +61,72 @@ namespace TepCommon
 
         protected class DictionaryTableDictProject : Dictionary<ID_DBTABLE, DataTable>
         {
+            #region DbTableCompList
             [Flags]
-            public enum DBTABLE_COMP_LIST_FILTER { NOT_SET = 0x0
-                , COMP_LIST_TG = 0x1
-                , COMP_LIST_ELECTRO = 0x2
+            public enum DbTableCompList {
+                NotSet = 0x0
+                , Tg = 0x1
+                , Tec = 0x2
             }
+
+            DbTableCompList _filterDbTableCompList;
+
+            public DbTableCompList FilterDbTableCompList
+            {
+                get { return _filterDbTableCompList; }
+
+                set {
+                    _filterDbTableCompList = value;
+                }
+            }
+            #endregion
+
+            #region DbTableTimezone
+            [Flags]
+            public enum DbTableTimezone {
+                NotSet = 0x0
+                , Utc = 0x1
+                , Msk = 0x2
+                , Nsk = 0x2
+            }
+
+            DbTableTimezone _filterDbTableTimezone;
+
+            public DbTableTimezone FilterDbTableTimezone
+            {
+                get { return _filterDbTableTimezone; }
+
+                set {
+                    _filterDbTableTimezone = value;
+                }
+            }
+            #endregion
+
+            #region DbTableTime
+            [Flags]
+            public enum DbTableTime
+            {
+                NotSet = 0x0
+                , Hour = 0x1
+                , Day = 0x2
+                , Month = 0x2
+            }
+
+            DbTableTime _filterDbTableTime;
+
+            public DbTableTime FilterDbTableTime
+            {
+                get { return _filterDbTableTime; }
+
+                set {
+                    _filterDbTableTime = value;
+                }
+            }
+
+            private void setDbTableFilter(DbTableTime filterDbTableTime)
+            {
+            }
+            #endregion
 
             public virtual int SetDbTableFilter(ID_DBTABLE idDBTable, int []filter)
             {
@@ -92,7 +153,7 @@ namespace TepCommon
                 return iRes;
             }
 
-            public virtual int SetDbTableFilter(DBTABLE_COMP_LIST_FILTER dbTableFilter)
+            public virtual int SetDbTableFilter(DbTableCompList dbTableFilter)
             {
                 int iRes = -1; // ошибка
 
@@ -102,7 +163,7 @@ namespace TepCommon
 
                 try {
                     switch (dbTableFilter) {
-                        case DBTABLE_COMP_LIST_FILTER.COMP_LIST_TG:
+                        case DbTableCompList.Tg:
                             idDbTable = ID_DBTABLE.COMP_LIST;
 
                             filter = string.Format(@"ID_COMP<{0} OR ID_COMP>{0}", 1000);

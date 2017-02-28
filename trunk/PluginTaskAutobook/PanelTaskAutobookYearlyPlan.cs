@@ -338,7 +338,7 @@ namespace PluginTaskAutobook
 
             m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
             m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.MONTH });
-            m_dictTableDictPrj.SetDbTableFilter(DictionaryTableDictProject.DBTABLE_COMP_LIST_FILTER.COMP_LIST_ELECTRO);
+            m_dictTableDictPrj.SetDbTableFilter(DictionaryTableDictProject.DbTableCompList.Electro);
 
             foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows) {
                 id_comp = (int)r[@"ID"];

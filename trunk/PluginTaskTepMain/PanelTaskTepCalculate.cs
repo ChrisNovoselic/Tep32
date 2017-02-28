@@ -127,6 +127,9 @@ namespace PluginTaskTepMain
                 , out err, out errMsg
             );
 
+            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
+            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH });
+
             if (err == 0)
                 try {
                     m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
@@ -135,13 +138,11 @@ namespace PluginTaskTepMain
 
                     //Заполнить элемент управления с периодами расчета
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
-                        , new int[] { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH }
                         , ID_PERIOD.HOUR); //??? активный период требуется прочитать из [profile]
                     Session.SetCurrentPeriod(PanelManagement.IdPeriod);
                     //Заполнить элемент управления с часовыми поясами
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
-                        , new int[] { (int)ID_TIMEZONE.MSK }
-                        , ID_TIMEZONE.MSK); //??? активный пояс требуется прочитать из [profile]                    
+                        , ID_TIMEZONE.MSK); //??? активный пояс требуется прочитать из [profile]
                     setCurrentTimeZone(PanelManagement.IdTimezone);
 
                     //// отобразить значения

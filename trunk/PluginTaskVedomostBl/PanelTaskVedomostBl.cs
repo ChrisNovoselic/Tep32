@@ -1277,12 +1277,15 @@ namespace PluginTaskVedomostBl
                 , out err, out errMsg
             );
 
-            m_dictTableDictPrj.SetDbTableFilter(DictionaryTableDictProject.DBTABLE_COMP_LIST_FILTER.COMP_LIST_TG);
+            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
+            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.DAY });
+
+            m_dictTableDictPrj.SetDbTableFilter(DictionaryTableDictProject.DbTableCompList.Tg);
 
             PanelManagement.Clear();
             //Dgv's
             initializeDataGridView(out err, out errMsg); //???
-            //groupHeader                                        
+            //groupHeader
             initializeGroupHeaders(out err, out errMsg);
             //радиобаттаны
             initializeRadioButtonBlock(out err, out errMsg);
@@ -1311,13 +1314,11 @@ namespace PluginTaskVedomostBl
 
                     //Заполнить элемент управления с часовыми поясами
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
-                        , new int[] { (int)ID_TIMEZONE.MSK }
                         , ID_TIMEZONE.MSK);
                     setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     idProfilePeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
-                        , new int[] { (int)ID_PERIOD.DAY }
                         , idProfilePeriod);
                     Session.SetCurrentPeriod(PanelManagement.IdPeriod);
                     PanelManagement.SetModeDatetimeRange();
