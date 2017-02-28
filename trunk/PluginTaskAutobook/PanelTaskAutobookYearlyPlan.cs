@@ -338,7 +338,7 @@ namespace PluginTaskAutobook
 
             m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
             m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.MONTH });
-            m_dictTableDictPrj.SetDbTableFilter(DictianaryTableDictProject.DBTABLE_FILTER.COMP_LIST_ELECTRO);
+            m_dictTableDictPrj.SetDbTableFilter(DictionaryTableDictProject.DBTABLE_COMP_LIST_FILTER.COMP_LIST_ELECTRO);
 
             foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows) {
                 id_comp = (int)r[@"ID"];
@@ -699,9 +699,9 @@ namespace PluginTaskAutobook
         /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны даты/времени</param>
         protected void setCurrentTimeZone(ComboBox cbxTimezone)
         {
-            int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
+            ID_TIMEZONE idTimezone = PanelManagement.IdTimezone;
 
-            Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
+            Session.SetCurrentTimeZone(idTimezone
                 , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
         }
 

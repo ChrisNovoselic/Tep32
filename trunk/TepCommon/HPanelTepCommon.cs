@@ -59,10 +59,10 @@ namespace TepCommon
         //    }
         //}
 
-        protected class DictianaryTableDictProject : Dictionary<ID_DBTABLE, DataTable>
+        protected class DictionaryTableDictProject : Dictionary<ID_DBTABLE, DataTable>
         {
             [Flags]
-            public enum DBTABLE_FILTER { NOT_SET = 0x0
+            public enum DBTABLE_COMP_LIST_FILTER { NOT_SET = 0x0
                 , COMP_LIST_TG = 0x1
                 , COMP_LIST_ELECTRO = 0x2
             }
@@ -92,7 +92,7 @@ namespace TepCommon
                 return iRes;
             }
 
-            public virtual int SetDbTableFilter(DBTABLE_FILTER dbTableFilter)
+            public virtual int SetDbTableFilter(DBTABLE_COMP_LIST_FILTER dbTableFilter)
             {
                 int iRes = -1; // ошибка
 
@@ -102,7 +102,7 @@ namespace TepCommon
 
                 try {
                     switch (dbTableFilter) {
-                        case DBTABLE_FILTER.COMP_LIST_TG:
+                        case DBTABLE_COMP_LIST_FILTER.COMP_LIST_TG:
                             idDbTable = ID_DBTABLE.COMP_LIST;
 
                             filter = string.Format(@"ID_COMP<{0} OR ID_COMP>{0}", 1000);
@@ -151,7 +151,7 @@ namespace TepCommon
         /// <summary>
         /// Словарь с таблицами словарно-проектных значений
         /// </summary>
-        protected DictianaryTableDictProject m_dictTableDictPrj;
+        protected DictionaryTableDictProject m_dictTableDictPrj;
         /// <summary>
         /// Удалить сессию (+ очистить реквизиты сессии)
         /// </summary>
@@ -490,7 +490,7 @@ namespace TepCommon
             errMsg = string.Empty;
 
             if (m_dictTableDictPrj == null)
-                m_dictTableDictPrj = new DictianaryTableDictProject();
+                m_dictTableDictPrj = new DictionaryTableDictProject();
             else {
                 Logging.Logg().Warning(@"HPanelTepCommon::initialize () - словарно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
 

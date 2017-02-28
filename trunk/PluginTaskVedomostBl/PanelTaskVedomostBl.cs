@@ -1277,7 +1277,7 @@ namespace PluginTaskVedomostBl
                 , out err, out errMsg
             );
 
-            m_dictTableDictPrj.SetDbTableFilter(DictianaryTableDictProject.DBTABLE_FILTER.COMP_LIST_TG);
+            m_dictTableDictPrj.SetDbTableFilter(DictionaryTableDictProject.DBTABLE_COMP_LIST_FILTER.COMP_LIST_TG);
 
             PanelManagement.Clear();
             //Dgv's
