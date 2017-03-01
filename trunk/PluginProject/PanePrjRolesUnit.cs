@@ -255,11 +255,9 @@ namespace PluginProject
 
             m_AllUnits = HTepUsers.GetTableProfileUnits.Copy();
             foreach (DataRow r in m_AllUnits.Select("ID>3"))
-            {
                 m_AllUnits.Rows.Remove(r);
-            }
 
-            m_arr_origTable[(int)ID_Table.Profiles] = HTepUsers.HTepProfilesXml.GetTableAllProfile.Copy();
+            m_arr_origTable[(int)ID_Table.Profiles] = HTepUsers.HTepProfilesXml.TableProfiles.Copy();
                 //User.GetTableAllProfile(connConfigDB).Copy();
 
             m_handlerDb.UnRegisterDbConnection();

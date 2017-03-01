@@ -672,11 +672,11 @@ namespace TepCommon
             /// <summary>
             /// Имя таблицы содержащей XML с описанием Profile
             /// </summary>
-            public static string m_nameTableProfilesData = @"profiles";
+            public static string s_nameTableProfilesData = @"profiles";
             /// <summary>
             /// Имя таблицы содержащей описания атрибутов элементов
             /// </summary>
-            public static string m_nameTableProfilesUnit = @"profiles_unit";
+            public static string s_nameTableProfilesUnit = @"profiles_unit";
             /// <summary>
             /// Перечисление индексов профайла
             /// </summary>
@@ -706,14 +706,18 @@ namespace TepCommon
             /// Словарь с XML для каждого пользователя
             /// </summary>
             public static Dictionary<string, XmlDocument> XmlUsers;
-            /// <summary>
+            /// <summary> 
             /// Оригинальная таблица с Profile
             /// </summary>
-            static DataTable dtProfiles_Orig;
+            public static DataTable TableProfiles { get { return s_tableProfiles_Orig; } }
+            /// <summary> 
+            /// Оригинальная таблица с Profile
+            /// </summary>
+            private static DataTable s_tableProfiles_Orig;
             /// <summary>
             /// Измененная таблица с Profile
             /// </summary>
-            static DataTable dtProfiles_Edit;
+            private static DataTable s_tableProfiles_Edit;
             /// <summary>
             /// Тип XML (роль/пользователь)
             /// </summary>
@@ -724,17 +728,6 @@ namespace TepCommon
             public enum Component : int { None, Panel, Item, Context, Count };
 
             #region GetDict
-
-            /// <summary>
-            /// Возвращает таблицу с профайлами для ролей и пользователей
-            /// </summary>
-            public static DataTable GetTableAllProfile
-            {
-                get
-                {
-                    return dtProfiles_Orig;
-                }
-            }
             /// <summary>
             /// Получить таблицу из БД
             /// </summary>
@@ -742,15 +735,22 @@ namespace TepCommon
             /// <returns>Таблица с XML</returns>
             private static DataTable getDataTable(ConnectionSettings connSet)
             {
-                DataTable dt;
+                DataTable tableRes;
                 int err = 0;
-                int idListener = DbSources.Sources().Register(connSet, false, string.Format(@"Интерфейс: {0}", connSet.dbName));
-                DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
-                string query = "SELECT * FROM ["+ m_nameTableProfilesData + "]";
-                dt = new DataTable();
-                dt = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
+
+                int idListener = -1;
+                string query = string.Empty;
+                DbConnection dbConn = null;
+
+                idListener = DbSources.Sources().Register(connSet, false, string.Format(@"Интерфейс: {0}", connSet.dbName));
+
+                dbConn = DbSources.Sources().GetConnection(idListener, out err);
+                query = "SELECT * FROM ["+ s_nameTableProfilesData + "]";
+                tableRes = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
+
                 DbSources.Sources().UnRegister(idListener);
-                return dt;
+
+                return tableRes;
             }
             /// <summary>
             /// Получение словаря с профайлом для ролей
@@ -759,7 +759,7 @@ namespace TepCommon
             private static void getProfileAllRoles()
             {
                 string query = "IS_ROLE=1";
-                DataRow[] dtUnic = dtProfiles_Orig.Select(query);
+                DataRow[] dtUnic = s_tableProfiles_Orig.Select(query);
 
                 DictionaryProfileItem dictProfileItem = new DictionaryProfileItem();
                 XmlDocument xml = new XmlDocument();
@@ -786,7 +786,7 @@ namespace TepCommon
             private static void getProfileAllUsers()
             {
                 string query = "IS_ROLE=0";
-                DataRow[] dtUnic = dtProfiles_Orig.Select(query);
+                DataRow[] dtUnic = s_tableProfiles_Orig.Select(query);
 
                 DictionaryProfileItem dictProfileItem;
                 XmlDocument xml;
@@ -887,13 +887,13 @@ namespace TepCommon
             /// <param name="connSet">Параметры подключения к БД</param>
             public static void UpdateProfile(ConnectionSettings connSet)
             {
-                dtProfiles_Orig = new DataTable();
+                s_tableProfiles_Orig = new DataTable();
                 XmlRoles = new Dictionary<string, XmlDocument>();
                 XmlUsers = new Dictionary<string, XmlDocument>();
 
-                dtProfiles_Orig = getDataTable(connSet);
+                s_tableProfiles_Orig = getDataTable(connSet);
                 GetTableProfileUnits(connSet);
-                dtProfiles_Edit = dtProfiles_Orig.Copy();
+                s_tableProfiles_Edit = s_tableProfiles_Orig.Copy();
                 getProfileAllRoles();
                 getProfileAllUsers();
             }
@@ -1233,9 +1233,9 @@ namespace TepCommon
             /// <param name="type">Тип XML (пользователь/роль)</param>
             public static void Save(ConnectionSettings connSet, XmlDocument doc, int id, Type type)
             {
-                dtProfiles_Edit = new DataTable();
-                dtProfiles_Edit = dtProfiles_Orig.Copy();
-                foreach (DataRow row in dtProfiles_Edit.Rows)
+                s_tableProfiles_Edit = new DataTable();
+                s_tableProfiles_Edit = s_tableProfiles_Orig.Copy();
+                foreach (DataRow row in s_tableProfiles_Edit.Rows)
                 {
                     if (row["ID_EXT"].ToString().Trim() == id.ToString() & row["IS_ROLE"].ToString().Trim() == ((int)type).ToString())
                     {
@@ -1247,7 +1247,7 @@ namespace TepCommon
                 int idListener = DbSources.Sources().Register(connSet, false, string.Format(@"Интерфейс: {0}", connSet.dbName));
                 DbConnection dbConn = DbSources.Sources().GetConnection(idListener, out err);
 
-                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, m_nameTableProfilesData, "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
+                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, s_nameTableProfilesData, "ID_EXT, IS_ROLE", string.Empty, s_tableProfiles_Orig, s_tableProfiles_Edit, out err);
 
                 DbSources.Sources().UnRegister(idListener);
 
@@ -1273,7 +1273,7 @@ namespace TepCommon
                 dtProfiles_Orig = getDTfromDict(arrDictOrig);
                 dtProfiles_Edit = getDTfromDict(arrDictEdit);
 
-                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, m_nameTableProfilesData, "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
+                DbTSQLInterface.RecUpdateInsertDelete(ref dbConn, s_nameTableProfilesData, "ID_EXT, IS_ROLE", string.Empty, dtProfiles_Orig, dtProfiles_Edit, out err);
 
                 DbSources.Sources().UnRegister(idListener);
 
@@ -1287,7 +1287,7 @@ namespace TepCommon
             private static DataTable getDTfromDict(Dictionary<string, XmlDocument>[] arrDict)
             {
                 DataTable dt = new DataTable();
-                dt = dtProfiles_Orig.Clone();
+                dt = s_tableProfiles_Orig.Clone();
 
 
                 for (int i = 0; i < (int)Type.Count; i++)
@@ -1388,7 +1388,7 @@ namespace TepCommon
                     errMsg = @"нет соединения с БД";
                 else
                 {
-                    query = @"SELECT * from " + m_nameTableProfilesUnit;
+                    query = @"SELECT * from " + s_nameTableProfilesUnit;
                     m_tblTypes = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
 
                     if (!(err == 0))
