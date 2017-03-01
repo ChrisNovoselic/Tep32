@@ -913,8 +913,8 @@ namespace PluginTaskBalTeplo
                 , out err, out errMsg
             );
 
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK });
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH });
+            m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Utc | DictionaryTableDictProject.DbTableTimezone.Msk | DictionaryTableDictProject.DbTableTimezone.Nsk;
+            m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Hour | DictionaryTableDictProject.DbTableTime.Month;
 
             if (err == 0) {
                 try {
@@ -1077,7 +1077,7 @@ namespace PluginTaskBalTeplo
                 ;
 
             Session.SetCurrentTimeZone(idTimezone
-                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)idTimezone)[0][@"OFFSET_UTC"]);
         }
 
         /// <summary>

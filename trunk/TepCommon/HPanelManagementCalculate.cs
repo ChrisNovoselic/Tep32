@@ -396,19 +396,27 @@ namespace TepCommon
                 //ctrl.DisplayMember = @"m_Text"; //nameFieldTextValue;
 
                 // вариант №2
-                ctrl.ValueMember = @"ID";
-                ctrl.DisplayMember = nameFieldTextValue;
-                tableValues = new DataTable();
-                rowValues.ToList().ForEach(r => { tableValues.Rows.Add(r); });
-                ctrl.DataSource = tableValues;
+                if (rowValues.Count() > 0) {
+                    ctrl.ValueMember = @"ID";
+                    ctrl.DisplayMember = nameFieldTextValue;
+                    tableValues = rowValues.ElementAt(0).Table.Clone();
+                    rowValues.ToList().ForEach(r => { tableValues.Rows.Add(r.ItemArray); });
+                    ctrl.DataSource = tableValues;
 
-                //if (!(indxSelected < 0))
-                //    ctrl.SelectedIndex = indxSelected;
-                //else
-                //    throw new Exception(@"PanelManagementTaskCalculaye::fillComboBoxValues () - не найдена строка для выбора по указанному идентификатру ...");
+                    //if (!(indxSelected < 0))
+                    //    ctrl.SelectedIndex = indxSelected;
+                    //else
+                    //    throw new Exception(@"PanelManagementTaskCalculaye::fillComboBoxValues () - не найдена строка для выбора по указанному идентификатру ...");
 
-                ctrl.SelectedIndexChanged += new EventHandler(handler);
+                    ctrl.SelectedIndexChanged += new EventHandler(handler);
+                } else {
+                    Logging.Logg().Error(string.Format(@"PanelManagementTaskCalculate::fillComboBoxValues () - таблица для DataSource пуста..."), Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
+
+            public bool AllowedTimezone { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0].Enabled = value; } }
+
+            public bool AllowedPeriod { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled = value; } }
 
             public void SetModeDatetimeRange()
             {

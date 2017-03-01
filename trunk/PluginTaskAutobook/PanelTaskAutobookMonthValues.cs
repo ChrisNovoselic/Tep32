@@ -1366,13 +1366,14 @@ namespace PluginTaskAutobook
                         break;
                 }
 
+            m_dictTableDictPrj = new DictionaryTableDictProject();
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMEZONE, COMP, MEASURE, RATIO
             initialize(new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD, */ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP_LIST, ID_DBTABLE.MEASURE, ID_DBTABLE.RATIO }
                 , out err, out errMsg);
 
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { });
+            m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Msk;
+            m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Month;
 
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
             Array namePut = Enum.GetValues(typeof(INDEX_GTP));
@@ -1412,8 +1413,7 @@ namespace PluginTaskAutobook
             try {
                 m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
-                if (err == 0)
-                {
+                if (err == 0) {
                     //Заполнить элемент управления с часовыми поясами
                     idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
@@ -1434,7 +1434,7 @@ namespace PluginTaskAutobook
                     else
                         Logging.Logg().Warning(string.Format(@"PanelTaskAutoBook::initialize () - в словаре 'm_dictProfile' не определен ключ [{0:1}]..."
                             , key, PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL)
-                            , Logging.INDEX_MESSAGE.NOT_SET);
+                                , Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 else
                     Logging.Logg().Error(MethodBase.GetCurrentMethod(), errMsg, Logging.INDEX_MESSAGE.NOT_SET);
@@ -1604,7 +1604,7 @@ namespace PluginTaskAutobook
             int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
 
             Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
-                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)idTimezone)[0][@"OFFSET_UTC"]);
         }
 
         /// <summary>

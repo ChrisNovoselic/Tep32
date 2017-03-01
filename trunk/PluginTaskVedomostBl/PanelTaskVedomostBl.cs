@@ -1265,6 +1265,7 @@ namespace PluginTaskVedomostBl
                         m_arListIds[(int)id] = new List<int>();
                         break;
                 }
+
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMWZONE, COMP, PARAMETER, RATIO
             initialize
@@ -1277,10 +1278,9 @@ namespace PluginTaskVedomostBl
                 , out err, out errMsg
             );
 
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.DAY });
-
-            m_dictTableDictPrj.SetDbTableFilter(DictionaryTableDictProject.DbTableCompList.Tg);
+            m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Msk;
+            m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Month;
+            m_dictTableDictPrj.FilterDbTableCompList = DictionaryTableDictProject.DbTableCompList.Tg;
 
             PanelManagement.Clear();
             //Dgv's
@@ -1307,10 +1307,7 @@ namespace PluginTaskVedomostBl
 
             if (err == 0) {
                 try {
-                    if (m_bflgClear == false)
-                        m_bflgClear = true;
-                    else
-                        m_bflgClear = false;
+                    m_bflgClear = !m_bflgClear;
 
                     //Заполнить элемент управления с часовыми поясами
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
@@ -1320,14 +1317,13 @@ namespace PluginTaskVedomostBl
                     idProfilePeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , idProfilePeriod);
+
                     Session.SetCurrentPeriod(PanelManagement.IdPeriod);
+
                     PanelManagement.SetModeDatetimeRange();
-
-                    (ctrl as ComboBox).Enabled = false;
-
-                }
-                catch (Exception e)
-                {
+                    PanelManagement.AllowedTimezone = false;
+                    PanelManagement.AllowedPeriod = false;
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelTaskVedomostBl::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -1414,13 +1410,13 @@ namespace PluginTaskVedomostBl
         /// <param name="ev">Аргумент события</param>
         protected void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
         {
-            if (m_bflgClear)
-            {
+            if (m_bflgClear) {
                 //Установить новое значение для текущего периода
                 setCurrentTimeZone(obj as ComboBox);
                 // очистить содержание представления
                 clear();
-            }
+            } else
+                ;
         }
 
         /// <summary>
@@ -1435,7 +1431,7 @@ namespace PluginTaskVedomostBl
                 ;
 
             Session.SetCurrentTimeZone(idTimezone
-                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)idTimezone)[0][@"OFFSET_UTC"]);
         }
 
         /// <summary>
@@ -1449,9 +1445,9 @@ namespace PluginTaskVedomostBl
                     PanelManagement.DateTimeRangeValue_Changed += new PanelManagementVedomostBl.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
                 else
                     if (active == false)
-                    PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-                else
-                    throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
+                        PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+                    else
+                        throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
         }
 
         /// <summary>
@@ -1470,8 +1466,10 @@ namespace PluginTaskVedomostBl
             //Возобновить обработку события - изменение начала/окончания даты/времени
             activateDateTimeRangeValue_OnChanged(true);
             if (m_bflgClear)
-                // очистить содержание представления
+            // очистить содержание представления
                 clear();
+            else
+                ;
         }
 
         /// <summary>

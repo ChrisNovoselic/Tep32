@@ -35,32 +35,102 @@ namespace TepCommon
         /// </summary>
         protected List<int>[] m_arListIds;
 
-        //private HMark _markTableDictPrj;
-        ///// <summary>
-        ///// Совокупность признаков наличия/отсутствия заполненых таблиц в словаре 'm_dictTableDictPrj'
-        ///// </summary>
-        //protected HMark m_markTableDictPrj
-        //{
-        //    set {
-        //        if (!(_markTableDictPrj == null)) {
-        //            Logging.Logg().Warning(@"HPanelTepCommon::m_markTableDictPrj.Set - повторная инициализация словарно-проектных таблиц ...", Logging.INDEX_MESSAGE.NOT_SET);
-
-        //            clearTableDictPrj();
-
-        //            m_dictTableDictPrj = null;
-        //            _markTableDictPrj = null;
-        //        } else
-        //            ;
-
-        //        _markTableDictPrj = value;
-        //        m_dictTableDictPrj = new Dictionary<ID_DBTABLE, DataTable>();
-
-        //        initTableDictPrj();
-        //    }
-        //}
-
         protected class DictionaryTableDictProject : Dictionary<ID_DBTABLE, DataTable>
         {
+            public enum Error {
+                ExFilterBuilder = -12
+                , ExRowRemove
+                , IdDbTableUnknown = -2
+                , Any = -1
+                , Not = 0
+                , WFilterNoApplied }
+
+            public class TSQLWhereItem
+            {
+                [Flags]
+                public enum RULE {
+                    NotSet
+                    , Equale
+                    , NotEquale
+                    , Above
+                    , Below
+                }
+
+                private string _nameField;
+
+                private object _limit;
+
+                public string Value { get; }
+
+                public RULE Rules;
+
+                public int Ready { get; }
+
+                public TSQLWhereItem(string nameField, object limit, RULE rules)
+                {
+                    _nameField = nameField;
+                    _limit = limit;
+                    Rules = rules;
+
+                    Ready = 0;
+
+                    foreach (RULE rule in Enum.GetValues(typeof(RULE)))
+                        if ((rule & Rules) == rule)
+                            switch (rule) {
+                                case RULE.Equale:
+                                    Value = string.Format(@"{0}<{1} OR {0}>{1}", _nameField, _limit);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        else
+                            ;
+                }
+            }            
+
+            public class ListTSQLWhere : List<TSQLWhereItem>//, IDisposable
+            {
+                public ID_DBTABLE IdDbTable;
+
+                public ListTSQLWhere(ID_DBTABLE idDbTable)
+                {
+                    IdDbTable = idDbTable;
+                }
+
+                public string Value
+                {
+                    get {
+                        string strRes = string.Empty;
+
+                        foreach (TSQLWhereItem item in this) {
+                            if (item.Ready == 0) {
+                                if (this.IndexOf(item) == 0)
+                                    if (Count == 1)
+                                        strRes = item.Value;
+                                    else
+                                        strRes = string.Format(@"({0})", item.Value);
+                                else
+                                    strRes += string.Format(@"OR ({0})", item.Value);
+                            } else
+                                ;
+                        }
+
+                        return strRes;
+                    }
+                }
+
+                //public void Dispose()
+                //{
+                //}
+            }
+
+            public DictionaryTableDictProject ()
+            {
+                _filterDbTableCompList = DbTableCompList.NotSet;
+                _filterDbTableTime = DbTableTime.NotSet;
+                _filterDbTableTimezone = DbTableTimezone.NotSet;
+            }
+
             #region DbTableCompList
             [Flags]
             public enum DbTableCompList {
@@ -77,6 +147,36 @@ namespace TepCommon
 
                 set {
                     _filterDbTableCompList = value;
+                    //??? не учитывается
+                    Error iRes = Error.Any; // ошибка
+
+                    ID_DBTABLE idDbTable = ID_DBTABLE.COMP_LIST;
+                    ListTSQLWhere listTSQLWhere = new ListTSQLWhere(idDbTable);
+
+                    try {
+                        foreach (DbTableCompList item in Enum.GetValues(typeof(DbTableCompList))) {
+                            if ((_filterDbTableCompList & item) == item)
+                                switch (item) {
+                                    case DbTableCompList.Tg:
+                                        listTSQLWhere.Add(new TSQLWhereItem(@"ID_COMP", (int)ID_COMP.TG, TSQLWhereItem.RULE.Equale));
+                                        break;
+                                    case DbTableCompList.Tec:
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            else
+                                ;
+                        }
+
+                        iRes = setDbTableFilter(listTSQLWhere);
+                    } catch (Exception e) {
+                        Logging.Logg().Exception(e, string.Format(@"FilterDbTableCompList.set (DbFilter={0}) - ID_DBTABLE={1}..."
+                            , _filterDbTableCompList, idDbTable)
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+
+                        iRes = Error.ExFilterBuilder; // исключение при поиске строк для удаления
+                    }
                 }
             }
             #endregion
@@ -87,7 +187,7 @@ namespace TepCommon
                 NotSet = 0x0
                 , Utc = 0x1
                 , Msk = 0x2
-                , Nsk = 0x2
+                , Nsk = 0x4
             }
 
             DbTableTimezone _filterDbTableTimezone;
@@ -98,6 +198,48 @@ namespace TepCommon
 
                 set {
                     _filterDbTableTimezone = value;
+                    //??? не учитывается
+                    Error iRes = Error.Any; // ошибка
+
+                    ID_DBTABLE idDbTable = ID_DBTABLE.TIMEZONE;
+                    ListTSQLWhere listTSQLWhere = new ListTSQLWhere(idDbTable);
+                    ID_TIMEZONE idTimezone = ID_TIMEZONE.UNKNOWN;
+
+                    try {
+                        foreach (DbTableTimezone item in Enum.GetValues(typeof(DbTableTimezone))) {
+                            idTimezone = ID_TIMEZONE.UNKNOWN;
+
+                            if ((_filterDbTableTimezone & item) == item)
+                                switch (item) {
+                                    case DbTableTimezone.Utc:
+                                        idTimezone = ID_TIMEZONE.UTC;
+                                        break;
+                                    case DbTableTimezone.Msk:
+                                        idTimezone = ID_TIMEZONE.MSK;
+                                        break;
+                                    case DbTableTimezone.Nsk:
+                                        idTimezone = ID_TIMEZONE.MSK;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            else
+                                ;
+
+                            if (!(idTimezone == ID_TIMEZONE.UNKNOWN))
+                                listTSQLWhere.Add(new TSQLWhereItem(@"ID", (int)idTimezone, TSQLWhereItem.RULE.Equale));
+                            else
+                                ;
+                        }
+
+                        iRes = setDbTableFilter(listTSQLWhere);
+                    } catch (Exception e) {
+                        Logging.Logg().Exception(e, string.Format(@"FilterDbTableCompList.set (DbFilter={0}) - ID_DBTABLE={1}..."
+                            , _filterDbTableCompList, idDbTable)
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+
+                        iRes = Error.ExFilterBuilder; // исключение при поиске строк для удаления
+                    }
                 }
             }
             #endregion
@@ -109,7 +251,7 @@ namespace TepCommon
                 NotSet = 0x0
                 , Hour = 0x1
                 , Day = 0x2
-                , Month = 0x2
+                , Month = 0x4
             }
 
             DbTableTime _filterDbTableTime;
@@ -120,6 +262,48 @@ namespace TepCommon
 
                 set {
                     _filterDbTableTime = value;
+                    //??? не учитывается
+                    Error iRes = Error.Any; // ошибка
+
+                    ID_DBTABLE idDbTable = ID_DBTABLE.TIME;
+                    ListTSQLWhere listTSQLWhere = new ListTSQLWhere(idDbTable);
+                    ID_PERIOD idPeriod = ID_PERIOD.UNKNOWN;
+
+                    try {
+                        foreach (DbTableTime item in Enum.GetValues(typeof(DbTableTime))) {
+                            idPeriod = ID_PERIOD.UNKNOWN;
+
+                            if ((_filterDbTableTime & item) == item)
+                                switch (item) {
+                                    case DbTableTime.Hour:
+                                        idPeriod = ID_PERIOD.HOUR;
+                                        break;
+                                    case DbTableTime.Day:
+                                        idPeriod = ID_PERIOD.DAY;
+                                        break;
+                                    case DbTableTime.Month:
+                                        idPeriod = ID_PERIOD.MONTH;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            else
+                                ;
+
+                            if (!(idPeriod == ID_PERIOD.UNKNOWN))
+                                listTSQLWhere.Add(new TSQLWhereItem(@"ID", (int)idPeriod, TSQLWhereItem.RULE.Equale));
+                            else
+                                ;
+                        }
+
+                        iRes = setDbTableFilter(listTSQLWhere);
+                    } catch (Exception e) {
+                        Logging.Logg().Exception(e, string.Format(@"FilterDbTableCompList.set (DbFilter={0}) - ID_DBTABLE={1}..."
+                            , _filterDbTableCompList, idDbTable)
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+
+                        iRes = Error.ExFilterBuilder; // исключение при поиске строк для удаления
+                    }
                 }
             }
 
@@ -128,70 +312,33 @@ namespace TepCommon
             }
             #endregion
 
-            public virtual int SetDbTableFilter(ID_DBTABLE idDBTable, int []filter)
+            protected virtual Error setDbTableFilter(ListTSQLWhere where)
             {
-                int iRes = -1; // ошибка
+                Error iRes = Error.Not; // ошибка
 
-                if (ContainsKey(idDBTable) == true) {
-                    switch (idDBTable) {
-                        case ID_DBTABLE.TIME:
-                            iRes = 0; // Ok
-                            break;
-                        case ID_DBTABLE.TIMEZONE:
-                            iRes = 0; // Ok
-                            break;
-                        case ID_DBTABLE.COMP_LIST:
-                            iRes = 0; // Ok
-                            break;
-                        default:
-                            iRes = 1; // фильтр не применен
-                            break;
-                    }
-                } else
-                    ;
-
-                return iRes;
-            }
-
-            public virtual int SetDbTableFilter(DbTableCompList dbTableFilter)
-            {
-                int iRes = -1; // ошибка
-
-                ID_DBTABLE idDbTable = ID_DBTABLE.UNKNOWN;
-                string filter = string.Empty;
+                ID_DBTABLE idDbTable = where.IdDbTable;
+                string filter = where.Value;
                 List<DataRow> rowsToDelete = new List<DataRow>();
 
                 try {
-                    switch (dbTableFilter) {
-                        case DbTableCompList.Tg:
-                            idDbTable = ID_DBTABLE.COMP_LIST;
-
-                            filter = string.Format(@"ID_COMP<{0} OR ID_COMP>{0}", 1000);
-                            break;
-                        default:
-                            break;
-                    }
-
                     if ((!(idDbTable == ID_DBTABLE.UNKNOWN))
                         && (string.IsNullOrEmpty(filter) == false))
                         if (ContainsKey(idDbTable) == true) {
                             rowsToDelete = this[idDbTable].Select(filter).ToList();
 
-                            iRes = 0; // Ok
+                            iRes = Error.Not; // Ok
                         } else
-                            iRes = -2;
+                            iRes = Error.IdDbTableUnknown;
                     else
-                        iRes = 1; // фильтр не применен - не найден обработчик
+                        iRes = Error.WFilterNoApplied; // фильтр не применен - не найден обработчик
                 } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}) - ID_DBTABLE={1}, filter='{2}'..."
-                        , dbTableFilter, idDbTable, filter)
-                        , Logging.INDEX_MESSAGE.NOT_SET);
-
-                    iRes = -11; // исключение при поиске строк для удаления
+                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0})..."
+                        , where.ToString())
+                            , Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
                 try {
-                    if (iRes == 0) {
+                    if (iRes == Error.Not) {
                         foreach (DataRow row in rowsToDelete)
                             this[idDbTable].Rows.Remove(row);
                     } else
@@ -199,11 +346,11 @@ namespace TepCommon
 
                     this[idDbTable].AcceptChanges();
                 } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}) - ID_DBTABLE={1}, filter='{2}', строк для удаления={3}..."
-                        , dbTableFilter, idDbTable, filter, rowsToDelete.Count)
-                        , Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}) - строк для удаления={1}..."
+                        , where.ToString(), rowsToDelete.Count)
+                            , Logging.INDEX_MESSAGE.NOT_SET);
 
-                    iRes = -12; // исключение при удалении строк
+                    iRes = Error.ExRowRemove; // исключение при удалении строк
                 }
 
                 return iRes;
@@ -213,6 +360,69 @@ namespace TepCommon
         /// Словарь с таблицами словарно-проектных значений
         /// </summary>
         protected DictionaryTableDictProject m_dictTableDictPrj;
+
+        protected virtual void initialize(ID_DBTABLE[] arIdTableDictPrj, out int err, out string errMsg)
+        {
+            err = 0;
+            errMsg = string.Empty;
+
+            if ((!(m_dictTableDictPrj == null))
+                && (m_dictTableDictPrj.Count > 0)) {
+                Logging.Logg().Warning(@"HPanelTepCommon::initialize () - словарно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                m_dictTableDictPrj.Clear();
+            } else
+                m_dictTableDictPrj = new DictionaryTableDictProject();
+
+            foreach (ID_DBTABLE id in /*Enum.GetValues(typeof(ID_DBTABLE))*/arIdTableDictPrj) {
+                switch (id) {
+                    case ID_DBTABLE.IN_PARAMETER:
+                        m_dictTableDictPrj.Add(id
+                            , m_handlerDb.Select((m_handlerDb as HandlerDbTaskCalculate).GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES), out err));
+                        break;
+                    case ID_DBTABLE.OUT_PARAMETER:
+                        m_dictTableDictPrj.Add(id
+                            , m_handlerDb.Select((m_handlerDb as HandlerDbTaskCalculate).GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES), out err));
+                        break;
+                    default:
+                        m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
+                        break;
+                }
+
+                if (err < 0) {
+                    // ошибка
+                    switch (err) {
+                        case -3: // наименовавние таблицы
+                            errMsg = @"неизвестное наименовнаие таблицы";
+                            break;
+                        case -2: // неизвестный тип
+                            errMsg = @"неизвестный тип таблицы";
+                            break;
+                        case -1:
+                        default:
+                            errMsg = @"неопределенная ошибка";
+                            break;
+                    }
+
+                    errMsg = string.Format(@"HPanelTepCommon::initialize (тип={0}) - {1}...", id, errMsg);
+
+                    break;
+                } else
+                    if (err > 0)
+                    // предупреждение
+                        switch (err) {
+                            case 1: // идентификатор указан прежде, чем его можно инициализировать объект для него
+                                break;
+                            default:
+                                break;
+                        }
+                    else
+                    // ошибок, предупреждений нет
+                        ;
+            }
+
+            //m_markTableDictPrj = new HMark(arIdTableDictPrj as int[]);
+        }
         /// <summary>
         /// Удалить сессию (+ очистить реквизиты сессии)
         /// </summary>
@@ -387,14 +597,14 @@ namespace TepCommon
 
             Control ctrl = null;
             string desc = string.Empty
-                , name = string.Empty;
+                , name = string.Empty
+                , query = string.Empty;
             string[] ar_name = null;
+            DataTable table;
             DataRow[] rows = null;
 
-            if (m_name_panel_desc != string.Empty)
-            {
-                try
-                {
+            if (string.IsNullOrEmpty(m_name_panel_desc) == false) {
+                try {
                     ctrl = this.Controls.Find(m_name_panel_desc, true)[0];
                     name = ((PlugInMenuItem)_iFuncPlugin).GetNameOwnerMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id);
                     ar_name = name.Split('\\');
@@ -402,22 +612,20 @@ namespace TepCommon
 
                     for (int i = 0; i < m_arr_name_group_panel.Length; i++)
                         if (m_arr_name_group_panel[i] == name)
-                        {
                             ((HPanelDesc)ctrl).SetLblGroup = new string[] { name, m_description_group[i] };
-                        }
                         else
                             ;
 
                     //Описание вкладки
-                    string query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + m_id_panel;
-                    DataTable dt = m_handlerDb.Select(query, out err);
-                    if (dt.Rows.Count != 0)
-                    {
-                        desc = dt.Rows[0][0].ToString();
+                    query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + m_id_panel;
+                    table = m_handlerDb.Select(query, out err);
+                    if (table.Rows.Count != 0) {
+                        desc = table.Rows[0][0].ToString();
                         ((HPanelDesc)ctrl).SetLblTab = new string[] { /*((PlugInMenuItem)_iFuncPlugin).GetNameMenuItem(((HFuncDbEdit)_iFuncPlugin)._Id)*/
                             this.Parent.Text, desc
                         };
-                    }
+                    } else
+                        ;
 
                     //Описания таблиц
                     query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + m_id_panel;
@@ -431,48 +639,45 @@ namespace TepCommon
                     query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_id_panel;
                     Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
 
-                    if (err != 0)
-                    {
+                    if (!(err == 0))
                         Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
-                    }
+                    else
+                        ;
 
-                    if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE") < 0))
-                    {
+                    if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE") < 0)) {
                         rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.MAIN);
+
                         if (rows.Length == 1)
-                        {
                             Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
-                        }
+                        else
+                            ;
 
                         //DataRow[] rows = null;
-                        if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0))
-                        {
+                        if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0)) {
                             rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.MAIN);
                             if (rows.Length == 1)
-                            {
                                 ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
-                            }
+                            else
+                                ;
 
                             rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.PROP);
                             if (rows.Length == 1)
-                            {
                                 ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
-                            }
+                            else
+                                ;
 
                             rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.DESC);
-                            if (rows.Length == 1)
-                            {
+                            if (rows.Length == 1) {
                                 ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                                 ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
-                            }
-                        }
-                        else
+                            } else
+                                ;
+                        } else
                             Logging.Logg().Error(@"HPanelTepCommon::initializeDescPanel () - в таблице [" + Descriptions[(int)ID_DT_DESC.TABLE].TableName + @"] не найдено поле [ID_TABLE]"
                                 , Logging.INDEX_MESSAGE.NOT_SET);
-                    }
-                }
-                catch (Exception e)
-                {
+                    } else
+                        ;
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"HPanelTepCommon::initializeDescPanel () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -543,70 +748,7 @@ namespace TepCommon
             }
         }
 
-        protected abstract void initialize(out int err, out string errMsg);
-
-        protected virtual void initialize(ID_DBTABLE[] arIdTableDictPrj, out int err, out string errMsg)
-        {
-            err = 0;
-            errMsg = string.Empty;
-
-            if (m_dictTableDictPrj == null)
-                m_dictTableDictPrj = new DictionaryTableDictProject();
-            else {
-                Logging.Logg().Warning(@"HPanelTepCommon::initialize () - словарно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                m_dictTableDictPrj.Clear();
-            }
-
-            foreach (ID_DBTABLE id in /*Enum.GetValues(typeof(ID_DBTABLE))*/arIdTableDictPrj) {
-                switch (id) {
-                    case ID_DBTABLE.IN_PARAMETER:
-                        m_dictTableDictPrj.Add(id
-                            , m_handlerDb.Select((m_handlerDb as HandlerDbTaskCalculate).GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES), out err));
-                        break;
-                    case ID_DBTABLE.OUT_PARAMETER:
-                        m_dictTableDictPrj.Add(id
-                            , m_handlerDb.Select((m_handlerDb as HandlerDbTaskCalculate).GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES), out err));
-                        break;
-                    default:
-                        m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
-                        break;
-                }
-
-                if (err < 0) {
-                    // ошибка
-                    switch (err) {
-                        case -3: // наименовавние таблицы
-                            errMsg = @"не известное наименовнаие таблицы";
-                            break;
-                        case -2: // неизвестный тип
-                            errMsg = @"не известный тип таблицы";
-                            break;
-                        case -1:
-                        default:
-                            errMsg = @"неопределенная ошибка";
-                            break;
-                    }
-
-                    errMsg = string.Format(@"HPanelTepCommon::initialize (тип={0}) - {1}...", id, errMsg);
-
-                    break;
-                } else
-                    if (err > 0)
-                    // предупреждение
-                        switch(err) {
-                            case 1: // идентификатор указан прежде, чем его можно инициализировать объект для него
-                                break;
-                            default:
-                                break;
-                        }
-                    else
-                    // ошибок, предупреждений нет
-                        ;
-            }
-
-            //m_markTableDictPrj = new HMark(arIdTableDictPrj as int[]);
-        }
+        protected abstract void initialize(out int err, out string errMsg);        
         /// <summary>
         /// Создать объект для обмена данными с БД
         /// </summary>
@@ -642,24 +784,20 @@ namespace TepCommon
         {
             string desc = string.Empty;
             string name = string.Empty;
-            try
-            {
-                if (((DataGridView)obj).SelectedRows.Count > 0)
-                {
+            try {
+                if (((DataGridView)obj).SelectedRows.Count > 0) {
                     name = ((DataGridView)obj).SelectedRows[0].Cells[0].Value.ToString();
+
                     foreach (DataRow r in Descriptions[(int)ID_DT_DESC.PROP].Rows)
-                    {
                         if (name == r["PARAM_NAME"].ToString())
-                        {
                             desc = r["DESCRIPTION"].ToString();
-                        }
-                    }
+                        else
+                            ;
                 }
+            } catch (Exception e) {
+                Logging.Logg().Exception(e, string.Format(@"HPanelCommon::HPanelEdit_dgvPropSelectionChanged () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message);
-            }
+
             SetDescSelRow(desc, name);
         }
 

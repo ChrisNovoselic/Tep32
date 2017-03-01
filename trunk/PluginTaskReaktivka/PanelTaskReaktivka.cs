@@ -255,8 +255,8 @@ namespace PluginTaskReaktivka
             initialize(new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD, */ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP, ID_DBTABLE.RATIO }
                 , out err, out errMsg);
 
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.MONTH });
+            m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Msk;
+            m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Month;
 
             (PanelManagement as PanelManagementReaktivka).Clear();
 
@@ -355,7 +355,7 @@ namespace PluginTaskReaktivka
                 ;
 
             Session.SetCurrentTimeZone(idTimezone
-                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)idTimezone)[0][@"OFFSET_UTC"]);
         }
 
         /// <summary>

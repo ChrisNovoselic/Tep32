@@ -111,6 +111,7 @@ namespace PluginTaskTepMain
             Control ctrl = null;
             string strItem = string.Empty;
             int i = -1;
+
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMEZONE, COMP_LIST, PARAMETERS(Type), MODE_DEV, RATIO
             initialize(new ID_DBTABLE[] {
@@ -127,8 +128,8 @@ namespace PluginTaskTepMain
                 , out err, out errMsg
             );
 
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH });
+            m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Msk;
+            m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Hour | DictionaryTableDictProject.DbTableTime.Month;
 
             if (err == 0)
                 try {
@@ -204,7 +205,7 @@ namespace PluginTaskTepMain
         protected void setCurrentTimeZone(ID_TIMEZONE idTimezone)
         {
             Session.SetCurrentTimeZone(idTimezone
-                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)idTimezone)[0][@"OFFSET_UTC"]);
         }
         ///// <summary>
         ///// Массив запросов к БД по получению словарных и проектных значений

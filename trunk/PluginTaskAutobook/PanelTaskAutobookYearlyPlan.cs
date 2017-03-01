@@ -336,9 +336,9 @@ namespace PluginTaskAutobook
             // PERIOD, TIMIZONE, COMP, PARAMETER(OUT_VALUES), MEASURE, RATIO
             initialize(new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD*/ }, out err, out errMsg);
 
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIMEZONE, new int[] { (int)ID_TIMEZONE.MSK });
-            m_dictTableDictPrj.SetDbTableFilter(ID_DBTABLE.TIME, new int[] { (int)ID_PERIOD.MONTH });
-            m_dictTableDictPrj.SetDbTableFilter(DictionaryTableDictProject.DbTableCompList.Electro);
+            m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Msk;
+            m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Month;
+            m_dictTableDictPrj.FilterDbTableCompList = DictionaryTableDictProject.DbTableCompList.Tec | DictionaryTableDictProject.DbTableCompList.Tg;
 
             foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows) {
                 id_comp = (int)r[@"ID"];
@@ -702,7 +702,7 @@ namespace PluginTaskAutobook
             ID_TIMEZONE idTimezone = PanelManagement.IdTimezone;
 
             Session.SetCurrentTimeZone(idTimezone
-                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + idTimezone)[0][@"OFFSET_UTC"]);
+                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)idTimezone)[0][@"OFFSET_UTC"]);
         }
 
         /// <summary>
