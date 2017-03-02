@@ -134,32 +134,29 @@ namespace PluginTaskTepMain
         /// </summary>
         protected class PanelManagementTaskTepOutVal : PanelManagementTaskTepValues
         {
-            protected override void activateCheckedHandler(bool bActive, INDEX_ID idToActivate)
+            protected override void activateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
             {
                 INDEX_CONTROL indxCtrl = INDEX_CONTROL.UNKNOWN;
                 TreeViewTaskTepCalcParameters tv = null;
 
-                indxCtrl = getIndexControlOfIndexID(idToActivate);
+                foreach (INDEX_ID idToActivate in arIdToActivate) {
+                    indxCtrl = getIndexControlOfIndexID(idToActivate);
 
-                if (indxCtrl == INDEX_CONTROL.CLBX_PARAMETER_CALCULATED)
-                {
-                    tv = (Controls.Find(indxCtrl.ToString(), true)[0] as TreeViewTaskTepCalcParameters);
+                    if (indxCtrl == INDEX_CONTROL.CLBX_PARAMETER_CALCULATED) {
+                        tv = (Controls.Find(indxCtrl.ToString(), true)[0] as TreeViewTaskTepCalcParameters);
 
-                    tv.ActivateCheckedHandler(bActive);
+                        tv.ActivateCheckedHandler(bActive);
 
-                    if (bActive == true)
-                    {
-                        //tv.NodeSelect += new DelegateIntFunc (onNodeSelect);
-                        tv.ItemCheck += new DelegateIntIntFunc (onItemCheck);
-                    }
-                    else
-                    {
-                        //tv.NodeSelect -= onNodeSelect;
-                        tv.ItemCheck -= onItemCheck;
-                    }
+                        if (bActive == true) {
+                            //tv.NodeSelect += new DelegateIntFunc (onNodeSelect);
+                            tv.ItemCheck += new DelegateIntIntFunc(onItemCheck);
+                        } else {
+                            //tv.NodeSelect -= onNodeSelect;
+                            tv.ItemCheck -= onItemCheck;
+                        }
+                    } else
+                        base.activateCheckedHandler(arIdToActivate, bActive);
                 }
-                else
-                    base.activateCheckedHandler(bActive, idToActivate);
             }
 
             protected override int addButtonRun(int posRow)
@@ -283,13 +280,10 @@ namespace PluginTaskTepMain
                 /// <param name="bActive">Признак назначения/снятия</param>
                 public void ActivateCheckedHandler(bool bActive)
                 {
-                    if (bActive == true)
-                    {
+                    if (bActive == true) {
                         //this.AfterSelect +=  new TreeViewEventHandler(onAfterSelect);
                         this.AfterCheck += new TreeViewEventHandler(onAfterCheck);
-                    }
-                    else
-                    {
+                    } else {
                         //this.AfterSelect -= onAfterSelect;
                         this.AfterCheck -= onAfterCheck;
                     }

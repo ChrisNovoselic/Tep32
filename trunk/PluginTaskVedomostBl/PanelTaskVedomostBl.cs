@@ -95,8 +95,8 @@ namespace PluginTaskVedomostBl
             TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов*/
             ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров
             //DENY_COMP_CALCULATED, 
-            DENY_COMP_VISIBLED,
-            BLOCK_VISIBLED, HGRID_VISIBLE,
+            DENY_GROUPHEADER_VISIBLED,
+            BLOCK_SELECTED, HGRID_VISIBLED,
             //DENY_PARAMETER_CALCULATED, // запрещенных для расчета
             //DENY_PARAMETER_VISIBLED // запрещенных для отображения
             COUNT
@@ -918,9 +918,8 @@ namespace PluginTaskVedomostBl
                   item.NewCheckState == CheckState.Unchecked ? false : false;
             DataGridViewVedomostBl cntrl = (getActiveView() as DataGridViewVedomostBl);
             //Поиск индекса элемента отображения
-            switch ((INDEX_ID)item.m_indxId)
-            {
-                case INDEX_ID.HGRID_VISIBLE:
+            switch ((INDEX_ID)item.m_indxId) {
+                case INDEX_ID.HGRID_VISIBLED:
                     cntrl.HideColumns(cntrl as DataGridView, s_listGroupHeaders[item.m_idItem], bItemChecked);
                     ReSizeControls(cntrl as DataGridView);
                     break;
@@ -1066,40 +1065,6 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// Инициализация радиобаттанов
-        /// </summary>
-        /// <param name="namePut">массив имен элементов</param>
-        /// <param name="err">номер ошибки</param>
-        /// <param name="errMsg">текст ошибки</param>
-        private void initializeRadioButtonBlock(out int err, out string errMsg)
-        {
-            err = 0;
-            errMsg = string.Empty;
-            
-            try {
-                //if (arId_comp[rbCnt] != 0)
-                //добавление радиобатонов на форму
-                PanelManagement.AddComponentRadioButton(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST]);
-
-            } catch (Exception e) {
-                Logging.Logg().Exception(e, @"PanelTaskVedomostBl::initializeRadioButtonBlock () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            }
-        }
-
-        private void initializeCheckBoxGroupHeaders(out int err, out string errMsg)
-        {
-            err = 0;
-            errMsg = string.Empty;
-
-            try {
-                //??? добавить элементы управления (а подписи к группам)
-                PanelManagement.AddComponentCheckBoxGroupHeaders(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST]);
-            } catch (Exception e) {
-                Logging.Logg().Exception(e, @"PanelTaskVedomostBl::initializeRadioButtonBlock () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            }
-        }
-
-        /// <summary>
         /// Инициализация сетки данных
         /// </summary>
         /// <param name="namePut">массив имен элементов</param>
@@ -1119,22 +1084,20 @@ namespace PluginTaskVedomostBl
             //DataTable tableComponentId; // ид компонентов
             Dictionary<string, List<int>> dictVisualSett;
 
-            //tableComponentId = HandlerDb.GetHeaderDGV(); // получение ид компонентов
+            m_dictHeaderBlock.Clear();
 
             //создание грида со значениями
-            for (i = 0; i < m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows.Count; i++)
-            {
+            for (i = 0; i < m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows.Count; i++) {
                 dgv = new DataGridViewVedomostBl(int.Parse(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows[i]["ID"].ToString()));
                 //??? исключить такое имя (ориентироваться на Tag)
                 dgv.Name = string.Format(@"DGV_DATA_B{0}", (i + 1));
                 dgv.BlockCount = i + 1;
 
                 m_dictHeaderBlock.Add((int)dgv.Tag, GetListHeaders(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER], (int)dgv.Tag)); // cловарь заголовков
+                //??? каждый раз получаем полный список и выбираем необходимый
+                dictVisualSett = getVisualSettingsOfIdComponent((int)dgv.Tag);
 
-                dictVisualSett = visualSettingsCol((int)dgv.Tag);
-
-                for (int k = 0; k < m_dictHeaderBlock[(int)dgv.Tag].Count; k++)
-                {
+                for (int k = 0; k < m_dictHeaderBlock[(int)dgv.Tag].Count; k++) {
                     idPar = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (int)dgv.Tag)[k]["ID_ALG"].ToString());
                     avg = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (int)dgv.Tag)[k]["AVG"].ToString());
                     idComp = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (int)dgv.Tag)[k]["ID"].ToString());
@@ -1155,8 +1118,7 @@ namespace PluginTaskVedomostBl
 
                 for (i = 0; i < DaysInMonth + 1; i++)
                     if (dgv.Rows.Count != DaysInMonth)
-                        dgv.AddRow(new DataGridViewVedomostBl.ROW_PROPERTY()
-                        {
+                        dgv.AddRow(new DataGridViewVedomostBl.ROW_PROPERTY() {
                             //m_idAlg = id_alg
                             //,
                             m_Value = dtRow.AddDays(i).ToShortDateString()
@@ -1194,42 +1156,6 @@ namespace PluginTaskVedomostBl
                 //???
                     Logging.Logg().Exception (e, string.Format(@"PanelVedomostBl::InitializeDataGridView () - ошибки проверки возможности редактирования ячеек..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
-            }
-        }
-
-        /// <summary>
-        /// Инициализация групп отображения заголовков
-        /// </summary>
-        /// <param name="err">номер ошибки</param>
-        /// <param name="errMsg">текст ошибки</param>
-        private void initializeGroupHeaders(out int err, out string errMsg)
-        {
-            err = 0;
-            errMsg = string.Empty;
-            string strItem = string.Empty;
-            int id_comp;
-
-            INDEX_ID[] arIndxIdToAdd = new INDEX_ID[]
-            {
-                INDEX_ID.HGRID_VISIBLE
-            };
-
-            bool[] arChecked = new bool[s_listGroupHeaders.Count];
-
-            //getControl();
-
-            foreach (var list in s_listGroupHeaders)
-            {
-                id_comp = s_listGroupHeaders.IndexOf(list);
-                strItem = "Группа " + (id_comp + 1);
-                // установить признак отображения группы столбцов
-                //for (int i = 0; i < arChecked.Count(); i++)
-                arChecked[id_comp] = true;
-                PanelManagement.AddComponent(id_comp
-                    , strItem
-                    , list
-                    , arIndxIdToAdd
-                    , arChecked);
             }
         }
 
@@ -1282,15 +1208,16 @@ namespace PluginTaskVedomostBl
             m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Month;
             m_dictTableDictPrj.FilterDbTableCompList = DictionaryTableDictProject.DbTableCompList.Tg;
 
-            PanelManagement.Clear();
             //Dgv's
             initializeDataGridView(out err, out errMsg); //???
-            //groupHeader
-            initializeGroupHeaders(out err, out errMsg);
+            // панель управления
+            PanelManagement.Clear();            
             //радиобаттаны
-            initializeRadioButtonBlock(out err, out errMsg);
+            PanelManagement.AddRadioButtonBlock(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], out err, out errMsg);
+            //groupHeader
+            PanelManagement.AddCheckBoxGroupHeaders(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], out err, out errMsg);            
             // активировать обработчик событий по индексу идентификатора
-            PanelManagement.ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.HGRID_VISIBLE });
+            PanelManagement.ActivateCheckedHandler(new INDEX_ID[] { INDEX_ID.DENY_GROUPHEADER_VISIBLED }, true);
             //активность_кнопки_сохранения
             try {
                 if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
@@ -1345,16 +1272,16 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="idComp">идКомпонента</param>
         /// <returns>словарь настроечных данных</returns>
-        private Dictionary<string, List<int>> visualSettingsCol(int idComp)
+        private Dictionary<string, List<int>> getVisualSettingsOfIdComponent(int idComp)
         {
+            Dictionary<string, List<int>> dictSettRes = new Dictionary<string, List<int>>();
+
             int err = -1
              , id_alg = -1;
+            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             List<int> ratio = new List<int>()
             , round = new List<int>();
-            string n_alg = string.Empty;
-
-            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
-            Dictionary<string, List<int>> _dictSett = new Dictionary<string, List<int>>();
+            string n_alg = string.Empty;            
 
             dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
                , new int[] {
@@ -1364,8 +1291,7 @@ namespace PluginTaskVedomostBl
 
             IEnumerable<DataRow> listParameter = ListParameter.Select(x => x).Where(x => (int)x["ID_COMP"] == idComp);
 
-            foreach (DataRow r in listParameter)
-            {
+            foreach (DataRow r in listParameter) {
                 id_alg = (int)r[@"ID_ALG"];
                 n_alg = r[@"N_ALG"].ToString().Trim();
                 // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
@@ -1374,21 +1300,20 @@ namespace PluginTaskVedomostBl
                     m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
 
                 // получить значения для настройки визуального отображения
-                if (dictVisualSettings.ContainsKey(n_alg) == true)
-                {// установленные в проекте
+                if (dictVisualSettings.ContainsKey(n_alg) == true) {
+                // установленные в проекте
                     ratio.Add(dictVisualSettings[n_alg.Trim()].m_ratio);
                     round.Add(dictVisualSettings[n_alg.Trim()].m_round);
-                }
-                else
-                {// по умолчанию
+                } else {
+                // по умолчанию
                     ratio.Add(HTepUsers.s_iRatioDefault);
                     round.Add(HTepUsers.s_iRoundDefault);
                 }
             }
-            _dictSett.Add("ratio", ratio);
-            _dictSett.Add("round", round);
+            dictSettRes.Add("ratio", ratio);
+            dictSettRes.Add("round", round);
 
-            return _dictSett;
+            return dictSettRes;
         }
 
         /// <summary>

@@ -142,7 +142,7 @@ namespace PluginTaskTepMain
             eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
             // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
             // компонента станции для элементов управления
-            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_CALCULATED, INDEX_ID.DENY_COMP_VISIBLED });
+            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(new INDEX_ID[] { INDEX_ID.DENY_COMP_CALCULATED, INDEX_ID.DENY_COMP_VISIBLED }, true);
 
             m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
         }
@@ -383,7 +383,7 @@ namespace PluginTaskTepMain
             //Установить новое значение для текущего периода
             Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex]);
             //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(false, arIndexIdToAdd);
+            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(arIndexIdToAdd, false);
             //Очистиить списки - элементы интерфейса
             (PanelManagement as PanelManagementTaskTepValues).Clear(arIndexIdToAdd);
             //Очистить список с параметрами, т.к. он м.б. индивидуален для каждого из периодов расчета
@@ -464,7 +464,7 @@ namespace PluginTaskTepMain
                         ;
             }
             //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(true, arIndexIdToAdd);
+            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(arIndexIdToAdd, true);
 
             base.panelManagement_onPeriodChanged(obj, ev);
         }
@@ -1332,7 +1332,7 @@ namespace PluginTaskTepMain
 
                 INDEX_ID[] arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_COMP_CALCULATED, INDEX_ID.DENY_COMP_VISIBLED };
 
-                ActivateCheckedHandler(false, arIndxIdToClear);
+                ActivateCheckedHandler(arIndxIdToClear, false);
 
                 Clear(arIndxIdToClear);
             }
@@ -1463,36 +1463,32 @@ namespace PluginTaskTepMain
                 (find(idToClear) as IControl).ClearItems();
             }
 
-            public void ActivateCheckedHandler(bool bActive, INDEX_ID[] arIdToActivate)
+            public void ActivateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
             {
-                for (int i = 0; i < arIdToActivate.Length; i++)
-                    activateCheckedHandler(bActive, arIdToActivate[i]);
+                activateCheckedHandler(arIdToActivate, bActive);
             }
 
-            protected virtual void activateCheckedHandler(bool bActive, INDEX_ID idToActivate)
+            protected virtual void activateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
             {
                 INDEX_CONTROL indxCtrl = INDEX_CONTROL.UNKNOWN;
                 CheckedListBox clbx = null;
 
-                indxCtrl = getIndexControlOfIndexID(idToActivate);
+                foreach (INDEX_ID idToActivate in arIdToActivate) {
+                    indxCtrl = getIndexControlOfIndexID(idToActivate);
 
-                if (!(indxCtrl == INDEX_CONTROL.UNKNOWN))
-                {
-                    clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
+                    if (!(indxCtrl == INDEX_CONTROL.UNKNOWN)) {
+                        clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
 
-                    if (bActive == true)
-                    {
-                        //clbx.SelectedIndexChanged += new EventHandler (onSelectedIndexChanged);
-                        clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
-                    }
-                    else
-                    {
-                        //clbx.SelectedIndexChanged -= onSelectedIndexChanged;
-                        clbx.ItemCheck -= onItemCheck;
-                    }
+                        if (bActive == true) {
+                            //clbx.SelectedIndexChanged += new EventHandler (onSelectedIndexChanged);
+                            clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
+                        } else {
+                            //clbx.SelectedIndexChanged -= onSelectedIndexChanged;
+                            clbx.ItemCheck -= onItemCheck;
+                        }
+                    } else
+                        ;
                 }
-                else
-                    ;
             }
 
             /// <summary>

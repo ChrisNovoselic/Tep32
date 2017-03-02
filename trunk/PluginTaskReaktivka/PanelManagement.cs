@@ -265,15 +265,15 @@ namespace PluginTaskReaktivka
 
                 INDEX_ID[] arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED };
 
-                activateCheckedHandler(false, arIndxIdToClear);
+                activateCheckedHandler(arIndxIdToClear, false);
 
                 Clear(arIndxIdToClear);
             }
 
             /// <summary>
-            /// 
+            /// Очистить все группы элементов управления, указанных в массиве
             /// </summary>
-            /// <param name="arIdToClear"></param>
+            /// <param name="arIdToClear">Массив индексов в списке идентификаторов групп элементов управления</param>
             public void Clear(INDEX_ID[] arIdToClear)
             {
                 for (int i = 0; i < arIdToClear.Length; i++)
@@ -281,45 +281,46 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// 
+            /// Очистить элементы управления по индексу в списке идентификаторов групп элементов
             /// </summary>
-            /// <param name="idToClear"></param>
+            /// <param name="idToClear">Индекс в списке группы идентификаторов</param>
             private void clear(INDEX_ID idToClear)
             {
                 (find(idToClear) as IControl).ClearItems();
             }
 
             /// <summary>
-            /// 
+            /// (Де)активировать обработчик события
             /// </summary>
-            /// <param name="bActive"></param>
-            /// <param name="arIdToActivate"></param>
-            public void activateCheckedHandler(bool bActive, INDEX_ID[] arIdToActivate)
+            /// <param name="bActive">Признак (де)активации</param>
+            /// <param name="arIdToActivate">Массив индексов в списке идентификаторов</param>
+            public void ActivateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
             {
-                for (int i = 0; i < arIdToActivate.Length; i++)
-                    activateCheckedHandler(bActive, arIdToActivate[i]);
+                activateCheckedHandler(arIdToActivate, bActive);
             }
 
             /// <summary>
-            /// 
+            /// (Де)активировать обработчик события изменения состояния элемента управления
             /// </summary>
-            /// <param name="bActive"></param>
-            /// <param name="idToActivate"></param>
-            protected virtual void activateCheckedHandler(bool bActive, INDEX_ID idToActivate)
+            /// <param name="arIdToActivate"></param>
+            /// <param name="bActive">Признак (де)активация обработчика события</param>            
+            protected virtual void activateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
             {
                 INDEX_CONTROL indxCtrl = INDEX_CONTROL.UNKNOWN;
                 CheckedListBox clbx = null;
 
-                indxCtrl = getIndexControlOfIndexID(idToActivate);
+                foreach (INDEX_ID idToActivate in arIdToActivate) {
+                    indxCtrl = getIndexControlOfIndexID(idToActivate);
 
-                if (!(indxCtrl == INDEX_CONTROL.UNKNOWN))
-                {
-                    clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
+                    if (!(indxCtrl == INDEX_CONTROL.UNKNOWN)) {
+                        clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
 
-                    if (bActive == true)
-                        clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
-                    else
-                        clbx.ItemCheck -= onItemCheck;
+                        if (bActive == true)
+                            clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
+                        else
+                            clbx.ItemCheck -= onItemCheck;
+                    } else
+                        ;
                 }
             }
 

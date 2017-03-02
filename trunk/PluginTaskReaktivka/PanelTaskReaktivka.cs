@@ -302,7 +302,7 @@ namespace PluginTaskReaktivka
                 //eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
                 // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
                 // компонента станции для элементов управления
-                PanelManagement.activateCheckedHandler(true, new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED });
+                PanelManagement.ActivateCheckedHandler(new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED }, true);
                 //
                 m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
