@@ -737,7 +737,7 @@ namespace PluginTaskVedomostBl
                 //??? очищать нечего, вкладка, возможно, не запущена
                 ActivateCheckedHandler(arIndxIdToClear, false);
 
-                Clear(arIndxIdToClear);                
+                Clear(arIndxIdToClear);
             }
 
             /// <summary>

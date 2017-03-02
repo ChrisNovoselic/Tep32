@@ -1211,7 +1211,7 @@ namespace PluginTaskVedomostBl
             //Dgv's
             initializeDataGridView(out err, out errMsg); //???
             // панель управления
-            PanelManagement.Clear();            
+            PanelManagement.Clear();
             //радиобаттаны
             PanelManagement.AddRadioButtonBlock(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], out err, out errMsg);
             //groupHeader

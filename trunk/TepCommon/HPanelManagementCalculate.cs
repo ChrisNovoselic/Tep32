@@ -272,6 +272,9 @@ namespace TepCommon
                 activateComboBoxSelectedIndex_onChanged(PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_PERIOD, cbxPeriod_SelectedIndexChanged);
 
                 activateComboBoxSelectedIndex_onChanged(PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE, cbxTimezone_SelectedIndexChanged);
+
+                while (Controls.Count > 0)
+                    Controls.RemoveAt(0);
             }
 
             private void activateComboBoxSelectedIndex_onChanged(INDEX_CONTROL_BASE indxctrl, EventHandler handler, bool bActivate = false)

@@ -230,11 +230,11 @@ namespace PluginProject
             m_handlerDb.RegisterDbConnection(out err);
             connConfigDB = m_handlerDb.DbConnection;
 
-            if (m_table_TEC.Columns.Count == 0)
-            {
+            if (m_table_TEC.Columns.Count == 0) {
                 DataColumn[] columns = { new DataColumn("ID"), new DataColumn("DESCRIPTION") };
                 m_table_TEC.Columns.AddRange(columns);
-            }
+            } else
+                ;
 
             //m_list_TEC = new InitTEC_200(idListener, true, new int[] { 0, (int)TECComponent.ID.GTP }, false).tec;
             m_table_TEC.Rows.Clear();
