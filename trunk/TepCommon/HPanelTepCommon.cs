@@ -110,7 +110,7 @@ namespace TepCommon
                                     else
                                         strRes = string.Format(@"({0})", item.Value);
                                 else
-                                    strRes += string.Format(@"OR ({0})", item.Value);
+                                    strRes += string.Format(@" AND ({0})", item.Value);
                             } else
                                 ;
                         }
@@ -161,6 +161,7 @@ namespace TepCommon
                                         listTSQLWhere.Add(new TSQLWhereItem(@"ID_COMP", (int)ID_COMP.TG, TSQLWhereItem.RULE.Equale));
                                         break;
                                     case DbTableCompList.Tec:
+                                        listTSQLWhere.Add(new TSQLWhereItem(@"ID_COMP", (int)ID_COMP.TEC, TSQLWhereItem.RULE.Equale));
                                         break;
                                     default:
                                         break;
@@ -460,7 +461,7 @@ namespace TepCommon
 
         #region Apelgans
 
-        protected int m_id_panel;
+        protected int m_Id;
 
         public enum ID_DT_DESC { TABLE, PROP };
 
@@ -510,13 +511,15 @@ namespace TepCommon
 
             InitializeComponent();
 
-            m_id_panel = findMyID();
+            m_Id = ID;
 
             m_handlerDb = createHandlerDb();
 
             m_dictProfile = new HTepUsers.DictionaryProfileItem();
         }
-
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
@@ -541,35 +544,37 @@ namespace TepCommon
         ///  , зарегистрированного в библиотеке
         /// </summary>
         /// <returns>Идентификатор типа панели</returns>
-        private int findMyID()
+        private int ID
         {
-            int iRes = -1;
-            Type myType = Type.Missing as Type;
+            get {
+                int iRes = -1;
+                Type thisType = Type.Missing as Type;
 
-            myType = this.GetType();
+                thisType = this.GetType();
 
-            //Вариант №1
-            KeyValuePair<int, Type>? pairRes = null;
+                //Вариант №1
+                KeyValuePair<int, Type>? pairRes = null;
 
-            pairRes = (_iFuncPlugin as PlugInBase).GetRegisterTypes().First(item => { return item.Value == myType; });
+                pairRes = (_iFuncPlugin as PlugInBase).GetRegisterTypes().First(item => { return item.Value == thisType; });
 
-            if (!(pairRes == null))
-                iRes = pairRes.GetValueOrDefault().Key;
-            else
-                ;
+                if (!(pairRes == null))
+                    iRes = pairRes.GetValueOrDefault().Key;
+                else
+                    ;
 
-            ////Вариант №2
-            //Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
+                ////Вариант №2
+                //Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
 
-            //foreach (var item in dictRegId)
-            //{
-            //    if (item.Value == myType)
-            //    {
-            //        iRes = item.Key;
-            //    }
-            //}
+                //foreach (var item in dictRegId)
+                //{
+                //    if (item.Value == myType)
+                //    {
+                //        iRes = item.Key;
+                //    }
+                //}
 
-            return iRes;
+                return iRes;
+            }
         }
 
         //private void initTableDictPrj(/*out int err*/)
@@ -617,7 +622,7 @@ namespace TepCommon
                             ;
 
                     //Описание вкладки
-                    query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + m_id_panel;
+                    query = "SELECT DESCRIPTION FROM [dbo].[fpanels] WHERE [ID]=" + m_Id;
                     table = m_handlerDb.Select(query, out err);
                     if (table.Rows.Count != 0) {
                         desc = table.Rows[0][0].ToString();
@@ -628,15 +633,15 @@ namespace TepCommon
                         ;
 
                     //Описания таблиц
-                    query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + m_id_panel;
+                    query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + m_Id;
                     Descriptions[(int)ID_DT_DESC.TABLE] = m_handlerDb.Select(query, out err);
 
                     //Описания параметров
-                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_id_panel;
+                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_Id;
                     Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
 
                     //Описания параметров
-                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_id_panel;
+                    query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_Id;
                     Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
 
                     if (!(err == 0))
@@ -704,9 +709,17 @@ namespace TepCommon
             m_handlerDb.InitConnectionSettings(obj as ConnectionSettings);
             
             //HTepUsers.HTepProfilesXml.UpdateProfile(m_handlerDb.ConnectionSettings);
-            m_dictProfile = HTepUsers.HTepProfilesXml.GetProfileUserPanel(HTepUsers.Id, HTepUsers.Role, m_id_panel);
+            m_dictProfile = HTepUsers.HTepProfilesXml.GetProfileUserPanel(HTepUsers.Id, HTepUsers.Role, m_Id);
 
         }
+
+        //public override void Stop()
+        //{
+        //    while (Controls.Count > 0)
+        //        Controls.RemoveAt(0);
+
+        //    base.Stop();
+        //}
 
         public override bool Activate(bool active)
         {

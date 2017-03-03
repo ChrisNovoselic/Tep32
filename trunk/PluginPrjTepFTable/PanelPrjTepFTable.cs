@@ -310,7 +310,7 @@ namespace PluginPrjTepFTable
         }
 
         /// <summary>
-        /// Инициализация компонентов
+        /// Инициализация элементов управления объекта (создание, размещение)
         /// </summary>
         private void InitializeComponent()
         {

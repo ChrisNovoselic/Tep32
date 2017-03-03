@@ -125,7 +125,9 @@ namespace PluginTaskTepMain
             {
                 InitializeComponents();
             }
-            
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
             private void InitializeComponents ()
             {
             }
@@ -171,7 +173,9 @@ namespace PluginTaskTepMain
             {
                 InitializeComponents();
             }
-
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
             private void InitializeComponents()
             {
                 Control ctrl = null;
@@ -201,6 +205,15 @@ namespace PluginTaskTepMain
 
                 ResumeLayout(false);
                 PerformLayout();
+            }
+            /// <summary>
+            /// Обработчик события - изменение значения из списка признаков отображения/снятия_с_отображения
+            /// </summary>
+            /// <param name="obj">Объект инициировавший событие</param>
+            /// <param name="ev">Аргумент события</param>
+            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
+            {
+                throw new NotImplementedException();
             }
         }
     }

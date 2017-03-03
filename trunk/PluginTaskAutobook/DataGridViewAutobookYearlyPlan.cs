@@ -87,18 +87,18 @@ namespace PluginTaskAutobook
             /// основной конструктор
             /// </summary>
             /// <param name="nameDGV"></param>
-            public DataGridViewAutobookYearlyPlan(string nameDGV)
+            public DataGridViewAutobookYearlyPlan(string name)
             {
-                InitializeComponents(nameDGV);
+                Name = name;
+
+                InitializeComponents();
             }
 
             /// <summary>
-            /// 
+            /// Инициализация элементов управления объекта (создание, размещение)
             /// </summary>
-            /// <param name="nameDGV"></param>
-            private void InitializeComponents(string nameDGV)
+            private void InitializeComponents()
             {
-                Name = nameDGV;
                 Dock = DockStyle.Fill;
                 //Запретить выделение "много" строк
                 MultiSelect = false;

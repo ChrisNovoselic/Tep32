@@ -71,7 +71,7 @@ namespace PluginTaskTepMain
             (m_dgvValues as DataGridViewTEPValues).SelectionChanged += new EventHandler(m_dgvValues_SelectionChanged);
         }
         /// <summary>
-        /// Инициализация элементов управления объекта
+        /// Инициализация элементов управления объекта (создание, размещение)
         /// </summary>
         private void InitializeComponents()
         {
@@ -116,13 +116,13 @@ namespace PluginTaskTepMain
             int i = -1
                 , id_comp = -1;
             INDEX_ID[] arIndxIdToAdd = new INDEX_ID[] {
-                        INDEX_ID.DENY_COMP_CALCULATED
-                        , INDEX_ID.DENY_COMP_VISIBLED
-                    };
+                INDEX_ID.DENY_COMP_CALCULATED
+                , INDEX_ID.DENY_COMP_VISIBLED
+            };
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
 
             //Заполнить элементы управления с компонентами станции
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows)
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows)
             {
                 id_comp = (Int16)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
@@ -158,8 +158,7 @@ namespace PluginTaskTepMain
             if (bClose == true)
             {
                 (PanelManagement as PanelManagementTaskTepValues).Clear();
-            }
-            else
+            } else
                 ;
         }
 
@@ -400,7 +399,7 @@ namespace PluginTaskTepMain
                 , new int[] {
                     //1
                     //, (_iFuncPlugin as PlugInBase)._Id
-                    m_id_panel
+                    m_Id
                     , (int)Session.m_currIdPeriod }
                 , out err);
             //Заполнить элементы управления с компонентами станции 
@@ -641,7 +640,9 @@ namespace PluginTaskTepMain
                 CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
                 //RowsRemoved += new DataGridViewRowsRemovedEventHandler (onRowsRemoved);
             }
-
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
             private void InitializeComponents()
             {
                 AddColumn(-2, string.Empty, false);
@@ -1173,13 +1174,6 @@ namespace PluginTaskTepMain
         protected abstract class PanelManagementTaskTepValues : HPanelTepCommon.PanelManagementTaskCalculate
         {
             /// <summary>
-            /// Событие - изменение выбора запрет/разрешение
-            ///  для компонента/параметра при участии_в_расчете/отображении
-            /// </summary>
-            public event ItemCheckedParametersEventHandler ItemCheck;
-
-            //protected ADDRESS_CALC m_address;
-            /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
             public PanelManagementTaskTepValues()
@@ -1187,7 +1181,9 @@ namespace PluginTaskTepMain
             {
                 InitializeComponents();
             }
-
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
             private void InitializeComponents()
             {
                 Control ctrl = null;
@@ -1586,23 +1582,13 @@ namespace PluginTaskTepMain
             //}
 
             /// <summary>
-            /// Обработчик события - изменение состояния элемента списка
+            /// Обработчик события - изменение значения из списка признаков отображения/снятия_с_отображения
             /// </summary>
             /// <param name="obj">Объект, инициировавший событие (список)</param>
             /// <param name="ev">Аргумент события</param>
-            protected void onItemCheck(object obj, ItemCheckEventArgs ev)
+            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
             {
-                itemCheck((obj as IControl).SelectedId, getIndexIdOfControl(obj as Control), ev.NewValue);
-            }
-
-            /// <summary>
-            /// Инициировать событие - изменение признака элемента
-            /// </summary>
-            /// <param name="address">Адрес элемента</param>
-            /// <param name="checkState">Значение признака элемента</param>
-            protected void itemCheck(int idItem, INDEX_ID indxId, CheckState checkState)
-            {
-                ItemCheck(new ItemCheckedParametersEventArgs(idItem, (int)indxId, checkState));
+                itemCheck((int)getIndexIdOfControl(obj as Control), (obj as IControl).SelectedId, ev.NewValue);
             }
 
             /// <summary>

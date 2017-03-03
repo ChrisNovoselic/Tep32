@@ -762,7 +762,7 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// 
+            /// Инициализация элементов управления объекта (создание, размещение)
             /// </summary>
             private void InitializeComponents()
             {
@@ -846,6 +846,16 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
+            /// Обработчик события - изменение значения из списка признаков отображения/снятия_с_отображения
+            /// </summary>
+            /// <param name="obj">Объект инициировавший событие</param>
+            /// <param name="ev">Аргумент события</param>
+            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
             /// Обработчик события - изменение дата/время окончания периода
             /// </summary>
             /// <param name="obj">Составной объект - календарь</param>
@@ -859,7 +869,7 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// инициализация объектов
+        /// Инициализация элементов управления объекта (создание, размещение)
         /// </summary>
         private void InitializeComponent()
         {
@@ -912,27 +922,9 @@ namespace PluginTaskAutobook
                  new EventHandler(btnExport_OnClick);
             //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CALENDAR.ToString(), true)[0] as Button).
 
-            m_dgvValues.CellParsing += dgvAB_CellParsing;
+            m_dgvValues.CellParsing += dgvValues_CellParsing;
             //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
         }
-
-        ///// <summary>
-        ///// обработка события - Выбор строки
-        ///// </summary>
-        ///// <param name="sender">Объект, инициировавший событие</param>
-        ///// <param name="e">Аргумент события</param>
-        //void dgvAB_SelectionChanged(object sender, EventArgs e)
-        //{
-        //    for (int i = 0; i < (sender as DataGridView).SelectedRows.Count; i++)
-        //        if ((sender as DataGridView).SelectedRows[i].Cells["Date"].Value != null)
-        //        {
-        //            DateTime dtRow = Convert.ToDateTime((sender as DataGridView).SelectedRows[i].Cells["Date"].Value);
-        //            HDateTimePicker datetimePicker =
-        //                (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker);
-        //            m_bflgClear = false;
-        //            datetimePicker.Value = dtRow;
-        //        }
-        //}
 
         /// <summary>
         /// Обработчик события при изменении периода расчета
@@ -976,15 +968,14 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие</param>
         /// <param name="e">данные события</param>
-        void dgvAB_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
+        void dgvValues_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
             int numMonth = PanelManagement.DatetimeRange.Begin.Month
                 , day = m_dgvValues.Rows.Count;
             DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
 
-            switch (m_dgvValues.Columns[e.ColumnIndex].Name)
-            {
-                case "CorGTP12":
+            switch ((INDEX_GTP)Enum.Parse(typeof(INDEX_GTP), m_dgvValues.Columns[e.ColumnIndex].Name)) {
+                case INDEX_GTP.CorGTP12:
                     //корректировка значений
                     m_dgvValues.editCells(e, INDEX_GTP.GTP12.ToString());
                     //сбор корр.значений
@@ -992,7 +983,7 @@ namespace PluginTaskAutobook
                     //сбор значений
                     m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = m_dgvValues.FillTableValueDay();
                     break;
-                case "CorGTP36":
+                case INDEX_GTP.CorGTP36:
                     //корректировка значений
                     m_dgvValues.editCells(e, INDEX_GTP.GTP36.ToString());
                     //сбор корр.значений
@@ -1052,7 +1043,7 @@ namespace PluginTaskAutobook
                 if (err == 0)
                     //Начать новую сессию расчета
                     //, получить входные для расчета значения для возможности редактирования
-                    HandlerDb.CreateSession(m_id_panel
+                    HandlerDb.CreateSession(m_Id
                         , Session.CountBasePeriod
                         , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , ref m_arTableOrigin
@@ -1481,7 +1472,7 @@ namespace PluginTaskAutobook
 
                 dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
                     , new int[] {
-                        m_id_panel
+                        m_Id
                         , (int)Session.m_currIdPeriod }
                         , out err);
 

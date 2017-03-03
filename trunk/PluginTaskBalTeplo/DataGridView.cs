@@ -26,19 +26,22 @@ namespace PluginTaskBalTeplo
 
             public INDEX_VIEW_VALUES m_ViewValues;
 
-            public DataGridViewBalTeploValues(string nameDGV)
+            public DataGridViewBalTeploValues(string name)
             {
                 m_dict_ProfileNALG_IN = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
                 m_dict_ProfileNALG_OUT = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
                 m_dbRatio = new DataTable();
 
-                InitializeComponents(nameDGV);
+                this.Name = name;
+                InitializeComponents();
+
                 this.CellValueChanged += new DataGridViewCellEventHandler(cellEndEdit);
             }
-
-            private void InitializeComponents(string nameDGV)
-            {
-                this.Name = nameDGV;
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
+            private void InitializeComponents()
+            {                
                 Dock = DockStyle.Fill;
                 //Запретить выделение "много" строк
                 MultiSelect = false;

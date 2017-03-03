@@ -17,10 +17,10 @@ namespace PluginTaskEJournal
         {
             InitializeComponent();
         }
-
-        private void InitializeComponent()
-        {
-        }
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
+        private void InitializeComponent() { }
 
         protected override void initialize(out int err, out string errMsg)
         {

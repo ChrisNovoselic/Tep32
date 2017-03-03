@@ -30,7 +30,9 @@ namespace PluginProject
         {
             get { return ((DataGridView)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]); }
         }
-
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
         private void InitializeComponent()
         {
             m_dgvProp.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(HPanelTepPrjSources_EditingControlShowing);

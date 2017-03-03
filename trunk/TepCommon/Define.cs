@@ -89,6 +89,7 @@ namespace TepCommon
     public enum ID_COMP
     {
         UNKNOWN = -1
+        , TEC = 1
         , TG = 1000
     }
 }

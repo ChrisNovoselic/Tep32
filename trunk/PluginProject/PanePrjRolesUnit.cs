@@ -154,7 +154,7 @@ namespace PluginProject
         }
 
         /// <summary>
-        /// Инициализация компонентов
+        /// Инициализация элементов управления объекта (создание, размещение)
         /// </summary>
         private void InitializeComponent()
         {
@@ -697,6 +697,9 @@ namespace PluginProject
 
     public class DataGridView_Prop : DataGridView
     {
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
         private void InitializeComponent()
         {
             this.Columns.Add("Значение", "Значение");
@@ -990,7 +993,9 @@ namespace PluginProject
         #endregion
 
         private System.Windows.Forms.ContextMenuStrip contextMenu_TreeView;
-
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
         private void InitializeComponent()
         {
             this.Dock = DockStyle.Fill;

@@ -27,7 +27,9 @@ namespace PluginPrjParameters
 
             InitializeComponent();
         }
-
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
         private void InitializeComponent()
         {
         }

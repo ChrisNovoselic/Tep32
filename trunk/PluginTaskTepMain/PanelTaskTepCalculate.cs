@@ -70,7 +70,7 @@ namespace PluginTaskTepMain
 
             InitializeComponents();
 
-            Session.m_IdFpanel = m_id_panel;
+            Session.m_IdFpanel = m_Id;
             Session.SetDatetimeRange(PanelManagementTaskCalculate.s_dtDefault, PanelManagementTaskCalculate.s_dtDefault.AddHours(1));
         }
 
@@ -80,7 +80,9 @@ namespace PluginTaskTepMain
         {
             return new HandlerDbTaskTepCalculate();
         }
-
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
         private void InitializeComponents ()
         {
         }
@@ -115,8 +117,8 @@ namespace PluginTaskTepMain
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMEZONE, COMP_LIST, PARAMETERS(Type), MODE_DEV, RATIO
             initialize(new ID_DBTABLE[] {
-                    /*ID_DBTABLE.PERIOD
-                    , */ID_DBTABLE.TIMEZONE
+                    ID_DBTABLE.TIME
+                    , ID_DBTABLE.TIMEZONE
                     , ID_DBTABLE.COMP_LIST
                     , TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.IN_PARAMETER :
                         TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES ? ID_DBTABLE.OUT_PARAMETER :
@@ -127,9 +129,11 @@ namespace PluginTaskTepMain
                     , ID_DBTABLE.RATIO }
                 , out err, out errMsg
             );
-
             m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Msk;
-            m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Hour | DictionaryTableDictProject.DbTableTime.Month;
+            m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Hour
+                | DictionaryTableDictProject.DbTableTime.Day
+                | DictionaryTableDictProject.DbTableTime.Month;
+            m_dictTableDictPrj.FilterDbTableCompList = DictionaryTableDictProject.DbTableCompList.Tec | DictionaryTableDictProject.DbTableCompList.Tg;
 
             if (err == 0)
                 try {
@@ -289,7 +293,9 @@ namespace PluginTaskTepMain
             {
                 InitializeComponents();
             }
-
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
             private void InitializeComponents()
             {
                 this.Dock = DockStyle.Fill;

@@ -33,12 +33,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// экземпляр делегата
             /// </summary>
-            public static Func<INDEX_CONTROL, System.Windows.Forms.Control> findControl;
-            /// <summary>
-            /// Событие - изменение выбора запрет/разрешение
-            ///  для компонента/параметра при участии_в_расчете/отображении
-            /// </summary>
-            public event ItemCheckedParametersEventHandler ItemCheck;
+            public static Func<INDEX_CONTROL, System.Windows.Forms.Control> findControl;            
 
             private ManagementVisibled m_ManagementVisible;
             ///// <summary>
@@ -111,7 +106,7 @@ namespace PluginTaskVedomostBl
                 SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //
                 // передать текущий объект для динамического размещения дочерних элементов управления
-                m_ManagementVisible = new ManagementVisibled(this);                
+                m_ManagementVisible = new ManagementVisibled(this, onItemCheck);                
 
                 ResumeLayout(false);
                 PerformLayout();
@@ -163,9 +158,8 @@ namespace PluginTaskVedomostBl
                     }
 
                     /// <summary>
-                    /// Инициализация объекта
+                    /// Инициализация элементов управления объекта (создание, размещение)
                     /// </summary>
-                    /// <param name="nameItem">Текст-подпись для элемента</param>
                     private void InitializeComponents()
                     {
                         Name = string.Format(@"RB_BLOCK_{0}", (int)Tag);
@@ -329,30 +323,38 @@ namespace PluginTaskVedomostBl
                         addItem(indx, text, bChecked);
                     }
                 }
-
+                /// <summary>
+                /// Объект для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
+                /// </summary>
                 private CheckedListBoxGroupHeaders m_clbGroupHeaderCheckStates;
                 /// <summary>
                 /// список активных групп хидеров отображения
                 /// </summary>
-                protected List<CheckState>[] m_arGroupHeaderCheckStates;
+                private List<CheckState>[] m_arGroupHeaderCheckStates;
                 /// <summary>
-                /// 
+                /// Список всех элементов управления для вызова на отображение значений для компонента ТЭЦ (ТГ)
                 /// </summary>
                 private List<RadioButtonBlock> m_listRadioButtonBlock;
-
+                /// <summary>
+                /// Элемент упаравления - родитель, для размещения элементов управления
+                /// </summary>
                 private HClassLibrary.HPanelCommon _panelParent;
 
+                private ItemCheckEventHandler checkListBox_onItemCheck;
                 /// <summary>
                 /// Конструктор - основной 
                 /// </summary>
                 /// <param name="panelParent">Родительский элемент управления (для динамического размещения элементов)</param>>
-                public ManagementVisibled(TableLayoutPanel panelParent)
+                public ManagementVisibled(TableLayoutPanel panelParent, ItemCheckEventHandler checkListBoxEventHandler)
                 {
                     _panelParent = panelParent as HClassLibrary.HPanelCommon;
+                    checkListBox_onItemCheck = checkListBoxEventHandler;
 
                     InitializeComponents();
                 }
-
+                /// <summary>
+                /// Инициализировать (создать, разместить) подчиненные(дочерние) элементы управления
+                /// </summary>
                 private void InitializeComponents()
                 {
                     Control ctrl = null;
@@ -378,7 +380,6 @@ namespace PluginTaskVedomostBl
                     _panelParent.SetColumnSpan(ctrl, _panelParent.ColumnCount / 2);
                     _panelParent.SetRowSpan(ctrl, 1);
                 }
-
                 /// <summary>
                 /// Идентификатор выбранного элемента списка
                 /// </summary>
@@ -388,7 +389,6 @@ namespace PluginTaskVedomostBl
                         return (int)m_listRadioButtonBlock[SelectedBlockIndex].Tag;
                     }
                 }
-
                 /// <summary>
                 /// Идентификатор выбранного элемента списка
                 /// </summary>
@@ -407,6 +407,19 @@ namespace PluginTaskVedomostBl
                     }
                 }
 
+                private int getIndexRadioButtonBlock(int tag)
+                {
+                    int iRes = -1; // элемент не найден
+                    Control ctrl = null;
+
+                    if (m_listRadioButtonBlock.Count > 0)
+                        iRes = m_listRadioButtonBlock.FindIndex(item => { return (int)item.Tag == tag; });
+                    else
+                    // список пуст
+                        ;
+
+                    return iRes;
+                }
                 /// <summary>
                 /// Добавить элемент в список
                 /// </summary>
@@ -423,21 +436,23 @@ namespace PluginTaskVedomostBl
                         m_listRadioButtonBlock = new List<RadioButtonBlock>();
                     else
                         ;
-
-                    m_listRadioButtonBlock.Add(ctrl = new RadioButtonBlock(id));
-                    // индекс
-                    ctrl.Index = m_listRadioButtonBlock.Count - 1;
-                    // подпись
-                    ctrl.Text = text;
-                    // 1-ый элемент отображать по умолчанию
-                    ctrl.Checked = ctrl.Index == 0;
-                    // обработчик события
-                    ctrl.CheckedChanged += radioButtonBlock_onCheckedChanged;
-
-                    _panelParent.Controls.Add(ctrl, 0, _panelParent.IndexLastRowControl);
-                    _panelParent.SetColumnSpan(ctrl, _panelParent.ColumnCount);
+                    // не допустить повторного добавления элемента с одинаковым 'Tag'
+                    if (getIndexRadioButtonBlock(id) < 0) {
+                        m_listRadioButtonBlock.Add(ctrl = new RadioButtonBlock(id));
+                        // индекс
+                        ctrl.Index = m_listRadioButtonBlock.Count - 1;
+                        // подпись
+                        ctrl.Text = text;
+                        // 1-ый элемент отображать по умолчанию
+                        ctrl.Checked = ctrl.Index == 0;
+                        // обработчик события
+                        ctrl.CheckedChanged += radioButtonBlock_onCheckedChanged;
+                        // размещение
+                        _panelParent.Controls.Add(ctrl, 0, _panelParent.IndexLastRowControl);
+                        _panelParent.SetColumnSpan(ctrl, _panelParent.ColumnCount);
+                    } else
+                        ;
                 }
-
                 /// <summary>
                 /// Добавить элемент управления для установки/снятия признака отображения той или иной группы столбцов в представлении
                 /// </summary>
@@ -451,35 +466,38 @@ namespace PluginTaskVedomostBl
                     posRow = _panelParent.IndexLastRowControl;
 
                     //
-                    //Признак для включения/исключения для отображения столбца(ов)
+                    //Подпись для списка признаков включения/исключения для отображения столбца(ов)
                     ctrl = new Label();
                     ctrl.Dock = DockStyle.Bottom;
                     (ctrl as Label).Text = @"Включить/исключить столбцы для отображения:";
                     _panelParent.Controls.Add(ctrl, 0, posRow);
                     _panelParent.SetColumnSpan(ctrl, _panelParent.ColumnCount);
                     //
-                    m_clbGroupHeaderCheckStates = new CheckedListBoxGroupHeaders();
-                    //m_clbGroupHeaderCheckStates = Activator.CreateInstance <CheckedListBoxGroupHeaders>();
-                    ctrl = m_clbGroupHeaderCheckStates;
+                    //Список признаков включения/исключения для отображения столбца(ов)
+                    ctrl =
+                    m_clbGroupHeaderCheckStates =
+                        new CheckedListBoxGroupHeaders();
+                    //ctrl = Activator.CreateInstance <CheckedListBoxGroupHeaders>(); 
                     ctrl.Name = INDEX_CONTROL.CLBX_GROUPHEADER_VISIBLED.ToString();
                     _panelParent.Controls.Add(ctrl, 0, posRow = posRow + 1);
                     _panelParent.SetColumnSpan(ctrl, _panelParent.ColumnCount);
                     _panelParent.SetRowSpan(ctrl, 4);
-
+                    // добавить элементы в список
                     for (int indxGroupHeader = 0; indxGroupHeader < s_listGroupHeaders.Count; indxGroupHeader++)
                         m_clbGroupHeaderCheckStates.AddItem(
                             indxGroupHeader
                             , string.Format(@"Группа {0}", indxGroupHeader + 1)
                             , s_listGroupHeaders[indxGroupHeader]
                             , true); //??? всегда TRUE 
-
+                    // зарегистрировать обработчик
+                    m_clbGroupHeaderCheckStates.ItemCheck += checkListBox_onItemCheck;
+                    // память для всех состояний элементов И для каждого из компонентов ТЭЦ (ТГ)
                     m_arGroupHeaderCheckStates = new List<CheckState>[arGroupHeaderCheckStates.Length];
-
+                    // значения состояний для всех элементов списка
                     for (int i = 0; i < m_arGroupHeaderCheckStates.Length; i++) {
                         m_arGroupHeaderCheckStates[i] = new List<CheckState>(arGroupHeaderCheckStates[i]);
                     }
                 }
-
                 /// <summary>
                 /// Обработчик события - переключение блока(ТГ)
                 /// </summary>
@@ -513,7 +531,6 @@ namespace PluginTaskVedomostBl
                     } else
                         ;
                 }
-
                 /// <summary>
                 /// Установка состояния элемента 
                 /// </summary>
@@ -521,7 +538,6 @@ namespace PluginTaskVedomostBl
                 {
                     setCheckStateValues(m_arGroupHeaderCheckStates[SelectedBlockIndex]);
                 }
-
                 /// <summary>
                 /// Установка состояния элемента 
                 /// </summary>
@@ -554,12 +570,15 @@ namespace PluginTaskVedomostBl
                     // кол-во состояний для установки == 0
                         ;
                 }
-
                 /// <summary>
                 /// Удалить все элементы в списке
                 /// </summary>
                 public void ClearItems()
-                {//??? что очищается                    
+                {//??? что очищается
+                    m_listRadioButtonBlock.Clear();
+
+                    m_clbGroupHeaderCheckStates.ClearItems();
+                    //m_arGroupHeaderCheckStates.
                 }
             }
 
@@ -734,9 +753,6 @@ namespace PluginTaskVedomostBl
 
                 arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_GROUPHEADER_VISIBLED };
 
-                //??? очищать нечего, вкладка, возможно, не запущена
-                ActivateCheckedHandler(arIndxIdToClear, false);
-
                 Clear(arIndxIdToClear);
             }
 
@@ -748,6 +764,9 @@ namespace PluginTaskVedomostBl
             {
                 foreach (INDEX_ID indx in arIndexIdToClear)
                     clear(indx);
+
+                //while (Controls.Count > 0)
+                //    Controls.RemoveAt(0);
             }
 
             /// <summary>
@@ -762,72 +781,13 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// (Де)активировать обработчик события
-            /// </summary>
-            /// <param name="bActive">Признак (де)активации</param>
-            /// <param name="arIdToActivate">Массив индексов в списке идентификаторов</param>
-            public void ActivateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
-            {
-                activateCheckedHandler(arIdToActivate, bActive);
-            }
-
-            /// <summary>
-            /// (Де)активировать обработчик события изменения состояния элемента управления
-            /// </summary>
-            /// <param name="arIdToActivate">Индекс в списке идентификаторов (для поиска идентификатора элемента управления по идентификатору группы элементов управления)</param>
-            /// <param name="bActive">Признак (де)активация обработчика события</param>            
-            protected virtual void activateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
-            {
-                INDEX_CONTROL indxCtrl = INDEX_CONTROL.UNKNOWN;
-                CheckedListBox clbx = null;
-
-                foreach (INDEX_ID idToActivate in arIdToActivate) {
-                    indxCtrl = getIndexControlOfIndexID(idToActivate);
-
-                    if (!(indxCtrl == INDEX_CONTROL.UNKNOWN)) {
-                        try {
-                            clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
-
-                            if (bActive == true)
-                                clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
-                            else
-                                clbx.ItemCheck -= onItemCheck;
-                        } catch (Exception e) {
-                            Logging.Logg().Exception(e, string.Format(@"PanelManagementVedomostBl::activateCheckedHandler (INDEX_ID={0}) - не найден элемент управления INDEX_CONTROL={1}..."
-                                , idToActivate, indxCtrl)
-                                    , Logging.INDEX_MESSAGE.NOT_SET);
-                        }
-                    } else
-                        ;
-                }
-            }
-
-            /// <summary>
-            /// Обработчик события - изменение состояния элемента списка
+            /// Обработчик события - изменение значения из списка признаков отображения/снятия_с_отображения
             /// </summary>
             /// <param name="obj">Объект, инициировавший событие (список)</param>
             /// <param name="ev">Аргумент события</param>
-            protected void onItemCheck(object obj, ItemCheckEventArgs ev)
+            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
             {
-                CheckedListBox clbx = (Controls.Find(INDEX_CONTROL.CLBX_GROUPHEADER_VISIBLED.ToString(), true)[0] as CheckedListBox);
-
-                itemCheck((obj as IControl).SelectedId, getIndexIdOfControl(obj as Control), ev.NewValue);
-
-                //if (clbx.CheckedItems.Count == 0)
-                //    clbx.SetItemChecked((obj as IControl).SelectedId + 1 == clbx.Items.Count ? 0 : (obj as IControl).SelectedId + 1, true);
-                //else if (clbx.CheckedItems.Count == 1)
-                //    if (clbx.CheckedItems.Contains(clbx.CheckedItems[(obj as IControl).SelectedId]))
-                //        ;
-            }
-
-            /// <summary>
-            /// Инициировать событие - изменение признака элемента
-            /// </summary>
-            /// <param name="address">Адрес элемента</param>
-            /// <param name="checkState">Значение признака элемента</param>
-            protected void itemCheck(int idItem, INDEX_ID indxId, CheckState checkState)
-            {
-                ItemCheck(new ItemCheckedParametersEventArgs(idItem, (int)indxId, checkState));
+                itemCheck((int)getIndexIdOfControl(obj as Control), (obj as IControl).SelectedId, ev.NewValue);
             }
         }
 

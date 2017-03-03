@@ -24,7 +24,9 @@ namespace PluginTaskTepMain
         {
             InitializeComponents();
         }
-
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
         private void InitializeComponents()
         {
         }
@@ -168,9 +170,9 @@ namespace PluginTaskTepMain
 
             protected void onItemCheck(int idItem, int iChecked)
             {
-                itemCheck(idItem
-                    , INDEX_ID.DENY_PARAMETER_CALCULATED
-                    , iChecked == 1 ? CheckState.Checked : CheckState.Unchecked);
+                itemCheck((int)INDEX_ID.DENY_PARAMETER_CALCULATED
+                    , idItem
+                    ,  iChecked == 1 ? CheckState.Checked : CheckState.Unchecked);
             }
 
             protected override void addParameter(Control ctrl, int id_alg, int id_comp, int id_put, string text, bool bChecked)

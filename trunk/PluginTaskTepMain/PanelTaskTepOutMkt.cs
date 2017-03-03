@@ -29,7 +29,9 @@ namespace PluginTaskTepMain
 
             InitializeComponent();
         }
-
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
         private void InitializeComponent()
         {
         }

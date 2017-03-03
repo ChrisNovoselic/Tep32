@@ -27,7 +27,9 @@ namespace PluginTaskTepMain
             (Controls.Find (INDEX_CONTROL.BUTTON_RUN_PREV.ToString(), true)[0] as Button).Click += new EventHandler (btnRunPrev_onClick);
             // обработчик 'К макету' - см. в базовом классе
         }
-
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
         private void InitializeComponents()
         {
         }
@@ -48,7 +50,7 @@ namespace PluginTaskTepMain
 
         protected override HandlerDbValues createHandlerDb()
         {
-            return new HandlerDbTaskTepCalculate(m_id_panel);
+            return new HandlerDbTaskTepCalculate(m_Id);
         }
 
         /// <summary>
@@ -120,7 +122,7 @@ namespace PluginTaskTepMain
                 if (err == 0)
                     //Начать новую сессию расчета
                     // , получить входные для расчета значения для возможности редактирования
-                    HandlerDb.CreateSession(m_id_panel
+                    HandlerDb.CreateSession(m_Id
                         , Session.CountBasePeriod
                         , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , ref m_arTableOrigin

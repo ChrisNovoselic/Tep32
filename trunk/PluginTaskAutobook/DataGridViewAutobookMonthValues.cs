@@ -83,20 +83,20 @@ namespace PluginTaskAutobook
                 }
             }
             /// <summary>
-            /// 
+            /// Конструктор - основной (без параметров)
             /// </summary>
-            /// <param name="nameDGV">имя вьюхи</param>
-            public DataGridViewAutobookMonthValues(string nameDGV)
+            /// <param name="nameDGV">Наименование элемента управления</param>
+            public DataGridViewAutobookMonthValues(string name)
             {
-                InitializeComponents(nameDGV);
+                Name = name;
+
+                InitializeComponents();
             }
             /// <summary>
-            /// 
+            /// Инициализация элементов управления объекта (создание, размещение)
             /// </summary>
-            /// <param name="nameDGV">имя вьюхи</param>
-            private void InitializeComponents(string nameDGV)
-            {
-                Name = nameDGV;
+            private void InitializeComponents()
+            {                
                 Dock = DockStyle.Fill;
                 //Запретить выделение "много" строк
                 MultiSelect = false;
@@ -501,10 +501,9 @@ namespace PluginTaskAutobook
 
                 valueCor = AsParseToF(Rows[e.RowIndex].Cells[Columns[e.ColumnIndex].Name].Value.ToString());
 
-                switch (Columns[e.ColumnIndex].Name)
+                switch ((INDEX_GTP)Enum.Parse(typeof(INDEX_GTP), Columns[e.ColumnIndex].Name))
                 {
-                    case "CorGTP12":
-
+                    case INDEX_GTP.CorGTP12:
                         double.TryParse(Rows[e.RowIndex].Cells[INDEX_GTP.GTP12.ToString()].Value.ToString(), out valueCell);
 
                         if (valueCell != 0)
@@ -516,7 +515,7 @@ namespace PluginTaskAutobook
                         double.TryParse(Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value.ToString(), out valueCell);
 
                         break;
-                    case "CorGTP36":
+                    case INDEX_GTP.CorGTP36:
                         double.TryParse(Rows[e.RowIndex].Cells[INDEX_GTP.GTP36.ToString()].Value.ToString(), out valueCell);
 
                         if (valueCell != 0)
@@ -529,8 +528,7 @@ namespace PluginTaskAutobook
                         break;
                 }
 
-                if (valueCell != 0)
-                {
+                if (!(valueCell == 0)) {
                     Rows[e.RowIndex].Cells[INDEX_GTP.TEC.ToString()].Value = AsParseToF(Rows[e.RowIndex].Cells[colName].Value.ToString())
                                + valueCell;
 
@@ -539,7 +537,9 @@ namespace PluginTaskAutobook
                             fillCells(Rows[i]);
                         else
                             break;
-                }
+                } else
+                //??? значение ячейки == 0, ну и что? считать не надо
+                    ;
             }
 
             /// <summary>
@@ -552,12 +552,9 @@ namespace PluginTaskAutobook
                 valueCell = 0,//знач. ячейки
                 value = 0;
 
-                foreach (DataGridViewColumn col in row.DataGridView.Columns)
-                {
-                    switch (col.Name)
-                    {
-                        case "CorGTP12":
-
+                foreach (DataGridViewColumn col in row.DataGridView.Columns) {
+                    switch ((INDEX_GTP)Enum.Parse(typeof(INDEX_GTP), col.Name)) {
+                        case INDEX_GTP.CorGTP12:
                             if (row.Cells[col.Name].Value.ToString() == string.Empty)
                                 valueCor = 0;
                             else
@@ -572,8 +569,7 @@ namespace PluginTaskAutobook
                                 Rows[row.Index].Cells[INDEX_GTP.GTP12.ToString()].Value = valueCor + valueCell;
                             break;
 
-                        case "CorGTP36":
-
+                        case INDEX_GTP.CorGTP36:
                             if (row.Cells[col.Name].Value.ToString() == string.Empty)
                                 valueCor = 0;
                             else

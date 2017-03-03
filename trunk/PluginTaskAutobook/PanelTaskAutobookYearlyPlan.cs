@@ -102,14 +102,14 @@ namespace PluginTaskAutobook
         protected class PanelManagementAutobookYearlyPlan : PanelManagementTaskCalculate //HPanelCommon
         {
             /// <summary>
-            /// 
+            /// Перечисление - идентификаторы элементов управления
             /// </summary>
             public enum INDEX_CONTROL
             {
-                UNKNOWN = -1,
-                BUTTON_SAVE, BUTTON_LOAD,
-                CHKBX_EDIT,
-                COUNT
+                UNKNOWN = -1
+                , BUTTON_SAVE, BUTTON_LOAD
+                , CHKBX_EDIT
+                    , COUNT
             }
 
             /// <summary>
@@ -129,7 +129,9 @@ namespace PluginTaskAutobook
             {
                 InitializeComponents();
             }
-
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
             private void InitializeComponents()
             {
                 Control ctrl = new Control();
@@ -187,6 +189,17 @@ namespace PluginTaskAutobook
 
                 if (!(DateTimeRangeValue_Changed == null))
                     DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
+                else
+                    ;
+            }
+            /// <summary>
+            /// Обработчик события - изменение значения из списка признаков отображения/снятия_с_отображения
+            /// </summary>
+            /// <param name="obj">Объект инициировавший событие</param>
+            /// <param name="ev">Аргумент события</param>
+            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
+            {
+                throw new NotImplementedException();
             }
         }
 
@@ -208,7 +221,7 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// инициализация объектов
+        /// Инициализация элементов управления объекта (создание, размещение)
         /// </summary>
         private void InitializeComponent()
         {
@@ -525,7 +538,7 @@ namespace PluginTaskAutobook
                 if (err == 0)
                     //Начать новую сессию расчета
                     // ,получить входные для расчета значения для возможности редактирования
-                    HandlerDb.CreateSession(m_id_panel
+                    HandlerDb.CreateSession(m_Id
                         , Session.CountBasePeriod
                         , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , ref m_arTableOrigin
@@ -630,7 +643,7 @@ namespace PluginTaskAutobook
 
             dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
                 , new int[] {
-                    m_id_panel
+                    m_Id
                     , (int)Session.m_currIdPeriod }
                     , out err);
 

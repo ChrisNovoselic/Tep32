@@ -19,9 +19,10 @@ namespace PluginDictionary
             //Дополнительные действия при сохранении значений
             delegateSaveAdding = saveAdding;
         }
-
-        private void InitializeComponent () {
-        }
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
+        private void InitializeComponent () { }
 
         private void saveAdding() { /*дополнительные действия не требуются*/ }
     }

@@ -31,15 +31,6 @@ namespace PluginTaskReaktivka
                 COUNT
             }
             /// <summary>
-            /// Событие - изменение выбора запрет/разрешение
-            ///  для компонента/параметра при участии_в_расчете/отображении
-            /// </summary>
-            public event ItemCheckedParametersEventHandler ItemCheck;
-            ///// <summary>
-            ///// 
-            ///// </summary>
-            //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
-            /// <summary>
             /// Инициализация размеров/стилей макета для размещения элементов управления
             /// </summary>
             /// <param name="cols">Количество столбцов в макете</param>
@@ -54,7 +45,9 @@ namespace PluginTaskReaktivka
             {
                 InitializeComponents();
             }
-
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
             private void InitializeComponents()
             {
                 //initializeLayoutStyle();
@@ -265,8 +258,6 @@ namespace PluginTaskReaktivka
 
                 INDEX_ID[] arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED };
 
-                activateCheckedHandler(arIndxIdToClear, false);
-
                 Clear(arIndxIdToClear);
             }
 
@@ -290,48 +281,13 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// (Де)активировать обработчик события
-            /// </summary>
-            /// <param name="bActive">Признак (де)активации</param>
-            /// <param name="arIdToActivate">Массив индексов в списке идентификаторов</param>
-            public void ActivateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
-            {
-                activateCheckedHandler(arIdToActivate, bActive);
-            }
-
-            /// <summary>
-            /// (Де)активировать обработчик события изменения состояния элемента управления
-            /// </summary>
-            /// <param name="arIdToActivate"></param>
-            /// <param name="bActive">Признак (де)активация обработчика события</param>            
-            protected virtual void activateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
-            {
-                INDEX_CONTROL indxCtrl = INDEX_CONTROL.UNKNOWN;
-                CheckedListBox clbx = null;
-
-                foreach (INDEX_ID idToActivate in arIdToActivate) {
-                    indxCtrl = getIndexControlOfIndexID(idToActivate);
-
-                    if (!(indxCtrl == INDEX_CONTROL.UNKNOWN)) {
-                        clbx = (Controls.Find(indxCtrl.ToString(), true)[0] as CheckedListBox);
-
-                        if (bActive == true)
-                            clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
-                        else
-                            clbx.ItemCheck -= onItemCheck;
-                    } else
-                        ;
-                }
-            }
-
-            /// <summary>
-            /// Обработчик события - изменение состояния элемента списка
+            /// Обработчик события - изменение значения из списка признаков отображения/снятия_с_отображения
             /// </summary>
             /// <param name="obj">Объект, инициировавший событие (список)</param>
             /// <param name="ev">Аргумент события</param>
-            protected void onItemCheck(object obj, ItemCheckEventArgs ev)
+            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
             {
-                itemCheck((obj as IControl).SelectedId, getIndexIdOfControl(obj as Control), ev.NewValue);
+                itemCheck((int)getIndexIdOfControl(obj as Control), (obj as IControl).SelectedId, ev.NewValue);
             }
 
             /// <summary>
@@ -344,22 +300,18 @@ namespace PluginTaskReaktivka
                 INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
                 INDEX_ID indxRes = INDEX_ID.UNKNOWN;
 
-                try
-                {
+                try {
                     //Определить идентификатор
                     id = getIndexControl(ctrl);
                     // , соответствующий изменившему состояние элементу 'CheckedListBox'
-                    switch (id)
-                    {
+                    switch (id) {
                         case INDEX_CONTROL.CLBX_COMP_VISIBLED:
                             indxRes = id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
                             break;
                         default:
                             break;
                     }
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
@@ -383,16 +335,6 @@ namespace PluginTaskReaktivka
                     throw new Exception(@"PanelTaskReaktivka::getIndexControl () - не найден объект 'CheckedListBox'...");
 
                 return indxRes;
-            }
-
-            /// <summary>
-            /// Инициировать событие - изменение признака элемента
-            /// </summary>
-            /// <param name="address">Адрес элемента</param>
-            /// <param name="checkState">Значение признака элемента</param>
-            protected void itemCheck(int idItem, INDEX_ID indxId, CheckState checkState)
-            {
-                ItemCheck(new ItemCheckedParametersEventArgs(idItem, (int)indxId, checkState));
             }
         }
     }

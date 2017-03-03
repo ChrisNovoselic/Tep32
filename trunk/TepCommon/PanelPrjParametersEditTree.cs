@@ -357,7 +357,9 @@ namespace TepCommon
 
             InitializeComponents();
         }
-
+        /// <summary>
+        /// Инициализация элементов управления объекта (создание, размещение)
+        /// </summary>
         private void InitializeComponents()
         {
             Control ctrl = null;

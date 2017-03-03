@@ -74,7 +74,9 @@ namespace TepCommon
 
                 InitializeComponents();
             }
-
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
             private void InitializeComponents()
             {
                 switch (m_type)
@@ -158,7 +160,7 @@ namespace TepCommon
 
         /// <summary>
         /// Обязательный метод для поддержки конструктора - не изменяйте
-        /// содержимое данного метода при помощи редактора кода.
+        ///  содержимое данного метода при помощи редактора кода.
         /// </summary>
         private void InitializeComponent()
         {

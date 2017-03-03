@@ -37,7 +37,7 @@ namespace TepCommon
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected class PanelManagementTaskCalculate : HClassLibrary.HPanelCommon
+        protected abstract class PanelManagementTaskCalculate : HClassLibrary.HPanelCommon
         {
             private enum INDEX_CONTROL_BASE
             {
@@ -78,14 +78,38 @@ namespace TepCommon
                     set { _newCheckState = value; }
                 }
 
-                public ItemCheckedParametersEventArgs(int idItem, int indxId, CheckState newCheckState)
+                public ItemCheckedParametersEventArgs(int indxId, int idItem, CheckState newCheckState)
                     : base()
                 {
-                    m_idItem = idItem;
                     m_indxId = indxId;
+                    m_idItem = idItem;
+                    
                     _newCheckState = newCheckState;
                 }
             }
+
+            /// <summary>
+            /// Событие - изменение выбора запрет/разрешение
+            ///  для компонента/параметра при участии_в_расчете/отображении
+            /// </summary>
+            public event ItemCheckedParametersEventHandler ItemCheck;
+
+            /// <summary>
+            /// Инициировать событие - изменение признака элемента
+            /// </summary>
+            /// <param name="address">Адрес элемента</param>
+            /// <param name="checkState">Значение признака элемента</param>
+            protected void itemCheck(int indxId, int idItem, CheckState checkState)
+            {
+                ItemCheck(new ItemCheckedParametersEventArgs(indxId, idItem, checkState));
+            }
+
+            /// <summary>
+            /// Обработчик события - изменение состояния элемента списка
+            /// </summary>
+            /// <param name="obj">Объект, инициировавший событие (список)</param>
+            /// <param name="ev">Аргумент события</param>
+            protected abstract void onItemCheck(object obj, ItemCheckEventArgs ev);
 
             /// <summary>
             /// Признаки порядка размещения элементов управления (последовательно - один над другим, одновременно - на одной строке, наличие подписей)
@@ -121,7 +145,9 @@ namespace TepCommon
                 // т.к. при изменении дата/время начала периода изменяется и дата/время окончания периода
                 (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);                
             }
-
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
             private void InitializeComponents()
             {
                 Control ctrl = null;
@@ -271,10 +297,7 @@ namespace TepCommon
             {
                 activateComboBoxSelectedIndex_onChanged(PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_PERIOD, cbxPeriod_SelectedIndexChanged);
 
-                activateComboBoxSelectedIndex_onChanged(PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE, cbxTimezone_SelectedIndexChanged);
-
-                while (Controls.Count > 0)
-                    Controls.RemoveAt(0);
+                activateComboBoxSelectedIndex_onChanged(PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE, cbxTimezone_SelectedIndexChanged);                
             }
 
             private void activateComboBoxSelectedIndex_onChanged(INDEX_CONTROL_BASE indxctrl, EventHandler handler, bool bActivate = false)
@@ -464,7 +487,7 @@ namespace TepCommon
                             , 1
                             , 0
                             , 0
-                            , 0).AddMonths(-1);
+                            , 0)/*.AddMonths(-1)*/;
                         hdtpEnd.Value = hdtpBegin.Value.AddMonths(1);
                         hdtpBegin.Mode =
                         hdtpEnd.Mode =

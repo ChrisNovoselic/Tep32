@@ -254,7 +254,9 @@ namespace PluginTaskBalTeplo
             {
                 initializeLayoutStyleEvenly(cols, rows);
             }
-
+            /// <summary>
+            /// Конмтруктор - основной (без параметров)
+            /// </summary>
             public PanelManagementBalTeplo()
                 : base(ModeTimeControlPlacement.Twin | ModeTimeControlPlacement.Labels) //6, 8
             {
@@ -263,7 +265,9 @@ namespace PluginTaskBalTeplo
                 for (INDEX_CONTROL indx = INDEX_CONTROL.RADIO_BLOCK; !(indx > INDEX_CONTROL.RADIO_PROM_PLOZSH); indx ++)
                     (Controls.Find(indx.ToString(), true)[0] as RadioButton).CheckedChanged += new EventHandler(onCheckedChangedIndexViewValues);
             }
-
+            /// <summary>
+            /// Инициализация элементов управления объекта (создание, размещение)
+            /// </summary>
             private void InitializeComponents()
             {
                 Control ctrl = new Control(); ;
@@ -367,6 +371,16 @@ namespace PluginTaskBalTeplo
                     ;
             }
 
+            /// <summary>
+            /// Обработчик события - изменение значения из списка признаков отображения/снятия_с_отображения
+            /// </summary>
+            /// <param name="obj">Объект инициировавший событие</param>
+            /// <param name="ev">Аргумент события</param>
+            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
+            {
+                throw new NotImplementedException();
+            }
+
             private void onCheckedChangedIndexViewValues(object obj, EventArgs e)
             {
                 if ((obj as RadioButton).Checked == true)
@@ -404,7 +418,7 @@ namespace PluginTaskBalTeplo
         }
 
         /// <summary>
-        /// инициализация объектов
+        /// Инициализация элементов управления объекта (создание, размещение)
         /// </summary>
         private void InitializeComponents()
         {
@@ -691,7 +705,7 @@ namespace PluginTaskBalTeplo
                 if (err == 0)
                     //Начать новую сессию расчета
                     //, получить входные для расчета значения для возможности редактирования
-                    HandlerDb.CreateSession(m_id_panel
+                    HandlerDb.CreateSession(m_Id
                         , Session.CountBasePeriod
                         , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
                         , ref m_arTableOrigin_in

@@ -200,9 +200,8 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// Инициализация компонента
+            /// Инициализация элементов управления объекта (создание, размещение)
             /// </summary>
-            /// <param name="nameDGV">имя окна отображения данных</param>
             private void InitializeComponents()
             {
                 Name = ((INDEX_CONTROL)Tag).ToString();

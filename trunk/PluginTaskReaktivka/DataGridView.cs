@@ -17,7 +17,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// 
         /// </summary>
-        protected class DGVReaktivka : DataGridViewValues
+        protected class DataGridViewValuesReaktivka : DataGridViewValues
         {
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
@@ -29,18 +29,18 @@ namespace PluginTaskReaktivka
             /// Конструктор
             /// </summary>
             /// <param name="nameDGV"></param>
-            public DGVReaktivka(string nameDGV)
+            public DataGridViewValuesReaktivka(string name) : base ()
             {
-                InitializeComponents(nameDGV);
+                Name = name;
+
+                InitializeComponents();
             }
 
             /// <summary>
-            /// 
+            /// Инициализация элементов управления объекта (создание, размещение)
             /// </summary>
-            /// <param name="nameDGV"></param>
-            private void InitializeComponents(string nameDGV)
+            private void InitializeComponents()
             {
-                Name = nameDGV;
                 Dock = DockStyle.Fill;
                 //Запретить выделение "много" строк
                 MultiSelect = false;

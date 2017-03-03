@@ -107,7 +107,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Экземпляр класса отображения данных
         /// </summary>
-        DGVReaktivka m_dgvValues;
+        DataGridViewValuesReaktivka m_dgvValues;
 
         /// <summary>
         /// Конструктор
@@ -127,11 +127,11 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// Конструктор
+        /// Инициализация элементов управления объекта (создание, размещение)
         /// </summary>
         private void InitializeComponents()
         {
-            m_dgvValues = new DGVReaktivka(INDEX_CONTROL.DGV_DATA.ToString());
+            m_dgvValues = new DataGridViewValuesReaktivka(INDEX_CONTROL.DGV_DATA.ToString());
 
             foreach (DataGridViewColumn column in m_dgvValues.Columns)
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
@@ -298,12 +298,6 @@ namespace PluginTaskReaktivka
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
 
-                //Установить обработчик события - добавить параметр
-                //eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
-                // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
-                // компонента станции для элементов управления
-                PanelManagement.ActivateCheckedHandler(new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED }, true);
-                //
                 m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
                 if (err == 0)
@@ -328,14 +322,14 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// Обработчик события - изменение часового пояса
+        /// ??? не соблюдаются принципы ООП Обработчик события - изменение часового пояса
         /// </summary>
         /// <param name="obj">Объект, инициировавший события (список с перечислением часовых поясов)</param>
         /// <param name="ev">Аргумент события</param>
         protected void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
         {
-            if (m_bflgClear)
-            {
+            //??? какой флаг, зачем
+            if (m_bflgClear) {
                 //Установить новое значение для текущего периода
                 setCurrentTimeZone(obj as ComboBox);
                 // очистить содержание представления
@@ -480,7 +474,7 @@ namespace PluginTaskReaktivka
             {
                 clear();
                 dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
-                    , new int[] { m_id_panel, (int)Session.m_currIdPeriod }
+                    , new int[] { m_Id, (int)Session.m_currIdPeriod }
                     , out err
                 );
 
@@ -513,7 +507,7 @@ namespace PluginTaskReaktivka
                 for (int i = 0; i < DaysInMonth + 1; i++)
                 {
                     if (m_dgvValues.Rows.Count != DaysInMonth)
-                        m_dgvValues.AddRow(new DGVReaktivka.ROW_PROPERTY()
+                        m_dgvValues.AddRow(new DataGridViewValuesReaktivka.ROW_PROPERTY()
                         {
                             m_idAlg = id_alg
                             //, m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
@@ -522,7 +516,7 @@ namespace PluginTaskReaktivka
                             , m_vsRound = round
                         });
                     else
-                        m_dgvValues.AddRow(new DGVReaktivka.ROW_PROPERTY()
+                        m_dgvValues.AddRow(new DataGridViewValuesReaktivka.ROW_PROPERTY()
                         {
                             m_idAlg = id_alg
                             //, m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
@@ -936,7 +930,7 @@ namespace PluginTaskReaktivka
             //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
             // или в этом же плюгИне измененить/сохраннить индивидуальные настройки
             //Изменить структуру 'DataGridView'          
-            (m_dgvValues as DGVReaktivka).UpdateStructure(ev);
+            (m_dgvValues as DataGridViewValuesReaktivka).UpdateStructure(ev);
         }
 
         /// <summary>
@@ -1052,7 +1046,7 @@ namespace PluginTaskReaktivka
                 if (err == 0)
                     //Начать новую сессию расчета
                     //, получить входные для расчета значения для возможности редактирования
-                    HandlerDb.CreateSession(m_id_panel
+                    HandlerDb.CreateSession(m_Id
                         , Session.CountBasePeriod
                         , m_dictTableDictPrj[ID_DBTABLE.COMP]
                         , ref m_arTableOrigin
