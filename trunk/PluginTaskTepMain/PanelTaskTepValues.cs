@@ -122,10 +122,9 @@ namespace PluginTaskTepMain
             bool[] arChecked = new bool[arIndxIdToAdd.Length];
 
             //Заполнить элементы управления с компонентами станции
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows)
-            {
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows) {
                 id_comp = (Int16)r[@"ID"];
-                m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
+                //m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
                 strItem = ((string)r[@"DESCRIPTION"]).Trim();
                 // установить признак участия в расчете компонента станции
                 arChecked[0] = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
@@ -142,7 +141,7 @@ namespace PluginTaskTepMain
             eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
             // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
             // компонента станции для элементов управления
-            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(new INDEX_ID[] { INDEX_ID.DENY_COMP_CALCULATED, INDEX_ID.DENY_COMP_VISIBLED }, true);
+            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(arIndxIdToAdd, true);
 
             m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
         }
@@ -370,7 +369,7 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         protected override void panelManagement_onPeriodChanged(object obj, EventArgs ev)
         {
-            ComboBox cbx = obj as ComboBox;
+            //ComboBox cbx = obj as ComboBox;
             int err = -1
                 , id_alg = -1
                 , ratio = -1
@@ -380,7 +379,7 @@ namespace PluginTaskTepMain
             INDEX_ID[] arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED };
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             //Установить новое значение для текущего периода
-            Session.SetCurrentPeriod((ID_PERIOD)m_arListIds[(int)INDEX_ID.PERIOD][cbx.SelectedIndex]);
+            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
             //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
             (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(arIndexIdToAdd, false);
             //Очистиить списки - элементы интерфейса
@@ -1459,10 +1458,10 @@ namespace PluginTaskTepMain
                 (find(idToClear) as IControl).ClearItems();
             }
 
-            public void ActivateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
-            {
-                activateCheckedHandler(arIdToActivate, bActive);
-            }
+            //public void ActivateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
+            //{
+            //    activateCheckedHandler(arIdToActivate, bActive);
+            //}
 
             protected virtual void activateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
             {

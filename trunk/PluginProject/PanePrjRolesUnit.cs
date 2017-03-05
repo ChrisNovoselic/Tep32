@@ -675,7 +675,7 @@ namespace PluginProject
                     if (((DataGridView_Prop)obj).SelectedRows[0].HeaderCell.Value != null)
                     {
                         name = ((DataGridView_Prop)obj).SelectedRows[0].HeaderCell.Value.ToString();
-                        foreach (DataRow r in Descriptions[(int)ID_DT_DESC.PROP].Select("ID_TABLE=" + (int)m_Level))
+                        foreach (DataRow r in Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.PROPERTIES].Select("ID_TABLE=" + (int)m_Level))
                         {
                             if (name == r["PARAM_NAME"].ToString())
                             {

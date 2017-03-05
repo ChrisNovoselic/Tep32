@@ -47,9 +47,9 @@ namespace PluginTaskTepMain
         protected enum INDEX_ID
         {
             UNKNOWN = -1
-            , PERIOD // идентификаторы периодов расчетов, использующихся на форме
+            /*, PERIOD // идентификаторы периодов расчетов, использующихся на форме
             , TIMEZONE // идентификаторы (целочисленные, из БД системы) часовых поясов
-            , ALL_COMPONENT, ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
+            , ALL_COMPONENT*/, ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
             , DENY_COMP_CALCULATED, DENY_PARAMETER_CALCULATED // запрещенных для расчета
             , DENY_COMP_VISIBLED, DENY_PARAMETER_VISIBLED // запрещенных для отображения
                 , COUNT
@@ -93,20 +93,20 @@ namespace PluginTaskTepMain
             errMsg = string.Empty;
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
-            for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
-                switch (id)
-                {
-                    case INDEX_ID.PERIOD:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
-                        break;
-                    case INDEX_ID.TIMEZONE:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-                        break;
-                    default:
-                        //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
-                        m_arListIds[(int)id] = new List<int>();
-                        break;
-                }
+            //for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
+            //    switch (id)
+            //    {
+            //        case INDEX_ID.PERIOD:
+            //            m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
+            //            break;
+            //        case INDEX_ID.TIMEZONE:
+            //            m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
+            //            break;
+            //        default:
+            //            //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
+            //            m_arListIds[(int)id] = new List<int>();
+            //            break;
+            //    }
 
             //HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
 
@@ -137,7 +137,7 @@ namespace PluginTaskTepMain
 
             if (err == 0)
                 try {
-                    m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
+                    //m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
 
                     initialize();
 

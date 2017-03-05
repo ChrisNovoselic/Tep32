@@ -460,10 +460,12 @@ namespace TepCommon
         }
 
         #region Apelgans
-
+        /// <summary>
+        /// Идентификатор текущего объекта панели(класса) в соответствии с решистрацией
+        /// </summary>
         protected int m_Id;
 
-        public enum ID_DT_DESC { TABLE, PROP };
+        public enum INDEX_DATATABLE_DESCRIPTION { TABLE, PROPERTIES };
 
         public DataTable[] Descriptions = new DataTable[] { new DataTable(), new DataTable() };
 
@@ -473,7 +475,7 @@ namespace TepCommon
         {
             MAIN = 1 //Главная
             , PROP = 2 //Свойства
-                , DESC = 3 //Описание
+            , DESC = 3 //Описание
         };
         /// <summary>
         /// Список групп
@@ -634,23 +636,23 @@ namespace TepCommon
 
                     //Описания таблиц
                     query = "SELECT * FROM [dbo].[table_description] WHERE [ID_PANEL]=" + m_Id;
-                    Descriptions[(int)ID_DT_DESC.TABLE] = m_handlerDb.Select(query, out err);
+                    Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE] = m_handlerDb.Select(query, out err);
 
                     //Описания параметров
                     query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_Id;
-                    Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
+                    Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.PROPERTIES] = m_handlerDb.Select(query, out err);
 
                     //Описания параметров
                     query = "SELECT * FROM [dbo].[param_description] WHERE [ID_PANEL]=" + m_Id;
-                    Descriptions[(int)ID_DT_DESC.PROP] = m_handlerDb.Select(query, out err);
+                    Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.PROPERTIES] = m_handlerDb.Select(query, out err);
 
                     if (!(err == 0))
                         Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
                     else
                         ;
 
-                    if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE") < 0)) {
-                        rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.MAIN);
+                    if (!(Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Columns.IndexOf("ID_TABLE") < 0)) {
+                        rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_AREA.MAIN);
 
                         if (rows.Length == 1)
                             Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
@@ -658,27 +660,27 @@ namespace TepCommon
                             ;
 
                         //DataRow[] rows = null;
-                        if (!(Descriptions[(int)ID_DT_DESC.TABLE].Columns.IndexOf("ID_TABLE=") < 0)) {
-                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.MAIN);
+                        if (!(Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Columns.IndexOf("ID_TABLE=") < 0)) {
+                            rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_AREA.MAIN);
                             if (rows.Length == 1)
                                 ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                             else
                                 ;
 
-                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.PROP);
+                            rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_AREA.PROP);
                             if (rows.Length == 1)
                                 ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                             else
                                 ;
 
-                            rows = Descriptions[(int)ID_DT_DESC.TABLE].Select("ID_TABLE=" + (int)ID_AREA.DESC);
+                            rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_AREA.DESC);
                             if (rows.Length == 1) {
                                 ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                                 ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
                             } else
                                 ;
                         } else
-                            Logging.Logg().Error(@"HPanelTepCommon::initializeDescPanel () - в таблице [" + Descriptions[(int)ID_DT_DESC.TABLE].TableName + @"] не найдено поле [ID_TABLE]"
+                            Logging.Logg().Error(@"HPanelTepCommon::initializeDescPanel () - в таблице [" + Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].TableName + @"] не найдено поле [ID_TABLE]"
                                 , Logging.INDEX_MESSAGE.NOT_SET);
                     } else
                         ;
@@ -801,7 +803,7 @@ namespace TepCommon
                 if (((DataGridView)obj).SelectedRows.Count > 0) {
                     name = ((DataGridView)obj).SelectedRows[0].Cells[0].Value.ToString();
 
-                    foreach (DataRow r in Descriptions[(int)ID_DT_DESC.PROP].Rows)
+                    foreach (DataRow r in Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.PROPERTIES].Rows)
                         if (name == r["PARAM_NAME"].ToString())
                             desc = r["DESCRIPTION"].ToString();
                         else

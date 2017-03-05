@@ -127,7 +127,7 @@ namespace PluginTaskTepMain
         {
             base.deleteSession();
 
-            int err = -1;            
+            int err = -1;
 
             HandlerDb.InitSession(out err);
         }
@@ -195,8 +195,7 @@ namespace PluginTaskTepMain
 
                 public int SelectedId
                 {
-                    get
-                    {
+                    get {
                         int iRes = -1;
 
                         string[] strIds = null;
