@@ -139,9 +139,9 @@ namespace PluginTaskTepMain
             }
             //Установить обработчик события - добавить параметр
             eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
-            // установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
-            // компонента станции для элементов управления
-            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(arIndxIdToAdd, true);
+            //// установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
+            //// компонента станции для элементов управления
+            //(PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(arIndxIdToAdd, true);
 
             m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
         }
@@ -369,101 +369,6 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         protected override void panelManagement_onPeriodChanged(object obj, EventArgs ev)
         {
-            //ComboBox cbx = obj as ComboBox;
-            int err = -1
-                , id_alg = -1
-                , ratio = -1
-                , round = -1;
-            string strItem = string.Empty;
-            string n_alg = string.Empty;
-            INDEX_ID[] arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED };
-            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
-            //Установить новое значение для текущего периода
-            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
-            //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(arIndexIdToAdd, false);
-            //Очистиить списки - элементы интерфейса
-            (PanelManagement as PanelManagementTaskTepValues).Clear(arIndexIdToAdd);
-            //Очистить список с параметрами, т.к. он м.б. индивидуален для каждого из периодов расчета
-            m_arListIds[(int)INDEX_ID.ALL_NALG].Clear();
-            //??? проверить сохранены ли значения
-            m_dgvValues.ClearRows();
-            //Список параметров для отображения
-            IEnumerable<DataRow> listParameter =
-                // в каждой строке значения полей, относящихся к параметру алгоритма расчета одинаковые, т.к. 'ListParameter' объединение 2-х таблиц
-                //ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]
-                ListParameter.Select(x => x);
-            //Установки для отображения значений
-            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
-                , new int[] {
-                    //1
-                    //, (_iFuncPlugin as PlugInBase)._Id
-                    m_Id
-                    , (int)Session.m_currIdPeriod }
-                , out err);
-            //Заполнить элементы управления с компонентами станции 
-            foreach (DataRow r in listParameter) {
-                id_alg = (int)r[@"ID_ALG"];
-                n_alg = r[@"N_ALG"].ToString().Trim();
-                // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
-                if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0) {
-                // добавить в список идентификатор параметра алгоритма расчета
-                    m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
-
-                    strItem = string.Format(@"{0} ({1})", ((string)r[@"N_ALG"]).Trim(), ((string)r[@"NAME_SHR"]).Trim());
-                    eventAddNAlgParameter(new PanelManagementTaskTepValues.ADDING_PARAMETER() {
-                        m_idNAlg = id_alg
-                        , m_idComp = (int)r[@"ID_COMP"]
-                        , m_idPut = (int)r[@"ID"]
-                        , m_strText = strItem
-                        , m_arIndexIdToAdd = arIndexIdToAdd
-                        , m_arChecked = new bool[] {
-                            m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
-                            , m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0
-                        }
-                    });
-                    // получить значения для настройки визуального отображения
-                    if (dictVisualSettings.ContainsKey(n_alg) == true) {
-                    // установленные в проекте
-                        ratio = dictVisualSettings[n_alg].m_ratio;
-                        round = dictVisualSettings[n_alg].m_round;
-                    } else {
-                    // по умолчанию
-                        ratio = HTepUsers.s_iRatioDefault;
-                        round = HTepUsers.s_iRoundDefault;
-                    }
-                    // добавить свойства для строки таблицы со значениями
-                    m_dgvValues.AddRow(new DataGridViewTEPValues.ROW_PROPERTY() {
-                        m_idAlg = id_alg
-                        , m_strHeaderText = ((string)r[@"N_ALG"]).Trim()
-                        , m_strToolTipText = ((string)r[@"NAME_SHR"]).Trim()
-                        , m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                        , m_strSymbol = !(r[@"SYMBOL"] is DBNull) ? ((string)r[@"SYMBOL"]).Trim() : string.Empty
-                        //, m_bVisibled = bVisibled
-                        , m_vsRatio = ratio
-                        , m_vsRound = round
-                        //, m_ratio = (int)r[@"ID_RATIO"]
-                    });
-                } else
-                    // параметр уже был добавлен
-                    if (!(eventAddCompParameter == null))
-                        // только, если назначенн обработчик в 'PanelTaskTepOutVal'
-                        eventAddCompParameter(new PanelManagementTaskTepValues.ADDING_PARAMETER() {
-                            m_idNAlg = id_alg
-                            , m_idComp = (int)r[@"ID_COMP"]
-                            , m_idPut = (int)r[@"ID"]
-                            , m_strText = strItem
-                            , m_arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED }
-                            , m_arChecked = new bool[] {
-                                m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
-                            }
-                        });
-                    else
-                        ;
-            }
-            //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-            (PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(arIndexIdToAdd, true);
-
             base.panelManagement_onPeriodChanged(obj, ev);
         }
         /// <summary>
@@ -1563,10 +1468,10 @@ namespace PluginTaskTepMain
                 return new CheckedListBoxTaskTepValues();
             }
 
-            protected virtual void addParameter(Control ctrl, int id_alg, int id_comp, int id_put, string text, bool bChecked)
+            protected virtual void addParameter(Control ctrl, int id_alg, int id_comp, int id_put, string text, bool bEnabled)
             {
                 if (ctrl is CheckedListBoxTaskTepValues)
-                    (ctrl as CheckedListBoxTaskTepValues).AddItem(id_alg, text, bChecked);
+                    (ctrl as CheckedListBoxTaskTepValues).AddItem(id_alg, text, bEnabled);
                 else
                     ;
             }

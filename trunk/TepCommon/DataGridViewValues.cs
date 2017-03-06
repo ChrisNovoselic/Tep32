@@ -30,7 +30,7 @@ namespace TepCommon
             protected Dictionary<int, RATIO> m_dictRatio;
 
             /// <summary>
-            /// Установить значения для словаря со значениями коэффициентов при масштабировании физических величин
+            /// Установить значения для яччеек представления со значениями коэффициентов при масштабировании физических величин
             /// </summary>
             /// <param name="tblRatio">Таблица БД со описанием коэфициентов</param>
             public void SetRatio(DataTable tblRatio)

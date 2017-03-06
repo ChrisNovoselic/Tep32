@@ -45,10 +45,10 @@ namespace PluginTaskBalTeplo
         /// </summary>
         public enum INDEX_CALC : int
         {
-            UNKNOW = -1,
-            CALC,
-            CorCALC,
-            COUNT
+            UNKNOWN = -1
+            , CALC
+            , CorCALC
+                , COUNT
         }
         
         /// <summary>
@@ -1098,7 +1098,7 @@ namespace PluginTaskBalTeplo
         /// Обработчик события при изменении периода расчета
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventBaseValueChanged(object obj)
+        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
             //Установить новое значение для текущего периода
             Session.SetCurrentPeriod(PanelManagement.IdPeriod);

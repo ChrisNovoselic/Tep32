@@ -187,7 +187,73 @@ namespace PluginTaskTepMain
             /// </summary>
             public class TreeViewTaskTepCalcParameters : TreeView, IControl
             {
-                private static string DELIMETER_KEY = @"::";
+                private class KEY_NODE
+                {
+                    public enum INDEX { ID_ALG, ID_COMP, ID_PUT }
+
+                    public INDEX Index
+                    {
+                        get {
+                            INDEX indxRes = INDEX.ID_ALG;
+
+                            foreach (INDEX indx in Enum.GetValues(typeof(INDEX)))
+                                if (_values[(int)indx] < 0)
+                                    break;
+                                else
+                                    indxRes = indx;
+
+                            return indxRes;
+                        }
+                    }
+
+                    private static string DELIMETER_KEY = @"::";
+
+                    private KEY_NODE() { }
+
+                    public KEY_NODE(int nAlg, int idComp, int idPut)
+                    {
+                        _values = new int [] { nAlg, idComp, idPut };
+                    }
+
+                    public KEY_NODE(string nameNode)
+                    {
+                        _values = new int[Enum.GetValues(typeof(INDEX)).Length];
+
+                        string[] strIds = null;
+
+                        strIds = nameNode.Split(new string[] { DELIMETER_KEY }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (INDEX indx in Enum.GetValues(typeof(INDEX)))
+                            if ((int)indx < strIds.Length)
+                                if (int.TryParse(strIds[(int)indx], out _values[(int)indx]) == false) {
+                                    _values[(int)indx] = -1;
+
+                                    throw new Exception(string.Format (@"TreeViewTaskTepCalcParameters.KEY_NODE::ctor (nameNode={0}) - ", nameNode));
+                                } else
+                                    ;
+                            else
+                                _values[(int)indx] = -1;
+                    }
+
+                    private int[] _values;
+
+                    public string ToString(INDEX indx = INDEX.ID_PUT)
+                    {
+                        string strRes = string.Empty;
+
+                        switch (indx) {
+                            case INDEX.ID_ALG:
+                                strRes = _values[(int)INDEX.ID_ALG].ToString();
+                                break;
+                            case INDEX.ID_PUT:
+                                strRes = _values[(int)INDEX.ID_ALG].ToString() + DELIMETER_KEY + _values[(int)INDEX.ID_PUT].ToString();
+                                break;
+                        }
+
+                        return strRes;                        
+                    }
+
+                    public int Id { get { return -1; } }
+                }
 
                 //public event DelegateIntFunc NodeSelect;
                 
@@ -198,10 +264,7 @@ namespace PluginTaskTepMain
                     get {
                         int iRes = -1;
 
-                        string[] strIds = null;
-
-                        strIds = SelectedNode.Name.Split(new string[] { DELIMETER_KEY }, StringSplitOptions.RemoveEmptyEntries);
-                        iRes = Int32.Parse(strIds[strIds.Length - 1]);
+                        iRes = new KEY_NODE(SelectedNode.Name).Id;
 
                         return iRes;
                     }
@@ -226,33 +289,35 @@ namespace PluginTaskTepMain
                     TreeNode node = null;
                     TreeNode[] nodesNAlg = null;
                     string strTextNode = string.Empty;
+                    KEY_NODE keyNode = null;
 
-                    nodesNAlg = Nodes.Find(id_alg.ToString(), false);
+                    keyNode = new KEY_NODE(id_alg, id_comp, id_put);
+                    nodesNAlg = Nodes.Find(id_alg.ToString(), false);                    
                     strTextNode = (Parent as PanelManagementTaskTepValues).GetNameComponent(id_comp);
 
-                    switch (nodesNAlg.Length)
-                    {
+                    switch (nodesNAlg.Length) {
                         case 0:
-                            node = Nodes.Add(id_alg.ToString(), text);
-                            node = node.Nodes.Add(id_alg.ToString() + DELIMETER_KEY + id_put.ToString(), strTextNode);
+                            node = Nodes.Add(keyNode.ToString(KEY_NODE.INDEX.ID_ALG), text);
+                            node = node.Nodes.Add(keyNode.ToString(), strTextNode);
                             break;
                         case 1:
-                            node = nodesNAlg[0].Nodes.Add(id_alg.ToString() + DELIMETER_KEY + id_put.ToString(), strTextNode);
+                            node = nodesNAlg[0].Nodes.Add(keyNode.ToString(), strTextNode);
                             break;
                         default:
-                            Logging.Logg().Error(@"TreeViewTaskTepCalcParameters::AddItem (ID_ALG=" + id_alg + @", ID_PUT=" + id_put + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Error(string.Format(@"TreeViewTaskTepCalcParameters::AddItem (KEY={0}) - ..."
+                                    , keyNode.ToString())
+                                , Logging.INDEX_MESSAGE.NOT_SET);
                             break;
                     }
 
                     node.Checked = bChecked;
 
-                    if (!(node.Parent == null))
-                    {// для элементов, 2-го уровня
+                    if (!(node.Parent == null)) {
+                    // для элементов, 2-го уровня
                         // по умолчанию для родительского элемента признак установлен
                         bChecked = true;
 
-                        foreach (TreeNode n in node.Parent.Nodes)
-                        {
+                        foreach (TreeNode n in node.Parent.Nodes) {
                             if (n.Checked == false)
                             {// если хотя бы один элемент без признака, то родительский элемент тоже без признака
                                 bChecked = false;

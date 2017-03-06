@@ -57,7 +57,7 @@ namespace PluginTaskEJournal
         /// Обработчик события - изменение значения в одном из базовых активных элементов на панели управления
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventBaseValueChanged(object obj)
+        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
             throw new NotImplementedException();
         }

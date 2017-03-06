@@ -22,8 +22,7 @@ namespace PluginTaskTepMain
         /// </summary>
         protected PanelManagementTaskCalculate PanelManagement
         {
-            get
-            {
+            get {
                 if (_panelManagement == null)
                     _panelManagement = createPanelManagement ();
                 else
@@ -148,7 +147,8 @@ namespace PluginTaskTepMain
                     //Заполнить элемент управления с часовыми поясами
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , ID_TIMEZONE.MSK); //??? активный пояс требуется прочитать из [profile]
-                    setCurrentTimeZone(PanelManagement.IdTimezone);
+                    Session.SetCurrentTimeZone(PanelManagement.IdTimezone
+                        , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)PanelManagement.IdTimezone)[0][@"OFFSET_UTC"]);
 
                     //// отобразить значения
                     //updateDataValues();
@@ -180,12 +180,27 @@ namespace PluginTaskTepMain
         /// Обработчик события при изменении периода расчета
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventBaseValueChanged(object obj)
+        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
-            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
-            setCurrentTimeZone(PanelManagement.IdTimezone);
-            //??? перед очисткой или после (не требуются ли предыдущий диапазон даты/времени)
-            Session.SetDatetimeRange(PanelManagement.DatetimeRange);
+            if (obj == null) {
+            // изменен DateTimeRange
+                //??? перед очисткой или после (не требуются ли предыдущий диапазон даты/времени)
+                Session.SetDatetimeRange(PanelManagement.DatetimeRange);
+            } else {
+            // изменены PERIOD или TIMEZONE
+                switch ((ID_DBTABLE)obj) {
+                    case ID_DBTABLE.TIME:
+                        Session.SetCurrentPeriod(PanelManagement.IdPeriod);
+                        break;
+                    case ID_DBTABLE.TIMEZONE:
+                        Session.SetCurrentTimeZone(PanelManagement.IdTimezone
+                            , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)PanelManagement.IdTimezone)[0][@"OFFSET_UTC"]);
+                        break;
+                    default:
+                        throw new Exception(string.Format(@""));
+                        //break;
+                }
+            }
 
             // очистить содержание представления
             clear();
@@ -201,45 +216,98 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         protected virtual void panelManagement_onPeriodChanged(object obj, EventArgs ev)
         {
-        }
-        /// <summary>
-        /// Установить новое значение для текущего периода
-        /// </summary>
-        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны даты/времени</param>
-        protected void setCurrentTimeZone(ID_TIMEZONE idTimezone)
-        {
-            Session.SetCurrentTimeZone(idTimezone
-                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)idTimezone)[0][@"OFFSET_UTC"]);
-        }
-        ///// <summary>
-        ///// Массив запросов к БД по получению словарных и проектных значений
-        ///// </summary>
-        //private string[] getQueryDictPrj()
-        //{
-        //    string[] arRes = null;
+            //ComboBox cbx = obj as ComboBox;
+            int err = -1
+                , id_alg = -1
+                , ratio = -1
+                , round = -1;
+            string strItem = string.Empty;
+            string n_alg = string.Empty;
+            INDEX_ID[] arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED };
+            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
+            //Установить новое значение для текущего периода
+            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
+            //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
+            _panelManagement.ActivateCheckedHandler(arIndexIdToAdd, false);
+            //Очистить списки - элементы интерфейса
+            _panelManagement.Clear(arIndexIdToAdd);
+            //Очистить список с параметрами, т.к. он м.б. индивидуален для каждого из периодов расчета
+            m_arListIds[(int)INDEX_ID.ALL_NALG].Clear();
+            //??? проверить сохранены ли значения
+            m_dgvValues.ClearRows();
+            //Список параметров для отображения
+            IEnumerable<DataRow> listParameter =
+                // в каждой строке значения полей, относящихся к параметру алгоритма расчета одинаковые, т.к. 'ListParameter' объединение 2-х таблиц
+                //ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]
+                ListParameter.Select(x => x);
+            //Установки для отображения значений
+            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
+                , new int[] {
+                    //1
+                    //, (_iFuncPlugin as PlugInBase)._Id
+                    m_Id
+                    , (int)Session.m_currIdPeriod }
+                , out err);
+            //Заполнить элементы управления с компонентами станции 
+            foreach (DataRow r in listParameter) {
+                id_alg = (int)r[@"ID_ALG"];
+                n_alg = r[@"N_ALG"].ToString().Trim();
+                // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
+                if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0) {
+                    // добавить в список идентификатор параметра алгоритма расчета
+                    m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
 
-        //    arRes = new string[]
-        //    {
-        //        //PERIOD
-        //        HandlerDb.GetQueryTimePeriods (m_strIdPeriods)
-        //        //TIMEZONE
-        //        , HandlerDb.GetQueryTimezones (m_strIdTimezones)
-        //        // список компонентов
-        //        , HandlerDb.GetQueryCompList ()
-        //        // параметры расчета
-        //        , HandlerDb.GetQueryParameters (Type)
-        //        //// настройки визуального отображения значений
-        //        //, @""
-        //        // режимы работы
-        //        , HandlerDb.GetQueryModeDev ()
-        //        //// единицы измерения
-        //        //, m_handlerDb.GetQueryMeasures ()
-        //        // коэффициенты для единиц измерения
-        //        , HandlerDb.GetQueryRatio ()
-        //    };
-
-        //    return arRes;
-        //}        
+                    strItem = string.Format(@"{0} ({1})", ((string)r[@"N_ALG"]).Trim(), ((string)r[@"NAME_SHR"]).Trim());
+                    eventAddNAlgParameter(new PanelManagementTaskTepValues.ADDING_PARAMETER() {
+                        m_idNAlg = id_alg
+                        //, m_idComp = (int)r[@"ID_COMP"]
+                        //, m_idPut = (int)r[@"ID"]
+                        , m_strText = strItem
+                        , m_arIndexIdToAdd = arIndexIdToAdd
+                        , m_arChecked = new bool[] {
+                            m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
+                            , m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0
+                        }
+                    });
+                    // получить значения для настройки визуального отображения
+                    if (dictVisualSettings.ContainsKey(n_alg) == true) {
+                        // установленные в проекте
+                        ratio = dictVisualSettings[n_alg].m_ratio;
+                        round = dictVisualSettings[n_alg].m_round;
+                    } else {
+                        // по умолчанию
+                        ratio = HTepUsers.s_iRatioDefault;
+                        round = HTepUsers.s_iRoundDefault;
+                    }
+                    // добавить свойства для строки таблицы со значениями
+                    m_dgvValues.AddRow(new DataGridViewTEPValues.ROW_PROPERTY() {
+                        m_idAlg = id_alg
+                        , m_strHeaderText = ((string)r[@"N_ALG"]).Trim()
+                        , m_strToolTipText = ((string)r[@"NAME_SHR"]).Trim()
+                        , m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                        , m_strSymbol = !(r[@"SYMBOL"] is DBNull) ? ((string)r[@"SYMBOL"]).Trim() : string.Empty
+                        //, m_bVisibled = bVisibled
+                        , m_vsRatio = ratio
+                        , m_vsRound = round
+                        //, m_ratio = (int)r[@"ID_RATIO"]
+                    });
+                } else
+                // параметр уже был добавлен
+                    // только, если назначенн обработчик в 'PanelTaskTepOutVal'
+                    eventAddCompParameter?.Invoke(new PanelManagementTaskTepValues.ADDING_PARAMETER() {
+                        m_idNAlg = id_alg
+                        //, m_idComp = (int)r[@"ID_COMP"]
+                        //, m_idPut = (int)r[@"ID"]
+                        , m_strText = strItem
+                        , m_arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED }
+                        , m_arChecked = new bool[] {
+                            m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
+                        }
+                    });
+            }
+            //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
+            _panelManagement.ActivateCheckedHandler(arIndexIdToAdd, true);
+        }     
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
         /// </summary>

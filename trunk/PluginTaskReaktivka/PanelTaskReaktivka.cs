@@ -374,7 +374,7 @@ namespace PluginTaskReaktivka
         /// Обработчик события при изменении периода расчета
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventBaseValueChanged(object obj)
+        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
             if (obj is Enum)
                 ; // switch ()

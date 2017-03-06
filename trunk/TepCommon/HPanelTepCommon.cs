@@ -579,18 +579,6 @@ namespace TepCommon
             }
         }
 
-        //private void initTableDictPrj(/*out int err*/)
-        //{
-        //    int err = -1;
-
-        //    foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE))) {
-        //        if (_markTableDictPrj.IsMarked((int)id) == true)
-        //            m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
-        //        else
-        //            ;
-        //    }
-        //}
-
         private void clearTableDictPrj()
         {
             foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE))) {
@@ -900,8 +888,12 @@ namespace TepCommon
             set
             {
                 __panelManagement = value;
-                __panelManagement.EventBaseValueChanged += new DelegateObjectFunc(panelManagement_OnEventBaseValueChanged);
+                __panelManagement.EventBaseValueChanged += new DelegateObjectFunc(panelManagement_OnEventIndexControlBaseValueChanged);
             }
+        }
+
+        public class EventIndexControlBaseValueChangedArgs : EventArgs
+        {
         }
 
         protected abstract PanelManagementTaskCalculate createPanelManagement();
@@ -909,7 +901,7 @@ namespace TepCommon
         /// Обработчик события при изменении периода расчета
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected abstract void panelManagement_OnEventBaseValueChanged(object obj);        
+        protected abstract void panelManagement_OnEventIndexControlBaseValueChanged(object obj);        
     }
 
     public class HPanelDesc : TableLayoutPanel

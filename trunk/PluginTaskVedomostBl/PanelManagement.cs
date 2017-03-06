@@ -587,7 +587,7 @@ namespace PluginTaskVedomostBl
             ///  для каждого из блоков (??? отобразить все)
             /// </summary>
             /// <param name="tableCompList">Таблица с компонентами ТЭЦ (!!! только блоки)</param>
-            public void AddRadioButtonBlock(DataTable tableCompList, out int err, out string strMsg)
+            public void AddComponent(DataTable tableCompList, out int err, out string strMsg)
             {
                 err = 0;
                 strMsg = string.Empty;

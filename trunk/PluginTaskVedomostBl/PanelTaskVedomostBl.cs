@@ -90,8 +90,8 @@ namespace PluginTaskVedomostBl
         {
             UNKNOWN = -1,
             /*PERIOD, // идентификаторы периодов расчетов, использующихся на форме
-            TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов*/
-            ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров
+            TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов
+            ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров*/
             //DENY_COMP_CALCULATED, 
             DENY_GROUPHEADER_VISIBLED,
             BLOCK_SELECTED, HGRID_VISIBLED,
@@ -644,17 +644,17 @@ namespace PluginTaskVedomostBl
 
             m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
-            for (INDEX_ID id = INDEX_ID.ALL_COMPONENT; id < INDEX_ID.COUNT; id++)
+            foreach (INDEX_ID id in Enum.GetValues(typeof(INDEX_ID)))
                 switch (id) {
                     /*case INDEX_ID.PERIOD:
                         m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
                         break;
                     case INDEX_ID.TIMEZONE:
                         m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-                        break;*/
+                        break;
                     case INDEX_ID.ALL_COMPONENT:
                         m_arListIds[(int)id] = new List<int> { };
-                        break;
+                        break;*/
                     default:
                         //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
                         m_arListIds[(int)id] = new List<int>();
@@ -682,7 +682,7 @@ namespace PluginTaskVedomostBl
             //// панель управления - очистка
             //PanelManagement.Clear();
             //радиобаттаны
-            PanelManagement.AddRadioButtonBlock(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], out err, out errMsg);
+            PanelManagement.AddComponent(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], out err, out errMsg);
             //groupHeader
             PanelManagement.AddCheckBoxGroupHeaders(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], out err, out errMsg);
             //активность_кнопки_сохранения
@@ -729,7 +729,7 @@ namespace PluginTaskVedomostBl
         /// Обработчик события при изменении периода расчета
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventBaseValueChanged(object obj)
+        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
         }
 
@@ -761,10 +761,12 @@ namespace PluginTaskVedomostBl
             foreach (DataRow r in listParameter) {
                 id_alg = (int)r[@"ID_ALG"];
                 n_alg = r[@"N_ALG"].ToString().Trim();
-                // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
-                if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
-                    // добавить в список идентификатор параметра алгоритма расчета
-                    m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
+                //// не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
+                //if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
+                //    // добавить в список идентификатор параметра алгоритма расчета
+                //    m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
+                //else
+                //    ;
 
                 // получить значения для настройки визуального отображения
                 if (dictVisualSettings.ContainsKey(n_alg) == true) {
