@@ -72,18 +72,6 @@ namespace PluginTaskAutobook
         /// </summary>
         protected HandlerDbTaskAutobookMonthValuesCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskAutobookMonthValuesCalculate; } }
         /// <summary>
-        /// Часовой пояс(часовой сдвиг)
-        /// </summary>
-        protected static int m_currentOffSet;
-        ///// <summary>
-        ///// 
-        ///// </summary>
-        //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
-        ///// <summary>
-        ///// Таблицы со значениями словарных, проектных данных
-        ///// </summary>
-        //protected DataTable[] m_dictTableDictPrj;
-        /// <summary>
         /// Метод для создания панели с активными объектами управления
         /// </summary>
         /// <returns>Панель управления</returns>
@@ -118,9 +106,9 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Создать объект класса для обращений (чтение/запись) к БД
         /// </summary>
-        /// <returns>экземпляр класса</returns>
+        /// <returns>Экземпляр класса для обращений (чтение/запись) к БД</returns>
         protected override HandlerDbValues createHandlerDb()
         {
             return new HandlerDbTaskAutobookMonthValuesCalculate();
@@ -909,13 +897,13 @@ namespace PluginTaskAutobook
 
             ctrl = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button);
             (ctrl as Button).Click += // действие по умолчанию
-                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+                new EventHandler(panelTepCommon_btnUpdate_onClick);
             ((ctrl as Button).ContextMenuStrip.Items.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+                new EventHandler(panelTepCommon_btnUpdate_onClick);
             ((ctrl as Button).ContextMenuStrip.Items.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(btnHistory_OnClick);
             (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
-                new EventHandler(HPanelTepCommon_btnSave_Click);
+                new EventHandler(panelTepCommon_btnSave_onClick);
             (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SEND.ToString(), true)[0] as Button).Click +=
                 new EventHandler(btnSend_OnClick);
             (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
@@ -924,14 +912,6 @@ namespace PluginTaskAutobook
 
             m_dgvValues.CellParsing += dgvValues_CellParsing;
             //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
-        }
-
-        /// <summary>
-        /// Обработчик события при изменении периода расчета
-        /// </summary>
-        /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
-        {
         }
 
         /// <summary>
@@ -1264,7 +1244,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие (??? кнопка или п. меню)</param>
         /// <param name="ev">Аргумент события</param>
-        protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
+        protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
             try
             {
@@ -1409,7 +1389,6 @@ namespace PluginTaskAutobook
                     idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , idProfileTimezone);
-                    setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
@@ -1434,129 +1413,74 @@ namespace PluginTaskAutobook
             }
         }
 
+        #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
         /// <summary>
-        /// Обработчик события - изменение часового пояса
+        /// Обработчик события при изменении значения
+        ///  одного из основных элементов управления на панели управления 'PanelManagement'
         /// </summary>
-        /// <param name="obj">Объект, инициировавший события (список с перечислением часовых поясов)</param>
-        /// <param name="ev">Аргумент события</param>
-        protected void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
+        /// <param name="obj">Аргумент события</param>
+        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
-            //Установить новое значение для текущего периода
-            setCurrentTimeZone(obj as ComboBox);
-            // очистить содержание представления
-            clear();
-            m_currentOffSet = Session.m_curOffsetUTC;
+            base.panelManagement_OnEventIndexControlBaseValueChanged(obj);
+
+            if (obj is Enum)
+                ; // switch ()
+            else
+                ;
         }
 
+        //protected override void panelManagement_OnEventDetailChanged(object obj)
+        //{
+        //    base.panelManagement_OnEventDetailChanged(obj);
+        //}
         /// <summary>
-        /// Обработчик события - изменение интервала (диапазона между нач. и оконч. датой/временем) расчета
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
         /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
+        protected override void panelManagement_DatetimeRangeChanged()
         {
-            int err = -1
-             , id_alg = -1
-             , ratio = -1
-             , round = -1;
-            string n_alg = string.Empty;
-            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
-            DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
-            //
-            settingDateRange();
-            Session.SetDatetimeRange(dtBegin, dtEnd);
-            // очистить содержание представления
-            if (m_bflgClear)
-            {
-                clear();
-
-                dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
-                    , new int[] {
-                        m_Id
-                        , (int)Session.m_currIdPeriod }
-                        , out err);
-
-                IEnumerable<DataRow> listParameter = ListParameter.Select(x => x);
-
-                foreach (DataRow r in listParameter)
-                {
-                    id_alg = (int)r[@"ID_ALG"];
-                    n_alg = r[@"N_ALG"].ToString().Trim();
-                    // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
-                    if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
-                        // добавить в список идентификатор параметра алгоритма расчета
-                        m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
-                }
-
-                // получить значения для настройки визуального отображения
-                if (dictVisualSettings.ContainsKey(n_alg.Trim()) == true)
-                {// установленные в проекте
-                    ratio = dictVisualSettings[n_alg.Trim()].m_ratio;
-                    round = dictVisualSettings[n_alg.Trim()].m_round;
-                }
-                else
-                {// по умолчанию
-                    ratio = HTepUsers.s_iRatioDefault;
-                    round = HTepUsers.s_iRoundDefault;
-                }
-
-                m_dgvValues.ClearRows();
-                //m_dgvAB.SelectionChanged -= dgvAB_SelectionChanged;
-                //заполнение представления
-                for (int i = 0; i < DaysInMonth; i++)
-                {
-                    m_dgvValues.AddRow(new DataGridViewAutobookMonthValues.ROW_PROPERTY()
-                    {
-                        m_idAlg = id_alg
-                                ,
-                        //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                        //,
-                        m_Value = dt.AddDays(i).ToShortDateString()
-                                ,
-                        m_vsRatio = ratio
-                                ,
-                        m_vsRound = round
-                    });
-                }
-            }
-            //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
-            //
-            m_currentOffSet = Session.m_curOffsetUTC;
-            m_bflgClear = true;
+            base.panelManagement_DatetimeRangeChanged();
         }
-
         /// <summary>
-        /// Установка длительности периода 
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
         /// </summary>
-        private void settingDateRange()
+        protected override void panelManagement_TimezoneChanged()
         {
-            int cntDays,
-                today = 0;
-
-            //PanelManagementAB.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-
-            //cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-            //  (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
-            //today = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
-
-            //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value =
-            //    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(-(today - 1));
-
-            //cntDays = DateTime.DaysInMonth((Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Year,
-            //    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Month);
-            //today = (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.Day;
-
-            //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).Value =
-            //    (Controls.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker).Value.AddDays(cntDays - today);
-
-            //PanelManagementAB.DateTimeRangeValue_Changed += new PanelManagementAutobook.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
-
+            base.panelManagement_TimezoneChanged();
         }
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
+        /// </summary>
+        protected override void panelManagement_PeriodChanged()
+        {
+            base.panelManagement_PeriodChanged();
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg-параметр
+        /// </summary>
+        /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
+        protected override void onAddNAlgParameter(NALG_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить Put-параметр
+        /// </summary>
+        /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
+        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg - параметр
+        /// </summary>
+        /// <param name="obj">Объект - компонент станции(оборудование)</param>
+        protected override void onAddComponent(object obj)
+        {
+        }
+        #endregion
 
         /// <summary>
         /// Список строк с параметрами алгоритма расчета для текущего периода расчета
         /// </summary>
-        private List<DataRow> ListParameter
+        protected override List<DataRow> ListParameter
         {
             get
             {
@@ -1587,91 +1511,11 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// Установить новое значение для текущего периода
+        /// Обработчик события - нажатие кнопки "Сохранить" - сохранение значений в БД
         /// </summary>
-        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны даты/времени</param>
-        protected void setCurrentTimeZone(ComboBox cbxTimezone)
-        {
-            int idTimezone = m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex];
-
-            Session.SetCurrentTimeZone((ID_TIMEZONE)idTimezone
-                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)idTimezone)[0][@"OFFSET_UTC"]);
-        }
-
-        /// <summary>
-        /// Обработчик события при изменении периода расчета
-        /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        protected virtual void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
-        {
-            //Установить новое значение для текущего периода
-            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
-            //Отменить обработку события - изменение начала/окончания даты/времени
-            activateDateTimeRangeValue_OnChanged(false);
-            //Установить новые режимы для "календарей"
-            PanelManagement.SetModeDatetimeRange();
-            //Возобновить обработку события - изменение начала/окончания даты/времени
-            activateDateTimeRangeValue_OnChanged(true);
-
-            // очистить содержание представления
-            clear();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="active"></param>
-        protected void activateDateTimeRangeValue_OnChanged(bool active)
-        {
-            if (!(PanelManagement == null))
-                if (active == true)
-                    PanelManagement.DateTimeRangeValue_Changed += new PanelManagementAutobookMonthValues.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
-                else
-                    if (active == false)
-                    PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-                else
-                    throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
-        }
-
-        ///// <summary>
-        ///// формирование запросов 
-        ///// для справочных данных
-        ///// </summary>
-        ///// <returns>запрос</returns>
-        //private string[] getQueryDictPrj()
-        //{
-        //    string[] arRes = null;
-
-        //    arRes = new string[]
-        //    {
-        //        //PERIOD
-        //        HandlerDb.GetQueryTimePeriods(m_strIdPeriods)
-        //        //TIMEZONE
-        //        , HandlerDb.GetQueryTimezones(m_strIdTimezones)
-        //        // список компонентов
-        //        , HandlerDb.GetQueryComp(Type)
-        //        // параметры расчета
-        //        //, HandlerDb.GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
-        //        //// настройки визуального отображения значений
-        //        //, @""
-        //        // режимы работы
-        //        //, HandlerDb.GetQueryModeDev()
-        //        //// единицы измерения
-        //        , m_handlerDb.GetQueryMeasures()
-        //        // коэффициенты для единиц измерения
-        //        , HandlerDb.GetQueryRatio()
-        //    };
-
-        //    return arRes;
-        //}
-
-        /// <summary>
-        /// Сохранение значений в БД
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
-        protected override void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
+        /// <param name="obj">Объект, инициировавший событие(кнопка)</param>
+        /// <param name="ev">Аргумент события(пустой)</param>
+        protected override void panelTepCommon_btnSave_onClick(object obj, EventArgs ev)
         {
             int err = -1;
             string errMsg = string.Empty;
@@ -1687,21 +1531,19 @@ namespace PluginTaskAutobook
             if (m_TableEdit.Rows.Count > 0)
                 //save вх. значений
                 saveInvalValue(out err);
+            else
+                ;
         }
 
         /// <summary>
-        /// получает структуру таблицы 
+        /// ??? получает структуру таблицы 
         /// OUTVAL_XXXXXX
         /// </summary>
         /// <param name="err"></param>
         /// <returns>таблица</returns>
         private DataTable getStructurOutval(string nameTable, out int err)
         {
-            string strRes = string.Empty;
-
-            strRes = "SELECT * FROM " + nameTable;
-
-            return HandlerDb.Select(strRes, out err);
+            return HandlerDb.Select("SELECT * FROM " + nameTable, out err);
         }
 
         /// <summary>

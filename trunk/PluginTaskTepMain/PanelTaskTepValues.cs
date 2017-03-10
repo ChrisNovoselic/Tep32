@@ -47,14 +47,6 @@ namespace PluginTaskTepMain
             //set { m_arTableEdit[(int)ID_VIEW_VALUES.SOURCE] = value.Copy(); }
         }
         /// <summary>
-        /// Событие для добавления основного параметра для панели управления
-        /// </summary>
-        protected event DelegateObjectFunc eventAddNAlgParameter;
-        /// <summary>
-        /// Событие для добавления детализированного (компонент) параметра для панели управления
-        /// </summary>
-        protected event DelegateObjectFunc eventAddCompParameter;
-        /// <summary>
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
@@ -97,12 +89,12 @@ namespace PluginTaskTepMain
             //(Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnUpdate_Click);
             Button btn = (Controls.Find(INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button);
             btn.Click += // действие по умолчанию
-                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+                new EventHandler(panelTepCommon_btnUpdate_onClick);
             (btn.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+                new EventHandler(panelTepCommon_btnUpdate_onClick);
             (btn.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(HPanelTepCommon_btnHistory_Click);
-            (Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
+            (Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
 
             (Controls.Find(INDEX_CONTROL.BUTTON_IMPORT.ToString(), true)[0] as Button).Click += new EventHandler(btnImport_Click);
             (Controls.Find(INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += new EventHandler(btnExport_Click);
@@ -137,11 +129,6 @@ namespace PluginTaskTepMain
 
                 m_dgvValues.AddColumn(id_comp, strItem, arChecked[1]);
             }
-            //Установить обработчик события - добавить параметр
-            eventAddNAlgParameter += new DelegateObjectFunc((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
-            //// установить единый обработчик события - изменение состояния признака участие_в_расчете/видимость
-            //// компонента станции для элементов управления
-            //(PanelManagement as PanelManagementTaskTepValues).ActivateCheckedHandler(arIndxIdToAdd, true);
 
             m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
         }
@@ -266,7 +253,7 @@ namespace PluginTaskTepMain
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие (??? кнопка или п. меню)</param>
         /// <param name="ev">Аргумент события</param>
-        protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
+        protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
             Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE;
 
@@ -350,7 +337,7 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Список строк с параметрами алгоритма расчета для текущего периода расчета
         /// </summary>
-        private List<DataRow> ListParameter
+        protected override List<DataRow> ListParameter
         {
             get
             {
@@ -362,15 +349,83 @@ namespace PluginTaskTepMain
                 return listRes;
             }
         }
+
+        #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
         /// <summary>
-        /// Обработчик события при изменении периода расчета
+        /// Обработчик события при изменении значения
+        ///  одного из основных элементов управления на панели управления 'PanelManagement'
         /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        protected override void panelManagement_onPeriodChanged(object obj, EventArgs ev)
+        /// <param name="obj">Аргумент события</param>
+        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
-            base.panelManagement_onPeriodChanged(obj, ev);
+            base.panelManagement_OnEventIndexControlBaseValueChanged(obj);
+
+            if (obj is Enum)
+                ; // switch ()
+            else
+                ;
         }
+
+        //protected override void panelManagement_OnEventDetailChanged(object obj)
+        //{
+        //    base.panelManagement_OnEventDetailChanged(obj);
+        //}
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
+        /// </summary>
+        protected override void panelManagement_DatetimeRangeChanged()
+        {
+            base.panelManagement_DatetimeRangeChanged();
+        }
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
+        /// </summary>
+        protected override void panelManagement_TimezoneChanged()
+        {
+            base.panelManagement_TimezoneChanged();
+        }
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
+        /// </summary>
+        protected override void panelManagement_PeriodChanged()
+        {
+            base.panelManagement_PeriodChanged();
+
+            //??? проверить сохранены ли значения
+            m_dgvValues.ClearRows();
+
+            //Очистить списки - элементы интерфейса
+            PanelManagement.Clear(new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED });
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg-параметр
+        /// </summary>
+        /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
+        protected override void onAddNAlgParameter(NALG_PARAMETER obj)
+        {
+            base.onAddNAlgParameter(obj);
+
+            (PanelManagement as PanelManagementTaskTepValues).AddNAlgParameter(obj, new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED });
+
+            // добавить свойства для строки таблицы со значениями
+            m_dgvValues.AddRow(new DataGridViewTEPValues.ROW_PROPERTY(obj));
+        }
+        /// <summary>
+        /// Обработчик события - добавить Put-параметр
+        /// </summary>
+        /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
+        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg - параметр
+        /// </summary>
+        /// <param name="obj">Объект - компонент станции(оборудование)</param>
+        protected override void onAddComponent(object obj)
+        {
+        }
+        #endregion
+
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
         /// </summary>
@@ -1426,40 +1481,20 @@ namespace PluginTaskTepMain
                 return strRes;
             }
 
-            public struct ADDING_PARAMETER
-            {
-                public int m_idNAlg;
-                public int m_idComp;
-                public int m_idPut;
-                public string m_strText;
-                public INDEX_ID[] m_arIndexIdToAdd;
-                public bool[] m_arChecked;
-
-                public ADDING_PARAMETER(int id_alg, int id_comp, int id_put, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
-                {
-                    m_idNAlg = id_alg;
-                    m_idComp = id_comp;
-                    m_idPut = id_put;
-                    m_strText = text;
-                    m_arIndexIdToAdd = new INDEX_ID[arIndexIdToAdd.Length]; arIndexIdToAdd.CopyTo(m_arIndexIdToAdd, 0);
-                    m_arChecked = new bool[arChecked.Length]; arChecked.CopyTo(m_arChecked, 0);
-                }
-            }
-
             //public void AddParameter(int id_alg, int id_comp, int id_put, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
-            public void OnAddParameter(object obj)
+            public void AddNAlgParameter(object obj, INDEX_ID[] arIndexIdToAdd)
             {
-                ADDING_PARAMETER addPar = (ADDING_PARAMETER)obj;
+                NALG_PARAMETER addPar = (NALG_PARAMETER)obj;
                 Control ctrl = null;
 
-                for (int i = 0; i < addPar.m_arIndexIdToAdd.Length; i++)
+                for (int i = 0; i < arIndexIdToAdd.Length; i++)
                 {
-                    ctrl = find(addPar.m_arIndexIdToAdd[i]);
+                    ctrl = find(arIndexIdToAdd[i]);
 
                     if (!(ctrl == null))
-                        addParameter(ctrl, addPar.m_idNAlg, addPar.m_idComp, addPar.m_idPut, addPar.m_strText, addPar.m_arChecked[i]);
+                        addNAlgParameter(ctrl, addPar.m_idNAlg, /*addPar.m_idComp, addPar.m_idPut,*/ addPar.m_strNameShr, addPar.m_bEnabled);
                     else
-                        Logging.Logg().Error(@"PanelManagementTaskTepValues::AddParameter () - не найден элемент для INDEX_ID=" + addPar.m_arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Error(@"PanelManagementTaskTepValues::AddParameter () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
@@ -1468,7 +1503,7 @@ namespace PluginTaskTepMain
                 return new CheckedListBoxTaskTepValues();
             }
 
-            protected virtual void addParameter(Control ctrl, int id_alg, int id_comp, int id_put, string text, bool bEnabled)
+            protected virtual void addNAlgParameter(Control ctrl, int id_alg, /*int id_comp, int id_put,*/ string text, bool bEnabled)
             {
                 if (ctrl is CheckedListBoxTaskTepValues)
                     (ctrl as CheckedListBoxTaskTepValues).AddItem(id_alg, text, bEnabled);

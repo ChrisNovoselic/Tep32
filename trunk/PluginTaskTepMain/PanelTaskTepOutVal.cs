@@ -35,7 +35,7 @@ namespace PluginTaskTepMain
         {
             base.initialize();
 
-            eventAddCompParameter += new DelegateObjectFunc ((PanelManagement as PanelManagementTaskTepValues).OnAddParameter);
+            //eventAddPutParameter += new Action<PUT_PARAMETER> ((PanelManagement as PanelManagementTaskTepValues).AddParameter);
         }
 
         public override bool Activate(bool activate)
@@ -175,12 +175,12 @@ namespace PluginTaskTepMain
                     ,  iChecked == 1 ? CheckState.Checked : CheckState.Unchecked);
             }
 
-            protected override void addParameter(Control ctrl, int id_alg, int id_comp, int id_put, string text, bool bChecked)
+            protected override void addNAlgParameter(Control ctrl, int id_alg, /*int id_comp, int id_put,*/ string text, bool bChecked)
             {
                 if (ctrl is TreeViewTaskTepCalcParameters)
                     (ctrl as TreeViewTaskTepCalcParameters).AddItem(id_alg, id_comp, id_put, text, bChecked);
                 else
-                    base.addParameter(ctrl, id_alg, id_comp, id_put, text, bChecked);
+                    base.addNAlgParameter(ctrl, id_alg, /*id_comp, id_put,*/ text, bChecked);
             }
             /// <summary>
             /// Класс для размещения параметров расчета с учетом их иерархической структуры

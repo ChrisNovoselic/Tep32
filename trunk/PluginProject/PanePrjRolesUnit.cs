@@ -195,7 +195,7 @@ namespace PluginProject
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(this.buttonSAVE_click);
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_BREAK.ToString(), true)[0]).Click += new System.EventHandler(this.buttonBreak_click);
             ((DataGridView_Prop_ComboBoxCell)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).EventCellValueChanged += new DataGridView_Prop_ComboBoxCell.DataGridView_Prop_ValuesCellValueChangedEventHandler(this.dgvProp_EndCellEdit);
-            ((DataGridView_Prop_ComboBoxCell)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).SelectionChanged += new EventHandler(this.HPanelEdit_dgvPropSelectionChanged);
+            ((DataGridView_Prop_ComboBoxCell)Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).SelectionChanged += new EventHandler(this.panelEdit_dgvPropSelectionChanged);
 
         }
 
@@ -664,7 +664,7 @@ namespace PluginProject
         /// </summary>
         /// <param name="obj">Объект</param>
         /// <param name="ev">Делегат</param>
-        protected override void HPanelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
+        protected override void panelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
         {
             string desc = string.Empty;
             string name = string.Empty;

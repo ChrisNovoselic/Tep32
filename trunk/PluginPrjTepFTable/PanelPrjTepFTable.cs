@@ -593,8 +593,8 @@ namespace PluginPrjTepFTable
             menuItem.Click += new System.EventHandler(btnDeleteToPoint_OnClick);
             menuItem = (btnDropDown.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_DELETE_FUNCTION.ToString(), true)[0]);
             menuItem.Click += new System.EventHandler(btnDeleteToFunction_OnClick);
-            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
-            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(panelTepCommon_btnSave_onClick);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(panelTepCommon_btnUpdate_onClick);
             //((Button)Controls.Find(INDEX_CONTROL.BUTTON_CALC.ToString(), true)[0]).Click += new EventHandler(PluginPrjTepFTable_ClickRez);
 
             //Обработчики событий

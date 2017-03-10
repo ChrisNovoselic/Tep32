@@ -53,14 +53,70 @@ namespace PluginTaskTepForm3Tech
         {
             throw new NotImplementedException();
         }
+
+        #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
         /// <summary>
-        /// Обработчик события - изменение значения в одном из базовых активных элементов на панели управления
+        /// Обработчик события при изменении значения
+        ///  одного из основных элементов управления на панели управления 'PanelManagement'
         /// </summary>
         /// <param name="obj">Аргумент события</param>
         protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
-            throw new NotImplementedException();
+            base.panelManagement_OnEventIndexControlBaseValueChanged(obj);
+
+            if (obj is Enum)
+                ; // switch ()
+            else
+                ;
         }
+
+        //protected override void panelManagement_OnEventDetailChanged(object obj)
+        //{
+        //    base.panelManagement_OnEventDetailChanged(obj);
+        //}
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
+        /// </summary>
+        protected override void panelManagement_DatetimeRangeChanged()
+        {
+            base.panelManagement_DatetimeRangeChanged();
+        }
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
+        /// </summary>
+        protected override void panelManagement_TimezoneChanged()
+        {
+            base.panelManagement_TimezoneChanged();
+        }
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
+        /// </summary>
+        protected override void panelManagement_PeriodChanged()
+        {
+            base.panelManagement_PeriodChanged();
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg-параметр
+        /// </summary>
+        /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
+        protected override void onAddNAlgParameter(NALG_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить Put-параметр
+        /// </summary>
+        /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
+        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg - параметр
+        /// </summary>
+        /// <param name="obj">Объект - компонент станции(оборудование)</param>
+        protected override void onAddComponent(object obj)
+        {
+        }
+        #endregion
     }
 
     public class PlugIn : HFuncDbEdit

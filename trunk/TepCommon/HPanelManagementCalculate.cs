@@ -310,9 +310,9 @@ namespace TepCommon
             /// <summary>
             /// Событие при изменениии основных настроечных параметров (ПЕРИОДб ЧАСОВОЙ ПОЯС, ДИАПАЗОН ДАТЫ/ВРЕМЕНИ)
             /// </summary>
-            public event DelegateObjectFunc EventBaseValueChanged;
+            public event DelegateObjectFunc EventIndexControlBaseValueChanged;
 
-            public event EventHandler EventDetailValueChanged;
+            public event DelegateObjectFunc EventIndexControlCustomValueChanged;
             /// <summary>
             /// Обработчик события при изменении периода расчета
             /// </summary>
@@ -326,10 +326,16 @@ namespace TepCommon
                 SetModeDatetimeRange();
                 //Возобновить обработку события - изменение начала/окончания даты/времени
                 activateDateTimeRangeValue_OnChanged(true);
-
-                EventBaseValueChanged?.Invoke(ID_DBTABLE.TIME);
+                //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
+                activateCheckedHandler(false);                
+                EventIndexControlBaseValueChanged?.Invoke(ID_DBTABLE.TIME);
+                //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
+                activateCheckedHandler(true);
             }
 
+            private void activateCheckedHandler(bool bActivate)
+            {
+            }
             /// <summary>
             /// Обработчик события - изменение часового пояса
             /// </summary>
@@ -337,23 +343,17 @@ namespace TepCommon
             /// <param name="ev">Аргумент события</param>
             protected void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
             {
-                EventBaseValueChanged?.Invoke(ID_DBTABLE.TIMEZONE);
+                EventIndexControlBaseValueChanged?.Invoke(ID_DBTABLE.TIMEZONE);
             }
 
             public ID_PERIOD IdPeriod
             {
-                get
-                {
-                    return (ID_PERIOD)getComboBoxSelectedValue(INDEX_CONTROL_BASE.CBX_PERIOD);
-                }
+                get { return (ID_PERIOD)getComboBoxSelectedValue(INDEX_CONTROL_BASE.CBX_PERIOD); }
             }
 
             public ID_TIMEZONE IdTimezone
             {
-                get
-                {
-                    return (ID_TIMEZONE)getComboBoxSelectedValue(INDEX_CONTROL_BASE.CBX_TIMEZONE);
-                }
+                get { return (ID_TIMEZONE)getComboBoxSelectedValue(INDEX_CONTROL_BASE.CBX_TIMEZONE); }
             }
 
             private object getComboBoxSelectedValue(INDEX_CONTROL_BASE indx)
@@ -530,7 +530,7 @@ namespace TepCommon
             /// <param name="ev">Аргумент события</param>
             private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
             {
-                EventBaseValueChanged(ID_DBTABLE.UNKNOWN);
+                EventIndexControlBaseValueChanged(ID_DBTABLE.UNKNOWN);
             }
         }
     }

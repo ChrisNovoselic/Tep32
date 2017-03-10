@@ -783,7 +783,7 @@ namespace TepCommon
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        protected virtual void HPanelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
+        protected virtual void panelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
         {
             string desc = string.Empty;
             string name = string.Empty;
@@ -834,7 +834,7 @@ namespace TepCommon
             addButton(ctrl, id, posCol, text);
         }
 
-        protected virtual void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
+        protected virtual void panelTepCommon_btnSave_onClick(object obj, EventArgs ev)
         {
             int err = -1;
             string errMsg = string.Empty;
@@ -867,7 +867,7 @@ namespace TepCommon
 
         protected abstract void successRecUpdateInsertDelete();
 
-        protected virtual void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
+        protected virtual void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
             reinit();
         }
@@ -875,8 +875,120 @@ namespace TepCommon
 
     public abstract partial class HPanelTepCommon : HPanelCommon
     {
+        protected struct PUT_PARAMETER
+        {
+            /// <summary>
+            /// Идентификатор в БД элемента в алгоритме расчета
+            /// </summary>
+            public int m_idNAlg;
+            /// <summary>
+            /// Идентификатор в БД компонента(оборудования)
+            /// </summary>
+            public int m_idComp;
+            /// <summary>
+            /// Идентификатор в БД (в соответствии с компонентом-оборудованием)
+            /// </summary>
+            public int m_idPut;
+            /// <summary>
+            /// Наименовнаие параметра
+            /// </summary>
+            public string m_strText;
+            /// <summary>
+            /// Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)
+            /// </summary>
+            public bool m_bEnabled;
+            /// <summary>
+            /// Конструктор объекта - 
+            /// </summary>
+            /// <param name="id_alg">Идентификатор в БД элемента в алгоритме расчета</param>
+            /// <param name="id_comp">Идентификатор в БД компонента(оборудования)</param>
+            /// <param name="id_put">Идентификатор в БД (в соответствии с компонентом-оборудованием)</param>
+            /// <param name="text">Наименовнаие параметра</param>
+            /// <param name="enabled">Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)</param>
+            public PUT_PARAMETER(int id_alg, int id_comp, int id_put, string text, bool enabled, bool visibled, int ratio, int round)
+            {
+                m_idNAlg = id_alg;
+                m_idComp = id_comp;
+                m_idPut = id_put;
+                m_strText = text;
+                m_bEnabled = enabled;
+            }
+        }
+
+        protected struct NALG_PARAMETER
+        {
+            /// <summary>
+            /// Идентификатор в БД элемента в алгоритме расчета
+            /// </summary>
+            public int m_idNAlg;
+            /// <summary>
+            /// Наименовнаие (краткое) параметра
+            /// </summary>
+            public string m_strNameShr;
+            /// <summary>
+            /// Наименовнаие (полное) параметра
+            /// </summary>
+            public string m_strDescription;
+            /// <summary>
+            /// Наименовнаие единиц измерения
+            /// </summary>
+            public string m_strMeausure;
+            /// <summary>
+            /// Формула (или символ для краткого обозначения)
+            /// </summary>
+            public string m_strSymbol;
+            /// <summary>
+            /// Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)
+            /// </summary>
+            public bool m_bEnabled;
+            /// <summary>
+            /// Признак отображения (не имеет смысла для 'PUT', т.к. полностью зависит от 'NALG')
+            /// </summary>
+            public bool m_bVisibled;
+            /// <summary>
+            /// Показатель степени 10 при преобразовании (для отображения) 
+            /// </summary>
+            public int m_iRatio;
+            /// <summary>
+            /// Количество знаков после запятой при округлении (для отображения)
+            /// </summary>
+            public int m_iRound;
+            /// <summary>
+            /// Конструктор объекта - 
+            /// </summary>
+            /// <param name="id_alg">Идентификатор в БД элемента в алгоритме расчета</param>
+            /// <param name="id_comp">Идентификатор в БД компонента(оборудования)</param>
+            /// <param name="id_put">Идентификатор в БД (в соответствии с компонентом-оборудованием)</param>
+            /// <param name="nameShr">Наименовнаие параметра</param>
+            /// <param name="enabled">Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)</param>
+            /// <param name="visibled">Признак отображения (не имеет смысла для 'PUT', т.к. полностью зависит от 'NALG')</param>
+            /// <param name="ratio">Показатель степени 10 при преобразовании (для отображения) </param>
+            /// <param name="round">Количество знаков после запятой при округлении (для отображения)</param>
+            public NALG_PARAMETER(int id_alg, int id_comp, int id_put
+                , string nameShr, string desc
+                , string measure, string symbol
+                , bool enabled, bool visibled
+                , int ratio, int round)
+            {
+                m_idNAlg = id_alg;
+                m_strNameShr = nameShr;
+                m_strDescription = desc;
+                m_strMeausure = measure;
+                m_strSymbol = symbol;
+                m_bEnabled = enabled;
+                m_bVisibled = visibled;
+                m_iRatio = ratio;
+                m_iRound = round;
+            }
+        }
+
         public HPanelTepCommon(IPlugIn plugIn) : base (plugIn)
         {
+            eventAddNAlgParameter += new Action<NALG_PARAMETER>(onAddNAlgParameter);
+
+            eventAddPutParameter += new Action<PUT_PARAMETER>(onAddPutParameter);
+
+            eventAddComponent += new DelegateObjectFunc(onAddComponent);
         }
 
         private PanelManagementTaskCalculate __panelManagement;
@@ -885,23 +997,171 @@ namespace TepCommon
         {
             get { return __panelManagement; }
 
-            set
-            {
+            set {
                 __panelManagement = value;
-                __panelManagement.EventBaseValueChanged += new DelegateObjectFunc(panelManagement_OnEventIndexControlBaseValueChanged);
+                // обработчик события при изменении значений в основных элементах управления
+                __panelManagement.EventIndexControlBaseValueChanged += new DelegateObjectFunc(panelManagement_OnEventIndexControlBaseValueChanged);
+                // обработчик события при изменении значений в дополнительных(добавленных программистом в наследуемых классах) элементах управления
+                __panelManagement.EventIndexControlCustomValueChanged += new DelegateObjectFunc(panelManagement_OnEventIndexControlCustomValueChanged);
             }
         }
 
         public class EventIndexControlBaseValueChangedArgs : EventArgs
         {
         }
+        /// <summary>
+        /// Событие для добавления основного параметра для панели управления
+        /// </summary>
+        protected event Action<NALG_PARAMETER> eventAddNAlgParameter;
+        /// <summary>
+        /// Событие для добавления детализированного (компонент) параметра для панели управления
+        /// </summary>
+        protected event Action<PUT_PARAMETER> eventAddPutParameter;
+        /// <summary>
+        /// Событие при добавлении компонента(оборудования) станции
+        /// </summary>
+        protected event DelegateObjectFunc eventAddComponent;
 
         protected abstract PanelManagementTaskCalculate createPanelManagement();
         /// <summary>
-        /// Обработчик события при изменении периода расчета
+        /// Обработчик события при изменении значений в основных элементах управления на панели упарвления
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected abstract void panelManagement_OnEventIndexControlBaseValueChanged(object obj);        
+        protected virtual void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
+        {
+            if (obj == null) {
+                // изменен DateTimeRange
+                //??? перед очисткой или после (не требуются ли предыдущий диапазон даты/времени)
+                Session.SetDatetimeRange(_panelManagement.DatetimeRange);
+
+                panelManagement_DatetimeRangeChanged();
+            } else {
+                // изменены PERIOD или TIMEZONE
+                switch ((ID_DBTABLE)obj) {
+                    case ID_DBTABLE.TIME:
+                        Session.SetCurrentPeriod(_panelManagement.IdPeriod);
+
+                        panelManagement_PeriodChanged();
+                        break;
+                    case ID_DBTABLE.TIMEZONE:
+                        Session.SetCurrentTimeZone(_panelManagement.IdTimezone
+                            , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)_panelManagement.IdTimezone)[0][@"OFFSET_UTC"]);
+
+                        panelManagement_TimezoneChanged();
+                        break;
+                    default:
+                        throw new Exception(string.Format(@""));
+                        //break;
+                }
+            }
+
+            // очистить содержание представления
+            clear();
+            //// при наличии признака - загрузить/отобразить значения из БД
+            //if (s_bAutoUpdateValues == true)
+            //    updateDataValues();
+            //else ;
+        }
+        /// <summary>
+        /// Обработчик события при изменении значений в дополнительных элементах управления на панели упарвления
+        /// </summary>
+        /// <param name="obj">Аргумент события</param>
+        protected virtual void panelManagement_OnEventIndexControlCustomValueChanged(object obj) { }        
+        /// <summary>
+        /// Список строк с параметрами алгоритма расчета для текущего периода расчета
+        /// </summary>
+        protected virtual List<DataRow> ListParameter { get; }
+
+        protected virtual void panelManagement_DatetimeRangeChanged()
+        {
+        }
+        /// <summary>
+        /// Обработчик события при изменении периода расчета
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
+        protected virtual void panelManagement_PeriodChanged()
+        {
+            //ComboBox cbx = obj as ComboBox;
+            int err = -1
+                , id_alg = -1
+                , ratio = -1, round = -1
+                , enabled = -1, visibled = -1;
+            string strItem = string.Empty;
+            string n_alg = string.Empty;
+            List<int> listIdNAlg = new List<int>();
+            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
+            
+            //Список параметров для отображения
+            IEnumerable<DataRow> listParameter =
+                // в каждой строке значения полей, относящихся к параметру алгоритма расчета одинаковые, т.к. 'ListParameter' объединение 2-х таблиц
+                //ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]
+                ListParameter.Select(x => x);
+            //Установки для отображения значений
+            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
+                , new int[] {
+                    m_Id
+                    , (int)Session.m_currIdPeriod }
+                , out err);
+            //Заполнить элементы управления с компонентами станции 
+            foreach (DataRow r in listParameter) {
+                id_alg = (int)r[@"ID_ALG"];
+                n_alg = r[@"N_ALG"].ToString().Trim();
+                // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
+                if (listIdNAlg.IndexOf(id_alg) < 0) {
+                    // добавить в список идентификатор параметра алгоритма расчета
+                    listIdNAlg.Add(id_alg);
+
+                    strItem = string.Format(@"{0} ({1})", ((string)r[@"N_ALG"]).Trim(), ((string)r[@"NAME_SHR"]).Trim());                    
+                    // получить значения для настройки визуального отображения
+                    if (dictVisualSettings.ContainsKey(n_alg) == true) {
+                    // установленные в проекте
+                        ratio = dictVisualSettings[n_alg].m_ratio;
+                        round = dictVisualSettings[n_alg].m_round;
+                    } else {
+                    // по умолчанию
+                        ratio = HTepUsers.s_iRatioDefault;
+                        round = HTepUsers.s_iRoundDefault;
+                    }
+
+                    short.TryParse(m_dictProfile.GetObjects(((int)Session.m_currIdPeriod).ToString()).Attributes[(int)CONTEXT_ENABLED], out enabled);
+                    short.TryParse(m_dictProfile.GetObjects(((int)Session.m_currIdPeriod).ToString()).Attributes[(int)CONTEXT_VISIBLED], out visibled);
+
+                    eventAddNAlgParameter(new NALG_PARAMETER() {
+                        m_idNAlg = id_alg
+                        , m_strNameShr = strItem
+                        //, m_arIndexIdToAdd = arIndexIdToAdd
+                        , m_bEnabled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true
+                        , m_bVisibled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true
+                        , m_iRatio = ratio
+                        , m_iRound = round
+                    });
+                } else {
+                // параметр уже был добавлен
+                    short.TryParse(m_dictProfile.GetObjects("", "", "").Attributes[(int)CONTEXT_ENABLED], out enabled);
+
+                    // только, если назначенн обработчик в 'PanelTaskTepOutVal'
+                    eventAddPutParameter?.Invoke(new PUT_PARAMETER() {
+                        m_idNAlg = id_alg
+                        , m_idComp = (int)r[@"ID_COMP"]
+                        , m_idPut = (int)r[@"ID"]
+                        , m_strText = strItem
+                        //, m_arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED }
+                        , m_bEnabled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true
+                    });
+                }
+            }
+        }
+
+        protected virtual void panelManagement_TimezoneChanged()
+        {
+        }
+
+        protected abstract void onAddNAlgParameter(NALG_PARAMETER obj);
+
+        protected abstract void onAddPutParameter(PUT_PARAMETER obj);
+
+        protected abstract void onAddComponent(object obj);
     }
 
     public class HPanelDesc : TableLayoutPanel

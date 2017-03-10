@@ -79,68 +79,7 @@ namespace PluginTaskReaktivka
                 /// Признак запрета участия в расчете
                 /// </summary>
                 public bool m_bCalcDeny;
-            }
-
-            /// <summary>
-            /// Структура для описания добавляемых строк
-            /// </summary>
-            public class ROW_PROPERTY
-            {
-                /// <summary>
-                /// Структура с дополнительными свойствами ячейки отображения
-                /// </summary>
-                public struct HDataGridViewCell //: DataGridViewCell
-                {
-                    public enum INDEX_CELL_PROPERTY : uint { IS_NAN }
-                    /// <summary>
-                    /// Признак отсутствия значения
-                    /// </summary>
-                    public int m_IdParameter;
-                    /// <summary>
-                    /// Признак качества значения в ячейке
-                    /// </summary>
-                    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
-
-                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
-                    {
-                        m_IdParameter = idParameter;
-                        m_iQuality = iQuality;
-                    }
-
-                    public bool IsNaN { get { return m_IdParameter < 0; } }
-                }
-
-                /// <summary>
-                /// Пояснения к параметру в алгоритме расчета
-                /// </summary>
-                public string m_strMeasure
-                    , m_Value;
-                /// <summary>
-                /// Идентификатор параметра в алгоритме расчета
-                /// </summary>
-                public int m_idAlg;
-                /// <summary>
-                /// Идентификатор множителя при отображении (визуальные установки) значений в строке
-                /// </summary>
-                public int m_vsRatio;
-                /// <summary>
-                /// Количество знаков после запятой при отображении (визуальные установки) значений в строке
-                /// </summary>
-                public int m_vsRound;
-
-                public HDataGridViewCell[] m_arPropertiesCells;
-
-                /// <summary>
-                /// 
-                /// </summary>
-                /// <param name="cntCols"></param>
-                public void InitCells(int cntCols)
-                {
-                    m_arPropertiesCells = new HDataGridViewCell[cntCols];
-                    for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT);
-                }
-            }
+            }            
 
             /// <summary>
             /// Добавить столбец

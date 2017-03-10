@@ -418,7 +418,7 @@ namespace TepCommon
             //Ширина столбца по ширине род./элемента управления
             m_dgvPrjProp.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             //Обработчик события "Выбор строки"
-            m_dgvPrjProp.SelectionChanged += new EventHandler(HPanelEdit_dgvPropSelectionChanged);
+            m_dgvPrjProp.SelectionChanged += new EventHandler(panelEdit_dgvPropSelectionChanged);
             //Обработчик события "Редактирование значения" (только для алгоритма)
             m_dgvPrjProp.CellEndEdit += new DataGridViewCellEventHandler(dgvProp_onCellEndEdit);
 
@@ -465,8 +465,8 @@ namespace TepCommon
             //Обработчики нажатия кнопок
             ((Button)Controls.Find (INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]).Click += new System.EventHandler(btnAdd_onClick);
             ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]).Click += new System.EventHandler(btnDelete_onClick);
-            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnSave_Click);
-            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(HPanelTepCommon_btnUpdate_Click);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0]).Click += new System.EventHandler(panelTepCommon_btnSave_onClick);
+            ((Button)Controls.Find(INDEX_CONTROL.BUTTON_UPDATE.ToString(), true)[0]).Click += new System.EventHandler(panelTepCommon_btnUpdate_onClick);
         }
 
         private void fillTableEdits(out int err, out string strErr)
@@ -1430,7 +1430,7 @@ namespace TepCommon
                 ; //Не для значения
         }
 
-        protected override void HPanelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
+        protected override void panelEdit_dgvPropSelectionChanged(object obj, EventArgs ev)
         {
             string desc = string.Empty;
             string name = string.Empty;

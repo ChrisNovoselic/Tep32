@@ -176,138 +176,71 @@ namespace PluginTaskTepMain
 
             return bRes;
         }
+
+        #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
         /// <summary>
-        /// Обработчик события при изменении периода расчета
+        /// Обработчик события при изменении значения
+        ///  одного из основных элементов управления на панели управления 'PanelManagement'
         /// </summary>
         /// <param name="obj">Аргумент события</param>
         protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
-            if (obj == null) {
-            // изменен DateTimeRange
-                //??? перед очисткой или после (не требуются ли предыдущий диапазон даты/времени)
-                Session.SetDatetimeRange(PanelManagement.DatetimeRange);
-            } else {
-            // изменены PERIOD или TIMEZONE
-                switch ((ID_DBTABLE)obj) {
-                    case ID_DBTABLE.TIME:
-                        Session.SetCurrentPeriod(PanelManagement.IdPeriod);
-                        break;
-                    case ID_DBTABLE.TIMEZONE:
-                        Session.SetCurrentTimeZone(PanelManagement.IdTimezone
-                            , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)PanelManagement.IdTimezone)[0][@"OFFSET_UTC"]);
-                        break;
-                    default:
-                        throw new Exception(string.Format(@""));
-                        //break;
-                }
-            }
+            base.panelManagement_OnEventIndexControlBaseValueChanged(obj);
 
-            // очистить содержание представления
-            clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
+            if (obj is Enum)
+                ; // switch ()
+            else
+                ;
+        }
+
+        //protected override void panelManagement_OnEventDetailChanged(object obj)
+        //{
+        //    base.panelManagement_OnEventDetailChanged(obj);
+        //}
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
+        /// </summary>
+        protected override void panelManagement_DatetimeRangeChanged()
+        {
+            base.panelManagement_DatetimeRangeChanged();
         }
         /// <summary>
-        /// Обработчик события при изменении периода расчета
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
         /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        protected virtual void panelManagement_onPeriodChanged(object obj, EventArgs ev)
+        protected override void panelManagement_TimezoneChanged()
         {
-            //ComboBox cbx = obj as ComboBox;
-            int err = -1
-                , id_alg = -1
-                , ratio = -1
-                , round = -1;
-            string strItem = string.Empty;
-            string n_alg = string.Empty;
-            INDEX_ID[] arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED };
-            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
-            //Установить новое значение для текущего периода
-            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
-            //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-            _panelManagement.ActivateCheckedHandler(arIndexIdToAdd, false);
-            //Очистить списки - элементы интерфейса
-            _panelManagement.Clear(arIndexIdToAdd);
-            //Очистить список с параметрами, т.к. он м.б. индивидуален для каждого из периодов расчета
-            m_arListIds[(int)INDEX_ID.ALL_NALG].Clear();
-            //??? проверить сохранены ли значения
-            m_dgvValues.ClearRows();
-            //Список параметров для отображения
-            IEnumerable<DataRow> listParameter =
-                // в каждой строке значения полей, относящихся к параметру алгоритма расчета одинаковые, т.к. 'ListParameter' объединение 2-х таблиц
-                //ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]
-                ListParameter.Select(x => x);
-            //Установки для отображения значений
-            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
-                , new int[] {
-                    //1
-                    //, (_iFuncPlugin as PlugInBase)._Id
-                    m_Id
-                    , (int)Session.m_currIdPeriod }
-                , out err);
-            //Заполнить элементы управления с компонентами станции 
-            foreach (DataRow r in listParameter) {
-                id_alg = (int)r[@"ID_ALG"];
-                n_alg = r[@"N_ALG"].ToString().Trim();
-                // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
-                if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0) {
-                    // добавить в список идентификатор параметра алгоритма расчета
-                    m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
+            base.panelManagement_TimezoneChanged();
+        }
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
+        /// </summary>
+        protected override void panelManagement_PeriodChanged()
+        {
+            base.panelManagement_PeriodChanged();
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg-параметр
+        /// </summary>
+        /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
+        protected override void onAddNAlgParameter(NALG_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить Put-параметр
+        /// </summary>
+        /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
+        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg - параметр
+        /// </summary>
+        /// <param name="obj">Объект - компонент станции(оборудование)</param>
+        protected override void onAddComponent(object obj)
+        {
+        }
+        #endregion
 
-                    strItem = string.Format(@"{0} ({1})", ((string)r[@"N_ALG"]).Trim(), ((string)r[@"NAME_SHR"]).Trim());
-                    eventAddNAlgParameter(new PanelManagementTaskTepValues.ADDING_PARAMETER() {
-                        m_idNAlg = id_alg
-                        //, m_idComp = (int)r[@"ID_COMP"]
-                        //, m_idPut = (int)r[@"ID"]
-                        , m_strText = strItem
-                        , m_arIndexIdToAdd = arIndexIdToAdd
-                        , m_arChecked = new bool[] {
-                            m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
-                            , m_arListIds[(int)INDEX_ID.DENY_PARAMETER_VISIBLED].IndexOf(id_alg) < 0
-                        }
-                    });
-                    // получить значения для настройки визуального отображения
-                    if (dictVisualSettings.ContainsKey(n_alg) == true) {
-                        // установленные в проекте
-                        ratio = dictVisualSettings[n_alg].m_ratio;
-                        round = dictVisualSettings[n_alg].m_round;
-                    } else {
-                        // по умолчанию
-                        ratio = HTepUsers.s_iRatioDefault;
-                        round = HTepUsers.s_iRoundDefault;
-                    }
-                    // добавить свойства для строки таблицы со значениями
-                    m_dgvValues.AddRow(new DataGridViewTEPValues.ROW_PROPERTY() {
-                        m_idAlg = id_alg
-                        , m_strHeaderText = ((string)r[@"N_ALG"]).Trim()
-                        , m_strToolTipText = ((string)r[@"NAME_SHR"]).Trim()
-                        , m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                        , m_strSymbol = !(r[@"SYMBOL"] is DBNull) ? ((string)r[@"SYMBOL"]).Trim() : string.Empty
-                        //, m_bVisibled = bVisibled
-                        , m_vsRatio = ratio
-                        , m_vsRound = round
-                        //, m_ratio = (int)r[@"ID_RATIO"]
-                    });
-                } else
-                // параметр уже был добавлен
-                    // только, если назначенн обработчик в 'PanelTaskTepOutVal'
-                    eventAddCompParameter?.Invoke(new PanelManagementTaskTepValues.ADDING_PARAMETER() {
-                        m_idNAlg = id_alg
-                        //, m_idComp = (int)r[@"ID_COMP"]
-                        //, m_idPut = (int)r[@"ID"]
-                        , m_strText = strItem
-                        , m_arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED }
-                        , m_arChecked = new bool[] {
-                            m_arListIds[(int)INDEX_ID.DENY_PARAMETER_CALCULATED].IndexOf(id_alg) < 0
-                        }
-                    });
-            }
-            //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-            _panelManagement.ActivateCheckedHandler(arIndexIdToAdd, true);
-        }     
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
         /// </summary>
@@ -379,75 +312,7 @@ namespace PluginTaskTepMain
             /// <summary>
             /// Перечисление для индексации столбцов со служебной информацией
             /// </summary>
-            protected enum INDEX_SERVICE_COLUMN : uint { ID_ALG, SYMBOL, COUNT }
-            /// <summary>
-            /// Структура для описания добавляемых строк
-            /// </summary>
-            public class ROW_PROPERTY
-            {
-                /// <summary>
-                /// Структура с дополнительными свойствами ячейки отображения
-                /// </summary>
-                public struct HDataGridViewCell //: DataGridViewCell
-                {
-                    public enum INDEX_CELL_PROPERTY : uint { CALC_DENY, IS_NAN }
-                    /// <summary>
-                    /// Признак запрета расчета
-                    /// </summary>
-                    public bool m_bCalcDeny;
-                    /// <summary>
-                    /// Признак отсутствия значения
-                    /// </summary>
-                    public int m_IdParameter;
-                    /// <summary>
-                    /// Признак качества значения в ячейке
-                    /// </summary>
-                    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
-
-                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, bool bCalcDeny)
-                    {
-                        m_IdParameter = idParameter;
-                        m_iQuality = iQuality;
-                        m_bCalcDeny = bCalcDeny;
-                    }
-
-                    public bool IsNaN { get { return m_IdParameter < 0; } }
-                }
-                /// <summary>
-                /// Идентификатор параметра в алгоритме расчета
-                /// </summary>
-                public int m_idAlg;
-                /// <summary>
-                /// Пояснения к параметру в алгоритме расчета
-                /// </summary>
-                public string m_strHeaderText
-                    , m_strToolTipText
-                    , m_strMeasure
-                    , m_strSymbol;
-
-                ///// <summary>
-                ///// Признак отображения строки
-                ///// </summary>
-                //public bool m_bVisibled;
-
-                /// <summary>
-                /// Идентификатор множителя при отображении (визуальные установки) значений в строке
-                /// </summary>
-                public int m_vsRatio;
-                /// <summary>
-                /// Количество знаков после запятой при отображении (визуальные установки) значений в строке
-                /// </summary>
-                public int m_vsRound;
-
-                public HDataGridViewCell[] m_arPropertiesCells;
-
-                public void InitCells(int cntCols)
-                {
-                    m_arPropertiesCells = new HDataGridViewCell[cntCols];
-                    for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT, false);
-                }
-            }
+            protected enum INDEX_SERVICE_COLUMN : uint { ID_ALG, SYMBOL, COUNT }            
             /// <summary>
             /// Перечисления для индексирования массива со значениями цветов для фона ячеек
             /// </summary>

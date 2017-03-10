@@ -19,10 +19,6 @@ namespace PluginTaskReaktivka
         /// </summary>
         static bool m_bflgClear = false;
         /// <summary>
-        /// Часовой пояс(часовой сдвиг)
-        /// </summary>
-        protected static int m_currentOffSet;
-        /// <summary>
         /// Набор элементов
         /// </summary>
         protected enum INDEX_CONTROL
@@ -159,12 +155,12 @@ namespace PluginTaskReaktivka
 
             Button btn = (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button);
             btn.Click += // действие по умолчанию
-                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+                new EventHandler(panelTepCommon_btnUpdate_onClick);
             (btn.ContextMenuStrip.Items.Find(PanelManagementReaktivka.INDEX_CONTROL.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+                new EventHandler(panelTepCommon_btnUpdate_onClick);
             (btn.ContextMenuStrip.Items.Find(PanelManagementReaktivka.INDEX_CONTROL.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(HPanelTepCommon_btnHistory_Click);
-            (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(HPanelTepCommon_btnSave_Click);
+            (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskReaktivka_ClickExport;
             (PanelManagement as PanelManagementReaktivka).ItemCheck += new PanelManagementReaktivka.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
             m_dgvValues.CellEndEdit += m_dgvReak_CellEndEdit;
@@ -307,7 +303,6 @@ namespace PluginTaskReaktivka
                     idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , idProfileTimezone);
-                    setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     idPeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
@@ -321,118 +316,69 @@ namespace PluginTaskReaktivka
             }
         }
 
+        #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
         /// <summary>
-        /// ??? не соблюдаются принципы ООП Обработчик события - изменение часового пояса
-        /// </summary>
-        /// <param name="obj">Объект, инициировавший события (список с перечислением часовых поясов)</param>
-        /// <param name="ev">Аргумент события</param>
-        protected void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
-        {
-            //??? какой флаг, зачем
-            if (m_bflgClear) {
-                //Установить новое значение для текущего периода
-                setCurrentTimeZone(obj as ComboBox);
-                // очистить содержание представления
-                clear();
-            }
-        }
-
-        /// <summary>
-        /// Установить новое значение для текущего периода
-        /// </summary>
-        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны даты/времени</param>
-        protected void setCurrentTimeZone(ComboBox cbxTimezone)
-        {
-            ID_TIMEZONE idTimezone =                
-                //m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex]
-                PanelManagement.IdTimezone
-                ;
-
-            Session.SetCurrentTimeZone(idTimezone
-                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)idTimezone)[0][@"OFFSET_UTC"]);
-        }
-
-        /// <summary>
-        /// Зарегистрировать/отменить обработчик события 'DateTimeRangeValue_Changed' от составного календаря
-        /// </summary>
-        /// <param name="active">Признак регистрации/отмены обработчика</param>
-        protected void activateDateTimeRangeValue_OnChanged(bool active)
-        {
-            if (!(PanelManagement == null))
-                if (active == true)
-                    PanelManagement.DateTimeRangeValue_Changed += new PanelManagementReaktivka.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
-                else
-                    if (active == false)
-                        PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-                    else
-                        ;
-            else
-                throw new Exception(@"PanelTaskReaktivka::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
-        }
-
-        /// <summary>
-        /// Обработчик события при изменении периода расчета
+        /// Обработчик события при изменении значения
+        ///  одного из основных элементов управления на панели управления 'PanelManagement'
         /// </summary>
         /// <param name="obj">Аргумент события</param>
         protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
+            base.panelManagement_OnEventIndexControlBaseValueChanged(obj);
+
             if (obj is Enum)
                 ; // switch ()
             else
                 ;
         }
 
-        /// <summary>
-        /// Обработчик события при изменении периода расчета
-        /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        protected virtual void cbxPeriod_SelectedIndexChanged(object obj, EventArgs ev)
-        {
-            //Установить новое значение для текущего периода
-            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
-            //Отменить обработку события - изменение начала/окончания даты/времени
-            activateDateTimeRangeValue_OnChanged(false);
-            //Установить новые режимы для "календарей"
-            PanelManagement.SetModeDatetimeRange();
-            //Возобновить обработку события - изменение начала/окончания даты/времени
-            activateDateTimeRangeValue_OnChanged(true);
-            if (m_bflgClear)
-                // очистить содержание представления
-                clear();
-        }
-
-        ///// <summary>
-        ///// формирование запросов 
-        ///// для справочных данных
-        ///// </summary>
-        ///// <returns>запрос</returns>
-        //private string[] getQueryDictPrj()
+        //protected override void panelManagement_OnEventDetailChanged(object obj)
         //{
-        //    string[] arRes = null;
-
-        //    arRes = new string[]
-        //    {
-        //        //PERIOD
-        //        HandlerDb.GetQueryTimePeriods(m_strIdPeriods)
-        //        //TIMEZONE
-        //        , HandlerDb.GetQueryTimezones(m_strIdTimezones)
-        //        // список компонентов
-        //        , HandlerDb.GetQueryComp(Type)
-        //        // параметры расчета
-        //        //, HandlerDb.GetQueryParameters(Type)
-        //        //// настройки визуального отображения значений
-        //        //, @""
-        //        // режимы работы
-        //        //, HandlerDb.GetQueryModeDev()
-        //        //// единицы измерения
-        //        //, m_handlerDb.GetQueryMeasures()
-        //        // коэффициенты для единиц измерения
-        //        , HandlerDb.GetQueryRatio()
-        //    };
-
-        //    return arRes;
+        //    base.panelManagement_OnEventDetailChanged(obj);
         //}
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
+        /// </summary>
+        protected override void panelManagement_DatetimeRangeChanged()
+        {
+            base.panelManagement_DatetimeRangeChanged();
+        }
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
+        /// </summary>
+        protected override void panelManagement_TimezoneChanged()
+        {
+            base.panelManagement_TimezoneChanged();
+        }
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
+        /// </summary>
+        protected override void panelManagement_PeriodChanged()
+        {
+            base.panelManagement_PeriodChanged();
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg-параметр
+        /// </summary>
+        /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
+        protected override void onAddNAlgParameter(NALG_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить Put-параметр
+        /// </summary>
+        /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
+        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg - параметр
+        /// </summary>
+        /// <param name="obj">Объект - компонент станции(оборудование)</param>
+        protected override void onAddComponent(object obj)
+        {
+        }
+        #endregion
 
         /// <summary>
         /// очистка грида
@@ -454,89 +400,9 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// Обработчик события - изменение интервала (диапазона между нач. и оконч. датой/временем) расчета
-        /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
-        {
-            int err = -1
-             , id_alg = -1
-             , ratio = -1
-             , round = -1;
-            string n_alg = string.Empty;
-            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
-            DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
-
-            Session.SetDatetimeRange(dtBegin, dtEnd);
-
-            if (m_bflgClear == true)
-            {
-                clear();
-                dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
-                    , new int[] { m_Id, (int)Session.m_currIdPeriod }
-                    , out err
-                );
-
-                IEnumerable<DataRow> listParameter = ListParameter.Select(x => x);
-
-                foreach (DataRow r in listParameter)
-                {
-                    id_alg = (int)r[@"ID_ALG"];
-                    n_alg = r[@"N_ALG"].ToString().Trim();
-                    // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
-                    if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
-                        // добавить в список идентификатор параметра алгоритма расчета
-                        m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
-                }
-
-                // получить значения для настройки визуального отображения
-                if (dictVisualSettings.ContainsKey(n_alg) == true)
-                {// установленные в проекте
-                    ratio = dictVisualSettings[n_alg.Trim()].m_ratio;
-                    round = dictVisualSettings[n_alg.Trim()].m_round;
-                }
-                else
-                {// по умолчанию
-                    ratio = HTepUsers.s_iRatioDefault;
-                    round = HTepUsers.s_iRoundDefault;
-                }
-
-                m_dgvValues.ClearRows();
-
-                for (int i = 0; i < DaysInMonth + 1; i++)
-                {
-                    if (m_dgvValues.Rows.Count != DaysInMonth)
-                        m_dgvValues.AddRow(new DataGridViewValuesReaktivka.ROW_PROPERTY()
-                        {
-                            m_idAlg = id_alg
-                            //, m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                            , m_Value = dt.AddDays(i).ToShortDateString()
-                            , m_vsRatio = ratio
-                            , m_vsRound = round
-                        });
-                    else
-                        m_dgvValues.AddRow(new DataGridViewValuesReaktivka.ROW_PROPERTY()
-                        {
-                            m_idAlg = id_alg
-                            //, m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                            , m_Value = "ИТОГО"
-                            , m_vsRatio = ratio
-                            , m_vsRound = round
-                        }
-                        , DaysInMonth);
-                }
-            } else
-                ; //??? ничего очищать не надо, но и ничего не делать
-
-            m_dgvValues.Rows[dtBegin.Day - 1].Selected = true;
-            m_currentOffSet = Session.m_curOffsetUTC;
-        }
-
-        /// <summary>
         /// Список строк с параметрами алгоритма расчета для текущего периода расчета
         /// </summary>
-        private List<DataRow> ListParameter
+        protected override List<DataRow> ListParameter
         {
             get
             {
@@ -566,7 +432,7 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// 
+        /// Метод обратного вызова при условии успешного выполнения операции обновление-вставка-удаление
         /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
@@ -579,7 +445,7 @@ namespace PluginTaskReaktivka
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
-        protected override void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
+        protected override void panelTepCommon_btnSave_onClick(object obj, EventArgs ev)
         {
             int err = -1;
 
@@ -603,7 +469,7 @@ namespace PluginTaskReaktivka
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
-        protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
+        protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
             Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE;
 

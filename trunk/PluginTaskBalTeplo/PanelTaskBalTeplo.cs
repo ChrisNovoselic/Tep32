@@ -21,6 +21,7 @@ namespace PluginTaskBalTeplo
         public enum INDEX_VIEW_VALUES { Block, Vyvod, PromPlozsh };
 
         private INDEX_VIEW_VALUES m_ViewValues;
+
         /// <summary>
         /// Таблицы со значениями для редактирования входные
         /// </summary>
@@ -65,23 +66,7 @@ namespace PluginTaskBalTeplo
             DGV_Param
                 , LABEL_DESC
         }
-        ///// <summary>
-        ///// Индексы массива списков идентификаторов
-        ///// </summary>
-        //protected enum INDEX_ID
-        //{
-        //    UNKNOWN = -1,
-        //    PERIOD // идентификаторы периодов расчетов, использующихся на форме
-        //        ,
-        //    TIMEZONE // идентификаторы (целочисленные, из БД системы) часовых поясов
-        //        //    , ALL_COMPONENT,
-        //        //ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
-        //        //    , DENY_COMP_CALCULATED,
-        //        //DENY_PARAMETER_CALCULATED // запрещенных для расчета
-        //        //    , DENY_COMP_VISIBLED,
-        //        //DENY_PARAMETER_VISIBLED // запрещенных для отображения
-        //        , COUNT
-        //}
+
         /// <summary>
         /// 
         /// </summary>
@@ -89,10 +74,12 @@ namespace PluginTaskBalTeplo
         {
             ID_CON = 10
         }
+
         /// <summary>
         /// 
         /// </summary>
         protected HandlerDbTaskBalTeploCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskBalTeploCalculate; } }
+
         /// <summary>
         /// Метод для создания панели с активными объектами управления
         /// </summary>
@@ -101,6 +88,7 @@ namespace PluginTaskBalTeplo
         {
             return new PanelManagementBalTeplo();
         }
+
         /// <summary>
         /// Отображение значений в табличном представлении(значения)
         /// </summary>
@@ -517,13 +505,13 @@ namespace PluginTaskBalTeplo
 
             Button btn = (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button);
             btn.Click += // действие по умолчанию
-                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+                new EventHandler(panelTepCommon_btnUpdate_onClick);
             (btn.ContextMenuStrip.Items.Find(PanelManagementBalTeplo.INDEX_CONTROL.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(HPanelTepCommon_btnUpdate_Click);
+                new EventHandler(panelTepCommon_btnUpdate_onClick);
             (btn.ContextMenuStrip.Items.Find(PanelManagementBalTeplo.INDEX_CONTROL.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(btnHistory_OnClick);
             (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
-                new EventHandler(HPanelTepCommon_btnSave_Click);
+                new EventHandler(panelTepCommon_btnSave_onClick);
             (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_IMPORT.ToString(), true)[0] as Button).Click +=
                 new EventHandler(PanelTaskBalTeplo_btnimport_Click);
             (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
@@ -842,7 +830,7 @@ namespace PluginTaskBalTeplo
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие (??? кнопка или п. меню)</param>
         /// <param name="ev">Аргумент события</param>
-        protected override void HPanelTepCommon_btnUpdate_Click(object obj, EventArgs ev)
+        protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
             Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE;
 
@@ -944,7 +932,6 @@ namespace PluginTaskBalTeplo
                     idProfileTimezone = (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , idProfileTimezone);
-                    setCurrentTimeZone(ctrl as ComboBox);
                     //Заполнить элемент управления с периодами расчета
                     idProfilePeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]); //??? требуется прочитать из [profile]
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
@@ -1002,36 +989,69 @@ namespace PluginTaskBalTeplo
             return dictProfileRes;
         }
 
+        #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
         /// <summary>
-        /// Обработчик события - изменение часового пояса
+        /// Обработчик события при изменении значения
+        ///  одного из основных элементов управления на панели управления 'PanelManagement'
         /// </summary>
-        /// <param name="obj">Объект, инициировавший события (список с перечислением часовых поясов)</param>
-        /// <param name="ev">Аргумент события</param>
-        protected void cbxTimezone_SelectedIndexChanged(object obj, EventArgs ev)
+        /// <param name="obj">Аргумент события</param>
+        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
         {
-            //Установить новое значение для текущего периода
-            setCurrentTimeZone(obj as ComboBox);
-            // очистить содержание представления
-            clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
+            base.panelManagement_OnEventIndexControlBaseValueChanged(obj);
+
+            if (obj is Enum)
+                ; // switch ()
+            else
+                ;
         }
 
+        //protected override void panelManagement_OnEventDetailChanged(object obj)
+        //{
+        //    base.panelManagement_OnEventDetailChanged(obj);
+        //}
         /// <summary>
-        /// Обработчик события - изменение интервала (диапазона между нач. и оконч. датой/временем) расчета
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
         /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
+        protected override void panelManagement_DatetimeRangeChanged()
         {
-            // очистить содержание представления
-            clear();
-            Session.SetDatetimeRange(dtBegin, dtEnd);
-            //заполнение представления
-            //fillDaysGrid(dtBegin, dtBegin.Month);
+            base.panelManagement_DatetimeRangeChanged();
         }
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
+        /// </summary>
+        protected override void panelManagement_TimezoneChanged()
+        {
+            base.panelManagement_TimezoneChanged();
+        }
+        /// <summary>
+        /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
+        /// </summary>
+        protected override void panelManagement_PeriodChanged()
+        {
+            base.panelManagement_PeriodChanged();
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg-параметр
+        /// </summary>
+        /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
+        protected override void onAddNAlgParameter(NALG_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить Put-параметр
+        /// </summary>
+        /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
+        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        {
+        }
+        /// <summary>
+        /// Обработчик события - добавить NAlg - параметр
+        /// </summary>
+        /// <param name="obj">Объект - компонент станции(оборудование)</param>
+        protected override void onAddComponent(object obj)
+        {
+        }
+        #endregion
 
         /// <summary>
         /// заполнение грида датами
@@ -1080,67 +1100,11 @@ namespace PluginTaskBalTeplo
         }
 
         /// <summary>
-        /// Установить новое значение для текущего периода
+        /// Обработчик события - нажатие кнопки "Сохранить" - сохранение значений в БД
         /// </summary>
-        /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны даты/времени</param>
-        protected void setCurrentTimeZone(ComboBox cbxTimezone)
-        {
-            ID_TIMEZONE idTimezone =
-                //m_arListIds[(int)INDEX_ID.TIMEZONE][cbxTimezone.SelectedIndex]
-                PanelManagement.IdTimezone
-                ;
-
-            Session.SetCurrentTimeZone(idTimezone
-                , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)idTimezone)[0][@"OFFSET_UTC"]);
-        }
-
-        /// <summary>
-        /// Обработчик события при изменении периода расчета
-        /// </summary>
-        /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
-        {
-            //Установить новое значение для текущего периода
-            Session.SetCurrentPeriod(PanelManagement.IdPeriod);
-            //Отменить обработку события - изменение начала/окончания даты/времени
-            activateDateTimeRangeValue_OnChanged(false);
-            //Установить новые режимы для "календарей"
-            PanelManagement.SetModeDatetimeRange();
-            //Возобновить обработку события - изменение начала/окончания даты/времени
-            activateDateTimeRangeValue_OnChanged(true);
-
-            // очистить содержание представления
-            clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="active"></param>
-        protected void activateDateTimeRangeValue_OnChanged(bool active)
-        {
-            if (!(PanelManagement == null))
-                if (active == true)
-                    PanelManagement.DateTimeRangeValue_Changed += new PanelManagementBalTeplo.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
-                else
-                    if (active == false)
-                        PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-                    else
-                        ;
-            else
-                throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
-        }
-
-        /// <summary>
-        /// Сохранение значений в БД
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="ev"></param>
-        protected override void HPanelTepCommon_btnSave_Click(object obj, EventArgs ev)
+        /// <param name="obj">Объект, инициировавший событие(кнопка)</param>
+        /// <param name="ev">Аргумент события(пустой)</param>
+        protected override void panelTepCommon_btnSave_onClick(object obj, EventArgs ev)
         {
             int err = -1;
             string errMsg = string.Empty;
@@ -1153,7 +1117,7 @@ namespace PluginTaskBalTeplo
             HandlerDb.saveResOut(getStructurOutval(out err)
             , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], out err);
 
-            base.HPanelTepCommon_btnSave_Click(obj, ev);
+            base.panelTepCommon_btnSave_onClick(obj, ev);
         }
 
         /// <summary>

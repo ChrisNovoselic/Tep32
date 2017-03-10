@@ -345,6 +345,15 @@ namespace TepCommon
 
                 return dictProfileItemRes;
             }
+
+            public bool GetAttribute(params string[] keys, out string strRes)
+            {
+                strRes = string.Empty;
+
+                bool bRes = false;                
+
+                return bRes;
+            }
             /// <summary>
             /// Установить значение для текущего объекта
             /// </summary>
