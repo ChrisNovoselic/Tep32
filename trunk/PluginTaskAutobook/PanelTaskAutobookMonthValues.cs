@@ -1245,7 +1245,7 @@ namespace PluginTaskAutobook
             m_dictTableDictPrj = new DictionaryTableDictProject();
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMEZONE, COMP, MEASURE, RATIO
-            initialize(new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD, */ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP_LIST, ID_DBTABLE.MEASURE, ID_DBTABLE.RATIO }
+            initialize(new ID_DBTABLE[] { ID_DBTABLE.TIME, ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP_LIST, ID_DBTABLE.MEASURE, ID_DBTABLE.RATIO }
                 , out err, out errMsg);
 
             m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Msk;

@@ -347,14 +347,14 @@ namespace PluginTaskAutobook
 
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMIZONE, COMP, PARAMETER(OUT_VALUES), MEASURE, RATIO
-            initialize(new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD*/ }, out err, out errMsg);
+            initialize(new ID_DBTABLE[] { ID_DBTABLE.TIMEZONE, ID_DBTABLE.TIME, ID_DBTABLE.COMP_LIST, ID_DBTABLE.RATIO }, out err, out errMsg);
 
             m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Msk;
             m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Month;
             m_dictTableDictPrj.FilterDbTableCompList = DictionaryTableDictProject.DbTableCompList.Tec | DictionaryTableDictProject.DbTableCompList.Tg;
 
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows) {
-                id_comp = (int)r[@"ID"];
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows) {
+                id_comp = (short)r[@"ID"];
                 m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
 
                 m_dgvValues.AddIdComp(id_comp, "Output");
@@ -385,7 +385,7 @@ namespace PluginTaskAutobook
                     //Заполнить элемент управления с часовыми поясами
                     idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.TIMEZONE));
                     PanelManagement.FillValueTimezone (m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], idProfileTimezone);
-                    Session.SetCurrentTimeZone(idProfileTimezone, (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(string.Format(@"ID={0}", idProfileTimezone))[0][@"OFFSET_UTC"]);
+                    Session.SetCurrentTimeZone(idProfileTimezone, (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(string.Format(@"ID={0}", (int)idProfileTimezone))[0][@"OFFSET_UTC"]);
                     //Заполнить элемент управления с периодами расчета
                     idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME], idProfilePeriod);

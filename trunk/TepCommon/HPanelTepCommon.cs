@@ -334,8 +334,8 @@ namespace TepCommon
                     else
                         iRes = Error.WFilterNoApplied; // фильтр не применен - не найден обработчик
                 } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0})..."
-                        , where.ToString())
+                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}, idDbTable={1})..."
+                        , where.ToString(), idDbTable)
                             , Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
@@ -348,8 +348,8 @@ namespace TepCommon
 
                     this[idDbTable].AcceptChanges();
                 } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}) - строк для удаления={1}..."
-                        , where.ToString(), rowsToDelete.Count)
+                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}, idDbTable={1}) - строк для удаления={2}..."
+                        , where.ToString(), idDbTable, rowsToDelete.Count)
                             , Logging.INDEX_MESSAGE.NOT_SET);
 
                     iRes = Error.ExRowRemove; // исключение при удалении строк
