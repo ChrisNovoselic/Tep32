@@ -132,6 +132,16 @@ namespace PluginTaskTepMain
             HandlerDb.InitSession(out err);
         }
         /// <summary>
+        /// Обработчик события - добавить Put-параметр
+        /// </summary>
+        /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
+        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        {
+            base.onAddPutParameter(obj);
+
+            (PanelManagement as PanelManagementTaskTepOutVal).AddPutParameter(obj);
+        }
+        /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
         protected class PanelManagementTaskTepOutVal : PanelManagementTaskTepValues
@@ -178,9 +188,16 @@ namespace PluginTaskTepMain
             protected override void addNAlgParameter(Control ctrl, int id_alg, /*int id_comp, int id_put,*/ string text, bool bChecked)
             {
                 if (ctrl is TreeViewTaskTepCalcParameters)
-                    (ctrl as TreeViewTaskTepCalcParameters).AddItem(id_alg, id_comp, id_put, text, bChecked);
+                    (ctrl as TreeViewTaskTepCalcParameters).AddItem(id_alg, -1, -1, text, bChecked);
                 else
                     base.addNAlgParameter(ctrl, id_alg, /*id_comp, id_put,*/ text, bChecked);
+            }
+
+            public void AddPutParameter(PUT_PARAMETER putPar)
+            {
+                Control ctrl = find(INDEX_ID.DENY_PARAMETER_CALCULATED);
+
+                (ctrl as TreeViewTaskTepCalcParameters).AddItem(putPar.m_idNAlg, putPar.m_idComp, putPar.m_idPut, putPar.m_strNameShr, putPar.m_bEnabled);
             }
             /// <summary>
             /// Класс для размещения параметров расчета с учетом их иерархической структуры

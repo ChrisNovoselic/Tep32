@@ -11,26 +11,33 @@ namespace TepCommon
     {
         protected class DataGridViewValues : DataGridView
         {
+            public enum ModeData { NALG, DATETIME }
+
+            public ModeData _modeData;
+
+            public DataGridViewValues(ModeData modeData) : base() { _modeData = modeData; }
+
+            protected class DictNAlgProperty : Dictionary <int, NALG_PROPERTY>
+            {
+            }
+
             /// <summary>
             /// Структура для описания добавляемых строк
             /// </summary>
-            public class ROW_PROPERTY
+            public class NALG_PROPERTY : NALG_PARAMETER
             {
-                private ROW_PROPERTY()
+                public NALG_PROPERTY(NALG_PARAMETER nAlgPar)
+                    : base(nAlgPar.m_idNAlg
+                          , -1 //???
+                          , -1 //???
+                          , nAlgPar.m_strNameShr
+                          , nAlgPar.m_strDescription
+                          , nAlgPar.m_strMeausure
+                          , nAlgPar.m_strSymbol
+                          , nAlgPar.m_bEnabled, nAlgPar.m_bVisibled
+                          , nAlgPar.m_iRatio, nAlgPar.m_iRound
+                    )
                 {
-                }
-
-                public ROW_PROPERTY(NALG_PARAMETER nAlgPar)
-                {
-                    m_idAlg = nAlgPar.m_idNAlg;
-
-                    m_strHeaderText = nAlgPar.m_strNameShr;
-                    m_strToolTipText = nAlgPar.m_strDescription;
-                    m_strMeasure = nAlgPar.m_strMeausure;
-                    m_strSymbol = nAlgPar.m_strSymbol;
-
-                    m_vsRatio = nAlgPar.m_iRatio;
-                    m_vsRound = nAlgPar.m_iRound;
                 }
                 /// <summary>
                 /// Структура с дополнительными свойствами ячейки отображения
@@ -43,57 +50,40 @@ namespace TepCommon
                     /// </summary>
                     public bool m_bCalcDeny;
                     /// <summary>
-                    /// Признак отсутствия значения
+                    /// Идентификатор элемента расчета, со сложным ключом (сопоставляемый с): идентификатор параметра в алгоритме расчета, идентификатор орбрудования - признак отсутствия значения
                     /// </summary>
-                    public int m_IdParameter;
+                    public int m_IdPut;
                     /// <summary>
                     /// Признак качества значения в ячейке
                     /// </summary>
                     public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
 
-                    public HDataGridViewCell(int idParameter, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, bool bCalcDeny)
+                    public HDataGridViewCell(int idPut, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, bool bCalcDeny)
                     {
-                        m_IdParameter = idParameter;
+                        m_IdPut = idPut;
                         m_iQuality = iQuality;
                         m_bCalcDeny = bCalcDeny;
                     }
 
-                    public bool IsNaN { get { return m_IdParameter < 0; } }
+                    public bool IsNaN { get { return m_IdPut < 0; } }
                 }
-                /// <summary>
-                /// Идентификатор параметра в алгоритме расчета
-                /// </summary>
-                public int m_idAlg;
-                /// <summary>
-                /// Пояснения к параметру в алгоритме расчета
-                /// </summary>
-                public string m_strHeaderText
-                    , m_strToolTipText
-                    , m_strMeasure
-                    , m_strSymbol;
 
                 ///// <summary>
                 ///// Признак отображения строки
                 ///// </summary>
                 //public bool m_bVisibled;
 
-                /// <summary>
-                /// Идентификатор множителя при отображении (визуальные установки) значений в строке
-                /// </summary>
-                public int m_vsRatio;
-                /// <summary>
-                /// Количество знаков после запятой при отображении (визуальные установки) значений в строке
-                /// </summary>
-                public int m_vsRound;
-
                 public HDataGridViewCell[] m_arPropertiesCells;
 
                 public void InitCells(int cntCols)
                 {
                     m_arPropertiesCells = new HDataGridViewCell[cntCols];
+
                     for (int c = 0; c < m_arPropertiesCells.Length; c++)
                         m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT, false);
                 }
+
+                public string FormatRound { get { return string.Format(@"F{0}", m_iRound); } }
             }
             /// <summary>
             /// Структура для хранения значений одной из записей в таблице со описанием коэфициентов  при масштабировании физических величин
@@ -109,7 +99,7 @@ namespace TepCommon
                     , m_strDesc;
             }
 
-            protected Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
+            protected Dictionary<int, NALG_PROPERTY> m_dictNAlgProperties;
             /// <summary>
             /// Словарь со значенями коэффициентов при масштабировании физических величин (микро, милли, кило, Мега)
             /// </summary>
@@ -131,6 +121,80 @@ namespace TepCommon
                         , m_nameEN = (string)r[@"NAME_RU"]
                         , m_strDesc = (string)r[@"DESCRIPTION"]
                     });
+            }
+
+            private void addNAlg(NALG_PROPERTY nAlg)
+            {
+                if (m_dictNAlgProperties == null)
+                    m_dictNAlgProperties = new Dictionary<int, NALG_PROPERTY>();
+                else
+                    ;
+
+                if (m_dictNAlgProperties.ContainsKey(nAlg.m_idNAlg) == false)
+                    m_dictNAlgProperties.Add(nAlg.m_idNAlg, nAlg);
+                else
+                    ;
+            }
+
+            public void AddNAlg(NALG_PROPERTY nAlg)
+            {
+                addNAlg(nAlg);
+            }
+
+            /// <summary>
+            /// Добавить строку в таблицу (режим NALG)
+            /// </summary>
+            public virtual int AddRow(NALG_PROPERTY nAlg)
+            {
+                int iRes = -1;
+
+                addNAlg(nAlg);
+
+                // создать строку, добавить строку
+                iRes = Rows.Add(new DataGridViewRow());
+                //// установить значения в ячейках для служебной информации
+                //Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
+                //Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
+                Rows[iRes].Tag = nAlg.m_idNAlg;
+                // инициализировать значения в служебных ячейках
+                m_dictNAlgProperties[nAlg.m_idNAlg].InitCells(Columns.Count);
+
+                return iRes;
+            }
+            /// <summary>
+            /// Добавить строку в таблицу (режим DATETIME)
+            /// </summary>
+            public virtual int AddRow(DateTime dtRow)
+            {
+                int iRes = -1;
+
+                // добавить строку
+                iRes = Rows.Add(new DataGridViewRow());
+
+                Rows[iRes].Tag = dtRow;
+
+                return iRes;
+            }
+
+            /// <summary>
+            /// Удалить все строки представления
+            /// </summary>
+            public virtual void ClearRows()
+            {
+                if (Rows.Count > 0)
+                    Rows.Clear();
+                else
+                    ;
+            }
+
+            /// <summary>
+            /// Очитсить значения в ячейках представления
+            /// </summary>
+            public virtual void ClearValues()
+            {
+                foreach (DataGridViewRow r in Rows)
+                    foreach (DataGridViewCell c in r.Cells)
+                        c.Value = string.Empty;
             }
         }
     }

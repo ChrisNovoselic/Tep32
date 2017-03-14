@@ -211,20 +211,44 @@ namespace TepCommon
         /// <param name="id">Идентификатор параметра открытых вкладок</param>
         /// <param name="connSett">Параменты подключения к БД</param>
         /// <returns>Список вкладок в виде строки</returns>
-        public static string GetAllowed(int id, ConnectionSettings connSett)
+        public static string GetAllowed(int context, ConnectionSettings connSett)
         {
-            string strRes = string.Empty;
-
-            //HTepProfilesXml.UpdateProfile(connSett);
+            HTepProfilesXml.UpdateProfile(connSett);
 
             DictionaryProfileItem dictProfileItem = HTepProfilesXml.GetProfileUser(Id, Role);
 
-            if (dictProfileItem.Attributes.ContainsKey(id.ToString()) == true)
-            {
-                strRes = dictProfileItem.Attributes[id.ToString()];
-            }
+            return dictProfileItem.GetAttribute(context);
+        }
+
+        public static string GetAllowed(int context, int id = -1, int role = -1)
+        {
+            string strRes = string.Empty;
+
+            DictionaryProfileItem dictProfileItem = null;
+
+            if (id < 0)
+                id = Id;
+            else
+                ;
+
+            if (role < 0)
+                role = Role;
+            else
+                ;
+
+            dictProfileItem = HTepProfilesXml.GetProfileUser(id, role);
+
+            if (!(dictProfileItem == null))
+                strRes = dictProfileItem.GetAttribute(context);
+            else
+                ;
 
             return strRes;
+        }
+
+        public static string GetAllowed(ID_ALLOWED context, int id = -1, int role = -1)
+        {
+            return GetAllowed((int)context, id, role);
         }
         /// <summary>
         /// Добавление открытой вкладки
@@ -240,12 +264,17 @@ namespace TepCommon
         /// <summary>
         /// Метод указывающий содержатся ли вкладки в списке открытых в пред сессии
         /// </summary>
-        /// <param name="id">ИД параметра</param>
+        /// <param name="context">ИД параметра</param>
         /// <param name="connSett">Параметры подключения к БД</param>
-        /// <returns></returns>
-        public static bool IsAllowed(int id, ConnectionSettings connSett)
+        /// <returns>Результат: значение элемента-котекста</returns>
+        public static bool IsAllowed(int context, ConnectionSettings connSett)
         {
-            return bool.Parse(GetAllowed(id, connSett));
+            return bool.Parse(GetAllowed(context, connSett));
+        }
+
+        public static bool IsAllowed(ID_ALLOWED context, ConnectionSettings connSett)
+        {
+            return bool.Parse(GetAllowed((int)context, connSett));
         }
         /// <summary>
         /// Свойство возвращающее таблицу с описанием атрибутов Profile
@@ -340,20 +369,66 @@ namespace TepCommon
                     else
                         ;
                 } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format(@"DictionaryProfileItem::GetObjects () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Exception(e, string.Format(@"DictionaryProfileItem::GetObjects () - ...")
+                        , Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
                 return dictProfileItemRes;
             }
 
-            public bool GetAttribute(params string[] keys, out string strRes)
+            public string GetAttribute(params object[] keys)
             {
-                strRes = string.Empty;
+                Func<object, string> fToString = delegate (object obj) {
+                    string strRes = string.Empty;
 
-                bool bRes = false;                
+                    Type type = obj.GetType();
 
-                return bRes;
+                    if (type.Equals(typeof(string)) == true)
+                        strRes = (string)obj;
+                    else if (type.IsEnum)
+                        strRes = ((int)obj).ToString();
+                    else if (type.IsPrimitive)
+                        strRes = obj.ToString();
+                    else
+                        ;
+
+                    return strRes;
+                };
+
+                return GetAttribute(
+                        //Array.ConvertAll<object, string>(keys, (o) => { return (string)o; })
+                        keys.ToList().Select(o => fToString(o)).ToArray()
+                    );
             }
+
+            public string GetAttribute(params string[] keys)
+            {
+                string strRes = string.Empty;
+
+                string []objectKeys;
+                string attributeKey;
+
+                if (keys.Length > 1) {
+                    objectKeys = keys.Take(keys.Length - 1).ToArray();
+                    attributeKey = keys[keys.Length - 1];
+
+                    strRes = GetObjects(objectKeys).Attributes[attributeKey];
+                } else if (keys.Length == 1) {
+                    if (Attributes.ContainsKey(keys[0]) == true)
+                        strRes = Attributes[keys[0]];
+                    else
+                        Logging.Logg().Warning(string.Format(@"DictionaryProfileItem::GetAttribute (keys.Length=1) - ключ {0} не найден...", keys[0]), Logging.INDEX_MESSAGE.NOT_SET);
+                } else
+                    Logging.Logg().Error(string.Format(@"DictionaryProfileItem::GetAttribute (keys.Length=0) - аргументы не указаны..."), Logging.INDEX_MESSAGE.NOT_SET);
+
+                return strRes;
+            }
+
+            public string GetAttribute(ID_PERIOD idPeriod, int context)
+            {
+                return GetAttribute(((int)idPeriod).ToString(), context.ToString());
+            }
+
             /// <summary>
             /// Установить значение для текущего объекта
             /// </summary>
@@ -369,6 +444,34 @@ namespace TepCommon
             /// Словарь с атрибутами объекта
             /// </summary>
             public Dictionary<string, string> Attributes;
+
+            private string GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE indxKey)
+            {
+                return GetAttribute(((int)indxKey).ToString());
+            }
+
+            private string GetAttribute(object oKey)
+            {
+                return GetAttribute(((int)oKey).ToString());
+            }
+
+
+            private string GetAttribute(int iKey)
+            {
+                return GetAttribute(iKey.ToString());
+            }
+
+            private string GetAttribute(string key)
+            {
+                string strRes = string.Empty;
+
+                if (Attributes.ContainsKey(key) == true)
+                    strRes = Attributes[key];
+                else
+                    ;
+
+                return strRes;
+            }
             /// <summary>
             /// Количество значений в текущем объекте
             /// </summary>
@@ -689,11 +792,11 @@ namespace TepCommon
             /// <summary>
             /// Перечисление индексов профайла
             /// </summary>
-            public enum PROFILE_INDEX
+            public enum INDEX_PROFILE
             {
                 UNKNOW = -1,
-                TIMEZONE = 101, MAIL, PERIOD, IS_SAVE_SOURCE,
-                ROUND = 201, RATIO, INPUT_PARAM, EDIT_COLUMN = 204,
+                TIMEZONE = 101, MAIL, PERIOD, ENABLED_CONTROL,
+                ROUND = 201, RATIO, INPUT_PARAM, ENABLED_ITEM = 204, VISIBLED_ITEM
             }
             /// <summary>
             /// Таблица содержащая описания атрибутов Profile
@@ -941,10 +1044,13 @@ namespace TepCommon
             /// <param name="connSet">ConnectionSettings для сохранения</param>
             public static void AddPanel(int idPanel, ConnectionSettings connSet)
             {
-                ParamComponent parComp = new ParamComponent();
-                string value = ProfileUsers[Id.ToString()].Attributes["3"];
+                //??? почему == 3
+                int idUnit = 3;
 
-                parComp.ID_Unit = 3;
+                ParamComponent parComp = new ParamComponent();
+                string value = ProfileUsers[Id.ToString()].Attributes[idUnit.ToString()];
+
+                parComp.ID_Unit = idUnit;
                 parComp.Value = value + ',' + idPanel.ToString();
 
                 XmlDocument doc = Edit(XmlUsers[Id.ToString()], Type.User, Id, Component.None, parComp);
@@ -958,10 +1064,14 @@ namespace TepCommon
             /// <param name="connSet">ConnectionSettings для сохранения</param>
             public static void RemovePanel(int idPanel, ConnectionSettings connSet)
             {
+                //??? почему == 3
+                int idUnit = 3;
+
                 ParamComponent parComp = new ParamComponent();
                 string value = string.Empty;
                 string[] panels;
-                value = ProfileUsers[Id.ToString()].Attributes["3"];
+
+                value = ProfileUsers[Id.ToString()].Attributes[idUnit.ToString()];
                 panels = value.Split(',');
                 string[] add_pan = new string[panels.Length - 1];
 
@@ -969,7 +1079,7 @@ namespace TepCommon
                     if (panels[i] != idPanel.ToString())
                         add_pan[i] = panels[i];
 
-                parComp.ID_Unit = 3;
+                parComp.ID_Unit = idUnit;
                 parComp.Value = string.Join(",", add_pan);
                 XmlDocument doc = Edit(XmlUsers[Id.ToString()], Type.User, Id, Component.None, parComp);
 

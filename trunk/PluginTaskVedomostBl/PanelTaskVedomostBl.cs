@@ -145,10 +145,10 @@ namespace PluginTaskVedomostBl
         /// экземпляр класса пикчи
         /// </summary>
         protected PictureVedBl m_pictureVedBl;
-        /// <summary>
-        /// ??? почему статик Экземпляр класса обрабокти данных
-        /// </summary>
-        private static VedomostBlCalculate s_VedCalculate;
+        ///// <summary>
+        ///// ??? почему статик Экземпляр класса обрабокти данных
+        ///// </summary>
+        //private static VedomostBlCalculate s_VedCalculate;
         /// <summary>
         /// 
         /// </summary>
@@ -210,55 +210,7 @@ namespace PluginTaskVedomostBl
             protected override int initValues(ListDATATABLE listDataTables)
             {
                 throw new NotImplementedException();
-            }
-        
-            /// <summary>
-            /// преобразование числа в нужный формат отображения
-            /// </summary>
-            /// <param name="value">число</param>
-            /// <returns>преобразованное число</returns>
-            public float AsParseToF(string value)
-            {
-                float fRes = 0;
-
-                int _indxChar = 0;
-                string _sepReplace = string.Empty;
-                bool bParsed = true;
-                //char[] _separators = { ' ', ',', '.', ':', '\t'};
-                //char[] letters = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).ToArray();                
-
-                foreach (char ch in value.ToCharArray())
-                {
-                    if (!char.IsDigit(ch))
-                        if (char.IsLetter(ch))
-                            value = value.Remove(_indxChar, 1);
-                        else
-                            _sepReplace = value.Substring(_indxChar, 1);
-                    else
-                        _indxChar++;
-
-                    switch (_sepReplace) {
-                        case ".":
-                        case ",":
-                        case " ":
-                        case ":":
-                            bParsed = float.TryParse(value.Replace(_sepReplace, "."), NumberStyles.Float, CultureInfo.InvariantCulture, out fRes);
-                            break;
-                    }
-                }
-
-                if (bParsed == false)
-                    try {
-                        fRes = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
-                    } catch (Exception) {
-                        if (string.IsNullOrEmpty (value.ToString()) == true)
-                            fRes = 0;
-                        else
-                            ;
-                    }
-
-                return fRes;
-            }
+            }            
         }
 
         /// <summary>
@@ -268,7 +220,7 @@ namespace PluginTaskVedomostBl
         public PanelTaskVedomostBl(IPlugIn iFunc)
             : base(iFunc)
         {
-            s_VedCalculate = new VedomostBlCalculate();
+            //s_VedCalculate = new VedomostBlCalculate();
 
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
             //Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
@@ -338,7 +290,7 @@ namespace PluginTaskVedomostBl
         private void PanelTaskVedomostBl_expExcel_Click(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();
-            m_rptExcel.CreateExcel(getActiveView(), Session.m_rangeDatetime);
+            m_rptExcel.CreateExcel(ActiveDataGridView, Session.m_rangeDatetime);
         }
 
         /// <summary>
@@ -385,7 +337,7 @@ namespace PluginTaskVedomostBl
         {
             bool bItemChecked = item.NewCheckState == CheckState.Checked ? true :
                   item.NewCheckState == CheckState.Unchecked ? false : false;
-            DataGridViewVedomostBl cntrl = (getActiveView() as DataGridViewVedomostBl);
+            DataGridViewVedomostBl cntrl = ActiveDataGridView;
             //Поиск индекса элемента отображения
             switch ((INDEX_ID)item.m_indxId) {
                 case INDEX_ID.HGRID_VISIBLED:
@@ -401,22 +353,21 @@ namespace PluginTaskVedomostBl
         /// Нахожджение активного DGV
         /// </summary>
         /// <returns>активная вьюха на панели</returns>
-        private DataGridView getActiveView()
+        private DataGridViewVedomostBl ActiveDataGridView
         {
-            bool _flagb = false;
-            Control cntrl = new Control();
+            get {
+                Control ctrlRes = new Control();
 
-            foreach (PictureVedBl item in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
-                if (item.Visible == true)
-                    foreach (DataGridView dgv in item.Controls)
-                    {
-                        cntrl = dgv;
-                        _flagb = true;
-                    }
-                else if (_flagb)
-                    break;
+                foreach (PictureVedBl item in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
+                    if (item.Visible == true) {
+                        ctrlRes = item.Controls[0];
 
-            return (cntrl as DataGridView);
+                        break;
+                    } else
+                        ;
+
+                return ctrlRes as DataGridViewVedomostBl;
+            }
         }
 
         /// <summary>
@@ -443,17 +394,6 @@ namespace PluginTaskVedomostBl
 
             GetPictureOfIdComp((int)(dgv as DataGridViewVedomostBl).Tag).Size = new Size(_drwW + 2, _drwH);
             dgv.Size = new Size(_drwW + 2, _drwH);
-        }
-
-        /// <summary>
-        /// Обработчик события - добавления строк в грид
-        /// (для изменение размера контролов)
-        /// </summary>
-        /// <param name="sender">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        private void DGVVedomostBl_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
-        {
-            ReSizeControls(sender as DataGridView);
         }
 
         /// <summary>
@@ -586,37 +526,27 @@ namespace PluginTaskVedomostBl
                 }
 
                 for (i = 0; i < DaysInMonth + 1; i++)
-                    if (dgv.Rows.Count != DaysInMonth)
-                        dgv.AddRow(new DataGridViewVedomostBl.ROW_PROPERTY() {
-                            //m_idAlg = id_alg
-                            //,
-                            m_Value = dtRow.AddDays(i).ToShortDateString()
-                        });
+                    if (dgv.Rows.Count < DaysInMonth)
+                        dgv.AddRow(dtRow.AddDays(i));
                     else {
-                        dgv.RowsAdded += DGVVedomostBl_RowsAdded;
-
-                        dgv.AddRow(
-                            new DataGridViewVedomostBl.ROW_PROPERTY() {
-                                //m_idAlg = id_alg
-                                //,
-                                m_Value = "ИТОГО"
-                            }
-                            , DaysInMonth
-                        );
+                        dgv.AddLastRow(dtRow.AddDays(i));
                     }
 
+                ReSizeControls(dgv);
+
                 ConfigureDataGridView(dgv);
+
                 m_pictureVedBl = new PictureVedBl(dgv);
                 (Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).Controls.Add(m_pictureVedBl);
                 //возможность_редактирвоания_значений
                 try {
-                    if (m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true)
+                    if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == true)
                         (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
-                            int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == (int)MODE_CORRECT.ENABLE;
+                            (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
                     else
                         (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
-                    if ((Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
+                    if ((Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked == true)
                         for (int t = 0; t < dgv.RowCount; t++)
                             dgv.ReadOnlyColumns = false;
                     else
@@ -687,9 +617,9 @@ namespace PluginTaskVedomostBl
             PanelManagement.AddCheckBoxGroupHeaders(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], out err, out errMsg);
             //активность_кнопки_сохранения
             try {
-                if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
+                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == true)
                     (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
-                        int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == (int)MODE_CORRECT.ENABLE;
+                        (MODE_CORRECT)MODE_CORRECT.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
                 else
                     (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
             } catch (Exception e) {
@@ -707,7 +637,7 @@ namespace PluginTaskVedomostBl
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , ID_TIMEZONE.MSK);
                     //Заполнить элемент управления с периодами расчета
-                    idProfilePeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
+                    idProfilePeriod = (ID_PERIOD)int.Parse(m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , idProfilePeriod);
 
@@ -783,7 +713,7 @@ namespace PluginTaskVedomostBl
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(object obj)
+        protected override void onAddComponent(TECComponent obj)
         {
         }
         #endregion
@@ -877,7 +807,7 @@ namespace PluginTaskVedomostBl
         {
             int //err = -1,
               id_alg = -1;
-            DataGridViewVedomostBl _dgv = (getActiveView() as DataGridViewVedomostBl);
+            DataGridViewVedomostBl dgv = ActiveDataGridView;
             string n_alg = string.Empty;
             DateTime dt = new DateTime(dtBegin.Year, dtBegin.Month, 1);
 
@@ -888,32 +818,19 @@ namespace PluginTaskVedomostBl
             {
                 clear();
 
-                if (_dgv.Rows.Count != 0)
-                    _dgv.ClearRows();
+                if (dgv.Rows.Count != 0)
+                    dgv.ClearRows();
 
                 for (int i = 0; i < DaysInMonth + 1; i++)
                 {
-                    if (_dgv.Rows.Count != DaysInMonth)
-                        _dgv.AddRow(new DataGridViewVedomostBl.ROW_PROPERTY()
-                        {
-                            m_idAlg = id_alg
-                            //, m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                            , m_Value = dt.AddDays(i).ToShortDateString()
-                        });
+                    if (dgv.Rows.Count != DaysInMonth)
+                        dgv.AddRow(dt.AddDays(i));
                     else
-                        _dgv.AddRow(new DataGridViewVedomostBl.ROW_PROPERTY()
-                        {
-                            m_idAlg = id_alg
-                            ,
-                            //m_strMeasure = ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                            //,
-                            m_Value = "ИТОГО"
-                        }
-                        , DaysInMonth);
+                        dgv.AddLastRow(dt.AddDays(i));
                 }
             }
 
-            _dgv.Rows[dtBegin.Day - 1].Selected = true;
+            dgv.Rows[dtBegin.Day - 1].Selected = true;
             s_currentOffSet = Session.m_curOffsetUTC;
         }
 
@@ -991,7 +908,7 @@ namespace PluginTaskVedomostBl
                         // создать копии для возможности сохранения изменений
                         setValues();
                         // отобразить значения
-                        (getActiveView() as DataGridViewVedomostBl).ShowValues(m_arTableOrigin[(int)Session.m_ViewValues], m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER], Session.m_ViewValues);
+                        ActiveDataGridView.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues], m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER], Session.m_ViewValues);
                         //сохранить готовые значения в таблицу
                         m_arTableEdit[(int)Session.m_ViewValues] = valuesFence();
                     }
@@ -1091,7 +1008,7 @@ namespace PluginTaskVedomostBl
         /// </summary>
         private DataTable valuesFence()
         { //сохранить вх. знач. в DataTable
-            return (getActiveView() as DataGridViewVedomostBl).FillTableToSave(m_TableOrigin, (int)Session.m_Id, Session.m_ViewValues);
+            return ActiveDataGridView.FillTableToSave(m_TableOrigin, (int)Session.m_Id, Session.m_ViewValues);
         }
 
         /// <summary>

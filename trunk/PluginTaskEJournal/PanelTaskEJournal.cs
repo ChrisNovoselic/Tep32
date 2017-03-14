@@ -113,7 +113,7 @@ namespace PluginTaskEJournal
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(object obj)
+        protected override void onAddComponent(TECComponent obj)
         {
         }
         #endregion

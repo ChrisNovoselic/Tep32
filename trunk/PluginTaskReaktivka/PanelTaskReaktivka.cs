@@ -275,11 +275,9 @@ namespace PluginTaskReaktivka
             }
             // возможность_редактирвоания_значений
             try {
-                if ((m_dictProfile.ContainsKey(((int)ID_PERIOD.MONTH).ToString()) == true)
-                    && (m_dictProfile[((int)ID_PERIOD.MONTH).ToString()].ContainsKey(((int)INDEX_CONTROL.DGV_DATA).ToString()) == true)
-                    && (m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)INDEX_CONTROL.DGV_DATA).ToString()).Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()) == true))
+                if (string.IsNullOrEmpty(m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == false)
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
-                        int.Parse(m_dictProfile.GetObjects(((int)ID_PERIOD.MONTH).ToString(), ((int)INDEX_CONTROL.DGV_DATA).ToString()).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.EDIT_COLUMN).ToString()]) == 1;
+                        int.Parse(m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == 1;
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
@@ -288,9 +286,9 @@ namespace PluginTaskReaktivka
                 else
                     m_dgvValues.AddBRead(true);
 
-                if (m_dictProfile.Attributes.ContainsKey(((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()) == true)
+                if (string.IsNullOrEmpty(m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == false)
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
-                        int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.IS_SAVE_SOURCE).ToString()]) == 1;
+                        int.Parse(m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == 1;
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
 
@@ -300,11 +298,11 @@ namespace PluginTaskReaktivka
                 {
                     //m_bflgClear = !m_bflgClear;
                     //Заполнить элемент управления с часовыми поясами
-                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
+                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.TIMEZONE));
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , idProfileTimezone);
                     //Заполнить элемент управления с периодами расчета
-                    idPeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]);
+                    idPeriod = (ID_PERIOD)int.Parse(m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , idPeriod);
                     Session.SetCurrentPeriod(idPeriod);
@@ -375,7 +373,7 @@ namespace PluginTaskReaktivka
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(object obj)
+        protected override void onAddComponent(TECComponent obj)
         {
         }
         #endregion
@@ -507,57 +505,6 @@ namespace PluginTaskReaktivka
             {
                 return DateTime.DaysInMonth(Session.m_rangeDatetime.Begin.Year, Session.m_rangeDatetime.Begin.Month);
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static float AsParseToF(string value)
-        {
-            int _indxChar = 0;
-            string _sepReplace = string.Empty;
-            bool bFlag = true;
-            //char[] _separators = { ' ', ',', '.', ':', '\t'};
-            //char[] letters = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).ToArray();
-            float fValue = 0;
-
-            foreach (char item in value.ToCharArray())
-            {
-                if (!char.IsDigit(item))
-                    if (char.IsLetter(item))
-                        value = value.Remove(_indxChar, 1);
-                    else
-                        _sepReplace = value.Substring(_indxChar, 1);
-                else
-                    _indxChar++;
-
-                switch (_sepReplace)
-                {
-                    case ".":
-                    case ",":
-                    case " ":
-                    case ":":
-                        float.TryParse(value.Replace(_sepReplace, "."), NumberStyles.Float, CultureInfo.InvariantCulture, out fValue);
-                        bFlag = false;
-                        break;
-                }
-            }
-
-            if (bFlag)
-                try
-                {
-                    if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out fValue))
-                        fValue = 0;
-                }
-                catch (Exception)
-                {
-                    if (value.ToString() == "")
-                        ;
-                }
-
-            return fValue;
         }
 
         /// <summary>

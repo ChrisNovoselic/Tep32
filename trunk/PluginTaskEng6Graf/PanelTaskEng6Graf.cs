@@ -61,6 +61,21 @@ namespace PluginTaskEng6Graf
         {
             throw new NotImplementedException();
         }
+
+        protected override void onAddNAlgParameter(NALG_PARAMETER obj)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void onAddComponent(TECComponent comp)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class PlugIn : HFuncDbEdit

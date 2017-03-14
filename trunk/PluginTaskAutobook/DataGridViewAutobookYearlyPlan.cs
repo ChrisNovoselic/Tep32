@@ -26,7 +26,7 @@ namespace PluginTaskAutobook
             /// основной конструктор
             /// </summary>
             /// <param name="nameDGV"></param>
-            public DataGridViewAutobookYearlyPlan(string name)
+            public DataGridViewAutobookYearlyPlan(string name) : base(ModeData.DATETIME)
             {
                 Name = name;
 
@@ -186,50 +186,28 @@ namespace PluginTaskAutobook
                 DataGridViewRow row = new DataGridViewRow();
                 i = Rows.Add(row);
             }
-            /// <summary>
-            /// Добавить строку в таблицу
-            /// </summary>
-            public void AddRow(ROW_PROPERTY rowProp)
-            {
-                int i = -1;
-                // создать строку
-                DataGridViewRow row = new DataGridViewRow();
-                if (m_dictPropertiesRows == null)
-                    m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
+            ///// <summary>
+            ///// Добавить строку в таблицу
+            ///// </summary>
+            //public void AddRow(ROW_PROPERTY rowProp)
+            //{
+            //    int i = -1;
+            //    // создать строку
+            //    DataGridViewRow row = new DataGridViewRow();
+            //    if (m_dictPropertiesRows == null)
+            //        m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
 
-                if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
-                    m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
+            //    if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
+            //        m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
 
-                // добавить строку
-                i = Rows.Add(row);
-                // установить значения в ячейках для служебной информации
-                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.MONTH_NAME].Value = rowProp.m_Value;
-                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
-                // инициализировать значения в служебных ячейках
-                m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public void ClearRows()
-            {
-                if (Rows.Count > 0)
-                    Rows.Clear();
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public void ClearValues()
-            {
-                foreach (HDataGridViewColumn c in Columns)
-                    if (c.m_iIdComp > 0)
-                        foreach (DataGridViewRow row in Rows)
-                            row.Cells[c.Index].Value = null;
-
-                //CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
-            }
+            //    // добавить строку
+            //    i = Rows.Add(row);
+            //    // установить значения в ячейках для служебной информации
+            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.MONTH_NAME].Value = rowProp.m_Value;
+            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
+            //    // инициализировать значения в служебных ячейках
+            //    m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
+            //}
 
             /// <summary>
             /// заполнение датагрида
@@ -255,11 +233,11 @@ namespace PluginTaskAutobook
                                     GetMonth.ElementAt(Convert.ToDateTime(tbOrigin.Rows[j]["WR_DATETIME"]).AddMonths(-1).Month - 1))
                                 {
                                     double.TryParse(tbOrigin.Rows[j]["VALUE"].ToString(), out dblVal);
-                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
                                     dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
                                     row.Cells[col.Index].Value =
-                                     dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);
+                                     dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
                                     break;
                                 }
                             }
@@ -300,24 +278,30 @@ namespace PluginTaskAutobook
 
                 foreach (HDataGridViewColumn col in Columns)
                     if (col.m_iIdComp > 0)
-                        foreach (DataGridViewRow row in Rows)
-                        {
+                        foreach (DataGridViewRow row in Rows) {
                             idAlg = (int)row.Cells["ALG"].Value;
-                            vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                            vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
 
                             if (row.Cells[col.Index].Value != null)
                                 if (double.TryParse(row.Cells[col.Index].Value.ToString(), out valueToRes))
-                                    editTable.Rows.Add(new object[]
-                                    {
+                                    editTable.Rows.Add(new object[] {
                                         col.m_iIdComp
                                         , idSession
                                         , 1.ToString()
                                         , valueToRes *= Math.Pow(10F, 1 * vsRatioValue)
-                                        , Convert.ToDateTime(row.Cells["DATE"].Value.ToString()).ToString("F",editTable.Locale)
+                                        , Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString()).ToString("F", editTable.Locale)
                                         , i
                                     });
+                                else
+                                    ;
+                            else
+                                ;
+
                             i++;
                         }
+                else
+                    ;
+
                 return editTable;
             }
         }

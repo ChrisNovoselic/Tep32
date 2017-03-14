@@ -182,17 +182,17 @@ namespace PluginTaskVedomostBl
             /// Перечисление для индексации столбцов со служебной информацией
             /// </summary>
             public enum INDEX_SERVICE_COLUMN : uint { ALG = 0, DATE, COUNT }
-            /// <summary>
-            /// Словарь настроечных данных
-            /// </summary>
-            private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
+            ///// <summary>
+            ///// Словарь настроечных данных
+            ///// </summary>
+            //private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
             private Dictionary<int, COLUMN_PROPERTY> m_dictPropertyColumns;
 
             /// <summary>
             /// Конструктор - основной (с параметром)
             /// </summary>
             /// <param name="nameDGV">Идентификатор оборудования - блока, данные которого отображаются в текущем представлении</param>
-            public DataGridViewVedomostBl(int tag)
+            public DataGridViewVedomostBl(int tag) : base (ModeData.DATETIME)
             {
                 Tag = tag;
 
@@ -321,6 +321,11 @@ namespace PluginTaskVedomostBl
                 public int m_IdComp;
             }
 
+            public void AddLastRow(DateTime dtRow)
+            {
+                AddRow(dtRow);
+            }
+
             /// <summary>
             /// Добавление колонки
             /// </summary>
@@ -414,83 +419,84 @@ namespace PluginTaskVedomostBl
                 }
             }
 
-            /// <summary>
-            /// Удаление набора строк
-            /// </summary>
-            public void ClearRows()
-            {
-                if (Rows.Count > 0)
-                    Rows.Clear();
-            }
+            ///// <summary>
+            ///// Удаление набора строк
+            ///// </summary>
+            //public void ClearRows()
+            //{
+            //    if (Rows.Count > 0)
+            //        Rows.Clear();
+            //}
 
-            /// <summary>
-            /// Очищение отображения от значений
-            /// </summary>
-            public void ClearValues()
-            {
-                //CellValueChanged -= onCellValueChanged;
+            ///// <summary>
+            ///// Очищение отображения от значений
+            ///// </summary>
+            //public void ClearValues()
+            //{
+            //    //CellValueChanged -= onCellValueChanged;
 
-                foreach (DataGridViewRow r in Rows)
-                    foreach (DataGridViewCell c in r.Cells)
-                        if (r.Cells.IndexOf(c) > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) // нельзя удалять идентификатор параметра
-                            c.Value = string.Empty;
+            //    foreach (DataGridViewRow r in Rows)
+            //        foreach (DataGridViewCell c in r.Cells)
+            //            if (r.Cells.IndexOf(c) > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) // нельзя удалять идентификатор параметра
+            //                c.Value = string.Empty;
 
-                //??? если установить 'true' - редактирование невозможно
-                //ReadOnly = false;
+            //    //??? если установить 'true' - редактирование невозможно
+            //    //ReadOnly = false;
 
-                //CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
-            }
+            //    //CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
+            //}
 
-            /// <summary>
-            /// Добавить строку в таблицу
-            /// </summary>
-            /// <param name="rowProp">структура строк</param>
-            public void AddRow(ROW_PROPERTY rowProp)
-            {
-                int i = -1;
-                // создать строку
-                DataGridViewRow row = new DataGridViewRow();
-                if (m_dictPropertiesRows == null)
-                    m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
+            ///// <summary>
+            ///// Добавить строку в таблицу
+            ///// </summary>
+            ///// <param name="rowProp">структура строк</param>
+            //public void AddRow(ROW_PROPERTY rowProp)
+            //{
+            //    int i = -1;
+            //    // создать строку
+            //    DataGridViewRow row = new DataGridViewRow();
+            //    if (m_dictPropertiesRows == null)
+            //        m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
 
-                if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
-                    m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
-                // добавить строку
-                i = Rows.Add(row);
-                // установить значения в ячейках для служебной информации
-                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
-                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
-                // инициализировать значения в служебных ячейках
-                m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
-            }
+            //    if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
+            //        m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
+            //    // добавить строку
+            //    i = Rows.Add(row);
+            //    // установить значения в ячейках для служебной информации
+            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
+            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
+            //    // инициализировать значения в служебных ячейках
+            //    m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
+            //}
 
-            /// <summary>
-            /// Добавить строку в таблицу
-            /// </summary>
-            /// <param name="rowProp">структура строк</param>
-            /// <param name="DaysInMonth">кол-во дней в месяце</param>
-            public void AddRow(ROW_PROPERTY rowProp, int DaysInMonth)
-            {
-                int i = -1;
-                // создать строку
-                DataGridViewRow row = new DataGridViewRow();
-                if (m_dictPropertiesRows == null)
-                    m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
+            ///// <summary>
+            ///// Добавить строку в таблицу
+            ///// </summary>
+            ///// <param name="rowProp">структура строк</param>
+            ///// <param name="DaysInMonth">кол-во дней в месяце</param>
+            //public void AddRow(ROW_PROPERTY rowProp, int DaysInMonth)
+            //{
+            //    int i = -1;
+            //    // создать строку
+            //    DataGridViewRow row = new DataGridViewRow();
+            //    if (m_dictPropertiesRows == null)
+            //        m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
 
-                if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
-                    m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
+            //    if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
+            //        m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
 
-                // добавить строку
-                i = Rows.Add(row);
-                // установить значения в ячейках для служебной информации
-                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
-                // инициализировать значения в служебных ячейках
-                //m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
+            //    // добавить строку
+            //    i = Rows.Add(row);
+            //    // установить значения в ячейках для служебной информации
+            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
+            //    // инициализировать значения в служебных ячейках
+            //    //m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
 
-                if (i == DaysInMonth)
-                    foreach (HDataGridViewColumn col in Columns)
-                        Rows[i].Cells[col.Index].ReadOnly = true;//блокировка строк
-            }
+            //    // блокировка для редактирования ячеек в крайней строке
+            //    if (i == DaysInMonth)
+            //        foreach (HDataGridViewColumn col in Columns)
+            //            Rows[i].Cells[col.Index].ReadOnly = true;
+            //}
 
             /// <summary>
             /// Установка возможности редактирования столбцов
@@ -842,21 +848,19 @@ namespace PluginTaskVedomostBl
             {
                 double _sumValue = 0F;
 
-                try
-                {
-                    //foreach (DataRow item in table.Rows)
-                    //{
-                    //    if (Rows.Count - 1 != table.Rows.IndexOf(item))
-                    //        _sumValue += s_VedCalculate.AsParseToF(item[indxCol].ToString());
-                    //}
+                try {
                     foreach (DataGridViewRow row in Rows)
-                        if (Rows.Count - 1 != row.Index)
-                            if (row.Cells[indxCol].Value != null)
-                                if (row.Cells[indxCol].Value.ToString() != "")
-                                    _sumValue += s_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
-                }
-                catch (Exception e)
-                {
+                        if (row.Index < Rows.Count - 1)
+                        // все кроме крайней строки
+                            if ((!(row.Cells[indxCol].Value == null))
+                                && (string.IsNullOrEmpty(row.Cells[indxCol].Value.ToString()) == false))
+                            // только, если есть значение для разбора
+                                _sumValue += HMath.doubleParse(row.Cells[indxCol].Value.ToString());
+                            else
+                                ;
+                        else
+                            ;
+                } catch (Exception e) {
                     MessageBox.Show("???" + "Ошибка суммирования столбца!");
                     Logging.Logg().Exception(e, @"PanelTaskVedomostBl::sumVal () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -872,35 +876,23 @@ namespace PluginTaskVedomostBl
             private double avgVal(DataTable table, int indxCol)
             {
                 int cntNum = 0;
-                double _avgValue = 0F
-                   , _sumValue = 0F;
+                double avgValue = 0F
+                   , sumValue = 0F;
 
-                try
-                {
-                    //foreach (DataRow item in table.Rows)
-                    //{
-                    //    if (Rows.Count - 1 != table.Rows.IndexOf(item))
-                    //    {
-                    //        _sumValue += s_VedCalculate.AsParseToF(item[indxCol].ToString());
-                    //        cntNum++;
-                    //    }
-                    //}
-
+                try {
                     foreach (DataGridViewRow row in Rows)
-                        if (row.Cells[indxCol].Value != null)
-                            if (row.Cells[indxCol].Value.ToString() != "")
-                            {
-                                _sumValue += s_VedCalculate.AsParseToF(row.Cells[indxCol].Value.ToString());
-                                cntNum++;
-                            }
-                }
-                catch (Exception exp)
-                {
+                        if ((!(row.Cells[indxCol].Value == null))
+                            && (string.IsNullOrEmpty(row.Cells[indxCol].Value.ToString()) == false)) {
+                            sumValue += HMath.doubleParse(row.Cells[indxCol].Value.ToString());
+                            cntNum++;
+                        } else
+                            ;
+                } catch (Exception exp) {
                     MessageBox.Show("???" + "Ошибка усреднения столбца!");
                     Logging.Logg().Exception(exp, @"PanelTaskVedomostBl::avgVal () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
-                return _avgValue = _sumValue / cntNum;
+                return avgValue = sumValue / cntNum;
             }
 
             /// <summary>
@@ -914,7 +906,7 @@ namespace PluginTaskVedomostBl
             {
                 int i = 0,
                     idAlg = -1
-                    , _hoursOffSet
+                    , hoursOffSet
                     , vsRatioValue = -1
                     , quality = 0,
                     indexPut = 0;
@@ -934,9 +926,9 @@ namespace PluginTaskVedomostBl
                 );
 
                 if (s_flagBl)
-                    _hoursOffSet = 1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);
+                    hoursOffSet = 1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);
                 else
-                    _hoursOffSet = (s_currentOffSet / 60);
+                    hoursOffSet = (s_currentOffSet / 60);
 
                 foreach (HDataGridViewColumn col in Columns)
                 {
@@ -949,7 +941,7 @@ namespace PluginTaskVedomostBl
                                     if (row.Cells[col.Index].Value.ToString() != "")
                                     {
                                         idAlg = col.m_IdAlg;
-                                        valueToRes = s_VedCalculate.AsParseToF(row.Cells[col.Index].Value.ToString());
+                                        valueToRes = HPanelTepCommon.AsParseToF(row.Cells[col.Index].Value.ToString());
                                         vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
                                         valueToRes *= Math.Pow(10F, vsRatioValue);
                                         dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
@@ -1018,7 +1010,10 @@ namespace PluginTaskVedomostBl
                     originValues = 0;
                 else
                     originValues =
-                        s_VedCalculate.AsParseToF(origin.Rows[i]["VALUE"].ToString());
+                        //HPanelTepCommon.AsParseToF(
+                        HMath.doubleParse(
+                            origin.Rows[i]["VALUE"].ToString()
+                        );
 
                 switch (typeValues)
                 {

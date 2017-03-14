@@ -136,8 +136,11 @@ namespace PluginTaskTepMain
             {
             }
 
-            public override void AddRow(ROW_PROPERTY rowProp)
+            public override int AddRow(NALG_PROPERTY nAlgPar)
             {
+                int iRes = base.AddRow(nAlgPar);
+
+                return iRes;
             }
 
             public override void ShowValues(DataTable values, DataTable parameter/*, bool bUseRatio = true*/)

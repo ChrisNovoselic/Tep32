@@ -395,7 +395,7 @@ namespace PluginTaskTepMain
             m_dgvValues.ClearRows();
 
             //Очистить списки - элементы интерфейса
-            PanelManagement.Clear(new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED });
+            (PanelManagement as PanelManagementTaskTepValues).Clear(new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED });
         }
         /// <summary>
         /// Обработчик события - добавить NAlg-параметр
@@ -408,7 +408,7 @@ namespace PluginTaskTepMain
             (PanelManagement as PanelManagementTaskTepValues).AddNAlgParameter(obj, new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED });
 
             // добавить свойства для строки таблицы со значениями
-            m_dgvValues.AddRow(new DataGridViewTEPValues.ROW_PROPERTY(obj));
+            m_dgvValues.AddRow(new DataGridViewValues.NALG_PROPERTY(obj));
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
@@ -416,12 +416,13 @@ namespace PluginTaskTepMain
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
         protected override void onAddPutParameter(PUT_PARAMETER obj)
         {
+            base.onAddPutParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(object obj)
+        protected override void onAddComponent(TECComponent obj)
         {
         }
         #endregion
@@ -584,8 +585,6 @@ namespace PluginTaskTepMain
 
             //    public ROW_PROPERTY m_Properties;
             //}
-
-            private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
@@ -627,20 +626,6 @@ namespace PluginTaskTepMain
                         Columns.Remove(listIndxToRemove[0]);
                         listIndxToRemove.RemoveAt(0);
                     }
-                }
-                else
-                    ;
-            }
-            /// <summary>
-            /// Удалить строки
-            /// </summary>
-            public override void ClearRows()
-            {
-                if (Rows.Count > 0)
-                {
-                    Rows.Clear();
-
-                    m_dictPropertiesRows.Clear();
                 }
                 else
                     ;
@@ -720,31 +705,20 @@ namespace PluginTaskTepMain
             /// <param name="headerText">Текст заголовка строки</param>
             /// <param name="toolTipText">Текст подсказки для заголовка строки</param>
             /// <param name="bVisibled">Признак отображения строки</param>
-            public override void AddRow(ROW_PROPERTY rowProp)
+            public override int AddRow(NALG_PROPERTY nAlgProp)
             {
-                int i = -1;
-                // создать строку
-                DataGridViewRow row = new DataGridViewRow();
-                if (m_dictPropertiesRows == null)
-                    m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-                else
-                    ;
-                m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
-                // добавить строку
-                i = Rows.Add(row);
-                // установить значения в ячейках для служебной информации
-                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value = rowProp.m_idAlg;
-                Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = rowProp.m_strSymbol
-                    + @",[" + rowProp.m_strMeasure + @"]"
-                    ;
-                // инициализировать значения в служебных ячейках
-                m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
+                int iRes = -1;
+
+                iRes = base.AddRow(nAlgProp);
+
                 // установить значение для заголовка
-                Rows[i].HeaderCell.Value = rowProp.m_strHeaderText
+                Rows[iRes].HeaderCell.Value = nAlgProp.m_strItem
                     //+ @"[" + rowProp.m_strMeasure + @"]"
                     ;
                 // установить значение для всплывающей подсказки
-                Rows[i].HeaderCell.ToolTipText = rowProp.m_strToolTipText;
+                Rows[iRes].HeaderCell.ToolTipText = nAlgProp.m_strDescription;
+
+                return iRes;
             }
 
             /// <summary>
@@ -761,12 +735,12 @@ namespace PluginTaskTepMain
                 clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
                 int id_alg = (int)Rows[iRow].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
 
-                bRes = ((m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_bCalcDeny == false)
-                    && ((m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].IsNaN == false)));
+                bRes = ((m_dictNAlgProperties[id_alg].m_arPropertiesCells[iCol].m_bCalcDeny == false)
+                    && ((m_dictNAlgProperties[id_alg].m_arPropertiesCells[iCol].IsNaN == false)));
                 if (bRes == true)
                     if ((bNewCalcDeny == true)
-                        && (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_bCalcDeny == false))
-                        switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
+                        && (m_dictNAlgProperties[id_alg].m_arPropertiesCells[iCol].m_bCalcDeny == false))
+                        switch (m_dictNAlgProperties[id_alg].m_arPropertiesCells[iCol].m_iQuality)
                         {//??? LIMIT
                             case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.USER];
@@ -809,11 +783,11 @@ namespace PluginTaskTepMain
                 clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
                 int id_alg = (int)Rows[iRow].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
 
-                bRes = m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].IsNaN == false;
+                bRes = m_dictNAlgProperties[id_alg].m_arPropertiesCells[iCol].IsNaN == false;
                 if (bRes == true)
                     if ((bNewCalcDeny == true)
                         && ((Columns[iCol] as HDataGridViewColumn).m_bCalcDeny == false))
-                        switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
+                        switch (m_dictNAlgProperties[id_alg].m_arPropertiesCells[iCol].m_iQuality)
                         {//??? LIMIT
                             case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
                                 clrRes = s_arCellColors[(int)INDEX_COLOR.USER];
@@ -852,11 +826,11 @@ namespace PluginTaskTepMain
             private bool getClrCellToValue(int iCol, int iRow, out Color clrRes)
             {
                 int id_alg = (int)Rows[iRow].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
-                bool bRes = !m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].IsNaN;
+                bool bRes = !m_dictNAlgProperties[id_alg].m_arPropertiesCells[iCol].IsNaN;
                 clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
 
                 if (bRes == true)
-                    switch (m_dictPropertiesRows[id_alg].m_arPropertiesCells[iCol].m_iQuality)
+                    switch (m_dictNAlgProperties[id_alg].m_arPropertiesCells[iCol].m_iQuality)
                     {//??? USER, LIMIT
                         case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT: // только для входной таблицы - значение по умолчанию [inval_def]
                             clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
@@ -952,7 +926,7 @@ namespace PluginTaskTepMain
                                 else
                                     ;
 
-                                m_dictPropertiesRows[rKey].m_arPropertiesCells[cIndx].m_bCalcDeny = !bItemChecked;
+                                m_dictNAlgProperties[rKey].m_arPropertiesCells[cIndx].m_bCalcDeny = !bItemChecked;
                             }
                             break;
                         case INDEX_ID.DENY_COMP_VISIBLED:
@@ -979,7 +953,7 @@ namespace PluginTaskTepMain
             public override void ShowValues(DataTable values, DataTable parameter/*, bool bUseRatio = true*/)
             {
                 int idAlg = -1
-                    , idParameter = -1
+                    , idPut = -1
                     , iQuality = -1
                     , iCol = 0, iRow = 0
                     , ratioValue = -1, vsRatioValue = -1;
@@ -996,7 +970,7 @@ namespace PluginTaskTepMain
                         foreach (DataGridViewRow row in Rows)
                         {
                             dblVal = double.NaN;
-                            idParameter = -1;
+                            idPut = -1;
                             iQuality = -1;
                             idAlg = (int)row.Cells[0].Value;
                             parameterRows = parameter.Select(@"ID_COMP=" + col.m_iIdComp + @" AND " + @"ID_ALG=" + idAlg);
@@ -1006,7 +980,7 @@ namespace PluginTaskTepMain
 
                                 if (cellRows.Length == 1)
                                 {
-                                    idParameter = (int)cellRows[0][@"ID_PUT"];
+                                    idPut = (int)cellRows[0][@"ID_PUT"];
                                     dblVal = ((double)cellRows[0][@"VALUE"]);
                                     iQuality = (int)cellRows[0][@"QUALITY"];
                                 }
@@ -1017,19 +991,19 @@ namespace PluginTaskTepMain
                                 ; // параметр расчета для компонента станции не найден
 
                             iRow = Rows.IndexOf(row);
-                            m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_IdParameter = idParameter;
-                            m_dictPropertiesRows[idAlg].m_arPropertiesCells[iCol].m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality;
+                            m_dictNAlgProperties[idAlg].m_arPropertiesCells[iCol].m_IdPut = idPut;
+                            m_dictNAlgProperties[idAlg].m_arPropertiesCells[iCol].m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality;
                             row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
 
                             if (getClrCellToValue(iCol, iRow, out clrCell) == true)
                             {
                                 // символ (??? один для строки, но назначается много раз по числу столбцов)
-                                row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictPropertiesRows[idAlg].m_strSymbol
-                                    + @",[" + m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_nameRU + m_dictPropertiesRows[idAlg].m_strMeasure + @"]";
+                                row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictNAlgProperties[idAlg].m_strSymbol
+                                    + @",[" + m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_nameRU + m_dictNAlgProperties[idAlg].m_strMeausure + @"]";
 
                                 //if (bUseRatio == true) {
                                     // Множитель для значения - для отображения
-                                    vsRatioValue = m_dictRatio[m_dictPropertiesRows[idAlg].m_vsRatio].m_value;
+                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
                                     // Множитель для значения - исходный в БД
                                     ratioValue =
                                         //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
@@ -1045,7 +1019,7 @@ namespace PluginTaskTepMain
                                 //    ; //отображать без изменений
 
                                 // отобразить с количеством знаков в соответствии с настройками
-                                row.Cells[iCol].Value = dblVal.ToString(@"F" + m_dictPropertiesRows[idAlg].m_vsRound, System.Globalization.CultureInfo.InvariantCulture);
+                                row.Cells[iCol].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
                             }
                             else
                                 ;
@@ -1107,8 +1081,8 @@ namespace PluginTaskTepMain
                             EventCellValueChanged(this, new DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs(
                                 (int)Rows[ev.RowIndex].Cells[0].Value //Идентификатор параметра [alg]
                                 , (Columns[ev.ColumnIndex] as HDataGridViewColumn).m_iIdComp //Идентификатор компонента
-                                , m_dictPropertiesRows[id_alg].m_arPropertiesCells[ev.ColumnIndex].m_IdParameter //Идентификатор параметра с учетом периода расчета [put]
-                                , m_dictPropertiesRows[id_alg].m_arPropertiesCells[ev.ColumnIndex].m_iQuality
+                                , m_dictNAlgProperties[id_alg].m_arPropertiesCells[ev.ColumnIndex].m_IdPut //Идентификатор параметра с учетом периода расчета [put]
+                                , m_dictNAlgProperties[id_alg].m_arPropertiesCells[ev.ColumnIndex].m_iQuality
                                 , dblValue));
                         else
                             ; //??? невозможно преобразовать значение - отобразить сообщение для пользователя
@@ -1284,10 +1258,10 @@ namespace PluginTaskTepMain
             public override void Clear()
             {
                 base.Clear();
-
+                //??? почему только компоненты
                 INDEX_ID[] arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_COMP_CALCULATED, INDEX_ID.DENY_COMP_VISIBLED };
 
-                ActivateCheckedHandler(arIndxIdToClear, false);
+                //ActivateCheckedHandler(arIndxIdToClear, false);
 
                 Clear(arIndxIdToClear);
             }
@@ -1297,8 +1271,7 @@ namespace PluginTaskTepMain
                 INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
                 INDEX_ID indxRes = INDEX_ID.UNKNOWN;
 
-                try
-                {
+                try {
                     //Определить идентификатор
                     id = getIndexControl(ctrl);
                     // , соответствующий изменившему состояние элементу 'CheckedListBox'
@@ -1317,9 +1290,7 @@ namespace PluginTaskTepMain
                         default:
                             break;
                     }
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
@@ -1482,9 +1453,8 @@ namespace PluginTaskTepMain
             }
 
             //public void AddParameter(int id_alg, int id_comp, int id_put, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
-            public void AddNAlgParameter(object obj, INDEX_ID[] arIndexIdToAdd)
+            public void AddNAlgParameter(NALG_PARAMETER nAlgPar, INDEX_ID[] arIndexIdToAdd)
             {
-                NALG_PARAMETER addPar = (NALG_PARAMETER)obj;
                 Control ctrl = null;
 
                 for (int i = 0; i < arIndexIdToAdd.Length; i++)
@@ -1492,7 +1462,7 @@ namespace PluginTaskTepMain
                     ctrl = find(arIndexIdToAdd[i]);
 
                     if (!(ctrl == null))
-                        addNAlgParameter(ctrl, addPar.m_idNAlg, /*addPar.m_idComp, addPar.m_idPut,*/ addPar.m_strNameShr, addPar.m_bEnabled);
+                        addNAlgParameter(ctrl, nAlgPar.m_idNAlg, /*addPar.m_idComp, addPar.m_idPut,*/ nAlgPar.m_strNameShr, nAlgPar.m_bEnabled);
                     else
                         Logging.Logg().Error(@"PanelManagementTaskTepValues::AddParameter () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 }

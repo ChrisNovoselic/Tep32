@@ -11,6 +11,7 @@ using System.Data.Common;
 
 using HClassLibrary;
 using InterfacePlugIn;
+using System.Globalization;
 
 namespace TepCommon
 {
@@ -875,6 +876,17 @@ namespace TepCommon
 
     public abstract partial class HPanelTepCommon : HPanelCommon
     {
+        protected struct TECComponent
+        {
+            public int m_id;
+
+            public int m_idOwner;
+
+            public int m_iType;
+
+            public int m_iTypeOwner;
+        }
+
         protected struct PUT_PARAMETER
         {
             /// <summary>
@@ -892,6 +904,8 @@ namespace TepCommon
             /// <summary>
             /// Наименовнаие параметра
             /// </summary>
+            public string m_strNameShr;
+
             public string m_strText;
             /// <summary>
             /// Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)
@@ -905,17 +919,19 @@ namespace TepCommon
             /// <param name="id_put">Идентификатор в БД (в соответствии с компонентом-оборудованием)</param>
             /// <param name="text">Наименовнаие параметра</param>
             /// <param name="enabled">Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)</param>
-            public PUT_PARAMETER(int id_alg, int id_comp, int id_put, string text, bool enabled, bool visibled, int ratio, int round)
+            public PUT_PARAMETER(int id_alg, int id_comp, int id_put, string nameShr, bool enabled, bool visibled, int ratio, int round)
             {
                 m_idNAlg = id_alg;
                 m_idComp = id_comp;
                 m_idPut = id_put;
-                m_strText = text;
+                m_strNameShr = nameShr; m_strText = string.Format(ITEM_TEXT_FORMAT, id_alg, nameShr);
                 m_bEnabled = enabled;
             }
         }
 
-        protected struct NALG_PARAMETER
+        private const string ITEM_TEXT_FORMAT = @"{0} ({1})";
+
+        protected class NALG_PARAMETER
         {
             /// <summary>
             /// Идентификатор в БД элемента в алгоритме расчета
@@ -925,6 +941,8 @@ namespace TepCommon
             /// Наименовнаие (краткое) параметра
             /// </summary>
             public string m_strNameShr;
+
+            public string m_strItem;
             /// <summary>
             /// Наименовнаие (полное) параметра
             /// </summary>
@@ -971,14 +989,10 @@ namespace TepCommon
                 , int ratio, int round)
             {
                 m_idNAlg = id_alg;
-                m_strNameShr = nameShr;
-                m_strDescription = desc;
-                m_strMeausure = measure;
-                m_strSymbol = symbol;
-                m_bEnabled = enabled;
-                m_bVisibled = visibled;
-                m_iRatio = ratio;
-                m_iRound = round;
+                m_strNameShr = nameShr; m_strItem = string.Format(ITEM_TEXT_FORMAT, id_alg, nameShr);  m_strDescription = desc;
+                m_strMeausure = measure; m_strSymbol = symbol;
+                m_bEnabled = enabled; m_bVisibled = visibled;
+                m_iRatio = ratio; m_iRound = round;
             }
         }
 
@@ -988,7 +1002,7 @@ namespace TepCommon
 
             eventAddPutParameter += new Action<PUT_PARAMETER>(onAddPutParameter);
 
-            eventAddComponent += new DelegateObjectFunc(onAddComponent);
+            eventAddComponent += new Action<TECComponent>(onAddComponent);
         }
 
         private PanelManagementTaskCalculate __panelManagement;
@@ -1020,7 +1034,7 @@ namespace TepCommon
         /// <summary>
         /// Событие при добавлении компонента(оборудования) станции
         /// </summary>
-        protected event DelegateObjectFunc eventAddComponent;
+        protected event Action<TECComponent> eventAddComponent;
 
         protected abstract PanelManagementTaskCalculate createPanelManagement();
         /// <summary>
@@ -1087,7 +1101,7 @@ namespace TepCommon
                 , id_alg = -1
                 , ratio = -1, round = -1
                 , enabled = -1, visibled = -1;
-            string strItem = string.Empty;
+            //string strItem = string.Empty;
             string n_alg = string.Empty;
             List<int> listIdNAlg = new List<int>();
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
@@ -1112,7 +1126,7 @@ namespace TepCommon
                     // добавить в список идентификатор параметра алгоритма расчета
                     listIdNAlg.Add(id_alg);
 
-                    strItem = string.Format(@"{0} ({1})", ((string)r[@"N_ALG"]).Trim(), ((string)r[@"NAME_SHR"]).Trim());                    
+                    //strItem = string.Format(@"{0} ({1})", n_alg, ((string)r[@"NAME_SHR"]).Trim());                    
                     // получить значения для настройки визуального отображения
                     if (dictVisualSettings.ContainsKey(n_alg) == true) {
                     // установленные в проекте
@@ -1124,29 +1138,31 @@ namespace TepCommon
                         round = HTepUsers.s_iRoundDefault;
                     }
 
-                    short.TryParse(m_dictProfile.GetObjects(((int)Session.m_currIdPeriod).ToString()).Attributes[(int)CONTEXT_ENABLED], out enabled);
-                    short.TryParse(m_dictProfile.GetObjects(((int)Session.m_currIdPeriod).ToString()).Attributes[(int)CONTEXT_VISIBLED], out visibled);
+                    int.TryParse(m_dictProfile.GetAttribute(Session.m_currIdPeriod, n_alg, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM), out enabled);
+                    int.TryParse(m_dictProfile.GetAttribute(Session.m_currIdPeriod, n_alg, HTepUsers.HTepProfilesXml.INDEX_PROFILE.VISIBLED_ITEM), out visibled);
 
-                    eventAddNAlgParameter(new NALG_PARAMETER() {
-                        m_idNAlg = id_alg
-                        , m_strNameShr = strItem
-                        //, m_arIndexIdToAdd = arIndexIdToAdd
-                        , m_bEnabled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true
-                        , m_bVisibled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true
-                        , m_iRatio = ratio
-                        , m_iRound = round
-                    });
+                    eventAddNAlgParameter(new NALG_PARAMETER(id_alg
+                        , -1
+                        , -1
+                        , ((string)r[@"NAME_SHR"]).Trim()
+                        , ((string)r[@"DESC"]).Trim()
+                        , ((string)r[@"MEASURE"]).Trim()
+                        , ((string)r[@"SYMBOL"]).Trim()
+                        , !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true
+                        , !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true
+                        , ratio
+                        , round
+                    ));
                 } else {
                 // параметр уже был добавлен
-                    short.TryParse(m_dictProfile.GetObjects("", "", "").Attributes[(int)CONTEXT_ENABLED], out enabled);
+                    int.TryParse(m_dictProfile.GetAttribute(Session.m_currIdPeriod, n_alg, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM), out enabled);
 
                     // только, если назначенн обработчик в 'PanelTaskTepOutVal'
                     eventAddPutParameter?.Invoke(new PUT_PARAMETER() {
                         m_idNAlg = id_alg
                         , m_idComp = (int)r[@"ID_COMP"]
                         , m_idPut = (int)r[@"ID"]
-                        , m_strText = strItem
-                        //, m_arIndexIdToAdd = new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED }
+                        , m_strNameShr = ((string)r[@"NAME_SHR"]).Trim()
                         , m_bEnabled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true
                     });
                 }
@@ -1161,7 +1177,53 @@ namespace TepCommon
 
         protected abstract void onAddPutParameter(PUT_PARAMETER obj);
 
-        protected abstract void onAddComponent(object obj);
+        protected abstract void onAddComponent(TECComponent comp);
+
+        /// <summary>
+        /// преобразование числа в нужный формат отображения
+        /// </summary>
+        /// <param name="value">число</param>
+        /// <returns>преобразованное число</returns>
+        public static float AsParseToF(string value)
+        {
+            int _indxChar = 0;
+            string _sepReplace = string.Empty;
+            bool bFlag = true;
+            //char[] _separators = { ' ', ',', '.', ':', '\t'};
+            //char[] letters = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).ToArray();
+            float fValue = 0;
+
+            foreach (char item in value.ToCharArray()) {
+                if (!char.IsDigit(item))
+                    if (char.IsLetter(item))
+                        value = value.Remove(_indxChar, 1);
+                    else
+                        _sepReplace = value.Substring(_indxChar, 1);
+                else
+                    _indxChar++;
+
+                switch (_sepReplace) {
+                    case ".":
+                    case ",":
+                    case " ":
+                    case ":":
+                        float.TryParse(value.Replace(_sepReplace, "."), NumberStyles.Float, CultureInfo.InvariantCulture, out fValue);
+                        bFlag = false;
+                        break;
+                }
+            }
+
+            if (bFlag)
+                try {
+                    fValue = float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
+                } catch (Exception e) {
+                    if (value.ToString() == "")
+                        fValue = 0;
+                }
+
+
+            return fValue;
+        }
     }
 
     public class HPanelDesc : TableLayoutPanel

@@ -90,7 +90,7 @@ namespace Tep64
         private void loadProfile()
         {
             PlugInMenuItem plugIn;
-            string ids = HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS, s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett())
+            string ids = HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.USERPROFILE_PLUGINS/*, s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett()*/)
                 /*/*, strNameOwnerMenuItem = string.Empty, strNameMenuItem = string.Empty*/;
             string[] arIds = ids.Split(new char [] {','}, StringSplitOptions.RemoveEmptyEntries);
             ////Вариант №1
@@ -516,17 +516,13 @@ namespace Tep64
                             Logging.Logg().Error(@"FormMain::initializeMenu () - не найден плюгИн для вкладки (ID=" + iKeyFPanel + @")...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
 
-                    if (iRes == 0)
-                    {
-                        профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Checked = Convert.ToBoolean(int.Parse( HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED, s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett())));
-                        профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Enabled = Convert.ToBoolean(int.Parse(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_ACCESS, s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett())));
+                    if (iRes == 0) {
+                        профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Checked = Convert.ToBoolean(int.Parse( HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_CHECKED/*, s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett()*/)));
+                        профайлАвтоЗагрузитьСохранитьToolStripMenuItem.Enabled = Convert.ToBoolean(int.Parse(HTepUsers.GetAllowed((int)HTepUsers.ID_ALLOWED.AUTO_LOADSAVE_USERPROFILE_ACCESS/*, s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett()*/)));
                         //Успешный запуск на выполнение приложения
                         Start();
-                    }
-                    else
-                    {
-                        switch (iRes)
-                        {
+                    } else {
+                        switch (iRes) {
                             case -2:
                                 strErr = @"Не удалось загрузить все разрешенные для использования модули из списка (несоответствие идентификатроов)";
                                 break;
@@ -536,10 +532,9 @@ namespace Tep64
                                 break;
                         }
                     }
-                }
-                else
-                {
+                } else {
                     if (iRes == 0) iRes = -1; else ;
+
                     strErr = @"Не удалось сформировать список разрешенных для использования модулей";
                 }
             } else {

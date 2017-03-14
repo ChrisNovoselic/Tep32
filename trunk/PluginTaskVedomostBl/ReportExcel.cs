@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using HClassLibrary;
+using TepCommon;
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace PluginTaskVedomostBl
@@ -123,7 +124,10 @@ namespace PluginTaskVedomostBl
                     for (int j = 0; j < dgvActive.Columns.Count; j++)
                         if (j >= ((int)DataGridViewVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1)) {
                             if (j > ((int)DataGridViewVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
-                                arrayData[i, indexArray] = s_VedCalculate.AsParseToF(dgvActive.Rows[i].Cells[j].Value.ToString());
+                                arrayData[i, indexArray] =
+                                    //s_VedCalculate.AsParseToF
+                                    HMath.doubleParse
+                                        (dgvActive.Rows[i].Cells[j].Value.ToString());
                             else
                                 arrayData[i, indexArray] = dgvActive.Rows[i].Cells[j].Value.ToString();
 
@@ -455,7 +459,10 @@ namespace PluginTaskVedomostBl
                 for (int j = 0; j < dgv.Rows.Count; j++) {
                     //colRange.Cells.NumberFormat = "0";
                     if (indxColDgv >= ((int)DataGridViewVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
-                        colRange.Cells[row] = s_VedCalculate.AsParseToF(Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value));
+                        colRange.Cells[row] =
+                            //s_VedCalculate.AsParseToF
+                            HPanelTepCommon.AsParseToF
+                                (Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value));
                     else
                         colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
 

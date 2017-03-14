@@ -513,9 +513,9 @@ namespace PluginTaskBalTeplo
             (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
                 new EventHandler(panelTepCommon_btnSave_onClick);
             (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_IMPORT.ToString(), true)[0] as Button).Click +=
-                new EventHandler(PanelTaskBalTeplo_btnimport_Click);
+                new EventHandler(panelTaskBalTeplo_btnImport_onClick);
             (Controls.Find(PanelManagementBalTeplo.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
-                 new EventHandler(PanelTaskbalTeplo_btnexport_Click);
+                 new EventHandler(panelTaskbalTeplo_btnExport_onClick);
 
             dgvBlock.CellParsing += dgvCellParsing;
             dgvOutput.CellParsing += dgvCellParsing;
@@ -530,7 +530,7 @@ namespace PluginTaskBalTeplo
         /// </summary>
         /// <param name="sender">Объект - инициатор события (кнопка)</param>
         /// <param name="e">Аргумент события</param>
-        void PanelTaskbalTeplo_btnexport_Click(object sender, EventArgs e)
+        private void panelTaskbalTeplo_btnExport_onClick(object sender, EventArgs e)
         {
             //rptExcel.CreateExcel(dgvAB);
         }
@@ -540,7 +540,7 @@ namespace PluginTaskBalTeplo
         /// </summary>
         /// <param name="sender">Объект - инициатор события (кнопка "Отправить")</param>
         /// <param name="e">Аргумент события</param>
-        void PanelTaskBalTeplo_btnimport_Click(object sender, EventArgs e)
+        private void panelTaskBalTeplo_btnImport_onClick(object sender, EventArgs e)
         {
             int err = -1;
             string toSend = (Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0] as TextBox).Text;
@@ -929,14 +929,12 @@ namespace PluginTaskBalTeplo
                     dgvParam.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvParam.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
                     //Заполнить элемент управления с часовыми поясами
-                    idProfileTimezone = (ID_TIMEZONE)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.TIMEZONE).ToString()]);
-                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
-                        , idProfileTimezone);
+                    idProfileTimezone = (ID_TIMEZONE)int.Parse(m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.TIMEZONE));
+                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], idProfileTimezone);
                     //Заполнить элемент управления с периодами расчета
-                    idProfilePeriod = (ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]); //??? требуется прочитать из [profile]
-                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
-                        , idProfilePeriod);
-                    Session.SetCurrentPeriod((ID_PERIOD)int.Parse(m_dictProfile.Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.PERIOD).ToString()]));
+                    idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.PERIOD)); //??? требуется прочитать из [profile]
+                    PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME], idProfilePeriod);
+                    Session.SetCurrentPeriod(idProfilePeriod);
                     PanelManagement.SetModeDatetimeRange();
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
@@ -962,23 +960,23 @@ namespace PluginTaskBalTeplo
         {
             Dictionary<int, object[]> dictProfileRes = new Dictionary<int, object[]>();
             string value = string.Empty;
-            //???
-            string[] contexts = {"33","34"};
+            //??? это не контекст, почему не константы
+            string[] contexts = {"33", "34"};
             //string[] id;
             List<double> ids = new List<double>();
             TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.UNKNOWN;
-                        
+
             List<object> obj = new List<object>();
 
             foreach (string context in contexts)
             {
-                value = m_dictProfile.GetObjects(tag.ToString(), context).Attributes[((int)HTepUsers.HTepProfilesXml.PROFILE_INDEX.INPUT_PARAM).ToString()];
+                value = m_dictProfile.GetAttribute(tag, context, HTepUsers.HTepProfilesXml.INDEX_PROFILE.INPUT_PARAM);
 
                 ids.Clear();
                 value.Trim().Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Cast<string>().ToList().ForEach(val => { ids.Add(HMath.doubleParse(val)); });
 
                 type = context.Equals(contexts[0]) == true ? TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES : //??? 33
-                    context.Equals(contexts[1]) == true ? TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES : //??? 34
+                    context.Equals(contexts[1]) == true ? TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES : //??? 34; как в 'INPUT_PARAM' оказались 'OUT_VALUES'
                         TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.UNKNOWN;
 
                 obj.Add(new object[] { ids.ToArray(), type, m_dictProfile.GetObjects(context) });
@@ -1048,7 +1046,7 @@ namespace PluginTaskBalTeplo
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(object obj)
+        protected override void onAddComponent(TECComponent obj)
         {
         }
         #endregion

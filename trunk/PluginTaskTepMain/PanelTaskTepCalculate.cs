@@ -48,8 +48,8 @@ namespace PluginTaskTepMain
             UNKNOWN = -1
             /*, PERIOD // идентификаторы периодов расчетов, использующихся на форме
             , TIMEZONE // идентификаторы (целочисленные, из БД системы) часовых поясов
-            , ALL_COMPONENT*/, ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
-            , DENY_COMP_CALCULATED, DENY_PARAMETER_CALCULATED // запрещенных для расчета
+            , ALL_COMPONENT, ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
+            */, DENY_COMP_CALCULATED, DENY_PARAMETER_CALCULATED // запрещенных для расчета
             , DENY_COMP_VISIBLED, DENY_PARAMETER_VISIBLED // запрещенных для отображения
                 , COUNT
         }
@@ -236,7 +236,7 @@ namespace PluginTaskTepMain
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(object obj)
+        protected override void onAddComponent(TECComponent obj)
         {
         }
         #endregion
@@ -290,7 +290,7 @@ namespace PluginTaskTepMain
         /// </summary>
         protected abstract class DataGridViewTEPCalculate : DataGridViewValues
         {
-            public DataGridViewTEPCalculate()
+            public DataGridViewTEPCalculate() : base (ModeData.NALG)
             {
                 InitializeComponents();
             }
@@ -338,15 +338,15 @@ namespace PluginTaskTepMain
 
             public abstract void AddColumn(int id_comp, string text, bool bVisibled);
 
-            public abstract void AddRow(ROW_PROPERTY rowProp);
+            //public abstract void AddRow(NALG_PARAMETER nAlgParameter);
 
             public abstract void ShowValues(DataTable values, DataTable parameter/*, bool bUseRatio = true*/);
 
             public abstract void ClearColumns();
 
-            public abstract void ClearRows();
+            //public abstract void ClearRows();
 
-            public abstract void ClearValues();
+            //public abstract void ClearValues();
 
             //public abstract void UpdateStructure(int id_item/*, int id_par*/, PanelTaskTepValues.INDEX_ID indxDeny, bool bItemChecked);
         }
