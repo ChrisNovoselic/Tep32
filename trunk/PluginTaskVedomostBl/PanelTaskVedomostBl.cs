@@ -526,11 +526,7 @@ namespace PluginTaskVedomostBl
                 }
 
                 for (i = 0; i < DaysInMonth + 1; i++)
-                    if (dgv.Rows.Count < DaysInMonth)
-                        dgv.AddRow(dtRow.AddDays(i));
-                    else {
-                        dgv.AddLastRow(dtRow.AddDays(i));
-                    }
+                    dgv.AddRow(dtRow.AddDays(i), i < DaysInMonth);
 
                 ReSizeControls(dgv);
 
@@ -540,9 +536,9 @@ namespace PluginTaskVedomostBl
                 (Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).Controls.Add(m_pictureVedBl);
                 //возможность_редактирвоания_значений
                 try {
-                    if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == true)
+                    if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
                         (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
-                            (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
+                            (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
                     else
                         (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
@@ -617,9 +613,9 @@ namespace PluginTaskVedomostBl
             PanelManagement.AddCheckBoxGroupHeaders(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], out err, out errMsg);
             //активность_кнопки_сохранения
             try {
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == true)
+                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == true)
                     (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
-                        (MODE_CORRECT)MODE_CORRECT.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
+                        (MODE_CORRECT)MODE_CORRECT.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
                 else
                     (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
             } catch (Exception e) {
@@ -637,11 +633,11 @@ namespace PluginTaskVedomostBl
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , ID_TIMEZONE.MSK);
                     //Заполнить элемент управления с периодами расчета
-                    idProfilePeriod = (ID_PERIOD)int.Parse(m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.PERIOD));
+                    idProfilePeriod = (ID_PERIOD)int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , idProfilePeriod);
 
-                    Session.SetCurrentPeriod(PanelManagement.IdPeriod);
+                    Session.CurrentIdPeriod = PanelManagement.IdPeriod;
 
                     PanelManagement.SetModeDatetimeRange();
                     PanelManagement.AllowedTimezone = false;
@@ -782,21 +778,21 @@ namespace PluginTaskVedomostBl
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="active"></param>
-        protected void activateDateTimeRangeValue_OnChanged(bool active)
-        {
-            if (!(PanelManagement == null))
-                if (active == true)
-                    PanelManagement.DateTimeRangeValue_Changed += new PanelManagementVedomostBl.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
-                else
-                    if (active == false)
-                        PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
-                    else
-                        throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
-        }
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <param name="active"></param>
+        //protected void activateDateTimeRangeValue_OnChanged(bool active)
+        //{
+        //    if (!(PanelManagement == null))
+        //        if (active == true)
+        //            PanelManagement.DateTimeRangeValue_Changed += new PanelManagementVedomostBl.DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
+        //        else
+        //            if (active == false)
+        //                PanelManagement.DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+        //            else
+        //                throw new Exception(@"PanelTaskAutobook::activateDateTimeRangeValue_OnChanged () - не создана панель с элементами управления...");
+        //}
 
         /// <summary>
         /// Обработчик события - изменение интервала (диапазона между нач. и оконч. датой/временем) расчета
@@ -814,24 +810,21 @@ namespace PluginTaskVedomostBl
             //settingDateRange();
             Session.SetDatetimeRange(dtBegin, dtEnd);
 
-            if (m_bflgClear)
-            {
+            if (m_bflgClear) {
                 clear();
 
                 if (dgv.Rows.Count != 0)
                     dgv.ClearRows();
+                else
+                    ;
 
                 for (int i = 0; i < DaysInMonth + 1; i++)
-                {
-                    if (dgv.Rows.Count != DaysInMonth)
-                        dgv.AddRow(dt.AddDays(i));
-                    else
-                        dgv.AddLastRow(dt.AddDays(i));
-                }
-            }
+                    dgv.AddRow(dt.AddDays(i), i < DaysInMonth);
+            } else
+                ;
 
             dgv.Rows[dtBegin.Day - 1].Selected = true;
-            s_currentOffSet = Session.m_curOffsetUTC;
+            s_currentOffSet = (int)Session.m_curOffsetUTC.TotalMinutes;
         }
 
         ///// <summary>
@@ -1091,7 +1084,7 @@ namespace PluginTaskVedomostBl
             m_arTableEdit[(int)Session.m_ViewValues] =
             HandlerDb.SaveValues(m_arTableOrigin[(int)Session.m_ViewValues]
                 , valuesFence()
-                , (int)Session.m_currIdTimezone
+                , (int)Session.CurrentIdTimezone
                 , out err);
 
             saveInvalValue(out err);

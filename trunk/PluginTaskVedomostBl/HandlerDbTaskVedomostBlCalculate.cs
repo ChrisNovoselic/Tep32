@@ -99,8 +99,8 @@ namespace PluginTaskVedomostBl
             strQuery += _Session.m_Id;
             strQuery += @"," + (Int32)IdTask;
             strQuery += @"," + HTepUsers.Id;
-            strQuery += @"," + (int)_Session.m_currIdPeriod;
-            strQuery += @"," + (int)_Session.m_currIdTimezone;
+            strQuery += @"," + (int)_Session.CurrentIdPeriod;
+            strQuery += @"," + (int)_Session.CurrentIdTimezone;
             strQuery += @",'" + _Session.m_rangeDatetime.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture)  // @"yyyyMMdd HH:mm:ss"
             strQuery += @",'" + _Session.m_rangeDatetime.End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture) ; // @"yyyyMMdd HH:mm:ss"
 
@@ -200,8 +200,8 @@ namespace PluginTaskVedomostBl
             DateTimeRange[] arRangesRes = null;
             int i = -1;
             bool bEndMonthBoudary = false;
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC),
-            dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(0);
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes),
+            dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes).AddDays(0);
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
@@ -352,7 +352,7 @@ namespace PluginTaskVedomostBl
                             + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)ID_PERIOD.DAY //+ " AND [ID_SOURCE] > 0 "
-                            + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone
+                            + @" AND ID_TIMEZONE = " + (int)_Session.CurrentIdTimezone
                             + @" AND p.ID_COMP = " + PanelTaskVedomostBl.s_getIdComp()
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
@@ -539,7 +539,7 @@ namespace PluginTaskVedomostBl
                     + @" WHERE  [ID_TASK] = " + (int)IdTask
                     + @" AND [DATE_TIME] > '" + dtRange[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + dtRange[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.CurrentIdTimezone
                     + @" AND [ID_TIME] = " + (int)ID_PERIOD.DAY
                     + @" AND [QUALITY] > 0";
 
@@ -574,7 +574,7 @@ namespace PluginTaskVedomostBl
                     + @" WHERE  [ID_TASK] = " + (int)IdTask
                     + @" AND [DATE_TIME] > '" + dtRange[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + dtRange[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.CurrentIdTimezone
                     + @" AND [ID_TIME] = " + (int)ID_PERIOD.DAY
                     + @" AND [QUALITY] > 0";
 
@@ -595,8 +595,8 @@ namespace PluginTaskVedomostBl
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(1);
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
+                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes).AddDays(1);
             //AddDays(-(DateTime.DaysInMonth(_Session.m_rangeDatetime.Begin.Year, _Session.m_rangeDatetime.Begin.Month) - 1));
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
@@ -674,7 +674,7 @@ namespace PluginTaskVedomostBl
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND v.ID_TIME = " + (int)ID_PERIOD.DAY
-                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone;
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.CurrentIdTimezone;
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";

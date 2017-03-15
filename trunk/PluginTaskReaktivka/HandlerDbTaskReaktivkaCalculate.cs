@@ -70,7 +70,7 @@ namespace PluginTaskReaktivka
                     + @" WHERE  [ID_TASK] = " + (int)IdTask
                     + @" AND [DATE_TIME] > '" + dtRange[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + dtRange[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.CurrentIdTimezone
                     + @" AND [ID_TIME] = " + (int)ID_PERIOD.DAY
                     + @" AND [QUALITY] > 0";
 
@@ -106,7 +106,7 @@ namespace PluginTaskReaktivka
                     + @" WHERE  [ID_TASK] = " + (int)IdTask
                     + @" AND [DATE_TIME] > '" + dtRange[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + dtRange[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.CurrentIdTimezone
                     + @" AND [ID_TIME] = " + (int)ID_PERIOD.DAY
                     + @" AND [QUALITY] > 0";
 
@@ -127,8 +127,8 @@ namespace PluginTaskReaktivka
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(1);
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
+                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes).AddDays(1);
             //AddDays(-(DateTime.DaysInMonth(_Session.m_rangeDatetime.Begin.Year, _Session.m_rangeDatetime.Begin.Month) - 1));
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
@@ -218,7 +218,7 @@ namespace PluginTaskReaktivka
                             + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)idPeriod //+ " AND [ID_SOURCE] > 0 "
-                            + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone
+                            + @" AND ID_TIMEZONE = " + (int)_Session.CurrentIdTimezone
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
@@ -351,8 +351,8 @@ namespace PluginTaskReaktivka
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMinutes(-1 * _Session.m_curOffsetUTC)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(1);
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
+                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes).AddDays(1);
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
@@ -489,7 +489,7 @@ namespace PluginTaskReaktivka
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND v.ID_TIME = " + (int)idPeriod
-                    + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
+                    + @" AND ID_TIMEZONE = " + (int)_Session.CurrentIdTimezone;
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";

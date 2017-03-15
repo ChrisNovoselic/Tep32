@@ -57,12 +57,12 @@ namespace PluginTaskTepMain
 
             base.initialize(out err, out errMsg);
         }
-        /// <summary>
-        /// Заполнение значениями элементов управления
-        /// </summary>
-        protected override void initialize()
-        {
-        }
+        ///// <summary>
+        ///// Заполнение значениями элементов управления
+        ///// </summary>
+        //protected override void initialize()
+        //{
+        //}
 
         protected override void recUpdateInsertDelete(out int err)
         {
@@ -130,18 +130,7 @@ namespace PluginTaskTepMain
             /// </summary>
             private void InitializeComponents ()
             {
-            }
-            
-            public override void AddColumn(int id_comp, string text, bool bVisibled)
-            {
-            }
-
-            public override int AddRow(NALG_PROPERTY nAlgPar)
-            {
-                int iRes = base.AddRow(nAlgPar);
-
-                return iRes;
-            }
+            }            
 
             public override void ShowValues(DataTable values, DataTable parameter/*, bool bUseRatio = true*/)
             {
@@ -159,9 +148,10 @@ namespace PluginTaskTepMain
             {
             }
 
-            //public override void UpdateStructure(int id_comp, int id_par, PanelTaskTepValues.INDEX_ID indxDeny, bool bItemChecked)
-            //{
-            //}
+            protected override void AddColumn(PUT_PARAMETER pPar, ModeAddColumn mode)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         protected override PanelTaskTepCalculate.PanelManagementTaskCalculate createPanelManagement()

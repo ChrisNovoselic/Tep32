@@ -789,17 +789,16 @@ namespace PluginTaskAutobook
                 throw new NotImplementedException();
             }
 
-            /// <summary>
-            /// Обработчик события - изменение дата/время окончания периода
-            /// </summary>
-            /// <param name="obj">Составной объект - календарь</param>
-            /// <param name="ev">Аргумент события</param>
-            protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
-            {
-                HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
-
-                DateTimeRangeValue_Changed?.Invoke(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
-            }
+            ///// <summary>
+            ///// Обработчик события - изменение дата/время окончания периода
+            ///// </summary>
+            ///// <param name="obj">Составной объект - календарь</param>
+            ///// <param name="ev">Аргумент события</param>
+            //protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
+            //{
+            //    HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
+            //    DateTimeRangeValue_Changed?.Invoke(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
+            //}
         }
 
         /// <summary>
@@ -893,7 +892,7 @@ namespace PluginTaskAutobook
                     //корректировка значений
                     m_dgvValues.editCells(e, INDEX_COLUMN.GTP12.ToString());
                     //сбор корр.значений
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = m_dgvValues.FillTableCorValue(Session.m_curOffsetUTC, e);
+                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = m_dgvValues.FillTableCorValue((int)Session.m_curOffsetUTC.TotalMinutes, e);
                     //сбор значений
                     m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = m_dgvValues.FillTableValueDay();
                     break;
@@ -901,7 +900,7 @@ namespace PluginTaskAutobook
                     //корректировка значений
                     m_dgvValues.editCells(e, INDEX_COLUMN.GTP36.ToString());
                     //сбор корр.значений
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = m_dgvValues.FillTableCorValue(Session.m_curOffsetUTC, e);
+                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = m_dgvValues.FillTableCorValue((int)Session.m_curOffsetUTC.TotalMinutes, e);
                     //сбор значений
                     m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = m_dgvValues.FillTableValueDay();
                     break;
@@ -1128,7 +1127,7 @@ namespace PluginTaskAutobook
                 m_dgvValues.FillTableValueDay();
             //сохранить вх.корр. знач. в DataTable
             m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-                m_dgvValues.FillTableCorValue(Session.m_curOffsetUTC);
+                m_dgvValues.FillTableCorValue((int)Session.m_curOffsetUTC.TotalMinutes);
         }
 
         /// <summary>
@@ -1253,8 +1252,8 @@ namespace PluginTaskAutobook
 
             //возможность_редактирвоания_значений
             try {
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == true)
-                    if ((MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == MODE_CORRECT.ENABLE)
+                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
+                    if ((MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE)
                         (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
                     else
                         (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
@@ -1264,9 +1263,9 @@ namespace PluginTaskAutobook
             }
             //активность_кнопки_сохранения
             try {
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == true)
+                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == true)
                     (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
-                        (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
+                        (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
                 else
                     (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
             } catch (Exception exp) {
@@ -1278,21 +1277,21 @@ namespace PluginTaskAutobook
 
                 if (err == 0) {
                     //Заполнить элемент управления с часовыми поясами
-                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.TIMEZONE));
+                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.TIMEZONE));
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , idProfileTimezone);
                     //Заполнить элемент управления с периодами расчета
-                    idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.PERIOD));
+                    idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , idProfilePeriod);
-                    Session.SetCurrentPeriod(PanelManagement.IdPeriod);
+                    Session.CurrentIdPeriod = PanelManagement.IdPeriod;
                     PanelManagement.SetModeDatetimeRange();
 
                     ctrl = Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0];
                     //из profiles
                     key = ((int)PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL).ToString();
                     if (m_dictProfile.Keys.Contains(key) == true)
-                        ctrl.Text = m_dictProfile.GetAttribute(key, HTepUsers.HTepProfilesXml.INDEX_PROFILE.MAIL);
+                        ctrl.Text = m_dictProfile.GetAttribute(key, HTepUsers.ID_ALLOWED.ADDRESS_MAIL_AUTOBOOK);
                     else
                         Logging.Logg().Warning(string.Format(@"PanelTaskAutoBook::initialize () - в словаре 'm_dictProfile' не определен ключ [{0:1}]..."
                             , key, PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL)

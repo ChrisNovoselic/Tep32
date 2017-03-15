@@ -178,20 +178,16 @@ namespace PluginTaskAutobook
                 PerformLayout();
             }
 
-            /// <summary>
-            /// Обработчик события - изменение дата/время окончания периода
-            /// </summary>
-            /// <param name="obj">Составной объект - календарь</param>
-            /// <param name="ev">Аргумент события</param>
-            protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
-            {
-                HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
-
-                if (!(DateTimeRangeValue_Changed == null))
-                    DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
-                else
-                    ;
-            }
+            ///// <summary>
+            ///// Обработчик события - изменение дата/время окончания периода
+            ///// </summary>
+            ///// <param name="obj">Составной объект - календарь</param>
+            ///// <param name="ev">Аргумент события</param>
+            //protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
+            //{
+            //    HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
+            //    DateTimeRangeValue_Changed?.Invoke(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
+            //}
             /// <summary>
             /// Обработчик события - изменение значения из списка признаков отображения/снятия_с_отображения
             /// </summary>
@@ -363,17 +359,17 @@ namespace PluginTaskAutobook
             m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
             try {
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_PLANEYAR, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == true)
+                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_PLANEYAR, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
                         (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
-                            (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_PLANEYAR, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
+                            (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_PLANEYAR, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
                 else
                     (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
                 m_dgvValues.AddBRead(!(Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked);
 
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == true)
+                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == true)
                     (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
-                        (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
+                        (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
                 else
                     (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
             } catch (Exception e) {
@@ -383,13 +379,14 @@ namespace PluginTaskAutobook
             if (err == 0) {
                 try {
                     //Заполнить элемент управления с часовыми поясами
-                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.TIMEZONE));
+                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.TIMEZONE));
                     PanelManagement.FillValueTimezone (m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], idProfileTimezone);
-                    Session.SetCurrentTimeZone(idProfileTimezone, (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(string.Format(@"ID={0}", (int)idProfileTimezone))[0][@"OFFSET_UTC"]);
+                    Session.CurrentIdTimezone = idProfileTimezone;
+                        //, (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(string.Format(@"ID={0}", (int)idProfileTimezone))[0][@"OFFSET_UTC"]);
                     //Заполнить элемент управления с периодами расчета
-                    idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.PERIOD));
+                    idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME], idProfilePeriod);
-                    Session.SetCurrentPeriod(idProfilePeriod);
+                    Session.CurrentIdPeriod = idProfilePeriod;
                     PanelManagement.SetModeDatetimeRange();
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelTaskAutoBook::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -661,7 +658,7 @@ namespace PluginTaskAutobook
 
                 if (dr_saveValue.Count() > 0) {
                     m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-                        HandlerDb.SavePlanValue(m_TableOrigin, dr_saveValue, (int)Session.m_currIdTimezone, out err);
+                        HandlerDb.SavePlanValue(m_TableOrigin, dr_saveValue, (int)Session.CurrentIdTimezone, out err);
 
                     //s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
                     base.panelTepCommon_btnSave_onClick(obj, ev);

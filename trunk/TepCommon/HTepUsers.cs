@@ -30,23 +30,24 @@ namespace TepCommon
             , AUTO_LOADSAVE_USERPROFILE_CHECKED //Автоматическая загрузка/сохранение списка идентификаторов вкладок, загружаемых автоматически
             , USERPROFILE_PLUGINS //Список вкладок, загружаемых автоматически
 
-            , QUERY_TIMEZONE = 101 //Идентификатор часового пояса при запросе значений
-            , ADRESS_MAIL_AUTOBOOK //Адрес_эп_Активной_ээ 
-            , PERIOD_IND //Период_идентификатор  
-
+            , TIMEZONE = 101 //Идентификатор часового пояса при запросе значений
+            , ADDRESS_MAIL_AUTOBOOK //Адрес_эп_Активной_ээ 
+            , PERIOD //Период_идентификатор
+            , ENABLED_CONTROL
 
             , VISUAL_SETTING_VALUE_ROUND = 201 //Отображение значений, количество знаков после запятой
             , VISUAL_SETTING_VALUE_RATIO //Отображение значений, множитель относительно базовой единицы измерения
             , INPUT_PARAM //Входные параметры
-            , EDIT_COLUMN //Редактирование_столбца 
+            , ENABLED_ITEM //Редактирование_столбца 
+            , VISIBLED_ITEM
         };
         /// <summary>
         /// Перечисление - индексы в массиве - аргументе функции 'GetParameterVisualSettings'
         /// </summary>
         public enum INDEX_VISUALSETTINGS_PARAMS
         { /*TASK, PLUGIN, */
-            TAB,
-            ITEM
+            TAB
+            , ITEM
                 , COUNT
         }
         /// <summary>
@@ -408,16 +409,22 @@ namespace TepCommon
                 string []objectKeys;
                 string attributeKey;
 
-                if (keys.Length > 1) {
-                    objectKeys = keys.Take(keys.Length - 1).ToArray();
-                    attributeKey = keys[keys.Length - 1];
+                if (keys.Length > 0) {
+                    if (keys.Length > 1) {
+                        objectKeys = keys.Take(keys.Length - 1).ToArray();
+                        attributeKey = keys[keys.Length - 1];
 
-                    strRes = GetObjects(objectKeys).Attributes[attributeKey];
-                } else if (keys.Length == 1) {
-                    if (Attributes.ContainsKey(keys[0]) == true)
-                        strRes = Attributes[keys[0]];
+                        strRes = GetObjects(objectKeys).GetAttribute(attributeKey);
+                    } else if (keys.Length == 1) {
+                    // указан ключ только аттрибута
+                        strRes = GetAttribute(keys[0]);                    
+                    } else
+                        ;
+
+                    if (strRes.Equals(string.Empty) == true)
+                        Logging.Logg().Warning(string.Format(@"DictionaryProfileItem::GetAttribute (keys.Length={0}, keys={1}) - значение не найдено...", keys.Length, string.Join(@",", keys)), Logging.INDEX_MESSAGE.NOT_SET);
                     else
-                        Logging.Logg().Warning(string.Format(@"DictionaryProfileItem::GetAttribute (keys.Length=1) - ключ {0} не найден...", keys[0]), Logging.INDEX_MESSAGE.NOT_SET);
+                        ;
                 } else
                     Logging.Logg().Error(string.Format(@"DictionaryProfileItem::GetAttribute (keys.Length=0) - аргументы не указаны..."), Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -445,9 +452,9 @@ namespace TepCommon
             /// </summary>
             public Dictionary<string, string> Attributes;
 
-            private string GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE indxKey)
+            private string GetAttribute(HTepUsers.ID_ALLOWED idAllowed)
             {
-                return GetAttribute(((int)indxKey).ToString());
+                return GetAttribute(((int)idAllowed).ToString());
             }
 
             private string GetAttribute(object oKey)
@@ -468,7 +475,7 @@ namespace TepCommon
                 if (Attributes.ContainsKey(key) == true)
                     strRes = Attributes[key];
                 else
-                    ;
+                    Logging.Logg().Error(string.Format(@"DictionaryProfileItem::GetAttribute (key={0}) - ключ не найден...", key), Logging.INDEX_MESSAGE.NOT_SET);
 
                 return strRes;
             }
@@ -789,15 +796,15 @@ namespace TepCommon
             /// Имя таблицы содержащей описания атрибутов элементов
             /// </summary>
             public static string s_nameTableProfilesUnit = @"profiles_unit";
-            /// <summary>
-            /// Перечисление индексов профайла
-            /// </summary>
-            public enum INDEX_PROFILE
-            {
-                UNKNOW = -1,
-                TIMEZONE = 101, MAIL, PERIOD, ENABLED_CONTROL,
-                ROUND = 201, RATIO, INPUT_PARAM, ENABLED_ITEM = 204, VISIBLED_ITEM
-            }
+            ///// <summary>
+            ///// Перечисление индексов профайла
+            ///// </summary>
+            //public enum INDEX_PROFILE
+            //{
+            //    UNKNOW = -1,
+            //    TIMEZONE = 101, MAIL, PERIOD, ENABLED_CONTROL,
+            //    ROUND = 201, RATIO, INPUT_PARAM, ENABLED_ITEM = 204, VISIBLED_ITEM
+            //}
             /// <summary>
             /// Таблица содержащая описания атрибутов Profile
             /// </summary>

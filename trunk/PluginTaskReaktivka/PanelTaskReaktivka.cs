@@ -275,9 +275,9 @@ namespace PluginTaskReaktivka
             }
             // возможность_редактирвоания_значений
             try {
-                if (string.IsNullOrEmpty(m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == false)
+                if (string.IsNullOrEmpty(m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == false)
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
-                        int.Parse(m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_ITEM)) == 1;
+                        int.Parse(m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == 1;
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
 
@@ -286,9 +286,9 @@ namespace PluginTaskReaktivka
                 else
                     m_dgvValues.AddBRead(true);
 
-                if (string.IsNullOrEmpty(m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == false)
+                if (string.IsNullOrEmpty(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == false)
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
-                        int.Parse(m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.ENABLED_CONTROL)) == 1;
+                        int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == 1;
                 else
                     (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
 
@@ -298,14 +298,14 @@ namespace PluginTaskReaktivka
                 {
                     //m_bflgClear = !m_bflgClear;
                     //Заполнить элемент управления с часовыми поясами
-                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.TIMEZONE));
+                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.TIMEZONE));
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , idProfileTimezone);
                     //Заполнить элемент управления с периодами расчета
-                    idPeriod = (ID_PERIOD)int.Parse(m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.PERIOD));
+                    idPeriod = (ID_PERIOD)int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , idPeriod);
-                    Session.SetCurrentPeriod(idPeriod);
+                    Session.CurrentIdPeriod = idPeriod;
                     PanelManagement.SetModeDatetimeRange();
                 } else                    
                     errMsg = @"Неизвестная ошибка";
@@ -457,7 +457,7 @@ namespace PluginTaskReaktivka
             //, out err);
 
             m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-                HandlerDb.SaveValues(m_TableOrigin, valuesFence, (int)Session.m_currIdTimezone, out err);
+                HandlerDb.SaveValues(m_TableOrigin, valuesFence, (int)Session.CurrentIdTimezone, out err);
 
             saveInvalValue(out err);
         }

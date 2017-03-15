@@ -75,13 +75,13 @@ namespace PluginTaskBalTeplo
                     {
                         if (((HDataGridViewColumn)Columns[e.ColumnIndex]).m_bInPut == true)
                         {
-                            idRatio = int.Parse(m_dict_ProfileNALG_IN[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.HTepProfilesXml.INDEX_PROFILE.RATIO).ToString()]);
-                            iRound = int.Parse(m_dict_ProfileNALG_IN[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.HTepProfilesXml.INDEX_PROFILE.ROUND).ToString()]);
+                            idRatio = int.Parse(m_dict_ProfileNALG_IN[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO).ToString()]);
+                            iRound = int.Parse(m_dict_ProfileNALG_IN[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND).ToString()]);
                         }
                         else
                         {
-                            idRatio = int.Parse(m_dict_ProfileNALG_OUT[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.HTepProfilesXml.INDEX_PROFILE.RATIO).ToString()]);
-                            iRound = int.Parse(m_dict_ProfileNALG_OUT[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.HTepProfilesXml.INDEX_PROFILE.ROUND).ToString()]);
+                            idRatio = int.Parse(m_dict_ProfileNALG_OUT[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO).ToString()]);
+                            iRound = int.Parse(m_dict_ProfileNALG_OUT[((HDataGridViewColumn)Columns[e.ColumnIndex]).m_N_ALG.ToString().Trim()].Attributes[((int)HTepUsers.ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND).ToString()]);
                         }
 
                         DataRow[] rows_Ratio = m_dbRatio.Select("ID=" + idRatio);

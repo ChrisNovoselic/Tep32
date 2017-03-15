@@ -8,6 +8,7 @@ using TepCommon;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Data;
+using System.ComponentModel;
 
 namespace TepCommon
 {
@@ -269,12 +270,8 @@ namespace TepCommon
             private void hdtpEnd_onValueChanged(object obj, EventArgs ev)
             {
                 HDateTimePicker hdtpEnd = obj as HDateTimePicker;
-                //m_dtRange.Set(hdtpEnd.LeadingValue, hdtpEnd.Value);
+                DateTimeRangeValue_Changed?.Invoke(hdtpEnd.LeadingValue, hdtpEnd.Value);
 
-                if (!(DateTimeRangeValue_Changed == null))
-                    DateTimeRangeValue_Changed(hdtpEnd.LeadingValue, hdtpEnd.Value);
-                else
-                    ;
             }
 
             /// <summary>
@@ -295,17 +292,59 @@ namespace TepCommon
 
             public virtual void Clear()
             {
-                activateComboBoxSelectedIndex_onChanged(PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_PERIOD, cbxPeriod_SelectedIndexChanged);
+                INDEX_CONTROL_BASE indxCtrl;
+                ComboBox cbx = null;
 
-                activateComboBoxSelectedIndex_onChanged(PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE, cbxTimezone_SelectedIndexChanged);                
+                indxCtrl = PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_PERIOD;
+                //activateComboBoxSelectedIndex_onChanged(indxCtrl, cbxPeriod_SelectedIndexChanged);
+                //cbx = Controls.Find(indxCtrl.ToString(), true)[0] as ComboBox;
+                //cbx.Enabled = false;
+                ////??? даже после отмены регистрации обработчика он вызывается, поэтому не очищаем 
+                //cbx.DataSource = null;
+                ////cbx.Items.Clear(); // элементы удалены автоматически
+
+                indxCtrl = PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE;
+                //activateComboBoxSelectedIndex_onChanged(indxCtrl, cbxTimezone_SelectedIndexChanged);
+                //cbx = Controls.Find(indxCtrl.ToString(), true)[0] as ComboBox;
+                //cbx.Enabled = false;
+                //cbx.DataSource = null;
+                //// элементы удалены автоматически
             }
 
-            private void activateComboBoxSelectedIndex_onChanged(INDEX_CONTROL_BASE indxctrl, EventHandler handler, bool bActivate = false)
+            private void activateComboBoxSelectedIndex_onChanged(INDEX_CONTROL_BASE indxCtrl, EventHandler handler, bool bActivate = false)
             {
-                ComboBox cbx = Controls.Find(indxctrl.ToString(), true)[0] as ComboBox;
+                ComboBox cbx = Controls.Find(indxCtrl.ToString(), true)[0] as ComboBox;
+
+                // всегда отписываться
                 cbx.SelectedIndexChanged -= handler;
-                cbx.DataSource = null;
-                //cbx.Items.Clear(); // элементы удалены автоматически
+
+                #region Проверить результат отмены регистрации обработчика
+                //Get the field EVENT_SELECTEDINDEXCHANGED
+                var eventSelectedIndexChangedKey = typeof(ComboBox).GetField("EVENT_SELECTEDINDEXCHANGED"
+                    , System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+                        .GetValue(cbx);
+                //Get the event handler list of the comboBox1
+                var eventList = typeof(ComboBox).GetProperty("Events"
+                    , System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        .GetValue(cbx, null) as EventHandlerList;
+                //Check if there is not any handler for SelectedIndexChanged
+                if (eventList[eventSelectedIndexChangedKey] == null)
+                    // списка обработчиков нет
+                    ;
+                else {
+                    if (eventList[eventSelectedIndexChangedKey].GetInvocationList().Count() == 0)
+                        // ни одного обработчика
+                        ;
+                    else {                        
+                    }
+                }
+                #endregion
+
+                // при необходимости подписаться
+                if (bActivate == true)
+                    cbx.SelectedIndexChanged += new EventHandler(handler);
+                else
+                    ;
             }
             /// <summary>
             /// Событие при изменениии основных настроечных параметров (ПЕРИОДб ЧАСОВОЙ ПОЯС, ДИАПАЗОН ДАТЫ/ВРЕМЕНИ)
@@ -426,22 +465,28 @@ namespace TepCommon
                     ctrl.ValueMember = @"ID";
                     ctrl.DisplayMember = nameFieldTextValue;
                     tableValues = rowValues.ElementAt(0).Table.Clone();
-                    rowValues.ToList().ForEach(r => { tableValues.Rows.Add(r.ItemArray); });
+                    rowValues.ToList().ForEach(r => { tableValues.Rows.Add(r.ItemArray); });                    
                     ctrl.DataSource = tableValues;
 
-                    //if (!(indxSelected < 0))
-                    //    ctrl.SelectedIndex = indxSelected;
+                    //??? до или после
+                    //ctrl.SelectedIndexChanged += new EventHandler(handler);
+                    activateComboBoxSelectedIndex_onChanged(indxCtrl, handler, true);
+
+                    //if (!(idSelected < 0))
+                        ctrl.SelectedValue = idSelected;
                     //else
                     //    throw new Exception(@"PanelManagementTaskCalculaye::fillComboBoxValues () - не найдена строка для выбора по указанному идентификатру ...");
-
-                    ctrl.SelectedIndexChanged += new EventHandler(handler);
                 } else {
                     Logging.Logg().Error(string.Format(@"PanelManagementTaskCalculate::fillComboBoxValues () - таблица для DataSource пуста..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
-
+            /// <summary>
+            /// Признак доступности элемента управления для выбора часового пояса
+            /// </summary>
             public bool AllowedTimezone { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0].Enabled = value; } }
-
+            /// <summary>
+            /// Признак доступности элемента управления для выбора периода расчета
+            /// </summary>
             public bool AllowedPeriod { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled = value; } }
 
             public void SetModeDatetimeRange()
@@ -515,11 +560,11 @@ namespace TepCommon
             /// <param name="active">Признак регистрации/отмены регистрации обработчика</param>
             protected void activateDateTimeRangeValue_OnChanged(bool active)
             {
+                // всегда отписаться (исключения при пустом событии не происходит)
+                DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
+                // при необходимости (по аргументу) - подписаться
                 if (active == true)
                     DateTimeRangeValue_Changed += new DateTimeRangeValueChangedEventArgs(datetimeRangeValue_onChanged);
-                else
-                    if (active == false)
-                    DateTimeRangeValue_Changed -= datetimeRangeValue_onChanged;
                 else
                     ;
             }

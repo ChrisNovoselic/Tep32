@@ -321,9 +321,9 @@ namespace PluginTaskVedomostBl
                 public int m_IdComp;
             }
 
-            public void AddLastRow(DateTime dtRow)
+            public void AddRow(DateTime dtRow, bool bEnded)
             {
-                AddRow(dtRow);
+                //AddRow(dtRow);
             }
 
             /// <summary>

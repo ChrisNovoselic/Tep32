@@ -102,36 +102,42 @@ namespace PluginTaskTepMain
             (PanelManagement as PanelManagementTaskTepValues).ItemCheck += new PanelManagementTaskTepValues.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
         }
 
-        protected override void initialize()
-        {
-            string strItem = string.Empty;
-            int i = -1
-                , id_comp = -1;
-            INDEX_ID[] arIndxIdToAdd = new INDEX_ID[] {
-                INDEX_ID.DENY_COMP_CALCULATED
-                , INDEX_ID.DENY_COMP_VISIBLED
-            };
-            bool[] arChecked = new bool[arIndxIdToAdd.Length];
+        //protected override void initialize()
+        //{
+        //    string strItem = string.Empty;
+        //    int i = -1
+        //        , id_comp = -1
+        //        , iChecked = -1;
+        //    INDEX_ID[] arIndxIdToAdd = new INDEX_ID[] {
+        //        INDEX_ID.DENY_COMP_CALCULATED
+        //        , INDEX_ID.DENY_COMP_VISIBLED
+        //    };
+        //    bool[] arChecked = new bool[arIndxIdToAdd.Length];
 
-            //Заполнить элементы управления с компонентами станции
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows) {
-                id_comp = (Int16)r[@"ID"];
-                //m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
-                strItem = ((string)r[@"DESCRIPTION"]).Trim();
-                // установить признак участия в расчете компонента станции
-                arChecked[0] = m_arListIds[(int)INDEX_ID.DENY_COMP_CALCULATED].IndexOf(id_comp) < 0;
-                // установить признак отображения компонента станции
-                arChecked[1] = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
-                (PanelManagement as PanelManagementTaskTepValues).AddComponent(id_comp
-                    , strItem
-                    , arIndxIdToAdd
-                    , arChecked);
+        //    //Заполнить элементы управления с компонентами станции
+        //    foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows) {
+        //        id_comp = (Int16)r[@"ID"];
+        //        //m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
+        //        strItem = ((string)r[@"DESCRIPTION"]).Trim();
+        //        // установить признак участия в расчете компонента станции
+        //        arChecked[0] = int.TryParse(m_dictProfile.GetAttribute(Session.CurrentIdPeriod, id_comp, HTepUsers.ID_ALLOWED.ENABLED_ITEM), out iChecked) == true ?
+        //            iChecked == 1
+        //                : true;
+        //        // установить признак отображения компонента станции
+        //        iChecked = -1;
+        //        arChecked[0] = int.TryParse(m_dictProfile.GetAttribute(Session.CurrentIdPeriod, id_comp, HTepUsers.ID_ALLOWED.VISIBLED_ITEM), out iChecked) == true ?
+        //            iChecked == 1
+        //                : true;
+        //        (PanelManagement as PanelManagementTaskTepValues).AddComponent(id_comp
+        //            , strItem
+        //            , arIndxIdToAdd
+        //            , arChecked);
 
-                m_dgvValues.AddColumn(id_comp, strItem, arChecked[1]);
-            }
+        //        m_dgvValues.AddColumn(id_comp, strItem, arChecked[1]);
+        //    }
 
-            m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-        }
+        //    m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+        //}
 
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
@@ -141,11 +147,7 @@ namespace PluginTaskTepMain
         {
             base.clear(bClose);
 
-            if (bClose == true)
-            {
-                (PanelManagement as PanelManagementTaskTepValues).Clear();
-            } else
-                ;
+            //!!! PanelManagement.Clear - вызывается в базовом классе
         }
 
         public override bool Activate(bool activate)
@@ -389,13 +391,13 @@ namespace PluginTaskTepMain
         /// </summary>
         protected override void panelManagement_PeriodChanged()
         {
-            base.panelManagement_PeriodChanged();
-
             //??? проверить сохранены ли значения
             m_dgvValues.ClearRows();
 
             //Очистить списки - элементы интерфейса
             (PanelManagement as PanelManagementTaskTepValues).Clear(new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED });
+
+            base.panelManagement_PeriodChanged();
         }
         /// <summary>
         /// Обработчик события - добавить NAlg-параметр
@@ -408,7 +410,7 @@ namespace PluginTaskTepMain
             (PanelManagement as PanelManagementTaskTepValues).AddNAlgParameter(obj, new INDEX_ID[] { INDEX_ID.DENY_PARAMETER_CALCULATED, INDEX_ID.DENY_PARAMETER_VISIBLED });
 
             // добавить свойства для строки таблицы со значениями
-            m_dgvValues.AddRow(new DataGridViewValues.NALG_PROPERTY(obj));
+            m_dgvValues.AddNAlg(obj);
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
@@ -603,8 +605,12 @@ namespace PluginTaskTepMain
             /// </summary>
             private void InitializeComponents()
             {
-                AddColumn(-2, string.Empty, false);
-                AddColumn(-1, @"Размерность", true);
+                //AddColumn(-2, string.Empty, false);
+                AddColumn(
+                    new PUT_PARAMETER (-1, -1
+                        , new TECComponent() // @"Размерность"
+                        , false, false)
+                    , ModeAddColumn.Service | ModeAddColumn.Visibled);
             }
 
             public override void ClearColumns()
@@ -636,7 +642,7 @@ namespace PluginTaskTepMain
             /// <param name="id_comp">Идентификатор компонента ТЭЦ</param>
             /// <param name="text">Текст для заголовка столбца</param>
             /// <param name="bVisibled">Признак участия в расчете/отображения</param>
-            public override void AddColumn(int id_comp, string text, bool bVisibled)
+            protected override void AddColumn(PUT_PARAMETER pPar, ModeAddColumn mode)
             {
                 int indxCol = -1; // индекс столбца при вставке
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
@@ -648,16 +654,14 @@ namespace PluginTaskTepMain
                     // столбец для станции - всегда крайний
                     foreach (HDataGridViewColumn col in Columns)
                         if ((col.m_iIdComp > 0)
-                            && (col.m_iIdComp < 1000))
-                        {
+                            && (col.m_iIdComp < 1000)) {
                             indxCol = Columns.IndexOf(col);
 
                             break;
-                        }
-                        else
+                        } else
                             ;
 
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp, m_bCalcDeny = false };
+                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = pPar.IdComponent, m_bCalcDeny = false };
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
 
@@ -665,9 +669,9 @@ namespace PluginTaskTepMain
                         ; // оставить значения по умолчанию
                     else
                     {// для добавлямых столбцов
-                        if (id_comp < 0)
+                        if ((mode & ModeAddColumn.Service) == ModeAddColumn.Service)
                         {// для служебных столбцов
-                            if (bVisibled == true)
+                            if ((mode & ModeAddColumn.Visibled) == ModeAddColumn.Visibled)
                             {// только для столбца с [SYMBOL]
                                 alignText = DataGridViewContentAlignment.MiddleLeft;
                                 autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
@@ -682,19 +686,19 @@ namespace PluginTaskTepMain
                             ;
                     }
 
-                    column.HeaderText = text;
+                    column.HeaderText = pPar.NameShrComponent;
                     column.DefaultCellStyle.Alignment = alignText;
                     column.AutoSizeMode = autoSzColMode;
-                    column.Visible = bVisibled;
+                    column.Visible = (mode & ModeAddColumn.Visibled) == ModeAddColumn.Visibled;
 
                     if (!(indxCol < 0))
                         Columns.Insert(indxCol, column as DataGridViewTextBoxColumn);
                     else
                         Columns.Add(column as DataGridViewTextBoxColumn);
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"DataGridViewTEPValues::AddColumn (id_comp=" + id_comp + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e
+                        , string.Format(@"DataGridViewTEPValues::AddColumn (id_comp={0}) - ...", pPar.IdComponent)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
@@ -705,18 +709,22 @@ namespace PluginTaskTepMain
             /// <param name="headerText">Текст заголовка строки</param>
             /// <param name="toolTipText">Текст подсказки для заголовка строки</param>
             /// <param name="bVisibled">Признак отображения строки</param>
-            public override int AddRow(NALG_PROPERTY nAlgProp)
+            public int AddRow(NALG_PROPERTY nAlgProp)
             {
                 int iRes = -1;
 
-                iRes = base.AddRow(nAlgProp);
+                AddNAlg(nAlgProp);
+
+                iRes = AddRow(nAlgProp);
 
                 // установить значение для заголовка
-                Rows[iRes].HeaderCell.Value = nAlgProp.m_strItem
+                Rows[iRes].HeaderCell.Value = nAlgProp.m_nAlg;
                     //+ @"[" + rowProp.m_strMeasure + @"]"
                     ;
                 // установить значение для всплывающей подсказки
                 Rows[iRes].HeaderCell.ToolTipText = nAlgProp.m_strDescription;
+
+                Rows[iRes].Cells[0].Value = string.Format(@"{0},[{1}]", nAlgProp.m_strSymbol, nAlgProp.m_strMeausure);
 
                 return iRes;
             }
@@ -1066,7 +1074,7 @@ namespace PluginTaskTepMain
             {
                 string strValue = string.Empty;
                 double dblValue = double.NaN;
-                int id_alg = (int)Rows[ev.RowIndex].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
+                int id_alg = (int)Rows[ev.RowIndex].Tag; // Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
 
                 try
                 {

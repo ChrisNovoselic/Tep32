@@ -675,8 +675,8 @@ namespace PluginTaskBalTeplo
         //    strQuery += _Session.m_Id;
         //    strQuery += @"," + (Int32)IdTask;
         //    strQuery += @"," + HTepUsers.Id;
-        //    strQuery += @"," + (int)_Session.m_currIdPeriod;
-        //    strQuery += @"," + (int)_Session.m_currIdTimezone;
+        //    strQuery += @"," + (int)_Session.CurrentIdPeriod;
+        //    strQuery += @"," + (int)_Session.CurrentIdTimezone;
         //    strQuery += @",'" + _Session.m_rangeDatetime.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture)  // @"yyyyMMdd HH:mm:ss"
         //    strQuery += @",'" + _Session.m_rangeDatetime.End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture) ; // @"yyyyMMdd HH:mm:ss"
 

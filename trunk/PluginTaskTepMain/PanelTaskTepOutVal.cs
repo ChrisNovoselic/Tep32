@@ -31,12 +31,12 @@ namespace PluginTaskTepMain
         {
         }
 
-        protected override void initialize()
-        {
-            base.initialize();
+        //protected override void initialize()
+        //{
+        //    base.initialize();
 
-            //eventAddPutParameter += new Action<PUT_PARAMETER> ((PanelManagement as PanelManagementTaskTepValues).AddParameter);
-        }
+        //    //eventAddPutParameter += new Action<PUT_PARAMETER> ((PanelManagement as PanelManagementTaskTepValues).AddParameter);
+        //}
 
         public override bool Activate(bool activate)
         {
@@ -79,7 +79,7 @@ namespace PluginTaskTepMain
             //Запрос для получения ранее учтенных (сохраненных) данных
             m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] =
                 //HandlerDb.GetValuesVar(Type
-                //    , Session.m_currIdPeriod
+                //    , Session.CurrentIdPeriod
                 //    , CountBasePeriod
                 //    , getDateTimeRangeValuesVar ()
                 //    , out err)
@@ -197,7 +197,7 @@ namespace PluginTaskTepMain
             {
                 Control ctrl = find(INDEX_ID.DENY_PARAMETER_CALCULATED);
 
-                (ctrl as TreeViewTaskTepCalcParameters).AddItem(putPar.m_idNAlg, putPar.m_idComp, putPar.m_idPut, putPar.m_strNameShr, putPar.m_bEnabled);
+                (ctrl as TreeViewTaskTepCalcParameters).AddItem(putPar.m_idNAlg, putPar.IdComponent, putPar.m_idPut, putPar.NameShrComponent, putPar.m_bEnabled);
             }
             /// <summary>
             /// Класс для размещения параметров расчета с учетом их иерархической структуры

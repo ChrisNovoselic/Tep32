@@ -20,24 +20,28 @@ namespace TepCommon
             protected class DictNAlgProperty : Dictionary <int, NALG_PROPERTY>
             {
             }
-
             /// <summary>
             /// Структура для описания добавляемых строк
             /// </summary>
             public class NALG_PROPERTY : NALG_PARAMETER
             {
+                //private const string NALG_NAMESHR_FORMAT = @"{0} ({1})";
+
                 public NALG_PROPERTY(NALG_PARAMETER nAlgPar)
-                    : base(nAlgPar.m_idNAlg
+                    : base(nAlgPar.m_idNAlg, nAlgPar.m_nAlg
                           , -1 //???
                           , -1 //???
                           , nAlgPar.m_strNameShr
                           , nAlgPar.m_strDescription
+                          , nAlgPar.m_sAverage
+                          , nAlgPar.m_iIdMeasure
                           , nAlgPar.m_strMeausure
                           , nAlgPar.m_strSymbol
                           , nAlgPar.m_bEnabled, nAlgPar.m_bVisibled
                           , nAlgPar.m_iRatio, nAlgPar.m_iRound
                     )
                 {
+                    //m_strItem = string.Format(NALG_NAMESHR_FORMAT, m_nAlg, m_strNameShr);
                 }
                 /// <summary>
                 /// Структура с дополнительными свойствами ячейки отображения
@@ -68,10 +72,7 @@ namespace TepCommon
                     public bool IsNaN { get { return m_IdPut < 0; } }
                 }
 
-                ///// <summary>
-                ///// Признак отображения строки
-                ///// </summary>
-                //public bool m_bVisibled;
+                //public string m_strItem;
 
                 public HDataGridViewCell[] m_arPropertiesCells;
 
@@ -104,7 +105,6 @@ namespace TepCommon
             /// Словарь со значенями коэффициентов при масштабировании физических величин (микро, милли, кило, Мега)
             /// </summary>
             protected Dictionary<int, RATIO> m_dictRatio;
-
             /// <summary>
             /// Установить значения для яччеек представления со значениями коэффициентов при масштабировании физических величин
             /// </summary>
@@ -123,7 +123,7 @@ namespace TepCommon
                     });
             }
 
-            private void addNAlg(NALG_PROPERTY nAlg)
+            public void AddNAlg(NALG_PARAMETER nAlg)
             {
                 if (m_dictNAlgProperties == null)
                     m_dictNAlgProperties = new Dictionary<int, NALG_PROPERTY>();
@@ -131,51 +131,14 @@ namespace TepCommon
                     ;
 
                 if (m_dictNAlgProperties.ContainsKey(nAlg.m_idNAlg) == false)
-                    m_dictNAlgProperties.Add(nAlg.m_idNAlg, nAlg);
+                    m_dictNAlgProperties.Add(nAlg.m_idNAlg, new NALG_PROPERTY(nAlg));
                 else
                     ;
             }
 
-            public void AddNAlg(NALG_PROPERTY nAlg)
+            protected void addPut(PUT_PARAMETER pPar)
             {
-                addNAlg(nAlg);
             }
-
-            /// <summary>
-            /// Добавить строку в таблицу (режим NALG)
-            /// </summary>
-            public virtual int AddRow(NALG_PROPERTY nAlg)
-            {
-                int iRes = -1;
-
-                addNAlg(nAlg);
-
-                // создать строку, добавить строку
-                iRes = Rows.Add(new DataGridViewRow());
-                //// установить значения в ячейках для служебной информации
-                //Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
-                //Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
-                Rows[iRes].Tag = nAlg.m_idNAlg;
-                // инициализировать значения в служебных ячейках
-                m_dictNAlgProperties[nAlg.m_idNAlg].InitCells(Columns.Count);
-
-                return iRes;
-            }
-            /// <summary>
-            /// Добавить строку в таблицу (режим DATETIME)
-            /// </summary>
-            public virtual int AddRow(DateTime dtRow)
-            {
-                int iRes = -1;
-
-                // добавить строку
-                iRes = Rows.Add(new DataGridViewRow());
-
-                Rows[iRes].Tag = dtRow;
-
-                return iRes;
-            }
-
             /// <summary>
             /// Удалить все строки представления
             /// </summary>
@@ -186,7 +149,6 @@ namespace TepCommon
                 else
                     ;
             }
-
             /// <summary>
             /// Очитсить значения в ячейках представления
             /// </summary>

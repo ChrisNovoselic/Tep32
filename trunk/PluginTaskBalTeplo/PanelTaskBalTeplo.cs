@@ -344,20 +344,16 @@ namespace PluginTaskBalTeplo
                 PerformLayout();
             }
 
-            /// <summary>
-            /// Обработчик события - изменение дата/время окончания периода
-            /// </summary>
-            /// <param name="obj">Составной объект - календарь</param>
-            /// <param name="ev">Аргумент события</param>
-            protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
-            {
-                HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
-
-                if (!(DateTimeRangeValue_Changed == null))
-                    DateTimeRangeValue_Changed(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
-                else
-                    ;
-            }
+            ///// <summary>
+            ///// Обработчик события - изменение дата/время окончания периода
+            ///// </summary>
+            ///// <param name="obj">Составной объект - календарь</param>
+            ///// <param name="ev">Аргумент события</param>
+            //protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
+            //{
+            //    HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
+            //    DateTimeRangeValue_Changed?.Invoke(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
+            //}
 
             /// <summary>
             /// Обработчик события - изменение значения из списка признаков отображения/снятия_с_отображения
@@ -929,12 +925,12 @@ namespace PluginTaskBalTeplo
                     dgvParam.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvParam.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
                     //Заполнить элемент управления с часовыми поясами
-                    idProfileTimezone = (ID_TIMEZONE)int.Parse(m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.TIMEZONE));
+                    idProfileTimezone = (ID_TIMEZONE)int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.TIMEZONE));
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], idProfileTimezone);
                     //Заполнить элемент управления с периодами расчета
-                    idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.HTepProfilesXml.INDEX_PROFILE.PERIOD)); //??? требуется прочитать из [profile]
+                    idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD)); //??? требуется прочитать из [profile]
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME], idProfilePeriod);
-                    Session.SetCurrentPeriod(idProfilePeriod);
+                    Session.CurrentIdPeriod = idProfilePeriod;
                     PanelManagement.SetModeDatetimeRange();
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
@@ -970,7 +966,7 @@ namespace PluginTaskBalTeplo
 
             foreach (string context in contexts)
             {
-                value = m_dictProfile.GetAttribute(tag, context, HTepUsers.HTepProfilesXml.INDEX_PROFILE.INPUT_PARAM);
+                value = m_dictProfile.GetAttribute(tag, context, HTepUsers.ID_ALLOWED.INPUT_PARAM);
 
                 ids.Clear();
                 value.Trim().Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Cast<string>().ToList().ForEach(val => { ids.Add(HMath.doubleParse(val)); });

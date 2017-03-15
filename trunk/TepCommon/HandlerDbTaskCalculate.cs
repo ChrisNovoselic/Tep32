@@ -108,17 +108,40 @@ namespace TepCommon
             /// <summary>
             /// Текущий выбранный идентификатор периода расчета
             /// </summary>
-            public ID_PERIOD m_currIdPeriod;
-            /// <summary>
+            private ID_PERIOD _currentIdPeriod;
+
+            public ID_PERIOD CurrentIdPeriod
+            {
+                get { return _currentIdPeriod; }
+
+                set { if (!(_currentIdPeriod == value)) { _currentIdPeriod = value; } else; }
+            }            /// <summary>
             /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
             /// </summary>
-            public ID_PERIOD ActualIdPeriod { get { return m_ViewValues == ID_VIEW_VALUES.SOURCE ? ID_PERIOD.DAY : m_currIdPeriod; } }
+            public ID_PERIOD ActualIdPeriod { get { return m_ViewValues == ID_VIEW_VALUES.SOURCE ? ID_PERIOD.DAY : _currentIdPeriod; } }
             /// <summary>
             /// Идентификатор текущий выбранного часового пояса
             /// </summary>
-            public ID_TIMEZONE m_currIdTimezone;
+            private ID_TIMEZONE _currentIdTimezone;
 
-            public int m_curOffsetUTC;
+            public ID_TIMEZONE CurrentIdTimezone
+            {
+                get { return _currentIdTimezone; }
+
+                set
+                {
+                    if (!(_currentIdTimezone == value)) {
+                        _currentIdTimezone = value;
+
+                        m_curOffsetUTC = value == ID_TIMEZONE.UNKNOWN ?
+                            TimeSpan.MinValue
+                                : getOffsetUTC(_currentIdTimezone);
+                    } else
+                        ;
+                }
+            }
+
+            public TimeSpan m_curOffsetUTC;
 
             public DateTimeRange m_rangeDatetime;
             /// <summary>
@@ -148,21 +171,32 @@ namespace TepCommon
                 }
             }
 
-            public void Initialize(DataRow r)
+            public void Initialize(DataRow r
+                //, TimeSpanDelegateIdTimezoneFunc getOffsetUTC
+                )
             {
                 Initialize((long)r[@"ID_CALCULATE"]
                     , (ID_PERIOD)r[@"ID_TIME"]
                     , (ID_TIMEZONE)r[@"ID_TIMEZONE"]
-                    , (int)r[@"OFFSET_UTC"]
-                    , new DateTimeRange((DateTime)r[@"DATETIME_BEGIN"], (DateTime)r[@"DATETIME_END"]));
+                    //, (int)r[@"OFFSET_UTC"]
+                    , new DateTimeRange((DateTime)r[@"DATETIME_BEGIN"], (DateTime)r[@"DATETIME_END"])
+                    //, getOffsetUTC
+                );
             }
 
-            public void Initialize(long id, ID_PERIOD idPeriod, ID_TIMEZONE idTimezone, int curOffsetUTC, DateTimeRange rangeDatetime)
+            private TimeSpanDelegateIdTimezoneFunc getOffsetUTC;
+
+            public void Initialize(long id
+                , ID_PERIOD idPeriod
+                , ID_TIMEZONE idTimezone
+                , DateTimeRange rangeDatetime
+                //, TimeSpanDelegateIdTimezoneFunc getOffsetUTC
+                )
             {
                 m_Id = id;
-                m_currIdPeriod = idPeriod;
-                m_currIdTimezone = idTimezone;
-                m_curOffsetUTC = curOffsetUTC;
+                CurrentIdPeriod = idPeriod;
+                _currentIdTimezone = idTimezone;
+                m_curOffsetUTC = getOffsetUTC(_currentIdTimezone);
                 m_rangeDatetime = rangeDatetime;
             }
 
@@ -180,25 +214,39 @@ namespace TepCommon
             {
                 m_rangeDatetime.Set(dtBegin, dtEnd);
             }
-            /// <summary>
-            /// Установить новое значение для текущего периода
-            /// </summary>
-            /// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны двты/времени</param>
-            public void SetCurrentTimeZone(ID_TIMEZONE idTimazone, int offsetUTC)
-            {
-                m_currIdTimezone = idTimazone;
-                m_curOffsetUTC = offsetUTC;
-            }
+            ///// <summary>
+            ///// Установить новое значение для текущего периода
+            ///// </summary>
+            ///// <param name="cbxTimezone">Объект, содержащий значение выбранной пользователем зоны двты/времени</param>
+            //public void SetCurrentTimeZone(ID_TIMEZONE idTimazone, int offsetUTC)
+            //{
+            //    m_currIdTimezone = idTimazone;
+            //    m_curOffsetUTC = offsetUTC;
+            //}
 
-            public void SetCurrentPeriod(ID_PERIOD idPeriod)
-            {
-                m_currIdPeriod = idPeriod;
-            }
+            //public void SetCurrentPeriod(ID_PERIOD idPeriod)
+            //{
+            //    m_currIdPeriod = idPeriod;
+            //}
 
             //public void SetIdFPanel(int idFPanel)
             //{
             //    _idFPanel = idFPanel;
             //}
+
+            public SESSION(TimeSpanDelegateIdTimezoneFunc getOffsetUTC)
+                : base ()
+            {
+                m_Id = -1;
+                m_IdFpanel = -1;
+                m_ViewValues = ID_VIEW_VALUES.UNKNOWN;
+                CurrentIdPeriod = ID_PERIOD.UNKNOWN;
+                CurrentIdTimezone = ID_TIMEZONE.UNKNOWN;
+                //, m_curOffsetUTC = TimeSpan.MinValue
+                m_rangeDatetime = new DateTimeRange();
+
+                this.getOffsetUTC = getOffsetUTC;
+            }
         }
 
         public SESSION _Session;
@@ -206,14 +254,7 @@ namespace TepCommon
         public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN/*, int idFPanel = -1*/)
             : base()
         {
-            _Session = new SESSION() { m_Id = -1
-                , m_IdFpanel = -1
-                , m_ViewValues = ID_VIEW_VALUES.UNKNOWN
-                , m_currIdPeriod = ID_PERIOD.UNKNOWN
-                , m_currIdTimezone = ID_TIMEZONE.UNKNOWN
-                , m_curOffsetUTC = int.MinValue
-                , m_rangeDatetime = new DateTimeRange()
-            };
+            _Session = new SESSION(getOffsetUTC);
 
             IdTask = idTask;
         }
@@ -347,8 +388,8 @@ namespace TepCommon
                 idFPanel
                 ;
             strQuery += @"," + HTepUsers.Id;
-            strQuery += @"," + (int)_Session.m_currIdPeriod;
-            strQuery += @"," + (int)_Session.m_currIdTimezone;
+            strQuery += @"," + (int)_Session.CurrentIdPeriod;
+            strQuery += @"," + (int)_Session.CurrentIdTimezone;
             strQuery += @",'" + _Session.m_rangeDatetime.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture)  // @"yyyyMMdd HH:mm:ss"
             strQuery += @",'" + _Session.m_rangeDatetime.End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture) ; // @"yyyyMMdd HH:mm:ss"
 
@@ -591,12 +632,14 @@ namespace TepCommon
         private string querySession
         {
             get {
-                return @"SELECT s.*, tz.[OFFSET_UTC] FROM [" + s_dictDbTables[ID_DBTABLE.SESSION].m_name + @"] as s"
-                    + @" JOIN [timezones] tz ON s.ID_TIMEZONE = tz.ID"
+                return string.Format(@"SELECT s.*, tz.[OFFSET_UTC] FROM [{0}] as s"
+                    + @" JOIN [{1}] tz ON s.ID_TIMEZONE = tz.ID"
                     +
                         //@" WHERE [ID_USER]=" + HTepUsers.Id
-                        @" WHERE " + whereQuerySession;
-                        ;
+                        @" WHERE {2}"
+                    , s_dictDbTables[ID_DBTABLE.SESSION].m_name
+                    , s_dictDbTables[ID_DBTABLE.TIMEZONE].m_name
+                    , whereQuerySession);
             }
         }
         /// <summary>
@@ -753,8 +796,8 @@ namespace TepCommon
             int i = -1;
             bool bEndMonthBoudary = false;
             // привести дату/время к UTC
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMinutes(-1 * _Session.m_curOffsetUTC)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC);
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
+                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes);
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
@@ -1012,6 +1055,36 @@ namespace TepCommon
                 UnRegisterDbConnection();
             else
                 ;
+        }
+
+        public delegate TimeSpan TimeSpanDelegateIdTimezoneFunc(ID_TIMEZONE id);
+
+        private TimeSpan getOffsetUTC(ID_TIMEZONE id)
+        {
+            int err = -1;
+
+            TimeSpan tsRes = TimeSpan.Zero;
+
+            int iRegDbConn = -1;
+
+            RegisterDbConnection(out iRegDbConn);
+
+            if (!(iRegDbConn < 0)) {
+                tsRes = TimeSpan.FromMinutes(
+                    (int)DbTSQLInterface.Select(ref _dbConnection
+                        , string.Format(@"SELECT [OFFSET_UTC] FROM [{0}] WHERE [ID]={1}", s_dictDbTables[ID_DBTABLE.TIMEZONE].m_name, (int)id)
+                        , null, null, out err)
+                        .Rows[0][0]
+                );
+            } else
+                ;
+
+            if (!(iRegDbConn > 0))
+                UnRegisterDbConnection();
+            else
+                ;
+
+            return tsRes;
         }
         /// <summary>
         /// Подготовить таблицы для проведения расчета

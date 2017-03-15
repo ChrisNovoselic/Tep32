@@ -138,17 +138,17 @@ namespace PluginTaskTepMain
                 try {
                     //m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
 
-                    initialize();
+                    //initialize();
 
                     //Заполнить элемент управления с периодами расчета
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
-                        , ID_PERIOD.HOUR); //??? активный период требуется прочитать из [profile]
-                    Session.SetCurrentPeriod(PanelManagement.IdPeriod);
+                        , ID_PERIOD.DAY); //??? активный период требуется прочитать из [profile]
+                    Session.CurrentIdPeriod = PanelManagement.IdPeriod;
                     //Заполнить элемент управления с часовыми поясами
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , ID_TIMEZONE.MSK); //??? активный пояс требуется прочитать из [profile]
-                    Session.SetCurrentTimeZone(PanelManagement.IdTimezone
-                        , (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)PanelManagement.IdTimezone)[0][@"OFFSET_UTC"]);
+                    Session.CurrentIdTimezone = PanelManagement.IdTimezone;
+                        //, (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)PanelManagement.IdTimezone)[0][@"OFFSET_UTC"]);
 
                     //// отобразить значения
                     //updateDataValues();
@@ -159,7 +159,7 @@ namespace PluginTaskTepMain
                 Logging.Logg().Error(MethodBase.GetCurrentMethod(), errMsg, Logging.INDEX_MESSAGE.NOT_SET);
         }
 
-        protected abstract void initialize();
+        //protected abstract void initialize();
         /// <summary>
         /// Установить признак активности панель при выборе ее пользователем
         /// </summary>
@@ -336,7 +336,17 @@ namespace PluginTaskTepMain
                 , Color.White //USER
             };
 
-            public abstract void AddColumn(int id_comp, string text, bool bVisibled);
+            [Flags]
+            protected enum ModeAddColumn
+            {
+                NotSet
+                , Insert = 1 // вставляемый (ТГ, в ~ от идентификатора)
+                , Service = 2 // сервисный/добавялемый
+                , Begined = 3 // всегда 1-ый (за сервисными)
+                , Visibled = 4 // отображаемый
+            }
+
+            protected abstract void AddColumn(PUT_PARAMETER pPar, ModeAddColumn mode);
 
             //public abstract void AddRow(NALG_PARAMETER nAlgParameter);
 

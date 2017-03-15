@@ -102,8 +102,8 @@ namespace PluginTaskAutobook
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(1).AddMinutes(-1 * _Session.m_curOffsetUTC)
-                , dtEnd = _Session.m_rangeDatetime.End.AddDays(1).AddMinutes(-1 * _Session.m_curOffsetUTC);
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(1).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
+                , dtEnd = _Session.m_rangeDatetime.End.AddDays(1).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes);
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
@@ -160,8 +160,8 @@ namespace PluginTaskAutobook
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC).AddDays(0);
+            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
+                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes).AddDays(0);
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
@@ -248,7 +248,7 @@ namespace PluginTaskAutobook
                                 + arQueryRanges[i].End.ToString(@"yyyyMM") + @"] v "
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)idPeriod + " AND [ID_SOURCE] > 0 "
-                            + @"AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone
+                            + @"AND ID_TIMEZONE = " + (int)_Session.CurrentIdTimezone
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
@@ -318,7 +318,7 @@ namespace PluginTaskAutobook
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.AddDays(-1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0"
-                    + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
+                    + @" AND ID_TIMEZONE = " + (int)_Session.CurrentIdTimezone;
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";
@@ -346,8 +346,8 @@ namespace PluginTaskAutobook
                     + @" FROM [dbo].[outval_" + dtRange[i].End.ToString(@"yyyyMM") + @"]"
                     + @" WHERE [DATE_TIME] > '" + dtRange[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + dtRange[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
-                    + @" AND [ID_TIME] = " + (int)_Session.m_currIdPeriod
+                    + @" AND [ID_TIMEZONE] = " + (int)_Session.CurrentIdTimezone
+                    + @" AND [ID_TIME] = " + (int)_Session.CurrentIdPeriod
                     + @" AND [QUALITY] > 0";
 
                 if (bLastItem == false)
@@ -412,7 +412,7 @@ namespace PluginTaskAutobook
                         + @" ON v.ID_PUT = p.ID"
                         + @" WHERE  ID_TASK = " + (int)IdTask
                         + @" AND v.ID_TIME = 24"
-                        + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
+                        + @" AND ID_TIMEZONE = " + (int)_Session.CurrentIdTimezone;
             }
 
             return Select(strQuery, out err);
@@ -621,7 +621,7 @@ namespace PluginTaskAutobook
                     + @" AND [DATE_TIME] > '" + arQueryRanges[i].Begin.AddDays(-1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND [DATE_TIME] <= '" + arQueryRanges[i].End.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
                     + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0"
-                    + @" AND ID_TIMEZONE = " + (int)_Session.m_currIdTimezone;
+                    + @" AND ID_TIMEZONE = " + (int)_Session.CurrentIdTimezone;
 
                 if (bLastItem == false)
                     strQuery += @" UNION ALL ";
@@ -689,7 +689,7 @@ namespace PluginTaskAutobook
                         , 0.ToString()
                         , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , _Session.m_currIdTimezone //??? точно ли значение идентификатора
+                        , _Session.CurrentIdTimezone //??? точно ли значение идентификатора
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]
                         , DateTime.Now
@@ -730,7 +730,7 @@ namespace PluginTaskAutobook
                         , 0.ToString()
                         , dtRes.ToString(CultureInfo.InvariantCulture)
                         , ID_PERIOD.DAY
-                        , _Session.m_currIdTimezone
+                        , _Session.CurrentIdTimezone
                         , 1.ToString()
                         , tableRes.Rows[i]["VALUE"]
                         , DateTime.Now.ToString(CultureInfo.InvariantCulture)
@@ -813,7 +813,7 @@ namespace PluginTaskAutobook
                             + @"ON v.ID_PUT = p.ID "
                             + @"WHERE  ID_TASK = " + (int)IdTask + " "
                             + @"AND v.[ID_TIME] = " + (int)idPeriod
-                            + " AND [ID_TIMEZONE] = " + (int)_Session.m_currIdTimezone
+                            + " AND [ID_TIMEZONE] = " + (int)_Session.CurrentIdTimezone
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
