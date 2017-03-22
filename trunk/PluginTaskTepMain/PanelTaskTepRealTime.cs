@@ -132,7 +132,7 @@ namespace PluginTaskTepMain
             {
             }            
 
-            public override void ShowValues(DataTable values, DataTable parameter/*, bool bUseRatio = true*/)
+            public override void ShowValues(DataTable values/*, DataTable parameter, bool bUseRatio = true*/)
             {
             }
 
@@ -148,7 +148,12 @@ namespace PluginTaskTepMain
             {
             }
 
-            protected override void AddColumn(PUT_PARAMETER pPar, ModeAddColumn mode)
+            public override void BuildStructure()
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override void addColumn(TECComponent comp, ModeAddColumn mode)
             {
                 throw new NotImplementedException();
             }
@@ -204,7 +209,12 @@ namespace PluginTaskTepMain
             /// </summary>
             /// <param name="obj">Объект инициировавший событие</param>
             /// <param name="ev">Аргумент события</param>
-            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
+            protected override void onItemCheck(object obj, EventArgs ev)
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override void activateControlChecked_onChanged(bool bActivate)
             {
                 throw new NotImplementedException();
             }

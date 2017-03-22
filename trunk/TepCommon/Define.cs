@@ -11,7 +11,7 @@ namespace TepCommon
     //[Flags]
     public enum ID_DBTABLE : short { UNKNOWN = -1
         , TIME, TIMEZONE
-        , COMP, COMP_LIST
+        , COMP, COMP_LIST, COMP_VALUES
         , MODE_DEV
         , RATIO
         , MEASURE
@@ -52,7 +52,7 @@ namespace TepCommon
     public enum ID_MODULE : int
     {
         UNKNOWN = 0
-            , ABOUT = 1
+        , ABOUT = 1
     }
     /// <summary>
     /// Типы объектов со значениями параметров для установления соединения с БД
@@ -90,6 +90,14 @@ namespace TepCommon
     {
         UNKNOWN = -1
         , TEC = 1
+        , GTP = 100
         , TG = 1000
+    }
+
+    public enum COMP_PARAMETER
+    {
+        OWNER = 1
+        , OWNER_GTP = 2
+        , OWNER_TG = 3
     }
 }

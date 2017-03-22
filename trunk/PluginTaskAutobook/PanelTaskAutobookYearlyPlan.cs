@@ -193,7 +193,12 @@ namespace PluginTaskAutobook
             /// </summary>
             /// <param name="obj">Объект инициировавший событие</param>
             /// <param name="ev">Аргумент события</param>
-            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
+            protected override void onItemCheck(object obj, EventArgs ev)
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override void activateControlChecked_onChanged(bool bActivate)
             {
                 throw new NotImplementedException();
             }
@@ -401,9 +406,9 @@ namespace PluginTaskAutobook
         ///  одного из основных элементов управления на панели управления 'PanelManagement'
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
+        protected override void panelManagement_EventIndexControlBase_onValueChanged(object obj)
         {
-            base.panelManagement_OnEventIndexControlBaseValueChanged(obj);
+            base.panelManagement_EventIndexControlBase_onValueChanged(obj);
 
             if (obj is Enum)
                 ; // switch ()

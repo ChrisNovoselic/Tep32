@@ -57,7 +57,7 @@ namespace PluginTaskEng6Graf
         /// Обработчик события - изменение значения в одном из базовых активных элементов на панели управления
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
+        protected override void panelManagement_EventIndexControlBase_onValueChanged(object obj)
         {
             throw new NotImplementedException();
         }

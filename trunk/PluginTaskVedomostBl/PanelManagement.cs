@@ -26,7 +26,7 @@ namespace PluginTaskVedomostBl
                 , MENUITEM_UPDATE, MENUITEM_HISTORY
                 , CLBX_COMP_VISIBLED/*, CLBX_COMP_CALCULATED*/
                 , CLBX_GROUPHEADER_VISIBLED
-                , CHKBX_EDIT = 14 /*, TBLP_BLK, TOOLTIP_GRP,
+                , CHKBX_MODE_ENABLE = 14 /*, TBLP_BLK, TOOLTIP_GRP,
                 PICTURE_BOXDGV, PANEL_PICTUREDGV*/
                     , COUNT
             }
@@ -371,7 +371,7 @@ namespace PluginTaskVedomostBl
                     //
                     //Признак Корректировка_включена/корректировка_отключена 
                     ctrl = new CheckBox();
-                    ctrl.Name = INDEX_CONTROL.CHKBX_EDIT.ToString();
+                    ctrl.Name = INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString();
                     ctrl.Text = @"Корректировка значений разрешена";
                     ctrl.Dock = DockStyle.Top;
                     ctrl.Enabled = false;
@@ -691,36 +691,36 @@ namespace PluginTaskVedomostBl
                 return indxRes;
             }
 
-            /// <summary>
-            /// Получение ИД контрола
-            /// </summary>
-            /// <param name="ctrl">контрол</param>
-            /// <returns>индекс</returns>
-            protected INDEX_ID getIndexIdOfControl(Control ctrl)
-            {
-                INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
-                INDEX_ID indxRes = INDEX_ID.UNKNOWN;
+            ///// <summary>
+            ///// Получение ИД контрола
+            ///// </summary>
+            ///// <param name="ctrl">контрол</param>
+            ///// <returns>индекс</returns>
+            //protected INDEX_ID getIndexIdOfControl(Control ctrl)
+            //{
+            //    INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
+            //    INDEX_ID indxRes = INDEX_ID.UNKNOWN;
 
-                try {
-                    //Определить идентификатор
-                    id = getIndexControl(ctrl);
-                    // , соответствующий изменившему состояние элементу 'CheckedListBox'
-                    switch (id) {
-                        case INDEX_CONTROL.CLBX_COMP_VISIBLED:
-                            indxRes = id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_GROUPHEADER_VISIBLED : INDEX_ID.UNKNOWN;
-                            break;
-                        case INDEX_CONTROL.CLBX_GROUPHEADER_VISIBLED:
-                            indxRes = id == INDEX_CONTROL.CLBX_GROUPHEADER_VISIBLED ? INDEX_ID.HGRID_VISIBLED : INDEX_ID.UNKNOWN;
-                            break;
-                        default:
-                            break;
-                    }
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
+            //    try {
+            //        //Определить идентификатор
+            //        id = getIndexControl(ctrl);
+            //        // , соответствующий изменившему состояние элементу 'CheckedListBox'
+            //        switch (id) {
+            //            case INDEX_CONTROL.CLBX_COMP_VISIBLED:
+            //                indxRes = id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_GROUPHEADER_VISIBLED : INDEX_ID.UNKNOWN;
+            //                break;
+            //            case INDEX_CONTROL.CLBX_GROUPHEADER_VISIBLED:
+            //                indxRes = id == INDEX_CONTROL.CLBX_GROUPHEADER_VISIBLED ? INDEX_ID.HGRID_VISIBLED : INDEX_ID.UNKNOWN;
+            //                break;
+            //            default:
+            //                break;
+            //        }
+            //    } catch (Exception e) {
+            //        Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //    }
 
-                return indxRes;
-            }
+            //    return indxRes;
+            //}
 
             /// <summary>
             /// Получение индекса контрола
@@ -785,9 +785,14 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="obj">Объект, инициировавший событие (список)</param>
             /// <param name="ev">Аргумент события</param>
-            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
+            protected override void onItemCheck(object obj, EventArgs ev)
             {
-                itemCheck((int)getIndexIdOfControl(obj as Control), (obj as IControl).SelectedId, ev.NewValue);
+                itemCheck((obj as IControl).SelectedId, ItemCheckedParametersEventArgs.TYPE.VISIBLE, (ev as ItemCheckEventArgs).NewValue);
+            }
+
+            protected override void activateControlChecked_onChanged(bool bActivate)
+            {
+                throw new NotImplementedException();
             }
         }
 

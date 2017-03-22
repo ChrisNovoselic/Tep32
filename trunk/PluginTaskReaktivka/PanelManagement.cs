@@ -285,9 +285,9 @@ namespace PluginTaskReaktivka
             /// </summary>
             /// <param name="obj">Объект, инициировавший событие (список)</param>
             /// <param name="ev">Аргумент события</param>
-            protected override void onItemCheck(object obj, ItemCheckEventArgs ev)
+            protected override void onItemCheck(object obj, EventArgs ev)
             {
-                itemCheck((int)getIndexIdOfControl(obj as Control), (obj as IControl).SelectedId, ev.NewValue);
+                itemCheck((obj as IControl).SelectedId, ItemCheckedParametersEventArgs.TYPE.VISIBLE, (ev as ItemCheckEventArgs).NewValue);
             }
 
             /// <summary>
@@ -335,6 +335,11 @@ namespace PluginTaskReaktivka
                     throw new Exception(@"PanelTaskReaktivka::getIndexControl () - не найден объект 'CheckedListBox'...");
 
                 return indxRes;
+            }
+
+            protected override void activateControlChecked_onChanged(bool bActivate)
+            {
+                throw new NotImplementedException();
             }
         }
     }

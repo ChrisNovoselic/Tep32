@@ -233,6 +233,11 @@ namespace PluginTaskVedomostBl
                 AddColumns(-1, "Date", "Дата", true);
             }
 
+
+            public override void BuildStructure()
+            {
+            }
+
             /// <summary>
             /// Класс для описания дополнительных свойств столбца в отображении (таблице)
             /// </summary>
@@ -419,85 +424,6 @@ namespace PluginTaskVedomostBl
                 }
             }
 
-            ///// <summary>
-            ///// Удаление набора строк
-            ///// </summary>
-            //public void ClearRows()
-            //{
-            //    if (Rows.Count > 0)
-            //        Rows.Clear();
-            //}
-
-            ///// <summary>
-            ///// Очищение отображения от значений
-            ///// </summary>
-            //public void ClearValues()
-            //{
-            //    //CellValueChanged -= onCellValueChanged;
-
-            //    foreach (DataGridViewRow r in Rows)
-            //        foreach (DataGridViewCell c in r.Cells)
-            //            if (r.Cells.IndexOf(c) > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) // нельзя удалять идентификатор параметра
-            //                c.Value = string.Empty;
-
-            //    //??? если установить 'true' - редактирование невозможно
-            //    //ReadOnly = false;
-
-            //    //CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
-            //}
-
-            ///// <summary>
-            ///// Добавить строку в таблицу
-            ///// </summary>
-            ///// <param name="rowProp">структура строк</param>
-            //public void AddRow(ROW_PROPERTY rowProp)
-            //{
-            //    int i = -1;
-            //    // создать строку
-            //    DataGridViewRow row = new DataGridViewRow();
-            //    if (m_dictPropertiesRows == null)
-            //        m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-
-            //    if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
-            //        m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
-            //    // добавить строку
-            //    i = Rows.Add(row);
-            //    // установить значения в ячейках для служебной информации
-            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
-            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
-            //    // инициализировать значения в служебных ячейках
-            //    m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
-            //}
-
-            ///// <summary>
-            ///// Добавить строку в таблицу
-            ///// </summary>
-            ///// <param name="rowProp">структура строк</param>
-            ///// <param name="DaysInMonth">кол-во дней в месяце</param>
-            //public void AddRow(ROW_PROPERTY rowProp, int DaysInMonth)
-            //{
-            //    int i = -1;
-            //    // создать строку
-            //    DataGridViewRow row = new DataGridViewRow();
-            //    if (m_dictPropertiesRows == null)
-            //        m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-
-            //    if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
-            //        m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
-
-            //    // добавить строку
-            //    i = Rows.Add(row);
-            //    // установить значения в ячейках для служебной информации
-            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
-            //    // инициализировать значения в служебных ячейках
-            //    //m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
-
-            //    // блокировка для редактирования ячеек в крайней строке
-            //    if (i == DaysInMonth)
-            //        foreach (HDataGridViewColumn col in Columns)
-            //            Rows[i].Cells[col.Index].ReadOnly = true;
-            //}
-
             /// <summary>
             /// Установка возможности редактирования столбцов
             /// </summary>
@@ -512,24 +438,24 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// Подготовка параметров к рисовке хидера
+            /// ??? зачем в аргументе указывать объект Подготовка параметров к рисовке хидера
             /// </summary>
             /// <param name="dgv">активное окно отображения данных</param>
-            public void ConfigureColumns(DataGridView dgv)
+            public void ConfigureColumns()
             {
                 int cntCol = 0;
-                formingTitleLists((int)dgv.Tag);
+                formingTitleLists((int)Tag);
 
-                formRelationsHeading((int)dgv.Tag);
+                formRelationsHeading((int)Tag);
 
-                foreach (DataGridViewColumn col in dgv.Columns)
+                foreach (DataGridViewColumn col in Columns)
                     if (col.Visible == true)
                         cntCol++;
 
-                s_iCountColumn = cntCol * dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width +
-                    dgv.Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width / s_listGroupHeaders.Count;
+                s_iCountColumn = cntCol * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width +
+                    Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width / s_listGroupHeaders.Count;
 
-                dgv.Paint += new PaintEventHandler(dataGridView1_Paint);
+                Paint += new PaintEventHandler(dataGridView1_Paint);
             }
 
             /// <summary>
@@ -592,6 +518,8 @@ namespace PluginTaskVedomostBl
 
                 if (m_arIntTopHeader.ContainsKey(idDgv))
                     m_arIntTopHeader.Remove(idDgv);
+                else
+                    ;
 
                 foreach (var item in m_headerTop[idDgv])
                 {
@@ -599,13 +527,16 @@ namespace PluginTaskVedomostBl
                     foreach (HDataGridViewColumn col in Columns)
                         if (col.Visible == true)
                             if (col.m_topHeader == item)
-                                if (!(item == ""))
+                                if (string.IsNullOrEmpty(item) == false)
                                     untdCol++;
-                                else
-                                {
+                                else {
                                     untdCol = 1;
                                     break;
                                 }
+                            else
+                                ;
+                        else
+                            ;
                     _arrIntTop[_indx] = untdCol;
                     _indx++;
                 }
@@ -635,24 +566,22 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// Скрыть/показать столбцы из списка групп
+            /// ??? зачем в 1-ом аргументе указывать объект Скрыть/показать столбцы из списка групп
             /// </summary>
-            /// <param name="dgvActive">активное окно отображения данных</param>
             /// <param name="listHeaderTop">лист с именами заголовков</param>
             /// <param name="isCheck">проверка чека</param>
-            public void HideColumns(DataGridView dgv, List<string> listHeaderTop, bool isCheck)
+            public void SetHeaderVisibled(List<string> listHeaderTop, bool isCheck)
             {
                 try {
                     foreach (var item in listHeaderTop)
                         foreach (HDataGridViewColumn col in Columns)
                             if (col.m_topHeader == item)
-                                if (isCheck)
-                                    col.Visible = true;
-                                else
-                                    col.Visible = false;
+                                col.Visible = isCheck;
+                            else
+                                ;
                 } catch (Exception) { }
 
-                ConfigureColumns(dgv);
+                ConfigureColumns();
             }
 
             /// <summary>

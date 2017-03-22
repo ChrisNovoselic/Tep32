@@ -62,6 +62,12 @@ namespace PluginTaskAutobook
                 //AddColumn(-1, "Дата", INDEX_SERVICE_COLUMN.DATE.ToString(), true, true);
             }
 
+
+            public override void BuildStructure()
+            {
+                throw new NotImplementedException();
+            }
+
             /// <summary>
             /// Класс для описания дополнительных свойств столбца в отображении (таблице)
             /// </summary>
@@ -175,10 +181,10 @@ namespace PluginTaskAutobook
                             // заполнить ячейки с корректированными значениями
                                 for (int t = 0; t < arRowValues.Count(); t++) {
                                     dblVal = Convert.ToDouble(arRowValues[t]["VALUE"]);
-                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
                                     dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
-                                    row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictNAlgProperties[idAlg].m_iRound, CultureInfo.InvariantCulture);
+                                    row.Cells[col.Index].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
                                 }
                             else
                                 ;
@@ -201,7 +207,7 @@ namespace PluginTaskAutobook
                                     if (row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString() ==
                                         //??? зачем учитывать смещение
                                         Convert.ToDateTime(arRowValues[p]["WR_DATETIME"]).AddMinutes(180 /*m_currentOffSet*/).AddDays(-1).ToShortDateString()) {
-                                        vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                                        vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
                                         dblVal = correctingValues(Math.Pow(10F, -1 * vsRatioValue)
                                             , arRowValues[p]["VALUE"]
@@ -213,8 +219,7 @@ namespace PluginTaskAutobook
 
                                         dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
-                                        row.Cells[col.Index].Value = dblVal.ToString(@"F" + m_dictNAlgProperties[idAlg].m_iRound,
-                                            CultureInfo.InvariantCulture);
+                                        row.Cells[col.Index].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
                                     } else
                                         ;
                             else
@@ -315,7 +320,7 @@ namespace PluginTaskAutobook
                     , increment = 0;
 
                 idAlg = (int)Rows[0].Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
                 planDay = (Convert.ToSingle(value)
                    / DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month));
@@ -326,7 +331,7 @@ namespace PluginTaskAutobook
                     dbValue = increment * Math.Pow(10F, 1 * vsRatioValue);
 
                     Rows[i].Cells["PlanSwen"].Value =
-                        dbValue.ToString(@"F" + m_dictNAlgProperties[idAlg].m_iRound, CultureInfo.InvariantCulture);
+                        dbValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
                 }
                 //Значение для крайней строки - индекс строки
                 indxLastRow = DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month) - 1;
@@ -334,7 +339,7 @@ namespace PluginTaskAutobook
                 dbValue = float.Parse(value) * Math.Pow(10F, -1 * vsRatioValue);
                 //Значение для крайней строки - форматирование значения
                 Rows[indxLastRow].Cells["PlanSwen"].Value =
-                    dbValue.ToString(@"F" + m_dictNAlgProperties[idAlg].m_iRound, CultureInfo.InvariantCulture);
+                    dbValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
             }
 
             /// <summary>
@@ -650,7 +655,7 @@ namespace PluginTaskAutobook
                         if (col.Index > (int)INDEX_COLUMN.GTP36 & col.Index < (int)INDEX_COLUMN.CorGTP36)
                         {
                             idAlg = (int)Rows[0].Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                            vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                            vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
                             if (cols.m_iIdComp == col.m_iIdComp &&
                                 Rows[i].Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value == Rows[e.RowIndex].Cells["Date"].Value)
@@ -716,7 +721,7 @@ namespace PluginTaskAutobook
                             try
                             {
                                 idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                                vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                                vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
                                 dtRes = Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString());
 
                                 if (row.Cells[col.Index].Value != null)
@@ -778,7 +783,7 @@ namespace PluginTaskAutobook
                             if (Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value) <= DateTime.Now.Date)
                             {
                                 idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                                vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                                vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
                                 vsRatio = vsRatioValue;
 
                                 if (row.Cells[col.Index].Value != null)

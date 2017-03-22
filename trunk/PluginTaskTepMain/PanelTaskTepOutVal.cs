@@ -4,6 +4,7 @@ using System.Data;
 
 using HClassLibrary;
 using TepCommon;
+using System.Collections.Generic;
 
 namespace PluginTaskTepMain
 {
@@ -139,23 +140,24 @@ namespace PluginTaskTepMain
         {
             base.onAddPutParameter(obj);
 
-            (PanelManagement as PanelManagementTaskTepOutVal).AddPutParameter(obj);
+            (PanelManagement as PanelManagementTaskTepOutVal).AddPutParameter(obj
+                , ((string)m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Select(string.Format(@"ID={0}", obj.m_Id))[0][@"NAME_SHR"]).Trim());
         }
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
         protected class PanelManagementTaskTepOutVal : PanelManagementTaskTepValues
         {
-            protected override void activateCheckedHandler(INDEX_ID[] arIdToActivate, bool bActive)
+            protected override void activateControlChecked_onChanged(INDEX_CONTROL[] arIndxControlToActivate, bool bActive)
             {
-                INDEX_CONTROL indxCtrl = INDEX_CONTROL.UNKNOWN;
                 TreeViewTaskTepCalcParameters tv = null;
+                List<INDEX_CONTROL> listIndxControlToActivate = new List<INDEX_CONTROL>(arIndxControlToActivate);
 
-                foreach (INDEX_ID idToActivate in arIdToActivate) {
-                    indxCtrl = getIndexControlOfIndexID(idToActivate);
+                foreach (INDEX_CONTROL indxControlToActivate in listIndxControlToActivate) {
+                    //indxCtrl = getIndexControlOfIndexID(idToActivate);
 
-                    if (indxCtrl == INDEX_CONTROL.CLBX_PARAMETER_CALCULATED) {
-                        tv = (Controls.Find(indxCtrl.ToString(), true)[0] as TreeViewTaskTepCalcParameters);
+                    if (indxControlToActivate == INDEX_CONTROL.MIX_PARAMETER_CALCULATED) {
+                        tv = (Controls.Find(indxControlToActivate.ToString(), true)[0] as TreeViewTaskTepCalcParameters);
 
                         tv.ActivateCheckedHandler(bActive);
 
@@ -167,8 +169,11 @@ namespace PluginTaskTepMain
                             tv.ItemCheck -= onItemCheck;
                         }
                     } else
-                        base.activateCheckedHandler(arIdToActivate, bActive);
+                    // оставить для обработке в бащовых методах
+                        ;
                 }
+                // в списке нет идентификатора объекта обработчик события 'CheckedChanged' уже обработано
+                base.activateControlChecked_onChanged(listIndxControlToActivate.ToArray(), bActive);
             }
 
             protected override int addButtonRun(int posRow)
@@ -177,27 +182,29 @@ namespace PluginTaskTepMain
 
                 return iRes;
             }
-
+            /// <summary>
+            /// Инициировать отправление события - измнение состояния параметра алгоритма расчета
+            ///  , либо базового, либо связанного с компонентом станции
+            /// </summary>
+            /// <param name="idItem">Идентификатор парметра алгоритма расчета (по значению можно определить базовый он или связанный)</param>
+            /// <param name="iChecked">Признак нового состояния элемента управленияЮ и, соответственно, параметра алгоритма расчета</param>
             protected void onItemCheck(int idItem, int iChecked)
             {
-                itemCheck((int)INDEX_ID.DENY_PARAMETER_CALCULATED
-                    , idItem
+                itemCheck(idItem
+                    , ItemCheckedParametersEventArgs.TYPE.ENABLE
                     ,  iChecked == 1 ? CheckState.Checked : CheckState.Unchecked);
             }
-
-            protected override void addNAlgParameter(Control ctrl, int id_alg, /*int id_comp, int id_put,*/ string text, bool bChecked)
+            /// <summary>
+            /// Добавить параметр алгоритма расчета, связанный с компонентом станции
+            ///  , добавляется только для древовидной структуры, управляющей включением/исключением из алгоритма расчета
+            ///  , для визуализации простой список параметров алгоритма расчета базовых
+            /// </summary>
+            /// <param name="putPar">Объект с описанием добавляемого параметра</param>
+            public void AddPutParameter(PUT_PARAMETER putPar, string nameShrComponent)
             {
-                if (ctrl is TreeViewTaskTepCalcParameters)
-                    (ctrl as TreeViewTaskTepCalcParameters).AddItem(id_alg, -1, -1, text, bChecked);
-                else
-                    base.addNAlgParameter(ctrl, id_alg, /*id_comp, id_put,*/ text, bChecked);
-            }
+                Control ctrl = find(INDEX_CONTROL.CLBX_COMP_CALCULATED);
 
-            public void AddPutParameter(PUT_PARAMETER putPar)
-            {
-                Control ctrl = find(INDEX_ID.DENY_PARAMETER_CALCULATED);
-
-                (ctrl as TreeViewTaskTepCalcParameters).AddItem(putPar.m_idNAlg, putPar.IdComponent, putPar.m_idPut, putPar.NameShrComponent, putPar.m_bEnabled);
+                (ctrl as TreeViewTaskTepCalcParameters).AddItem(putPar.Key.m_idNAlg, putPar.Key.m_idComp, putPar.m_Id, nameShrComponent, putPar.IsEnabled);
             }
             /// <summary>
             /// Класс для размещения параметров расчета с учетом их иерархической структуры
@@ -405,7 +412,7 @@ namespace PluginTaskTepMain
                 }
             }            
 
-            protected override Control createControlParameterCalculated()
+            protected override Control createControlNAlgParameterCalculated()
             {
                 return new TreeViewTaskTepCalcParameters();
             }

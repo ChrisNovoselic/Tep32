@@ -77,6 +77,12 @@ namespace PluginTaskAutobook
                 public bool m_bCalcDeny;
             }
 
+
+            public override void BuildStructure()
+            {
+                throw new NotImplementedException();
+            }
+
             /// <summary>
             /// Добавить столбец
             /// </summary>
@@ -233,11 +239,11 @@ namespace PluginTaskAutobook
                                     GetMonth.ElementAt(Convert.ToDateTime(tbOrigin.Rows[j]["WR_DATETIME"]).AddMonths(-1).Month - 1))
                                 {
                                     double.TryParse(tbOrigin.Rows[j]["VALUE"].ToString(), out dblVal);
-                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
                                     dblVal *= Math.Pow(10F, -1 * vsRatioValue);
 
                                     row.Cells[col.Index].Value =
-                                     dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
+                                        dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
                                     break;
                                 }
                             }
@@ -280,7 +286,7 @@ namespace PluginTaskAutobook
                     if (col.m_iIdComp > 0)
                         foreach (DataGridViewRow row in Rows) {
                             idAlg = (int)row.Cells["ALG"].Value;
-                            vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                            vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
                             if (row.Cells[col.Index].Value != null)
                                 if (double.TryParse(row.Cells[col.Index].Value.ToString(), out valueToRes))

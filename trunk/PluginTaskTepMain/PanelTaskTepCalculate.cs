@@ -183,9 +183,9 @@ namespace PluginTaskTepMain
         ///  одного из основных элементов управления на панели управления 'PanelManagement'
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
+        protected override void panelManagement_EventIndexControlBase_onValueChanged(object obj)
         {
-            base.panelManagement_OnEventIndexControlBaseValueChanged(obj);
+            base.panelManagement_EventIndexControlBase_onValueChanged(obj);
 
             if (obj is Enum)
                 ; // switch ()
@@ -309,16 +309,16 @@ namespace PluginTaskTepMain
                 AllowUserToResizeRows = false;
                 RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders | DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             }
-            /// <summary>
-            /// Перечисление для индексации столбцов со служебной информацией
-            /// </summary>
-            protected enum INDEX_SERVICE_COLUMN : uint { ID_ALG, SYMBOL, COUNT }            
+            ///// <summary>
+            ///// Перечисление для индексации столбцов со служебной информацией
+            ///// </summary>
+            //protected enum INDEX_SERVICE_COLUMN : uint { ID_ALG, SYMBOL, COUNT }            
             /// <summary>
             /// Перечисления для индексирования массива со значениями цветов для фона ячеек
             /// </summary>
             protected enum INDEX_COLOR : uint
             {
-                EMPTY, VARIABLE, DEFAULT, CALC_DENY, NAN, PARTIAL, NOT_REC, LIMIT,
+                EMPTY, VARIABLE, DEFAULT, DISABLED, NAN, PARTIAL, NOT_REC, LIMIT,
                 USER
                     , COUNT
             }
@@ -342,15 +342,15 @@ namespace PluginTaskTepMain
                 NotSet
                 , Insert = 1 // вставляемый (ТГ, в ~ от идентификатора)
                 , Service = 2 // сервисный/добавялемый
-                , Begined = 3 // всегда 1-ый (за сервисными)
-                , Visibled = 4 // отображаемый
+                , Begined = 4 // всегда 1-ый (за сервисными)
+                , Visibled = 8 // отображаемый
             }
 
-            protected abstract void AddColumn(PUT_PARAMETER pPar, ModeAddColumn mode);
+            protected abstract void addColumn(TECComponent comp, ModeAddColumn mode);
 
             //public abstract void AddRow(NALG_PARAMETER nAlgParameter);
 
-            public abstract void ShowValues(DataTable values, DataTable parameter/*, bool bUseRatio = true*/);
+            public abstract void ShowValues(DataTable values/*, DataTable parameter, bool bUseRatio = true*/);
 
             public abstract void ClearColumns();
 

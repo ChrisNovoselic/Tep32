@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Data;
 using System.ComponentModel;
+using System.Reflection;
 
 namespace TepCommon
 {
@@ -59,15 +60,20 @@ namespace TepCommon
             /// </summary>
             public class ItemCheckedParametersEventArgs : EventArgs
             {
+                public enum TYPE { ENABLE, VISIBLE }
                 /// <summary>
                 /// Индекс в списке идентификаторов
                 ///  для получения ключа в словаре со значениями
                 /// </summary>
-                public int m_indxId;
+                public TYPE m_type;
                 /// <summary>
                 /// Идентификатор в алгоритме расчета
                 /// </summary>
-                public int m_idItem;
+                public int m_idAlg;
+
+                public int m_idComp;
+
+                public int m_idPut;
 
                 private CheckState _newCheckState;
                 /// <summary>
@@ -79,14 +85,33 @@ namespace TepCommon
                     set { _newCheckState = value; }
                 }
 
-                public ItemCheckedParametersEventArgs(int indxId, int idItem, CheckState newCheckState)
+                public ItemCheckedParametersEventArgs(int id, TYPE type, CheckState newCheckState)
                     : base()
                 {
-                    m_indxId = indxId;
-                    m_idItem = idItem;
-                    
+                    m_idAlg = -1;
+                    m_idComp = -1;
+                    m_idPut = -1;
+
+                    if (id < (int)ID_START_RECORD.ALG)
+                    // очевидно, что это компонент
+                        m_idComp = id;
+                    else if (id < (int)ID_START_RECORD.PUT)
+                    // очевидно, что это параметр в алгоритме расчета
+                        m_idAlg = id;
+                    else
+                    // очевидно, что это параметр в алгоритме расчета + связанный с компонентом
+                        m_idPut = id;
+
+                    m_type = type;
+
                     _newCheckState = newCheckState;
                 }
+
+                public bool IsNAlg { get { return (!(m_idAlg < (int)ID_START_RECORD.ALG)) && (m_idAlg < (int)ID_START_RECORD.PUT); } }
+
+                public bool IsComponent { get { return ((m_idComp > 0) && (m_idComp < (int)TECComponent.TYPE.UNREACHABLE)) && (m_idPut < 0); } }
+
+                public bool IsPut { get { return (!(m_idPut < (int)ID_START_RECORD.PUT)); } }
             }
 
             /// <summary>
@@ -100,9 +125,9 @@ namespace TepCommon
             /// </summary>
             /// <param name="address">Адрес элемента</param>
             /// <param name="checkState">Значение признака элемента</param>
-            protected void itemCheck(int indxId, int idItem, CheckState checkState)
+            protected void itemCheck(int idItem, ItemCheckedParametersEventArgs.TYPE type, CheckState checkState)
             {
-                ItemCheck(new ItemCheckedParametersEventArgs(indxId, idItem, checkState));
+                ItemCheck(new ItemCheckedParametersEventArgs(idItem, type, checkState));
             }
 
             /// <summary>
@@ -110,7 +135,7 @@ namespace TepCommon
             /// </summary>
             /// <param name="obj">Объект, инициировавший событие (список)</param>
             /// <param name="ev">Аргумент события</param>
-            protected abstract void onItemCheck(object obj, ItemCheckEventArgs ev);
+            protected abstract void onItemCheck(object obj, EventArgs ev); //ItemCheckEventArgs
 
             /// <summary>
             /// Признаки порядка размещения элементов управления (последовательно - один над другим, одновременно - на одной строке, наличие подписей)
@@ -315,36 +340,61 @@ namespace TepCommon
             {
                 ComboBox cbx = Controls.Find(indxCtrl.ToString(), true)[0] as ComboBox;
 
+                // вариант №1
                 // всегда отписываться
                 cbx.SelectedIndexChanged -= handler;
-
-                #region Проверить результат отмены регистрации обработчика
-                //Get the field EVENT_SELECTEDINDEXCHANGED
-                var eventSelectedIndexChangedKey = typeof(ComboBox).GetField("EVENT_SELECTEDINDEXCHANGED"
-                    , System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
-                        .GetValue(cbx);
-                //Get the event handler list of the comboBox1
-                var eventList = typeof(ComboBox).GetProperty("Events"
-                    , System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                        .GetValue(cbx, null) as EventHandlerList;
-                //Check if there is not any handler for SelectedIndexChanged
-                if (eventList[eventSelectedIndexChangedKey] == null)
-                    // списка обработчиков нет
-                    ;
-                else {
-                    if (eventList[eventSelectedIndexChangedKey].GetInvocationList().Count() == 0)
-                        // ни одного обработчика
-                        ;
-                    else {                        
-                    }
-                }
-                #endregion
 
                 // при необходимости подписаться
                 if (bActivate == true)
                     cbx.SelectedIndexChanged += new EventHandler(handler);
                 else
                     ;
+
+                //// вариант №2
+                //activateControl_onHandler(Controls.Find(indxCtrl.ToString(), true)[0] as ComboBox, "SelectedIndexChanged", handler, bActivate);
+
+                ////??? вариант №3 универсальный
+                ////activateControl_onHandler(cbx, cbx.SelectedIndexChanged, handler, bActivate);
+            }
+
+            private void activateControl_onHandler(Control ctrl, string nameEvent, EventHandler handler, bool bActivate = false)
+            {
+                EventInfo infoEvent;
+                FieldInfo infoField;
+                PropertyInfo infoProperty;
+                System.Reflection.EventInfo[] infoEvents = ctrl.GetType().GetEvents();
+
+                infoEvent = infoEvents.First(ie => { return (ie.Name.Equals(nameEvent) == true); });
+                if (!(infoEvent == null)) {
+                    infoField = ctrl.GetType().GetField(string.Format("EVENT_{0}", infoEvent.Name.ToUpper())
+                        /*, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static*/);
+                    infoProperty = typeof(ComboBox).GetProperty("Events"
+                        , System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);                        
+
+                    if ((!(infoField == null))
+                        && (!(infoProperty == null))) {
+                        //Get the field EVENT_SELECTEDINDEXCHANGED
+                        var eventKey = infoField?.GetValue(ctrl);
+                        //Get the event handler list of the Control
+                        var eventList = infoProperty?.GetValue(ctrl, null) as EventHandlerList;
+
+                        if (bActivate == false)
+                            //Check if there is not any handler for nameEvent
+                            if (eventList[eventKey] == null)
+                            // списка обработчиков нет
+                                ;
+                            else
+                                if (eventList[eventKey].GetInvocationList().Count() == 0)
+                                // ни одного обработчика
+                                    ;
+                                else
+                                    eventList.RemoveHandler(eventKey, handler);
+                        else
+                            eventList.AddHandler(eventKey, handler);
+                    } else
+                        Logging.Logg().Error(string.Format(@"::activateControl_onHandler (EVENT={0}) - невозможно получить либо ключ события в списке событий, либо сам список", nameEvent), Logging.INDEX_MESSAGE.NOT_SET);
+                } else
+                    Logging.Logg().Error(string.Format(@"::activateControl_onHandler (EVENT={0}) - не найдена информация по событию", nameEvent), Logging.INDEX_MESSAGE.NOT_SET);
             }
             /// <summary>
             /// Событие при изменениии основных настроечных параметров (ПЕРИОДб ЧАСОВОЙ ПОЯС, ДИАПАЗОН ДАТЫ/ВРЕМЕНИ)
@@ -366,14 +416,45 @@ namespace TepCommon
                 //Возобновить обработку события - изменение начала/окончания даты/времени
                 activateDateTimeRangeValue_OnChanged(true);
                 //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-                activateCheckedHandler(false);                
+                activateControlChecked_onChanged(false);                
                 EventIndexControlBaseValueChanged?.Invoke(ID_DBTABLE.TIME);
                 //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-                activateCheckedHandler(true);
+                activateControlChecked_onChanged(true);
             }
 
-            private void activateCheckedHandler(bool bActivate)
+            protected abstract void activateControlChecked_onChanged(bool bActivate);
+
+            protected virtual void activateControlChecked_onChanged(string[] arNameControlToActivate, bool bActive)
             {
+                activateCheckedListBoxChecked_onChanged(arNameControlToActivate, bActive);
+            }
+
+            private void activateCheckedListBoxChecked_onChanged(string[] arNameControlToActivate, bool bActive)
+            {
+                CheckedListBox clbx;
+
+                foreach (string nameControlToActivate in arNameControlToActivate) {
+                    //indxCtrl = getIndexControlOfIndexID(idToActivate);
+
+                    if (!(nameControlToActivate == "UNKNOWN")) {
+                        clbx = (Controls.Find(nameControlToActivate.ToString(), true)[0] as CheckedListBox);
+
+                        if (!(clbx == null))
+                            // вариант №1
+                            if (bActive == true) {
+                                clbx.ItemCheck += new ItemCheckEventHandler(onItemCheck);
+                            } else {
+                                clbx.ItemCheck -= onItemCheck;
+                            }
+                            //// вариант №2
+                            //activateControl_onHandler(clbx, "ItemCheck", onItemCheck, bActive);
+                        else
+                        // не CheckedListBox
+                            Logging.Logg().Warning(string.Format(@"::activateCheckedListBoxChecked_onChanged () - в качестве аргумента указано .Name={0} не CheckedListBox", nameControlToActivate)
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+                    } else
+                        ;
+                }
             }
             /// <summary>
             /// Обработчик события - изменение часового пояса
@@ -483,11 +564,11 @@ namespace TepCommon
             /// <summary>
             /// Признак доступности элемента управления для выбора часового пояса
             /// </summary>
-            public bool AllowedTimezone { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0].Enabled = value; } }
+            public bool AllowUserTimezoneChanged { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0].Enabled = value; } }
             /// <summary>
             /// Признак доступности элемента управления для выбора периода расчета
             /// </summary>
-            public bool AllowedPeriod { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled = value; } }
+            public bool AllowUserPeriodChanged { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled = value; } }
 
             public void SetModeDatetimeRange()
             {

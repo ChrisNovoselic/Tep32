@@ -124,10 +124,8 @@ namespace PluginTaskBalTeplo
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
-                try
-                {
+                try {
                     HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false };
                     alignText = DataGridViewContentAlignment.MiddleLeft;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -138,9 +136,7 @@ namespace PluginTaskBalTeplo
                     column.DefaultCellStyle.Alignment = alignText;
                     column.AutoSizeMode = autoSzColMode;
                     Columns.Add(column as DataGridViewTextBoxColumn);
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -154,13 +150,12 @@ namespace PluginTaskBalTeplo
             /// <param name="idPut">индентификатор источника</param>
             public void AddColumn(string txtHeader, bool bRead, string nameCol, string N_ALG, bool bInPut)
             {
+                HDataGridViewColumn column;
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
-                try
-                {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_N_ALG = N_ALG, m_bInPut = bInPut };
+                try {
+                    column = new HDataGridViewColumn() { m_bCalcDeny = false, m_N_ALG = N_ALG, m_bInPut = bInPut };
                     alignText = DataGridViewContentAlignment.MiddleLeft;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
                     //column.Frozen = true;
@@ -170,9 +165,7 @@ namespace PluginTaskBalTeplo
                     column.DefaultCellStyle.Alignment = alignText;
                     column.AutoSizeMode = autoSzColMode;
                     Columns.Add(column as DataGridViewTextBoxColumn);
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }

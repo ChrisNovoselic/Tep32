@@ -113,8 +113,7 @@ namespace PluginTaskVedomostBl
         /// </summary>
         protected PanelManagementVedomostBl PanelManagement
         {
-            get
-            {
+            get {
                 if (_panelManagement == null)
                     _panelManagement = createPanelManagement();
 
@@ -210,7 +209,7 @@ namespace PluginTaskVedomostBl
             protected override int initValues(ListDATATABLE listDataTables)
             {
                 throw new NotImplementedException();
-            }            
+            }
         }
 
         /// <summary>
@@ -231,7 +230,7 @@ namespace PluginTaskVedomostBl
 
             InitializeComponent();
 
-            s_getPicture = new Func <int, PictureBox> (GetPictureOfIdComp);
+            s_getPicture = new Func<int, PictureBox>(GetPictureOfIdComp);
             s_getDGV = new Func<DataGridView>(GetDGVOfIdComp);
             s_getIdComp = new Func<int>(GetIdComp);
         }
@@ -275,11 +274,11 @@ namespace PluginTaskVedomostBl
             (btn.ContextMenuStrip.Items.Find(PanelManagementVedomostBl.INDEX_CONTROL.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(panelTepCommon_btnUpdate_onClick);
             (btn.ContextMenuStrip.Items.Find(PanelManagementVedomostBl.INDEX_CONTROL.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(HPanelTepCommon_btnHistory_Click);
+                new EventHandler(panelTepCommon_btnHistory_onClick);
             (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
-            (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskVedomostBl_expExcel_Click;
-            PanelManagement.ItemCheck += new PanelManagementVedomostBl.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
-            (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).CheckedChanged += PanelManagementVedomost_CheckedChanged;
+            (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += panelManagemenet_btnExportExcel_onClick;
+            PanelManagement.ItemCheck += new PanelManagementTaskCalculate.ItemCheckedParametersEventHandler(panelManagement_onItemCheck);
+            (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).CheckedChanged += panelManagement_ModeEnabledCheckedChanged;
         }
 
         /// <summary>
@@ -287,36 +286,57 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="sender">объект, вызвавщий событие</param>
         /// <param name="e">Аргумент события, описывающий состояние элемента</param>
-        private void PanelTaskVedomostBl_expExcel_Click(object sender, EventArgs e)
+        private void panelManagemenet_btnExportExcel_onClick(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();
             m_rptExcel.CreateExcel(ActiveDataGridView, Session.m_rangeDatetime);
         }
+
+        //private class ItemCheckedVedomostBlParametersEventArgs : PanelManagementVedomostBl.ItemCheckedParametersEventArgs
+        //{
+        //    public ItemCheckedVedomostBlParametersEventArgs(int id, CheckState newCheckState)
+        //        : base (id, TYPE.VISIBLE, newCheckState)
+        //    {
+        //    }
+
+        //    public int IndexHeader { get { return m_idComp; } }
+
+        //    new public bool IsNAlg { get { return false; } }
+
+        //    new public bool IsComponent { get { return false; } }
+
+        //    new public bool IsPut { get { return false; } }
+        //}
 
         /// <summary>
         /// Обработчик события - изменение отображения кол-во групп заголовка
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
-        private void panelManagement_ItemCheck(PanelManagementVedomostBl.ItemCheckedParametersEventArgs ev)
+        private void panelManagement_onItemCheck(PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
         {
             int idItem = -1;
 
-            //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
-            if (ev.NewCheckState == CheckState.Unchecked)
-                if (m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0)
-                    m_arListIds[(int)ev.m_indxId].Add(idItem);
-                else; //throw new Exception (@"");
-            else
-                if (ev.NewCheckState == CheckState.Checked)
-                if (!(m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0))
-                    m_arListIds[(int)ev.m_indxId].Remove(idItem);
-                else; //throw new Exception (@"");
-            else;
+            //??? где сохраняются изменения. только на элементе управления?
+            ;
             //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
             // или в этом же плюгИне измененить/сохраннить индивидуальные настройки
+            ;
             //Изменить структуру 'HDataGRidVIew's'          
-            placementHGridViewOnTheForm(ev);
+            bool bItemChecked = ev.NewCheckState == CheckState.Checked ? true :
+                  ev.NewCheckState == CheckState.Unchecked ? false : false;
+            DataGridViewVedomostBl cntrl = ActiveDataGridView;
+
+            if (ev.m_type == PanelManagementTaskCalculate.ItemCheckedParametersEventArgs.TYPE.VISIBLE) {
+                if (ev.IsComponent == true) {
+                    cntrl.SetHeaderVisibled(s_listGroupHeaders[ev.m_idComp], bItemChecked);
+                    ReSizeControls(cntrl as DataGridView);
+                } else
+                //??? другие случаи
+                    ;
+            } else
+            //??? ENABLE
+                ;
         }
 
         /// <summary>
@@ -324,29 +344,8 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        void PanelManagementVedomost_CheckedChanged(object sender, EventArgs e)
+        void panelManagement_ModeEnabledCheckedChanged(object sender, EventArgs e)
         {
-
-        }
-
-        /// <summary>
-        /// Изменить структуру 'HDataGRidVIew's'
-        /// </summary>
-        /// <param name="item"></param>
-        private void placementHGridViewOnTheForm(PanelManagementVedomostBl.ItemCheckedParametersEventArgs item)
-        {
-            bool bItemChecked = item.NewCheckState == CheckState.Checked ? true :
-                  item.NewCheckState == CheckState.Unchecked ? false : false;
-            DataGridViewVedomostBl cntrl = ActiveDataGridView;
-            //Поиск индекса элемента отображения
-            switch ((INDEX_ID)item.m_indxId) {
-                case INDEX_ID.HGRID_VISIBLED:
-                    cntrl.HideColumns(cntrl as DataGridView, s_listGroupHeaders[item.m_idItem], bItemChecked);
-                    ReSizeControls(cntrl as DataGridView);
-                    break;
-                default:
-                    break;
-            }
         }
 
         /// <summary>
@@ -470,7 +469,8 @@ namespace PluginTaskVedomostBl
         /// <param name="dgv">активное окно отображения данных</param>
         public void ConfigureDataGridView(DataGridView dgv)
         {
-            (dgv as DataGridViewVedomostBl).ConfigureColumns(dgv as DataGridView);
+            //???
+            (dgv as DataGridViewVedomostBl).ConfigureColumns(/*dgv as DataGridView*/);
         }
 
         /// <summary>
@@ -536,13 +536,13 @@ namespace PluginTaskVedomostBl
                 (Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).Controls.Add(m_pictureVedBl);
                 //возможность_редактирвоания_значений
                 try {
-                    if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
-                        (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
-                            (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
+                    if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
+                        (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).Checked =
+                            (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
                     else
-                        (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+                        (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).Checked = false;
 
-                    if ((Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked == true)
+                    if ((Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).Checked == true)
                         for (int t = 0; t < dgv.RowCount; t++)
                             dgv.ReadOnlyColumns = false;
                     else
@@ -640,8 +640,8 @@ namespace PluginTaskVedomostBl
                     Session.CurrentIdPeriod = PanelManagement.IdPeriod;
 
                     PanelManagement.SetModeDatetimeRange();
-                    PanelManagement.AllowedTimezone = false;
-                    PanelManagement.AllowedPeriod = false;
+                    PanelManagement.AllowUserTimezoneChanged = false;
+                    PanelManagement.AllowUserPeriodChanged = false;
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelTaskVedomostBl::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -656,9 +656,9 @@ namespace PluginTaskVedomostBl
         ///  одного из основных элементов управления на панели управления 'PanelManagement'
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
+        protected override void panelManagement_EventIndexControlBase_onValueChanged(object obj)
         {
-            base.panelManagement_OnEventIndexControlBaseValueChanged(obj);
+            base.panelManagement_EventIndexControlBase_onValueChanged(obj);
 
             if (obj is Enum)
                 ; // switch ()
@@ -1198,7 +1198,7 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="obj">Составной объект - календарь</param>
         /// <param name="ev">Аргумент события</param>
-        private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
+        private void panelTepCommon_btnHistory_onClick(object obj, EventArgs ev)
         {
             Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE;
 

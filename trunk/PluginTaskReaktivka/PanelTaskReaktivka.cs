@@ -320,9 +320,9 @@ namespace PluginTaskReaktivka
         ///  одного из основных элементов управления на панели управления 'PanelManagement'
         /// </summary>
         /// <param name="obj">Аргумент события</param>
-        protected override void panelManagement_OnEventIndexControlBaseValueChanged(object obj)
+        protected override void panelManagement_EventIndexControlBase_onValueChanged(object obj)
         {
-            base.panelManagement_OnEventIndexControlBaseValueChanged(obj);
+            base.panelManagement_EventIndexControlBase_onValueChanged(obj);
 
             if (obj is Enum)
                 ; // switch ()
@@ -729,19 +729,21 @@ namespace PluginTaskReaktivka
         {
             int idItem = -1;
 
-            //Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
-            if (ev.NewCheckState == CheckState.Unchecked)
-                if (m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0)
-                    m_arListIds[(int)ev.m_indxId].Add(idItem);
-                else; //throw new Exception (@"");
-            else
-                if (ev.NewCheckState == CheckState.Checked)
-                if (!(m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0))
-                    m_arListIds[(int)ev.m_indxId].Remove(idItem);
-                else; //throw new Exception (@"");
-            else;
-            //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
+            ////Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
+            //if (ev.NewCheckState == CheckState.Unchecked)
+            //    if (m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0)
+            //        m_arListIds[(int)ev.m_indxId].Add(idItem);
+            //    else; //throw new Exception (@"");
+            //else
+            //    if (ev.NewCheckState == CheckState.Checked)
+            //    if (!(m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0))
+            //        m_arListIds[(int)ev.m_indxId].Remove(idItem);
+            //    else; //throw new Exception (@"");
+            //else;
+
+            //??? Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
             // или в этом же плюгИне измененить/сохраннить индивидуальные настройки
+            //m_dictProfile.SetAttribute();
             //Изменить структуру 'DataGridView'          
             (m_dgvValues as DataGridViewValuesReaktivka).UpdateStructure(ev);
         }

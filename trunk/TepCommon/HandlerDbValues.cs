@@ -28,6 +28,7 @@ namespace TepCommon
             //, { ID_DBTABLE.PERIOD       , new DB_TABLE () { m_name = @"period"      , m_description = @"" } }
             , { ID_DBTABLE.COMP_LIST    , new DB_TABLE () { m_name = @"comp_list"   , m_description = @"" } }
             , { ID_DBTABLE.COMP         , new DB_TABLE () { m_name = @"comp"        , m_description = @"" } }
+            , { ID_DBTABLE.COMP_VALUES  , new DB_TABLE () { m_name = @"comp_values" , m_description = @"" } }
             , { ID_DBTABLE.MODE_DEV     , new DB_TABLE () { m_name = @"mode_dev"    , m_description = @"" } }
             , { ID_DBTABLE.RATIO        , new DB_TABLE () { m_name = @"ratio"       , m_description = @"" } }
             , { ID_DBTABLE.MEASURE      , new DB_TABLE () { m_name = @"measure"     , m_description = @"" } }

@@ -66,6 +66,12 @@ namespace PluginTaskReaktivka
                 AddColumn(-1, "Дата", INDEX_SERVICE_COLUMN.DATE.ToString(), true, true);
             }
 
+
+            public override void BuildStructure()
+            {
+                throw new NotImplementedException();
+            }
+
             /// <summary>
             /// Класс для описания дополнительных свойств столбца в отображении (таблице)
             /// </summary>
@@ -284,67 +290,37 @@ namespace PluginTaskReaktivka
                         false;
 
                 //Поиск индекса элемента отображения
-                switch ((INDEX_ID)item.m_indxId)
-                {
-                    case INDEX_ID.DENY_COMP_VISIBLED:
-                        // найти индекс столбца (компонента) - по идентификатору
+                if (item.m_type == PanelManagementTaskCalculate.ItemCheckedParametersEventArgs.TYPE.VISIBLE) {
+                    if (item.IsComponent == true)
+                    // найти индекс столбца (компонента) - по идентификатору
                         foreach (HDataGridViewColumn c in Columns)
-                            if (c.m_iIdComp == item.m_idItem)
-                            {
+                            if (c.m_iIdComp == item.m_idComp) {
                                 indx = Columns.IndexOf(c);
                                 break;
-                            }
-                        break;
-                    default:
-                        break;
-                }
+                            } else
+                                ;
+                    else
+                    //??? рассмотреть другие случаи (NAlg, Put)
+                        ;
+                } else
+                //??? рассмотреть другие случаи (ENABLE)
+                    ;
 
-                if (!(indx < 0))
-                {
-                    switch ((INDEX_ID)item.m_indxId)
-                    {
-                        //case INDEX_ID.DENY_COMP_CALCULATED:
-                        //    cIndx = indx;
-                        //    // для всех ячеек в столбце
-                        //    foreach (DataGridViewRow r in Rows)
-                        //    {
-                        //        indx = Rows.IndexOf(r);
-                        //        if (getClrCellToComp(cIndx, indx, bItemChecked, out clrCell) == true)
-                        //            r.Cells[cIndx].Style.BackColor = clrCell;
-                        //        else
-                        //            ;
-                        //    }
-                        //    (Columns[cIndx] as HDataGridViewColumn).m_bCalcDeny = !bItemChecked;
-                        //    break;
-                        //case INDEX_ID.DENY_PARAMETER_CALCULATED:
-                        //    rKey = (int)Rows[indx].Cells[(int)INDEX_SERVICE_COLUMN.ID_ALG].Value;
-                        //    // для всех ячеек в строке
-                        //    foreach (DataGridViewCell c in Rows[indx].Cells)
-                        //    {
-                        //        cIndx = Rows[indx].Cells.IndexOf(c);
-                        //        if (getClrCellToParameter(cIndx, indx, bItemChecked, out clrCell) == true)
-                        //            c.Style.BackColor = clrCell;
-                        //        else
-                        //            ;
-
-                        //        m_dictPropertiesRows[rKey].m_arPropertiesCells[cIndx].m_bCalcDeny = !bItemChecked;
-                        //    }
-                        //    break;
-                        case INDEX_ID.DENY_COMP_VISIBLED:
+                if (!(indx < 0)) {
+                    if (item.m_type == PanelManagementTaskCalculate.ItemCheckedParametersEventArgs.TYPE.VISIBLE) { // VISIBLE
+                        if (item.IsComponent == true) { // COMPONENT
                             cIndx = indx;
                             // для всех ячеек в столбце
                             Columns[cIndx].Visible = bItemChecked;
-                            break;
-                            //case INDEX_ID.DENY_PARAMETER_VISIBLED:
-                            //    // для всех ячеек в строке
-                            //    Rows[indx].Visible = bItemChecked;
-                            //    break;
-                            //default:
-                            //    break;
-                    }
-                }
-                else
-                    ; // нет элемента для изменения стиля
+                        } else
+                            //??? рассмотреть другие случаи (NAlg, Put)
+                            ;
+                    } else
+                        //??? рассмотреть другие случаи (ENABLE)
+                        ;
+                } else
+                // нет элемента для изменения стиля
+                    ;
             }
 
 
@@ -408,7 +384,7 @@ namespace PluginTaskReaktivka
                                         iQuality = (int)parameterRows[i][@"QUALITY"];
 
                                         row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
-                                        vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                                        vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
                                         dblVal *= Math.Pow(10F, 1 * vsRatioValue);
 
@@ -493,7 +469,7 @@ namespace PluginTaskReaktivka
                                     && (string.IsNullOrEmpty(row.Cells[col.Index].Value.ToString()) == false)) {
                                     idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
                                     valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
-                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
                                     valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
                                     dtVal = Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString());
@@ -551,7 +527,7 @@ namespace PluginTaskReaktivka
                                     if (row.Cells[iCol].Value.ToString() != "")
                                     {
                                         idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                                        vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_value;
+                                        vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
                                         row.Cells[iCol].Value =
                                             //AsParseToF
                                             HMath.doubleParse

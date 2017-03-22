@@ -9,26 +9,40 @@ namespace TepCommon
 {
     partial class HPanelTepCommon
     {
-        protected class DataGridViewValues : DataGridView
+        protected abstract class DataGridViewValues : DataGridView
         {
             public enum ModeData { NALG, DATETIME }
 
             public ModeData _modeData;
 
             public DataGridViewValues(ModeData modeData) : base() { _modeData = modeData; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public abstract void BuildStructure();
 
             protected class DictNAlgProperty : Dictionary <int, NALG_PROPERTY>
             {
+                public void SetEnabled(int id_alg, int id_comp, bool value)
+                {
+                    this[id_alg].m_dictPutParameters[id_comp].SetEnabled(value);
+                }
             }
+
+            //public class DictPutParameter : Dictionary<int, PUT_PARAMETER>
+            //{
+            //    public void SetEnabled(int id_comp, bool value)
+            //    {
+            //        this[id_comp].SetEnabled(value); 
+            //    }
+            //}
             /// <summary>
             /// Структура для описания добавляемых строк
             /// </summary>
             public class NALG_PROPERTY : NALG_PARAMETER
             {
-                //private const string NALG_NAMESHR_FORMAT = @"{0} ({1})";
-
                 public NALG_PROPERTY(NALG_PARAMETER nAlgPar)
-                    : base(nAlgPar.m_idNAlg, nAlgPar.m_nAlg
+                    : base(nAlgPar.m_Id, nAlgPar.m_nAlg
                           , -1 //???
                           , -1 //???
                           , nAlgPar.m_strNameShr
@@ -38,53 +52,59 @@ namespace TepCommon
                           , nAlgPar.m_strMeausure
                           , nAlgPar.m_strSymbol
                           , nAlgPar.m_bEnabled, nAlgPar.m_bVisibled
-                          , nAlgPar.m_iRatio, nAlgPar.m_iRound
+                          , nAlgPar.m_prjRatio, nAlgPar.m_vsRatio, nAlgPar.m_vsRound
                     )
                 {
-                    //m_strItem = string.Format(NALG_NAMESHR_FORMAT, m_nAlg, m_strNameShr);
                 }
+
+                public
+                    //DictPutParameter
+                    Dictionary<int, PUT_PARAMETER>
+                        m_dictPutParameters;
+
+                public string FormatRound { get { return string.Format(@"F{0}", m_vsRound); } }
+            }
+            /// <summary>
+            /// Структура с дополнительными свойствами ячейки отображения
+            /// </summary>
+            public struct CELL_PROPERTY //: DataGridViewCell
+            {
                 /// <summary>
-                /// Структура с дополнительными свойствами ячейки отображения
+                /// Количество свойств структуры
                 /// </summary>
-                public struct HDataGridViewCell //: DataGridViewCell
+                private static int CNT_SET = 2;
+                /// <summary>
+                /// Счетчик кол-ва изменений свойств, для проверки признака установки всех значений
+                /// </summary>
+                private int _cntSet;
+                /// <summary>
+                /// Метод для увеличения счетчика кол-ва изменений
+                /// </summary>
+                private void counter() { if (_cntSet < CNT_SET) _cntSet++; else/*дальнейшее увеличение необязательно*/; }
+
+                private double _value;
+                /// <summary>
+                /// Значение в ячейке
+                /// </summary>
+                public double m_Value { get { return _value; } set { _value = value; counter(); } }
+
+                public void SetValue(double value) { m_Value = value; }
+
+                private TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE _iQuality;
+                /// <summary>
+                /// Признак качества значения в ячейке
+                /// </summary>
+                public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality { get { return _iQuality; } set { _iQuality = value; counter(); } }
+
+                public CELL_PROPERTY(float value, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
                 {
-                    public enum INDEX_CELL_PROPERTY : uint { CALC_DENY, IS_NAN }
-                    /// <summary>
-                    /// Признак запрета расчета
-                    /// </summary>
-                    public bool m_bCalcDeny;
-                    /// <summary>
-                    /// Идентификатор элемента расчета, со сложным ключом (сопоставляемый с): идентификатор параметра в алгоритме расчета, идентификатор орбрудования - признак отсутствия значения
-                    /// </summary>
-                    public int m_IdPut;
-                    /// <summary>
-                    /// Признак качества значения в ячейке
-                    /// </summary>
-                    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
+                    _cntSet = CNT_SET; //!!! по количеству свойств
 
-                    public HDataGridViewCell(int idPut, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, bool bCalcDeny)
-                    {
-                        m_IdPut = idPut;
-                        m_iQuality = iQuality;
-                        m_bCalcDeny = bCalcDeny;
-                    }
-
-                    public bool IsNaN { get { return m_IdPut < 0; } }
+                    _value = value;
+                    _iQuality = iQuality;
                 }
 
-                //public string m_strItem;
-
-                public HDataGridViewCell[] m_arPropertiesCells;
-
-                public void InitCells(int cntCols)
-                {
-                    m_arPropertiesCells = new HDataGridViewCell[cntCols];
-
-                    for (int c = 0; c < m_arPropertiesCells.Length; c++)
-                        m_arPropertiesCells[c] = new HDataGridViewCell(-1, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT, false);
-                }
-
-                public string FormatRound { get { return string.Format(@"F{0}", m_iRound); } }
+                public bool IsNaN { get { return _cntSet < CNT_SET; } }
             }
             /// <summary>
             /// Структура для хранения значений одной из записей в таблице со описанием коэфициентов  при масштабировании физических величин
@@ -100,7 +120,7 @@ namespace TepCommon
                     , m_strDesc;
             }
 
-            protected Dictionary<int, NALG_PROPERTY> m_dictNAlgProperties;
+            protected DictNAlgProperty m_dictNAlgProperties;
             /// <summary>
             /// Словарь со значенями коэффициентов при масштабировании физических величин (микро, милли, кило, Мега)
             /// </summary>
@@ -123,20 +143,20 @@ namespace TepCommon
                     });
             }
 
-            public void AddNAlg(NALG_PARAMETER nAlg)
+            public virtual void AddNAlgParameter(NALG_PARAMETER nAlg)
             {
                 if (m_dictNAlgProperties == null)
-                    m_dictNAlgProperties = new Dictionary<int, NALG_PROPERTY>();
+                    m_dictNAlgProperties = new DictNAlgProperty();
                 else
                     ;
 
-                if (m_dictNAlgProperties.ContainsKey(nAlg.m_idNAlg) == false)
-                    m_dictNAlgProperties.Add(nAlg.m_idNAlg, new NALG_PROPERTY(nAlg));
+                if (m_dictNAlgProperties.ContainsKey(nAlg.m_Id) == false)
+                    m_dictNAlgProperties.Add(nAlg.m_Id, new NALG_PROPERTY(nAlg));
                 else
                     ;
             }
 
-            protected void addPut(PUT_PARAMETER pPar)
+            public virtual void AddPutParameter(PUT_PARAMETER putPar)
             {
             }
             /// <summary>

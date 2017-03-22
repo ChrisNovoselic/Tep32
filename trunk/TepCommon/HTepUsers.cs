@@ -376,7 +376,11 @@ namespace TepCommon
 
                 return dictProfileItemRes;
             }
-
+            /// <summary>
+            /// Возвратить значение аттрибута по набору ключей
+            /// </summary>
+            /// <param name="keys">Набор ключей, крайний ключ для аттрибута</param>
+            /// <returns>Значение аттрибута</returns>
             public string GetAttribute(params object[] keys)
             {
                 Func<object, string> fToString = delegate (object obj) {
@@ -401,7 +405,10 @@ namespace TepCommon
                         keys.ToList().Select(o => fToString(o)).ToArray()
                     );
             }
-
+            /// <summary>
+            /// Возвратить значение аттрибута по набору ключей
+            /// </summary>
+            /// <param name="keys">Набор ключей, крайний ключ для аттрибута</param>
             public string GetAttribute(params string[] keys)
             {
                 string strRes = string.Empty;
@@ -422,7 +429,7 @@ namespace TepCommon
                         ;
 
                     if (strRes.Equals(string.Empty) == true)
-                        Logging.Logg().Warning(string.Format(@"DictionaryProfileItem::GetAttribute (keys.Length={0}, keys={1}) - значение не найдено...", keys.Length, string.Join(@",", keys)), Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Warning(string.Format(@"DictionaryProfileItem::GetAttribute (keys.Length={0}, keys={1}) - значение не найдено...", keys.Length, string.Join(@",", keys)), Logging.INDEX_MESSAGE.W_003);
                     else
                         ;
                 } else
@@ -430,7 +437,12 @@ namespace TepCommon
 
                 return strRes;
             }
-
+            /// <summary>
+            /// Возвратить значение аттрибута по набору ключей
+            /// </summary>
+            /// <param name="idPeriod">Ключ в словаре с аттрибутами</param>
+            /// <param name="context">Ключ аттрибута</param>
+            /// <returns>Значение аттрибута</returns>
             public string GetAttribute(ID_PERIOD idPeriod, int context)
             {
                 return GetAttribute(((int)idPeriod).ToString(), context.ToString());
@@ -451,18 +463,29 @@ namespace TepCommon
             /// Словарь с атрибутами объекта
             /// </summary>
             public Dictionary<string, string> Attributes;
-
+            /// <summary>
+            /// Возвратить значение аттрибута по ключу
+            /// </summary>
+            /// <param name="idAllowed">Ключ аттрибута</param>
+            /// <returns>Значение аттрибута</returns>
             private string GetAttribute(HTepUsers.ID_ALLOWED idAllowed)
             {
                 return GetAttribute(((int)idAllowed).ToString());
             }
-
+            /// <summary>
+            /// Возвратить значение аттрибута по ключу
+            /// </summary>
+            /// <param name="oKey">Ключ аттрибута</param>
+            /// <returns>Значение аттрибута</returns>
             private string GetAttribute(object oKey)
             {
                 return GetAttribute(((int)oKey).ToString());
             }
-
-
+            /// <summary>
+            /// Возвратить значение аттрибута по ключу
+            /// </summary>
+            /// <param name="iKey">Ключ(целочисленный) аттрибута</param>
+            /// <returns>Значение аттрибута</returns>
             private string GetAttribute(int iKey)
             {
                 return GetAttribute(iKey.ToString());
@@ -475,7 +498,7 @@ namespace TepCommon
                 if (Attributes.ContainsKey(key) == true)
                     strRes = Attributes[key];
                 else
-                    Logging.Logg().Error(string.Format(@"DictionaryProfileItem::GetAttribute (key={0}) - ключ не найден...", key), Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Warning(string.Format(@"DictionaryProfileItem::GetAttribute (key={0}) - ключ не найден...", key), Logging.INDEX_MESSAGE.W_002);
 
                 return strRes;
             }
