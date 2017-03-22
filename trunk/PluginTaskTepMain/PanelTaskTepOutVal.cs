@@ -207,6 +207,22 @@ namespace PluginTaskTepMain
                 (ctrl as TreeViewTaskTepCalcParameters).AddItem(putPar.Key.m_idNAlg, putPar.Key.m_idComp, putPar.m_Id, nameShrComponent, putPar.IsEnabled);
             }
             /// <summary>
+            /// ??? Возвратить наименование компонента
+            /// </summary>
+            /// <param name="id_comp">Идентификатор компонента</param>
+            /// <returns>Наименование компонента</returns>
+            public string GetNameComponent(int id_comp)
+            {
+                string strRes = string.Empty;
+
+                CheckedListBoxTaskTepValues ctrl = null;
+
+                ctrl = find(INDEX_CONTROL.MIX_PARAMETER_CALCULATED.ToString()) as CheckedListBoxTaskTepValues;
+                strRes = ctrl.GetNameItem(id_comp);
+
+                return strRes;
+            }
+            /// <summary>
             /// Класс для размещения параметров расчета с учетом их иерархической структуры
             /// </summary>
             public class TreeViewTaskTepCalcParameters : TreeView, IControl
@@ -317,7 +333,7 @@ namespace PluginTaskTepMain
 
                     keyNode = new KEY_NODE(id_alg, id_comp, id_put);
                     nodesNAlg = Nodes.Find(id_alg.ToString(), false);                    
-                    strTextNode = (Parent as PanelManagementTaskTepValues).GetNameComponent(id_comp);
+                    strTextNode = (Parent as PanelManagementTaskTepOutVal).GetNameComponent(id_comp);
 
                     switch (nodesNAlg.Length) {
                         case 0:

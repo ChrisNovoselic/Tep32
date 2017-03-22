@@ -35,24 +35,6 @@ namespace PluginTaskTepMain
         /// Отображение значений в табличном представлении
         /// </summary>
         protected DataGridViewTEPCalculate m_dgvValues;
-        
-        ///// <summary>
-        ///// Таблицы со значениями словарных, проектных данных
-        ///// </summary>
-        //protected DataTable[] m_dictTableDictPrj;
-        /// <summary>
-        /// Индексы массива списков идентификаторов
-        /// </summary>
-        protected enum INDEX_ID
-        {
-            UNKNOWN = -1
-            /*, PERIOD // идентификаторы периодов расчетов, использующихся на форме
-            , TIMEZONE // идентификаторы (целочисленные, из БД системы) часовых поясов
-            , ALL_COMPONENT, ALL_NALG // все идентификаторы компонентов ТЭЦ/параметров
-            */, DENY_COMP_CALCULATED, DENY_PARAMETER_CALCULATED // запрещенных для расчета
-            , DENY_COMP_VISIBLED, DENY_PARAMETER_VISIBLED // запрещенных для отображения
-                , COUNT
-        }
         /// <summary>
         /// Конструктор - основной (с параметрами)
         /// </summary>
@@ -91,23 +73,7 @@ namespace PluginTaskTepMain
             err = 0;
             errMsg = string.Empty;
 
-            m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
-            //for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
-            //    switch (id)
-            //    {
-            //        case INDEX_ID.PERIOD:
-            //            m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR/*, (int)ID_PERIOD.SHIFTS*/, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
-            //            break;
-            //        case INDEX_ID.TIMEZONE:
-            //            m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-            //            break;
-            //        default:
-            //            //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
-            //            m_arListIds[(int)id] = new List<int>();
-            //            break;
-            //    }
-
-            //HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
+            HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
 
             Control ctrl = null;
             string strItem = string.Empty;
@@ -119,15 +85,13 @@ namespace PluginTaskTepMain
                     ID_DBTABLE.TIME
                     , ID_DBTABLE.TIMEZONE
                     , ID_DBTABLE.COMP_LIST
-                    , TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.IN_PARAMETER :
-                        TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES ? ID_DBTABLE.OUT_PARAMETER :
-                            TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES ? ID_DBTABLE.OUT_PARAMETER :
-                                TaskCalculateType == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME ? ID_DBTABLE.OUT_PARAMETER :
-                                    ID_DBTABLE.UNKNOWN
+                    , IsInParameters == true ? ID_DBTABLE.IN_PARAMETER : ID_DBTABLE.UNKNOWN
+                    , IsOutParameters == true ? ID_DBTABLE.OUT_PARAMETER : ID_DBTABLE.UNKNOWN
                     , ID_DBTABLE.MODE_DEV
                     , ID_DBTABLE.RATIO }
                 , out err, out errMsg
             );
+
             m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Msk;
             m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Hour
                 | DictionaryTableDictProject.DbTableTime.Day
@@ -136,10 +100,6 @@ namespace PluginTaskTepMain
 
             if (err == 0)
                 try {
-                    //m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Clear();
-
-                    //initialize();
-
                     //Заполнить элемент управления с периодами расчета
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , ID_PERIOD.DAY); //??? активный период требуется прочитать из [profile]
@@ -148,10 +108,6 @@ namespace PluginTaskTepMain
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , ID_TIMEZONE.MSK); //??? активный пояс требуется прочитать из [profile]
                     Session.CurrentIdTimezone = PanelManagement.IdTimezone;
-                        //, (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)PanelManagement.IdTimezone)[0][@"OFFSET_UTC"]);
-
-                    //// отобразить значения
-                    //updateDataValues();
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelTaskTepValues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }

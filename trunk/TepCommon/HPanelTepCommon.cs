@@ -423,7 +423,12 @@ namespace TepCommon
                         ;
             }
 
-            //m_markTableDictPrj = new HMark(arIdTableDictPrj as int[]);
+            //??? обязательная таблица
+            ID_DBTABLE idDbTable = ID_DBTABLE.COMP_VALUES;
+            if (m_dictTableDictPrj.ContainsKey(idDbTable) == false) {
+                m_dictTableDictPrj.Add(idDbTable, m_handlerDb.GetDataTable(idDbTable, out err));
+            } else
+                ;
         }
         /// <summary>
         /// Удалить сессию (+ очистить реквизиты сессии)
@@ -1036,10 +1041,27 @@ namespace TepCommon
 
         protected class NALG_PARAMETER
         {
+            //private TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE _type;
+
+            public TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE m_type; // { get { return _type; } }
+
+            private int _id;
             /// <summary>
             /// Идентификатор в БД элемента в алгоритме расчета
             /// </summary>
-            public int m_Id;
+            public int m_Id
+            {
+                get {
+                    return _id;
+                }
+
+                set {
+                    _id = value;
+
+                    //if ((!(_id < (int)ID_START_RECORD.))
+                    //    && (true))
+                }
+            }
 
             public string m_nAlg;
             /// <summary>
@@ -1084,27 +1106,41 @@ namespace TepCommon
             /// Конструктор объекта - 
             /// </summary>
             /// <param name="id_alg">Идентификатор в БД элемента в алгоритме расчета</param>
-            /// <param name="id_comp">Идентификатор в БД компонента(оборудования)</param>
-            /// <param name="id_put">Идентификатор в БД (в соответствии с компонентом-оборудованием)</param>
             /// <param name="nameShr">Наименовнаие параметра</param>
             /// <param name="enabled">Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)</param>
             /// <param name="visibled">Признак отображения (не имеет смысла для 'PUT', т.к. полностью зависит от 'NALG')</param>
             /// <param name="prjRatio">Показатель степени 10 при преобразовании (загружаемое значение) </param>
             /// <param name="vsRatio">Показатель степени 10 при преобразовании (для отображения) </param>
             /// <param name="vsRound">Количество знаков после запятой при округлении (для отображения)</param>
-            public NALG_PARAMETER(int id_alg, string n_alg, int id_comp, int id_put
+            public NALG_PARAMETER(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type
+                , int id_alg, string n_alg
                 , string nameShr, string desc
                 , short sAverage
                 , int idMeasure, string nameShrMeasure, string symbol
                 , bool enabled, bool visibled
                 , int prjRatio, int vsRatio, int vsRound)
             {
+                m_type = type;
                 m_Id = id_alg; m_nAlg = n_alg;
                 m_strNameShr = nameShr;  m_strDescription = desc;
                 m_sAverage = sAverage;
                 m_iIdMeasure = idMeasure; m_strMeausure = nameShrMeasure; m_strSymbol = symbol;
                 m_bEnabled = enabled; m_bVisibled = visibled;
                 m_prjRatio = prjRatio; m_vsRatio = vsRatio; m_vsRound = vsRound;
+            }
+
+            public NALG_PARAMETER(NALG_PARAMETER clone)
+                : this (clone.m_type
+                        , clone.m_Id, clone.m_nAlg
+                        , clone.m_strNameShr
+                        , clone.m_strDescription
+                        , clone.m_sAverage
+                        , clone.m_iIdMeasure
+                        , clone.m_strMeausure
+                        , clone.m_strSymbol
+                        , clone.m_bEnabled, clone.m_bVisibled
+                        , clone.m_prjRatio, clone.m_vsRatio, clone.m_vsRound)
+            {
             }
         }
 
@@ -1129,6 +1165,22 @@ namespace TepCommon
                 __panelManagement.EventIndexControlBaseValueChanged += new DelegateObjectFunc(panelManagement_EventIndexControlBase_onValueChanged);
                 // обработчик события при изменении значений в дополнительных(добавленных программистом в наследуемых классах) элементах управления
                 __panelManagement.EventIndexControlCustomValueChanged += new DelegateObjectFunc(panelManagement_EventIndexControlCustom_onValueChanged);
+            }
+        }
+
+        public bool IsInParameters
+        {
+            get {
+                return ((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES);
+            }
+        }
+
+        public bool IsOutParameters
+        {
+            get {
+                return ((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+                    || ((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES)
+                    || ((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME);
             }
         }
 
@@ -1210,58 +1262,86 @@ namespace TepCommon
         /// <param name="ev">Аргумент события</param>
         protected virtual void panelManagement_PeriodChanged()
         {
-            //ComboBox cbx = obj as ComboBox;
-            int err = -1
-                , id_alg = -1
-                , id_comp = -1, id_comp_owner = -1
-                , prjRatio = -1, vsRatio = -1, vsRound = -1
-                , enabled = -1, visibled = -1;
-            //string strItem = string.Empty;
-            string n_alg = string.Empty;
-            List<int> listIdNAlg = new List<int>();
-            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
-            DataTable tableCompValues;
-            TECComponent component;            
-            
-            //Установки для отображения значений
-            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
-                , new int[] {
-                    m_Id
-                    , (int)Session.CurrentIdPeriod }
-                , out err);
+            addComponents();
 
-            //Список компонентов
-            if (m_dictTableDictPrj.ContainsKey(ID_DBTABLE.COMP_VALUES) == false) {
-                tableCompValues = m_handlerDb.GetDataTable(ID_DBTABLE.COMP_VALUES, out err);
-            } else
-                tableCompValues = m_dictTableDictPrj[ID_DBTABLE.COMP_VALUES];
+            if (IsInParameters == true)
+                addAlgParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES);
+            else
+                ;
+
+            if (IsOutParameters == true)
+                addAlgParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+            else
+                ;
+        }
+
+        protected virtual void panelManagement_TimezoneChanged()
+        {
+        }
+
+        protected abstract void onAddNAlgParameter(NALG_PARAMETER obj);
+
+        protected abstract void onAddPutParameter(PUT_PARAMETER obj);
+
+        protected abstract void onAddComponent(TECComponent comp);
+
+        #region Добавление компонентов, параметров в алгоритме расчета
+        private bool getIdComponentOwner(int id_comp, out int id_comp_owner)
+        {
+            return int.TryParse((string)m_dictTableDictPrj[ID_DBTABLE.COMP_VALUES].Select(string.Format(@"ID={0} AND ID_PAR={1}", id_comp, (int)COMP_PARAMETER.OWNER))[0][@"VALUE"], out id_comp_owner);
+        }
+
+        private void addComponents()
+        {
+            int err = -1
+                , id_comp = -1, id_comp_owner = -1
+                , enabled = -1, visibled = -1;
+            bool bEnabled = false
+                , bVisibled = false;
 
             foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows) {
                 id_comp = r[@"ID"] is DBNull ? -1 : (short)r[@"ID"];
 
                 if (id_comp > 0) {
-                    if (int.TryParse((string)tableCompValues.Select(string.Format(@"ID={0} AND ID_PAR={1}", id_comp, (int)COMP_PARAMETER.OWNER))[0][@"VALUE"], out id_comp_owner) == true) {
+                    if (getIdComponentOwner(id_comp, out id_comp_owner) == true) {
                         if (int.TryParse(m_dictProfile.GetAttribute(Session.CurrentIdPeriod, id_comp, HTepUsers.ID_ALLOWED.ENABLED_ITEM), out enabled) == false)
                             enabled = -1;
                         else
                             ;
+                        bEnabled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true;
 
                         if (int.TryParse(m_dictProfile.GetAttribute(Session.CurrentIdPeriod, id_comp, HTepUsers.ID_ALLOWED.VISIBLED_ITEM), out visibled) == false)
                             visibled = -1;
                         else
                             ;
+                        bVisibled = !(visibled < 0) ? visibled == 0 ? false : visibled == 1 ? true : true : true;
 
                         eventAddComponent(new TECComponent(id_comp
                             , id_comp_owner
                             , r[@"DESCRIPTION"] is DBNull ? string.Empty : ((string)r[@"DESCRIPTION"]).Trim()
-                            , !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true
-                            , !(visibled < 0) ? visibled == 0 ? false : visibled == 1 ? true : true : true
+                            , bEnabled
+                            , bVisibled
                         ));
                     } else
                         Logging.Logg().Error(string.Format(@"HPanelTepCommon::panelManagement_PeriodChanged () - не определенный идентификатор родительского компонента для {}...", id_comp), Logging.INDEX_MESSAGE.NOT_SET);
                 } else
                     Logging.Logg().Error(string.Format(@"HPanelTepCommon::panelManagement_PeriodChanged () - не определенный идентификатор компонента..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
+        }
+
+        private void addAlgParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        {
+            int err = -1
+                , id_alg = -1
+                , id_comp = -1, id_comp_owner = -1
+                , prjRatio = -1, vsRatio = -1, vsRound = -1
+                , enabled = -1, visibled = -1;
+            bool bEnabled = false
+                , bVisibled = false;
+            string n_alg = string.Empty;
+            List<int> listIdNAlg = new List<int>();
+            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
+            TECComponent component;
 
             //Список параметров для отображения
             IEnumerable<DataRow> listParameter =
@@ -1278,11 +1358,13 @@ namespace TepCommon
                     enabled = -1;
                 else
                     ;
+                bEnabled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true;
 
                 if (int.TryParse(m_dictProfile.GetAttribute(Session.CurrentIdPeriod, n_alg, HTepUsers.ID_ALLOWED.VISIBLED_ITEM), out visibled) == false)
                     visibled = -1;
                 else
                     ;
+                bVisibled = !(visibled < 0) ? visibled == 0 ? false : visibled == 1 ? true : true : true;
 
                 // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
                 if (listIdNAlg.IndexOf(id_alg) < 0) {
@@ -1292,57 +1374,55 @@ namespace TepCommon
                     //strItem = string.Format(@"{0} ({1})", n_alg, ((string)r[@"NAME_SHR"]).Trim());                    
                     // получить значения для настройки визуального отображения
                     if (dictVisualSettings.ContainsKey(n_alg) == true) {
-                    // установленные в проекте
+                        // установленные в проекте
                         vsRatio = dictVisualSettings[n_alg].m_ratio;
                         vsRound = dictVisualSettings[n_alg].m_round;
                     } else {
-                    // по умолчанию
+                        // по умолчанию
                         vsRatio = HTepUsers.s_iRatioDefault;
                         vsRound = HTepUsers.s_iRoundDefault;
                     }
 
-                    eventAddNAlgParameter(new NALG_PARAMETER(id_alg, n_alg
-                        , -1
-                        , -1
+                    eventAddNAlgParameter(new NALG_PARAMETER(
+                        type
+                        , id_alg, n_alg
                         , r[@"NAME_SHR"] is DBNull ? string.Empty : ((string)r[@"NAME_SHR"]).Trim()
                         , r[@"DESCRIPTION"] is DBNull ? string.Empty : ((string)r[@"DESCRIPTION"]).Trim()
                         , ((short)r[@"AVG"])
                         , ((int)r[@"ID_MEASURE"])
                         , r[@"NAME_SHR_MEASURE"] is DBNull ? string.Empty : ((string)r[@"NAME_SHR_MEASURE"]).Trim()
                         , r[@"SYMBOL"] is DBNull ? string.Empty : ((string)r[@"SYMBOL"]).Trim()
-                        , !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true
-                        , !(visibled < 0) ? visibled == 0 ? false : visibled == 1 ? true : true : true
+                        , bEnabled
+                        , bVisibled
                         , prjRatio, vsRatio, vsRound
                     ));
                 } else {
-                    // параметр уже был добавлен
-                    component = new TECComponent((int)r[@"ID_COMP"]
-                        , -1 //???
+                    // параметр уже был добавлен                    
+                }
+
+                // всегда добавлять (каждый параметр)
+                id_comp = (int)r[@"ID_COMP"];
+                if ((id_comp > 0)
+                    && (getIdComponentOwner(id_comp, out id_comp_owner) == true)) {
+                    component = new TECComponent(id_comp
+                        , id_comp_owner
                         , string.Empty //??? m_strNameShr = ((string)r[@"NAME_SHR"]).Trim()                        
-                        , (!(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true)
-                        , (!(visibled < 0) ? visibled == 0 ? false : visibled == 1 ? true : true : true)
+                        , bEnabled
+                        , bVisibled
                     );
                     // только, если назначенн обработчик в 'PanelTaskTepOutVal'
                     eventAddPutParameter?.Invoke(new PUT_PARAMETER() {
-                        Key = new PUT_PARAMETER.KEY() { m_idNAlg = id_alg, m_idComp = component.m_Id }
+                        Key = new PUT_PARAMETER.KEY() { m_idNAlg = id_alg, m_idComp = id_comp }
                         , m_Id = (int)r[@"ID"]
-                        , m_bEnabled = component.m_bEnabled
-                        , m_bVisibled = component.m_bVisibled
+                        , m_bEnabled = bEnabled
+                        , m_bVisibled = bVisibled
                         ,
                     });
-                }
+                } else
+                    Logging.Logg().Error(string.Format(@"::addAlgParameters () - некорректный идентификатор параметра в алгоритме расчета..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
-
-        protected virtual void panelManagement_TimezoneChanged()
-        {
-        }
-
-        protected abstract void onAddNAlgParameter(NALG_PARAMETER obj);
-
-        protected abstract void onAddPutParameter(PUT_PARAMETER obj);
-
-        protected abstract void onAddComponent(TECComponent comp);
+        #endregion
 
         /// <summary>
         /// преобразование числа в нужный формат отображения

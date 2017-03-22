@@ -15,31 +15,12 @@ namespace PluginTaskReaktivka
     public partial class PanelTaskReaktivka : HPanelTepCommon
     {
         /// <summary>
-        /// флаг очистки отображения
-        /// </summary>
-        static bool m_bflgClear = false;
-        /// <summary>
         /// Набор элементов
         /// </summary>
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1,
-            DGV_DATA, LABEL_DESC
-        }
-        /// <summary>
-        /// Индексы массива списков идентификаторов
-        /// </summary>
-        protected enum INDEX_ID
-        {
-            UNKNOWN = -1,
-            /*PERIOD, // идентификаторы периодов расчетов, использующихся на форме
-            TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов*/
-            ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров
-            //DENY_COMP_CALCULATED, 
-            DENY_COMP_VISIBLED,
-            //DENY_PARAMETER_CALCULATED, // запрещенных для расчета
-            //DENY_PARAMETER_VISIBLED // запрещенных для отображения
-            COUNT
+            DATAGRIDVIEW_VALUES, LABEL_DESC
         }
         /// <summary>
         /// Перечисление - режимы работы вкладки
@@ -127,7 +108,7 @@ namespace PluginTaskReaktivka
         /// </summary>
         private void InitializeComponents()
         {
-            m_dgvValues = new DataGridViewValuesReaktivka(INDEX_CONTROL.DGV_DATA.ToString());
+            m_dgvValues = new DataGridViewValuesReaktivka(INDEX_CONTROL.DATAGRIDVIEW_VALUES.ToString());
 
             foreach (DataGridViewColumn column in m_dgvValues.Columns)
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
@@ -213,105 +194,67 @@ namespace PluginTaskReaktivka
             ID_PERIOD idProfilePeriod;
             ID_TIMEZONE idProfileTimezone;
             string strItem = string.Empty;
-            int i = -1
-                , id_comp = -1;
-            Control ctrl = null;
-            ID_PERIOD idPeriod = ID_PERIOD.UNKNOWN;
-
-            m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
+            object[] keys;
 
             int role = (int)HTepUsers.Role;
 
-            INDEX_ID[] arIndxIdToAdd = new INDEX_ID[] {
-                        //INDEX_ID.DENY_COMP_CALCULATED,
-                        INDEX_ID.DENY_COMP_VISIBLED
-                    };
-            bool[] arChecked = new bool[arIndxIdToAdd.Length];
-
-            for (INDEX_ID id = INDEX_ID.ALL_COMPONENT; id < INDEX_ID.COUNT; id++)
-                switch (id)
-                {
-                    /*case INDEX_ID.PERIOD:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
-                        break;
-                    case INDEX_ID.TIMEZONE:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-                        break;*/
-                    case INDEX_ID.ALL_COMPONENT:
-                        m_arListIds[(int)id] = new List<int> { };
-                        break;
-                    default:
-                        //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
-                        m_arListIds[(int)id] = new List<int>();
-                        break;
-                }
-
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, COMP, TIMEZONE, RATIO
-            initialize(new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD, */ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP, ID_DBTABLE.RATIO }
+            initialize(
+                new ID_DBTABLE[] {
+                    ID_DBTABLE.TIME
+                    , ID_DBTABLE.TIMEZONE
+                    , ID_DBTABLE.COMP_LIST
+                    , ID_DBTABLE.RATIO
+                    , ID_DBTABLE.IN_PARAMETER
+                    //, ID_DBTABLE.OUT_PARAMETER
+                    ,
+                }
                 , out err, out errMsg);
 
             m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Msk;
             m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Month;
+            m_dictTableDictPrj.FilterDbTableCompList = DictionaryTableDictProject.DbTableCompList.Tec | DictionaryTableDictProject.DbTableCompList.Tg;
 
-            (PanelManagement as PanelManagementReaktivka).Clear();
-
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP].Rows)
-            {
-                id_comp = (int)r[@"ID"];
-                m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
-                strItem = ((string)r[@"DESCRIPTION"]).Trim();
-                // установить признак отображения компонента станции
-                arChecked[0] = m_arListIds[(int)INDEX_ID.DENY_COMP_VISIBLED].IndexOf(id_comp) < 0;
-                (PanelManagement as PanelManagementReaktivka).AddComponent(id_comp
-                    , strItem
-                    , arIndxIdToAdd
-                    , arChecked);
-
-                if (m_dictTableDictPrj[ID_DBTABLE.COMP].Rows.Count + 2 > m_dgvValues.Columns.Count)
-                    m_dgvValues.AddColumn(id_comp, strItem, strItem, true, arChecked[0]);
-                else
-                    ;
-            }
-            // возможность_редактирвоания_значений
-            try {
-                if (string.IsNullOrEmpty(m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == false)
-                    (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
-                        int.Parse(m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == 1;
-                else
-                    (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-
-                if ((Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked)
-                    m_dgvValues.AddBRead(false);
-                else
-                    m_dgvValues.AddBRead(true);
-
-                if (string.IsNullOrEmpty(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == false)
-                    (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
-                        int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == 1;
-                else
-                    (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-
+            if (err == 0) {
                 m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
-                if (err == 0)
-                {
-                    //m_bflgClear = !m_bflgClear;
-                    //Заполнить элемент управления с часовыми поясами
-                    idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.TIMEZONE));
-                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
-                        , idProfileTimezone);
+                try {
                     //Заполнить элемент управления с периодами расчета
-                    idPeriod = (ID_PERIOD)int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD));
+                    idProfilePeriod = ID_PERIOD.DAY;
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
-                        , idPeriod);
-                    Session.CurrentIdPeriod = idPeriod;
-                    PanelManagement.SetModeDatetimeRange();
-                } else                    
-                    errMsg = @"Неизвестная ошибка";
-            } catch (Exception e) {
-                Logging.Logg().Exception(e, @"PanelTaskReaktivka::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            }
+                        , idProfilePeriod); //??? активный период требуется прочитать из [profile]
+                    Session.CurrentIdPeriod = PanelManagement.IdPeriod;
+                    //Заполнить элемент управления с часовыми поясами
+                    idProfileTimezone = ID_TIMEZONE.MSK;
+                    PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
+                        , idProfileTimezone); //??? активный пояс требуется прочитать из [profile]
+                    Session.CurrentIdTimezone = PanelManagement.IdTimezone;
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, @"PanelTaskReaktivka::initialize () - инициализация стандартных элементов управления...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+
+                // возможность_редактирвоания_значений
+                try {
+                    keys = new object[] { ID_PERIOD.MONTH, INDEX_CONTROL.DATAGRIDVIEW_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM };
+                    if (string.IsNullOrEmpty(m_dictProfile.GetAttribute(keys)) == false)
+                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_ENABLED_DATAGRIDVIEW_VALUES.ToString(), true)[0] as CheckBox).Checked =
+                            int.Parse(m_dictProfile.GetAttribute(keys)) == 1;
+                    else
+                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_ENABLED_DATAGRIDVIEW_VALUES.ToString(), true)[0] as CheckBox).Checked = false;
+
+                    m_dgvValues.AddBRead(!(Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.CHKBX_ENABLED_DATAGRIDVIEW_VALUES.ToString(), true)[0] as CheckBox).Checked);
+                    //??? это не одно и то же, что и редактирование представления? требуется объединить признаки, т.е. выставлять значение по одному и тому же признаку
+                    if (string.IsNullOrEmpty(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == false)
+                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
+                            int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == 1;
+                    else
+                        (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, @"PanelTaskReaktivka::initialize () - установка свойств элементов в соответствии с профилем...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+            } else
+                errMsg = @"Неизвестная ошибка";
         }
 
         #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'

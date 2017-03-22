@@ -15,7 +15,7 @@ namespace PluginTaskReaktivka
     partial class PanelTaskReaktivka
     {
         /// <summary>
-        /// 
+        /// Представление для отображения значений (реактивная электроэнергия)
         /// </summary>
         protected class DataGridViewValuesReaktivka : DataGridViewValues
         {
@@ -26,9 +26,9 @@ namespace PluginTaskReaktivka
             //private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
 
             /// <summary>
-            /// Конструктор
+            /// Конструктор - основной (с параметрами)
             /// </summary>
-            /// <param name="nameDGV"></param>
+            /// <param name="nameDGV">Наименование представления (используется для поиска элемента)</param>
             public DataGridViewValuesReaktivka(string name) : base (ModeData.DATETIME)
             {
                 Name = name;

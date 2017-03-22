@@ -18,7 +18,13 @@ namespace TepCommon
             /// <summary>
             /// Перечисление - индексы типов вкладок (объектов наследуемых классов)
             /// </summary>
-            public enum TYPE { UNKNOWN = -1, IN_VALUES, OUT_TEP_NORM_VALUES, OUT_VALUES, OUT_TEP_REALTIME, COUNT }
+            [Flags]
+            public enum TYPE { UNKNOWN = 0x0
+                , IN_VALUES = 1
+                , OUT_TEP_NORM_VALUES = 2
+                , OUT_VALUES = 4
+                , OUT_TEP_REALTIME = 8
+                    , }
             private TYPE _type;
             /// <summary>
             /// Индекс типа вкладки для текущего объекта

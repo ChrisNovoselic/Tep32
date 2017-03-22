@@ -181,7 +181,7 @@ namespace PluginTaskTepMain
         {
             Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT;
 
-            onButtonLoadClick();            
+            buttonLoad_onClick();            
         }
 
         private void panelManagement_btnExport_onClick(object sender, EventArgs e)
@@ -259,7 +259,7 @@ namespace PluginTaskTepMain
         {
             Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE;
 
-            onButtonLoadClick();
+            buttonLoad_onClick();
         }
 
         /// <summary>
@@ -271,10 +271,10 @@ namespace PluginTaskTepMain
         {
             Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE;
 
-            onButtonLoadClick();
+            buttonLoad_onClick();
         }
 
-        protected virtual void onButtonLoadClick()
+        protected virtual void buttonLoad_onClick()
         {
             // ... - загрузить/отобразить значения из БД
             updateDataValues();
@@ -360,8 +360,6 @@ namespace PluginTaskTepMain
         /// <param name="obj">Аргумент события</param>
         protected override void panelManagement_EventIndexControlBase_onValueChanged(object obj)
         {
-            base.panelManagement_EventIndexControlBase_onValueChanged(obj);
-
             if (obj is Enum)
                 switch ((ID_DBTABLE)obj) {
                     case ID_DBTABLE.TIME:
@@ -892,11 +890,15 @@ namespace PluginTaskTepMain
                             ;
                 } else if (item.IsNAlg == true) {
                     // найти индекс строки (параметра) - по идентификатору
-                    indx = (
-                            from r in Rows.Cast<DataGridViewRow>()
-                            where (int)r.Tag == item.m_idAlg
-                            select new { r.Index }
-                        ).Cast<int>().ElementAt<int>(0);
+                    // вариант №1
+                    indx = Rows.Cast<DataGridViewRow>().First(r => { return (int)r.Tag == item.m_idAlg; }).Index;
+                    //// // вариант №2
+                    //indx = (
+                    //        from r in Rows.Cast<DataGridViewRow>()
+                    //        where (int)r.Tag == item.m_idAlg
+                    //        select new { r.Index }
+                    //    ).Cast<int>().ElementAt<int>(0);
+                    //// // вариант №3
                     //foreach (DataGridViewRow r in Rows)
                     //    if ((int)r.Tag == item.m_idAlg) {
                     //        indx = Rows.IndexOf(r);
@@ -1265,51 +1267,6 @@ namespace PluginTaskTepMain
                 //??? тоже очищаются
                 clearParameters();
             }
-
-            //protected INDEX_ID getIndexIdOfControl(Control ctrl)
-            //{
-            //    INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
-            //    INDEX_ID indxRes = INDEX_ID.UNKNOWN;
-
-            //    try {
-            //        //Определить идентификатор
-            //        id = getIndexControl(ctrl);
-            //        // , соответствующий изменившему состояние элементу 'CheckedListBox'
-            //        switch (id)
-            //        {
-            //            case INDEX_CONTROL.CLBX_COMP_CALCULATED:
-            //            case INDEX_CONTROL.CLBX_COMP_VISIBLED:
-            //                indxRes = id == INDEX_CONTROL.CLBX_COMP_CALCULATED ? INDEX_ID.DENY_COMP_CALCULATED :
-            //                    id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
-            //                break;
-            //            case INDEX_CONTROL.CLBX_PARAMETER_CALCULATED:
-            //            case INDEX_CONTROL.CLBX_PARAMETER_VISIBLED:
-            //                indxRes = id == INDEX_CONTROL.CLBX_PARAMETER_CALCULATED ? INDEX_ID.DENY_PARAMETER_CALCULATED :
-            //                    id == INDEX_CONTROL.CLBX_PARAMETER_VISIBLED ? INDEX_ID.DENY_PARAMETER_VISIBLED : INDEX_ID.UNKNOWN;
-            //                break;
-            //            default:
-            //                break;
-            //        }
-            //    } catch (Exception e) {
-            //        Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            //    }
-
-            //    return indxRes;
-            //}
-            /// <summary>
-            /// Найти элемент управления на панели по индексу идентификатора
-            /// </summary>
-            /// <param name="id">Индекс идентификатора, используемого для заполнения элемента управления</param>
-            /// <returns>Дочерний элемент управления</returns>
-            protected Control find(INDEX_ID id)
-            {
-                Control ctrlRes = null;
-
-                ctrlRes = find(getIndexControlOfIndexID(id));
-
-                return ctrlRes;
-            }
-
             /// <summary>
             /// Найти элемент управления на панели идентификатору
             /// </summary>
@@ -1322,37 +1279,6 @@ namespace PluginTaskTepMain
                 ctrlRes = Controls.Find(indxCtrl.ToString(), true)[0];
 
                 return ctrlRes;
-            }
-
-            /// <summary>
-            /// Возвратить идентификатор элемента управления по идентификатору
-            ///  , используемого для его заполнения
-            /// </summary>
-            /// <param name="indxId"></param>
-            /// <returns></returns>
-            protected INDEX_CONTROL getIndexControlOfIndexID(INDEX_ID indxId)
-            {
-                INDEX_CONTROL indxRes = INDEX_CONTROL.UNKNOWN;
-
-                switch (indxId)
-                {
-                    case INDEX_ID.DENY_COMP_CALCULATED:
-                        indxRes = INDEX_CONTROL.CLBX_COMP_CALCULATED;
-                        break;
-                    case INDEX_ID.DENY_PARAMETER_CALCULATED:
-                        indxRes = INDEX_CONTROL.MIX_PARAMETER_CALCULATED;
-                        break;
-                    case INDEX_ID.DENY_COMP_VISIBLED:
-                        indxRes = INDEX_CONTROL.CLBX_COMP_VISIBLED;
-                        break;
-                    case INDEX_ID.DENY_PARAMETER_VISIBLED:
-                        indxRes = INDEX_CONTROL.CLBX_PARAMETER_VISIBLED;
-                        break;
-                    default:
-                        break;
-                }
-
-                return indxRes;
             }
 
             protected INDEX_CONTROL getIndexControl(Control ctrl)
@@ -1459,18 +1385,6 @@ namespace PluginTaskTepMain
                     else
                         Logging.Logg().Error(@"PanelManagementTaskTepValues::AddComponent () - не найден элемент для INDEX_ID=" + indxCtrl.ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 }
-            }
-
-            public string GetNameComponent(int id_comp)
-            {
-                string strRes = string.Empty;
-
-                CheckedListBoxTaskTepValues ctrl = null;
-
-                ctrl = find(INDEX_ID.DENY_COMP_CALCULATED) as CheckedListBoxTaskTepValues;
-                strRes = ctrl.GetNameItem(id_comp);
-
-                return strRes;
             }
 
             public void AddNAlgParameter(NALG_PARAMETER nAlgPar)

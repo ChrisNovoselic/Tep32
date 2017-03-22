@@ -172,7 +172,7 @@ namespace PluginTaskTepMain
                     ;
         }
 
-        protected override void onButtonLoadClick()
+        protected override void buttonLoad_onClick()
         {
             // вызов 'reinit()'
             //base.HPanelTepCommon_btnUpdate_Click(obj, ev);
@@ -180,7 +180,7 @@ namespace PluginTaskTepMain
             // очистить содержание представления
             clear();
             // ... - загрузить/отобразить значения из БД
-            base.onButtonLoadClick();
+            base.buttonLoad_onClick();
         }
 
         /// <summary>

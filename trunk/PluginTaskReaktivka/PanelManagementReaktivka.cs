@@ -22,13 +22,12 @@ namespace PluginTaskReaktivka
             /// </summary>
             public enum INDEX_CONTROL
             {
-                UNKNOWN = -1,
-                BUTTON_SEND, BUTTON_SAVE, BUTTON_LOAD, BUTTON_EXPORT,
-                TXTBX_EMAIL,
-                MENUITEM_UPDATE, MENUITEM_HISTORY,
-                CLBX_COMP_VISIBLED, CLBX_COMP_CALCULATED,
-                CHKBX_EDIT,
-                COUNT
+                UNKNOWN = -1
+                , BUTTON_SAVE, BUTTON_LOAD, BUTTON_EXPORT
+                , MENUITEM_UPDATE, MENUITEM_HISTORY
+                , CLBX_COMP_VISIBLED
+                , CHKBX_ENABLED_DATAGRIDVIEW_VALUES
+                    , COUNT
             }
             /// <summary>
             /// Инициализация размеров/стилей макета для размещения элементов управления
@@ -106,7 +105,7 @@ namespace PluginTaskReaktivka
                 SetColumnSpan(ctrl, ColumnCount); SetRowSpan(ctrl, 4);
                 //Признак Корректировка_включена/корректировка_отключена 
                 ctrl = new CheckBox();
-                ctrl.Name = INDEX_CONTROL.CHKBX_EDIT.ToString();
+                ctrl.Name = INDEX_CONTROL.CHKBX_ENABLED_DATAGRIDVIEW_VALUES.ToString();
                 ctrl.Text = @"Корректировка значений разрешена";
                 ctrl.Dock = DockStyle.Fill;
                 ctrl.Enabled = false;
@@ -177,76 +176,13 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// Добавить элемент компонент станции в списки
-            /// , в соответствии с 'arIndexIdToAdd'
-            /// </summary>
-            /// <param name="id">Идентификатор компонента</param>
-            /// <param name="text">Текст подписи к компоненту</param>
-            /// <param name="arIndexIdToAdd">Массив индексов в списке </param>
-            /// <param name="arChecked">Массив признаков состояния для элементов</param>
-            public void AddComponent(int id_comp, string text, INDEX_ID[] arIndexIdToAdd, bool[] arChecked)
-            {
-                Control ctrl = null;
-
-                for (int i = 0; i < arIndexIdToAdd.Length; i++)
-                {
-                    ctrl = find(arIndexIdToAdd[i]);
-
-                    if (!(ctrl == null))
-                        (ctrl as CheckedListBoxTaskReaktivka).AddItem(id_comp, text, arChecked[i]);
-                    else
-                        Logging.Logg().Error(@"PanelManagementTaskTepValues::AddComponent () - не найден элемент для INDEX_ID=" + arIndexIdToAdd[i].ToString(), Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-
-            /// <summary>
-            /// Найти элемент управления на панели по индексу идентификатора
-            /// </summary>
-            /// <param name="id">Индекс идентификатора, используемого для заполнения элемента управления</param>
-            /// <returns>Дочерний элемент управления</returns>
-            protected Control find(INDEX_ID id)
-            {
-                Control ctrlRes = null;
-
-                ctrlRes = find(getIndexControlOfIndexID(id));
-
-                return ctrlRes;
-            }
-
-            /// <summary>
             /// Найти элемент управления на панели идентификатору
             /// </summary>
             /// <param name="indxCtrl">Идентификатор элемента управления</param>
             /// <returns>элемент панели</returns>
             protected Control find(INDEX_CONTROL indxCtrl)
             {
-                Control ctrlRes = null;
-
-                ctrlRes = Controls.Find(indxCtrl.ToString(), true)[0];
-
-                return ctrlRes;
-            }
-
-            /// <summary>
-            /// Возвратить идентификатор элемента управления по идентификатору
-            ///  , используемого для его заполнения
-            /// </summary>
-            /// <param name="indxId"></param>
-            /// <returns>индекс элемента панели</returns>
-            protected INDEX_CONTROL getIndexControlOfIndexID(INDEX_ID indxId)
-            {
-                INDEX_CONTROL indxRes = INDEX_CONTROL.UNKNOWN;
-
-                switch (indxId)
-                {
-                    case INDEX_ID.DENY_COMP_VISIBLED:
-                        indxRes = INDEX_CONTROL.CLBX_COMP_VISIBLED;
-                        break;
-                    default:
-                        break;
-                }
-
-                return indxRes;
+                return find(indxCtrl.ToString());
             }
 
             /// <summary>
@@ -256,28 +192,28 @@ namespace PluginTaskReaktivka
             {
                 base.Clear();
 
-                INDEX_ID[] arIndxIdToClear = new INDEX_ID[] { INDEX_ID.DENY_COMP_VISIBLED };
+                INDEX_CONTROL[] arIndxControlToClear = new INDEX_CONTROL[] { INDEX_CONTROL.CLBX_COMP_VISIBLED };
 
-                Clear(arIndxIdToClear);
+                Clear(arIndxControlToClear);
             }
 
             /// <summary>
             /// Очистить все группы элементов управления, указанных в массиве
             /// </summary>
-            /// <param name="arIdToClear">Массив индексов в списке идентификаторов групп элементов управления</param>
-            public void Clear(INDEX_ID[] arIdToClear)
+            /// <param name="arIndxToClear">Массив индексов в списке идентификаторов групп элементов управления</param>
+            public void Clear(INDEX_CONTROL[] arIndxToClear)
             {
-                for (int i = 0; i < arIdToClear.Length; i++)
-                    clear(arIdToClear[i]);
+                for (int i = 0; i < arIndxToClear.Length; i++)
+                    clear(arIndxToClear[i]);
             }
 
             /// <summary>
             /// Очистить элементы управления по индексу в списке идентификаторов групп элементов
             /// </summary>
             /// <param name="idToClear">Индекс в списке группы идентификаторов</param>
-            private void clear(INDEX_ID idToClear)
+            private void clear(INDEX_CONTROL indxToClear)
             {
-                (find(idToClear) as IControl).ClearItems();
+                (find(indxToClear) as IControl).ClearItems();
             }
 
             /// <summary>
@@ -290,56 +226,9 @@ namespace PluginTaskReaktivka
                 itemCheck((obj as IControl).SelectedId, ItemCheckedParametersEventArgs.TYPE.VISIBLE, (ev as ItemCheckEventArgs).NewValue);
             }
 
-            /// <summary>
-            /// Получение ИД контрола
-            /// </summary>
-            /// <param name="ctrl">контрол</param>
-            /// <returns>индекс</returns>
-            protected INDEX_ID getIndexIdOfControl(Control ctrl)
-            {
-                INDEX_CONTROL id = INDEX_CONTROL.UNKNOWN; //Индекс (по сути - идентификатор) элемента управления, инициировавшего событие
-                INDEX_ID indxRes = INDEX_ID.UNKNOWN;
-
-                try {
-                    //Определить идентификатор
-                    id = getIndexControl(ctrl);
-                    // , соответствующий изменившему состояние элементу 'CheckedListBox'
-                    switch (id) {
-                        case INDEX_CONTROL.CLBX_COMP_VISIBLED:
-                            indxRes = id == INDEX_CONTROL.CLBX_COMP_VISIBLED ? INDEX_ID.DENY_COMP_VISIBLED : INDEX_ID.UNKNOWN;
-                            break;
-                        default:
-                            break;
-                    }
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, @"PanelManagementTaskTepValues::onItemCheck () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-
-                return indxRes;
-            }
-
-            /// <summary>
-            /// Получение индекса контрола
-            /// </summary>
-            /// <param name="ctrl">контрол</param>
-            /// <returns>имя индекса контрола на панели</returns>
-            protected INDEX_CONTROL getIndexControl(Control ctrl)
-            {
-                INDEX_CONTROL indxRes = INDEX_CONTROL.UNKNOWN;
-
-                string strId = (ctrl as Control).Name;
-
-                if (strId.Equals(INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString()) == true)
-                    indxRes = INDEX_CONTROL.CLBX_COMP_VISIBLED;
-                else
-                    throw new Exception(@"PanelTaskReaktivka::getIndexControl () - не найден объект 'CheckedListBox'...");
-
-                return indxRes;
-            }
-
             protected override void activateControlChecked_onChanged(bool bActivate)
             {
-                throw new NotImplementedException();
+                activateControlChecked_onChanged(new string[] { INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString() }, bActivate);
             }
         }
     }

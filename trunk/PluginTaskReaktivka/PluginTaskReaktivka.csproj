@@ -50,11 +50,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataGridView.cs">
+    <Compile Include="DataGridViewReaktivka.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="HandlerDbTaskReaktivkaCalculate.cs" />
-    <Compile Include="PanelManagement.cs">
+    <Compile Include="PanelManagementReaktivka.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="PluginItems.cs" />

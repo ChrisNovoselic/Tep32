@@ -42,18 +42,7 @@ namespace TepCommon
             public class NALG_PROPERTY : NALG_PARAMETER
             {
                 public NALG_PROPERTY(NALG_PARAMETER nAlgPar)
-                    : base(nAlgPar.m_Id, nAlgPar.m_nAlg
-                          , -1 //???
-                          , -1 //???
-                          , nAlgPar.m_strNameShr
-                          , nAlgPar.m_strDescription
-                          , nAlgPar.m_sAverage
-                          , nAlgPar.m_iIdMeasure
-                          , nAlgPar.m_strMeausure
-                          , nAlgPar.m_strSymbol
-                          , nAlgPar.m_bEnabled, nAlgPar.m_bVisibled
-                          , nAlgPar.m_prjRatio, nAlgPar.m_vsRatio, nAlgPar.m_vsRound
-                    )
+                    : base(nAlgPar)
                 {
                 }
 

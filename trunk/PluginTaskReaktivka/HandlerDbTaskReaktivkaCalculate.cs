@@ -4,7 +4,6 @@ using System.Data;
 using HClassLibrary;
 using TepCommon;
 
-
 namespace PluginTaskReaktivka
 {
     /// <summary>

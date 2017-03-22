@@ -315,6 +315,20 @@ namespace TepCommon
                 }
             }
 
+            /// <summary>
+            /// Найти элемент управления на панели идентификатору
+            /// </summary>
+            /// <param name="indxCtrl">Идентификатор элемента управления</param>
+            /// <returns>элемент панели</returns>
+            protected Control find(string nameCtrl)
+            {
+                Control ctrlRes = null;
+
+                ctrlRes = Controls.Find(nameCtrl, true)[0];
+
+                return ctrlRes;
+            }
+
             public virtual void Clear()
             {
                 INDEX_CONTROL_BASE indxCtrl;
