@@ -168,7 +168,7 @@ namespace PluginTaskVedomostBl
                 /// <summary>
                 /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
                 /// </summary>
-                private class CheckedListBoxGroupHeaders : CheckedListBox, IControl
+                private class CheckedListBoxGroupHeaders : CheckedListBoxTaskCalculate
                 {
                     /// <summary>
                     /// подсказка
@@ -183,18 +183,12 @@ namespace PluginTaskVedomostBl
                     /// </summary>
                     private int _indexToolTipText;
                     /// <summary>
-                    /// Список для хранения идентификаторов переменных
-                    /// </summary>
-                    private List<int> m_listId;
-                    /// <summary>
                     /// Конструктор - основной (без параметров)
                     /// </summary>
                     public CheckedListBoxGroupHeaders()
                         : base()
                     {
                         try {
-                            m_listId = new List<int>();
-
                             m_ToolTipText = new string[s_listGroupHeaders.Count];
 
                             Dock = DockStyle.Fill;
@@ -202,36 +196,9 @@ namespace PluginTaskVedomostBl
 
                             MouseMove += new MouseEventHandler(showCheckBoxToolTip);
                         } catch (Exception e) {
-                            Logging.Logg().Exception(e, @"PanelManagementVedomostBl::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Exception(e, @"CheckedListBoxGroupHeaders::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
                     }
-
-                    /// <summary>
-                    /// Идентификатор выбранного элемента списка
-                    /// </summary>
-                    public int SelectedId { get { return m_listId[SelectedIndex]; } }
-
-                    /// <summary>
-                    /// Добавить элемент в список
-                    /// </summary>
-                    /// <param name="id">Идентификатор элемента</param>
-                    /// <param name="text">Текст подписи элемента</param>
-                    /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
-                    private void addItem(int id, string text, bool bChecked)
-                    {
-                        Items.Add(text, bChecked);
-                        m_listId.Add(id);
-                    }
-
-                    /// <summary>
-                    /// Удалить все элементы в списке
-                    /// </summary>
-                    public void ClearItems()
-                    {
-                        Items.Clear();
-                        m_listId.Clear();
-                    }
-
                     ///// <summary>
                     ///// Возвращает имя итема
                     ///// </summary>
@@ -245,7 +212,6 @@ namespace PluginTaskVedomostBl
 
                     //    return strRes;
                     //}
-
                     /// <summary>
                     /// обработчик события - отображения всплывающей подсказки по группам
                     /// </summary>
@@ -281,7 +247,6 @@ namespace PluginTaskVedomostBl
                             // предыдущий текст остался актуальным
                             ;
                     }
-
                     /// <summary>
                     /// Формирование текста всплывающей подсказки 
                     /// для групп
@@ -307,7 +272,6 @@ namespace PluginTaskVedomostBl
 
                         return strTextToolTip;
                     }
-
                     /// <summary>
                     /// Добавить элемент компонент станции в списки
                     ///, в соответствии с 'arIndexIdToAdd'
@@ -316,11 +280,11 @@ namespace PluginTaskVedomostBl
                     /// <param name="text">Текст подписи к компоненту</param>
                     /// <param name="arIndexIdToAdd">Массив индексов в списке </param>
                     /// <param name="arChecked">Массив признаков состояния для элементов</param>
-                    public void AddItem(int indx, string text, List<string> textToolTip, bool bChecked)
+                    public void AddItem(int id, string text, List<string> textToolTip, bool bChecked)
                     {
-                        m_ToolTipText[indx] = formatToolTipText(textToolTip);
+                        m_ToolTipText[id] = formatToolTipText(textToolTip);
 
-                        addItem(indx, text, bChecked);
+                        AddItem(id, text, bChecked);
                     }
                 }
                 /// <summary>

@@ -221,7 +221,7 @@ namespace PluginTaskReaktivka
 
                 try {
                     //Заполнить элемент управления с периодами расчета
-                    idProfilePeriod = ID_PERIOD.DAY;
+                    idProfilePeriod = ID_PERIOD.MONTH;
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , idProfilePeriod); //??? активный период требуется прочитать из [profile]
                     Session.CurrentIdPeriod = PanelManagement.IdPeriod;
@@ -318,6 +318,7 @@ namespace PluginTaskReaktivka
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
         protected override void onAddComponent(TECComponent obj)
         {
+            PanelManagement.AddComponent(obj);
         }
         #endregion
 
@@ -349,7 +350,7 @@ namespace PluginTaskReaktivka
             {
                 List<DataRow> listRes;
 
-                listRes = m_dictTableDictPrj[ID_DBTABLE.COMP].Select().ToList<DataRow>();
+                listRes = m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select().ToList<DataRow>();
 
                 return listRes;
             }
@@ -753,23 +754,6 @@ namespace PluginTaskReaktivka
 
             if (!(iRegDbConn > 0))
                 m_handlerDb.UnRegisterDbConnection();
-        }
-
-        /// <summary>
-        /// Проверка выбранного диапазона
-        /// </summary>
-        /// <param name="dtRange">диапазон дат</param>
-        /// <returns>флагп проверки</returns>
-        private bool rangeCheking(DateTimeRange[] dtRange)
-        {
-            bool bflag = false;
-
-            for (int i = 0; i < dtRange.Length; i++)
-                if (dtRange[i].Begin.Month > DateTime.Now.Month)
-                    if (dtRange[i].End.Year >= DateTime.Now.Year)
-                        bflag = true;
-
-            return bflag;
         }
 
         /// <summary>

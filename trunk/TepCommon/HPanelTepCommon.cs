@@ -31,10 +31,10 @@ namespace TepCommon
         private System.ComponentModel.IContainer components = null;
 
         protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE TaskCalculateType;
-        /// <summary>
-        /// Массив списков параметров
-        /// </summary>
-        protected List<int>[] m_arListIds;
+        ///// <summary>
+        ///// Массив списков параметров
+        ///// </summary>
+        //protected List<int>[] m_arListIds;
 
         protected class DictionaryTableDictProject : Dictionary<ID_DBTABLE, DataTable>
         {
@@ -962,33 +962,29 @@ namespace TepCommon
 
         protected struct PUT_PARAMETER
         {
-            public struct KEY
-            {
+            //public struct KEY
+            //{
                 /// <summary>
                 /// Идентификатор в БД элемента в алгоритме расчета
                 /// </summary>
                 public int m_idNAlg;
-                /// <summary>
-                /// Идентификатор в БД компонента(оборудования)
-                /// </summary>
-                public int m_idComp;
-            }
+            //    /// <summary>
+            //    /// Идентификатор в БД компонента(оборудования)
+            //    /// </summary>
+            //    public int m_idComp;
+            //}
 
-            public KEY Key;
+            //public KEY Key;
             /// <summary>
             /// Идентификатор в БД (в соответствии с компонентом-оборудованием)
             /// </summary>
             public int m_Id;
-            ///// <summary>
-            ///// Наименовнаие параметра
-            ///// </summary>
-            //public string m_strNameShr;
 
-            //public TECComponent m_component;
+            public TECComponent m_component;
 
-            //public int IdComponent { get { return m_component.m_id; } }
+            public int IdComponent { get { return m_component.m_Id; } }
 
-            //public string NameShrComponent { get { return m_component.m_nameShr; } }
+            public string NameShrComponent { get { return m_component.m_nameShr; } }
 
             public bool IsEnabled { get { return m_bEnabled; } }
 
@@ -1009,19 +1005,23 @@ namespace TepCommon
             /// <param name="id_alg">Идентификатор в БД элемента в алгоритме расчета</param>
             /// <param name="id_comp">Идентификатор в БД компонента(оборудования)</param>
             /// <param name="id_put">Идентификатор в БД (в соответствии с компонентом-оборудованием)</param>
+            /// <param name="comp">Объект компонента</param>
             /// <param name="enabled">Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)</param>
-            public PUT_PARAMETER(int id_alg, int id_comp, int id_put, bool enabled, bool visibled)
-                : this (new TepCommon.HPanelTepCommon.PUT_PARAMETER.KEY() { m_idNAlg = id_alg, m_idComp = id_comp }
-                    , id_put
-                    , enabled
-                    , visibled)
-            {
-            }
+            //public PUT_PARAMETER(int id_alg, int id_put, TECComponent comp, bool enabled, bool visibled)
+            //    : this(/*new TepCommon.HPanelTepCommon.PUT_PARAMETER.KEY() { m_idNAlg =*/ id_alg/*, m_idComp = id_comp }*/
+            //        , id_put
+            //        , comp
+            //        , enabled
+            //        , visibled)
+            //{
+            //}
 
-            public PUT_PARAMETER(KEY key, int id_put, bool enabled, bool visibled)
+            public PUT_PARAMETER(int id_alg/*KEY key*/, int id_put, TECComponent comp, bool enabled, bool visibled)
             {
-                Key = key;
+                m_idNAlg = id_alg //Key = key
+                    ;
                 m_Id = id_put;
+                m_component = comp;
                 m_bEnabled = enabled;
                 m_bVisibled = visibled;
             }
@@ -1412,8 +1412,9 @@ namespace TepCommon
                     );
                     // только, если назначенн обработчик в 'PanelTaskTepOutVal'
                     eventAddPutParameter?.Invoke(new PUT_PARAMETER() {
-                        Key = new PUT_PARAMETER.KEY() { m_idNAlg = id_alg, m_idComp = id_comp }
+                        /*Key = new PUT_PARAMETER.KEY() {*/ m_idNAlg = id_alg/*, m_idComp = id_comp }*/
                         , m_Id = (int)r[@"ID"]
+                        , m_component = component
                         , m_bEnabled = bEnabled
                         , m_bVisibled = bVisibled
                         ,

@@ -41,6 +41,70 @@ namespace TepCommon
         /// </summary>
         protected abstract class PanelManagementTaskCalculate : HClassLibrary.HPanelCommon
         {
+            /// <summary>
+            /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
+            /// </summary>
+            protected class CheckedListBoxTaskCalculate : CheckedListBox, IControl
+            {
+                private struct ITEM
+                {
+                    public int Id;
+
+                    public string Text;                    
+
+                    public override string ToString()
+                    {
+                        return Text;
+                    }
+                }
+                ///// <summary>
+                ///// Список для хранения идентификаторов переменных
+                ///// </summary>
+                //private List<int> m_listId;
+
+                public CheckedListBoxTaskCalculate()
+                    : base()
+                {
+                    //m_listId = new List<int>();
+                }
+
+                /// <summary>
+                /// Идентификатор выбранного элемента списка
+                /// </summary>
+                public int SelectedId { get { return /*m_listId*/((ITEM)Items[SelectedIndex]).Id; } }
+
+                /// <summary>
+                /// Добавить элемент в список
+                /// </summary>
+                /// <param name="text">Текст подписи элемента</param>
+                /// <param name="id">Идентификатор элемента</param>
+                /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
+                public void AddItem(int id, string text, bool bChecked)
+                {
+                    int indxNewItem = -1;
+
+                    indxNewItem = Items.Add(new ITEM() { Id = id, Text = text }, bChecked);
+                }
+
+                /// <summary>
+                /// Удалить все элементы в списке
+                /// </summary>
+                public void ClearItems()
+                {
+                    Items.Clear();
+                    //m_listId.Clear();
+                }
+
+                public string GetNameItem(int id)
+                {
+                    string strRes = string.Empty;
+
+                    strRes = Items.Cast<ITEM>().First(item => { return item.Id == id; }).Text;
+
+                    return strRes;
+                }
+            }
+
             private enum INDEX_CONTROL_BASE
             {
                 UNKNOWN = -1
@@ -563,6 +627,7 @@ namespace TepCommon
                     rowValues.ToList().ForEach(r => { tableValues.Rows.Add(r.ItemArray); });                    
                     ctrl.DataSource = tableValues;
 
+                    ctrl.SelectedIndex = -1;
                     //??? до или после
                     //ctrl.SelectedIndexChanged += new EventHandler(handler);
                     activateComboBoxSelectedIndex_onChanged(indxCtrl, handler, true);

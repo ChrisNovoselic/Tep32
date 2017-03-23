@@ -97,10 +97,10 @@ namespace PluginTaskReaktivka
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
                 //
-                ctrl = new CheckedListBoxTaskReaktivka();
+                ctrl = new CheckedListBoxTaskCalculate();
                 ctrl.Name = INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString();
                 ctrl.Dock = DockStyle.Fill;
-                (ctrl as CheckedListBoxTaskReaktivka).CheckOnClick = true;
+                (ctrl as CheckedListBoxTaskCalculate).CheckOnClick = true;
                 Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, ColumnCount); SetRowSpan(ctrl, 4);
                 //Признак Корректировка_включена/корректировка_отключена 
@@ -117,62 +117,11 @@ namespace PluginTaskReaktivka
                 PerformLayout();
             }
 
-            /// <summary>
-            /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
-            /// </summary>
-            protected class CheckedListBoxTaskReaktivka : CheckedListBox, IControl
+            public void AddComponent(TECComponent comp)
             {
-                int[] arItem;
-                /// <summary>
-                /// Список для хранения идентификаторов переменных
-                /// </summary>
-                private List<int> m_listId;
+                CheckedListBoxTaskCalculate ctrl = find(INDEX_CONTROL.CLBX_COMP_VISIBLED) as CheckedListBoxTaskCalculate;
 
-                public CheckedListBoxTaskReaktivka()
-                    : base()
-                {
-                    m_listId = new List<int>();
-                }
-
-                /// <summary>
-                /// Идентификатор выбранного элемента списка
-                /// </summary>
-                public int SelectedId { get { return m_listId[SelectedIndex]; } }
-
-                /// <summary>
-                /// Добавить элемент в список
-                /// </summary>
-                /// <param name="text">Текст подписи элемента</param>
-                /// <param name="id">Идентификатор элемента</param>
-                /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
-                public void AddItem(int id, string text, bool bChecked)
-                {
-                    Items.Add(text, bChecked);
-                    m_listId.Add(id);
-                }
-
-                /// <summary>
-                /// Удалить все элементы в списке
-                /// </summary>
-                public void ClearItems()
-                {
-                    Items.Clear();
-                    m_listId.Clear();
-                }
-
-                /// <summary>
-                /// Возвратить наименование элемента по идентификатору
-                /// </summary>
-                /// <param name="id"><Идентификатор элемента/param>
-                /// <returns>Наименованеи элемента</returns>
-                public string GetNameItem(int id)
-                {
-                    string strRes = string.Empty;
-
-                    strRes = (string)Items[m_listId.IndexOf(id)];
-
-                    return strRes;
-                }
+                ctrl.AddItem(comp.m_Id, comp.m_nameShr, comp.m_bVisibled);
             }
 
             /// <summary>

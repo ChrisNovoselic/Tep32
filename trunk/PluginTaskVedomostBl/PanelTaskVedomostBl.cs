@@ -469,7 +469,7 @@ namespace PluginTaskVedomostBl
         /// <param name="dgv">активное окно отображения данных</param>
         public void ConfigureDataGridView(DataGridView dgv)
         {
-            //???
+            //??? зачем передавать аргумент объект самого себя
             (dgv as DataGridViewVedomostBl).ConfigureColumns(/*dgv as DataGridView*/);
         }
 
@@ -564,28 +564,29 @@ namespace PluginTaskVedomostBl
             err = 0;
             errMsg = string.Empty;
 
+            ID_TIMEZONE idProfileTimezone = ID_TIMEZONE.UNKNOWN;
             ID_PERIOD idProfilePeriod = ID_PERIOD.UNKNOWN;
             string strItem = string.Empty;
             Control ctrl = null;
 
-            m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
+            //m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
-            foreach (INDEX_ID id in Enum.GetValues(typeof(INDEX_ID)))
-                switch (id) {
-                    /*case INDEX_ID.PERIOD:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
-                        break;
-                    case INDEX_ID.TIMEZONE:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-                        break;
-                    case INDEX_ID.ALL_COMPONENT:
-                        m_arListIds[(int)id] = new List<int> { };
-                        break;*/
-                    default:
-                        //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
-                        m_arListIds[(int)id] = new List<int>();
-                        break;
-                }
+            //foreach (INDEX_ID id in Enum.GetValues(typeof(INDEX_ID)))
+            //    switch (id) {
+            //        /*case INDEX_ID.PERIOD:
+            //            m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
+            //            break;
+            //        case INDEX_ID.TIMEZONE:
+            //            m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
+            //            break;
+            //        case INDEX_ID.ALL_COMPONENT:
+            //            m_arListIds[(int)id] = new List<int> { };
+            //            break;*/
+            //        default:
+            //            //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
+            //            m_arListIds[(int)id] = new List<int>();
+            //            break;
+            //    }
 
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMWZONE, COMP, PARAMETER, RATIO
@@ -627,11 +628,13 @@ namespace PluginTaskVedomostBl
 
             if (err == 0) {
                 try {
+                    //???
                     m_bflgClear = !m_bflgClear;
 
                     //Заполнить элемент управления с часовыми поясами
+                    idProfileTimezone = ID_TIMEZONE.MSK;
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
-                        , ID_TIMEZONE.MSK);
+                        , idProfileTimezone);
                     //Заполнить элемент управления с периодами расчета
                     idProfilePeriod = (ID_PERIOD)int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
@@ -993,7 +996,7 @@ namespace PluginTaskVedomostBl
         private void setValues()
         {
             m_arTableEdit[(int)Session.m_ViewValues] =
-             m_arTableOrigin[(int)Session.m_ViewValues].Clone();
+                m_arTableOrigin[(int)Session.m_ViewValues].Clone();
         }
 
         /// <summary>

@@ -63,11 +63,11 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataGridView.cs">
+    <Compile Include="DataGridViewVedomostBl.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="HandlerDbTaskVedomostBlCalculate.cs" />
-    <Compile Include="PanelManagement.cs">
+    <Compile Include="PanelManagementVedomostBl.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="PanelTaskVedomostBl.cs">

@@ -140,8 +140,7 @@ namespace PluginTaskTepMain
         {
             base.onAddPutParameter(obj);
 
-            (PanelManagement as PanelManagementTaskTepOutVal).AddPutParameter(obj
-                , ((string)m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Select(string.Format(@"ID={0}", obj.m_Id))[0][@"NAME_SHR"]).Trim());
+            (PanelManagement as PanelManagementTaskTepOutVal).AddPutParameter(obj);
         }
         /// <summary>
         /// Класс для размещения управляющих элементов управления
@@ -200,11 +199,11 @@ namespace PluginTaskTepMain
             ///  , для визуализации простой список параметров алгоритма расчета базовых
             /// </summary>
             /// <param name="putPar">Объект с описанием добавляемого параметра</param>
-            public void AddPutParameter(PUT_PARAMETER putPar, string nameShrComponent)
+            public void AddPutParameter(PUT_PARAMETER putPar)
             {
                 Control ctrl = find(INDEX_CONTROL.CLBX_COMP_CALCULATED);
 
-                (ctrl as TreeViewTaskTepCalcParameters).AddItem(putPar.Key.m_idNAlg, putPar.Key.m_idComp, putPar.m_Id, nameShrComponent, putPar.IsEnabled);
+                (ctrl as TreeViewTaskTepCalcParameters).AddItem(putPar.m_idNAlg, putPar.IdComponent, putPar.m_Id, putPar.NameShrComponent, putPar.IsEnabled);
             }
             /// <summary>
             /// ??? Возвратить наименование компонента
@@ -215,9 +214,9 @@ namespace PluginTaskTepMain
             {
                 string strRes = string.Empty;
 
-                CheckedListBoxTaskTepValues ctrl = null;
+                CheckedListBoxTaskCalculate ctrl = null;
 
-                ctrl = find(INDEX_CONTROL.MIX_PARAMETER_CALCULATED.ToString()) as CheckedListBoxTaskTepValues;
+                ctrl = find(INDEX_CONTROL.MIX_PARAMETER_CALCULATED.ToString()) as CheckedListBoxTaskCalculate;
                 strRes = ctrl.GetNameItem(id_comp);
 
                 return strRes;

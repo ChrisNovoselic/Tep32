@@ -45,21 +45,21 @@ namespace PluginTaskAutobook
             DGV_PLANEYAR = 2,
             LABEL_DESC, LABEL_YEARPLAN
         }
-        /// <summary>
-        /// Индексы массива списков идентификаторов
-        /// </summary>
-        protected enum INDEX_ID
-        {
-            UNKNOWN = -1,
-            /*PERIOD, // идентификаторы периодов расчетов, использующихся на форме
-            TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов*/
-            ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров
-            //    , DENY_COMP_CALCULATED,
-            //DENY_PARAMETER_CALCULATED // запрещенных для расчета
-            //    , DENY_COMP_VISIBLED,
-            //DENY_PARAMETER_VISIBLED // запрещенных для отображения
-            COUNT
-        }
+        ///// <summary>
+        ///// Индексы массива списков идентификаторов
+        ///// </summary>
+        //protected enum INDEX_ID
+        //{
+        //    UNKNOWN = -1,
+        //    /*PERIOD, // идентификаторы периодов расчетов, использующихся на форме
+        //    TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов*/
+        //    ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров
+        //    //    , DENY_COMP_CALCULATED,
+        //    //DENY_PARAMETER_CALCULATED // запрещенных для расчета
+        //    //    , DENY_COMP_VISIBLED,
+        //    //DENY_PARAMETER_VISIBLED // запрещенных для отображения
+        //    COUNT
+        //}
         /// <summary>
         /// Отображение значений в табличном представлении(план)
         /// </summary>
@@ -324,27 +324,27 @@ namespace PluginTaskAutobook
                 , id_comp = -1;
             Control ctrl = null;
 
-            m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
+            //m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
 
             //m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
             int role = HTepUsers.Role;
 
-            for (INDEX_ID id = INDEX_ID.ALL_COMPONENT; id < INDEX_ID.COUNT; id++)
-                switch (id) {
-                    /*case INDEX_ID.PERIOD:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH, (int)ID_PERIOD.YEAR };
-                        break;
-                    case INDEX_ID.TIMEZONE:
-                        m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-                        break;*/
-                    case INDEX_ID.ALL_COMPONENT:
-                        m_arListIds[(int)id] = new List<int> { };
-                        break;
-                    default:
-                        //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
-                        m_arListIds[(int)id] = new List<int>();
-                        break;
-                }
+            //for (INDEX_ID id = INDEX_ID.ALL_COMPONENT; id < INDEX_ID.COUNT; id++)
+            //    switch (id) {
+            //        /*case INDEX_ID.PERIOD:
+            //            m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH, (int)ID_PERIOD.YEAR };
+            //            break;
+            //        case INDEX_ID.TIMEZONE:
+            //            m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
+            //            break;*/
+            //        case INDEX_ID.ALL_COMPONENT:
+            //            m_arListIds[(int)id] = new List<int> { };
+            //            break;
+            //        default:
+            //            //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
+            //            m_arListIds[(int)id] = new List<int>();
+            //            break;
+            //    }
 
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMIZONE, COMP, PARAMETER(OUT_VALUES), MEASURE, RATIO
@@ -356,7 +356,7 @@ namespace PluginTaskAutobook
 
             foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows) {
                 id_comp = (short)r[@"ID"];
-                m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
+                //m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
 
                 m_dgvValues.AddIdComp(id_comp, "Output");
             }

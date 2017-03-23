@@ -1139,7 +1139,7 @@ namespace PluginTaskTepMain
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
                 //Признак для включения/исключения из расчета компонента
-                ctrl = new CheckedListBoxTaskTepValues();
+                ctrl = new CheckedListBoxTaskCalculate();
                 ctrl.Name = INDEX_CONTROL.CLBX_COMP_CALCULATED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
@@ -1195,13 +1195,13 @@ namespace PluginTaskTepMain
                 (ctrl as System.Windows.Forms.Label).Text = @"Включить/исключить для отображения";
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 1);
-                ctrl = new CheckedListBoxTaskTepValues();
+                ctrl = new CheckedListBoxTaskCalculate();
                 ctrl.Name = INDEX_CONTROL.CLBX_COMP_VISIBLED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, 8); SetRowSpan(ctrl, 3);
                 //Признак для включения/исключения для отображения параметра
-                ctrl = new CheckedListBoxTaskTepValues();
+                ctrl = new CheckedListBoxTaskCalculate();
                 ctrl.Name = INDEX_CONTROL.CLBX_PARAMETER_VISIBLED.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 3);
@@ -1381,7 +1381,7 @@ namespace PluginTaskTepMain
                         bChecked = false;
 
                     if (!(ctrl == null))
-                        (ctrl as CheckedListBoxTaskTepValues).AddItem(comp.m_Id, comp.m_nameShr, bChecked);
+                        (ctrl as CheckedListBoxTaskCalculate).AddItem(comp.m_Id, comp.m_nameShr, bChecked);
                     else
                         Logging.Logg().Error(@"PanelManagementTaskTepValues::AddComponent () - не найден элемент для INDEX_ID=" + indxCtrl.ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -1389,7 +1389,7 @@ namespace PluginTaskTepMain
 
             public void AddNAlgParameter(NALG_PARAMETER nAlgPar)
             {
-                CheckedListBoxTaskTepValues ctrl;
+                CheckedListBoxTaskCalculate ctrl;
                 bool bChecked = false;
 
                 // в этих элементах управления размещаются элементы проекта - параметры алгоритма расчета
@@ -1399,7 +1399,7 @@ namespace PluginTaskTepMain
                 };
 
                 foreach (INDEX_CONTROL indxCtrl in arIndexControl) {
-                    ctrl = find(indxCtrl) as CheckedListBoxTaskTepValues;
+                    ctrl = find(indxCtrl) as CheckedListBoxTaskCalculate;
 
                     if (indxCtrl == INDEX_CONTROL.MIX_PARAMETER_CALCULATED)
                         bChecked = nAlgPar.m_bEnabled;
@@ -1409,7 +1409,7 @@ namespace PluginTaskTepMain
                         bChecked = false;
 
                     if (!(ctrl == null))
-                        (ctrl as CheckedListBoxTaskTepValues).AddItem(nAlgPar.m_Id, nAlgPar.m_strNameShr, bChecked);
+                        (ctrl as CheckedListBoxTaskCalculate).AddItem(nAlgPar.m_Id, nAlgPar.m_strNameShr, bChecked);
                     else
                         Logging.Logg().Error(@"PanelManagementTaskTepValues::AddNAlgParameter () - не найден элемент =" + indxCtrl.ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -1417,7 +1417,7 @@ namespace PluginTaskTepMain
 
             protected virtual Control createControlNAlgParameterCalculated()
             {
-                return new CheckedListBoxTaskTepValues();
+                return new CheckedListBoxTaskCalculate();
             }
 
             //private void onSelectedIndexChanged(object obj, EventArgs ev)
@@ -1457,58 +1457,6 @@ namespace PluginTaskTepMain
                     itemCheck((obj as IControl).SelectedId, type, (ev as ItemCheckEventArgs).NewValue);
                 } else
                     Logging.Logg().Error(string.Format(@""), Logging.INDEX_MESSAGE.NOT_SET);
-            }
-
-            /// <summary>
-            /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
-            /// </summary>
-            protected class CheckedListBoxTaskTepValues : CheckedListBox, IControl
-            {
-                /// <summary>
-                /// Список для хранения идентификаторов переменных
-                /// </summary>
-                private List<int> m_listId;
-
-                public CheckedListBoxTaskTepValues()
-                    : base()
-                {
-                    m_listId = new List<int>();
-                }
-
-                /// <summary>
-                /// Идентификатор выбранного элемента списка
-                /// </summary>
-                public int SelectedId { get { return m_listId[SelectedIndex]; } }
-
-                /// <summary>
-                /// Добавить элемент в список
-                /// </summary>
-                /// <param name="text">Текст подписи элемента</param>
-                /// <param name="id">Идентификатор элемента</param>
-                /// <param name="bChecked">Значение признака "Использовать/Не_использовать"</param>
-                public void AddItem(int id, string text, bool bChecked)
-                {
-                    Items.Add(text, bChecked);
-                    m_listId.Add(id);
-                }
-
-                /// <summary>
-                /// Удалить все элементы в списке
-                /// </summary>
-                public void ClearItems()
-                {
-                    Items.Clear();
-                    m_listId.Clear();
-                }
-
-                public string GetNameItem(int id)
-                {
-                    string strRes = string.Empty;
-
-                    strRes = (string)Items[m_listId.IndexOf(id)];
-
-                    return strRes;
-                }
             }
         }
     }
