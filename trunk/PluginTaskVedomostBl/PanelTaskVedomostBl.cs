@@ -49,10 +49,14 @@ namespace PluginTaskVedomostBl
         /// флаг очистки отображения
         /// </summary>
         private bool m_bflgClear = false;
-        ///// <summary>
-        ///// 
-        ///// </summary>
-        //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
+        /// <summary>
+        /// Список компонентов станции
+        /// </summary>
+        private List<TECComponent> m_listTECComponent;
+        /// <summary>
+        /// Список представлений для каждого из компонентов станции 
+        /// </summary>
+        private List<DataGridViewVedomostBl> m_listDataGridViewVedomostBl;
         /// <summary>
         /// Массив словарей для составления хидеров каждого блока(ТГ)
         /// </summary>
@@ -83,22 +87,6 @@ namespace PluginTaskVedomostBl
         /// Перечисление - режимы работы вкладки
         /// </summary>
         protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
-        /// <summary>
-        /// Индексы массива списков идентификаторов
-        /// </summary>
-        protected enum INDEX_ID
-        {
-            UNKNOWN = -1,
-            /*PERIOD, // идентификаторы периодов расчетов, использующихся на форме
-            TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов
-            ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров*/
-            //DENY_COMP_CALCULATED, 
-            DENY_GROUPHEADER_VISIBLED,
-            BLOCK_SELECTED, HGRID_VISIBLED,
-            //DENY_PARAMETER_CALCULATED, // запрещенных для расчета
-            //DENY_PARAMETER_VISIBLED // запрещенных для отображения
-            COUNT
-        }
         /// <summary>
         /// Таблицы со значениями для редактирования
         /// </summary>
@@ -217,13 +205,13 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="iFunc"></param>
         public PanelTaskVedomostBl(IPlugIn iFunc)
-            : base(iFunc)
+            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
-            //s_VedCalculate = new VedomostBlCalculate();
-
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
             //Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
             m_dictHeaderBlock = new Dictionary<int, List<string[]>> { };
+
+            m_listTECComponent = new List<TECComponent>();
 
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
@@ -277,8 +265,8 @@ namespace PluginTaskVedomostBl
                 new EventHandler(panelTepCommon_btnHistory_onClick);
             (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
             (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += panelManagemenet_btnExportExcel_onClick;
-            PanelManagement.ItemCheck += new PanelManagementTaskCalculate.ItemCheckedParametersEventHandler(panelManagement_onItemCheck);
-            (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).CheckedChanged += panelManagement_ModeEnabledCheckedChanged;
+            //PanelManagement.ItemCheck += new PanelManagementTaskCalculate.ItemCheckedParametersEventHandler(panelManagement_onItemCheck);
+            (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).CheckedChanged += panelManagement_ModeEnable_onChanged;
         }
 
         /// <summary>
@@ -313,10 +301,8 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
-        private void panelManagement_onItemCheck(PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
+        protected override void panelManagement_onItemCheck(PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
         {
-            int idItem = -1;
-
             //??? где сохраняются изменения. только на элементе управления?
             ;
             //Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
@@ -330,7 +316,7 @@ namespace PluginTaskVedomostBl
             if (ev.m_type == PanelManagementTaskCalculate.ItemCheckedParametersEventArgs.TYPE.VISIBLE) {
                 if (ev.IsComponent == true) {
                     cntrl.SetHeaderVisibled(s_listGroupHeaders[ev.m_idComp], bItemChecked);
-                    ReSizeControls(cntrl as DataGridView);
+                    reSizeControls(cntrl as DataGridView);
                 } else
                 //??? другие случаи
                     ;
@@ -344,7 +330,7 @@ namespace PluginTaskVedomostBl
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        void panelManagement_ModeEnabledCheckedChanged(object sender, EventArgs e)
+        void panelManagement_ModeEnable_onChanged(object sender, EventArgs e)
         {
         }
 
@@ -372,7 +358,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Настройка размеров контролов отображения
         /// </summary>
-        private void ReSizeControls(DataGridView dgv)
+        private void reSizeControls(DataGridView dgv)
         {
             int cntVisibleColumns = 0;
 
@@ -391,7 +377,7 @@ namespace PluginTaskVedomostBl
             int _drwW = cntVisibleColumns * dgv.Columns[2].Width + 10
                 , _drwH = (dgv.Rows.Count) * dgv.Rows[0].Height + 70;
 
-            GetPictureOfIdComp((int)(dgv as DataGridViewVedomostBl).Tag).Size = new Size(_drwW + 2, _drwH);
+            //GetPictureOfIdComp((int)(dgv as DataGridViewVedomostBl).Tag).Size = new Size(_drwW + 2, _drwH);
             dgv.Size = new Size(_drwW + 2, _drwH);
         }
 
@@ -496,8 +482,8 @@ namespace PluginTaskVedomostBl
             m_dictHeaderBlock.Clear();
 
             //создание грида со значениями
-            for (i = 0; i < m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows.Count; i++) {
-                dgv = new DataGridViewVedomostBl(int.Parse(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows[i]["ID"].ToString()));
+            for (i = 0; i < m_listTECComponent.Count; i++) {
+                dgv = m_listDataGridViewVedomostBl.Find(item => { return (int)item.Tag == m_listTECComponent[i].m_Id; });
                 //??? исключить такое имя (ориентироваться на Tag)
                 dgv.Name = string.Format(@"DGV_DATA_B{0}", (i + 1));
                 dgv.BlockCount = i + 1;
@@ -528,7 +514,7 @@ namespace PluginTaskVedomostBl
                 for (i = 0; i < DaysInMonth + 1; i++)
                     dgv.AddRow(dtRow.AddDays(i), i < DaysInMonth);
 
-                ReSizeControls(dgv);
+                reSizeControls(dgv);
 
                 ConfigureDataGridView(dgv);
 
@@ -569,25 +555,6 @@ namespace PluginTaskVedomostBl
             string strItem = string.Empty;
             Control ctrl = null;
 
-            //m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
-
-            //foreach (INDEX_ID id in Enum.GetValues(typeof(INDEX_ID)))
-            //    switch (id) {
-            //        /*case INDEX_ID.PERIOD:
-            //            m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
-            //            break;
-            //        case INDEX_ID.TIMEZONE:
-            //            m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-            //            break;
-            //        case INDEX_ID.ALL_COMPONENT:
-            //            m_arListIds[(int)id] = new List<int> { };
-            //            break;*/
-            //        default:
-            //            //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
-            //            m_arListIds[(int)id] = new List<int>();
-            //            break;
-            //    }
-
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMWZONE, COMP, PARAMETER, RATIO
             initialize
@@ -595,7 +562,8 @@ namespace PluginTaskVedomostBl
                 (new ID_DBTABLE[] { /*ID_DBTABLE.PERIOD
                     , */ID_DBTABLE.TIME, ID_DBTABLE.TIMEZONE
                     , ID_DBTABLE.COMP_LIST
-                    , TaskCalculateType == HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.IN_PARAMETER : ID_DBTABLE.UNKNOWN
+                    , IsInParameters == true ? ID_DBTABLE.IN_PARAMETER : ID_DBTABLE.UNKNOWN
+                    , IsOutParameters == true ? ID_DBTABLE.OUT_PARAMETER : ID_DBTABLE.UNKNOWN
                     , ID_DBTABLE.RATIO }
                 , out err, out errMsg
             );
@@ -604,14 +572,6 @@ namespace PluginTaskVedomostBl
             m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Month;
             m_dictTableDictPrj.FilterDbTableCompList = DictionaryTableDictProject.DbTableCompList.Tg;
 
-            //Dgv's
-            initializeDataGridView(out err, out errMsg); //???
-            //// панель управления - очистка
-            //PanelManagement.Clear();
-            //радиобаттаны
-            PanelManagement.AddComponent(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], out err, out errMsg);
-            //groupHeader
-            PanelManagement.AddCheckBoxGroupHeaders(m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], out err, out errMsg);
             //активность_кнопки_сохранения
             try {
                 if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == true)
@@ -692,7 +652,23 @@ namespace PluginTaskVedomostBl
         /// </summary>
         protected override void panelManagement_PeriodChanged()
         {
+            int err = -1;
+            string errMsg = string.Empty;
+
+            //// панель управления - очистка
+            //PanelManagement.Clear();
+            // удалить все компоненты за указанный ранее (предыдущий) период
+            m_listTECComponent.Clear();
+            // удалить все представления за указанный ранее период
+            m_listDataGridViewVedomostBl.Clear();
+
             base.panelManagement_PeriodChanged();
+            //Закончилось перечисление компонентов, параметров алгоритма расчета...
+
+            //??? Dgv's
+            initializeDataGridView(out err, out errMsg);
+            //Переключатели для выбора компонентов(эн./блоков, котлов)
+            PanelManagement.AddComponent(m_listTECComponent, out err, out errMsg);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg-параметр
@@ -714,6 +690,10 @@ namespace PluginTaskVedomostBl
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
         protected override void onAddComponent(TECComponent obj)
         {
+            // собираем для вызова 'PanelManagement.AddComponent' по окончанию сбора всех компонентов
+            m_listTECComponent.Add(obj);
+
+            m_listDataGridViewVedomostBl.Add(new DataGridViewVedomostBl(obj.m_Id));
         }
         #endregion
 
@@ -1211,7 +1191,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// оброботчик события кнопки
         /// </summary>
-        protected virtual void onButtonLoadClick()
+        protected void onButtonLoadClick()
         {
             // ... - загрузить/отобразить значения из БД
             updateDataValues();

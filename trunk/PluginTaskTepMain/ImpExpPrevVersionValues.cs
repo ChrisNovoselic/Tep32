@@ -47,16 +47,12 @@ namespace PluginTaskTepMain
 
             DataTable tableRes = null;
 
-            switch (type)
-            {
-                case TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES:
-                    tableRes = importInValues(idSession, quality, tablePrjPars, tableDictPrj, out err);
-                    break;
-                default:
-                    tableRes = new DataTable();
+            if ((type & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES) {
+                tableRes = importInValues(idSession, quality, tablePrjPars, tableDictPrj, out err);
+            } else {
+                tableRes = new DataTable();
 
-                    Logging.Logg().Error(@"ImpExpPrevVersionValues::Import () - неизвестный тип импортируемых значений...", Logging.INDEX_MESSAGE.NOT_SET);
-                    break;
+                Logging.Logg().Error(@"ImpExpPrevVersionValues::Import () - неизвестный тип импортируемых значений...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             return tableRes;

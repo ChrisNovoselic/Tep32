@@ -54,19 +54,6 @@ namespace PluginTaskAutobook
         /// Набор элементов
         /// </summary>
         protected enum INDEX_CONTROL { UNKNOWN = -1, LABEL_DESC = 1, DGV_DATA = 3 }
-        ///// <summary>
-        ///// Индексы массива списков идентификаторов
-        ///// </summary>
-        //protected enum INDEX_ID
-        //{
-        //    UNKNOWN = -1,
-        //    /*ERIOD, // идентификаторы периодов расчетов, использующихся на форме               
-        //    TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов                   
-        //    ALL_COMPONENT,*/ ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров
-        //    //    , DENY_COMP_CALCULATED,//DENY_PARAMETER_CALCULATED // запрещенных для расчета
-        //    DENY_COMP_VISIBLED, //DENY_PARAMETER_VISIBLED // запрещенных для отображения
-        //    COUNT
-        //}
         /// <summary>
         /// Объект для взаимодействия с БД
         /// </summary>
@@ -637,7 +624,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="iFunc"></param>
         public PanelTaskAutobookMonthValues(IPlugIn iFunc)
-            : base(iFunc)
+            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             m_AutoBookCalculate = new TaskAutobookCalculate();
@@ -843,9 +830,9 @@ namespace PluginTaskAutobook
             (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
                 new EventHandler(panelTepCommon_btnSave_onClick);
             (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SEND.ToString(), true)[0] as Button).Click +=
-                new EventHandler(btnSend_OnClick);
+                new EventHandler(btnSend_onClick);
             (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
-                 new EventHandler(btnExport_OnClick);
+                 new EventHandler(btnExport_onClick);
             //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CALENDAR.ToString(), true)[0] as Button).
 
             m_dgvValues.CellParsing += dgvValues_CellParsing;
@@ -857,7 +844,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие</param>
         /// <param name="e">данные события</param>
-        private void btnExport_OnClick(object sender, EventArgs e)
+        private void btnExport_onClick(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();
             m_rptExcel.CreateExcel(m_dgvValues, Session.m_rangeDatetime);
@@ -868,7 +855,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие</param>
         /// <param name="e">данные события</param>
-        private void btnSend_OnClick(object sender, EventArgs e)
+        private void btnSend_onClick(object sender, EventArgs e)
         {
             m_rptsNSS = new ReportsToNSS();
 
@@ -1307,6 +1294,16 @@ namespace PluginTaskAutobook
             } catch (Exception e) {
                 Logging.Logg().Exception(e, @"PanelTaskAutobookMonthVakues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
+        }
+
+        /// <summary>
+        /// Обработчик события - изменение состояния элемента 'CheckedListBox'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
+        protected override void panelManagement_onItemCheck(HPanelTepCommon.PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
+        {
+            throw new NotImplementedException();
         }
 
         #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'

@@ -205,11 +205,11 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Класс панели - ИРЗ Учет активной электроэнергии - плановые значения (месяц-год)
         /// </summary>
-        /// <param name="iFunc"></param>
-        public PanelTaskAutobookYearlyPlan(IPlugIn iFunc)
-            : base(iFunc)
+        /// <param name="iFunc">Объект для взаимодействия с вызывающей программой</param>
+        public PanelTaskAutobookYearlyPlan(IPlugIn iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
 
@@ -420,6 +420,17 @@ namespace PluginTaskAutobook
         //{
         //    base.panelManagement_OnEventDetailChanged(obj);
         //}
+
+        /// <summary>
+        /// Обработчик события - изменение состояния элемента 'CheckedListBox'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
+        protected override void panelManagement_onItemCheck(HPanelTepCommon.PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
         /// </summary>

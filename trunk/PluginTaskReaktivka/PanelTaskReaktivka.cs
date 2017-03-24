@@ -91,7 +91,7 @@ namespace PluginTaskReaktivka
         /// </summary>
         /// <param name="iFunc"></param>
         public PanelTaskReaktivka(IPlugIn iFunc)
-            : base(iFunc)
+            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.REAKTIVKA;
 
@@ -143,7 +143,7 @@ namespace PluginTaskReaktivka
                 new EventHandler(HPanelTepCommon_btnHistory_Click);
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskReaktivka_ClickExport;
-            (PanelManagement as PanelManagementReaktivka).ItemCheck += new PanelManagementReaktivka.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
+            //(PanelManagement as PanelManagementReaktivka).ItemCheck += new PanelManagementReaktivka.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
             m_dgvValues.CellEndEdit += m_dgvReak_CellEndEdit;
             //m_dgvReak.CellParsing += m_dgvReak_CellParsing;
         }
@@ -669,7 +669,7 @@ namespace PluginTaskReaktivka
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
-        private void panelManagement_ItemCheck(PanelManagementReaktivka.ItemCheckedParametersEventArgs ev)
+        protected override void panelManagement_onItemCheck(PanelManagementReaktivka.ItemCheckedParametersEventArgs ev)
         {
             int idItem = -1;
 

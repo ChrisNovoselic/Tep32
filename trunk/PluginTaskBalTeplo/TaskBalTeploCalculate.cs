@@ -70,7 +70,7 @@ namespace PluginTaskBalTeplo
         {
             base.createTaskCalculate();
 
-            m_taskCalculate = new HandlerDbTaskCalculate.TaskBalTeploCalculate();
+            m_taskCalculate = new HandlerDbTaskCalculate.HandlerDbTaskBalTeploCalculate();
         }
 
         protected override void calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, out int err)
@@ -95,7 +95,7 @@ namespace PluginTaskBalTeplo
                     case TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES:
                         tableOrigin = listDataTables.FindDataTable(TepCommon.HandlerDbTaskCalculate.TaskCalculate.INDEX_DATATABLE.OUT_VALUES);
                         tableOriginIn = listDataTables.FindDataTable(TepCommon.HandlerDbTaskCalculate.TaskCalculate.INDEX_DATATABLE.IN_VALUES);
-                        DataTable[] tableRes = (m_taskCalculate as HandlerDbTaskCalculate.TaskBalTeploCalculate).CalculateOut(listDataTables);
+                        DataTable[] tableRes = (m_taskCalculate as HandlerDbTaskCalculate.HandlerDbTaskBalTeploCalculate).CalculateOut(listDataTables);
                         tableCalcRes = tableRes[1];
                         tableCalcResIn = tableRes[0];
                         break;
@@ -1238,11 +1238,10 @@ namespace PluginTaskBalTeplo
 
     public partial class HandlerDbTaskCalculate : TepCommon.HandlerDbValues
     {
-
         /// <summary>
         /// Класс для расчета технико-экономических показателей
         /// </summary>
-        public partial class TaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
+        public partial class HandlerDbTaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
             protected override int initValues(TepCommon.HandlerDbTaskCalculate.TaskCalculate.ListDATATABLE listDataTables)
             {
@@ -1344,7 +1343,7 @@ namespace PluginTaskBalTeplo
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public TaskBalTeploCalculate()
+            public HandlerDbTaskBalTeploCalculate()
                 : base()
             {
                 m_indxCompRealTime = INDX_COMP.UNKNOWN;

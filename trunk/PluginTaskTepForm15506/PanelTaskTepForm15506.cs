@@ -13,7 +13,7 @@ namespace PluginTaskTepForm15506
     public class PanelTaskTepForm15506 : HPanelTepCommon
     {
         public PanelTaskTepForm15506(IPlugIn iFunc)
-            : base(iFunc)
+            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             InitializeComponent();
         }
@@ -73,6 +73,15 @@ namespace PluginTaskTepForm15506
         }
 
         protected override void onAddComponent(TECComponent comp)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Обработчик события - изменение состояния элемента 'CheckedListBox'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
+        protected override void panelManagement_onItemCheck(HPanelTepCommon.PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
         {
             throw new NotImplementedException();
         }

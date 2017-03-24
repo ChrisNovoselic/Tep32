@@ -131,7 +131,7 @@ namespace PluginTaskReaktivka
             /// <returns>элемент панели</returns>
             protected Control find(INDEX_CONTROL indxCtrl)
             {
-                return find(indxCtrl.ToString());
+                return findControl(indxCtrl.ToString());
             }
 
             /// <summary>

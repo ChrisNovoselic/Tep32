@@ -377,19 +377,22 @@ namespace TepCommon
                 m_dictTableDictPrj = new DictionaryTableDictProject();
 
             foreach (ID_DBTABLE id in /*Enum.GetValues(typeof(ID_DBTABLE))*/arIdTableDictPrj) {
-                switch (id) {
-                    case ID_DBTABLE.IN_PARAMETER:
-                        m_dictTableDictPrj.Add(id
-                            , m_handlerDb.Select((m_handlerDb as HandlerDbTaskCalculate).GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES), out err));
-                        break;
-                    case ID_DBTABLE.OUT_PARAMETER:
-                        m_dictTableDictPrj.Add(id
-                            , m_handlerDb.Select((m_handlerDb as HandlerDbTaskCalculate).GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES), out err));
-                        break;
-                    default:
-                        m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
-                        break;
-                }
+                if (!(id == ID_DBTABLE.UNKNOWN))
+                    switch (id) {
+                        case ID_DBTABLE.IN_PARAMETER:
+                            m_dictTableDictPrj.Add(id
+                                , m_handlerDb.Select((m_handlerDb as HandlerDbTaskCalculate).GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES), out err));
+                            break;
+                        case ID_DBTABLE.OUT_PARAMETER:
+                            m_dictTableDictPrj.Add(id
+                                , m_handlerDb.Select((m_handlerDb as HandlerDbTaskCalculate).GetQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES), out err));
+                            break;
+                        default:
+                            m_dictTableDictPrj.Add(id, m_handlerDb.GetDataTable(id, out err));
+                            break;
+                    }
+                else
+                    err = 2;
 
                 if (err < 0) {
                     // ошибка
@@ -415,8 +418,10 @@ namespace TepCommon
                         switch (err) {
                             case 1: // идентификатор указан прежде, чем его можно инициализировать объект для него
                                 break;
-                            default:
+                            case 2: // идентификатор по умолчанию или один из идентификаторов имеет неопределенное значение
                                 break;
+                            default:
+                                    break;
                         }
                     else
                     // ошибок, предупреждений нет
@@ -513,9 +518,6 @@ namespace TepCommon
             : base(13, 13)
         {
             this._iFuncPlugin = plugIn;
-
-            ////Создать объект "словарь" дочерних элементов управления
-            //m_dictControls = new Dictionary<int, Control>();
 
             InitializeComponent();
 
@@ -1144,8 +1146,11 @@ namespace TepCommon
             }
         }
 
-        public HPanelTepCommon(IPlugIn plugIn) : base (plugIn)
+        public HPanelTepCommon(IPlugIn plugIn, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+            : base (plugIn)
         {
+            TaskCalculateType = type;
+
             eventAddNAlgParameter += new Action<NALG_PARAMETER>(onAddNAlgParameter);
 
             eventAddPutParameter += new Action<PUT_PARAMETER>(onAddPutParameter);
@@ -1165,6 +1170,8 @@ namespace TepCommon
                 __panelManagement.EventIndexControlBaseValueChanged += new DelegateObjectFunc(panelManagement_EventIndexControlBase_onValueChanged);
                 // обработчик события при изменении значений в дополнительных(добавленных программистом в наследуемых классах) элементах управления
                 __panelManagement.EventIndexControlCustomValueChanged += new DelegateObjectFunc(panelManagement_EventIndexControlCustom_onValueChanged);
+
+                __panelManagement.ItemCheck += new PanelManagementTaskCalculate.ItemCheckedParametersEventHandler(panelManagement_onItemCheck);
             }
         }
 
@@ -1251,6 +1258,8 @@ namespace TepCommon
         /// Список строк с параметрами алгоритма расчета для текущего периода расчета
         /// </summary>
         protected virtual List<DataRow> ListParameter { get; }
+
+        protected abstract void panelManagement_onItemCheck(PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev);
 
         protected virtual void panelManagement_DatetimeRangeChanged()
         {

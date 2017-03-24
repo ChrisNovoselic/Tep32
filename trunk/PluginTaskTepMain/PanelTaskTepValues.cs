@@ -99,7 +99,7 @@ namespace PluginTaskTepMain
             (Controls.Find(INDEX_CONTROL.BUTTON_IMPORT.ToString(), true)[0] as Button).Click += new EventHandler(panelManagement_btnImport_onClick);
             (Controls.Find(INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += new EventHandler(panelManagement_btnExport_onClick);
 
-            (PanelManagement as PanelManagementTaskTepValues).ItemCheck += new PanelManagementTaskTepValues.ItemCheckedParametersEventHandler(panelManagement_onItemCheck);
+            //(PanelManagement as PanelManagementTaskTepValues).ItemCheck += new PanelManagementTaskTepValues.ItemCheckedParametersEventHandler(panelManagement_onItemCheck);
         }
 
         //protected override void initialize()
@@ -470,10 +470,8 @@ namespace PluginTaskTepMain
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
-        private void panelManagement_onItemCheck(PanelManagementTaskTepValues.ItemCheckedParametersEventArgs ev)
+        protected override void panelManagement_onItemCheck(PanelManagementTaskTepValues.ItemCheckedParametersEventArgs ev)
         {
-            int idItem = -1;
-
             //??? где сохраняются изменения. только на элементе управления?
             ;
             //??? Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек

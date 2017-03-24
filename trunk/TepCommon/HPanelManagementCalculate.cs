@@ -233,7 +233,7 @@ namespace TepCommon
                 //Назначить обработчик события - изменение дата/время окончания периода
                 // при этом отменить обработку события - изменение дата/время начала периода
                 // т.к. при изменении дата/время начала периода изменяется и дата/время окончания периода
-                (Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);                
+                (findControl(INDEX_CONTROL_BASE.HDTP_END.ToString()) as HDateTimePicker).ValueChanged += new EventHandler(hdtpEnd_onValueChanged);                
             }
             /// <summary>
             /// Инициализация элементов управления объекта (создание, размещение)
@@ -379,20 +379,6 @@ namespace TepCommon
                 }
             }
 
-            /// <summary>
-            /// Найти элемент управления на панели идентификатору
-            /// </summary>
-            /// <param name="indxCtrl">Идентификатор элемента управления</param>
-            /// <returns>элемент панели</returns>
-            protected Control find(string nameCtrl)
-            {
-                Control ctrlRes = null;
-
-                ctrlRes = Controls.Find(nameCtrl, true)[0];
-
-                return ctrlRes;
-            }
-
             public virtual void Clear()
             {
                 INDEX_CONTROL_BASE indxCtrl;
@@ -515,7 +501,7 @@ namespace TepCommon
                     //indxCtrl = getIndexControlOfIndexID(idToActivate);
 
                     if (!(nameControlToActivate == "UNKNOWN")) {
-                        clbx = (Controls.Find(nameControlToActivate.ToString(), true)[0] as CheckedListBox);
+                        clbx = findControl(nameControlToActivate) as  CheckedListBox;
 
                         if (!(clbx == null))
                             // вариант №1

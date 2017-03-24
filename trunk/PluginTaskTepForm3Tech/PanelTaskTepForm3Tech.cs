@@ -13,7 +13,7 @@ namespace PluginTaskTepForm3Tech
     public class PanelTaskTepForm3Tech : TepCommon.HPanelTepCommon
     {
         public PanelTaskTepForm3Tech(IPlugIn iFunc)
-            : base(iFunc)
+            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             InitializeComponent();
         }
@@ -50,6 +50,15 @@ namespace PluginTaskTepForm3Tech
         /// </summary>
         /// <returns>Панель управления</returns>
         protected override PanelManagementTaskCalculate createPanelManagement()
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Обработчик события - изменение состояния элемента 'CheckedListBox'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
+        protected override void panelManagement_onItemCheck(HPanelTepCommon.PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
         {
             throw new NotImplementedException();
         }

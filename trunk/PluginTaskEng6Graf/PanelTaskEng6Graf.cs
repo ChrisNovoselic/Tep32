@@ -13,7 +13,7 @@ namespace PluginTaskEng6Graf
     public class PanelTaskEng6Graf : HPanelTepCommon
     {
         public PanelTaskEng6Graf(IPlugIn iFunc)
-            : base(iFunc)
+            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             InitializeComponent();
         }
@@ -54,6 +54,17 @@ namespace PluginTaskEng6Graf
             throw new NotImplementedException();
         }
         /// <summary>
+        /// Обработчик события - изменение состояния элемента 'CheckedListBox'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
+        protected override void panelManagement_onItemCheck(HPanelTepCommon.PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
+        {
+            throw new NotImplementedException();
+        }
+
+        #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
+        /// <summary>
         /// Обработчик события - изменение значения в одном из базовых активных элементов на панели управления
         /// </summary>
         /// <param name="obj">Аргумент события</param>
@@ -76,6 +87,7 @@ namespace PluginTaskEng6Graf
         {
             throw new NotImplementedException();
         }
+        #endregion
     }
 
     public class PlugIn : HFuncDbEdit

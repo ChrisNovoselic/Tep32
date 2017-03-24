@@ -216,7 +216,7 @@ namespace PluginTaskTepMain
 
                 CheckedListBoxTaskCalculate ctrl = null;
 
-                ctrl = find(INDEX_CONTROL.MIX_PARAMETER_CALCULATED.ToString()) as CheckedListBoxTaskCalculate;
+                ctrl = findControl(INDEX_CONTROL.MIX_PARAMETER_CALCULATED.ToString()) as CheckedListBoxTaskCalculate;
                 strRes = ctrl.GetNameItem(id_comp);
 
                 return strRes;

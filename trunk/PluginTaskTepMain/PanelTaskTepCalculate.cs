@@ -43,10 +43,8 @@ namespace PluginTaskTepMain
         /// <param name="strNameTablePut">Строка - наименование таблицы с параметрами, детализированных до принадлежности к компоненту станции (оборудования)</param>
         /// <param name="strNameTableValues">Строка - наименование таблицы со значениями</param>
         protected PanelTaskTepCalculate(IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
-            : base(iFunc)
+            : base(iFunc, type)
         {
-            TaskCalculateType = type;
-
             HandlerDb.IdTask = ID_TASK.TEP;
 
             InitializeComponents();

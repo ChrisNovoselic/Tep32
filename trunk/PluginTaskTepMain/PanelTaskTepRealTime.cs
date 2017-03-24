@@ -164,6 +164,16 @@ namespace PluginTaskTepMain
             return new PanelManagementTaskTepRealTime ();
         }
 
+        /// <summary>
+        /// Обработчик события - изменение состояния элемента 'CheckedListBox'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
+        protected override void panelManagement_onItemCheck(HPanelTepCommon.PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
+        {
+            throw new NotImplementedException();
+        }
+
         private class PanelManagementTaskTepRealTime : HPanelTepCommon.PanelManagementTaskCalculate
         {
             public PanelManagementTaskTepRealTime()

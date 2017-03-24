@@ -121,6 +121,16 @@ namespace PluginTaskBalTeplo
         }
 
         /// <summary>
+        /// Обработчик события - изменение состояния элемента 'CheckedListBox'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
+        protected override void panelManagement_onItemCheck(HPanelTepCommon.PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// калькулятор значений
         /// </summary>
         public class TaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
@@ -147,7 +157,7 @@ namespace PluginTaskBalTeplo
         /// </summary>
         /// <param name="iFunc">Объект для взаимодействия с вызывающим приложением</param>
         public PanelTaskBalTeplo(IPlugIn iFunc)
-            : base(iFunc)
+            : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.BAL_TEPLO;
             m_calculate = new TaskBalTeploCalculate();
