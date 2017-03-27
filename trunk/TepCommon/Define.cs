@@ -100,4 +100,11 @@ namespace TepCommon
         , OWNER_GTP = 2
         , OWNER_TG = 3
     }
+
+    public enum AGREGATE_ACTION
+    {
+        SUMMA
+        , AVERAGE
+        , VZVESH
+    }
 }

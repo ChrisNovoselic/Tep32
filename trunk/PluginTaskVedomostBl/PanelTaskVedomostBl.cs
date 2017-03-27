@@ -22,45 +22,34 @@ namespace PluginTaskVedomostBl
         /// Для обозначения выбора 1 или 6 блоков
         /// </summary>
         static bool s_flagBl = true;
-        ///// <summary>
-        ///// ??? Делегат (возврат пикчи по Ид)
-        ///// </summary>
-        ///// <param name="id">ид грида</param>
-        ///// <returns>picture</returns>
-        //public delegate PictureBox PictureBoxDelegateIntFunc(int id);
-        ///// <summary>
-        ///// ??? Делегат 
-        ///// </summary>
-        ///// <returns>грид</returns>
-        //public delegate DataGridView DataGridViewDelegateFunc();
         /// <summary>
-        /// ??? экземпляр делегата(возврат пикчи по Ид)
+        /// ??? экземпляр делегата(возврат PictureBox для активного представления)
         /// </summary>
-        static public Func<int, PictureBox> s_getPicture;
-        /// <summary>
-        /// ??? экземпляр делегата(возврат отображения активного)
-        /// </summary>
-        static public Func<DataGridView> s_getDGV;
+        public static Func<PictureBox> s_delegateGetActivePictureBox;
         /// <summary>
         /// ??? экземпляр делегата(возврат Ид)
         /// </summary>
-        static public Func<int> s_getIdComp;
+        public static Func<int> s_delegateGetIdActiveComponent;
         /// <summary>
         /// флаг очистки отображения
         /// </summary>
         private bool m_bflgClear = false;
+
+        private List<NALG_PARAMETER> m_listNAlgParameter;
         /// <summary>
         /// Список компонентов станции
         /// </summary>
         private List<TECComponent> m_listTECComponent;
+
+        private List<PUT_PARAMETER> m_listPutParameter;
         /// <summary>
         /// Список представлений для каждого из компонентов станции 
         /// </summary>
         private List<DataGridViewVedomostBl> m_listDataGridViewVedomostBl;
-        /// <summary>
-        /// Массив словарей для составления хидеров каждого блока(ТГ)
-        /// </summary>
-        protected Dictionary<int, List<string[]>> m_dictHeaderBlock;
+        ///// <summary>
+        ///// Массив словарей для составления хидеров каждого блока(ТГ)
+        ///// </summary>
+        //protected Dictionary<int, List<string[]>> m_dictHeaderBlock;
         /// <summary>
         /// Лист с группами хидеров отображения
         /// </summary>
@@ -128,10 +117,6 @@ namespace PluginTaskVedomostBl
         /// 
         /// </summary>
         protected ReportExcel m_rptExcel;
-        /// <summary>
-        /// экземпляр класса пикчи
-        /// </summary>
-        protected PictureVedBl m_pictureVedBl;
         ///// <summary>
         ///// ??? почему статик Экземпляр класса обрабокти данных
         ///// </summary>
@@ -146,33 +131,36 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// ???
         /// </summary>
-        protected class PictureVedBl : PictureBox
+        protected class PictureBoxVedomostBl : PictureBox
         {
             /// <summary>
             /// ид Пикчи
             /// </summary>
-            public int m_idCompPicture;
+            public int m_IdControl;
 
             /// <summary>
             /// Конструктор
             /// </summary>
             /// <param name="viewActive">активный грид</param>
-            public PictureVedBl(DataGridViewVedomostBl viewActive)
+            public PictureBoxVedomostBl()
             {
-                InitializeComponents(viewActive);
+                InitializeComponents();
             }
 
             /// <summary>
             /// Инициализация компонента
             /// </summary>
-            /// <param name="viewActive">??? активный грид</param>
-            private void InitializeComponents(DataGridViewVedomostBl viewActive)
-            {
-                int _drwH = (viewActive.Rows.Count) * viewActive.Rows[0].Height + 70;
+            private void InitializeComponents()
+            {                
+            }
 
-                Size = new Size(viewActive.Width - 10, _drwH);
-                m_idCompPicture = (int)viewActive.Tag;
-                Controls.Add(viewActive);
+            public void AddControl(DataGridViewVedomostBl dgv)
+            {
+                int _drwH = (dgv.Rows.Count) * dgv.Rows[0].Height + 70;
+
+                Size = new Size(dgv.Width - 10, _drwH);
+                m_IdControl = (int)dgv.Tag;
+                Controls.Add(dgv);
             }
         }
 
@@ -208,19 +196,21 @@ namespace PluginTaskVedomostBl
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
-            //Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
-            m_dictHeaderBlock = new Dictionary<int, List<string[]>> { };
 
+            m_listNAlgParameter = new List<NALG_PARAMETER>();
             m_listTECComponent = new List<TECComponent>();
+            m_listPutParameter = new List<PUT_PARAMETER>();
+            m_listDataGridViewVedomostBl = new List<DataGridViewVedomostBl>();
 
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
 
-            InitializeComponent();
+            InitializeComponent();            
 
-            s_getPicture = new Func<int, PictureBox>(GetPictureOfIdComp);
-            s_getDGV = new Func<DataGridView>(GetDGVOfIdComp);
-            s_getIdComp = new Func<int>(GetIdComp);
+            //???
+            s_delegateGetActivePictureBox = new Func<PictureBox>(GetActivePictureBox);
+            //s_getDGV = new Func<DataGridView>(GetDGVOfIdComp);
+            s_delegateGetIdActiveComponent = new Func<int>(GetIdActiveComponent);
         }
 
         /// <summary>
@@ -311,12 +301,12 @@ namespace PluginTaskVedomostBl
             //Изменить структуру 'HDataGRidVIew's'          
             bool bItemChecked = ev.NewCheckState == CheckState.Checked ? true :
                   ev.NewCheckState == CheckState.Unchecked ? false : false;
-            DataGridViewVedomostBl cntrl = ActiveDataGridView;
+            DataGridViewVedomostBl dgv = ActiveDataGridView;
 
             if (ev.m_type == PanelManagementTaskCalculate.ItemCheckedParametersEventArgs.TYPE.VISIBLE) {
                 if (ev.IsComponent == true) {
-                    cntrl.SetHeaderVisibled(s_listGroupHeaders[ev.m_idComp], bItemChecked);
-                    reSizeControls(cntrl as DataGridView);
+                    dgv.SetHeaderVisibled(s_listGroupHeaders[ev.m_idComp], bItemChecked);
+                    dgv.ResizeControls();
                 } else
                 //??? другие случаи
                     ;
@@ -343,7 +333,7 @@ namespace PluginTaskVedomostBl
             get {
                 Control ctrlRes = new Control();
 
-                foreach (PictureVedBl item in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
+                foreach (PictureBoxVedomostBl item in findControl(INDEX_CONTROL.PANEL_PICTUREDGV.ToString()).Controls)
                     if (item.Visible == true) {
                         ctrlRes = item.Controls[0];
 
@@ -356,45 +346,22 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// Настройка размеров контролов отображения
+        /// Возвращает PictureBox по идентификатору активного представления (компонента)
         /// </summary>
-        private void reSizeControls(DataGridView dgv)
+        /// <param name="idComp">Идентификатор компонента, установленный также идентификатором и для представления</param>
+        /// <returns>Объект активного PictureBox</returns>
+        public PictureBox GetActivePictureBox()
         {
-            int cntVisibleColumns = 0;
-
-            foreach (DataGridViewColumn col in dgv.Columns) {
-                if (dgv.Columns.IndexOf(col) > 0)
-                    col.Width = 65;
-                else
-                    ;
-
-                if (col.Visible == true)
-                    cntVisibleColumns++;
-                else
-                    ;
-            }
-
-            int _drwW = cntVisibleColumns * dgv.Columns[2].Width + 10
-                , _drwH = (dgv.Rows.Count) * dgv.Rows[0].Height + 70;
-
-            //GetPictureOfIdComp((int)(dgv as DataGridViewVedomostBl).Tag).Size = new Size(_drwW + 2, _drwH);
-            dgv.Size = new Size(_drwW + 2, _drwH);
-        }
-
-        /// <summary>
-        /// Возвращает пикчу по номеру
-        /// </summary>
-        /// <param name="idComp">ид номер грида</param>
-        /// <returns>активная пикча на панели</returns>
-        public PictureBox GetPictureOfIdComp(int idComp)
-        {
-            int cnt = 0,
-                outCnt = 0;
+            int cnt = 0
+                , outCnt = 0
+                , idComp = -1;
             PictureBox cntrl = new PictureBox();
 
-            foreach (PictureVedBl item in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
+            idComp = (int)ActiveDataGridView.Tag;
+
+            foreach (PictureBoxVedomostBl item in findControl(INDEX_CONTROL.PANEL_PICTUREDGV.ToString()).Controls)
             {
-                if (idComp == item.m_idCompPicture)
+                if (idComp == item.m_IdControl)
                 {
                     outCnt = cnt;
                     cntrl = (item as PictureBox);
@@ -423,7 +390,7 @@ namespace PluginTaskVedomostBl
         {
             DataGridView cntrl = new DataGridView();
 
-            foreach (PictureVedBl picture in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
+            foreach (PictureBoxVedomostBl picture in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
                 foreach (DataGridViewVedomostBl item in picture.Controls)
                     if (item.Visible == true)
                         cntrl = (item as DataGridView);
@@ -436,28 +403,20 @@ namespace PluginTaskVedomostBl
         /// Возвращает idComp
         /// </summary>
         /// <returns>индентификатор объекта</returns>
-        public int GetIdComp()
+        public int GetIdActiveComponent()
         {
-            int _idComp = 0;
-
-            foreach (PictureVedBl picture in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
-                if (picture.Visible == true)
-                    foreach (DataGridViewVedomostBl item in picture.Controls)
-                        if (item.Visible == true)
-                            _idComp = (int)item.Tag;
-
-            return _idComp;
+            return (int)ActiveDataGridView.Tag;
         }
 
-        /// <summary>
-        /// Настройка размеров формы отображения данных
-        /// </summary>
-        /// <param name="dgv">активное окно отображения данных</param>
-        public void ConfigureDataGridView(DataGridView dgv)
-        {
-            //??? зачем передавать аргумент объект самого себя
-            (dgv as DataGridViewVedomostBl).ConfigureColumns(/*dgv as DataGridView*/);
-        }
+        ///// <summary>
+        ///// Настройка размеров формы отображения данных
+        ///// </summary>
+        ///// <param name="dgv">активное окно отображения данных</param>
+        //public void ConfigureDataGridView(DataGridView dgv)
+        //{
+        //    //??? зачем передавать аргумент объект самого себя
+        //    (dgv as DataGridViewVedomostBl).ConfigureColumns(/*dgv as DataGridView*/);
+        //}
 
         /// <summary>
         /// Инициализация сетки данных
@@ -470,56 +429,33 @@ namespace PluginTaskVedomostBl
             err = 0;
             errMsg = string.Empty;
 
-            int i = -1
-                , idPar = -1
-                , avg = -1
-                , idComp = -1;
             DataGridViewVedomostBl dgv = null;
-            DateTime dtRow = PanelManagement.DatetimeRange.Begin;
-            //DataTable tableComponentId; // ид компонентов
-            Dictionary<string, List<int>> dictVisualSett;
-
-            m_dictHeaderBlock.Clear();
+            DateTime dtStartInMonth = PanelManagement.DatetimeRange.Begin;
+            PictureBoxVedomostBl pictureBox;
 
             //создание грида со значениями
-            for (i = 0; i < m_listTECComponent.Count; i++) {
+            for (int i = 0; i < m_listTECComponent.Count; i++) {
                 dgv = m_listDataGridViewVedomostBl.Find(item => { return (int)item.Tag == m_listTECComponent[i].m_Id; });
                 //??? исключить такое имя (ориентироваться на Tag)
                 dgv.Name = string.Format(@"DGV_DATA_B{0}", (i + 1));
                 dgv.BlockCount = i + 1;
 
-                m_dictHeaderBlock.Add((int)dgv.Tag, GetListHeaders(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER], (int)dgv.Tag)); // cловарь заголовков
-                //??? каждый раз получаем полный список и выбираем необходимый
-                dictVisualSett = getVisualSettingsOfIdComponent((int)dgv.Tag);
+                dgv.AddHeaderColumns(getListHeaders(m_listNAlgParameter, m_listPutParameter.FindAll(put => { return put.IdComponent == (int)dgv.Tag; }))); // cловарь заголовков
+                ////??? каждый раз получаем полный список и выбираем необходимый
+                //dictVisualSett = getVisualSettingsOfIdComponent((int)dgv.Tag);
 
-                for (int k = 0; k < m_dictHeaderBlock[(int)dgv.Tag].Count; k++) {
-                    idPar = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (int)dgv.Tag)[k]["ID_ALG"].ToString());
-                    avg = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (int)dgv.Tag)[k]["AVG"].ToString());
-                    idComp = int.Parse(m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("ID_COMP = " + (int)dgv.Tag)[k]["ID"].ToString());
+                dgv.AddColumns(m_listPutParameter.FindAll(put => { return put.IdComponent == (int)dgv.Tag; }));
 
-                    dgv.AddColumns(idPar
-                        , new DataGridViewVedomostBl.COLUMN_PROPERTY {
-                            topHeader = m_dictHeaderBlock[(int)dgv.Tag][k][(int)DataGridViewVedomostBl.INDEX_HEADER.TOP].ToString(),
-                            nameCol = m_dictHeaderBlock[(int)dgv.Tag][k][(int)DataGridViewVedomostBl.INDEX_HEADER.MIDDLE].ToString(),
-                            hdrText = m_dictHeaderBlock[(int)dgv.Tag][k][(int)DataGridViewVedomostBl.INDEX_HEADER.LOW].ToString(),
-                            m_idAlg = idPar,
-                            m_IdComp = idComp,
-                            m_vsRatio = dictVisualSett["ratio"][k],
-                            m_vsRound = dictVisualSett["round"][k],
-                            m_Avg = avg
-                        }
-                       , true);
-                }
+                dgv.AddRows(dtStartInMonth, DaysInMonth);
 
-                for (i = 0; i < DaysInMonth + 1; i++)
-                    dgv.AddRow(dtRow.AddDays(i), i < DaysInMonth);
+                dgv.ResizeControls();
 
-                reSizeControls(dgv);
+                dgv.ConfigureColumns();
 
-                ConfigureDataGridView(dgv);
+                pictureBox = new PictureBoxVedomostBl();
+                pictureBox.AddControl(dgv);
+                (findControl(INDEX_CONTROL.PANEL_PICTUREDGV.ToString()) as Panel).Controls.Add(pictureBox);
 
-                m_pictureVedBl = new PictureVedBl(dgv);
-                (Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0] as Panel).Controls.Add(m_pictureVedBl);
                 //возможность_редактирвоания_значений
                 try {
                     if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
@@ -657,8 +593,12 @@ namespace PluginTaskVedomostBl
 
             //// панель управления - очистка
             //PanelManagement.Clear();
+            //
+            m_listNAlgParameter.Clear();
             // удалить все компоненты за указанный ранее (предыдущий) период
             m_listTECComponent.Clear();
+            // удалить все параметры расчета(связанные с компонентом) за указанный ранее (предыдущий) период
+            m_listPutParameter.Clear();
             // удалить все представления за указанный ранее период
             m_listDataGridViewVedomostBl.Clear();
 
@@ -676,6 +616,10 @@ namespace PluginTaskVedomostBl
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
         protected override void onAddNAlgParameter(NALG_PARAMETER obj)
         {
+            //??? с единственной целью - формирования заголовков представления
+            m_listNAlgParameter.Add(obj);
+
+            m_listDataGridViewVedomostBl.ForEach(dgv => { dgv.AddNAlgParameter(obj); });
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
@@ -683,6 +627,7 @@ namespace PluginTaskVedomostBl
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
         protected override void onAddPutParameter(PUT_PARAMETER obj)
         {
+            m_listPutParameter.Add(obj);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
@@ -697,57 +642,57 @@ namespace PluginTaskVedomostBl
         }
         #endregion
 
-        /// <summary>
-        /// Получение визуальных настроек 
-        /// для отображения данных на форме
-        /// </summary>
-        /// <param name="idComp">идКомпонента</param>
-        /// <returns>словарь настроечных данных</returns>
-        private Dictionary<string, List<int>> getVisualSettingsOfIdComponent(int idComp)
-        {
-            Dictionary<string, List<int>> dictSettRes = new Dictionary<string, List<int>>();
+        ///// <summary>
+        ///// Получение визуальных настроек 
+        ///// для отображения данных на форме
+        ///// </summary>
+        ///// <param name="idComp">идКомпонента</param>
+        ///// <returns>словарь настроечных данных</returns>
+        //private Dictionary<string, List<int>> getVisualSettingsOfIdComponent(int idComp)
+        //{
+        //    Dictionary<string, List<int>> dictSettRes = new Dictionary<string, List<int>>();
 
-            int err = -1
-             , id_alg = -1;
-            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
-            List<int> ratio = new List<int>()
-            , round = new List<int>();
-            string n_alg = string.Empty;            
+        //    int err = -1
+        //     , id_alg = -1;
+        //    Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
+        //    List<int> ratio = new List<int>()
+        //    , round = new List<int>();
+        //    string n_alg = string.Empty;            
 
-            dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
-               , new int[] {
-                    m_Id
-                    , idComp }
-               , out err);
+        //    dictVisualSettings = HTepUsers.GetParameterVisualSettings(m_handlerDb.ConnectionSettings
+        //       , new int[] {
+        //            m_Id
+        //            , idComp }
+        //       , out err);
 
-            IEnumerable<DataRow> listParameter = ListParameter.Select(x => x).Where(x => (int)x["ID_COMP"] == idComp);
+        //    IEnumerable<DataRow> listParameter = ListParameter.Select(x => x).Where(x => (int)x["ID_COMP"] == idComp);
 
-            foreach (DataRow r in listParameter) {
-                id_alg = (int)r[@"ID_ALG"];
-                n_alg = r[@"N_ALG"].ToString().Trim();
-                //// не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
-                //if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
-                //    // добавить в список идентификатор параметра алгоритма расчета
-                //    m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
-                //else
-                //    ;
+        //    foreach (DataRow r in listParameter) {
+        //        id_alg = (int)r[@"ID_ALG"];
+        //        n_alg = r[@"N_ALG"].ToString().Trim();
+        //        //// не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
+        //        //if (m_arListIds[(int)INDEX_ID.ALL_NALG].IndexOf(id_alg) < 0)
+        //        //    // добавить в список идентификатор параметра алгоритма расчета
+        //        //    m_arListIds[(int)INDEX_ID.ALL_NALG].Add(id_alg);
+        //        //else
+        //        //    ;
 
-                // получить значения для настройки визуального отображения
-                if (dictVisualSettings.ContainsKey(n_alg) == true) {
-                // установленные в проекте
-                    ratio.Add(dictVisualSettings[n_alg.Trim()].m_ratio);
-                    round.Add(dictVisualSettings[n_alg.Trim()].m_round);
-                } else {
-                // по умолчанию
-                    ratio.Add(HTepUsers.s_iRatioDefault);
-                    round.Add(HTepUsers.s_iRoundDefault);
-                }
-            }
-            dictSettRes.Add("ratio", ratio);
-            dictSettRes.Add("round", round);
+        //        // получить значения для настройки визуального отображения
+        //        if (dictVisualSettings.ContainsKey(n_alg) == true) {
+        //        // установленные в проекте
+        //            ratio.Add(dictVisualSettings[n_alg.Trim()].m_ratio);
+        //            round.Add(dictVisualSettings[n_alg.Trim()].m_round);
+        //        } else {
+        //        // по умолчанию
+        //            ratio.Add(HTepUsers.s_iRatioDefault);
+        //            round.Add(HTepUsers.s_iRoundDefault);
+        //        }
+        //    }
+        //    dictSettRes.Add("ratio", ratio);
+        //    dictSettRes.Add("round", round);
 
-            return dictSettRes;
-        }
+        //    return dictSettRes;
+        //}
 
         /// <summary>
         /// кол-во дней в текущем месяце
@@ -884,7 +829,7 @@ namespace PluginTaskVedomostBl
                         // создать копии для возможности сохранения изменений
                         setValues();
                         // отобразить значения
-                        ActiveDataGridView.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues], m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER], Session.m_ViewValues);
+                        ActiveDataGridView.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues], Session.m_ViewValues);
                         //сохранить готовые значения в таблицу
                         m_arTableEdit[(int)Session.m_ViewValues] = valuesFence();
                     }

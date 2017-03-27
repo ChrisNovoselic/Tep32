@@ -1075,7 +1075,7 @@ namespace TepCommon
             /// </summary>
             public string m_strDescription;
 
-            public short m_sAverage;
+            public AGREGATE_ACTION m_sAverage;
 
             public int m_iIdMeasure;
             /// <summary>
@@ -1117,7 +1117,7 @@ namespace TepCommon
             public NALG_PARAMETER(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type
                 , int id_alg, string n_alg
                 , string nameShr, string desc
-                , short sAverage
+                , AGREGATE_ACTION sAverage
                 , int idMeasure, string nameShrMeasure, string symbol
                 , bool enabled, bool visibled
                 , int prjRatio, int vsRatio, int vsRound)
@@ -1397,7 +1397,7 @@ namespace TepCommon
                         , id_alg, n_alg
                         , r[@"NAME_SHR"] is DBNull ? string.Empty : ((string)r[@"NAME_SHR"]).Trim()
                         , r[@"DESCRIPTION"] is DBNull ? string.Empty : ((string)r[@"DESCRIPTION"]).Trim()
-                        , ((short)r[@"AVG"])
+                        , (AGREGATE_ACTION)short.Parse(r[@"AVG"].ToString().Trim())
                         , ((int)r[@"ID_MEASURE"])
                         , r[@"NAME_SHR_MEASURE"] is DBNull ? string.Empty : ((string)r[@"NAME_SHR_MEASURE"]).Trim()
                         , r[@"SYMBOL"] is DBNull ? string.Empty : ((string)r[@"SYMBOL"]).Trim()

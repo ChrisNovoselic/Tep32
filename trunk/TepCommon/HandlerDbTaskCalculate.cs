@@ -756,8 +756,7 @@ namespace TepCommon
                         + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask
                         + whereParameters
                         + @" JOIN [dbo].[" + s_dictDbTables[ID_DBTABLE.MEASURE].m_name + @"] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
-            }
-            else
+            } else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::GetQueryParameters () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return strRes;

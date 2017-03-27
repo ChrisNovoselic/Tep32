@@ -488,7 +488,7 @@ namespace PluginTaskVedomostBl
                         ;
 
                     if ((sender as RadioButtonBlock).Checked == true) {
-                        pictrure = s_getPicture(id); //GetPictureOfIdComp
+                        pictrure = s_delegateGetActivePictureBox(); //GetPictureOfIdComp
                         pictrure.Visible = true;
                         pictrure.Enabled = true;
 

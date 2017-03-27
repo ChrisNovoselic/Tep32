@@ -22,50 +22,83 @@ namespace PluginTaskVedomostBl
             , TOP, MIDDLE, LOW
                 , COUNT
         }
+
+        private struct HEADER
+        {
+            public string src;
+
+            public string[] values;
+
+            public int idNAlg;
+
+            public int idPut;
+        }
         /// <summary>
         /// Возвратить список с заголовками представления для отображения значений
         /// </summary>
         /// <param name="arlistStr">лист парамтеров</param>
         /// <param name="rowPars">таблица с данными</param>
         /// <returns>Список массивов строк-заговков</returns>
-        public List<string[]> GetListHeaders(DataTable tableSource, int id)
+        private List<string[]> getListHeaders(List<NALG_PARAMETER>listNAlgParameter, List<PUT_PARAMETER>listPutParameter)
         {
-            List<List<string>> arlistStr;
-            DataRow[] rowPars;
+            List<HEADER> listRes = new List<HEADER> { };
+
             int cntHeader = 0;
+            NALG_PARAMETER nalg_prop;
             string[] arStrHeader;
-            List<string[]> listHeader = new List<string[]> { };
+            List<HEADER> listHeader;            
 
-            using (ListStringHeaderParseer parser = new ListStringHeaderParseer(tableSource, id)) { arlistStr = parser.m_ListParam; }
+            listHeader = new List<HEADER>(listPutParameter.Count);
 
-            rowPars = tableSource.Select("ID_COMP = " + id);
+            nalg_prop = null;
 
-            var enumHeader = (from r in rowPars.AsEnumerable()
-                              orderby r.Field<int>("ID")
-                              select new
-                              {
-                                  NAME_SHR = r.Field<string>("NAME_SHR"),
-                              }).Distinct();
-
-            listHeader.Clear();
-
-            for (int j = 0; j < arlistStr.Count; j++) {
-                if (arlistStr[j].Count < 3)
-                    arStrHeader = new string[arlistStr[j].Count + 1];
+            foreach (PUT_PARAMETER put in listPutParameter) {
+                if ((nalg_prop == null)
+                    || ((!(nalg_prop == null)) && (!(nalg_prop.m_Id == put.m_Id))))
+                    nalg_prop = listNAlgParameter.Find(nAlg => { return nAlg.m_Id == put.m_idNAlg; });
                 else
-                    arStrHeader = new string[arlistStr[j].Count];
+                    ;
+
+                listHeader.Add(new HEADER() {
+                    idNAlg = nalg_prop.m_Id
+                    , idPut = put.m_Id
+                    , src = nalg_prop.m_strNameShr
+                    , values = nalg_prop.m_strNameShr.ToString().Split('.', ',')
+                });
+            }
+
+            listRes.Clear();
+
+            for (int j = 0; j < listHeader.Count; j++) {
+                //??? почему 3
+                //  , может у всех по 3(количество уровней) элемента
+                if (listHeader[j].values.Length < 3)
+                    arStrHeader = new string[listHeader[j].values.Length + 1];
+                else
+                    arStrHeader = new string[listHeader[j].values.Length];
 
                 cntHeader = 0;
 
-                for (int level = arlistStr[j].Count - 1; level > -1; level--) {
-                    switch (level) {
-                        case (int)LEVEL_HEADER.TOP:
+                for (int level = listHeader[j].values.Length - 1; level > -1; level--) {
+                    if ((!(nalg_prop == null))
+                        && (!(nalg_prop.m_Id == listHeader[j].idNAlg)))
+                        nalg_prop = listNAlgParameter.Find(nAlg => { return nAlg.m_Id == listHeader[j].idNAlg; });
+                    else
+                        ;
+
+                    switch ((LEVEL_HEADER)level) {
+                        case LEVEL_HEADER.TOP:
                             for (int t = 0; t < s_listGroupHeaders.Count; t++) {
                                 for (int n = 0; n < s_listGroupHeaders[t].Count; n++) {
                                     cntHeader++;
-                                    if (int.Parse(arlistStr[j].ElementAt((int)LEVEL_HEADER.TOP)) == cntHeader) {
+                                    if (int.Parse(listHeader[j].values.ElementAt((int)LEVEL_HEADER.TOP)) == cntHeader) {
                                         arStrHeader[level] = s_listGroupHeaders[t][n];
-                                        listHeader.Add(arStrHeader);
+                                        listRes.Add(new HEADER() {
+                                            idNAlg = listHeader[j].idNAlg
+                                            , idPut = listHeader[j].idPut
+                                            , src = nalg_prop.m_strNameShr
+                                            , values = arStrHeader
+                                        });
 
                                         t = s_listGroupHeaders.Count; // прервать внешний цикл
                                         break;
@@ -74,17 +107,17 @@ namespace PluginTaskVedomostBl
                                 }
                             }
                             break;
-                        case (int)LEVEL_HEADER.MIDDLE:
+                        case LEVEL_HEADER.MIDDLE:
                             // ??? почему < 3
-                            if (arlistStr[j].Count < 3)
-                                arStrHeader[level + 1] = "";
+                            if (listHeader[j].values.Length < 3)
+                                arStrHeader[level + 1] = string.Empty;
                             else
                                 ;
 
-                            arStrHeader[(int)LEVEL_HEADER.MIDDLE] = rowPars[j]["NAME_SHR"].ToString().Trim();
+                            arStrHeader[(int)LEVEL_HEADER.MIDDLE] = nalg_prop.m_strNameShr; // listHeader[j].src
                             break;
-                        case (int)LEVEL_HEADER.LOW:
-                            arStrHeader[level] = rowPars[j]["DESCRIPTION"].ToString().Trim();
+                        case LEVEL_HEADER.LOW:
+                            arStrHeader[level] = nalg_prop.m_strDescription;
                             break;
                         default:
                             break;
@@ -92,54 +125,9 @@ namespace PluginTaskVedomostBl
                 } // for - level
             }
 
-            return listHeader;
+            return (from header in listRes select new { header.values }) as List<string[]>;
         }
 
-        /// <summary>
-        /// класс для формирования листа с параметрами 
-        /// для формирования заголовков
-        /// </summary>
-        private class ListStringHeaderParseer : IDisposable
-        {
-            /// <summary>
-            /// набор листов с параметрами группировки
-            /// </summary>
-            public List<List<string>> m_ListParam;
-
-            /// <summary>
-            /// Конструктор - основной (с параметрами)
-            /// </summary>
-            /// <param name="table">таблица с данными</param>
-            /// <param name="id_comp">параметр для выборки</param>
-            public ListStringHeaderParseer(DataTable table, int id_comp)
-            {
-                parse(table.Select("ID_COMP = " + id_comp));
-            }
-
-            /// <summary>
-            /// формирование листа параметров вида x.y.z,
-            /// где x - TopHeader, y - MiddleHeader, y - LowHeader
-            /// </summary>
-            /// <param name="tablePars">таблица с данными</param>
-            private void parse(DataRow[] tablePars)
-            {
-                m_ListParam = new List<List<string>>(tablePars.Count());
-
-                List<string> list;
-
-                foreach (DataRow row in tablePars)
-                {
-                    list = new List<string>();
-
-                    list = row["N_ALG"].ToString().Split('.', ',').ToList();
-                    m_ListParam.Add(list);
-                }
-            }
-
-            public void Dispose()
-            {
-            }
-        }
         /// <summary>
         /// класс вьюхи
         /// </summary>
@@ -178,21 +166,18 @@ namespace PluginTaskVedomostBl
             /// ??? зачем Количество блоков
             /// </summary>
             public int BlockCount;
-            /// <summary>
-            /// Перечисление для индексации столбцов со служебной информацией
-            /// </summary>
-            public enum INDEX_SERVICE_COLUMN : uint { ALG = 0, DATE, COUNT }
             ///// <summary>
-            ///// Словарь настроечных данных
+            ///// Перечисление для индексации столбцов со служебной информацией
             ///// </summary>
-            //private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
-            private Dictionary<int, COLUMN_PROPERTY> m_dictPropertyColumns;
+            //public enum INDEX_SERVICE_COLUMN : uint { ALG = 0, DATE, COUNT }
 
+            private List<string[]> m_listHeaders;
             /// <summary>
             /// Конструктор - основной (с параметром)
             /// </summary>
             /// <param name="nameDGV">Идентификатор оборудования - блока, данные которого отображаются в текущем представлении</param>
-            public DataGridViewVedomostBl(int tag) : base (ModeData.DATETIME)
+            public DataGridViewVedomostBl(int tag)
+                : base (ModeData.DATETIME)
             {
                 Tag = tag;
 
@@ -228,37 +213,10 @@ namespace PluginTaskVedomostBl
                 ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.BottomCenter;
                 ColumnHeadersHeight = ColumnHeadersHeight * s_GroupHeaderCount;//высота от нижнего(headerText)
                 ScrollBars = ScrollBars.None;
-
-                AddColumns(-2, "ALG", string.Empty, false);
-                AddColumns(-1, "Date", "Дата", true);
             }
-
 
             public override void BuildStructure()
             {
-            }
-
-            /// <summary>
-            /// Класс для описания дополнительных свойств столбца в отображении (таблице)
-            /// </summary>
-            private class HDataGridViewColumn : DataGridViewTextBoxColumn
-            {
-                /// <summary>
-                /// Идентификатор компонента
-                /// </summary>
-                public int m_IdAlg;
-                /// <summary>
-                /// Идентификатор компонента
-                /// </summary>
-                public int m_IdComp;
-                /// <summary>
-                /// Признак запрета участия в расчете
-                /// </summary>
-                public bool m_bCalcDeny;
-                /// <summary>
-                /// признак общей группы
-                /// </summary>
-                public string m_topHeader;
             }
 
             /// <summary>
@@ -267,63 +225,21 @@ namespace PluginTaskVedomostBl
             public class COLUMN_PROPERTY
             {
                 /// <summary>
-                /// Структура с дополнительными свойствами ячейки отображения
+                /// Параметр в алгоритме расчета, связанный с компонентом станции
                 /// </summary>
-                public struct HDataGridViewCell //: DataGridViewCell
-                {
-                    public enum INDEX_CELL_PROPERTY : uint { IS_NAN }
-                    /// <summary>
-                    /// Признак отсутствия значения
-                    /// </summary>
-                    public int m_IdParameter;
-                    /// <summary>
-                    /// Признак качества значения в ячейке
-                    /// </summary>
-                    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
-
-                    public HDataGridViewCell(int idParameter, HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
-                    {
-                        m_IdParameter = idParameter;
-                        m_iQuality = iQuality;
-                    }
-                    /// <summary>
-                    /// 
-                    /// </summary>
-                    public bool IsNaN { get { return m_IdParameter < 0; } }
-                }
-
-                /// <summary>
-                /// Идентификатор параметра в алгоритме расчета
-                /// </summary>
-                public int m_idAlg;
-                /// <summary>
-                /// признак агрегации
-                /// </summary>
-                public int m_Avg;
-                /// <summary>
-                /// Идентификатор множителя при отображении (визуальные установки) значений в столбце
-                /// </summary>
-                public int m_vsRatio;
-                /// <summary>
-                /// Количество знаков после запятой при отображении (визуальные установки) значений в столбце
-                /// </summary>
-                public int m_vsRound;
+                public PUT_PARAMETER m_putParameter;
                 /// <summary>
                 /// Имя колонки
                 /// </summary>
-                public string nameCol;
+                public string m_textMiddleHeader;
                 /// <summary>
                 /// Текст в колонке
                 /// </summary>
-                public string hdrText;
+                public string m_textLowHeader;
                 /// <summary>
                 /// Имя общей группы колонки
                 /// </summary>
-                public string topHeader;
-                /// <summary>
-                /// Имя общей группы колонки
-                /// </summary>
-                public int m_IdComp;
+                public string m_textTopHeader;
             }
 
             public void AddRow(DateTime dtRow, bool bEnded)
@@ -332,26 +248,27 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// Добавление колонки
+            /// Добавление столбца
             /// </summary>
             /// <param name="idHeader">номер колонки</param>
-            /// <param name="nameCol">имя колонки</param>
+            /// <param name="textMiddle">имя колонки</param>
             /// <param name="headerText">текст заголовка</param>
             /// <param name="bVisible">видимость</param>
-            public void AddColumns(int idHeader, string nameCol, string headerText, bool bVisible)
+            private void addColumn(int idHeader, COLUMN_PROPERTY col_prop)
             {
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
 
                 try
                 {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_IdAlg = idHeader, m_bCalcDeny = false };
+                    DataGridViewColumn column = new DataGridViewColumn();
+                    column.Tag = col_prop;
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     //column.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
                     column.Frozen = true;
-                    column.Visible = bVisible;
+                    column.Visible = col_prop.m_putParameter.m_bVisibled;
                     column.ReadOnly = false;
-                    column.Name = nameCol;
-                    column.HeaderText = headerText;
+                    column.Name = col_prop.m_textMiddleHeader;
+                    column.HeaderText = col_prop.m_textLowHeader;
                     column.DefaultCellStyle.Alignment = alignText;
                     //column.AutoSizeMode = autoSzColMode;
                     Columns.Add(column as DataGridViewTextBoxColumn);
@@ -362,67 +279,67 @@ namespace PluginTaskVedomostBl
                 }
             }
 
-            /// <summary>
-            /// Добавление колонки
-            /// </summary>
-            /// <param name="idHeader">номер колонки</param>
-            /// <param name="col_prop">Структура для описания добавляемых столбцов</param>
-            /// <param name="bVisible">видимость</param>
-            public void AddColumns(int idHeader, COLUMN_PROPERTY col_prop, bool bVisible)
-            {
-                int indxCol = -1; // индекс столбца при вставке
-                DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
+            ///// <summary>
+            ///// Добавление колонки
+            ///// </summary>
+            ///// <param name="idHeader">номер колонки</param>
+            ///// <param name="col_prop">Структура для описания добавляемых столбцов</param>
+            ///// <param name="bVisible">видимость</param>
+            //public void AddColumn(int idHeader, COLUMN_PROPERTY col_prop, bool bVisible)
+            //{
+            //    int indxCol = -1; // индекс столбца при вставке
+            //    DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
 
-                try
-                {
-                    if (m_dictPropertyColumns == null)
-                        m_dictPropertyColumns = new Dictionary<int, COLUMN_PROPERTY>();
+            //    try
+            //    {
+            //        if (m_dictPropertyColumns == null)
+            //            m_dictPropertyColumns = new Dictionary<int, COLUMN_PROPERTY>();
 
-                    if (!m_dictPropertyColumns.ContainsKey(col_prop.m_idAlg))
-                        m_dictPropertyColumns.Add(col_prop.m_idAlg, col_prop);
-                    // найти индекс нового столбца
-                    // столбец для станции - всегда крайний
-                    //foreach (HDataGridViewColumn col in Columns)
-                    //    if ((col.m_iIdComp > 0)
-                    //        && (col.m_iIdComp < 1000))
-                    //    {
-                    //        indxCol = Columns.IndexOf(col);
-                    //        break;
-                    //    }
+            //        if (!m_dictPropertyColumns.ContainsKey(col_prop.m_idAlg))
+            //            m_dictPropertyColumns.Add(col_prop.m_idAlg, col_prop);
+            //        // найти индекс нового столбца
+            //        // столбец для станции - всегда крайний
+            //        //foreach (HDataGridViewColumn col in Columns)
+            //        //    if ((col.m_iIdComp > 0)
+            //        //        && (col.m_iIdComp < 1000))
+            //        //    {
+            //        //        indxCol = Columns.IndexOf(col);
+            //        //        break;
+            //        //    }
 
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_topHeader = col_prop.topHeader, m_IdAlg = idHeader, m_IdComp = col_prop.m_IdComp };
-                    alignText = DataGridViewContentAlignment.MiddleRight;
+            //        HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_topHeader = col_prop.m_textTopHeader, m_IdAlg = idHeader, m_IdComp = col_prop.m_IdComp };
+            //        alignText = DataGridViewContentAlignment.MiddleRight;
 
-                    if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
-                        ; // оставить значения по умолчанию
-                    else
-                    {// для добавлямых столбцов
-                        //if (idHeader < 0)
-                        //{// для служебных столбцов
-                        if (bVisible == true)
-                        {// только для столбца с [SYMBOL]
-                            alignText = DataGridViewContentAlignment.MiddleLeft;
-                        }
-                        column.Frozen = true;
-                        column.ReadOnly = true;
-                        //}
-                    }
+            //        if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
+            //            ; // оставить значения по умолчанию
+            //        else
+            //        {// для добавлямых столбцов
+            //            //if (idHeader < 0)
+            //            //{// для служебных столбцов
+            //            if (bVisible == true)
+            //            {// только для столбца с [SYMBOL]
+            //                alignText = DataGridViewContentAlignment.MiddleLeft;
+            //            }
+            //            column.Frozen = true;
+            //            column.ReadOnly = true;
+            //            //}
+            //        }
 
-                    column.HeaderText = col_prop.hdrText;
-                    column.Name = col_prop.nameCol;
-                    column.DefaultCellStyle.Alignment = alignText;
-                    column.Visible = bVisible;
+            //        column.HeaderText = col_prop.hdrText;
+            //        column.Name = col_prop.nameCol;
+            //        column.DefaultCellStyle.Alignment = alignText;
+            //        column.Visible = bVisible;
 
-                    if (!(indxCol < 0))
-                        Columns.Insert(indxCol, column as DataGridViewTextBoxColumn);
-                    else
-                        Columns.Add(column as DataGridViewTextBoxColumn);
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"DataGridViewVedBl::AddColumn (idHeader=" + idHeader + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
+            //        if (!(indxCol < 0))
+            //            Columns.Insert(indxCol, column as DataGridViewTextBoxColumn);
+            //        else
+            //            Columns.Add(column as DataGridViewTextBoxColumn);
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        Logging.Logg().Exception(e, @"DataGridViewVedBl::AddColumn (idHeader=" + idHeader + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //    }
+            //}
 
             /// <summary>
             /// Установка возможности редактирования столбцов
@@ -431,7 +348,7 @@ namespace PluginTaskVedomostBl
             public bool ReadOnlyColumns
             {
                 set {
-                    foreach (HDataGridViewColumn col in Columns)
+                    foreach (DataGridViewColumn col in Columns)
                         //if (col.Name == nameCol)
                         col.ReadOnly = value;
                 }
@@ -452,10 +369,9 @@ namespace PluginTaskVedomostBl
                     if (col.Visible == true)
                         cntCol++;
 
-                s_iCountColumn = cntCol * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width +
-                    Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width / s_listGroupHeaders.Count;
+                s_iCountColumn = cntCol * WIDTH_COL1 + WIDTH_COL1 / s_listGroupHeaders.Count;
 
-                Paint += new PaintEventHandler(dataGridView1_Paint);
+                Paint += new PaintEventHandler(dataGridView_onPaint);
             }
 
             /// <summary>
@@ -464,43 +380,56 @@ namespace PluginTaskVedomostBl
             /// <param name="idTG">номер идТГ</param>
             private void formingTitleLists(int idTG)
             {
-                string _oldItem = string.Empty;
-                List<string> _listTop = new List<string>(),
-                    _listMiddle = new List<string>();
+                string oldItem = string.Empty;
+                COLUMN_PROPERTY col_prop;
+                List<string> listTop = new List<string>()
+                    , listMiddle = new List<string>();
 
                 if (m_headerTop.ContainsKey(idTG))
                     m_headerTop.Remove(idTG);
 
-                foreach (HDataGridViewColumn col in Columns)
-                    if (col.m_IdAlg >= 0)
+                foreach (DataGridViewColumn col in Columns) {
+                    col_prop = (COLUMN_PROPERTY)col.Tag;
+
+                    if (!(col_prop.m_putParameter.m_idNAlg < 0))
                         if (col.Visible == true)
-                            if (col.m_topHeader != "")
-                                if (col.m_topHeader != _oldItem)
+                            if (col_prop.m_textTopHeader.Equals(string.Empty) == false)
+                                if (col_prop.m_textTopHeader.Equals(oldItem) == false)
                                 {
-                                    _oldItem = col.m_topHeader;
-                                    _listTop.Add(col.m_topHeader);
+                                    oldItem = col_prop.m_textTopHeader;
+                                    listTop.Add(col_prop.m_textTopHeader);
                                 }
                                 else;
                             else
-                                _listTop.Add(col.m_topHeader);
+                                listTop.Add(col_prop.m_textTopHeader);
                         else;
                     else;
+                }
 
-                m_headerTop.Add(idTG, _listTop);
+                m_headerTop.Add(idTG, listTop);
 
                 if (m_headerMiddle.ContainsKey(idTG))
                     m_headerMiddle.Remove(idTG);
+                else
+                    ;
 
-                foreach (HDataGridViewColumn col in Columns)
-                    if (col.m_IdAlg >= 0)
+                foreach (DataGridViewColumn col in Columns) {
+                    col_prop = (COLUMN_PROPERTY)col.Tag;
+
+                    if (!(col_prop.m_putParameter.m_idNAlg < 0))
                         if (col.Visible == true)
-                            if (col.Name != _oldItem)
-                            {
-                                _oldItem = col.Name;
-                                _listMiddle.Add(col.Name);
-                            }
+                            if (col.Name != oldItem) {
+                                oldItem = col.Name;
+                                listMiddle.Add(col.Name);
+                            } else
+                                ;
+                        else
+                            ;
+                    else
+                        ;
+                }
 
-                m_headerMiddle.Add(idTG, _listMiddle);
+                m_headerMiddle.Add(idTG, listMiddle);
             }
 
             /// <summary>
@@ -510,59 +439,75 @@ namespace PluginTaskVedomostBl
             /// <param name="idDgv">номер окна отображения</param>
             private void formRelationsHeading(int idDgv)
             {
-                string _oldItem = string.Empty;
-                int _indx = 0,
-                    _untdColM = 0;
-                int[] _arrIntTop = new int[m_headerTop[idDgv].Count()],
-                    _arrIntMiddle = new int[m_headerMiddle[idDgv].Count()];
+                string oldItem = string.Empty;
+                int indx = 0
+                    , untdCol = 0
+                    , untdColM = 0;
+
+                COLUMN_PROPERTY col_prop;
+                int[] arrIntTop = new int[m_headerTop[idDgv].Count()]
+                    , arrIntMiddle = new int[m_headerMiddle[idDgv].Count()];
 
                 if (m_arIntTopHeader.ContainsKey(idDgv))
                     m_arIntTopHeader.Remove(idDgv);
                 else
                     ;
 
-                foreach (var item in m_headerTop[idDgv])
-                {
-                    int untdCol = 0;
-                    foreach (HDataGridViewColumn col in Columns)
+                foreach (var item in m_headerTop[idDgv]) {
+                    untdCol = 0;
+
+                    foreach (DataGridViewColumn col in Columns) {
+                        col_prop = (COLUMN_PROPERTY)col.Tag;
+
                         if (col.Visible == true)
-                            if (col.m_topHeader == item)
+                            if (col_prop.m_textTopHeader.Equals(item) == true)
                                 if (string.IsNullOrEmpty(item) == false)
                                     untdCol++;
                                 else {
                                     untdCol = 1;
+
                                     break;
                                 }
                             else
                                 ;
                         else
                             ;
-                    _arrIntTop[_indx] = untdCol;
-                    _indx++;
+                    }
+
+                    arrIntTop[indx] = untdCol;
+                    indx++;
                 }
 
-                m_arIntTopHeader.Add(idDgv, _arrIntTop);
-                _indx = 0;
+                m_arIntTopHeader.Add(idDgv, arrIntTop);
+                indx = 0;
 
                 if (m_arMiddleCol.ContainsKey(idDgv))
                     m_arMiddleCol.Remove(idDgv);
+                else
+                    ;
 
-                foreach (var item in m_headerMiddle[idDgv])
-                {
-                    foreach (HDataGridViewColumn col in Columns)
-                    {
-                        if (col.m_IdAlg > -1)
+                foreach (var item in m_headerMiddle[idDgv]) {
+                    foreach (DataGridViewColumn col in Columns) {
+                        col_prop = (COLUMN_PROPERTY)col.Tag;
+
+                        if (col_prop.m_putParameter.m_idNAlg > -1)
                             if (item == col.Name)
-                                _untdColM++;
+                                untdColM++;
                             else
-                                if (_untdColM > 0)
-                                break;
+                                if (untdColM > 0)
+                                    break;
+                                else
+                                    ;
+                        else
+                            ;
                     }
-                    _arrIntMiddle[_indx] = _untdColM;
-                    _indx++;
-                    _untdColM = 0;
+
+                    arrIntMiddle[indx] = untdColM;
+                    indx++;
+                    untdColM = 0;
                 }
-                m_arMiddleCol.Add(idDgv, _arrIntMiddle);
+
+                m_arMiddleCol.Add(idDgv, arrIntMiddle);
             }
 
             /// <summary>
@@ -572,24 +517,33 @@ namespace PluginTaskVedomostBl
             /// <param name="isCheck">проверка чека</param>
             public void SetHeaderVisibled(List<string> listHeaderTop, bool isCheck)
             {
+                COLUMN_PROPERTY col_prop;
+
                 try {
                     foreach (var item in listHeaderTop)
-                        foreach (HDataGridViewColumn col in Columns)
-                            if (col.m_topHeader == item)
+                        foreach (DataGridViewColumn col in Columns) {
+                            col_prop = (COLUMN_PROPERTY)col.Tag;
+
+                            if (col_prop.m_textTopHeader.Equals(item) == true)
                                 col.Visible = isCheck;
                             else
                                 ;
-                } catch (Exception) { }
+                        }
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, @"DataGridViewVedomostBl::SetHeaderVisibled () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
 
                 ConfigureColumns();
             }
+
+            private int WIDTH_COL1 { get { return Columns[2].Width; }  }
 
             /// <summary>
             /// обработчик события перерисовки грида(построение шапки заголовка)
             /// </summary>
             /// <param name="sender">Объект, инициировавший событие</param>
             /// <param name="ev">Аргумент события</param>
-            void dataGridView1_Paint(object sender, PaintEventArgs e)
+            void dataGridView_onPaint(object sender, PaintEventArgs e)
             {
                 int indxCol = 0
                     , idComp = -1
@@ -620,16 +574,14 @@ namespace PluginTaskVedomostBl
                 foreach (var item in m_headerMiddle[idComp])
                 {
                     //get the column header cell
-                    r1.Width = m_arMiddleCol[idComp][m_headerMiddle[idComp].ToList().IndexOf(item)]
-                        * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                    r1.Width = m_arMiddleCol[idComp][m_headerMiddle[idComp].ToList().IndexOf(item)] * WIDTH_COL1;
                     r1.Height = height + 3;//??? 
 
                     if (m_headerMiddle[idComp].ToList().IndexOf(item) - 1 > -1)
-                        r1.X = r1.X + m_arMiddleCol[idComp][m_headerMiddle[idComp].ToList().IndexOf(item) - 1]
-                            * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                        r1.X = r1.X + m_arMiddleCol[idComp][m_headerMiddle[idComp].ToList().IndexOf(item) - 1] * WIDTH_COL1;
                     else
                     {
-                        r1.X += Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                        r1.X += WIDTH_COL1;
                         r1.Y = r1.Y + r1.Height;
                     }
 
@@ -644,14 +596,14 @@ namespace PluginTaskVedomostBl
                 foreach (var item in m_headerTop[idComp])
                 {
                     //get the column header cell
-                    r2.Width = m_arIntTopHeader[idComp][indxCol] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                    r2.Width = m_arIntTopHeader[idComp][indxCol] * WIDTH_COL1;
                     r2.Height = height + 2;//??? 
 
                     if (indxCol - 1 > -1)
-                        r2.X = r2.X + m_arIntTopHeader[idComp][indxCol - 1] * Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                        r2.X = r2.X + m_arIntTopHeader[idComp][indxCol - 1] * WIDTH_COL1;
                     else
                     {
-                        r2.X += Columns[(int)INDEX_SERVICE_COLUMN.COUNT].Width;
+                        r2.X += WIDTH_COL1;
                         r2.Y += r2.Y;
                     }
 
@@ -667,12 +619,64 @@ namespace PluginTaskVedomostBl
                 //(sender as DGVVedomostBl).Paint -= new PaintEventHandler(dataGridView1_Paint);
             }
 
+            public void AddHeaderColumns(List<string[]> listHeaders)
+            {
+                m_listHeaders = new List<string[]>(listHeaders);
+            }
+
+            public void AddColumns(List<PUT_PARAMETER>listPutParameter)
+            {
+                int i = -1;
+
+                for (int col = 0; col < m_listHeaders.Count; col++) {
+                    addColumn(listPutParameter[col].m_idNAlg
+                        , new DataGridViewVedomostBl.COLUMN_PROPERTY {
+                            m_textTopHeader = m_listHeaders[col][(int)DataGridViewVedomostBl.INDEX_HEADER.TOP].ToString()
+                            , m_textMiddleHeader = m_listHeaders[col][(int)DataGridViewVedomostBl.INDEX_HEADER.MIDDLE].ToString()
+                            , m_textLowHeader = m_listHeaders[col][(int)DataGridViewVedomostBl.INDEX_HEADER.LOW].ToString()
+                            , m_putParameter = listPutParameter[col]
+                        });
+                }
+            }
+
+            public void AddRows(DateTime dtStart, int cnt)
+            {
+                for (int i = 0; i < cnt + 1; i++)
+                    AddRow(dtStart.AddDays(i), i < cnt);
+            }
+
+            /// <summary>
+            /// Настройка размеров контролов отображения
+            /// </summary>
+            public void ResizeControls()
+            {
+                int cntVisibleColumns = 0;
+
+                foreach (DataGridViewColumn col in Columns) {
+                    if (Columns.IndexOf(col) > 0)
+                        col.Width = 65;
+                    else
+                        ;
+
+                    if (col.Visible == true)
+                        cntVisibleColumns++;
+                    else
+                        ;
+                }
+
+                int _drwW = cntVisibleColumns * Columns[2].Width + 10
+                    , _drwH = (Rows.Count) * Rows[0].Height + 70;
+
+                //GetPictureOfIdComp((int)(dgv as DataGridViewVedomostBl).Tag).Size = new Size(_drwW + 2, _drwH);
+                Size = new Size(_drwW + 2, _drwH);
+            }
+
             /// <summary>
             /// обработчик события - перерисовки ячейки
             /// </summary>
             /// <param name="sender">Объект, инициировавший событие</param>
             /// <param name="ev">Аргумент события</param>
-            static void dataGridView1_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+            static void dataGridView_onCellPainting(object sender, DataGridViewCellPaintingEventArgs e)
             {
                 if (e.RowIndex == -1 && e.ColumnIndex > -1)
                 {
@@ -691,81 +695,66 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="tableOrigin">таблица с данными</param>
             /// <param name="typeValues">тип загружаемых данных</param>
-            public void ShowValues(DataTable tableOrigin, DataTable tableInParameter, HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
+            public void ShowValues(DataTable tableOrigin, HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
             {
-                DataTable _dtOriginVal = new DataTable(),
-                    _dtEditVal = new DataTable();
-                int idAlg = -1
-                   , idParameter = -1
-                   , _hoursOffSet
-                   , iCol = 0
-                   , _vsRatioValue = -1;
-                double dblVal = -1F;
+                DataTable tableOriginCopy = new DataTable();
+                int cntDay = -1
+                   , hoursOffSet
+                   , iCol = 0;
 
-                DataRow[] parameterRows = null,
-                    editRow = null;
+                DataRow[] editRow = null;
+                NALG_PROPERTY nalg_prop;
+                COLUMN_PROPERTY col_prop;
 
-                _dtOriginVal = tableOrigin.Copy();
+                tableOriginCopy = tableOrigin.Copy();
                 ClearValues();
 
                 if ((int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE == (int)typeValues)
                     if (s_flagBl)
-                        _hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);
+                        hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);
                     else
-                        _hoursOffSet = (s_currentOffSet / 60);
+                        hoursOffSet = (s_currentOffSet / 60);
                 else
-                    _hoursOffSet = s_currentOffSet / 60;
+                    hoursOffSet = s_currentOffSet / 60;
 
-                if (_dtOriginVal.Rows.Count > 0)
-                    foreach (HDataGridViewColumn col in Columns)
-                    {
-                        if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
-                        {
-                            try
-                            {
-                                parameterRows = tableInParameter.Select(string.Format(tableInParameter.Locale
-                                    , "ID_ALG = " + col.m_IdAlg + " AND ID_COMP = " + (int)Tag));
-                                editRow = _dtOriginVal.Select(string.Format(_dtOriginVal.Locale, "ID_PUT = " + (int)parameterRows[0]["ID"]));
-                            }
-                            catch (Exception)
-                            {
-                                MessageBox.Show("???" + "Ошибка выборки данных!");
-                            }
+                if (tableOriginCopy.Rows.Count > 0)
+                    foreach (DataGridViewColumn col in Columns) {
+                        col_prop = (COLUMN_PROPERTY)col.Tag;
+                        nalg_prop = m_dictNAlgProperties[col_prop.m_putParameter.m_idNAlg];
 
-                            for (int i = 0; i < editRow.Count(); i++)
-                            {
-                                _vsRatioValue = m_dictPropertyColumns[col.m_IdAlg].m_vsRatio;
-
-                                if (Convert.ToDateTime(editRow[i][@"WR_DATETIME"]).AddHours(_hoursOffSet).ToShortDateString() ==
-                                    Rows[i].Cells["Date"].Value.ToString())
-                                {
-                                    Rows[i].Cells[iCol].Value =
-                                        (((double)editRow[i][@"VALUE"]).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound,
-                                            CultureInfo.InvariantCulture));
-                                }
-                                else
-                                    ;
-                            }
-
-                            try
-                            {
-                                if (m_dictPropertyColumns[col.m_IdAlg].m_Avg == 0)
-                                    Rows[RowCount - 1].Cells[iCol].Value =
-                                        sumVal(_dtEditVal, col.Index).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound, CultureInfo.InvariantCulture);
-                                else
-                                    Rows[RowCount - 1].Cells[iCol].Value =
-                                        avgVal(_dtEditVal, col.Index).ToString(@"F" + m_dictPropertyColumns[col.m_IdAlg].m_vsRound, CultureInfo.InvariantCulture);
-                            }
-                            catch (Exception exp)
-                            {
-                                MessageBox.Show("???" + "Ошибка усредненния данных по столбцу " + col.m_topHeader + "! " + exp.ToString());
-                            }
+                        try {
+                            editRow = tableOriginCopy.Select(string.Format(tableOriginCopy.Locale, "ID_PUT = " + col_prop.m_putParameter.m_Id));
+                        } catch (Exception e) {
+                            Logging.Logg().Exception(e, string.Format(@"DataGridViewVedomostBl::ShowValues () - ошибка выборки данных ID_PUT={0}...", col_prop.m_putParameter.m_Id), Logging.INDEX_MESSAGE.NOT_SET);
                         }
-                        else
-                            ;
 
+                        for (int i = 0; i < editRow.Count(); i++) {
+                            //??? почему сравниваются строки, а не значения
+                            if (Convert.ToDateTime(editRow[i][@"WR_DATETIME"]).AddHours(hoursOffSet).ToShortDateString() ==
+                                Rows[i].Cells["Date"].Value.ToString()) {
+                                Rows[i].Cells[iCol].Value =
+                                    ((double)editRow[i][@"VALUE"]).ToString(nalg_prop.FormatRound, CultureInfo.InvariantCulture);
+                            } else
+                                ;
+                        }
+
+                        try {
+                            if (nalg_prop.m_sAverage == 0)
+                                Rows[RowCount - 1].Cells[iCol].Value =
+                                    summaColumnValues(col.Index, out cntDay).ToString(nalg_prop.FormatRound, CultureInfo.InvariantCulture);
+                            else
+                                Rows[RowCount - 1].Cells[iCol].Value =
+                                    averageColumnValues(col.Index, out cntDay).ToString(nalg_prop.FormatRound, CultureInfo.InvariantCulture);
+                        } catch (Exception e) {
+                            Logging.Logg().Exception(e
+                                , string.Format("???DataGridViewVedomostBl::ShowValues () - усредненние данных по столбцу name={0}", col_prop.m_textTopHeader)
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                        
                         iCol++;
-                    }
+                    } // цикл по столбцам представления
+                else
+                    ;
             }
 
             /// <summary>
@@ -773,28 +762,30 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="indxCol">индекс столбца</param>
             /// <returns>сумма по столбцу</returns>
-            private double sumVal(DataTable table, int indxCol)
+            private double summaColumnValues(int indxCol, out int counter)
             {
-                double _sumValue = 0F;
+                counter = 0;
+                double dblRes = 0F;
 
                 try {
                     foreach (DataGridViewRow row in Rows)
                         if (row.Index < Rows.Count - 1)
                         // все кроме крайней строки
                             if ((!(row.Cells[indxCol].Value == null))
-                                && (string.IsNullOrEmpty(row.Cells[indxCol].Value.ToString()) == false))
+                                && (string.IsNullOrEmpty(row.Cells[indxCol].Value.ToString()) == false)) {
                             // только, если есть значение для разбора
-                                _sumValue += HMath.doubleParse(row.Cells[indxCol].Value.ToString());
-                            else
+                                dblRes += HMath.doubleParse(row.Cells[indxCol].Value.ToString());
+
+                                counter++;
+                            } else
                                 ;
                         else
                             ;
                 } catch (Exception e) {
-                    MessageBox.Show("???" + "Ошибка суммирования столбца!");
-                    Logging.Logg().Exception(e, @"PanelTaskVedomostBl::sumVal () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Exception(e, string.Format(@"PanelTaskVedomostBl::summaColumnValues () - суммирования столбца №{0}...", indxCol), Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
-                return _sumValue;
+                return dblRes;
             }
 
             /// <summary>
@@ -802,36 +793,28 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="indxCol">индекс столбца</param>
             /// <returns>среднее по столбцу</returns>
-            private double avgVal(DataTable table, int indxCol)
+            private double averageColumnValues(int indxCol, out int counter)
             {
-                int cntNum = 0;
-                double avgValue = 0F
-                   , sumValue = 0F;
+                counter = 0;
+                double summaValue = summaColumnValues(indxCol, out counter)
+                    , dblRes = 0F;
 
-                try {
-                    foreach (DataGridViewRow row in Rows)
-                        if ((!(row.Cells[indxCol].Value == null))
-                            && (string.IsNullOrEmpty(row.Cells[indxCol].Value.ToString()) == false)) {
-                            sumValue += HMath.doubleParse(row.Cells[indxCol].Value.ToString());
-                            cntNum++;
-                        } else
-                            ;
-                } catch (Exception exp) {
-                    MessageBox.Show("???" + "Ошибка усреднения столбца!");
-                    Logging.Logg().Exception(exp, @"PanelTaskVedomostBl::avgVal () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
+                if (counter > 0)
+                    dblRes = summaValue / counter;
+                else
+                    dblRes = double.NaN;
 
-                return avgValue = sumValue / cntNum;
+                return dblRes;
             }
 
             /// <summary>
             /// Формирование таблицы данных с отображения
             /// </summary>
-            /// <param name="dtSourceOrg">таблица с оригинальными данными</param>
+            /// <param name="tableSourceOrigin">таблица с оригинальными данными</param>
             /// <param name="idSession">номер сессии пользователя</param>
             /// <param name="typeValues">тип данных</param>
             /// <returns>таблица с новыми данными с вьюхи</returns>
-            public DataTable FillTableToSave(DataTable dtSourceOrg, int idSession, HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
+            public DataTable FillTableToSave(DataTable tableSourceOrigin, int idSession, HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
             {
                 int i = 0,
                     idAlg = -1
@@ -841,9 +824,11 @@ namespace PluginTaskVedomostBl
                     indexPut = 0;
                 double valueToRes = 0;
                 DateTime dtVal;
+                NALG_PROPERTY nalg_prop;
+                COLUMN_PROPERTY col_prop;
 
-                DataTable dtSourceEdit = new DataTable();
-                dtSourceEdit.Columns.AddRange(
+                DataTable tableSourceEdit = new DataTable();
+                tableSourceEdit.Columns.AddRange(
                     new DataColumn[] {
                         new DataColumn (@"ID_PUT", typeof (int))
                         , new DataColumn (@"ID_SESSION", typeof (long))
@@ -859,40 +844,50 @@ namespace PluginTaskVedomostBl
                 else
                     hoursOffSet = (s_currentOffSet / 60);
 
-                foreach (HDataGridViewColumn col in Columns)
-                {
-                    if (col.m_IdAlg > 0)
-                    {
-                        foreach (DataGridViewRow row in Rows)
-                        {
-                            if (row.Index != row.DataGridView.RowCount - 1)
-                                if (row.Cells[col.Index].Value != null)
-                                    if (row.Cells[col.Index].Value.ToString() != "")
-                                    {
-                                        idAlg = col.m_IdAlg;
-                                        valueToRes = HPanelTepCommon.AsParseToF(row.Cells[col.Index].Value.ToString());
-                                        vsRatioValue = m_dictPropertyColumns[idAlg].m_vsRatio;
-                                        valueToRes *= Math.Pow(10F, vsRatioValue);
-                                        dtVal = Convert.ToDateTime(row.Cells["Date"].Value.ToString());
-                                        quality = diffRowsInTables(dtSourceOrg, valueToRes, i, idAlg, typeValues);
+                foreach (DataGridViewColumn col in Columns) {
+                    col_prop = (COLUMN_PROPERTY)col.Tag;
+                    nalg_prop = m_dictNAlgProperties[col_prop.m_putParameter.m_idNAlg];
 
-                                        dtSourceEdit.Rows.Add(new object[]
-                                        {
-                                            col.m_IdComp
-                                            , idSession
-                                            , quality
-                                            , valueToRes
-                                            , dtVal.AddMinutes(-s_currentOffSet).ToString("F",dtSourceEdit.Locale)
-                                            , i
-                                        });
-                                        i++;
-                                    }
-                        }
+                    if (col_prop.m_putParameter.m_idNAlg > 0) {
+                        foreach (DataGridViewRow row in Rows) {
+                            if (row.Index != row.DataGridView.RowCount - 1)
+                                if (string.IsNullOrEmpty(row.Cells[col.Index].Value.ToString()) == false) {
+                                    idAlg = col_prop.m_putParameter.m_idNAlg;
+                                    valueToRes = HPanelTepCommon.AsParseToF(row.Cells[col.Index].Value.ToString());
+                                    vsRatioValue = nalg_prop.m_vsRatio;
+                                    valueToRes *= Math.Pow(10F, vsRatioValue);
+                                    dtVal = (DateTime)row.Tag;
+                                    //??? в этом методе сортируется табл. по 2-ум полям
+                                    //!!! срочно исключить, т.к. внутри 2-ух циклов
+                                    quality = diffRowsInTables(tableSourceOrigin, valueToRes, i, nalg_prop.FormatRound, typeValues);
+
+                                    tableSourceEdit.Rows.Add(new object[] {
+                                        col_prop.m_putParameter.IdComponent
+                                        , idSession
+                                        , quality
+                                        , valueToRes
+                                        , dtVal.AddMinutes(-s_currentOffSet).ToString("F",tableSourceEdit.Locale)
+                                        , i
+                                    });
+
+                                    i++;
+                                } else
+                                // в ячейке не валидное значение, не может быть определено
+                                    ;
+                            else
+                            // крайняя строка (ИТОГО за период)
+                                ;
+                        } // цикл по строкам (датам) в представлении
+
                         indexPut++;
-                    }
-                }
-                dtSourceEdit = sortDataTable(dtSourceEdit, "WR_DATETIME");
-                return dtSourceEdit;
+                    } else
+                    // идентификатор параметра в алгоритме расчета не валидный
+                        ;
+                } // цикл по столбцам (параметрам в алгоритме расчета, связанным с компонентом) в представлении
+
+                tableSourceEdit = sortDataTable(tableSourceEdit, "WR_DATETIME");
+
+                return tableSourceEdit;
             }
 
             /// <summary>
@@ -928,11 +923,11 @@ namespace PluginTaskVedomostBl
             /// <param name="idAlg">номер алгоритма</param>
             /// <param name="typeValues">тип данных</param>
             /// <returns>показатель изменения</returns>
-            private int diffRowsInTables(DataTable origin, double editValue, int i, int idAlg, HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
+            private int diffRowsInTables(DataTable origin, double editValue, int i, string formatRound, HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
             {
                 int quality = 1;
                 double originValues;
-
+                //??? зачем сортировка
                 origin = sortDataTable(origin, "ID_PUT, WR_DATETIME");
 
                 if (origin.Rows.Count - 1 < i)
@@ -947,7 +942,8 @@ namespace PluginTaskVedomostBl
                 switch (typeValues)
                 {
                     case HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE:
-                        if (originValues.ToString(@"F" + m_dictPropertyColumns[idAlg].m_vsRound, CultureInfo.InvariantCulture) != editValue.ToString())
+                        //??? почему сравниваются строки
+                        if (originValues.ToString(formatRound, CultureInfo.InvariantCulture).Equals(editValue.ToString().Trim()) == false)
                             quality = 2;
                         break;
                     case HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE:

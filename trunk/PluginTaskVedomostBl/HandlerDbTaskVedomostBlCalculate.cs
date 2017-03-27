@@ -353,7 +353,7 @@ namespace PluginTaskVedomostBl
                             + @"ON p.ID = v.ID_PUT "
                             + @"WHERE v.[ID_TIME] = " + (int)ID_PERIOD.DAY //+ " AND [ID_SOURCE] > 0 "
                             + @" AND ID_TIMEZONE = " + (int)_Session.CurrentIdTimezone
-                            + @" AND p.ID_COMP = " + PanelTaskVedomostBl.s_getIdComp()
+                            + @" AND p.ID_COMP = " + PanelTaskVedomostBl.s_delegateGetIdActiveComponent()
                         ;
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
