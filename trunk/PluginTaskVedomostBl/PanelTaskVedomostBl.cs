@@ -17,11 +17,15 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// ??? переменная с текущем отклоненеим от UTC
         /// </summary>
-        static int s_currentOffSet;
+        private static int s_currentOffSet;
         /// <summary>
         /// Для обозначения выбора 1 или 6 блоков
         /// </summary>
-        static bool s_flagBl = true;
+        private static bool s_flagBl = true;
+        /// <summary>
+        /// флаг очистки отображения
+        /// </summary>
+        private bool m_bflgClear = false;
         /// <summary>
         /// ??? экземпляр делегата(возврат PictureBox для активного представления)
         /// </summary>
@@ -31,16 +35,16 @@ namespace PluginTaskVedomostBl
         /// </summary>
         public static Func<int> s_delegateGetIdActiveComponent;
         /// <summary>
-        /// флаг очистки отображения
+        /// Список параметров алгоритма расчета, не связанных с компонентом станции (верхний/1-ый уровень)
         /// </summary>
-        private bool m_bflgClear = false;
-
         private List<NALG_PARAMETER> m_listNAlgParameter;
         /// <summary>
         /// Список компонентов станции
         /// </summary>
         private List<TECComponent> m_listTECComponent;
-
+        /// <summary>
+        /// Список параметров алгоритма расчета, связанных с компонентом станции (нижний/2-ой уровень)
+        /// </summary>
         private List<PUT_PARAMETER> m_listPutParameter;
         /// <summary>
         /// Список представлений для каждого из компонентов станции 
@@ -67,9 +71,7 @@ namespace PluginTaskVedomostBl
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1
-            /*, DGV_DATA_B1, DGV_DATA_B2, DGV_DATA_B3, DGV_DATA_B4, DGV_DATA_B5, DGV_DATA_B6
-            , RADIOBTN_BLK1, RADIOBTN_BLK2, RADIOBTN_BLK3, RADIOBTN_BLK4, RADIOBTN_BLK5, RADIOBTN_BLK6*/
-            , LABEL_DESC, TBLP_HGRID, PICTURE_BOXDGV, PANEL_PICTUREDGV
+            , LABEL_DESC, TBLP_HGRID, /*PICTURE_BOXDGV,*/ PANEL_PICTUREBOX
                 , COUNT
         }
         /// <summary>
@@ -134,11 +136,6 @@ namespace PluginTaskVedomostBl
         protected class PictureBoxVedomostBl : PictureBox
         {
             /// <summary>
-            /// ид Пикчи
-            /// </summary>
-            public int m_IdControl;
-
-            /// <summary>
             /// Конструктор
             /// </summary>
             /// <param name="viewActive">активный грид</param>
@@ -156,10 +153,14 @@ namespace PluginTaskVedomostBl
 
             public void AddControl(DataGridViewVedomostBl dgv)
             {
-                int _drwH = (dgv.Rows.Count) * dgv.Rows[0].Height + 70;
+                int height = -1;
 
-                Size = new Size(dgv.Width - 10, _drwH);
-                m_IdControl = (int)dgv.Tag;
+                Tag = (int)dgv.Tag;
+
+                height = (dgv.Rows.Count) * dgv.Rows[0].Height + DataGridViewVedomostBl.HEIGHT_HEADER;
+
+                this.Size = new Size(dgv.Width - DataGridViewVedomostBl.PADDING_COLUMN, height);
+
                 Controls.Add(dgv);
             }
         }
@@ -230,16 +231,16 @@ namespace PluginTaskVedomostBl
             Controls.Add(PanelManagement, 0, posRow);
             SetColumnSpan(PanelManagement, 4); SetRowSpan(PanelManagement, 13);
             //контейнеры для DGV
-            PictureBox pictureBox = new PictureBox();
-            pictureBox.Name = INDEX_CONTROL.PICTURE_BOXDGV.ToString();
-            pictureBox.TabStop = false;
+            //PictureBox pictureBox = new PictureBox();
+            //pictureBox.Name = INDEX_CONTROL.PICTURE_BOXDGV.ToString();
+            //pictureBox.TabStop = false;
             //
-            Panel m_paneL = new Panel();
-            m_paneL.Name = INDEX_CONTROL.PANEL_PICTUREDGV.ToString();
-            m_paneL.Dock = DockStyle.Fill;
-            (m_paneL as Panel).AutoScroll = true;
-            Controls.Add(m_paneL, 5, posRow);
-            SetColumnSpan(m_paneL, 9); SetRowSpan(m_paneL, 10);
+            Panel panelPictureBox = new Panel();
+            panelPictureBox.Name = INDEX_CONTROL.PANEL_PICTUREBOX.ToString();
+            panelPictureBox.Dock = DockStyle.Fill;
+            (panelPictureBox as Panel).AutoScroll = true;
+            Controls.Add(panelPictureBox, 0, posRow); // 5
+            SetColumnSpan(panelPictureBox, 9); SetRowSpan(panelPictureBox, 10); // 9, 10
             //
             addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 
@@ -333,7 +334,7 @@ namespace PluginTaskVedomostBl
             get {
                 Control ctrlRes = new Control();
 
-                foreach (PictureBoxVedomostBl item in findControl(INDEX_CONTROL.PANEL_PICTUREDGV.ToString()).Controls)
+                foreach (PictureBoxVedomostBl item in findControl(INDEX_CONTROL.PANEL_PICTUREBOX.ToString()).Controls)
                     if (item.Visible == true) {
                         ctrlRes = item.Controls[0];
 
@@ -359,9 +360,9 @@ namespace PluginTaskVedomostBl
 
             idComp = (int)ActiveDataGridView.Tag;
 
-            foreach (PictureBoxVedomostBl item in findControl(INDEX_CONTROL.PANEL_PICTUREDGV.ToString()).Controls)
+            foreach (PictureBoxVedomostBl item in findControl(INDEX_CONTROL.PANEL_PICTUREBOX.ToString()).Controls)
             {
-                if (idComp == item.m_IdControl)
+                if (idComp == (int)item.Tag)
                 {
                     outCnt = cnt;
                     cntrl = (item as PictureBox);
@@ -380,23 +381,6 @@ namespace PluginTaskVedomostBl
                 WhichBlIsSelected = false;
 
             return cntrl;
-        }
-
-        /// <summary>
-        /// Возвращает по номеру грид
-        /// </summary>
-        /// <returns>активный грид на панели</returns>
-        public DataGridView GetDGVOfIdComp()
-        {
-            DataGridView cntrl = new DataGridView();
-
-            foreach (PictureBoxVedomostBl picture in Controls.Find(INDEX_CONTROL.PANEL_PICTUREDGV.ToString(), true)[0].Controls)
-                foreach (DataGridViewVedomostBl item in picture.Controls)
-                    if (item.Visible == true)
-                        cntrl = (item as DataGridView);
-
-            return cntrl;
-
         }
 
         /// <summary>
@@ -446,7 +430,7 @@ namespace PluginTaskVedomostBl
 
                 dgv.AddColumns(m_listPutParameter.FindAll(put => { return put.IdComponent == (int)dgv.Tag; }));
 
-                dgv.AddRows(dtStartInMonth, DaysInMonth);
+                dgv.AddRows(dtStartInMonth, TimeSpan.FromDays(1), DaysInMonth);
 
                 dgv.ResizeControls();
 
@@ -454,7 +438,7 @@ namespace PluginTaskVedomostBl
 
                 pictureBox = new PictureBoxVedomostBl();
                 pictureBox.AddControl(dgv);
-                (findControl(INDEX_CONTROL.PANEL_PICTUREDGV.ToString()) as Panel).Controls.Add(pictureBox);
+                (findControl(INDEX_CONTROL.PANEL_PICTUREBOX.ToString()) as Panel).Controls.Add(pictureBox);
 
                 //возможность_редактирвоания_значений
                 try {
@@ -747,7 +731,7 @@ namespace PluginTaskVedomostBl
                     ;
 
                 for (int i = 0; i < DaysInMonth + 1; i++)
-                    dgv.AddRow(dt.AddDays(i), i < DaysInMonth);
+                    dgv.AddRow(dt.AddDays(i), !(i < DaysInMonth));
             } else
                 ;
 

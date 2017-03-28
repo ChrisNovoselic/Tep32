@@ -177,7 +177,7 @@ namespace PluginTaskVedomostBl
                         colRange = (m_workSheet.Cells[rowSheet, colSheetBegin] as Excel.Range);
                         //записываем данные в ячейки
                         colRange.Value2 = item;
-                        colSheetEnd += (dgvActive as DataGridViewVedomostBl).m_arIntTopHeader[idDgv][indxCol];
+                        colSheetEnd += (dgvActive as DataGridViewVedomostBl).m_arCounterHeaderTop[indxCol];
                         //выделяем область(левый верхний угол и правый нижний)
                         var cells = m_workSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
                         //объединяем ячейки
@@ -200,12 +200,12 @@ namespace PluginTaskVedomostBl
                 colSheetEnd = 1;
                 rowSheet = 3;
 
-                foreach (var item in (dgvActive as DataGridViewVedomostBl).m_headerMiddle[idDgv]) {
+                foreach (var item in (dgvActive as DataGridViewVedomostBl).m_listTextHeaderMiddle[idDgv]) {
                     //получаем диапазон
                     colRange = (m_workSheet.Cells[rowSheet, colSheetBegin] as Excel.Range);
                     //записываем данные в ячейки
                     colRange.Value2 = item;
-                    colSheetEnd += (dgvActive as DataGridViewVedomostBl).m_arMiddleCol[idDgv][(dgvActive as DataGridViewVedomostBl).m_headerMiddle[idDgv].ToList().IndexOf(item)];
+                    colSheetEnd += (dgvActive as DataGridViewVedomostBl).m_arCounterHeaderMiddle[(dgvActive as DataGridViewVedomostBl).m_listTextHeaderMiddle[idDgv].ToList().IndexOf(item)];
                     // выделяем область(левый верхний угол и правый нижний)
                     var cells = m_workSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
                     //объединяем ячейки
