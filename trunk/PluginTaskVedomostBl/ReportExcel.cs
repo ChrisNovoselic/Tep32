@@ -157,7 +157,7 @@ namespace PluginTaskVedomostBl
                 int indxCol = 0,
                     colSheetBegin = 2, colSheetEnd = 1,
                     rowSheet = 2,
-                    idDgv = (int)(dgvActive as DataGridViewVedomostBl).Tag;
+                    idComponent = (dgvActive as DataGridViewVedomostBl).IdComponent;
                 //m_excApp.Visible = true;
                 //получаем диапазон
                 Excel.Range colRange = (m_workSheet.Cells[2, colSheetBegin - 1] as Excel.Range);
@@ -200,12 +200,12 @@ namespace PluginTaskVedomostBl
                 colSheetEnd = 1;
                 rowSheet = 3;
 
-                foreach (var item in (dgvActive as DataGridViewVedomostBl).m_listTextHeaderMiddle[idDgv]) {
+                foreach (var item in (dgvActive as DataGridViewVedomostBl).m_listTextHeaderMiddle[idComponent]) {
                     //получаем диапазон
                     colRange = (m_workSheet.Cells[rowSheet, colSheetBegin] as Excel.Range);
                     //записываем данные в ячейки
                     colRange.Value2 = item;
-                    colSheetEnd += (dgvActive as DataGridViewVedomostBl).m_arCounterHeaderMiddle[(dgvActive as DataGridViewVedomostBl).m_listTextHeaderMiddle[idDgv].ToList().IndexOf(item)];
+                    colSheetEnd += (dgvActive as DataGridViewVedomostBl).m_arCounterHeaderMiddle[(dgvActive as DataGridViewVedomostBl).m_listTextHeaderMiddle[idComponent].ToList().IndexOf(item)];
                     // выделяем область(левый верхний угол и правый нижний)
                     var cells = m_workSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
                     //объединяем ячейки
@@ -384,7 +384,8 @@ namespace PluginTaskVedomostBl
             {
                 //Excel.Range exclTEC = exclWrksht.get_Range("B2");
                 Excel.Range exclRMonth = exclWrksht.get_Range("R1");
-                exclRMonth.Value2 = "Ведомость блока №" + (dgv as DataGridViewVedomostBl).BlockCount + " за " + HDateTime.NameMonths[dtRange.Begin.Month - 1] + " месяц " + dtRange.Begin.Year + " года";
+                exclRMonth.Value2 = string.Format("Ведомость {0} за {1} месяц {2} года"
+                    , ((HandlerDbTaskCalculate.TECComponent)(dgv as DataGridViewVedomostBl).Tag).m_nameShr, HDateTime.NameMonths[dtRange.Begin.Month - 1], dtRange.Begin.Year);
                 exclRMonth.Font.Bold = true;
                 //HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
             }

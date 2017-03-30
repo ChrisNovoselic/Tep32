@@ -17,9 +17,9 @@ namespace TepCommon
 
             public DataGridViewValues(ModeData modeData) : base() { _modeData = modeData; }
             /// <summary>
-            /// 
+            /// Построить структуру представления (столбцы, строки)
             /// </summary>
-            public abstract void BuildStructure();
+            public abstract void BuildStructure(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER>listPutParameter);
 
             protected class DictNAlgProperty : Dictionary <int, NALG_PROPERTY>
             {
@@ -29,7 +29,7 @@ namespace TepCommon
                 }
             }
 
-            //public class DictPutParameter : Dictionary<int, PUT_PARAMETER>
+            //public class DictPutParameter : Dictionary<int, HandlerDbTaskCalculate.PUT_PARAMETER>
             //{
             //    public void SetEnabled(int id_comp, bool value)
             //    {
@@ -39,16 +39,16 @@ namespace TepCommon
             /// <summary>
             /// Структура для описания добавляемых строк
             /// </summary>
-            public class NALG_PROPERTY : NALG_PARAMETER
+            public class NALG_PROPERTY : HandlerDbTaskCalculate.NALG_PARAMETER
             {
-                public NALG_PROPERTY(NALG_PARAMETER nAlgPar)
+                public NALG_PROPERTY(HandlerDbTaskCalculate.NALG_PARAMETER nAlgPar)
                     : base(nAlgPar)
                 {
                 }
 
                 public
                     //DictPutParameter
-                    Dictionary<int, PUT_PARAMETER>
+                    Dictionary<int, HandlerDbTaskCalculate.PUT_PARAMETER>
                         m_dictPutParameters;
 
                 public string FormatRound { get { return string.Format(@"F{0}", m_vsRound); } }
@@ -94,7 +94,11 @@ namespace TepCommon
                 }
 
                 public bool IsNaN { get { return _cntSet < CNT_SET; } }
-            }
+            }            
+
+            protected DictNAlgProperty m_dictNAlgProperties;
+
+            #region RATIO
             /// <summary>
             /// Структура для хранения значений одной из записей в таблице со описанием коэфициентов  при масштабировании физических величин
             /// </summary>
@@ -108,12 +112,10 @@ namespace TepCommon
                     , m_nameEN
                     , m_strDesc;
             }
-
-            protected DictNAlgProperty m_dictNAlgProperties;
             /// <summary>
             /// Словарь со значенями коэффициентов при масштабировании физических величин (микро, милли, кило, Мега)
             /// </summary>
-            protected Dictionary<int, RATIO> m_dictRatio;
+            private Dictionary<int, RATIO> m_dictRatio;
             /// <summary>
             /// Установить значения для яччеек представления со значениями коэффициентов при масштабировании физических величин
             /// </summary>
@@ -132,7 +134,47 @@ namespace TepCommon
                     });
             }
 
-            public virtual void AddNAlgParameter(NALG_PARAMETER nAlg)
+            private int _prevIdNAlgAsRatio;
+            private int _prevVsRatioValue;
+            private int _prevPrjRatioValue;
+
+            public double GetValueCellAsRatio(int idNAlg, double value)
+            {
+                double dblRes = -1F;
+
+                int vsRatioValue = -1
+                    , prjRatioValue = -1;
+
+                if (!(_prevIdNAlgAsRatio == idNAlg)) {
+                    // Множитель для значения - для отображения
+                    vsRatioValue =
+                        m_dictRatio[m_dictNAlgProperties[idNAlg].m_vsRatio].m_value
+                        ;
+                    // Множитель для значения - исходный в БД
+                    prjRatioValue =
+                        //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
+                        m_dictRatio[m_dictNAlgProperties[idNAlg].m_prjRatio].m_value
+                        ;
+
+                    _prevVsRatioValue = vsRatioValue;
+                    _prevPrjRatioValue = prjRatioValue;
+                } else {
+                    vsRatioValue = _prevVsRatioValue;
+                    prjRatioValue = _prevPrjRatioValue;
+                }
+                // проверить требуется ли преобразование
+                if (!(prjRatioValue == vsRatioValue))
+                // домножить значение на коэффициент
+                    dblRes = value * Math.Pow(10F, prjRatioValue - vsRatioValue);
+                else
+                //отображать без изменений
+                    dblRes = value;
+
+                return dblRes;
+            }
+            #endregion
+
+            public virtual void AddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER nAlg)
             {
                 if (m_dictNAlgProperties == null)
                     m_dictNAlgProperties = new DictNAlgProperty();
@@ -145,7 +187,7 @@ namespace TepCommon
                     ;
             }
 
-            public virtual void AddPutParameter(PUT_PARAMETER putPar)
+            public virtual void AddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER putPar)
             {
             }
             /// <summary>

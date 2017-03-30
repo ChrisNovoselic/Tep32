@@ -54,13 +54,13 @@ namespace PluginTaskTepMain
 
             m_taskCalculate = new HandlerDbTaskCalculate.TaskTepCalculate();
         }
-        /// <summary>
-        /// Корректировка входных (сырых) значений - аналог 'import.prg'
-        /// </summary>
-        protected override void correctValues(ref DataTable tableSesion, ref DataTable tableProject)
-        {
-            //(m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CorrectValues(ref tableSesion, ref tableProject);
-        }
+        ///// <summary>
+        ///// Корректировка входных (сырых) значений - аналог 'import.prg'
+        ///// </summary>
+        //protected override void correctValues(ref DataTable tableSesion, ref DataTable tableProject)
+        //{
+        //    //(m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CorrectValues(ref tableSesion, ref tableProject);
+        //}
 
         protected override void calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, out int err)
         {
@@ -93,6 +93,16 @@ namespace PluginTaskTepMain
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при подготовке данных для расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+        }
+
+        public override DataTable GetImportValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
+        {
+            return ImpExpPrevVersionValues.Import(type
+                        , idSession
+                        , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER
+                        , tableInParameter
+                        , tableRatio
+                        , out err);
         }
     }
     

@@ -482,7 +482,7 @@ namespace TepCommon
                 if (i == (int)INDEX_PARAMETER.ALGORITM)
                     query += @" ORDER BY [N_ALG]";
 
-                m_arTableEdit[i] = m_handlerDb.Select(query, out err);
+                m_arTableEdit[i] = __handlerDb.Select(query, out err);
 
                 if (!(err == 0))
                 {
@@ -960,8 +960,8 @@ namespace TepCommon
             int iRegDbConn = -1;
             DbConnection dbConn = null;
 
-            m_handlerDb.RegisterDbConnection(out iRegDbConn);
-            dbConn = m_handlerDb.DbConnection;
+            __handlerDb.RegisterDbConnection(out iRegDbConn);
+            dbConn = __handlerDb.DbConnection;
 
             for (INDEX_PARAMETER i = INDEX_PARAMETER.ALGORITM; i < INDEX_PARAMETER.COUNT; i++)
             {
@@ -979,7 +979,7 @@ namespace TepCommon
                     ;
             }
 
-            m_handlerDb.UnRegisterDbConnection();
+            __handlerDb.UnRegisterDbConnection();
         }
 
         protected override void successRecUpdateInsertDelete()

@@ -13,54 +13,54 @@ namespace PluginTaskBalTeplo
 {
     public class HandlerDbTaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate
     {
-        public override string GetQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
-        {
-            string strRes = string.Empty
-                , whereParameters = string.Empty;
+        //public override string getQueryParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        //{
+        //    string strRes = string.Empty
+        //        , whereParameters = string.Empty;
 
-            //if (type == TaskCalculate.TYPE.UNKNOWN)
-            //    type = m_taskCalculate.Type;
-            //else
-            //    ;
+        //    //if (type == TaskCalculate.TYPE.UNKNOWN)
+        //    //    type = m_taskCalculate.Type;
+        //    //else
+        //    //    ;
 
-            if (!(type == TaskCalculate.TYPE.UNKNOWN))
-            {
-                strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
-                        + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
-                        + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
-                    + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
-                        + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask
-                        + whereParameters
-                        + @" JOIN [dbo].[" + s_dictDbTables[ID_DBTABLE.MEASURE].m_name + @"] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
-            }
-            else
-                Logging.Logg().Error(@"HandlerDbTaskCalculate::GetQueryParameters () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+        //    if (!(type == TaskCalculate.TYPE.UNKNOWN))
+        //    {
+        //        strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
+        //                + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
+        //                + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
+        //            + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] as p"
+        //                + @" JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask
+        //                + whereParameters
+        //                + @" JOIN [dbo].[" + s_dictDbTables[ID_DBTABLE.MEASURE].m_name + @"] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
+        //    }
+        //    else
+        //        Logging.Logg().Error(@"HandlerDbTaskCalculate::GetQueryParameters () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
-            return strRes;
-        }
+        //    return strRes;
+        //}
 
-        public override string GetQueryValuesVar(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
-        {
-            string strRes = string.Empty
-               , strJoinValues = string.Empty;
+        //public override string GetQueryVariableValues(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        //{
+        //    string strRes = string.Empty
+        //       , strJoinValues = string.Empty;
 
-            if (!(type == TaskCalculate.TYPE.UNKNOWN))
-            {
-                //strJoinValues = getRangeAlg(type);
-                if (strJoinValues.Equals(string.Empty) == false)
-                    strJoinValues = @" JOIN [" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT AND p.ID_ALG" + strJoinValues;
-                else
-                    ;
+        //    if (!(type == TaskCalculate.TYPE.UNKNOWN))
+        //    {
+        //        //strJoinValues = getRangeAlg(type);
+        //        if (strJoinValues.Equals(string.Empty) == false)
+        //            strJoinValues = @" JOIN [" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT AND p.ID_ALG" + strJoinValues;
+        //        else
+        //            ;
 
-                strRes = @"SELECT v.* FROM " + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @" as v"
-                    + strJoinValues
-                    + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-            }
-            else
-                Logging.Logg().Error(@"HandlerDbTaskCalculate::getQueryValuesVar () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+        //        strRes = @"SELECT v.* FROM " + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @" as v"
+        //            + strJoinValues
+        //            + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+        //    }
+        //    else
+        //        Logging.Logg().Error(@"HandlerDbTaskCalculate::getQueryValuesVar () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
-            return strRes;
-        }
+        //    return strRes;
+        //}
 
         /// <summary>
         /// Создать объект расчета для типа задачи
@@ -104,545 +104,475 @@ namespace PluginTaskBalTeplo
                 }
                 // сохранить результаты вычисления
                 saveResult(tableOrigin, tableCalcRes, out err);
-                saveResultIn(tableOriginIn, tableCalcResIn, out err);
+                //???
+                //saveResultIn(tableOriginIn, tableCalcResIn, out err);
             }
             else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при подготовке данных для расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
         }
 
-        /// <summary>
-        /// Сохранить результаты вычислений в таблице для временных значений
-        /// </summary>
-        /// <param name="tableOrigin">??? Таблица с оригинальными значениями</param>
-        /// <param name="tableRes">??? Таблица с оригинальными значениями</param>
-        /// <param name="err">Признак выполнения операции сохранения</param>
-        protected void saveResultIn(DataTable tableOrigin, DataTable tableRes, out int err)
-        {
-            err = -1;
-
-            DataTable tableEdit = new DataTable();
-            DataRow[] rowSel = null;
-
-            tableEdit = tableOrigin.Clone();
-
-            foreach (DataRow r in tableOrigin.Rows)
-            {
-                rowSel = tableRes.Select(@"ID=" + r[@"ID_PUT"]);
-
-                if (rowSel.Length == 1)
-                {
-                    tableEdit.Rows.Add(new object[] {
-                        //r[@"ID"],
-                        r[@"ID_SESSION"]
-                        , r[@"ID_PUT"]
-                        , rowSel[0][@"QUALITY"]
-                        , rowSel[0][@"VALUE"]
-                        , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
-                        , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
-                    });
-                }
-                else
-                    ; //??? ошибка
-            }
-
-            RecUpdateInsertDelete(s_dictDbTables[ID_DBTABLE.INVALUES].m_name, @"ID_PUT, ID_SESSION", string.Empty, tableOrigin, tableEdit, out err);
-        }
-
-        private const int MAX_ROWCOUNT_TO_INSERT = 666;
-
-        /// <summary>
-        /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
-        ///  , структура таблицы совместима с [inval], [outval]
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="idPeriod">период</param>
-        /// <param name="cntBasePeriod"></param>
-        /// <param name="arQueryRanges">диапазон времени запроса</param>
-        /// <returns></returns>
-        public override string GetQueryValuesVar(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, ID_PERIOD idPeriod, int cntBasePeriod, DateTimeRange[] arQueryRanges)
-        {
-
-            string strRes = string.Empty
-            , whereParameters = string.Empty;
-
-            if (!(type == TaskCalculate.TYPE.UNKNOWN))
-            {
-                // аналог в 'GetQueryParameters'
-                //whereParameters = getWhereRangeAlg(type);
-                //if (whereParameters.Equals(string.Empty) == false)
-                //    whereParameters = @" AND a." + whereParameters;
-                //else
-                //    ;
-
-                int i = -1;
-                bool bLastItem = false
-                    , bEquDatetime = false;
-
-                for (i = 0; i < arQueryRanges.Length; i++)
-                {
-                    bLastItem = !(i < (arQueryRanges.Length - 1));
-
-                    strRes += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
-                            + @", " + _Session.m_Id + @" as [ID_SESSION]"
-                            + @",[DATE_TIME]"
-                            + @", m.[AVG]"
-                             + @", ROW_NUMBER() OVER(ORDER BY v.ID_PUT) as [EXTENDED_DEFINITION] "
-                        //+ @", GETDATE () as [WR_DATETIME]"
-                        + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                        + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
-                            + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
-                            + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
-                            + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
-                            + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                        + @" WHERE v.[ID_TIME] = " + (int)idPeriod + " AND ID_SOURCE > 0 " //???ID_PERIOD.HOUR //??? _currIdPeriod
-                        ;
-                    // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
-                    // 'Begin' == 'End'
-                    if (bLastItem == true)
-                        bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
-                    else
-                        ;
-
-                    if (bEquDatetime == false)
-                        strRes += @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                      + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddDays(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'";
-
-                    if (bLastItem == false)
-                        strRes += @" UNION ALL ";
-                    else
-                        ;
-                }
-
-                strRes = " " + @" SELECT v.ID_PUT" // as [ID]"
-                        + @", " + _Session.m_Id + @" as [ID_SESSION]"
-                        + @", [QUALITY]"
-                        + ",[VALUE]"
-                         + ",[DATE_TIME] as [WR_DATETIME]"
-                          + @",[EXTENDED_DEFINITION]"
-                    + @" FROM (" + strRes + @") as v"
-                    + @" ORDER BY  v.ID_PUT,v.DATE_TIME"
-                    ;
-            }
-            else
-                Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::getQueryValuesVar () - неизветстный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
-
-            return strRes;
-        }
-
-        public DataTable GetValuesDayVar(TaskCalculate.TYPE type
-            , ID_PERIOD idPeriod
-            , int cntBasePeriod
-            , DateTimeRange[] arQueryRanges
-            , out int err)
-        {
-            DataTable tableRes = new DataTable();
-
-            err = -1;
-
-            tableRes = DbTSQLInterface.Select(ref _dbConnection
-                , GetQueryValuesDayVar(type
-                    , idPeriod
-                    , cntBasePeriod
-                    , arQueryRanges)
-                , null, null
-                , out err);
-
-            return tableRes;
-        }
-
-        public string GetQueryValuesDayVar(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, ID_PERIOD idPeriod, int cntBasePeriod, DateTimeRange[] arQueryRanges)
-        {
-            string strRes = string.Empty
-            , whereParameters = string.Empty;
-
-            if (!(type == TaskCalculate.TYPE.UNKNOWN))
-            {
-                // аналог в 'GetQueryParameters'
-                //whereParameters = getWhereRangeAlg(type);
-                //if (whereParameters.Equals(string.Empty) == false)
-                //    whereParameters = @" AND a." + whereParameters;
-                //else
-                //    ;
-
-                int i = -1;
-                bool bLastItem = false
-                    , bEquDatetime = false;
-
-                for (i = 0; i < arQueryRanges.Length; i++)
-                {
-                    bLastItem = !(i < (arQueryRanges.Length - 1));
-
-                    strRes += @"SELECT [ID_PUT], " + _Session.m_Id + @" as [ID_SESSION]"
-                            + @", [QUALITY], SUM([VALUE]) as [VALUE]"
-                            + @", Convert(DateTime, '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"') as [WR_DATETIME]"
-                            + @", Convert(bigint,0 ) as [EXTENDED_DEFINITION]"
-
-                        + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                        + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"]"
-
-                        + @" WHERE [ID_TIME] = 13 AND ID_SOURCE > 0 " //???ID_PERIOD.HOUR //??? _currIdPeriod
-                        ;
-                    // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
-                    // 'Begin' == 'End'
-                    if (bLastItem == true)
-                        bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
-                    else
-                        ;
-
-                    if (bEquDatetime == false)
-                        strRes += @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                      + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddDays(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'";
-
-                    if (bLastItem == false)
-                        strRes += @" UNION ALL ";
-                    else
-                        ;
-                    strRes += @" group by ID_PUT,QUALITY";
-                }
-            }
-            else
-                Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::getQueryValuesVar () - неизветстный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
-
-            return strRes;
-        }
-
-        /// <summary>
-        /// Возвратить объект-таблицу со значенями по умолчанию
-        /// </summary>
-        /// <param name="idPeriod">Идентификатор </param>
-        /// <param name="err">Признак выполнения функции</param>
-        /// <returns>Объект-таблица со значенями по умолчанию</returns>
-        public DataTable GetValuesDefAll(ID_PERIOD idPeriod, ID_DBTABLE idTableDb, out int err)
-        {
-            DataTable tableRes = new DataTable();
-            string query = string.Empty;
-
-            if (idTableDb == ID_DBTABLE.INVALUES) {
-                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] FROM [inalg] a LEFT JOIN [input] i on a.id=i.ID_ALG INNER JOIN inval_def d on d.ID_PUT=i.ID WHERE a.ID_TASK=2 and d.[ID_TIME] = " + (int)idPeriod;
-            } else
-                ;
-
-            if (idTableDb == ID_DBTABLE.OUTVALUES) {
-                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] "
-+ @"FROM [outalg] a LEFT JOIN [output] i on a.id=i.ID_ALG INNER JOIN inval_def d on d.ID_PUT=i.ID "
-+ @"WHERE a.ID_TASK = 2 AND d.[ID_TIME] = " + (int)idPeriod;
-            } else
-                ;
-
-
-            err = -1;
-
-            tableRes = DbTSQLInterface.Select(ref _dbConnection, query, null, null, out err);
-
-            return tableRes;
-        }
-
-        public DataTable GetValuesArch(ID_DBTABLE idTableDb, out int err)
-        {
-            string strRes = string.Empty;
-            DataTable res = new DataTable();
-            string from = s_dictDbTables[idTableDb].m_name + @"_" + _Session.m_rangeDatetime.Begin.Year.ToString() + _Session.m_rangeDatetime.Begin.Month.ToString(@"00");
-            DateTimeRange[] dt_range = GetDateTimeRangeValuesVar();
-            strRes = "SELECT * FROM "
-                + from
-                + " WHERE DATE_TIME>='" + dt_range[0].Begin.ToString() + "' AND DATE_TIME<= '" + dt_range[0].End.ToString() + "' AND ID_USER=" + HUsers.Id.ToString();
-
-            res = Select(strRes, out err).Copy();
-            res.Columns.Remove("ID");
-            return res;
-        }
-
-        /// <summary>
-        /// Получение корр. входных значений
-        /// из INVAL
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="arQueryRanges"></param>
-        /// <param name="idPeriod">тек. период</param>
-        /// <param name="err"></param>
-        /// <returns>таблица занчений</returns>
-        public DataTable getCorInPut(TaskCalculate.TYPE type
-            , DateTimeRange[] arQueryRanges
-            , ID_PERIOD idPeriod
-            , out int err)
-        {
-            string strQuery = string.Empty;
-
-            for (int i = 0; i < arQueryRanges.Length; i++)
-            {
-                strQuery = "SELECT  p.ID as ID_PUT"
-                    + @", " + _Session.m_Id + @" as [ID_SESSION]"
-                    + @", v.QUALITY as QUALITY, v.VALUE as VALUE"
-                    + @",v.DATE_TIME as WR_DATETIME,  ROW_NUMBER() OVER(ORDER BY p.ID) as [EXTENDED_DEFINITION] "
-                    + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
-                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
-                    + @" ON a.ID = p.ID_ALG"
-                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                    + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
-                    + @" ON v.ID_PUT = p.ID"
-                    + @" WHERE  ID_TASK = " + (int)IdTask
-                    + @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.AddHours(-arQueryRanges[i].Begin.Hour).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddHours(-arQueryRanges[i].Begin.Hour).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND v.ID_TIME = " + (int)idPeriod + " AND v.ID_SOURCE = 0";
-            }
-            return Select(strQuery, out err);
-        }
-
-        /// <summary>
-        /// Получение плановых значений
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="arQueryRanges">отрезок времени</param>
-        /// <param name="idPeriod">период времени</param>
-        /// <param name="err"></param>
-        /// <returns>таблица значений</returns>
-        public DataTable getPlanOnMonth(TaskCalculate.TYPE type
-            , DateTimeRange[] arQueryRanges
-            , ID_PERIOD idPeriod, out int err)
-        {
-            string strQuery = string.Empty;
-
-            for (int i = 0; i < arQueryRanges.Length; i++)
-            {
-                strQuery = "SELECT  p.ID as ID_PUT"
-                        + @", " + _Session.m_Id + @" as [ID_SESSION]"
-                        + @", v.QUALITY as QUALITY, v.VALUE as VALUE"
-                          + @",v.DATE_TIME as WR_DATETIME,  ROW_NUMBER() OVER(ORDER BY p.ID) as [EXTENDED_DEFINITION] "
-                          + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a"
-                           + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p"
-                          + @" ON a.ID = p.ID_ALG"
-                           + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                           + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v "
-                          + @" ON v.ID_PUT = p.ID"
-                          + @" WHERE  ID_TASK = " + (int)IdTask
-                          + @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                          + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddMonths(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'"
-                    + @" AND v.ID_TIME = 24";
-            }
-
-            return Select(strQuery, out err);
-        }
-
-        /// <summary>
-        /// Создать новую сессию для расчета
-        ///  - вставить входные данные во временную таблицу
-        /// </summary>
-        /// <param name="idFPanel">Идентификатор панели на замену [ID_TASK]</param>
-        /// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
-        /// <param name="tablePars">Таблица характеристик входных параметров</param>
-        /// <param name="tableSessionValues">Таблица значений входных параметров</param>
-        /// <param name="tableDefValues">Таблица значений по умолчанию входных параметров</param>
-        /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        public void CreateSession(int idFPanel
-            , int cntBasePeriod
-            , DataTable tablePars
-            , ref DataTable[] arTableValuesIn
-            , ref DataTable[] arTableValuesOut
-            , DateTimeRange dtRange, out int err
-            , out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-            string strQuery = string.Empty;
-
-            if (_Session.m_ViewValues == ID_VIEW_VALUES.SOURCE)
-                CS_Source(idFPanel
-                    , cntBasePeriod
-                    , tablePars
-                    , ref arTableValuesIn
-                    , ref arTableValuesOut
-                    , dtRange, out err
-                    , out strErr);
-            if (_Session.m_ViewValues == ID_VIEW_VALUES.ARCHIVE)
-                CS_Archive(idFPanel
-                    , cntBasePeriod
-                    , tablePars
-                    , ref arTableValuesIn
-                    , ref arTableValuesOut
-                    , dtRange, out err
-                    , out strErr);
-        }
-
-        private void CS_Archive(int idFPanel
-            , int cntBasePeriod
-            , DataTable tablePars
-            , ref DataTable[] arTableValuesIn
-            , ref DataTable[] arTableValuesOut
-            , DateTimeRange dtRange, out int err
-            , out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-            string strQuery = string.Empty;
-
-            if ((arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Columns.Count > 0)
-                && (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Rows.Count > 0))
-            {
-                //Вставить строку с идентификатором новой сессии
-                insertIdSession(idFPanel, cntBasePeriod, out err);
-                //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE], out err);
-
-                // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
-                // получить входные для расчета значения для возможности редактирования
-                strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
-                    + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
-
-                if ((arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Columns.Count > 0)
-                    && (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Rows.Count > 0))
-                {
-                    //Вставить строки в таблицу БД со входными значениями для расчета
-                    insertOutValues(out err, arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]);
-
-                    // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
-                    // получить входные для расчета значения для возможности редактирования
-                    strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
-                        + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
-                        + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
-                }
-            }
-            else
-            {
-                CS_Source(idFPanel
-                    , cntBasePeriod
-                    , tablePars
-                    , ref arTableValuesIn
-                    , ref arTableValuesOut
-                    , dtRange, out err
-                    , out strErr);
-            }
-        }
-
-        private DataTable mergeSessionDefault(DataTable dt_Session, DataTable dt_Default)
-        {
-            int id_session = int.Parse(dt_Session.Rows[0]["ID_SESSION"].ToString());
-            int quality = int.Parse(dt_Session.Rows[0]["QUALITY"].ToString());
-            DateTime wr_datetime = DateTime.Parse(dt_Session.Rows[0]["WR_DATETIME"].ToString());
-            string extended_def = dt_Session.Rows[0]["EXTENDED_DEFINITION"].ToString();
-
-            foreach (DataRow row in dt_Default.Rows)
-            {
-                DataRow[] rows_Session = dt_Session.Select("ID_PUT=" + row["ID_PUT"]);
-                if(rows_Session.Length==0)
-                {
-                    object[] obj_row = new object[] {row["ID_PUT"], id_session, quality, row["VALUE"], wr_datetime, extended_def};
-                    dt_Session.Rows.Add(obj_row);
-                }
-            }
-            return dt_Session;
-        }
-
-        private void CS_Source(int idFPanel
-            , int cntBasePeriod
-            , DataTable tablePars
-            , ref DataTable[] arTableValuesIn
-            , ref DataTable[] arTableValuesOut
-            , DateTimeRange dtRange, out int err
-            , out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-            string strQuery = string.Empty;
-
-
-            if ((arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Columns.Count > 0)
-                && (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0))
-            {
-                //Вставить строку с идентификатором новой сессии
-                insertIdSession(idFPanel, cntBasePeriod, out err);
-
-                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = mergeSessionDefault(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]);
-
-                //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], out err);
-
-                // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
-                // получить входные для расчета значения для возможности редактирования
-                strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
-                    + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
-            }
-            else
-            {
-                if (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows.Count > 0)
-                {
-                    //Вставить строку с идентификатором новой сессии
-                    insertIdSession(idFPanel, cntBasePeriod, out err);
-                    //Вставить строки в таблицу БД со входными значениями для расчета
-                    insertDefInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT], out err);
-
-                    // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                    arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
-                    // получить входные для расчета значения для возможности редактирования
-                    strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                        + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
-                        + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                    arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
-                }
-                else
-                    Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
-            }
-
-            if ((arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Columns.Count > 0)
-                && (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0))
-            {
-                //Вставить строки в таблицу БД со входными значениями для расчета
-                insertOutValues(out err, arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]);
-
-                // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
-                // получить входные для расчета значения для возможности редактирования
-                strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
-                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
-                    + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
-            }
-            else
-            {
-                if (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows.Count > 0)
-                {
-                    //Вставить строки в таблицу БД со входными значениями для расчета
-                    insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT], out err);
-
-                    // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
-                    // получить входные для расчета значения для возможности редактирования
-                    strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
-                        + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
-                        + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                    arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
-
-                }
-                else
-                    if (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count == 0)
-                {
-                    string strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
-                        + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
-                        + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
-                        + @" FROM [dbo].[output] as p"
-                        + @" JOIN [dbo].[outalg] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask
-                        + @" JOIN [dbo].[measure] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
-                    DataTable param = Select(strRes, out err);
-                    foreach (DataRow r in param.Rows)
-                    {
-                        arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows.Add(new object[] { r["ID"], "19", "0", "0", DateTime.Now });
-                    }
-                    insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT], out err);
-
-                }
-                Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
-            }
-        }
+        ///// <summary>
+        ///// Сохранить результаты вычислений в таблице для временных значений
+        ///// </summary>
+        ///// <param name="tableOrigin">??? Таблица с оригинальными значениями</param>
+        ///// <param name="tableRes">??? Таблица с оригинальными значениями</param>
+        ///// <param name="err">Признак выполнения операции сохранения</param>
+        //protected void saveResultIn(DataTable tableOrigin, DataTable tableRes, out int err)
+        //{
+        //    err = -1;
+
+        //    DataTable tableEdit = new DataTable();
+        //    DataRow[] rowSel = null;
+
+        //    tableEdit = tableOrigin.Clone();
+
+        //    foreach (DataRow r in tableOrigin.Rows)
+        //    {
+        //        rowSel = tableRes.Select(@"ID=" + r[@"ID_PUT"]);
+
+        //        if (rowSel.Length == 1)
+        //        {
+        //            tableEdit.Rows.Add(new object[] {
+        //                //r[@"ID"],
+        //                r[@"ID_SESSION"]
+        //                , r[@"ID_PUT"]
+        //                , rowSel[0][@"QUALITY"]
+        //                , rowSel[0][@"VALUE"]
+        //                , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
+        //                , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
+        //            });
+        //        }
+        //        else
+        //            ; //??? ошибка
+        //    }
+
+        //    RecUpdateInsertDelete(s_dictDbTables[ID_DBTABLE.INVALUES].m_name, @"ID_PUT, ID_SESSION", string.Empty, tableOrigin, tableEdit, out err);
+        //}
+
+        //private const int MAX_ROWCOUNT_TO_INSERT = 666;
+
+        ///// <summary>
+        ///// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
+        /////  , структура таблицы совместима с [inval], [outval]
+        ///// </summary>
+        ///// <param name="type"></param>
+        ///// <param name="idPeriod">период</param>
+        ///// <param name="cntBasePeriod"></param>
+        ///// <param name="arQueryRanges">диапазон времени запроса</param>
+        ///// <returns></returns>
+        //public override string getQueryVariableValues(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, ID_PERIOD idPeriod, int cntBasePeriod, DateTimeRange[] arQueryRanges)
+        //{
+
+        //    string strRes = string.Empty
+        //    , whereParameters = string.Empty;
+
+        //    if (!(type == TaskCalculate.TYPE.UNKNOWN))
+        //    {
+        //        // аналог в 'GetQueryParameters'
+        //        //whereParameters = getWhereRangeAlg(type);
+        //        //if (whereParameters.Equals(string.Empty) == false)
+        //        //    whereParameters = @" AND a." + whereParameters;
+        //        //else
+        //        //    ;
+
+        //        int i = -1;
+        //        bool bLastItem = false
+        //            , bEquDatetime = false;
+
+        //        for (i = 0; i < arQueryRanges.Length; i++)
+        //        {
+        //            bLastItem = !(i < (arQueryRanges.Length - 1));
+
+        //            strRes += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
+        //                    + @", " + _Session.m_Id + @" as [ID_SESSION]"
+        //                    + @",[DATE_TIME]"
+        //                    + @", m.[AVG]"
+        //                     + @", ROW_NUMBER() OVER(ORDER BY v.ID_PUT) as [EXTENDED_DEFINITION] "
+        //                //+ @", GETDATE () as [WR_DATETIME]"
+        //                + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+        //                + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
+        //                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
+        //                    + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
+        //                    + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask + whereParameters
+        //                    + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
+        //                + @" WHERE v.[ID_TIME] = " + (int)idPeriod + " AND ID_SOURCE > 0 " //???ID_PERIOD.HOUR //??? _currIdPeriod
+        //                ;
+        //            // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
+        //            // 'Begin' == 'End'
+        //            if (bLastItem == true)
+        //                bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
+        //            else
+        //                ;
+
+        //            if (bEquDatetime == false)
+        //                strRes += @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+        //              + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddDays(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+
+        //            if (bLastItem == false)
+        //                strRes += @" UNION ALL ";
+        //            else
+        //                ;
+        //        }
+
+        //        strRes = " " + @" SELECT v.ID_PUT" // as [ID]"
+        //                + @", " + _Session.m_Id + @" as [ID_SESSION]"
+        //                + @", [QUALITY]"
+        //                + ",[VALUE]"
+        //                 + ",[DATE_TIME] as [WR_DATETIME]"
+        //                  + @",[EXTENDED_DEFINITION]"
+        //            + @" FROM (" + strRes + @") as v"
+        //            + @" ORDER BY  v.ID_PUT,v.DATE_TIME"
+        //            ;
+        //    }
+        //    else
+        //        Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::getQueryValuesVar () - неизветстный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+
+        //    return strRes;
+        //}
+
+//        public DataTable GetValuesDayVar(TaskCalculate.TYPE type
+//            , ID_PERIOD idPeriod
+//            , int cntBasePeriod
+//            , DateTimeRange[] arQueryRanges
+//            , out int err)
+//        {
+//            DataTable tableRes = new DataTable();
+
+//            err = -1;
+
+//            tableRes = DbTSQLInterface.Select(ref _dbConnection
+//                , GetQueryValuesDayVar(type
+//                    , idPeriod
+//                    , cntBasePeriod
+//                    , arQueryRanges)
+//                , null, null
+//                , out err);
+
+//            return tableRes;
+//        }
+
+//        public string GetQueryValuesDayVar(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, ID_PERIOD idPeriod, int cntBasePeriod, DateTimeRange[] arQueryRanges)
+//        {
+//            string strRes = string.Empty
+//            , whereParameters = string.Empty;
+
+//            if (!(type == TaskCalculate.TYPE.UNKNOWN))
+//            {
+//                // аналог в 'GetQueryParameters'
+//                //whereParameters = getWhereRangeAlg(type);
+//                //if (whereParameters.Equals(string.Empty) == false)
+//                //    whereParameters = @" AND a." + whereParameters;
+//                //else
+//                //    ;
+
+//                int i = -1;
+//                bool bLastItem = false
+//                    , bEquDatetime = false;
+
+//                for (i = 0; i < arQueryRanges.Length; i++)
+//                {
+//                    bLastItem = !(i < (arQueryRanges.Length - 1));
+
+//                    strRes += @"SELECT [ID_PUT], " + _Session.m_Id + @" as [ID_SESSION]"
+//                            + @", [QUALITY], SUM([VALUE]) as [VALUE]"
+//                            + @", Convert(DateTime, '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"') as [WR_DATETIME]"
+//                            + @", Convert(bigint,0 ) as [EXTENDED_DEFINITION]"
+
+//                        + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
+//                        + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"]"
+
+//                        + @" WHERE [ID_TIME] = 13 AND ID_SOURCE > 0 " //???ID_PERIOD.HOUR //??? _currIdPeriod
+//                        ;
+//                    // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
+//                    // 'Begin' == 'End'
+//                    if (bLastItem == true)
+//                        bEquDatetime = arQueryRanges[i].Begin.Equals(arQueryRanges[i].End);
+//                    else
+//                        ;
+
+//                    if (bEquDatetime == false)
+//                        strRes += @" AND [DATE_TIME] >= '" + arQueryRanges[i].Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'"
+//                      + @" AND [DATE_TIME] < '" + arQueryRanges[i].End.AddDays(1).ToString(@"yyyyMMdd HH:mm:ss") + @"'";
+
+//                    if (bLastItem == false)
+//                        strRes += @" UNION ALL ";
+//                    else
+//                        ;
+//                    strRes += @" group by ID_PUT,QUALITY";
+//                }
+//            }
+//            else
+//                Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::getQueryValuesVar () - неизветстный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+
+//            return strRes;
+//        }
+
+//        /// <summary>
+//        /// Возвратить объект-таблицу со значенями по умолчанию
+//        /// </summary>
+//        /// <param name="idPeriod">Идентификатор </param>
+//        /// <param name="err">Признак выполнения функции</param>
+//        /// <returns>Объект-таблица со значенями по умолчанию</returns>
+//        public DataTable GetValuesDefAll(ID_PERIOD idPeriod, ID_DBTABLE idTableDb, out int err)
+//        {
+//            DataTable tableRes = new DataTable();
+//            string query = string.Empty;
+
+//            if (idTableDb == ID_DBTABLE.INVALUES) {
+//                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] FROM [inalg] a LEFT JOIN [input] i on a.id=i.ID_ALG INNER JOIN inval_def d on d.ID_PUT=i.ID WHERE a.ID_TASK=2 and d.[ID_TIME] = " + (int)idPeriod;
+//            } else
+//                ;
+
+//            if (idTableDb == ID_DBTABLE.OUTVALUES) {
+//                query = @"SELECT  d.[ID_PUT],d.[ID_TIME],d.[VALUE],d.[WR_ID_USER],d.[WR_DATETIME] "
+//+ @"FROM [outalg] a LEFT JOIN [output] i on a.id=i.ID_ALG INNER JOIN inval_def d on d.ID_PUT=i.ID "
+//+ @"WHERE a.ID_TASK = 2 AND d.[ID_TIME] = " + (int)idPeriod;
+//            } else
+//                ;
+
+
+//            err = -1;
+
+//            tableRes = DbTSQLInterface.Select(ref _dbConnection, query, null, null, out err);
+
+//            return tableRes;
+//        }
+
+//        public DataTable GetValuesArch(ID_DBTABLE idTableDb, out int err)
+//        {
+//            string strRes = string.Empty;
+//            DataTable res = new DataTable();
+//            string from = s_dictDbTables[idTableDb].m_name + @"_" + _Session.m_rangeDatetime.Begin.Year.ToString() + _Session.m_rangeDatetime.Begin.Month.ToString(@"00");
+//            DateTimeRange[] dt_range = getDateTimeRangeVariableValues();
+//            strRes = "SELECT * FROM "
+//                + from
+//                + " WHERE DATE_TIME>='" + dt_range[0].Begin.ToString() + "' AND DATE_TIME<= '" + dt_range[0].End.ToString() + "' AND ID_USER=" + HUsers.Id.ToString();
+
+//            res = Select(strRes, out err).Copy();
+//            res.Columns.Remove("ID");
+//            return res;
+//        }
+
+        ///// <summary>
+        ///// Создать новую сессию для расчета
+        /////  - вставить входные данные во временную таблицу
+        ///// </summary>
+        ///// <param name="idFPanel">Идентификатор панели на замену [ID_TASK]</param>
+        ///// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
+        ///// <param name="tablePars">Таблица характеристик входных параметров</param>
+        ///// <param name="tableSessionValues">Таблица значений входных параметров</param>
+        ///// <param name="tableDefValues">Таблица значений по умолчанию входных параметров</param>
+        ///// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
+        ///// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        ///// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
+        //public void CreateSession(int idFPanel
+        //    , int cntBasePeriod
+        //    , DataTable tablePars
+        //    , ref DataTable[] arTableValuesIn
+        //    , ref DataTable[] arTableValuesOut
+        //    , DateTimeRange dtRange, out int err
+        //    , out string strErr)
+        //{
+        //    err = 0;
+        //    strErr = string.Empty;
+        //    string strQuery = string.Empty;
+
+        //    if (_Session.m_ViewValues == ID_VIEW_VALUES.SOURCE)
+        //        CS_Source(idFPanel
+        //            , cntBasePeriod
+        //            , tablePars
+        //            , ref arTableValuesIn
+        //            , ref arTableValuesOut
+        //            , dtRange, out err
+        //            , out strErr);
+        //    if (_Session.m_ViewValues == ID_VIEW_VALUES.ARCHIVE)
+        //        CS_Archive(idFPanel
+        //            , cntBasePeriod
+        //            , tablePars
+        //            , ref arTableValuesIn
+        //            , ref arTableValuesOut
+        //            , dtRange, out err
+        //            , out strErr);
+        //}
+
+        //private void CS_Archive(int idFPanel
+        //    , int cntBasePeriod
+        //    , DataTable tablePars
+        //    , ref DataTable[] arTableValuesIn
+        //    , ref DataTable[] arTableValuesOut
+        //    , DateTimeRange dtRange, out int err
+        //    , out string strErr)
+        //{
+        //    err = 0;
+        //    strErr = string.Empty;
+        //    string strQuery = string.Empty;
+
+        //    if ((arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Columns.Count > 0)
+        //        && (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Rows.Count > 0))
+        //    {
+        //        //Вставить строку с идентификатором новой сессии
+        //        insertIdSession(idFPanel, cntBasePeriod, out err);
+        //        //Вставить строки в таблицу БД со входными значениями для расчета
+        //        insertInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE], out err);
+
+        //        // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+        //        arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
+        //        // получить входные для расчета значения для возможности редактирования
+        //        strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
+        //            + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
+        //            + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+        //        arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
+
+        //        if ((arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Columns.Count > 0)
+        //            && (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Rows.Count > 0))
+        //        {
+        //            //Вставить строки в таблицу БД со входными значениями для расчета
+        //            insertOutValues(out err, arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]);
+
+        //            // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+        //            arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
+        //            // получить входные для расчета значения для возможности редактирования
+        //            strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
+        //                + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
+        //                + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+        //            arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        CS_Source(idFPanel
+        //            , cntBasePeriod
+        //            , tablePars
+        //            , ref arTableValuesIn
+        //            , ref arTableValuesOut
+        //            , dtRange, out err
+        //            , out strErr);
+        //    }
+        //}
+
+        //private DataTable mergeSessionDefault(DataTable dt_Session, DataTable dt_Default)
+        //{
+        //    int id_session = int.Parse(dt_Session.Rows[0]["ID_SESSION"].ToString());
+        //    int quality = int.Parse(dt_Session.Rows[0]["QUALITY"].ToString());
+        //    DateTime wr_datetime = DateTime.Parse(dt_Session.Rows[0]["WR_DATETIME"].ToString());
+        //    string extended_def = dt_Session.Rows[0]["EXTENDED_DEFINITION"].ToString();
+
+        //    foreach (DataRow row in dt_Default.Rows)
+        //    {
+        //        DataRow[] rows_Session = dt_Session.Select("ID_PUT=" + row["ID_PUT"]);
+        //        if(rows_Session.Length==0)
+        //        {
+        //            object[] obj_row = new object[] {row["ID_PUT"], id_session, quality, row["VALUE"], wr_datetime, extended_def};
+        //            dt_Session.Rows.Add(obj_row);
+        //        }
+        //    }
+        //    return dt_Session;
+        //}
+
+        //private void CS_Source(int idFPanel
+        //    , int cntBasePeriod
+        //    , DataTable tablePars
+        //    , ref DataTable[] arTableValuesIn
+        //    , ref DataTable[] arTableValuesOut
+        //    , DateTimeRange dtRange, out int err
+        //    , out string strErr)
+        //{
+        //    err = 0;
+        //    strErr = string.Empty;
+        //    string strQuery = string.Empty;
+
+
+        //    if ((arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Columns.Count > 0)
+        //        && (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0))
+        //    {
+        //        //Вставить строку с идентификатором новой сессии
+        //        insertIdSession(idFPanel, cntBasePeriod, out err);
+
+        //        arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = mergeSessionDefault(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]);
+
+        //        //Вставить строки в таблицу БД со входными значениями для расчета
+        //        insertInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], out err);
+
+        //        // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+        //        arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
+        //        // получить входные для расчета значения для возможности редактирования
+        //        strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
+        //            + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
+        //            + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+        //        arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
+        //    }
+        //    else
+        //    {
+        //        if (arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows.Count > 0)
+        //        {
+        //            //Вставить строку с идентификатором новой сессии
+        //            insertIdSession(idFPanel, cntBasePeriod, out err);
+        //            //Вставить строки в таблицу БД со входными значениями для расчета
+        //            insertDefInValues(arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT], out err);
+
+        //            // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+        //            arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
+        //            // получить входные для расчета значения для возможности редактирования
+        //            strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
+        //                + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
+        //                + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+        //            arTableValuesIn[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
+        //        }
+        //        else
+        //            Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
+        //    }
+
+        //    if ((arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Columns.Count > 0)
+        //        && (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0))
+        //    {
+        //        //Вставить строки в таблицу БД со входными значениями для расчета
+        //        insertOutValues(out err, arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]);
+
+        //        // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+        //        arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
+        //        // получить входные для расчета значения для возможности редактирования
+        //        strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
+        //            + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
+        //            + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+        //        arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
+        //    }
+        //    else
+        //    {
+        //        if (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows.Count > 0)
+        //        {
+        //            //Вставить строки в таблицу БД со входными значениями для расчета
+        //            insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT], out err);
+
+        //            // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+        //            arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Clear();
+        //            // получить входные для расчета значения для возможности редактирования
+        //            strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
+        //                + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
+        //                + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+        //            arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Select(strQuery, out err);
+
+        //        }
+        //        else
+        //            if (arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count == 0)
+        //        {
+        //            string strRes = @"SELECT p.ID, p.ID_ALG, p.ID_COMP, p.ID_RATIO, p.MINVALUE, p.MAXVALUE"
+        //                + @", a.NAME_SHR, a.N_ALG, a.DESCRIPTION, a.ID_MEASURE, a.SYMBOL"
+        //                + @", m.NAME_RU as NAME_SHR_MEASURE, m.[AVG]"
+        //                + @" FROM [dbo].[output] as p"
+        //                + @" JOIN [dbo].[outalg] as a ON a.ID = p.ID_ALG AND a.ID_TASK = " + (int)IdTask
+        //                + @" JOIN [dbo].[measure] as m ON a.ID_MEASURE = m.ID ORDER BY ID";
+        //            DataTable param = Select(strRes, out err);
+        //            foreach (DataRow r in param.Rows)
+        //            {
+        //                arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Rows.Add(new object[] { r["ID"], "19", "0", "0", DateTime.Now });
+        //            }
+        //            insertDefOutValues(arTableValuesOut[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT], out err);
+
+        //        }
+        //        Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
+        //    }
+        //}
 
         ///// <summary>
         ///// Вставить в таблицу БД идентификатор новой сессии
@@ -821,92 +751,92 @@ namespace PluginTaskBalTeplo
         }
 
 
-        /// <summary>
-        /// Вставить значения в таблицу для временных выходных значений сессии расчета
-        /// </summary>
-        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
-        public void insertOutValues(out int err, DataTable tableRes)
-        {
-            err = -1;
+        ///// <summary>
+        ///// Вставить значения в таблицу для временных выходных значений сессии расчета
+        ///// </summary>
+        ///// <param name="err">Идентификатор ошибки при выполнении функции</param>
+        //public void insertOutValues(out int err, DataTable tableRes)
+        //{
+        //    err = -1;
 
-            if (IdTask == ID_TASK.BAL_TEPLO)
-                insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err, tableRes);
-            else
-                ;
-            //if (err == 0)
-            //    insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err);
-            //else
-            //    ;
-        }
+        //    if (IdTask == ID_TASK.BAL_TEPLO)
+        //        insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err, tableRes);
+        //    else
+        //        ;
+        //    //if (err == 0)
+        //    //    insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err);
+        //    //else
+        //    //    ;
+        //}
 
-        /// <summary>
-        /// Вставить значения в таблицу для временных выходных значений сессии расчета
-        /// </summary>
-        /// <param name="idSession">Идентификатор сессии расчета</param>
-        /// <param name="typeCalc">Тип расчета</param>
-        /// <param name="tableRes">таблица с данными</param>
-        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
-        private void insertOutValues(long idSession, TaskCalculate.TYPE typeCalc, out int err, DataTable tableRes)
-        {
-            err = 0;
-            string strBaseQuery = string.Empty
-                , strQuery = string.Empty;
-            int iRowCounterToInsert = -1;
+        ///// <summary>
+        ///// Вставить значения в таблицу для временных выходных значений сессии расчета
+        ///// </summary>
+        ///// <param name="idSession">Идентификатор сессии расчета</param>
+        ///// <param name="typeCalc">Тип расчета</param>
+        ///// <param name="tableRes">таблица с данными</param>
+        ///// <param name="err">Идентификатор ошибки при выполнении функции</param>
+        //private void insertOutValues(long idSession, TaskCalculate.TYPE typeCalc, out int err, DataTable tableRes)
+        //{
+        //    err = 0;
+        //    string strBaseQuery = string.Empty
+        //        , strQuery = string.Empty;
+        //    int iRowCounterToInsert = -1;
 
-            strBaseQuery =
-            strQuery =
-                @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @" VALUES ";
+        //    strBaseQuery =
+        //    strQuery =
+        //        @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @" VALUES ";
 
-            if (true)
-            {
-                iRowCounterToInsert = 0;
-                foreach (DataRow rowSel in tableRes.Rows)
-                {
-                    if (iRowCounterToInsert > MAX_ROWCOUNT_TO_INSERT)
-                    {
-                        // исключить лишнюю запятую
-                        strQuery = strQuery.Substring(0, strQuery.Length - 1);
-                        // вставить строки в таблицу
-                        DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+        //    if (true)
+        //    {
+        //        iRowCounterToInsert = 0;
+        //        foreach (DataRow rowSel in tableRes.Rows)
+        //        {
+        //            if (iRowCounterToInsert > MAX_ROWCOUNT_TO_INSERT)
+        //            {
+        //                // исключить лишнюю запятую
+        //                strQuery = strQuery.Substring(0, strQuery.Length - 1);
+        //                // вставить строки в таблицу
+        //                DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
 
-                        if (!(err == 0))
-                            // при ошибке - не продолжать
-                            break;
-                        else
-                            ;
+        //                if (!(err == 0))
+        //                    // при ошибке - не продолжать
+        //                    break;
+        //                else
+        //                    ;
 
-                        strQuery = strBaseQuery;
-                        iRowCounterToInsert = 0;
-                    }
-                    else
-                        ;
-                    strQuery += @"(";
+        //                strQuery = strBaseQuery;
+        //                iRowCounterToInsert = 0;
+        //            }
+        //            else
+        //                ;
+        //            strQuery += @"(";
 
-                    strQuery += idSession + @"," //ID_SEESION
-                      + rowSel[@"ID_PUT"] + @"," //ID_PUT
-                      + rowSel[@"QUALITY"] + @"," //QUALITY
-                      + rowSel[@"VALUE"].ToString().Replace(',', '.') + @"," + //VALUE
-                    "'" + rowSel[@"WR_DATETIME"] + @"'," +
-                    "'" + HDateTime.ToMoscowTimeZone().ToString()
-                      ;
+        //            strQuery += idSession + @"," //ID_SEESION
+        //              + rowSel[@"ID_PUT"] + @"," //ID_PUT
+        //              + rowSel[@"QUALITY"] + @"," //QUALITY
+        //              + rowSel[@"VALUE"].ToString().Replace(',', '.') + @"," + //VALUE
+        //            "'" + rowSel[@"WR_DATETIME"] + @"'," +
+        //            "'" + HDateTime.ToMoscowTimeZone().ToString()
+        //              ;
 
-                    strQuery += @"'),";
+        //            strQuery += @"'),";
 
-                    iRowCounterToInsert++;
+        //            iRowCounterToInsert++;
 
-                }
+        //        }
 
-                if (err == 0)
-                {
-                    // исключить лишнюю запятую
-                    strQuery = strQuery.Substring(0, strQuery.Length - 1);
-                    // вставить строки в таблицу
-                    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-                }
-                else
-                    ; // при ошибке - не продолжать
-            }
-        }
+        //        if (err == 0)
+        //        {
+        //            // исключить лишнюю запятую
+        //            strQuery = strQuery.Substring(0, strQuery.Length - 1);
+        //            // вставить строки в таблицу
+        //            DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+        //        }
+        //        else
+        //            ; // при ошибке - не продолжать
+        //    }
+        //}
 
         /// <summary>
         /// Вставить значения в таблицу для временных входных значений по умолчанию
@@ -1015,7 +945,7 @@ namespace PluginTaskBalTeplo
             DataTable tableParameters = null;
             string strQuery = string.Empty;
 
-            strQuery = GetQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES);
+            strQuery = getQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES);
 
             return tableParameters = Select(strQuery, out err);
         }
@@ -1199,6 +1129,11 @@ namespace PluginTaskBalTeplo
                 //}
             }
             return tableEdit;
+        }
+
+        public override DataTable GetImportValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
+        {
+            throw new NotImplementedException();
         }
 
         ///// <summary>

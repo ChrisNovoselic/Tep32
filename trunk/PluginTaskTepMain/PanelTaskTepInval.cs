@@ -67,7 +67,7 @@ namespace PluginTaskTepMain
             //    , m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]
             //    , out err);
 
-            m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVAL_DEF].m_name
+            __handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVAL_DEF].m_name
                 , @"ID_PUT, ID_TIME"
                 , string.Empty
                 , m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
@@ -90,59 +90,14 @@ namespace PluginTaskTepMain
             //deleteSession();
 
             base.Stop();
-        }
-        /// <summary>
-        /// Установить значения таблиц для редактирования
-        /// </summary>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        protected override void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-
-            Session.New();
-            //Запрос для получения архивных данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = new DataTable();
-            //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE ?
-                HandlerDb.GetValuesVar(TaskCalculateType, Session.ActualIdPeriod, Session.CountBasePeriod, arQueryRanges, out err) :
-                    Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(TaskCalculateType
-                        , Session.m_Id
-                        , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
-                        , m_dictTableDictPrj[ID_DBTABLE.RATIO]
-                        , out err) :
-                            new DataTable();
-            //Проверить признак выполнения запроса
-            if (err == 0)
-            {
-                //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
-                m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = HandlerDb.GetValuesDef(Session.ActualIdPeriod, out err);
-                //Проверить признак выполнения запроса
-                if (err == 0)
-                    //Начать новую сессию расчета
-                    // , получить входные для расчета значения для возможности редактирования
-                    HandlerDb.CreateSession(m_Id
-                        , Session.CountBasePeriod
-                        , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
-                        , ref m_arTableOrigin
-                        , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
-                        , out err, out strErr);
-                else
-                    strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
-                        + @" по " + Session.m_rangeDatetime.End.ToString();
-            }
-            else
-                strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
-                    + @" по " + Session.m_rangeDatetime.End.ToString();            
-        }
+        }        
 
         /// <summary>
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>
         /// <param name="dgv">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        protected override void onEventCellValueChanged(object dgv, DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
+        protected override void onEventCellValueChanged(object dgv, DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
         {
             DataRow[] rowsParameter = null;
 
@@ -170,17 +125,6 @@ namespace PluginTaskTepMain
                 }
                 else
                     ;
-        }
-
-        protected override void buttonLoad_onClick()
-        {
-            // вызов 'reinit()'
-            //base.HPanelTepCommon_btnUpdate_Click(obj, ev);
-            // для этой вкладки - требуется просто 'clear'
-            // очистить содержание представления
-            clear();
-            // ... - загрузить/отобразить значения из БД
-            base.buttonLoad_onClick();
         }
 
         /// <summary>

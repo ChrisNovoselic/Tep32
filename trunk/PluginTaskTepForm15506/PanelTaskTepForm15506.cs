@@ -62,17 +62,17 @@ namespace PluginTaskTepForm15506
             throw new NotImplementedException();
         }
 
-        protected override void onAddNAlgParameter(NALG_PARAMETER obj)
+        protected override void onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
             throw new NotImplementedException();
         }
 
-        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        protected override void onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
             throw new NotImplementedException();
         }
 
-        protected override void onAddComponent(TECComponent comp)
+        protected override void onAddComponent(HandlerDbTaskCalculate.TECComponent comp)
         {
             throw new NotImplementedException();
         }
@@ -82,6 +82,11 @@ namespace PluginTaskTepForm15506
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         protected override void panelManagement_onItemCheck(HPanelTepCommon.PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void onSetValuesCompleted()
         {
             throw new NotImplementedException();
         }

@@ -173,7 +173,7 @@ namespace TepCommon
 
                 public bool IsNAlg { get { return (!(m_idAlg < (int)ID_START_RECORD.ALG)) && (m_idAlg < (int)ID_START_RECORD.PUT); } }
 
-                public bool IsComponent { get { return ((m_idComp > 0) && (m_idComp < (int)TECComponent.TYPE.UNREACHABLE)) && (m_idPut < 0); } }
+                public bool IsComponent { get { return ((m_idComp > 0) && (m_idComp < (int)HandlerDbTaskCalculate.TECComponent.TYPE.UNREACHABLE)) && (m_idPut < 0); } }
 
                 public bool IsPut { get { return (!(m_idPut < (int)ID_START_RECORD.PUT)); } }
             }
@@ -476,7 +476,7 @@ namespace TepCommon
                 //Отменить обработку события - изменение начала/окончания даты/времени
                 activateDateTimeRangeValue_OnChanged(false);
                 //Установить новые режимы для "календарей"
-                SetModeDatetimeRange();
+                setModeDatetimeRange();
                 //Возобновить обработку события - изменение начала/окончания даты/времени
                 activateDateTimeRangeValue_OnChanged(true);
                 //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
@@ -635,7 +635,7 @@ namespace TepCommon
             /// </summary>
             public bool AllowUserPeriodChanged { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled = value; } }
 
-            public void SetModeDatetimeRange()
+            private void setModeDatetimeRange()
             {
                 ID_PERIOD idPeriod = IdPeriod;
 

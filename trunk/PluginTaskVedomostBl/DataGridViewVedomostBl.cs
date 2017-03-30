@@ -42,121 +42,6 @@ namespace PluginTaskVedomostBl
             }
         }
         /// <summary>
-        /// Возвратить список с заголовками представления для отображения значений
-        /// </summary>
-        /// <param name="arlistStr">лист парамтеров</param>
-        /// <param name="rowPars">таблица с данными</param>
-        /// <returns>Список массивов строк-заговков</returns>
-        private List<HEADER> getListHeaders(List<NALG_PARAMETER>listNAlgParameter, List<PUT_PARAMETER>listPutParameter)
-        {
-            //List<string[]> listRes = new List<string[]> { };
-            List<HEADER> listHeaderRes = new List<HEADER> { };
-
-            int cntHeader = 0;
-            NALG_PARAMETER nalg_prop;
-            string[] arStrHeader;
-            List<HEADER> listHeaderSrc;            
-
-            listHeaderSrc = new List<HEADER>(listPutParameter.Count);
-
-            nalg_prop = null;
-
-            foreach (PUT_PARAMETER put in listPutParameter) {
-                if ((nalg_prop == null)
-                    || ((!(nalg_prop == null)) && (!(nalg_prop.m_Id == put.m_Id))))
-                    nalg_prop = listNAlgParameter.Find(nAlg => { return nAlg.m_Id == put.m_idNAlg; });
-                else
-                    ;
-
-                listHeaderSrc.Add(new HEADER() {
-                    idNAlg = nalg_prop.m_Id
-                    , idComponent = put.IdComponent
-                    , idPut = put.m_Id
-                    , src = nalg_prop
-                        //.m_strNameShr
-                        .m_nAlg
-                    , values =
-                        nalg_prop
-                            //.m_strNameShr
-                            .m_nAlg
-                            .Split('.', ',')
-                });
-            }
-
-            listHeaderRes.Clear();
-
-            for (int j = 0; j < listHeaderSrc.Count; j++) {
-                //??? почему 3
-                //  , может у всех по 3(количество уровней) элемента
-                if (listHeaderSrc[j].values.Length < 3)
-                    arStrHeader = new string[listHeaderSrc[j].values.Length + 1];
-                else
-                    arStrHeader = new string[listHeaderSrc[j].values.Length];
-
-                cntHeader = 0;
-
-                for (int level = listHeaderSrc[j].values.Length - 1; level > -1; level--) {
-                    if ((!(nalg_prop == null))
-                        && (!(nalg_prop.m_Id == listHeaderSrc[j].idNAlg)))
-                        nalg_prop = listNAlgParameter.Find(nAlg => { return nAlg.m_Id == listHeaderSrc[j].idNAlg; });
-                    else
-                        ;
-
-                    switch ((LEVEL_HEADER)level) {
-                        case LEVEL_HEADER.TOP:
-                            for (int t = 0; t < s_listGroupHeaders.Count; t++) {
-                                for (int n = 0; n < s_listGroupHeaders[t].Count; n++) {
-                                    cntHeader++;
-
-                                    try {
-                                        if (int.Parse(listHeaderSrc[j].values.ElementAt((int)LEVEL_HEADER.TOP)) == cntHeader) {
-                                            arStrHeader[level] = s_listGroupHeaders[t][n];
-
-                                            listHeaderRes.Add(new HEADER() {
-                                                idNAlg = listHeaderSrc[j].idNAlg
-                                                , idComponent = listHeaderSrc[j].idComponent
-                                                , idPut = listHeaderSrc[j].idPut
-                                                , src = nalg_prop
-                                                    //.m_strNameShr
-                                                    .m_nAlg
-                                                , values = arStrHeader
-                                            });
-
-                                            t = s_listGroupHeaders.Count; // прервать внешний цикл
-                                            break;
-                                        } else
-                                            ;
-                                    } catch (Exception e) {
-                                        Logging.Logg().Exception(e, string.Format(@"PanelTaskVedomostBl::getListHeaders () - разбор TOP HEADER=[{0}]...", listHeaderSrc[j].ToString()), Logging.INDEX_MESSAGE.NOT_SET);
-                                    }
-                                }
-                            }
-                            break;
-                        case LEVEL_HEADER.MIDDLE:
-                            // ??? почему < 3
-                            if (listHeaderSrc[j].values.Length < 3)
-                                arStrHeader[level + 1] = string.Empty;
-                            else
-                                ;
-
-                            arStrHeader[(int)LEVEL_HEADER.MIDDLE] = nalg_prop.m_strNameShr; // listHeader[j].src
-                            break;
-                        case LEVEL_HEADER.LOW:
-                            arStrHeader[level] = nalg_prop.m_strDescription;
-                            break;
-                        default:
-                            break;
-                    }
-                } // for - level
-            }
-
-            //var linqRes = from header in listHeaderRes select new string[] { header.values };
-            //listRes = linqRes as List<string[]>;
-
-            return listHeaderRes;
-        }
-
-        /// <summary>
         /// класс вьюхи
         /// </summary>
         protected class DataGridViewVedomostBl : DataGridViewValues
@@ -186,10 +71,6 @@ namespace PluginTaskVedomostBl
                 TOP, MIDDLE, LOW,
                 COUNT
             }
-            /// <summary>
-            /// ??? зачем Количество блоков
-            /// </summary>
-            public int BlockCount;
             ///// <summary>
             ///// Перечисление для индексации столбцов со служебной информацией
             ///// </summary>
@@ -200,10 +81,10 @@ namespace PluginTaskVedomostBl
             /// Конструктор - основной (с параметром)
             /// </summary>
             /// <param name="nameDGV">Идентификатор оборудования - блока, данные которого отображаются в текущем представлении</param>
-            public DataGridViewVedomostBl(int tag)
+            public DataGridViewVedomostBl(HandlerDbTaskCalculate.TECComponent comp)
                 : base (ModeData.DATETIME)
             {
-                Tag = tag;
+                Tag = comp;
 
                 InitializeComponents();
             }
@@ -213,7 +94,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             private void InitializeComponents()
             {
-                Name = ((INDEX_CONTROL)Tag).ToString();
+                Name = string.Format(@"DGV_BLOCK_{0}", IdComponent);
                 Dock = DockStyle.None;
                 //Запретить выделение "много" строк
                 MultiSelect = false;
@@ -232,7 +113,7 @@ namespace PluginTaskVedomostBl
                 //Отменить возможность изменения порядка следования столбцов строк
                 AllowUserToOrderColumns = false;
                 //Не отображать заголовки строк
-                RowHeadersVisible = true;
+                RowHeadersVisible = false;
 
                 RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders | DataGridViewRowHeadersWidthSizeMode.DisableResizing;                
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;                
@@ -242,8 +123,36 @@ namespace PluginTaskVedomostBl
                 ScrollBars = ScrollBars.None;
             }
 
-            public override void BuildStructure()
+            public int IdComponent { get { return ((HandlerDbTaskCalculate.TECComponent)Tag).m_Id; } }
+
+            private DateTime _datetimeBegin;
+
+            public DateTime DatetimeBegin { set { _datetimeBegin = value; } }
+
+            /// <summary>
+            /// кол-во дней в текущем месяце
+            /// </summary>
+            /// <returns>кол-во дней</returns>
+            public int DaysInMonth
             {
+                get {
+                    return DateTime.DaysInMonth(_datetimeBegin.Year, _datetimeBegin.Month);
+                }
+            }
+
+            public override void BuildStructure(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
+            {
+                AddHeaderColumns(getListHeaders(listNAlgParameter, listPutParameter)); // cловарь заголовков
+                ////??? каждый раз получаем полный список и выбираем необходимый
+                //dictVisualSett = getVisualSettingsOfIdComponent((int)dgv.Tag);
+
+                AddColumns(listPutParameter);
+
+                AddRows(_datetimeBegin, TimeSpan.FromDays(1), DaysInMonth);
+
+                ResizeControls();
+
+                ConfigureColumns();
             }
 
             /// <summary>
@@ -254,7 +163,7 @@ namespace PluginTaskVedomostBl
                 /// <summary>
                 /// Параметр в алгоритме расчета, связанный с компонентом станции
                 /// </summary>
-                public PUT_PARAMETER m_putParameter;
+                public HandlerDbTaskCalculate.PUT_PARAMETER m_putParameter;
                 /// <summary>
                 /// Имя колонки
                 /// </summary>
@@ -318,96 +227,7 @@ namespace PluginTaskVedomostBl
                     Logging.Logg().Exception(e, @"DataGridViewVedomostBl::addColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
-
-            ///// <summary>
-            ///// Добавление столбца
-            ///// </summary>
-            ///// <param name="text">Текст для заголовка столбца</param>
-            //private void addColumn(string text)
-            //{
-            //    DataGridViewTextBoxColumn column;
-            //    DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
-
-            //    try {
-            //        column = new DataGridViewTextBoxColumn();
-            //        column.Tag = -1;
-            //        alignText = DataGridViewContentAlignment.MiddleCenter;
-            //        //column.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            //        column.Frozen = true;
-            //        column.Visible = true;
-            //        column.ReadOnly = true;
-            //        column.Name = text;
-            //        column.HeaderText = text;
-            //        column.DefaultCellStyle.Alignment = alignText;
-            //        //column.AutoSizeMode = autoSzColMode;
-            //        Columns.Add(column as DataGridViewTextBoxColumn);
-            //    } catch (Exception e) {
-            //        Logging.Logg().Exception(e, @"DataGridViewVedomostBl::addColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            //    }
-            //}
-
-            ///// <summary>
-            ///// Добавление колонки
-            ///// </summary>
-            ///// <param name="idHeader">номер колонки</param>
-            ///// <param name="col_prop">Структура для описания добавляемых столбцов</param>
-            ///// <param name="bVisible">видимость</param>
-            //public void AddColumn(int idHeader, COLUMN_PROPERTY col_prop, bool bVisible)
-            //{
-            //    int indxCol = -1; // индекс столбца при вставке
-            //    DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
-
-            //    try
-            //    {
-            //        if (m_dictPropertyColumns == null)
-            //            m_dictPropertyColumns = new Dictionary<int, COLUMN_PROPERTY>();
-
-            //        if (!m_dictPropertyColumns.ContainsKey(col_prop.m_idAlg))
-            //            m_dictPropertyColumns.Add(col_prop.m_idAlg, col_prop);
-            //        // найти индекс нового столбца
-            //        // столбец для станции - всегда крайний
-            //        //foreach (HDataGridViewColumn col in Columns)
-            //        //    if ((col.m_iIdComp > 0)
-            //        //        && (col.m_iIdComp < 1000))
-            //        //    {
-            //        //        indxCol = Columns.IndexOf(col);
-            //        //        break;
-            //        //    }
-
-            //        HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false, m_topHeader = col_prop.m_textTopHeader, m_IdAlg = idHeader, m_IdComp = col_prop.m_IdComp };
-            //        alignText = DataGridViewContentAlignment.MiddleRight;
-
-            //        if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
-            //            ; // оставить значения по умолчанию
-            //        else
-            //        {// для добавлямых столбцов
-            //            //if (idHeader < 0)
-            //            //{// для служебных столбцов
-            //            if (bVisible == true)
-            //            {// только для столбца с [SYMBOL]
-            //                alignText = DataGridViewContentAlignment.MiddleLeft;
-            //            }
-            //            column.Frozen = true;
-            //            column.ReadOnly = true;
-            //            //}
-            //        }
-
-            //        column.HeaderText = col_prop.hdrText;
-            //        column.Name = col_prop.nameCol;
-            //        column.DefaultCellStyle.Alignment = alignText;
-            //        column.Visible = bVisible;
-
-            //        if (!(indxCol < 0))
-            //            Columns.Insert(indxCol, column as DataGridViewTextBoxColumn);
-            //        else
-            //            Columns.Add(column as DataGridViewTextBoxColumn);
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        Logging.Logg().Exception(e, @"DataGridViewVedBl::AddColumn (idHeader=" + idHeader + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            //    }
-            //}
-
+        
             /// <summary>
             /// Установка возможности редактирования столбцов
             /// </summary>
@@ -430,7 +250,7 @@ namespace PluginTaskVedomostBl
                 int cntCol = 0;
                 formingTitleLists();
 
-                formRelationsHeading();
+                formingRelationsHeading();
 
                 foreach (DataGridViewColumn col in Columns)
                     if (col.Visible == true)
@@ -506,7 +326,7 @@ namespace PluginTaskVedomostBl
             /// Формирвоанеи списка отношения 
             /// кол-во верхних заголовков к нижним
             /// </summary>
-            private void formRelationsHeading()
+            private void formingRelationsHeading()
             {
                 string oldItem = string.Empty;
                 int indx = 0
@@ -606,8 +426,6 @@ namespace PluginTaskVedomostBl
 
             private int WIDTH_COLUMN_DATE { get { return RowHeadersVisible == true ? 0 : WIDTH_COLUMN_DEFAULT; } }
 
-            //private static int INDEX_COLUMN_0 = 1;
-
             private int WIDTH_COLUMN { get { return Columns[RowHeadersVisible == true ? 0 : 1].Width; }  }
 
             /// <summary>
@@ -698,7 +516,7 @@ namespace PluginTaskVedomostBl
                 m_listHeaders = new List<HEADER>(listHeaders);
             }
 
-            public void AddColumns(List<PUT_PARAMETER>listPutParameter)
+            public void AddColumns(List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
                 int i = -1;
 
@@ -707,10 +525,10 @@ namespace PluginTaskVedomostBl
                         m_textTopHeader = string.Empty
                         , m_textMiddleHeader = "DATE"
                         , m_textLowHeader = "Дата"
-                        , m_putParameter = new PUT_PARAMETER() {
+                        , m_putParameter = new HandlerDbTaskCalculate.PUT_PARAMETER() {
                             m_idNAlg = -1
                             , m_Id = -1
-                            , m_component = new TECComponent() {
+                            , m_component = new HandlerDbTaskCalculate.TECComponent() {
                                 m_Id = -1
                                 , m_idOwner = -1
                                 , m_nameShr = string.Empty
@@ -735,8 +553,9 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Добавить строки в количестве 'cnt', очередная строка имеет
             /// </summary>
-            /// <param name="dtStart"></param>
-            /// <param name="cnt"></param>
+            /// <param name="dtStart">Дата для 1-ой строки предсавления</param>
+            /// <param name="tsAdding">Смещение между метками времени строк</param>
+            /// <param name="cnt">Количество строк в представлении (дней в месяце)</param>
             public void AddRows(DateTime dtStart, TimeSpan tsAdding, int cnt)
             {
                 DateTime dtCurrent = dtStart;
@@ -753,7 +572,8 @@ namespace PluginTaskVedomostBl
                 int cntVisibleColumns = 0
                     , width = -1
                     , height = -1;
-
+                //??? каждый раз устанавливать размеры для столбцов
+                // , однако для них установлено свойство 'NoResizeble'
                 foreach (DataGridViewColumn col in Columns) {
                     if ((Columns.IndexOf(col) > 0)
                         || (RowHeadersVisible == true))
@@ -815,7 +635,7 @@ namespace PluginTaskVedomostBl
                 tableOriginCopy = tableOrigin.Copy();
                 ClearValues();
 
-                if ((int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE == (int)typeValues)
+                if ((int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD == (int)typeValues)
                     if (s_flagBl)
                         hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);
                     else
@@ -1052,7 +872,7 @@ namespace PluginTaskVedomostBl
                         if (originValues.ToString(formatRound, CultureInfo.InvariantCulture).Equals(editValue.ToString().Trim()) == false)
                             quality = 2;
                         break;
-                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE:
+                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD:
                         quality = 1;
                         break;
                     case HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT:
@@ -1062,6 +882,121 @@ namespace PluginTaskVedomostBl
                 }
 
                 return quality;
+            }
+
+            /// <summary>
+            /// Возвратить список с заголовками представления для отображения значений
+            /// </summary>
+            /// <param name="arlistStr">лист парамтеров</param>
+            /// <param name="rowPars">таблица с данными</param>
+            /// <returns>Список массивов строк-заговков</returns>
+            private List<HEADER> getListHeaders(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
+            {
+                //List<string[]> listRes = new List<string[]> { };
+                List<HEADER> listHeaderRes = new List<HEADER> { };
+
+                int cntHeader = 0;
+                HandlerDbTaskCalculate.NALG_PARAMETER nalg_prop;
+                string[] arStrHeader;
+                List<HEADER> listHeaderSrc;            
+
+                listHeaderSrc = new List<HEADER>(listPutParameter.Count);
+
+                nalg_prop = null;
+
+                foreach (HandlerDbTaskCalculate.PUT_PARAMETER put in listPutParameter) {
+                    if ((nalg_prop == null)
+                        || ((!(nalg_prop == null)) && (!(nalg_prop.m_Id == put.m_Id))))
+                        nalg_prop = listNAlgParameter.Find(nAlg => { return nAlg.m_Id == put.m_idNAlg; });
+                    else
+                        ;
+
+                    listHeaderSrc.Add(new HEADER() {
+                        idNAlg = nalg_prop.m_Id
+                        , idComponent = put.IdComponent
+                        , idPut = put.m_Id
+                        , src = nalg_prop
+                            //.m_strNameShr
+                            .m_nAlg
+                        , values =
+                            nalg_prop
+                                //.m_strNameShr
+                                .m_nAlg
+                                .Split('.', ',')
+                    });
+                }
+
+                listHeaderRes.Clear();
+
+                for (int j = 0; j < listHeaderSrc.Count; j++) {
+                    //??? почему 3
+                    //  , может у всех по 3(количество уровней) элемента
+                    if (listHeaderSrc[j].values.Length < 3)
+                        arStrHeader = new string[listHeaderSrc[j].values.Length + 1];
+                    else
+                        arStrHeader = new string[listHeaderSrc[j].values.Length];
+
+                    cntHeader = 0;
+
+                    for (int level = listHeaderSrc[j].values.Length - 1; level > -1; level--) {
+                        if ((!(nalg_prop == null))
+                            && (!(nalg_prop.m_Id == listHeaderSrc[j].idNAlg)))
+                            nalg_prop = listNAlgParameter.Find(nAlg => { return nAlg.m_Id == listHeaderSrc[j].idNAlg; });
+                        else
+                            ;
+
+                        switch ((LEVEL_HEADER)level) {
+                            case LEVEL_HEADER.TOP:
+                                for (int t = 0; t < s_listGroupHeaders.Count; t++) {
+                                    for (int n = 0; n < s_listGroupHeaders[t].Count; n++) {
+                                        cntHeader++;
+
+                                        try {
+                                            if (int.Parse(listHeaderSrc[j].values.ElementAt((int)LEVEL_HEADER.TOP)) == cntHeader) {
+                                                arStrHeader[level] = s_listGroupHeaders[t][n];
+
+                                                listHeaderRes.Add(new HEADER() {
+                                                    idNAlg = listHeaderSrc[j].idNAlg
+                                                    , idComponent = listHeaderSrc[j].idComponent
+                                                    , idPut = listHeaderSrc[j].idPut
+                                                    , src = nalg_prop
+                                                        //.m_strNameShr
+                                                        .m_nAlg
+                                                    , values = arStrHeader
+                                                });
+
+                                                t = s_listGroupHeaders.Count; // прервать внешний цикл
+                                                break;
+                                            } else
+                                                ;
+                                        } catch (Exception e) {
+                                            Logging.Logg().Exception(e, string.Format(@"PanelTaskVedomostBl::getListHeaders () - разбор TOP HEADER=[{0}]...", listHeaderSrc[j].ToString()), Logging.INDEX_MESSAGE.NOT_SET);
+                                        }
+                                    }
+                                }
+                                break;
+                            case LEVEL_HEADER.MIDDLE:
+                                // ??? почему < 3
+                                if (listHeaderSrc[j].values.Length < 3)
+                                    arStrHeader[level + 1] = string.Empty;
+                                else
+                                    ;
+
+                                arStrHeader[(int)LEVEL_HEADER.MIDDLE] = nalg_prop.m_strNameShr; // listHeader[j].src
+                                break;
+                            case LEVEL_HEADER.LOW:
+                                arStrHeader[level] = nalg_prop.m_strDescription;
+                                break;
+                            default:
+                                break;
+                        }
+                    } // for - level
+                }
+
+                //var linqRes = from header in listHeaderRes select new string[] { header.values };
+                //listRes = linqRes as List<string[]>;
+
+                return listHeaderRes;
             }
         }
     }

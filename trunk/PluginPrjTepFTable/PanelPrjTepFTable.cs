@@ -79,7 +79,7 @@ namespace PluginPrjTepFTable
             DataGridView dgv = null;
             List<string> listNAlg;
             string strItem = string.Empty;
-            m_tblOrigin = m_handlerDb.GetDataTable(ID_DBTABLE.FTABLE, out err);
+            m_tblOrigin = __handlerDb.GetDataTable(ID_DBTABLE.FTABLE, out err);
 
             if (err == 0)
             {
@@ -296,7 +296,7 @@ namespace PluginPrjTepFTable
         /// <param name="err">Признак ошибки при выполнении метода</param>
         protected override void recUpdateInsertDelete(out int err)
         {
-            m_handlerDb.RecUpdateInsertDelete(@"ftable", @"ID", string.Empty, m_tblOrigin, m_tblEdit, out err);
+            __handlerDb.RecUpdateInsertDelete(@"ftable", @"ID", string.Empty, m_tblOrigin, m_tblEdit, out err);
         }
 
         /// <summary>

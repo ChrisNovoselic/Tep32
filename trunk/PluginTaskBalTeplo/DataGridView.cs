@@ -237,7 +237,7 @@ namespace PluginTaskBalTeplo
                             {
                                 if (row_comp.Length > 0)
                                 {
-                                    row_val = (tbOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Select("ID_PUT="
+                                    row_val = (tbOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Select("ID_PUT="
                                         + row_comp[0]["ID"].ToString()));
 
                                     if (row_val.Length > 0)
@@ -258,7 +258,7 @@ namespace PluginTaskBalTeplo
 
                                 if (row_comp.Length > 0)
                                 {
-                                    row_val = (tbOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Select("ID_PUT="
+                                    row_val = (tbOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Select("ID_PUT="
                                         + row_comp[0]["ID"].ToString()));
 
                                     if (row_val.Length > 0)

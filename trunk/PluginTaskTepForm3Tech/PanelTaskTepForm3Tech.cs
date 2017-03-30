@@ -86,9 +86,9 @@ namespace PluginTaskTepForm3Tech
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
         /// </summary>
-        protected override void panelManagement_DatetimeRangeChanged()
+        protected override void panelManagement_DatetimeRange_onChanged()
         {
-            base.panelManagement_DatetimeRangeChanged();
+            base.panelManagement_DatetimeRange_onChanged();
         }
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
@@ -100,30 +100,35 @@ namespace PluginTaskTepForm3Tech
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
         /// </summary>
-        protected override void panelManagement_PeriodChanged()
+        protected override void panelManagement_Period_onChanged()
         {
-            base.panelManagement_PeriodChanged();
+            base.panelManagement_Period_onChanged();
         }
         /// <summary>
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void onAddNAlgParameter(NALG_PARAMETER obj)
+        protected override void onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        protected override void onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(TECComponent obj)
+        protected override void onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
         {
+        }
+
+        protected override void onSetValuesCompleted()
+        {
+            throw new NotImplementedException();
         }
         #endregion
     }

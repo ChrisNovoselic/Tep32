@@ -82,19 +82,17 @@ namespace PluginTaskTepMain
         {
             int err = -1;
             string strErr = string.Empty;
-
-            DateTimeRange[] arQueryRanges = null;
             
             // удалить устаревшую сессию
             deleteSession();
-            // создать новую сессию
-            arQueryRanges = HandlerDb.GetDateTimeRangeValuesVar();
-            // загрузить значения для новой сесии
+            ////??? создать новую сессию
+            //arQueryRanges = HandlerDb.GetDateTimeRangeVariableValues();
+            //??? загрузить значения для новой сесии
 
             // произвести расчет
             HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME);
             // установить/отобразить значения
-            setValues(arQueryRanges, out err, out strErr);
+            setValues(out err, out strErr);
         }
         ///// <summary>
         ///// Инициировать подготовку к расчету
@@ -111,7 +109,7 @@ namespace PluginTaskTepMain
         /// </summary>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         /// <param name="strErr">Строка текста сообщения при галичии ошибки</param>
-        protected override void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
+        protected override void setValues(out int err, out string strErr)
         {
             err = 0;
             strErr = string.Empty;
@@ -119,7 +117,7 @@ namespace PluginTaskTepMain
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
         /// </summary>
-        protected class DataGridViewTEPRealTime : DataGridViewTEPCalculate
+        protected class DataGridViewTEPRealTime : DataGridViewTaskTepCalculate
         {
             public DataGridViewTEPRealTime() : base ()
             {
@@ -148,12 +146,12 @@ namespace PluginTaskTepMain
             {
             }
 
-            public override void BuildStructure()
+            public override void BuildStructure(List<TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
                 throw new NotImplementedException();
             }
 
-            protected override void addColumn(TECComponent comp, ModeAddColumn mode)
+            protected override void addColumn(TepCommon.HandlerDbTaskCalculate.TECComponent comp, ModeAddColumn mode)
             {
                 throw new NotImplementedException();
             }
@@ -170,6 +168,11 @@ namespace PluginTaskTepMain
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         protected override void panelManagement_onItemCheck(HPanelTepCommon.PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void onSetValuesCompleted()
         {
             throw new NotImplementedException();
         }

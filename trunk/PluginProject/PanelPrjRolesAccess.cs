@@ -95,7 +95,7 @@ namespace PluginProject
             : base(iFunc)
         {
             InitializeComponent();
-            m_handlerDb = createHandlerDb();
+            __handlerDb = createHandlerDb();
             m_arr_UserRolesTable = new DataTable[3];
         }
 
@@ -166,12 +166,12 @@ namespace PluginProject
                 node = tree.SelectedNode;
                 par_node = tree.SelectedNode.Parent;
             }
-            m_handlerDb.RegisterDbConnection(out err);
+            __handlerDb.RegisterDbConnection(out err);
             m_tblOrigin = null;
-            m_tblOrigin = User.GetProfiles(m_handlerDb.DbConnection, out err);
-            m_arr_UserRolesTable[(int)ID_Table.Role] = m_handlerDb.GetDataTable(ID_DBTABLE.ROLES_UNIT, out err);
-            m_arr_UserRolesTable[(int)ID_Table.User] = m_handlerDb.GetDataTable(ID_DBTABLE.USERS, out err);
-            m_arr_UserRolesTable[(int)ID_Table.Panels] = User.GetRolesPanels(m_handlerDb.DbConnection, out err);
+            m_tblOrigin = User.GetProfiles(__handlerDb.DbConnection, out err);
+            m_arr_UserRolesTable[(int)ID_Table.Role] = __handlerDb.GetDataTable(ID_DBTABLE.ROLES_UNIT, out err);
+            m_arr_UserRolesTable[(int)ID_Table.User] = __handlerDb.GetDataTable(ID_DBTABLE.USERS, out err);
+            m_arr_UserRolesTable[(int)ID_Table.Panels] = User.GetRolesPanels(__handlerDb.DbConnection, out err);
 
             if (m_table_TEC.Columns.Count == 0)
             {
@@ -191,7 +191,7 @@ namespace PluginProject
 
             ((DataGridView_Prop_Text_Check)this.Controls.Find(INDEX_CONTROL.DGV_DICT_PROP.ToString(), true)[0]).Create_DGV(m_arr_UserRolesTable[(int)ID_Table.Panels]);
             
-            m_handlerDb.UnRegisterDbConnection();
+            __handlerDb.UnRegisterDbConnection();
             resetDataTable();
 
 
@@ -390,9 +390,9 @@ namespace PluginProject
             int err = -1;
             string keys = string.Empty;
             m_tblOrigin.Columns["VALUE"].ColumnName = m_tblEdit.Columns["VALUE"].ColumnName = "IsUse";
-            m_handlerDb.RegisterDbConnection(out err);
-            m_handlerDb.RecUpdateInsertDelete(getNameMode(ID_Table.Role), "ID_EXT,IS_ROLE,ID_FPANEL", string.Empty, m_tblOrigin, m_tblEdit, out err);
-            m_handlerDb.UnRegisterDbConnection();
+            __handlerDb.RegisterDbConnection(out err);
+            __handlerDb.RecUpdateInsertDelete(getNameMode(ID_Table.Role), "ID_EXT,IS_ROLE,ID_FPANEL", string.Empty, m_tblOrigin, m_tblEdit, out err);
+            __handlerDb.UnRegisterDbConnection();
             m_tblOrigin.Columns["IsUse"].ColumnName = m_tblEdit.Columns["IsUse"].ColumnName = "VALUE";
             fillDataTable();
             resetDataTable();

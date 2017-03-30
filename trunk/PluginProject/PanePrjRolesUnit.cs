@@ -227,8 +227,8 @@ namespace PluginProject
             DbConnection connConfigDB;
 
             int err = -1;
-            m_handlerDb.RegisterDbConnection(out err);
-            connConfigDB = m_handlerDb.DbConnection;
+            __handlerDb.RegisterDbConnection(out err);
+            connConfigDB = __handlerDb.DbConnection;
 
             if (m_table_TEC.Columns.Count == 0) {
                 DataColumn[] columns = { new DataColumn("ID"), new DataColumn("DESCRIPTION") };
@@ -260,7 +260,7 @@ namespace PluginProject
             m_arr_origTable[(int)ID_Table.Profiles] = HTepUsers.HTepProfilesXml.TableProfiles.Copy();
                 //User.GetTableAllProfile(connConfigDB).Copy();
 
-            m_handlerDb.UnRegisterDbConnection();
+            __handlerDb.UnRegisterDbConnection();
         }
 
         /// <summary>
@@ -622,10 +622,10 @@ namespace PluginProject
                             break;
                     }
 
-                    m_handlerDb.RecUpdateInsertDelete(getNameMode(i), keys, "",m_arr_origTable[(int)i], m_arr_editTable[(int)i], out err);
+                    __handlerDb.RecUpdateInsertDelete(getNameMode(i), keys, "",m_arr_origTable[(int)i], m_arr_editTable[(int)i], out err);
                 }
 
-                HTepUsers.HTepProfilesXml.UpdateProfile(m_handlerDb.ConnectionSettings);
+                HTepUsers.HTepProfilesXml.UpdateProfile(__handlerDb.ConnectionSettings);
                 fillDataTable();
                 resetDataTable();
                 ((TreeView_Users)this.Controls.Find(INDEX_CONTROL.TREE_DICT_ITEM.ToString(), true)[0]).Update_tree(m_arr_editTable[(int)ID_Table.User], m_arr_editTable[(int)ID_Table.Role]);

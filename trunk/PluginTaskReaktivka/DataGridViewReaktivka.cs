@@ -19,17 +19,18 @@ namespace PluginTaskReaktivka
         /// </summary>
         protected class DataGridViewValuesReaktivka : DataGridViewValues
         {
-            /// <summary>
-            /// Перечисление для индексации столбцов со служебной информацией
-            /// </summary>
-            protected enum INDEX_SERVICE_COLUMN : uint { ALG, DATE, COUNT }
+            ///// <summary>
+            ///// Перечисление для индексации столбцов со служебной информацией
+            ///// </summary>
+            //protected enum INDEX_SERVICE_COLUMN : uint { ALG, DATE, COUNT }
             //private Dictionary<int, ROW_PROPERTY> m_dictPropertiesRows;
 
             /// <summary>
             /// Конструктор - основной (с параметрами)
             /// </summary>
             /// <param name="nameDGV">Наименование представления (используется для поиска элемента)</param>
-            public DataGridViewValuesReaktivka(string name) : base (ModeData.DATETIME)
+            public DataGridViewValuesReaktivka(string name)
+                : base (ModeData.DATETIME)
             {
                 Name = name;
 
@@ -62,30 +63,15 @@ namespace PluginTaskReaktivka
                 //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                 ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
-                AddColumn(-2, string.Empty, INDEX_SERVICE_COLUMN.ALG.ToString(), true, false);
-                AddColumn(-1, "Дата", INDEX_SERVICE_COLUMN.DATE.ToString(), true, true);
+                //AddColumn(-2, string.Empty, INDEX_SERVICE_COLUMN.ALG.ToString(), true, false);
+                //AddColumn(-1, "Дата", INDEX_SERVICE_COLUMN.DATE.ToString(), true, true);
             }
 
 
-            public override void BuildStructure()
+            public override void BuildStructure(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
                 throw new NotImplementedException();
-            }
-
-            /// <summary>
-            /// Класс для описания дополнительных свойств столбца в отображении (таблице)
-            /// </summary>
-            private class HDataGridViewColumn : DataGridViewTextBoxColumn
-            {
-                /// <summary>
-                /// Идентификатор компонента
-                /// </summary>
-                public int m_iIdComp;
-                /// <summary>
-                /// Признак запрета участия в расчете
-                /// </summary>
-                public bool m_bCalcDeny;
-            }            
+            }          
 
             /// <summary>
             /// Добавить столбец
@@ -95,7 +81,7 @@ namespace PluginTaskReaktivka
             /// <param name="nameCol">имя столбца</param>
             /// <param name="bRead">"только чтение"</param>
             /// <param name="bVisibled">видимость столбца</param>
-            public void AddColumn(int id_comp, string txtHeader, string nameCol, bool bRead, bool bVisibled)
+            public void AddColumn(HandlerDbTaskCalculate.PUT_PARAMETER putPar)
             {
                 int indxCol = -1; // индекс столбца при вставке
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
@@ -105,18 +91,17 @@ namespace PluginTaskReaktivka
                 {
                     // найти индекс нового столбца
                     // столбец для станции - всегда крайний
-                    foreach (HDataGridViewColumn col in Columns)
-                        if ((col.m_iIdComp > 0)
-                            && (col.m_iIdComp < 1000))
-                        {
+                    foreach (DataGridViewColumn col in Columns)
+                        if ((((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).IdComponent > 0)
+                            && (((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_component.IsTec == true)) {
                             indxCol = Columns.IndexOf(col);
 
                             break;
-                        }
-                        else
+                        } else
                             ;
 
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_iIdComp = id_comp, m_bCalcDeny = false };
+                    DataGridViewColumn column = new DataGridViewColumn();
+                    column.Tag = putPar;
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
 
@@ -124,86 +109,78 @@ namespace PluginTaskReaktivka
                         ; // оставить значения по умолчанию
                     else
                     {// для добавлямых столбцов
-                        if (id_comp < 0)
+                        if (putPar.IdComponent < 0)
                         {// для служебных столбцов
-                            if (bVisibled == true)
-                            {// только для столбца с [SYMBOL]
+                            if (putPar.m_bVisibled == true) {// только для столбца с [SYMBOL]
                                 alignText = DataGridViewContentAlignment.MiddleLeft;
                                 autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
-                            }
-                            column.Frozen = true;
+                            } else
+                                ;
 
+                            column.Frozen = true;
                         }
+                        else
+                            ;
                     }
 
-                    column.HeaderText = txtHeader;
-                    column.ReadOnly = bRead;
-                    column.Name = nameCol;
+                    column.HeaderText = putPar.NameShrComponent;
+                    column.ReadOnly = putPar.m_bEnabled;
+                    column.Name = @"???";
                     column.DefaultCellStyle.Alignment = alignText;
                     column.AutoSizeMode = autoSzColMode;
-                    column.Visible = bVisibled;
+                    column.Visible = putPar.m_bVisibled;
 
                     if (!(indxCol < 0))
                         Columns.Insert(indxCol, column as DataGridViewTextBoxColumn);
                     else
                         Columns.Add(column as DataGridViewTextBoxColumn);
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"DataGridViewTEPValues::AddColumn (id_comp=" + id_comp + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, string.Format(@"DataGridViewTReaktivka::AddColumn (id_comp={0}) - ...", putPar.IdComponent), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
-            /// <summary>
-            /// Добавить столбец
-            /// </summary>
-            /// <param name="text">Текст для заголовка столбца</param>
-            /// <param name="bRead">флаг изменения пользователем ячейки</param>
-            /// <param name="nameCol">имя столбца</param>
-            /// <param name="idPut">индентификатор источника</param>
-            public void AddColumn(string txtHeader, string nameCol, bool bRead, bool bVisibled)
-            {
-                DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
-                DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-                //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            ///// <summary>
+            ///// Добавить столбец
+            ///// </summary>
+            ///// <param name="text">Текст для заголовка столбца</param>
+            ///// <param name="bRead">флаг изменения пользователем ячейки</param>
+            ///// <param name="nameCol">имя столбца</param>
+            ///// <param name="idPut">индентификатор источника</param>
+            //public void AddColumn(string txtHeader, string nameCol, bool bRead, bool bVisibled)
+            //{
+            //    DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
+            //    DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
+            //    //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
-                try
-                {
-                    HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false };
-                    alignText = DataGridViewContentAlignment.MiddleRight;
-                    autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
-                    column.Frozen = true;
-                    column.ReadOnly = bRead;
-                    column.Name = nameCol;
-                    column.HeaderText = txtHeader;
-                    column.DefaultCellStyle.Alignment = alignText;
-                    column.AutoSizeMode = autoSzColMode;
-                    Columns.Add(column as DataGridViewTextBoxColumn);
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-
-            /// <summary>
-            /// Удаление набора строк
-            /// </summary>
-            public void ClearRows()
-            {
-                if (Rows.Count > 0)
-                    Rows.Clear();
-            }
+            //    try
+            //    {
+            //        HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false };
+            //        alignText = DataGridViewContentAlignment.MiddleRight;
+            //        autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
+            //        column.Frozen = true;
+            //        column.ReadOnly = bRead;
+            //        column.Name = nameCol;
+            //        column.HeaderText = txtHeader;
+            //        column.DefaultCellStyle.Alignment = alignText;
+            //        column.AutoSizeMode = autoSzColMode;
+            //        Columns.Add(column as DataGridViewTextBoxColumn);
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //    }
+            //}
 
             /// <summary>
             /// Установка возможности редактирования столбцов
             /// </summary>
-            /// <param name="bRead">true/false</param>
-            public void AddBRead(bool bRead)
+            public void SetReadOnly (bool value)
             {
-                foreach (HDataGridViewColumn col in Columns)
-                    if (col.m_iIdComp > 0)
-                        col.ReadOnly = bRead;
+                foreach (DataGridViewColumn col in Columns)
+                    if (((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).IdComponent > 0)
+                        col.ReadOnly = value;
+                    else
+                        ;
             }
 
             ///// <summary>
@@ -293,8 +270,8 @@ namespace PluginTaskReaktivka
                 if (item.m_type == PanelManagementTaskCalculate.ItemCheckedParametersEventArgs.TYPE.VISIBLE) {
                     if (item.IsComponent == true)
                     // найти индекс столбца (компонента) - по идентификатору
-                        foreach (HDataGridViewColumn c in Columns)
-                            if (c.m_iIdComp == item.m_idComp) {
+                        foreach (DataGridViewColumn c in Columns)
+                            if (((HandlerDbTaskCalculate.PUT_PARAMETER)c.Tag).IdComponent == item.m_idComp) {
                                 indx = Columns.IndexOf(c);
                                 break;
                             } else
@@ -339,69 +316,54 @@ namespace PluginTaskReaktivka
                     dbSumVal = 0;
                 DataRow[] parameterRows = null;
 
-                var enumTime = (from r in source.AsEnumerable()
-                                orderby r.Field<DateTime>("WR_DATETIME")
-                                select new
-                                {
-                                    WR_DATETIME = r.Field<DateTime>("WR_DATETIME"),
-                                }).Distinct();
-
                 //if ((int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE == (int)typeValues)
                 //    ;
 
-                foreach (HDataGridViewColumn col in Columns)
-                {
-                    if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
-                    {
-                        try
-                        {
-                            parameterRows = source.Select(string.Format(source.Locale, "ID_PUT = " + col.m_iIdComp));
-                        }
-                        catch (Exception e)
-                        {
-                            MessageBox.Show(e.ToString());
-                        }
+                foreach (DataGridViewColumn col in Columns) {
+                    try {
+                        parameterRows = source.Select(string.Format(source.Locale, "ID_PUT = " + ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).IdComponent));
+                    } catch (Exception e) {
+                        Logging.Logg().Exception(e, @"DataGridViewValuesReaktivka::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
 
-                        foreach (DataGridViewRow row in Rows)
-                        {
-                            if (row.Index != RowCount - 1)
+                    foreach (DataGridViewRow row in Rows) {
+                        dbSumVal = 0;
+
+                        if (row.Index != RowCount - 1) {
+                            try
                             {
-                                try
-                                {
-                                    idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                                } catch (Exception exp) {
-                                    MessageBox.Show(exp.ToString());
-                                }
+                                idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_idNAlg;
+                            } catch (Exception exp) {
+                                Logging.Logg().Exception(exp, @"DataGridViewValuesReaktivka::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            }
 
-                                for (int i = 0; i < parameterRows.Count(); i++) {
-                                    //??? как можно сравнить дату/время в строках
-                                    //??? сравнивать дату, но при этом добавлять минуты
-                                    //??? зачем учитывать смещение
-                                    if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(180/*m_currentOffSet*/).AddDays(-1).ToShortDateString() ==
-                                        row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString()) {
-                                        idParameter = (int)parameterRows[i][@"ID_PUT"];
-                                        dblVal = ((double)parameterRows[i][@"VALUE"]);
-                                        iQuality = (int)parameterRows[i][@"QUALITY"];
+                            for (int i = 0; i < parameterRows.Count(); i++) {
+                                //??? как можно сравнить дату/время в строках
+                                //??? сравнивать дату, но при этом добавлять минуты
+                                //??? зачем учитывать смещение
+                                if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(180/*m_currentOffSet*/).AddDays(-1).ToShortDateString() ==
+                                    ((DateTime)row.Tag).ToString()) {
+                                    idParameter = (int)parameterRows[i][@"ID_PUT"];
+                                    dblVal = ((double)parameterRows[i][@"VALUE"]);
+                                    iQuality = (int)parameterRows[i][@"QUALITY"];
 
-                                        row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
-                                        vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
-
-                                        dblVal *= Math.Pow(10F, 1 * vsRatioValue);
+                                    if ((row.Cells[iCol].ReadOnly = double.IsNaN(dblVal)) == false) {
+                                        dblVal = GetValueCellAsRatio(idAlg, dblVal);
 
                                         row.Cells[iCol].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
                                         dbSumVal += dblVal;
                                     } else
                                         ;
-                                }
+                                } else
+                                    ;
                             }
-                            else
-                                row.Cells[iCol].Value = dbSumVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+                        } else
+                            row.Cells[iCol].Value = dbSumVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
 
-                            iRow++;
-                        }
+                        iRow++;
                     }
-                    iCol++;
-                    dbSumVal = 0;
+
+                    iCol++;                    
                 }
             }
 
@@ -413,28 +375,30 @@ namespace PluginTaskReaktivka
             /// <param name="newValue">новое значение</param>
             public void SumValue(int indxCol, int indxRow)
             {
-                int idAlg = -1;
-                double sumValue = 0F
-                    , value;
+                //int idAlg = -1;
+                //double sumValue = 0F
+                //    , value;
 
-                idAlg = (int)Rows[indxRow].Cells[0].Value;
+                //idAlg = (int)Rows[indxRow].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value;
 
-                foreach (DataGridViewRow row in Rows)
-                    if (row.Cells[indxCol].Value != null)
-                    {
-                        if (Rows.Count - 1 != row.Index)
-                        {
-                            value = AsParseToF(row.Cells[indxCol].Value.ToString());
-                            sumValue += value;
-                        }
-                        else
-                            row.Cells[indxCol].Value = sumValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
-                        formatCell();
-                    }
+                //foreach (DataGridViewRow row in Rows)
+                //    if (row.Cells[indxCol].Value != null)
+                //    {
+                //        if (Rows.Count - 1 != row.Index)
+                //        {
+                //            value = AsParseToF(row.Cells[indxCol].Value.ToString());
+                //            sumValue += value;
+                //        }
+                //        else
+                //            row.Cells[indxCol].Value = sumValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+                //        formatCell();
+                //    }
+                //    else
+                //        ;
             }
 
             /// <summary>
-            /// Формирование таблицы данных с отображения
+            /// ??? Формирование таблицы данных с отображения
             /// </summary>
             /// <param name="tableSourceOrg">таблица с оригинальными данными</param>
             /// <param name="idSession">номер сессии пользователя</param>
@@ -442,100 +406,100 @@ namespace PluginTaskReaktivka
             /// <returns>таблица с новыми данными с вьюхи</returns>
             public DataTable GetValue(DataTable tableSourceOrg, int idSession, HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
             {
-                int i = 0
-                    , idAlg = -1
-                     , vsRatioValue = -1
-                     , quality = -1;
-                double valueToRes = 0;
-                DateTime dtVal;
+                //int i = 0
+                //    , idAlg = -1
+                //     , vsRatioValue = -1
+                //     , quality = -1;
+                //double valueToRes = 0;
+                //DateTime dtVal;
 
                 DataTable tableSourceEdit = new DataTable();
-                tableSourceEdit.Columns.AddRange(new DataColumn[] {
-                    new DataColumn (@"ID_PUT", typeof (int))
-                    , new DataColumn (@"ID_SESSION", typeof (long))
-                    , new DataColumn (@"QUALITY", typeof (int))
-                    , new DataColumn (@"VALUE", typeof (float))
-                    , new DataColumn (@"WR_DATETIME", typeof (DateTime))
-                    , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
-                });
+                //tableSourceEdit.Columns.AddRange(new DataColumn[] {
+                //    new DataColumn (@"ID_PUT", typeof (int))
+                //    , new DataColumn (@"ID_SESSION", typeof (long))
+                //    , new DataColumn (@"QUALITY", typeof (int))
+                //    , new DataColumn (@"VALUE", typeof (float))
+                //    , new DataColumn (@"WR_DATETIME", typeof (DateTime))
+                //    , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
+                //});
 
-                foreach (HDataGridViewColumn col in Columns)
-                {
-                    if (col.m_iIdComp > 0)
-                        foreach (DataGridViewRow row in Rows)
-                            if (row.Index < (row.DataGridView.RowCount - 1))
-                            // без крайней строки
-                                if ((!(row.Cells[col.Index].Value == null))
-                                    && (string.IsNullOrEmpty(row.Cells[col.Index].Value.ToString()) == false)) {
-                                    idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                                    valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
-                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+                //foreach (DataGridViewColumn col in Columns)
+                //{
+                //    if (col.m_iIdComp > 0)
+                //        foreach (DataGridViewRow row in Rows)
+                //            if (row.Index < (row.DataGridView.RowCount - 1))
+                //            // без крайней строки
+                //                if ((!(row.Cells[col.Index].Value == null))
+                //                    && (string.IsNullOrEmpty(row.Cells[col.Index].Value.ToString()) == false)) {
+                //                    idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
+                //                    valueToRes = Convert.ToDouble(row.Cells[col.Index].Value.ToString().Replace('.', ','));
+                //                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
-                                    valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
-                                    dtVal = Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString());
+                //                    valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                //                    dtVal = (DateTime)row.Tag;
 
-                                    quality = diffRowsInTables(tableSourceOrg, valueToRes, i, idAlg, typeValues);
+                //                    quality = diffRowsInTables(tableSourceOrg, valueToRes, i, idAlg, typeValues);
 
-                                    tableSourceEdit.Rows.Add(new object[]
-                                    {
-                                        col.m_iIdComp
-                                        , idSession
-                                        , quality
-                                        , valueToRes
-                                        //??? зачем учитывать смещение
-                                        , dtVal.AddMinutes(-180/*m_currentOffSet*/).ToString("F", tableSourceEdit.Locale)
-                                        , i
-                                    });
-                                    i++;
-                                } else
-                                // ячейка пустая
-                                    ;
-                            else
-                            // крайняя строка
-                                ;
-                }
+                //                    tableSourceEdit.Rows.Add(new object[]
+                //                    {
+                //                        col.m_iIdComp
+                //                        , idSession
+                //                        , quality
+                //                        , valueToRes
+                //                        //??? зачем учитывать смещение
+                //                        , dtVal.AddMinutes(-180/*m_currentOffSet*/).ToString("F", tableSourceEdit.Locale)
+                //                        , i
+                //                    });
+                //                    i++;
+                //                } else
+                //                // ячейка пустая
+                //                    ;
+                //            else
+                //            // крайняя строка
+                //                ;
+                //}
 
-                try
-                {
-                    tableSourceEdit = sortingTable(tableSourceEdit, "WR_DATETIME, ID_PUT");
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
+                //try
+                //{
+                //    tableSourceEdit = sortingTable(tableSourceEdit, "WR_DATETIME, ID_PUT");
+                //}
+                //catch (Exception)
+                //{
+                //    throw;
+                //}
 
                 return tableSourceEdit;
             }
 
             /// <summary>
-            /// Форматирование значений
+            /// ??? Форматирование значений
             /// </summary>
             private void formatCell()
             {
-                int idAlg = -1
-                     , vsRatioValue = -1,
-                     iCol = 0;
-                //double dblVal = 1F;
+                //int idAlg = -1
+                //     , vsRatioValue = -1,
+                //     iCol = 0;
+                ////double dblVal = 1F;
 
-                foreach (HDataGridViewColumn column in Columns)
-                {
-                    if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
-                        foreach (DataGridViewRow row in Rows)
-                        {
-                            if (row.Index != row.DataGridView.RowCount - 1)
-                                if (row.Cells[iCol].Value != null)
-                                    if (row.Cells[iCol].Value.ToString() != "")
-                                    {
-                                        idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                                        vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
-                                        row.Cells[iCol].Value =
-                                            //AsParseToF
-                                            HMath.doubleParse
-                                                (row.Cells[iCol].Value.ToString()).ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
-                                    }
-                        }
-                    iCol++;
-                }
+                //foreach (HDataGridViewColumn column in Columns)
+                //{
+                //    if (iCol > ((int)INDEX_SERVICE_COLUMN.COUNT - 1))
+                //        foreach (DataGridViewRow row in Rows)
+                //        {
+                //            if (row.Index != row.DataGridView.RowCount - 1)
+                //                if (row.Cells[iCol].Value != null)
+                //                    if (row.Cells[iCol].Value.ToString() != "")
+                //                    {
+                //                        idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
+                //                        vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+                //                        row.Cells[iCol].Value =
+                //                            //AsParseToF
+                //                            HMath.doubleParse
+                //                                (row.Cells[iCol].Value.ToString()).ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+                //                    }
+                //        }
+                //    iCol++;
+                //}
             }
 
             /// <summary>
@@ -585,7 +549,7 @@ namespace PluginTaskReaktivka
                         //???
                             ;
                         break;
-                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE:
+                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD:
                         quality = 1;
                         break;
                     case HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT:

@@ -63,7 +63,7 @@ namespace PluginTaskAutobook
             }
 
 
-            public override void BuildStructure()
+            public override void BuildStructure(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
                 throw new NotImplementedException();
             }
@@ -150,7 +150,7 @@ namespace PluginTaskAutobook
                 , HandlerDbTaskCalculate.ID_VIEW_VALUES viewValues)
             {
                 int idAlg = -1
-                  , vsRatioValue = -1
+                  //, vsRatioValue = -1
                   , corOffset = 0;
                 DataRow[] arRowValues = null;
                 Array namePut = Enum.GetValues(typeof(INDEX_COLUMN));
@@ -180,16 +180,14 @@ namespace PluginTaskAutobook
                             if (!(arRowValues == null))
                             // заполнить ячейки с корректированными значениями
                                 for (int t = 0; t < arRowValues.Count(); t++) {
-                                    dblVal = Convert.ToDouble(arRowValues[t]["VALUE"]);
-                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
-                                    dblVal *= Math.Pow(10F, -1 * vsRatioValue);
+                                    dblVal = GetValueCellAsRatio(idAlg, Convert.ToDouble(arRowValues[t]["VALUE"]));
 
                                     row.Cells[col.Index].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
                                 }
                             else
                                 ;
 
-                            if (HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE == viewValues)
+                            if (HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD == viewValues)
                                 corOffset = 1;
                             else
                                 ;
@@ -207,17 +205,17 @@ namespace PluginTaskAutobook
                                     if (row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString() ==
                                         //??? зачем учитывать смещение
                                         Convert.ToDateTime(arRowValues[p]["WR_DATETIME"]).AddMinutes(180 /*m_currentOffSet*/).AddDays(-1).ToShortDateString()) {
-                                        vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+                                        //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
-                                        dblVal = correctingValues(Math.Pow(10F, -1 * vsRatioValue)
-                                            , arRowValues[p]["VALUE"]
+                                        dblVal = correctingValues(/*Math.Pow(10F, -1 * vsRatioValue)
+                                            , */arRowValues[p]["VALUE"]
                                             , col.Name
                                             , ref bflg
                                             , row
-                                            , viewValues);
+                                            , viewValues);                                        
 
-
-                                        dblVal *= Math.Pow(10F, -1 * vsRatioValue);
+                                        //dblVal *= Math.Pow(10F, -1 * vsRatioValue);
+                                        dblVal = GetValueCellAsRatio(idAlg, dblVal);
 
                                         row.Cells[col.Index].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
                                     } else
@@ -242,8 +240,8 @@ namespace PluginTaskAutobook
             /// <param name="row">тек.строка</param>
             /// <param name="typeValues">тип загружаеммых данных(архивные/текущие)</param>
             /// <returns></returns>
-            private double correctingValues(double pow
-                , object rowValue
+            private double correctingValues(/*double pow
+                , */object rowValue
                 , string namecol
                 , ref bool bflg
                 , DataGridViewRow row
@@ -257,7 +255,7 @@ namespace PluginTaskAutobook
                     case HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE:
                         signValues = -1;
                         break;
-                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE:
+                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD:
                         break;
                     case HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT:
                         break;
@@ -270,7 +268,7 @@ namespace PluginTaskAutobook
                     case "GTP12":
                         if (double.TryParse(row.Cells["CorGTP12"].Value.ToString(), out valRes))
                         {
-                            valRes *= pow;
+                            //valRes *= pow;
                             valRes += (double)rowValue * signValues;
                             bflg = true;
                         }
@@ -281,7 +279,7 @@ namespace PluginTaskAutobook
                     case "GTP36":
                         if (double.TryParse(row.Cells["CorGTP36"].Value.ToString(), out valRes))
                         {
-                            valRes *= pow;
+                            //valRes *= pow;
                             valRes += (double)rowValue * signValues;
                             bflg = true;
                         }
@@ -292,8 +290,8 @@ namespace PluginTaskAutobook
                     case "TEC":
                         if (bflg)
                         {
-                            valRes = double.Parse(row.Cells["GTP12"].Value.ToString()) * pow
-                                + double.Parse(row.Cells["GTP36"].Value.ToString()) * pow;
+                            valRes = double.Parse(row.Cells["GTP12"].Value.ToString()) /** pow*/
+                                + double.Parse(row.Cells["GTP36"].Value.ToString()) /** pow*/;
                             bflg = false;
                         }
                         else
@@ -313,14 +311,14 @@ namespace PluginTaskAutobook
             private void showPlanValues(string value, DateTime date)
             {
                 int idAlg
-                     , vsRatioValue = -1
+                     //, vsRatioValue = -1
                      , indxLastRow = -1;
                 double planDay
                    , dbValue
                     , increment = 0;
 
                 idAlg = (int)Rows[0].Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+                //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
                 planDay = (Convert.ToSingle(value)
                    / DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month));
@@ -328,7 +326,7 @@ namespace PluginTaskAutobook
                 for (int i = 0; i < Rows.Count - 1; i++)
                 {
                     increment = increment + planDay;
-                    dbValue = increment * Math.Pow(10F, 1 * vsRatioValue);
+                    dbValue = increment * GetValueCellAsRatio(idAlg, increment);
 
                     Rows[i].Cells["PlanSwen"].Value =
                         dbValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
@@ -336,7 +334,7 @@ namespace PluginTaskAutobook
                 //Значение для крайней строки - индекс строки
                 indxLastRow = DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month) - 1;
                 //Значение для крайней строки - значение
-                dbValue = float.Parse(value) * Math.Pow(10F, -1 * vsRatioValue);
+                dbValue = GetValueCellAsRatio(idAlg, float.Parse(value));
                 //Значение для крайней строки - форматирование значения
                 Rows[indxLastRow].Cells["PlanSwen"].Value =
                     dbValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
@@ -631,9 +629,8 @@ namespace PluginTaskAutobook
             public DataTable FillTableCorValue(int offset, DataGridViewCellParsingEventArgs e)
             {
                 double valueToRes;
-                int idComp = 0
-                     , idAlg
-                     , vsRatioValue = -1;
+                int idComp = -1
+                     , idAlg = -1;
                 DateTime timeRes;
                 HDataGridViewColumn cols = (HDataGridViewColumn)Columns[e.ColumnIndex];
 
@@ -655,18 +652,17 @@ namespace PluginTaskAutobook
                         if (col.Index > (int)INDEX_COLUMN.GTP36 & col.Index < (int)INDEX_COLUMN.CorGTP36)
                         {
                             idAlg = (int)Rows[0].Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                            vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
                             if (cols.m_iIdComp == col.m_iIdComp &&
                                 Rows[i].Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value == Rows[e.RowIndex].Cells["Date"].Value)
                             {
-                                valueToRes = AsParseToF(e.Value.ToString()) * Math.Pow(10F, 1 * vsRatioValue);
+                                valueToRes = GetValueCellAsRatio(idAlg, AsParseToF(e.Value.ToString()));
                                 idComp = cols.m_iIdComp;
                             }
                             else
                                 if (double.TryParse(Rows[i].Cells[col.Index].Value.ToString(), out valueToRes))
                             {
-                                valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                                valueToRes = GetValueCellAsRatio(idAlg, valueToRes);
                                 idComp = col.m_iIdComp;
                             }
                             else
@@ -698,7 +694,8 @@ namespace PluginTaskAutobook
             public DataTable FillTableCorValue(int offset)
             {
                 int idAlg
-                    , vsRatioValue = -1;
+                    //, vsRatioValue = -1
+                    ;
                 double valueToRes = -1;
                 DateTime dtRes = new DateTime();
 
@@ -721,14 +718,15 @@ namespace PluginTaskAutobook
                             try
                             {
                                 idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                                vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+                                //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
                                 dtRes = Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString());
 
                                 if (row.Cells[col.Index].Value != null)
-                                    if (row.Cells[col.Index].Value.ToString() != "")
+                                    if (string.IsNullOrEmpty(row.Cells[col.Index].Value.ToString()) == false)
                                     {
                                         valueToRes = AsParseToF(row.Cells[col.Index].Value.ToString());
-                                        valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                                        //valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                                        valueToRes = GetValueCellAsRatio(idAlg, valueToRes);
                                     }
                                     else
                                         valueToRes = -1;
@@ -762,7 +760,8 @@ namespace PluginTaskAutobook
             {
                 Array namePut = Enum.GetValues(typeof(INDEX_COLUMN));
                 int idAlg
-                   , vsRatioValue = -1;
+                   //, vsRatioValue = -1
+                   ;
                 double valueToRes = 0F;
 
                 DataTable dtSourceEdit = new DataTable();
@@ -783,14 +782,14 @@ namespace PluginTaskAutobook
                             if (Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value) <= DateTime.Now.Date)
                             {
                                 idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                                vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
-                                vsRatio = vsRatioValue;
+                                //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+                                //vsRatio = vsRatioValue;
 
                                 if (row.Cells[col.Index].Value != null)
                                 {
                                     AsParseToF(row.Cells[col.Index].Value.ToString());
 
-                                    valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                                    valueToRes = GetValueCellAsRatio(idAlg, valueToRes);
 
                                     dtSourceEdit.Rows.Add(new object[]
                                     {

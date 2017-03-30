@@ -63,6 +63,12 @@
     <Compile Include="HPanelManagementCalculate.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="HPanelCommon.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HPanelDesc.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="HPanelTepCommon.cs">
       <SubType>Component</SubType>
     </Compile>

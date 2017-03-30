@@ -19,6 +19,8 @@ namespace TepCommon
 
             public string m_description;
         }
+
+        public enum STATE_VALUE { ORIGINAL, EDIT }
         /// <summary>
         /// Наименования таблиц в БД, необходимых для расчета (длина = INDEX_DBTABLE_NAME.COUNT)
         /// </summary>
@@ -50,7 +52,192 @@ namespace TepCommon
             , { ID_DBTABLE.USERS        , new DB_TABLE () { m_name = @"users"       , m_description = @"" } }
             ,
         };
+        /// <summary>
+        /// Словарь для хранения таблиц со словарно-проектными значениями
+        /// ??? public временно
+        /// </summary>
+        public class DictionaryTableDictProject : Dictionary<ID_DBTABLE, DataTable>
+        {
+            public enum Error
+            {
+                ExFilterBuilder = -12
+                , ExRowRemove
+                , IdDbTableUnknown = -2
+                , Any = -1
+                , Not = 0
+                , WFilterNoApplied
+            }
 
+            public class TSQLWhereItem
+            {
+                [Flags]
+                public enum RULE
+                {
+                    NotSet
+                    , Equale
+                    , NotEquale
+                    , Above
+                    , Below
+                }
+
+                private string _nameField;
+
+                private object _limit;
+
+                public string Value { get; }
+
+                public RULE Rules;
+
+                public int Ready { get; }
+
+                public TSQLWhereItem(string nameField, object limit, RULE rules)
+                {
+                    _nameField = nameField;
+                    _limit = limit;
+                    Rules = rules;
+
+                    Ready = 0;
+
+                    foreach (RULE rule in Enum.GetValues(typeof(RULE)))
+                        if ((rule & Rules) == rule)
+                            switch (rule) {
+                                case RULE.Equale:
+                                    Value = string.Format(@"{0}<{1} OR {0}>{1}", _nameField, _limit);
+                                    break;
+                                default:
+                                    break;
+                            } else
+                            ;
+                }
+            }
+
+            public class ListTSQLWhere : List<TSQLWhereItem>//, IDisposable
+            {
+                public ID_DBTABLE IdDbTable;
+
+                public ListTSQLWhere(ID_DBTABLE idDbTable)
+                {
+                    IdDbTable = idDbTable;
+                }
+
+                public string Value
+                {
+                    get {
+                        string strRes = string.Empty;
+
+                        foreach (TSQLWhereItem item in this) {
+                            if (item.Ready == 0) {
+                                if (this.IndexOf(item) == 0)
+                                    if (Count == 1)
+                                        strRes = item.Value;
+                                    else
+                                        strRes = string.Format(@"({0})", item.Value);
+                                else
+                                    strRes += string.Format(@" AND ({0})", item.Value);
+                            } else
+                                ;
+                        }
+
+                        return strRes;
+                    }
+                }
+
+                //public void Dispose()
+                //{
+                //}
+            }
+
+            public DictionaryTableDictProject()
+            {
+            }
+
+            public virtual Error SetDbTableFilter(ListTSQLWhere where)
+            {
+                Error iRes = Error.Not; // ошибка
+
+                ID_DBTABLE idDbTable = where.IdDbTable;
+                string filter = where.Value;
+                List<DataRow> rowsToDelete = new List<DataRow>();
+
+                try {
+                    if ((!(idDbTable == ID_DBTABLE.UNKNOWN))
+                        && (string.IsNullOrEmpty(filter) == false))
+                        if (ContainsKey(idDbTable) == true) {
+                            rowsToDelete = this[idDbTable].Select(filter).ToList();
+
+                            iRes = Error.Not; // Ok
+                        } else
+                            iRes = Error.IdDbTableUnknown;
+                    else
+                        iRes = Error.WFilterNoApplied; // фильтр не применен - не найден обработчик
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}, idDbTable={1})..."
+                        , where.ToString(), idDbTable)
+                            , Logging.INDEX_MESSAGE.NOT_SET);
+                }
+
+                try {
+                    if (iRes == Error.Not) {
+                        foreach (DataRow row in rowsToDelete)
+                            this[idDbTable].Rows.Remove(row);
+                    } else
+                        ;
+
+                    this[idDbTable].AcceptChanges();
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}, idDbTable={1}) - строк для удаления={2}..."
+                        , where.ToString(), idDbTable, rowsToDelete.Count)
+                            , Logging.INDEX_MESSAGE.NOT_SET);
+
+                    iRes = Error.ExRowRemove; // исключение при удалении строк
+                }
+
+                return iRes;
+            }
+        }
+        /// <summary>
+        /// Словарь с таблицами словарно-проектных значений
+        /// ??? public временно
+        /// </summary>
+        public DictionaryTableDictProject m_dictTableDictPrj;
+        /// <summary>
+        /// Проверить возможность добавления таблиц в словарь словарно-проектных величин
+        ///  , при необходимости обеспечить такую возможность
+        /// </summary>
+        public void DictTableDictPrjValidate()
+        {
+            if ((!(m_dictTableDictPrj == null))
+                && (m_dictTableDictPrj.Count > 0)) {
+                Logging.Logg().Warning(@"HPanelTepCommon::initialize () - словарно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                m_dictTableDictPrj.Clear();
+            } else
+                m_dictTableDictPrj = new DictionaryTableDictProject();
+        }
+        /// <summary>
+        /// Добавить таблицу в словарь со словарно-проектными величинами
+        /// </summary>
+        /// <param name="id">Идентификатор таблицы БД</param>
+        /// <param name="err">Признак ошибки при чтении из БД данных таблицы</param>
+        public virtual void AddTableDictPrj(ID_DBTABLE id, out int err)
+        {
+            addTableDictPrj(id, GetDataTable(id, out err));
+        }
+        /// <summary>
+        /// Добавить таблицу в словарь со словарно-проектными величинами
+        /// </summary>
+        /// <param name="idDbTable">дентификатор таблицы БД</param>
+        /// <param name="table">Таблица с данными для добавления</param>
+        protected void addTableDictPrj(ID_DBTABLE idDbTable, DataTable table)
+        {
+            if (m_dictTableDictPrj.ContainsKey(idDbTable) == false) {
+                m_dictTableDictPrj.Add(idDbTable, table);
+            } else
+                ;
+        }
+        /// <summary>
+        /// Конструктор - основной (без параметров)
+        /// </summary>
         public HandlerDbValues()
             : base()
         {

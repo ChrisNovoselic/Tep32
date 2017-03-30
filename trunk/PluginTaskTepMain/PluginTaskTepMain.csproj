@@ -69,6 +69,12 @@
     <Compile Include="PanelTaskTepRealTime.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="DataGridViewTaskTepValues.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="PanelManagementTaskTepValues.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PanelTaskTepValues.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -78,7 +78,7 @@ namespace PluginTaskAutobook
             }
 
 
-            public override void BuildStructure()
+            public override void BuildStructure(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
                 throw new NotImplementedException();
             }
@@ -223,8 +223,7 @@ namespace PluginTaskAutobook
             public void ShowValues(DataTable tbOrigin)
             {
                 double dblVal = -1F;
-                int idAlg = -1
-                    , vsRatioValue = -1;
+                int idAlg = -1;
 
                 ClearValues();
 
@@ -238,9 +237,11 @@ namespace PluginTaskAutobook
                                 if (row.Cells["Month"].Value.ToString() ==
                                     GetMonth.ElementAt(Convert.ToDateTime(tbOrigin.Rows[j]["WR_DATETIME"]).AddMonths(-1).Month - 1))
                                 {
-                                    double.TryParse(tbOrigin.Rows[j]["VALUE"].ToString(), out dblVal);
-                                    vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
-                                    dblVal *= Math.Pow(10F, -1 * vsRatioValue);
+                                    if (double.TryParse(tbOrigin.Rows[j]["VALUE"].ToString(), out dblVal) == true)
+                                        dblVal = GetValueCellAsRatio(idAlg, dblVal);
+                                    else
+                                    //???
+                                        dblVal = 0F;
 
                                     row.Cells[col.Index].Value =
                                         dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
@@ -262,51 +263,51 @@ namespace PluginTaskAutobook
             }
 
             /// <summary>
-            /// Формирвоание значений
+            /// ??? Формирвоание значений
             /// </summary>
             /// <param name="idSession">номер сессии</param>
             public DataTable FillTableEdit(int idSession)
             {
-                int i = 0
-                    , idAlg = -1
-                    , vsRatioValue = -1;
-                double valueToRes;
+                //int i = 0
+                //    , idAlg = -1
+                //    , vsRatioValue = -1;
+                //double valueToRes;
 
                 DataTable editTable = new DataTable();
-                editTable.Columns.AddRange(new DataColumn[] {
-                        new DataColumn (@"ID_PUT", typeof (int))
-                        , new DataColumn (@"ID_SESSION", typeof (long))
-                        , new DataColumn (@"QUALITY", typeof (int))
-                        , new DataColumn (@"VALUE", typeof (float))
-                        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
-                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
-                    });
+                //editTable.Columns.AddRange(new DataColumn[] {
+                //        new DataColumn (@"ID_PUT", typeof (int))
+                //        , new DataColumn (@"ID_SESSION", typeof (long))
+                //        , new DataColumn (@"QUALITY", typeof (int))
+                //        , new DataColumn (@"VALUE", typeof (float))
+                //        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
+                //        , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
+                //    });
 
-                foreach (HDataGridViewColumn col in Columns)
-                    if (col.m_iIdComp > 0)
-                        foreach (DataGridViewRow row in Rows) {
-                            idAlg = (int)row.Cells["ALG"].Value;
-                            vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+                //foreach (HDataGridViewColumn col in Columns)
+                //    if (col.m_iIdComp > 0)
+                //        foreach (DataGridViewRow row in Rows) {
+                //            idAlg = (int)row.Cells["ALG"].Value;
+                //            vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
-                            if (row.Cells[col.Index].Value != null)
-                                if (double.TryParse(row.Cells[col.Index].Value.ToString(), out valueToRes))
-                                    editTable.Rows.Add(new object[] {
-                                        col.m_iIdComp
-                                        , idSession
-                                        , 1.ToString()
-                                        , valueToRes *= Math.Pow(10F, 1 * vsRatioValue)
-                                        , Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString()).ToString("F", editTable.Locale)
-                                        , i
-                                    });
-                                else
-                                    ;
-                            else
-                                ;
+                //            if (row.Cells[col.Index].Value != null)
+                //                if (double.TryParse(row.Cells[col.Index].Value.ToString(), out valueToRes))
+                //                    editTable.Rows.Add(new object[] {
+                //                        col.m_iIdComp
+                //                        , idSession
+                //                        , 1.ToString()
+                //                        , valueToRes *= Math.Pow(10F, 1 * vsRatioValue)
+                //                        , Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString()).ToString("F", editTable.Locale)
+                //                        , i
+                //                    });
+                //                else
+                //                    ;
+                //            else
+                //                ;
 
-                            i++;
-                        }
-                else
-                    ;
+                //            i++;
+                //        }
+                //else
+                //    ;
 
                 return editTable;
             }

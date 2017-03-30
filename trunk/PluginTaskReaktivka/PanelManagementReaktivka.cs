@@ -117,7 +117,7 @@ namespace PluginTaskReaktivka
                 PerformLayout();
             }
 
-            public void AddComponent(TECComponent comp)
+            public void AddComponent(HandlerDbTaskCalculate.TECComponent comp)
             {
                 CheckedListBoxTaskCalculate ctrl = find(INDEX_CONTROL.CLBX_COMP_VISIBLED) as CheckedListBoxTaskCalculate;
 

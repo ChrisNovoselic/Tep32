@@ -275,7 +275,7 @@ namespace PluginProject
         {
             int err = -1;
 
-            HTepUsers.HTepProfilesXml.UpdateProfile(m_handlerDb.ConnectionSettings);
+            HTepUsers.HTepProfilesXml.UpdateProfile(__handlerDb.ConnectionSettings);
             m_arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.User] = copyXml(HTepUsers.GetDicpXmlUsers);
             m_arrDictXml_Edit[(int)HTepUsers.HTepProfilesXml.Type.Role] = copyXml(HTepUsers.GetDicpXmlRoles);
 
@@ -285,9 +285,9 @@ namespace PluginProject
             m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.User] = HTepUsers.GetDicpUsersProfile;
             m_arrDictProfiles[(int)HTepUsers.HTepProfilesXml.Type.Role] = HTepUsers.GetDicpRolesProfile;
             
-            m_handlerDb.RegisterDbConnection(out err);
+            __handlerDb.RegisterDbConnection(out err);
 
-            DbConnection connConfigDB = m_handlerDb.DbConnection;
+            DbConnection connConfigDB = __handlerDb.DbConnection;
 
             if (m_table_TEC.Columns.Count == 0) {
                 DataColumn[] columns = { new DataColumn("ID"), new DataColumn("DESCRIPTION") };
@@ -303,7 +303,7 @@ namespace PluginProject
             HTepUsers.GetRoles(ref connConfigDB, @"", @"DESCRIPTION", out m_arr_origTable[(int)ID_Table.Role], out err);
             m_arr_origTable[(int)ID_Table.Role].DefaultView.Sort = "ID";
 
-            m_handlerDb.UnRegisterDbConnection();
+            __handlerDb.UnRegisterDbConnection();
 
             resetDataTable();
 
@@ -965,7 +965,7 @@ namespace PluginProject
             string warning;
             string keys = string.Empty;
 
-            HTepUsers.HTepProfilesXml.Save(m_handlerDb.ConnectionSettings,m_arrDictXml_Orig,m_arrDictXml_Edit);
+            HTepUsers.HTepProfilesXml.Save(__handlerDb.ConnectionSettings,m_arrDictXml_Orig,m_arrDictXml_Edit);
 
             ButtonSaveEnabled = false;
             fillDataTable();

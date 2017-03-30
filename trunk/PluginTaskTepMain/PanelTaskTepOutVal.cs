@@ -68,40 +68,40 @@ namespace PluginTaskTepMain
         /// Обработчик события - изменение значения в отображении для сохранения
         /// </summary>
         /// <param name="pars"></param>
-        protected override void onEventCellValueChanged(object dgv, PanelTaskTepValues.DataGridViewTEPValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
+        protected override void onEventCellValueChanged(object dgv, PanelTaskTepValues.DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
         {
             throw new NotImplementedException();
         }
 
-        protected override void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-            //Запрос для получения ранее учтенных (сохраненных) данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] =
-                //HandlerDb.GetValuesVar(Type
-                //    , Session.CurrentIdPeriod
-                //    , CountBasePeriod
-                //    , getDateTimeRangeValuesVar ()
-                //    , out err)
-                new DataTable()
-                    ;
-            //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE ?
-                HandlerDb.GetValuesVar(TaskCalculateType, out err) : Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(TaskCalculateType
-                    , Session.m_Id
-                    , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
-                    , m_dictTableDictPrj[ID_DBTABLE.RATIO]
-                    , out err) :
-                        new DataTable ();
+        //protected override void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
+        //{
+        //    err = 0;
+        //    strErr = string.Empty;
+        //    //Запрос для получения ранее учтенных (сохраненных) данных
+        //    m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] =
+        //        //HandlerDb.GetValuesVar(Type
+        //        //    , Session.CurrentIdPeriod
+        //        //    , CountBasePeriod
+        //        //    , getDateTimeRangeValuesVar ()
+        //        //    , out err)
+        //        new DataTable()
+        //            ;
+        //    //Запрос для получения автоматически собираемых данных
+        //    m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE ?
+        //        HandlerDb.GetVariableValues(TaskCalculateType, out err) : Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(TaskCalculateType
+        //            , Session.m_Id
+        //            , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
+        //            , m_dictTableDictPrj[ID_DBTABLE.RATIO]
+        //            , out err) :
+        //                new DataTable ();
 
-            switch (err)
-            {
-                case 0:
-                default:
-                    break;
-            }
-        }
+        //    switch (err)
+        //    {
+        //        case 0:
+        //        default:
+        //            break;
+        //    }
+        //}
         /// <summary>
         /// Обработчик события - нажатие кнопки "Результирующее действие - К макету"
         /// </summary>
@@ -136,7 +136,7 @@ namespace PluginTaskTepMain
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        protected override void onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
             base.onAddPutParameter(obj);
 
@@ -199,7 +199,7 @@ namespace PluginTaskTepMain
             ///  , для визуализации простой список параметров алгоритма расчета базовых
             /// </summary>
             /// <param name="putPar">Объект с описанием добавляемого параметра</param>
-            public void AddPutParameter(PUT_PARAMETER putPar)
+            public void AddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar)
             {
                 Control ctrl = find(INDEX_CONTROL.CLBX_COMP_CALCULATED);
 

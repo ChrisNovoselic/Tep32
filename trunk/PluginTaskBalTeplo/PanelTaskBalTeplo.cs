@@ -76,9 +76,9 @@ namespace PluginTaskBalTeplo
         }
 
         /// <summary>
-        /// 
+        /// Объект доступа к данным
         /// </summary>
-        protected HandlerDbTaskBalTeploCalculate HandlerDb { get { return m_handlerDb as HandlerDbTaskBalTeploCalculate; } }
+        private HandlerDbTaskBalTeploCalculate HandlerDb { get { return __handlerDb as HandlerDbTaskBalTeploCalculate; } }
 
         /// <summary>
         /// Метод для создания панели с активными объектами управления
@@ -556,7 +556,7 @@ namespace PluginTaskBalTeplo
             int err = -1;
             string toSend = (Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0] as TextBox).Text;
 
-            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
+            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
                 dgvBlock.FillTableValueDay(HandlerDb.OutValues(out err), dgvBlock, HandlerDb.getOutPut(out err));
             //rptsNSS.SendMailToNSS(m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
             //, HandlerDb.GetDateTimeRangeValuesVar(), toSend);
@@ -571,64 +571,64 @@ namespace PluginTaskBalTeplo
         /// <param name="e">Аргумент события</param>
         void dgvCellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
-            int err = -1;
-            int id_put = -1;
-            string N_ALG = (((DataGridViewBalTeploValues)sender).Columns[e.ColumnIndex] as DataGridViewBalTeploValues.HDataGridViewColumn).m_N_ALG;
-            int id_comp = Convert.ToInt32(((DataGridViewBalTeploValues)sender).Rows[e.RowIndex].HeaderCell.Value);
+        //    int err = -1;
+        //    int id_put = -1;
+        //    string N_ALG = (((DataGridViewBalTeploValues)sender).Columns[e.ColumnIndex] as DataGridViewBalTeploValues.HDataGridViewColumn).m_N_ALG;
+        //    int id_comp = Convert.ToInt32(((DataGridViewBalTeploValues)sender).Rows[e.RowIndex].HeaderCell.Value);
 
-            if ((((DataGridViewBalTeploValues)sender).Columns[e.ColumnIndex] as DataGridViewBalTeploValues.HDataGridViewColumn).m_bInPut == true)
-            {
-                DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
-                if (rows.Length == 1)
-                    id_put = Convert.ToInt32(rows[0]["ID"]);
-                m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
-            }
-            else
-            {
-                DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.OUT_PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
-                if (rows.Length == 1)
-                    id_put = Convert.ToInt32(rows[0]["ID"]);
-                m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
-            }
-            HandlerDb.RegisterDbConnection(out err);
-            HandlerDb.RecUpdateInsertDelete(
-                TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVALUES].m_name
-                , "ID_PUT,ID_SESSION"
-                , null
-                , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
-                , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
-                , out err
-            );
-            //HandlerDb.insertInValues(m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], out err);
-            HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
-            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar (
-                TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
-                , out err
-            );
-            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar(
-                TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
-                , out err
-            );
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-                m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
-            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-                m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
+        //    if ((((DataGridViewBalTeploValues)sender).Columns[e.ColumnIndex] as DataGridViewBalTeploValues.HDataGridViewColumn).m_bInPut == true)
+        //    {
+        //        DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
+        //        if (rows.Length == 1)
+        //            id_put = Convert.ToInt32(rows[0]["ID"]);
+        //        m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
+        //    }
+        //    else
+        //    {
+        //        DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.OUT_PARAMETER].Select("N_ALG=" + N_ALG + " and ID_COMP=" + id_comp);
+        //        if (rows.Length == 1)
+        //            id_put = Convert.ToInt32(rows[0]["ID"]);
+        //        m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Select("ID_PUT=" + id_put)[0]["VALUE"] = e.Value;
+        //    }
+        //    HandlerDb.RegisterDbConnection(out err);
+        //    HandlerDb.RecUpdateInsertDelete(
+        //        TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVALUES].m_name
+        //        , "ID_PUT,ID_SESSION"
+        //        , null
+        //        , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
+        //        , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
+        //        , out err
+        //    );
+        //    //HandlerDb.insertInValues(m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], out err);
+        //    HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+        //    m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetVariableValues (
+        //        TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
+        //        , out err
+        //    );
+        //    m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetVariableValues(
+        //        TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+        //        , out err
+        //    );
+        //    m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
+        //        m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
+        //    m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
+        //        m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
 
-            HandlerDb.UnRegisterDbConnection();
+        //    HandlerDb.UnRegisterDbConnection();
 
-            dgvBlock.ShowValues(m_arTableEdit_in, m_arTableEdit_out
-                , m_dictTableDictPrj);
-            dgvOutput.ShowValues(m_arTableEdit_in, m_arTableEdit_out
-                , m_dictTableDictPrj);
-            dgvTeploBL.ShowValues(m_arTableEdit_in, m_arTableEdit_out
-                , m_dictTableDictPrj);
-            dgvTeploOP.ShowValues(m_arTableEdit_in, m_arTableEdit_out
-                , m_dictTableDictPrj);
-            dgvParam.ShowValues(m_arTableEdit_in, m_arTableEdit_out
-                , m_dictTableDictPrj);
-            dgvPromPlozsh.ShowValues(m_arTableEdit_in, m_arTableEdit_out
-                , m_dictTableDictPrj);
-            ((DataGridViewBalTeploValues)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = e.Value;
+        //    dgvBlock.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+        //        , m_dictTableDictPrj);
+        //    dgvOutput.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+        //        , m_dictTableDictPrj);
+        //    dgvTeploBL.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+        //        , m_dictTableDictPrj);
+        //    dgvTeploOP.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+        //        , m_dictTableDictPrj);
+        //    dgvParam.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+        //        , m_dictTableDictPrj);
+        //    dgvPromPlozsh.ShowValues(m_arTableEdit_in, m_arTableEdit_out
+        //        , m_dictTableDictPrj);
+        //    ((DataGridViewBalTeploValues)sender).Rows[e.RowIndex].Cells[e.ColumnIndex].Value = e.Value;
         }
         
         /// <summary>
@@ -641,179 +641,160 @@ namespace PluginTaskBalTeplo
             base.Stop();
         }
 
-        /// <summary>
-        /// получение значений
-        /// создание сессии
-        /// </summary>
-        /// <param name="arQueryRanges"></param>
-        /// <param name="err">номер ошибки</param>
-        /// <param name="strErr"></param>
-        private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-            //Создание сессии
-            Session.New();
-            ////изменение начальной даты
-            //if (arQueryRanges.Count() > 1)
-            //    arQueryRanges[1] = new DateTimeRange(arQueryRanges[1].Begin.AddDays(-(arQueryRanges[1].Begin.Day - 1))
-            //        , arQueryRanges[1].End.AddDays(-(arQueryRanges[1].End.Day - 2)));
-            //else
-            //    arQueryRanges[0] = new DateTimeRange(arQueryRanges[0].Begin.AddDays(-(arQueryRanges[0].Begin.Day - 1))
-            //        , arQueryRanges[0].End.AddDays(DayIsMonth - arQueryRanges[0].End.Day));
+        ///// <summary>
+        ///// получение значений
+        ///// создание сессии
+        ///// </summary>
+        ///// <param name="arQueryRanges"></param>
+        ///// <param name="err">номер ошибки</param>
+        ///// <param name="strErr"></param>
+        //private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
+        //{
+        //    err = 0;
+        //    strErr = string.Empty;
+        //    //Создание сессии
+        //    Session.New();
+        //    ////изменение начальной даты
+        //    //if (arQueryRanges.Count() > 1)
+        //    //    arQueryRanges[1] = new DateTimeRange(arQueryRanges[1].Begin.AddDays(-(arQueryRanges[1].Begin.Day - 1))
+        //    //        , arQueryRanges[1].End.AddDays(-(arQueryRanges[1].End.Day - 2)));
+        //    //else
+        //    //    arQueryRanges[0] = new DateTimeRange(arQueryRanges[0].Begin.AddDays(-(arQueryRanges[0].Begin.Day - 1))
+        //    //        , arQueryRanges[0].End.AddDays(DayIsMonth - arQueryRanges[0].End.Day));
             
-            //Запрос для получения архивных данных
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = HandlerDb.GetValuesArch(ID_DBTABLE.INVALUES, out err);
-            //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
-                (
-                TaskCalculateType
-                , Session.ActualIdPeriod
-                , Session.CountBasePeriod
-                , arQueryRanges
-               , out err
-                );
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Merge(HandlerDb.GetValuesDayVar
-                (
-                TaskCalculateType
-                , Session.ActualIdPeriod
-                , Session.CountBasePeriod
-                , arQueryRanges
-               , out err
-                ));
+        //    //Запрос для получения архивных данных
+        //    m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = HandlerDb.GetValuesArch(ID_DBTABLE.INVALUES, out err);
+        //    //Запрос для получения автоматически собираемых данных
+        //    m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
+        //        (
+        //        TaskCalculateType
+        //        , Session.ActualIdPeriod
+        //        , Session.CountBasePeriod
+        //        , arQueryRanges
+        //       , out err
+        //        );
+        //    m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Merge(HandlerDb.GetValuesDayVar
+        //        (
+        //        TaskCalculateType
+        //        , Session.ActualIdPeriod
+        //        , Session.CountBasePeriod
+        //        , arQueryRanges
+        //       , out err
+        //        ));
 
-            //Получение значений по-умолчанию input
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, ID_DBTABLE.INVALUES, out err);
+        //    //Получение значений по-умолчанию input
+        //    m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, ID_DBTABLE.INVALUES, out err);
 
-            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = HandlerDb.GetValuesArch(ID_DBTABLE.OUTVALUES, out err);
-            //Запрос для получения автоматически собираемых данных
-            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
-                (
-                TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
-                , Session.ActualIdPeriod
-                , Session.CountBasePeriod
-                , arQueryRanges
-               , out err
-                );
-            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, ID_DBTABLE.OUTVALUES, out err);
+        //    m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = HandlerDb.GetValuesArch(ID_DBTABLE.OUTVALUES, out err);
+        //    //Запрос для получения автоматически собираемых данных
+        //    m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
+        //        (
+        //        TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
+        //        , Session.ActualIdPeriod
+        //        , Session.CountBasePeriod
+        //        , arQueryRanges
+        //       , out err
+        //        );
+        //    m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = HandlerDb.GetValuesDefAll(ID_PERIOD.DAY, ID_DBTABLE.OUTVALUES, out err);
 
-            //Проверить признак выполнения запроса
-            if (err == 0)
-            {
-                //Проверить признак выполнения запроса
-                if (err == 0)
-                    //Начать новую сессию расчета
-                    //, получить входные для расчета значения для возможности редактирования
-                    HandlerDb.CreateSession(m_Id
-                        , Session.CountBasePeriod
-                        , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
-                        , ref m_arTableOrigin_in
-                        , ref m_arTableOrigin_out
-                        , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
-                        , out err, out strErr);
-                else
-                    strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
-                        + @" по " + Session.m_rangeDatetime.End.ToString();
-            }
-            else
-                strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
-                    + @" по " + Session.m_rangeDatetime.End.ToString();
-        }
+        //    //Проверить признак выполнения запроса
+        //    if (err == 0)
+        //    {
+        //        //Проверить признак выполнения запроса
+        //        if (err == 0)
+        //            //Начать новую сессию расчета
+        //            //, получить входные для расчета значения для возможности редактирования
+        //            HandlerDb.CreateSession(m_Id
+        //                , Session.CountBasePeriod
+        //                , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
+        //                , ref m_arTableOrigin_in
+        //                , ref m_arTableOrigin_out
+        //                , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
+        //                , out err, out strErr);
+        //        else
+        //            strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
+        //                + @" по " + Session.m_rangeDatetime.End.ToString();
+        //    }
+        //    else
+        //        strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
+        //            + @" по " + Session.m_rangeDatetime.End.ToString();
+        //}
 
-        /// <summary>
-        /// copy
-        /// </summary>
-        private void setValues()
-        {
-            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-                m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Copy();
-            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
-                = m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
-            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-                m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Copy();
-            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
-                = m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
-        }
+        ///// <summary>
+        ///// copy
+        ///// </summary>
+        //private void setValues()
+        //{
+        //    m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
+        //        m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Copy();
+        //    m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
+        //        = m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
+        //    m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
+        //        m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Copy();
+        //    m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
+        //        = m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
+        //}
 
-        /// <summary>
-        /// загрузка/обновление данных
-        /// </summary>
-        private void updateDataValues()
-        {
-            int err = -1
-                , cnt = Session.CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
-                , iAVG = -1
-                , iRegDbConn = -1;
-            string errMsg = string.Empty;
+        ///// <summary>
+        ///// загрузка/обновление данных
+        ///// </summary>
+        //private void updateDataValues()
+        //{
+        //    int err = -1
+        //        , cnt = Session.CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
+        //        , iAVG = -1
+        //        , iRegDbConn = -1;
+        //    string errMsg = string.Empty;
 
-            m_handlerDb.RegisterDbConnection(out iRegDbConn);
-            clear();
+        //    m_handlerDb.RegisterDbConnection(out iRegDbConn);
+        //    clear();
 
-            if (!(iRegDbConn < 0))
-            {
-                // установить значения в таблицах для расчета, создать новую сессию
-                setValues(HandlerDb.GetDateTimeRangeValuesVar(), out err, out errMsg);
+        //    if (!(iRegDbConn < 0))
+        //    {
+        //        // установить значения в таблицах для расчета, создать новую сессию
+        //        setValues(HandlerDb.GetDateTimeRangeValuesVar(), out err, out errMsg);
 
-                if (err == 0)
-                {
-                    if (m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0)
-                    {
-                        // создать копии для возможности сохранения изменений
-                        //setValues();
-                        //вычисление значений
-                        HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
-                        m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
-                            (
-                            TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES,
-                            out err
-                            );
-                        m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
-                            (
-                            TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES,
-                            out err
-                            );
-                        setValues();
+        //        if (err == 0)
+        //        {
+        //            if (m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0)
+        //            {
+        //                // создать копии для возможности сохранения изменений
+        //                //setValues();
+        //                //вычисление значений
+        //                HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+        //                m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
+        //                    (
+        //                    TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES,
+        //                    out err
+        //                    );
+        //                m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
+        //                    (
+        //                    TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES,
+        //                    out err
+        //                    );
+        //                setValues();
 
-                        dgvBlock.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                            , m_dictTableDictPrj);
-                        dgvOutput.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                            , m_dictTableDictPrj);
-                        dgvTeploBL.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                            , m_dictTableDictPrj);
-                        dgvTeploOP.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                            , m_dictTableDictPrj);
-                        dgvParam.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                            , m_dictTableDictPrj);
-                        dgvPromPlozsh.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                            , m_dictTableDictPrj);
-                        ////сохранить вых. знач. в DataTable
-                        //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-                        //    dgvBlock.FillTableValueDay(HandlerDb.OutValues(out err)
-                        //       , dgvBlock
-                        //       , HandlerDb.getOutPut(out err));
-                        ////сохранить вых.корр. знач. в DataTable
-                        //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-                        //    dgvBlock.FillTableCorValue(HandlerDb.OutValues(out err), dgvBlock);
-                    }
-                    else ;
-                }
-                else
-                {
-                    // в случае ошибки "обнулить" идентификатор сессии
-                    deleteSession();
-                    throw new Exception(@"PanelTaskBalTeplo::updatedataValues() - " + errMsg);
-                }
-                //удалить сессию
-                //deleteSession();
-            }
-            else
-                ;
+                        
+        //            }
+        //            else ;
+        //        }
+        //        else
+        //        {
+        //            // в случае ошибки "обнулить" идентификатор сессии
+        //            deleteSession();
+        //            throw new Exception(@"PanelTaskBalTeplo::updatedataValues() - " + errMsg);
+        //        }
+        //        //удалить сессию
+        //        //deleteSession();
+        //    }
+        //    else
+        //        ;
 
-            if (!(iRegDbConn > 0))
-                m_handlerDb.UnRegisterDbConnection();
-            else
-                ;
-        }
+        //    if (!(iRegDbConn > 0))
+        //        m_handlerDb.UnRegisterDbConnection();
+        //    else
+        //        ;
+        //}
 
         /// <summary>
         /// обработчик кнопки-архивные значения
@@ -824,14 +805,6 @@ namespace PluginTaskBalTeplo
         {
             Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE;
 
-            onButtonLoadClick();
-        }
-
-        /// <summary>
-        /// оброботчик события кнопки
-        /// </summary>
-        protected virtual void onButtonLoadClick()
-        {
             // ... - загрузить/отобразить значения из БД
             updateDataValues();
         }
@@ -843,22 +816,22 @@ namespace PluginTaskBalTeplo
         /// <param name="ev">Аргумент события</param>
         protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE;
+            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD;
 
-            onButtonLoadClick();
-
+            // ... - загрузить/отобразить значения из БД
+            updateDataValues();
         }
         /// <summary>
         /// 
         /// </summary>
         protected System.Data.DataTable m_TableOrigin
         {
-            get { return m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]; }
+            get { return m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
         }
 
         protected System.Data.DataTable m_TableEdit
         {
-            get { return m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]; }
+            get { return m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
         }
 
         /// <summary>
@@ -898,22 +871,6 @@ namespace PluginTaskBalTeplo
             ID_PERIOD idProfilePeriod;
             ID_TIMEZONE idProfileTimezone;
 
-            //m_arListIds = new List<int>[(int)INDEX_ID.COUNT];
-            //for (INDEX_ID id = INDEX_ID.PERIOD; id < INDEX_ID.COUNT; id++)
-            //    switch (id) {
-            //        case INDEX_ID.PERIOD:
-            //            m_arListIds[(int)id] = new List<int> { (int)ID_PERIOD.HOUR, (int)ID_PERIOD.DAY, (int)ID_PERIOD.MONTH };
-            //            break;
-            //        case INDEX_ID.TIMEZONE:
-            //            m_arListIds[(int)id] = new List<int> { (int)ID_TIMEZONE.UTC, (int)ID_TIMEZONE.MSK, (int)ID_TIMEZONE.NSK };
-            //            break;
-            //        default:
-            //            //??? где получить запрещенные для расчета/отображения идентификаторы компонентов ТЭЦ\параметров алгоритма
-            //            m_arListIds[(int)id] = new List<int>();
-            //            break;
-            //    }
-
-            //m_dictTableDictPrj = new DataTable[(int)ID_DBTABLE.COUNT];
             HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
 
             Control ctrl = null;
@@ -926,8 +883,8 @@ namespace PluginTaskBalTeplo
                 , out err, out errMsg
             );
 
-            m_dictTableDictPrj.FilterDbTableTimezone = DictionaryTableDictProject.DbTableTimezone.Utc | DictionaryTableDictProject.DbTableTimezone.Msk | DictionaryTableDictProject.DbTableTimezone.Nsk;
-            m_dictTableDictPrj.FilterDbTableTime = DictionaryTableDictProject.DbTableTime.Hour | DictionaryTableDictProject.DbTableTime.Month;
+            HandlerDb.FilterDbTableTimezone =  TepCommon.HandlerDbTaskCalculate.DbTableTimezone.Utc | TepCommon.HandlerDbTaskCalculate.DbTableTimezone.Msk | TepCommon.HandlerDbTaskCalculate.DbTableTimezone.Nsk;
+            HandlerDb.FilterDbTableTime =  TepCommon.HandlerDbTaskCalculate.DbTableTime.Hour | TepCommon.HandlerDbTaskCalculate.DbTableTime.Month;
 
             if (err == 0) {
                 try {
@@ -946,7 +903,6 @@ namespace PluginTaskBalTeplo
                     idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD)); //??? требуется прочитать из [profile]
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME], idProfilePeriod);
                     Session.CurrentIdPeriod = idProfilePeriod;
-                    PanelManagement.SetModeDatetimeRange();
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
                     //из profiles
@@ -1021,9 +977,9 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
         /// </summary>
-        protected override void panelManagement_DatetimeRangeChanged()
+        protected override void panelManagement_DatetimeRange_onChanged()
         {
-            base.panelManagement_DatetimeRangeChanged();
+            base.panelManagement_DatetimeRange_onChanged();
         }
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
@@ -1035,32 +991,60 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
         /// </summary>
-        protected override void panelManagement_PeriodChanged()
+        protected override void panelManagement_Period_onChanged()
         {
-            base.panelManagement_PeriodChanged();
+            base.panelManagement_Period_onChanged();
         }
         /// <summary>
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void onAddNAlgParameter(NALG_PARAMETER obj)
+        protected override void onAddNAlgParameter(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(PUT_PARAMETER obj)
+        protected override void onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(TECComponent obj)
+        protected override void onAddComponent(TepCommon.HandlerDbTaskCalculate.TECComponent obj)
         {
         }
         #endregion
+
+        /// <summary>
+        /// Обработчик события - завершение загрузки значений
+        ///  , сигнал для их отображения
+        /// </summary>
+        protected override void onSetValuesCompleted()
+        {
+            dgvBlock.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                            , m_dictTableDictPrj);
+            dgvOutput.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                , m_dictTableDictPrj);
+            dgvTeploBL.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                , m_dictTableDictPrj);
+            dgvTeploOP.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                , m_dictTableDictPrj);
+            dgvParam.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                , m_dictTableDictPrj);
+            dgvPromPlozsh.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                , m_dictTableDictPrj);
+            ////сохранить вых. знач. в DataTable
+            //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
+            //    dgvBlock.FillTableValueDay(HandlerDb.OutValues(out err)
+            //       , dgvBlock
+            //       , HandlerDb.getOutPut(out err));
+            ////сохранить вых.корр. знач. в DataTable
+            //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
+            //    dgvBlock.FillTableCorValue(HandlerDb.OutValues(out err), dgvBlock);
+        }
 
         /// <summary>
         /// заполнение грида датами
@@ -1118,13 +1102,13 @@ namespace PluginTaskBalTeplo
             int err = -1;
             string errMsg = string.Empty;
 
-            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
+            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
             HandlerDb.saveResInval(getStructurOutval(out err)
-            , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], out err);
+            , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD], out err);
 
-            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
+            m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
             HandlerDb.saveResOut(getStructurOutval(out err)
-            , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE], out err);
+            , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD], out err);
 
             base.panelTepCommon_btnSave_onClick(obj, ev);
         }
@@ -1194,47 +1178,21 @@ namespace PluginTaskBalTeplo
         {
             err = -1;
 
-            m_handlerDb.RecUpdateInsertDelete(GetNameTableIn(
+            HandlerDb.RecUpdateInsertDelete(GetNameTableIn(
                 PanelManagement.DatetimeRange.Begin)
                 , @"ID_PUT, DATE_TIME, ID_USER, ID_SOURCE"
                 , @""
                 , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]
-                , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
+                , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]
                 , out err
             );
 
-            m_handlerDb.RecUpdateInsertDelete(
+            HandlerDb.RecUpdateInsertDelete(
                 GetNameTableOut(PanelManagement.DatetimeRange.Begin)
                 , @"ID_PUT, DATE_TIME, ID_USER, ID_SOURCE"
                 , @""
                 , m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]
-                , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
-                , out err
-            );
-        }
-
-        /// <summary>
-        /// Сохранение выходных знчений(План ТЭЦ)
-        /// </summary>
-        /// <param name="err"></param>
-        private void saveInvalValue(out int err)
-        {
-            err = -1;
-            DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeValuesVar();
-
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-                HandlerDb.getInPut(TaskCalculateType, dtrPer, Session.ActualIdPeriod, out err);
-
-            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-            HandlerDb.saveResInval(m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
-            , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT], out err);
-
-            m_handlerDb.RecUpdateInsertDelete(
-                GetNameTableIn(PanelManagement.DatetimeRange.Begin)
-                , @"ID_PUT, DATE_TIME"
-                , @"ID"
-                , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
-                , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
+                , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]
                 , out err
             );
         }
@@ -1244,10 +1202,10 @@ namespace PluginTaskBalTeplo
         /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-               m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
-            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-               m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Copy();
+            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
+               m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Copy();
+            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
+               m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Copy();
         }
 
         /// <summary>

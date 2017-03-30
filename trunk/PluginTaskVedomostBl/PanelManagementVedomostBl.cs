@@ -106,7 +106,7 @@ namespace PluginTaskVedomostBl
                 SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //
                 // передать текущий объект для динамического размещения дочерних элементов управления
-                m_managementVisible = new ManagementVisibled(this, onItemCheck);                
+                m_managementVisible = new ManagementVisibled(this/*, onItemCheck*/);
 
                 ResumeLayout(false);
                 PerformLayout();
@@ -304,15 +304,15 @@ namespace PluginTaskVedomostBl
                 /// </summary>
                 private HClassLibrary.HPanelCommon _panelParent;
 
-                private ItemCheckEventHandler checkListBox_onItemCheck;
+                //private ItemCheckEventHandler checkListBox_onItemCheck;
                 /// <summary>
                 /// Конструктор - основной 
                 /// </summary>
                 /// <param name="panelParent">Родительский элемент управления (для динамического размещения элементов)</param>>
-                public ManagementVisibled(TableLayoutPanel panelParent, ItemCheckEventHandler checkListBoxEventHandler)
+                public ManagementVisibled(TableLayoutPanel panelParent/*, ItemCheckEventHandler checkListBoxEventHandler*/)
                 {
                     _panelParent = panelParent as HClassLibrary.HPanelCommon;
-                    checkListBox_onItemCheck = checkListBoxEventHandler;
+                    //checkListBox_onItemCheck = checkListBoxEventHandler;
 
                     InitializeComponents();
                 }
@@ -454,8 +454,8 @@ namespace PluginTaskVedomostBl
                             , string.Format(@"Группа {0}", indxGroupHeader + 1)
                             , s_listGroupHeaders[indxGroupHeader]
                             , true); //??? всегда TRUE 
-                    // зарегистрировать обработчик
-                    m_clbGroupHeaderCheckStates.ItemCheck += checkListBox_onItemCheck;
+                    //// зарегистрировать обработчик
+                    //m_clbGroupHeaderCheckStates.ItemCheck += checkListBox_onItemCheck;
                     // память для всех состояний элементов И для каждого из компонентов ТЭЦ (ТГ)
                     m_arGroupHeaderCheckStates = new List<CheckState>[arGroupHeaderCheckStates.Length];
                     // значения состояний для всех элементов списка
@@ -552,13 +552,13 @@ namespace PluginTaskVedomostBl
             ///  для каждого из блоков (??? отобразить все)
             /// </summary>
             /// <param name="tableCompList">Таблица с компонентами ТЭЦ (!!! только блоки)</param>
-            public void AddComponent(IEnumerable<TECComponent> listComponent, out int err, out string strMsg)
+            public void AddComponent(IEnumerable<HandlerDbTaskCalculate.TECComponent> listComponent, out int err, out string strMsg)
             {
                 err = 0;
                 strMsg = string.Empty;
 
                 int indxRadioButton = -1;
-                TECComponent comp;
+                HandlerDbTaskCalculate.TECComponent comp;
 
                 //создание списка по блокам
                 for (indxRadioButton = 0; indxRadioButton < listComponent.Count(); indxRadioButton++) {
@@ -575,7 +575,7 @@ namespace PluginTaskVedomostBl
             ///  для каждого из блоков (??? отобразить все)
             /// </summary>
             /// <param name="tableCompList">Таблица с компонентами ТЭЦ (!!! только блоки)</param>
-            private void addCheckBoxGroupHeaders(IEnumerable<TECComponent> listComponent, out int err, out string strMsg)
+            private void addCheckBoxGroupHeaders(IEnumerable<HandlerDbTaskCalculate.TECComponent> listComponent, out int err, out string strMsg)
             {
                 err = 0;
                 strMsg = string.Empty;
