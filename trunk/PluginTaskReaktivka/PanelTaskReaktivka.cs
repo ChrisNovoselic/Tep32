@@ -98,9 +98,7 @@ namespace PluginTaskReaktivka
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
 
-            InitializeComponents();
-
-            Session.SetDatetimeRange(_panelManagement.DatetimeRange);
+            InitializeComponents();            
         }
 
         /// <summary>
@@ -178,7 +176,7 @@ namespace PluginTaskReaktivka
         void PanelTaskReaktivka_ClickExport(object sender, EventArgs e)
         {
             m_reportExcel = new ReportExcel();//
-            m_reportExcel.CreateExcel(m_dgvValues, Session.m_rangeDatetime);
+            m_reportExcel.CreateExcel(m_dgvValues, Session.m_DatetimeRange);
         }
 
         /// <summary>
@@ -425,7 +423,7 @@ namespace PluginTaskReaktivka
         {
             get
             {
-                return DateTime.DaysInMonth(Session.m_rangeDatetime.Begin.Year, Session.m_rangeDatetime.Begin.Month);
+                return DateTime.DaysInMonth(Session.m_DatetimeRange.Begin.Year, Session.m_DatetimeRange.Begin.Month);
             }
         }
 

@@ -34,7 +34,7 @@ namespace PluginTaskTepMain
 
                 if (_idFPanelTaskTepMainInValues > 0) {
                     strRes = string.Format(@"s.[ID_FPANEL]={0} AND s.[ID_USER]={1} AND s.[ID_TIME]={2} AND s.[ID_TIMEZONE]={3} AND s.[DATETIME_BEGIN]='{4:yyyyMMdd HH:mm:ss}' AND s.[DATETIME_END]='{5:yyyyMMdd HH:mm:ss}'"
-                        , _idFPanelTaskTepMainInValues, HTepUsers.Id, (int)_Session.CurrentIdPeriod, (int)_Session.CurrentIdTimezone, _Session.m_rangeDatetime.Begin, _Session.m_rangeDatetime.End);
+                        , _idFPanelTaskTepMainInValues, HTepUsers.Id, (int)_Session.CurrentIdPeriod, (int)_Session.CurrentIdTimezone, _Session.m_DatetimeRange.Begin, _Session.m_DatetimeRange.End);
                 }
                 else
                     strRes = base.whereQuerySession;
@@ -95,7 +95,7 @@ namespace PluginTaskTepMain
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при подготовке данных для расчета...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
-        public override DataTable GetImportValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
+        public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
         {
             return ImpExpPrevVersionValues.Import(type
                         , idSession

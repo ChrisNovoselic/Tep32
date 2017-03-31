@@ -28,228 +28,6 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        ///  Создать новую сессию для расчета
-        /// - вставить входные данные во временную таблицу
-        /// </summary>
-        /// <param name="idFPanel">Идентификатор панели на замену [ID_TASK]</param>
-        /// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
-        /// <param name="tablePars">Таблица характеристик входных параметров</param>
-        /// <param name="arTableValues"></param>
-        /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        public override void CreateSession(int idFPanel
-            , int cntBasePeriod
-            , DataTable tablePars
-            , ref DataTable[] arTableValues
-            , DateTimeRange dtRange, out int err
-            , out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-            string strQuery = string.Empty;
-
-            if ((arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD].Columns.Count > 0)
-                && (arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD].Rows.Count > 0))
-            {
-                //Вставить строку с идентификатором новой сессии
-                insertIdSession(cntBasePeriod, out err);
-                //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD], out err);
-                // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD].Rows.Clear();
-                // получить входные для расчета значения для возможности редактирования
-                strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
-                    + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD] = Select(strQuery, out err);
-            }
-            else
-                Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
-        }
-
-        /// <summary>
-        /// Вставить в таблицу БД идентификатор новой сессии
-        /// </summary>
-        /// <param name="id">Идентификатор сессии</param>
-        /// <param name="idPeriod">Идентификатор периода расчета</param>
-        /// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
-        /// <param name="idTimezone">Идентификатор часового пояса</param>
-        /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        private void insertIdSession(
-            int cntBasePeriod
-            , out int err)
-        {
-            err = -1;
-
-            string strQuery = string.Empty;
-
-            // подготовить содержание запроса при вставке значений, идентифицирующих новую сессию
-            strQuery = @"INSERT INTO " + TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.SESSION].m_name + @" ("
-                + @"[ID_CALCULATE]"
-                + @", [ID_TASK]"
-                + @", [ID_USER]"
-                + @", [ID_TIME]"
-                + @", [ID_TIMEZONE]"
-                + @", [DATETIME_BEGIN]"
-                + @", [DATETIME_END]) VALUES ("
-                ;
-
-            strQuery += _Session.m_Id;
-            strQuery += @"," + (Int32)IdTask;
-            strQuery += @"," + HTepUsers.Id;
-            strQuery += @"," + (int)_Session.CurrentIdPeriod;
-            strQuery += @"," + (int)_Session.CurrentIdTimezone;
-            strQuery += @",'" + _Session.m_rangeDatetime.Begin.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture)  // @"yyyyMMdd HH:mm:ss"
-            strQuery += @",'" + _Session.m_rangeDatetime.End.ToString(@"yyyyMMdd HH:mm:ss") + @"'";//(System.Globalization.CultureInfo.InvariantCulture) ; // @"yyyyMMdd HH:mm:ss"
-
-            strQuery += @")";
-
-            //Вставить в таблицу БД строку с идентификтором новой сессии
-            DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-        }
-
-        /// <summary>
-        /// Вставить значения в таблицу для временных входных значений
-        /// </summary>
-        /// <param name="tableInValues">Таблица со значениями для вставки</param>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        private void insertInValues(DataTable tableInValues, out int err)
-        {
-            err = -1;
-            int cntRow = 1,
-                maxNumAdd = 0,
-                maxInsertRow = 0;
-            string strQuery = string.Empty
-                , strNameColumn = string.Empty;
-            string[] arNameColumns = null;
-            Type[] arTypeColumns = null;
-
-            if ((tableInValues.Rows.Count / 1000) > 0)
-                cntRow = cntRow + (tableInValues.Rows.Count / 1000);
-
-            for (int i = 0; i < cntRow; i++)
-            {
-                // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-                strQuery = @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @" (";
-
-                arTypeColumns = new Type[tableInValues.Columns.Count];
-                arNameColumns = new string[tableInValues.Columns.Count];
-                foreach (DataColumn c in tableInValues.Columns)
-                {
-                    arTypeColumns[c.Ordinal] = c.DataType;
-                    if (c.ColumnName.Equals(@"ID") == true)
-                        strNameColumn = @"ID_PUT";
-                    else
-                        strNameColumn = c.ColumnName;
-                    arNameColumns[c.Ordinal] = strNameColumn;
-                    strQuery += strNameColumn + @",";
-                }
-                // исключить лишнюю запятую
-                strQuery = strQuery.Substring(0, strQuery.Length - 1);
-
-                strQuery += @") VALUES ";
-
-                maxInsertRow = 0;
-
-                while (maxNumAdd < tableInValues.Rows.Count)
-                {
-                    if ((maxInsertRow % 1000) > 0 || maxInsertRow == 0)
-                    {
-                        strQuery += @"(";
-
-                        foreach (DataColumn c in tableInValues.Columns)
-                            strQuery += DbTSQLInterface.ValueToQuery(tableInValues.Rows[maxNumAdd][c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
-                        // исключить лишнюю запятую
-                        strQuery = strQuery.Substring(0, strQuery.Length - 1);
-
-                        strQuery += @"),";
-                        maxNumAdd++;
-                        maxInsertRow++;
-                    }
-                    else
-                        break;
-                }
-
-                //foreach (DataRow r in tableInValues.Rows)
-                //{
-                //    strQuery += @"(";
-
-                //    foreach (DataColumn c in tableInValues.Columns)
-                //        strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
-                //    // исключить лишнюю запятую
-                //    strQuery = strQuery.Substring(0, strQuery.Length - 1);
-
-                //    strQuery += @"),";
-                //}
-                // исключить лишнюю запятую
-                strQuery = strQuery.Substring(0, strQuery.Length - 1);
-                //Вставить во временную таблицу в БД входные для расчета значения
-                DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-            }
-        }
-
-        ///// <summary>
-        ///// получение временного диапазона 
-        ///// для блоков 2-5
-        ///// </summary>
-        ///// <returns>диапазон дат</returns>
-        //public override DateTimeRange[] getDateTimeRangeVariableValues()
-        //{
-        //    DateTimeRange[] arRangesRes = null;
-        //    int i = -1;
-        //    bool bEndMonthBoudary = false;
-        //    DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes),
-        //    dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes).AddDays(0);
-
-        //    arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
-        //    bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
-
-        //    if (bEndMonthBoudary == false)
-        //        if (arRangesRes.Length == 1)
-        //            // самый простой вариант - один элемент в массиве - одна таблица
-        //            arRangesRes[0] = new DateTimeRange(dtBegin, dtEnd);
-        //        else
-        //            // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
-        //            for (i = 0; i < arRangesRes.Length; i++)
-        //                if (i == 0)
-        //                {
-        //                    // предыдущих значений нет
-        //                    //arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-        //                    arRangesRes[i] = new DateTimeRange(dtBegin, dtBegin.AddDays(1));
-        //                }
-        //                else
-        //                    if (i == arRangesRes.Length - 1)
-        //                    // крайний элемент массива
-        //                    arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-        //                else
-        //                    // для элементов в "середине" массива
-        //                    arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End,
-        //                       new DateTime(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month, DateTime.DaysInMonth(arRangesRes[i - 1].End.Year, arRangesRes[i - 1].End.AddMonths(1).Month)));
-        //    //HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-        //    else
-        //        if (bEndMonthBoudary == true)
-        //        // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
-        //        // + использование следующей за 'dtEnd' таблицы
-        //        for (i = 0; i < arRangesRes.Length; i++)
-        //            if (i == 0)
-        //                // предыдущих значений нет
-        //                arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-        //            else
-        //                if (i == arRangesRes.Length - 1)
-        //                // крайний элемент массива
-        //                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-        //            else
-        //                // для элементов в "середине" массива
-        //                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-        //    else
-        //        ;
-
-        //    return arRangesRes;
-        //}
-
-        /// <summary>
         /// получение временного диапазона 
         /// для блоков 1,6
         /// </summary>
@@ -260,8 +38,8 @@ namespace PluginTaskVedomostBl
             int i = -1;
             bool bEndMonthBoudary = false;
             DateTime dtBegin =
-                _Session.m_rangeDatetime.Begin.AddHours(-(TimeZoneInfo.Local.BaseUtcOffset + TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset).Hours - 2),
-            dtEnd = _Session.m_rangeDatetime.End.AddHours(-(TimeZoneInfo.Local.BaseUtcOffset + TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset).Hours - 2).AddDays(1);
+                _Session.m_DatetimeRange.Begin.AddHours(-(TimeZoneInfo.Local.BaseUtcOffset + TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset).Hours - 2),
+            dtEnd = _Session.m_DatetimeRange.End.AddHours(-(TimeZoneInfo.Local.BaseUtcOffset + TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time").BaseUtcOffset).Hours - 2).AddDays(1);
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
@@ -561,8 +339,8 @@ namespace PluginTaskVedomostBl
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes).AddDays(1);
+            DateTime dtBegin = _Session.m_DatetimeRange.Begin.AddDays(-_Session.m_DatetimeRange.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
+                , dtEnd = _Session.m_DatetimeRange.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes).AddDays(1);
             //AddDays(-(DateTime.DaysInMonth(_Session.m_rangeDatetime.Begin.Year, _Session.m_rangeDatetime.Begin.Month) - 1));
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
@@ -650,7 +428,7 @@ namespace PluginTaskVedomostBl
             return Select(strQuery, out err);
         }
 
-        public override DataTable GetImportValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
+        public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
         {
             throw new NotImplementedException();
         }

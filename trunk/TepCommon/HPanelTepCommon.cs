@@ -137,6 +137,8 @@ namespace TepCommon
                         Session.CurrentIdTimezone = _panelManagement.IdTimezone;
                             //, (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)_panelManagement.IdTimezone)[0][@"OFFSET_UTC"]);
 
+                        Session.SetDatetimeRange(_panelManagement.DatetimeRange);
+
                         panelManagement_TimezoneChanged();
                         break;
                     default:
@@ -160,10 +162,7 @@ namespace TepCommon
 
         protected abstract void panelManagement_onItemCheck(PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev);
 
-        protected virtual void panelManagement_DatetimeRange_onChanged()
-        {
-            Session.SetDatetimeRange(_panelManagement.DatetimeRange);
-        }
+        protected virtual void panelManagement_DatetimeRange_onChanged() { }
         /// <summary>
         /// Обработчик события при изменении периода расчета
         /// </summary>
@@ -396,14 +395,51 @@ namespace TepCommon
             err = 0;
             strErr = string.Empty;
 
+            string strQuery = string.Empty;
+            ID_DBTABLE idDbTable = ID_DBTABLE.UNKNOWN;
+            Dictionary<KEY_VALUES, DataTable> dictTableValues;
+
             Session.NewId();
+
+            dictTableValues = new Dictionary<KEY_VALUES, DataTable>();
 
             foreach (TaskCalculate.TYPE type in Enum.GetValues(typeof(TaskCalculate.TYPE)))
                 if (((!((int)type == 0)) && ((int)type > 0) && (!(type == TaskCalculate.TYPE.UNKNOWN)))
                     && (TaskCalculateType & type) == type)
-                    m_dictValues[new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = type }] = _handlerDb.GetValues(m_Id, type, out err, out strErr);
+                    //m_dictValues[new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = type }] =
+                    dictTableValues[new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = type }] =
+                        _handlerDb.GetTableValues(m_Id, type, out err, out strErr);
                 else
                     ;
+
+            //Начать новую сессию расчета
+            _handlerDb.CreateSession(m_Id
+                //, Session.CountBasePeriod
+                , dictTableValues[new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = TaskCalculate.TYPE.IN_VALUES }]
+                , new DataTable()
+                , out err, out strErr);
+
+            foreach (KEY_VALUES keyValues in m_dictValues.Keys) {
+                idDbTable = keyValues.TypeCalculate == TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.INVALUES :
+                    keyValues.TypeCalculate == TaskCalculate.TYPE.OUT_VALUES ? ID_DBTABLE.OUTVALUES :
+                        ID_DBTABLE.UNKNOWN; // не найдено наименование таблицы, ошибка в запросе
+
+                if (!(idDbTable == ID_DBTABLE.UNKNOWN)) {
+                // получить результирующаю таблицу
+                // получить входные для расчета значения для возможности редактирования
+                    strQuery = string.Format(@"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
+                        + @" FROM [{0}]"
+                        + @" WHERE [ID_SESSION]={1}"
+                            , HandlerDbValues.s_dictDbTables[idDbTable].m_name
+                            , Session.m_Id);
+
+                    m_dictValues[keyValues] =
+                        //HandlerDbTaskCalculate.TableToListValues(dictTableValues[keyValues]) // простое копирование из таблицы
+                        HandlerDbTaskCalculate.TableToListValues(_handlerDb.Select(strQuery, out err)) // сложное обращение к БД, но происходит дополнительная проверка (создание новой сессии с корректными данными)
+                        ;
+                } else
+                    Logging.Logg().Error (string.Format(@"HPanelTepCommon::setValues () - не найден идентификатор таблицы БД..."), Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
 
         /// <summary>

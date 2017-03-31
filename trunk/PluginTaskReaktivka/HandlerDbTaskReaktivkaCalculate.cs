@@ -25,24 +25,24 @@ namespace PluginTaskReaktivka
             err = 0;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public string GetQueryComp(TaskCalculate.TYPE type)
-        {
-            string strRes = string.Empty;
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <returns></returns>
+        //public string GetQueryComp(TaskCalculate.TYPE type)
+        //{
+        //    string strRes = string.Empty;
 
-            strRes = @"SELECT a.[ID] as ID_ALG, p.[ID], p.[ID_COMP], cl.[DESCRIPTION], a.[N_ALG] "
-            + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
-            + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
-            + @"ON a.ID = p.ID_ALG "
-            + @"LEFT JOIN " + "[" + s_dictDbTables[ID_DBTABLE.COMP_LIST].m_name + @"] cl "
-            + @"ON cl.ID = p.ID_COMP "
-            + @"WHERE a.ID_TASK  = " + (int)IdTask;
+        //    strRes = @"SELECT a.[ID] as ID_ALG, p.[ID], p.[ID_COMP], cl.[DESCRIPTION], a.[N_ALG] "
+        //    + @"FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + "] a "
+        //    + @"LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + "] p "
+        //    + @"ON a.ID = p.ID_ALG "
+        //    + @"LEFT JOIN " + "[" + s_dictDbTables[ID_DBTABLE.COMP_LIST].m_name + @"] cl "
+        //    + @"ON cl.ID = p.ID_COMP "
+        //    + @"WHERE a.ID_TASK  = " + (int)IdTask;
 
-            return strRes;
-        }
+        //    return strRes;
+        //}
 
         /// <summary>
         /// Получение вых.знач.
@@ -126,8 +126,8 @@ namespace PluginTaskReaktivka
             int i = -1;
             bool bEndMonthBoudary = false;
 
-            DateTime dtBegin = _Session.m_rangeDatetime.Begin.AddDays(-_Session.m_rangeDatetime.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
-                , dtEnd = _Session.m_rangeDatetime.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes).AddDays(1);
+            DateTime dtBegin = _Session.m_DatetimeRange.Begin.AddDays(-_Session.m_DatetimeRange.Begin.Day).AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
+                , dtEnd = _Session.m_DatetimeRange.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes).AddDays(1);
             //AddDays(-(DateTime.DaysInMonth(_Session.m_rangeDatetime.Begin.Year, _Session.m_rangeDatetime.Begin.Month) - 1));
 
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
@@ -247,97 +247,97 @@ namespace PluginTaskReaktivka
         //    return strRes;
         //}
 
-        /// <summary>
-        ///  Создать новую сессию для расчета
-        /// - вставить входные данные во временную таблицу
-        /// </summary>
-        /// <param name="idFPanel">Идентификатор панели на замену [ID_TASK]</param>
-        /// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
-        /// <param name="tablePars">Таблица характеристик входных параметров</param>
-        /// <param name="arTableValues"></param>
-        /// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        public override void CreateSession(int idFPanel
-            , int cntBasePeriod
-            , DataTable tablePars
-            , ref DataTable[] arTableValues
-            , DateTimeRange dtRange, out int err
-            , out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-            string strQuery = string.Empty;
+        ///// <summary>
+        /////  Создать новую сессию для расчета
+        ///// - вставить входные данные во временную таблицу
+        ///// </summary>
+        ///// <param name="idFPanel">Идентификатор панели на замену [ID_TASK]</param>
+        ///// <param name="cntBasePeriod">Количество базовых периодов расчета в интервале расчета</param>
+        ///// <param name="tablePars">Таблица характеристик входных параметров</param>
+        ///// <param name="arTableValues"></param>
+        ///// <param name="dtRange">Диапазон даты/времени для интервала расчета</param>
+        ///// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        ///// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
+        //public override void CreateSession(int idFPanel
+        //    , int cntBasePeriod
+        //    , DataTable tablePars
+        //    , ref DataTable[] arTableValues
+        //    , DateTimeRange dtRange, out int err
+        //    , out string strErr)
+        //{
+        //    err = 0;
+        //    strErr = string.Empty;
+        //    string strQuery = string.Empty;
 
-            if ((arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD].Columns.Count > 0)
-                && (arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD].Rows.Count > 0))
-            {
-                //Вставить строку с идентификатором новой сессии
-                insertIdSession(idFPanel, cntBasePeriod, out err);
-                //Вставить строки в таблицу БД со входными значениями для расчета
-                insertInValues(arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD], out err);
-                // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
-                arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD].Rows.Clear();
-                // получить входные для расчета значения для возможности редактирования
-                strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                    + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
-                    + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-                arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD] = Select(strQuery, out err);
-            }
-            else
-                Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
-        }
+        //    if ((arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD].Columns.Count > 0)
+        //        && (arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD].Rows.Count > 0))
+        //    {
+        //        //Вставить строку с идентификатором новой сессии
+        //        insertIdSession(idFPanel, cntBasePeriod, out err);
+        //        //Вставить строки в таблицу БД со входными значениями для расчета
+        //        insertInValues(arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD], out err);
+        //        // необходимость очистки/загрузки - приведение структуры таблицы к совместимому с [inval]
+        //        arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD].Rows.Clear();
+        //        // получить входные для расчета значения для возможности редактирования
+        //        strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
+        //            + @" FROM [" + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"]"
+        //            + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+        //        arTableValues[(int)ID_VIEW_VALUES.SOURCE_LOAD] = Select(strQuery, out err);
+        //    }
+        //    else
+        //        Logging.Logg().Error(@"TepCommon.HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
+        //}
 
-        /// <summary>
-        /// Вставить значения в таблицу для временных входных значений
-        /// </summary>
-        /// <param name="tableInValues">Таблица со значениями для вставки</param>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        private void insertInValues(DataTable tableInValues, out int err)
-        {
-            err = -1;
+        ///// <summary>
+        ///// Вставить значения в таблицу для временных входных значений
+        ///// </summary>
+        ///// <param name="tableInValues">Таблица со значениями для вставки</param>
+        ///// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        //private void insertInValues(DataTable tableInValues, out int err)
+        //{
+        //    err = -1;
 
-            string strQuery = string.Empty
-                , strNameColumn = string.Empty;
-            string[] arNameColumns = null;
-            Type[] arTypeColumns = null;
+        //    string strQuery = string.Empty
+        //        , strNameColumn = string.Empty;
+        //    string[] arNameColumns = null;
+        //    Type[] arTypeColumns = null;
 
-            // подготовить содержание запроса при вставке значений во временную таблицу для расчета
-            strQuery = @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @" (";
+        //    // подготовить содержание запроса при вставке значений во временную таблицу для расчета
+        //    strQuery = @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @" (";
 
-            arTypeColumns = new Type[tableInValues.Columns.Count];
-            arNameColumns = new string[tableInValues.Columns.Count];
-            foreach (DataColumn c in tableInValues.Columns)
-            {
-                arTypeColumns[c.Ordinal] = c.DataType;
-                if (c.ColumnName.Equals(@"ID") == true)
-                    strNameColumn = @"ID_PUT";
-                else
-                    strNameColumn = c.ColumnName;
-                arNameColumns[c.Ordinal] = strNameColumn;
-                strQuery += strNameColumn + @",";
-            }
-            // исключить лишнюю запятую
-            strQuery = strQuery.Substring(0, strQuery.Length - 1);
+        //    arTypeColumns = new Type[tableInValues.Columns.Count];
+        //    arNameColumns = new string[tableInValues.Columns.Count];
+        //    foreach (DataColumn c in tableInValues.Columns)
+        //    {
+        //        arTypeColumns[c.Ordinal] = c.DataType;
+        //        if (c.ColumnName.Equals(@"ID") == true)
+        //            strNameColumn = @"ID_PUT";
+        //        else
+        //            strNameColumn = c.ColumnName;
+        //        arNameColumns[c.Ordinal] = strNameColumn;
+        //        strQuery += strNameColumn + @",";
+        //    }
+        //    // исключить лишнюю запятую
+        //    strQuery = strQuery.Substring(0, strQuery.Length - 1);
 
-            strQuery += @") VALUES ";
+        //    strQuery += @") VALUES ";
 
-            foreach (DataRow r in tableInValues.Rows)
-            {
-                strQuery += @"(";
+        //    foreach (DataRow r in tableInValues.Rows)
+        //    {
+        //        strQuery += @"(";
 
-                foreach (DataColumn c in tableInValues.Columns)
-                    strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
-                // исключить лишнюю запятую
-                strQuery = strQuery.Substring(0, strQuery.Length - 1);
+        //        foreach (DataColumn c in tableInValues.Columns)
+        //            strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
+        //        // исключить лишнюю запятую
+        //        strQuery = strQuery.Substring(0, strQuery.Length - 1);
 
-                strQuery += @"),";
-            }
-            // исключить лишнюю запятую
-            strQuery = strQuery.Substring(0, strQuery.Length - 1);
-            //Вставить во временную таблицу в БД входные для расчета значения
-            DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-        }
+        //        strQuery += @"),";
+        //    }
+        //    // исключить лишнюю запятую
+        //    strQuery = strQuery.Substring(0, strQuery.Length - 1);
+        //    //Вставить во временную таблицу в БД входные для расчета значения
+        //    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+        //}
 
         ///// <summary>
         ///// получение временного диапазона 
@@ -498,7 +498,7 @@ namespace PluginTaskReaktivka
             return Select(strQuery, out err);
         }
 
-        public override DataTable GetImportValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
+        public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
         {
             throw new NotImplementedException();
         }

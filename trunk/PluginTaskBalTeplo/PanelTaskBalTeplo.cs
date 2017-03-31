@@ -171,7 +171,6 @@ namespace PluginTaskBalTeplo
 
             InitializeComponents();
 
-            Session.SetDatetimeRange(PanelManagement.DatetimeRange);
             PanelManagement.EventCheckedChangedIndexViewValues += new EventHandler(onCheckedChangedIndexViewValues);
         }
 
@@ -220,7 +219,7 @@ namespace PluginTaskBalTeplo
         {
             get
             {
-                return DateTime.DaysInMonth(Session.m_rangeDatetime.Begin.Year, Session.m_rangeDatetime.Begin.Month);
+                return DateTime.DaysInMonth(Session.m_DatetimeRange.Begin.Year, Session.m_DatetimeRange.Begin.Month);
             }
         }
 

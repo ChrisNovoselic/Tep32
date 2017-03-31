@@ -1030,7 +1030,7 @@ namespace PluginTaskBalTeplo
                                 rowSel
                                 , HUsers.Id.ToString()
                                 , 0.ToString()
-                                , (_Session.m_rangeDatetime.Begin - getOffsetMoscowToUTC).ToString(CultureInfo.InvariantCulture)
+                                , (_Session.m_DatetimeRange.Begin - getOffsetMoscowToUTC).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
                                 , ID_TIMEZONE.MSK
                                 , 1.ToString()
@@ -1118,7 +1118,7 @@ namespace PluginTaskBalTeplo
                                 rowSel
                                 , HUsers.Id.ToString()
                                 , 0.ToString()
-                                , (_Session.m_rangeDatetime.Begin - getOffsetMoscowToUTC).ToString(CultureInfo.InvariantCulture)
+                                , (_Session.m_DatetimeRange.Begin - getOffsetMoscowToUTC).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
                                 , ID_TIMEZONE.MSK
                                 , 1.ToString()
@@ -1131,7 +1131,7 @@ namespace PluginTaskBalTeplo
             return tableEdit;
         }
 
-        public override DataTable GetImportValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
+        public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
         {
             throw new NotImplementedException();
         }

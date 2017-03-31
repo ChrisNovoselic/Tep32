@@ -268,7 +268,7 @@ namespace PluginTaskVedomostBl
         private void panelManagemenet_btnExportExcel_onClick(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();
-            m_rptExcel.CreateExcel(ActiveDataGridView, Session.m_rangeDatetime);
+            m_rptExcel.CreateExcel(ActiveDataGridView, Session.m_DatetimeRange);
         }
 
         //private class ItemCheckedVedomostBlParametersEventArgs : PanelManagementVedomostBl.ItemCheckedParametersEventArgs

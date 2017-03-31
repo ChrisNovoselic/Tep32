@@ -657,7 +657,7 @@ namespace PluginTaskAutobook
         {
             get
             {
-                return DateTime.DaysInMonth(Session.m_rangeDatetime.Begin.Year, Session.m_rangeDatetime.Begin.Month);
+                return DateTime.DaysInMonth(Session.m_DatetimeRange.Begin.Year, Session.m_DatetimeRange.Begin.Month);
             }
         }
 
@@ -859,7 +859,7 @@ namespace PluginTaskAutobook
         private void btnExport_onClick(object sender, EventArgs e)
         {
             m_rptExcel = new ReportExcel();
-            m_rptExcel.CreateExcel(m_dgvValues, Session.m_rangeDatetime);
+            m_rptExcel.CreateExcel(m_dgvValues, Session.m_DatetimeRange);
         }
 
         /// <summary>
