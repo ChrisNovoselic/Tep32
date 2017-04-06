@@ -1294,7 +1294,13 @@ namespace PluginProject
         public DataGridView_Prop_Text_Check()
             : base()
         {
-            this.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
+            InitializeComponents();
+        }
+
+        private void InitializeComponents()
+        {
+            this.RowHeadersWidth = 236;
+            this.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             //this.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.EnableResizing;
             //this.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllHeaders;
             //this.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
@@ -1318,7 +1324,9 @@ namespace PluginProject
                     row.Cells.Add(new DataGridViewTextBoxCell());
 
                 this.Rows.Add(row);
-                this.Rows[this.Rows.Count - 1].HeaderCell.Value = r["DESCRIPTION"].ToString().Trim();
+                this.Rows[this.Rows.Count - 1].HeaderCell.Value =
+                this.Rows[this.Rows.Count - 1].HeaderCell.ToolTipText =
+                    r["DESCRIPTION"].ToString().Trim();
                 this.Rows[this.Rows.Count - 1].Tag = r["ID"].ToString().Trim();
             }
 

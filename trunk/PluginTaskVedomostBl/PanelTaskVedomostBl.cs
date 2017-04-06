@@ -50,10 +50,6 @@ namespace PluginTaskVedomostBl
         /// Список представлений для каждого из компонентов станции 
         /// </summary>
         private List<DataGridViewVedomostBl> m_listDataGridViewVedomostBl;
-        ///// <summary>
-        ///// Массив словарей для составления хидеров каждого блока(ТГ)
-        ///// </summary>
-        //protected Dictionary<int, List<string[]>> m_dictHeaderBlock;
         /// <summary>
         /// Лист с группами хидеров отображения
         /// </summary>
@@ -74,10 +70,6 @@ namespace PluginTaskVedomostBl
             , LABEL_DESC, TBLP_HGRID, /*PICTURE_BOXDGV,*/ PANEL_PICTUREBOX
                 , COUNT
         }
-        /// <summary>
-        /// Перечисление - режимы работы вкладки
-        /// </summary>
-        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
         /// <summary>
         /// Таблицы со значениями для редактирования
         /// </summary>
@@ -123,13 +115,6 @@ namespace PluginTaskVedomostBl
         ///// ??? почему статик Экземпляр класса обрабокти данных
         ///// </summary>
         //private static VedomostBlCalculate s_VedCalculate;
-        /// <summary>
-        /// 
-        /// </summary>
-        protected DataTable m_TableOrigin
-        {
-            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
-        }
         /// <summary>
         /// ???
         /// </summary>
@@ -409,7 +394,7 @@ namespace PluginTaskVedomostBl
             //for (int i = 0; i < m_listTECComponent.Count; i++)
             foreach (DataGridViewVedomostBl dgv in m_listDataGridViewVedomostBl)
             {
-                dgv.DatetimeBegin = PanelManagement.DatetimeRange.Begin; // Session.m_rangeDatetime.Begin;
+                dgv.DatetimeStamp = PanelManagement.DatetimeRange.Begin; // Session.m_rangeDatetime.Begin;
                 dgv.BuildStructure(m_listNAlgParameter, m_listPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));
 
                 pictureBox = new PictureBoxVedomostBl();
@@ -496,8 +481,6 @@ namespace PluginTaskVedomostBl
                     idProfilePeriod = (ID_PERIOD)int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD));
                     PanelManagement.FillValuePeriod(HandlerDb.m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , idProfilePeriod);
-
-                    Session.CurrentIdPeriod = PanelManagement.IdPeriod;
 
                     PanelManagement.AllowUserTimezoneChanged = false;
                     PanelManagement.AllowUserPeriodChanged = false;
@@ -865,13 +848,13 @@ namespace PluginTaskVedomostBl
         //        m_arTableOrigin[(int)Session.m_ViewValues].Clone();
         //}
 
-        /// <summary>
-        /// формирование таблицы данных
-        /// </summary>
-        private DataTable valuesFence()
-        { //сохранить вх. знач. в DataTable
-            return ActiveDataGridView.FillTableToSave(m_TableOrigin, (int)Session.m_Id, Session.m_ViewValues);
-        }
+        ///// <summary>
+        ///// формирование таблицы данных
+        ///// </summary>
+        //private DataTable valuesFence()
+        //{ //сохранить вх. знач. в DataTable
+        //    return ActiveDataGridView.FillTableToSave(m_TableOrigin, (int)Session.m_Id, Session.m_ViewValues);
+        //}
 
         /// <summary>
         /// ??? проверка выборки блока(для 1 и 6)

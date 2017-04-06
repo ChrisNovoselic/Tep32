@@ -14,6 +14,9 @@ namespace TepCommon
 {
     public abstract partial class HandlerDbTaskCalculate : HandlerDbValues
     {
+        /// <summary>
+        /// Описание компонента станции (ТГ, ГТП, ВЫВОД, ПромПлощадка)
+        /// </summary>
         public struct TECComponent
         {
             //private TECComponent() { _id = -1; _iType = getType(_id); _idOwner = -1; _iTypeOwner = getType(_idOwner); m_nameShr = string.Empty; _bEnabled = true; _bVisibled = true; }
@@ -92,9 +95,13 @@ namespace TepCommon
 
             public bool IsTg { get { return m_iType == TYPE.TG; } }
 
+            public bool IsGtp { get { return m_iType == TYPE.GTP; } }
+
             public bool IsTec { get { return m_iType == TYPE.TEC; } }
         }
-
+        /// <summary>
+        /// Свойства параметра в алгоритме расчета 2-го уровня (связан с компонентом)
+        /// </summary>
         public struct PUT_PARAMETER
         {
             //public struct KEY
@@ -125,7 +132,7 @@ namespace TepCommon
 
             public bool IsVisibled { get { return m_bVisibled; } }
 
-            //public string m_strText;
+            public int m_prjRatio;
             /// <summary>
             /// Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)
             /// </summary>
@@ -151,12 +158,13 @@ namespace TepCommon
             //{
             //}
 
-            public PUT_PARAMETER(int id_alg/*KEY key*/, int id_put, TECComponent comp, bool enabled, bool visibled)
+            public PUT_PARAMETER(int id_alg/*KEY key*/, int id_put, TECComponent comp, int prjRatio, bool enabled, bool visibled)
             {
                 m_idNAlg = id_alg //Key = key
                     ;
                 m_Id = id_put;
                 m_component = comp;
+                m_prjRatio = prjRatio;
                 m_bEnabled = enabled;
                 m_bVisibled = visibled;
             }
@@ -231,7 +239,7 @@ namespace TepCommon
             /// </summary>
             public bool m_bVisibled;
 
-            public int m_prjRatio;
+            //public int m_prjRatio;
             /// <summary>
             /// Показатель степени 10 при преобразовании (для отображения) 
             /// </summary>
@@ -256,7 +264,8 @@ namespace TepCommon
                 , AGREGATE_ACTION sAverage
                 , int idMeasure, string nameShrMeasure, string symbol
                 , bool enabled, bool visibled
-                , int prjRatio, int vsRatio, int vsRound)
+                /*, int prjRatio*/
+                , int vsRatio, int vsRound)
             {
                 m_type = type;
                 m_Id = id_alg;
@@ -269,7 +278,7 @@ namespace TepCommon
                 m_strSymbol = symbol;
                 m_bEnabled = enabled;
                 m_bVisibled = visibled;
-                m_prjRatio = prjRatio;
+                //m_prjRatio = prjRatio;
                 m_vsRatio = vsRatio;
                 m_vsRound = vsRound;
             }
@@ -284,18 +293,24 @@ namespace TepCommon
                         , clone.m_strMeausure
                         , clone.m_strSymbol
                         , clone.m_bEnabled, clone.m_bVisibled
-                        , clone.m_prjRatio, clone.m_vsRatio, clone.m_vsRound)
+                        /*, clone.m_prjRatio*/
+                        , clone.m_vsRatio, clone.m_vsRound)
             {
             }
         }
-
+        /// <summary>
+        /// Ключ для идентификации значения
+        ///  , иначе указание к какому параметру в алгоритме расчета принадлежит значение
+        /// </summary>
         public struct KEY_VALUES
         {
             public TaskCalculate.TYPE TypeCalculate;
 
             public STATE_VALUE TypeState;
         }
-
+        /// <summary>
+        /// Значение для параметра в алгоритме расчета и его свойства
+        /// </summary>
         public struct VALUES
         {
             public int m_IdPut;
@@ -342,7 +357,7 @@ namespace TepCommon
         /// <summary>
         /// Идентификатор задачи
         /// </summary>
-        public ID_TASK IdTask { get { return _iIdTask; } set { if (!(_iIdTask == value)) { _iIdTask = value; createTaskCalculate(); } else ; } }
+        public ID_TASK IdTask { get { return _iIdTask; } set { if (!(_iIdTask == value)) { _iIdTask = value; createTaskCalculate(); } else; } }
         /// <summary>
         /// Объект для произведения расчетов
         /// </summary>
@@ -410,8 +425,8 @@ namespace TepCommon
 
                 set { if (!(_currentIdPeriod == value)) { _currentIdPeriod = value; } else; }
             }            /// <summary>
-            /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
-            /// </summary>
+                         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
+                         /// </summary>
             public ID_PERIOD ActualIdPeriod { get { return m_ViewValues == ID_VIEW_VALUES.SOURCE_LOAD ? ID_PERIOD.DAY : _currentIdPeriod; } }
             /// <summary>
             /// Идентификатор текущий выбранного часового пояса
@@ -422,8 +437,7 @@ namespace TepCommon
             {
                 get { return _currentIdTimezone; }
 
-                set
-                {
+                set {
                     if (!(_currentIdTimezone == value)) {
                         _currentIdTimezone = value;
 
@@ -443,8 +457,7 @@ namespace TepCommon
             /// </summary>
             public int CountBasePeriod
             {
-                get
-                {
+                get {
                     int iRes = -1;
                     ID_PERIOD idPeriod = ActualIdPeriod;
 
@@ -475,7 +488,7 @@ namespace TepCommon
                     , (ID_TIMEZONE)r[@"ID_TIMEZONE"]
                     //, (int)r[@"OFFSET_UTC"]
                     , new DateTimeRange((DateTime)r[@"DATETIME_BEGIN"], (DateTime)r[@"DATETIME_END"])
-                    //, getOffsetUTC
+                //, getOffsetUTC
                 );
             }
 
@@ -493,6 +506,12 @@ namespace TepCommon
                 _currentIdTimezone = idTimezone;
                 m_curOffsetUTC = getOffsetUTC(_currentIdTimezone);
                 m_DatetimeRange = rangeDatetime;
+            }
+
+            public void Clear()
+            {
+                _currentIdPeriod = ID_PERIOD.UNKNOWN;
+                _currentIdTimezone = ID_TIMEZONE.UNKNOWN;
             }
 
             public void NewId()
@@ -530,7 +549,7 @@ namespace TepCommon
             //}
 
             public SESSION(TimeSpanDelegateIdTimezoneFunc getOffsetUTC)
-                : base ()
+                : base()
             {
                 m_Id = -1;
                 m_IdFpanel = -1;
@@ -551,8 +570,11 @@ namespace TepCommon
         public enum DbTableCompList
         {
             NotSet = 0x0
-            , Tg = 0x1
-            , Tec = 0x2
+            , PromPlozh = 1 //??? 3000
+            , Vyvod = 2 //??? 2000
+            , Tg = 4 //1000
+            , Gtp = 8 //500
+            , Tec = 16 //1
         }
 
         DbTableCompList _filterDbTableCompList;
@@ -566,26 +588,41 @@ namespace TepCommon
                 //??? не учитывается
                 DictionaryTableDictProject.Error iRes = DictionaryTableDictProject.Error.Any; // ошибка
 
-                ID_DBTABLE idDbTable = ID_DBTABLE.COMP_LIST;
-                DictionaryTableDictProject.ListTSQLWhere listTSQLWhere = new DictionaryTableDictProject.ListTSQLWhere(idDbTable);
+                int[] limits = null;
+                ID_DBTABLE idDbTable = ID_DBTABLE.COMP_LIST; // new ID_DBTABLE[] { ID_DBTABLE.COMP_LIST, ID_DBTABLE.IN_PARAMETER };
+                DictionaryTableDictProject.ListTSQLWhere listTSQLWhere = new DictionaryTableDictProject.ListTSQLWhere(idDbTable); // null;
 
                 try {
                     foreach (DbTableCompList item in Enum.GetValues(typeof(DbTableCompList))) {
-                        if ((_filterDbTableCompList & item) == item)
+                        if ((!(item == DbTableCompList.NotSet))
+                            && (_filterDbTableCompList & item) == item) {
                             switch (item) {
                                 case DbTableCompList.Tg:
-                                    listTSQLWhere.Add(new DictionaryTableDictProject.TSQLWhereItem(@"ID_COMP", (int)ID_COMP.TG, DictionaryTableDictProject.TSQLWhereItem.RULE.Equale));
+                                    limits = new int[] { (int)ID_COMP.TG, (int)ID_COMP.VYVOD };
+                                    break;
+                                case DbTableCompList.Gtp:
+                                    limits = new int[] { (int)ID_COMP.GTP, (int)ID_COMP.TG };
                                     break;
                                 case DbTableCompList.Tec:
-                                    listTSQLWhere.Add(new DictionaryTableDictProject.TSQLWhereItem(@"ID_COMP", (int)ID_COMP.TEC, DictionaryTableDictProject.TSQLWhereItem.RULE.Equale));
+                                    limits = new int[] { (int)ID_COMP.TEC, (int)ID_COMP.GTP };
                                     break;
                                 default:
                                     break;
-                            } else
+                            }
+
+                            if (!(limits == null))
+                                listTSQLWhere.Add(new DictionaryTableDictProject.TSQLWhereItem(@"ID", DictionaryTableDictProject.TSQLWhereItem.RULE.Between, limits));
+                            else
+                                ;
+                        } else
                             ;
                     }
 
-                    iRes = m_dictTableDictPrj.SetDbTableFilter(listTSQLWhere);
+                    //foreach (ID_DBTABLE idDbTable in idDbTables) {
+                    //    listTSQLWhere = new DictionaryTableDictProject.ListTSQLWhere(idDbTable);
+
+                        iRes = m_dictTableDictPrj.SetDbTableFilter(listTSQLWhere);
+                    //}
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, string.Format(@"FilterDbTableCompList.set (DbFilter={0}) - ID_DBTABLE={1}..."
                         , _filterDbTableCompList, idDbTable)
@@ -643,7 +680,7 @@ namespace TepCommon
                             ;
 
                         if (!(idTimezone == ID_TIMEZONE.UNKNOWN))
-                            listTSQLWhere.Add(new DictionaryTableDictProject.TSQLWhereItem(@"ID", (int)idTimezone, DictionaryTableDictProject.TSQLWhereItem.RULE.Equale));
+                            listTSQLWhere.Add(new DictionaryTableDictProject.TSQLWhereItem(@"ID", DictionaryTableDictProject.TSQLWhereItem.RULE.Equale, (int)idTimezone));
                         else
                             ;
                     }
@@ -706,7 +743,7 @@ namespace TepCommon
                             ;
 
                         if (!(idPeriod == ID_PERIOD.UNKNOWN))
-                            listTSQLWhere.Add(new DictionaryTableDictProject.TSQLWhereItem(@"ID", (int)idPeriod, DictionaryTableDictProject.TSQLWhereItem.RULE.Equale));
+                            listTSQLWhere.Add(new DictionaryTableDictProject.TSQLWhereItem(@"ID", DictionaryTableDictProject.TSQLWhereItem.RULE.Equale, (int)idPeriod));
                         else
                             ;
                     }
@@ -768,23 +805,23 @@ namespace TepCommon
                     rowsSel = arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Select(@"ID_PUT=" + rValPar[@"ID"]);
 
                     if (rowsSel.Length == 0) {
-                    // добавить из таблицы "по умолчанию"
-                        rowsSel = arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Select(@"ID_PUT=" + rValPar[@"ID_PUT"]);
+                        // добавить из таблицы "по умолчанию"
+                        rowsSel = arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Select(@"ID_PUT=" + rValPar[@"ID"]);
 
                         if (rowsSel.Length == 0) {
-                        // добавить "0"
+                            // добавить "0"
                             listValuesToAdd.Add(new object[] {
-                                rowsSel[0][@"ID_PUT"]
+                                (int)rValPar[@"ID"]
                                 //, HUsers.Id //ID_USER
                                 //, -1 //ID_SOURCE
                                 , _Session.m_Id //ID_SESSION
                                 , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC //QUALITY
                                 , 0F //VALUE
                                 , HDateTime.ToMoscowTimeZone() //??? GETADTE()
-                                , 0 //EXTENSION_DEFAULT
+                                , string.Format(@"{0}", DateTime.MinValue) //EXTENSION_DEFAULT
                             });
                         } else if (rowsSel.Length == 1)
-                            listValuesToAdd.Add (new object[] {
+                            listValuesToAdd.Add(new object[] {
                                 rowsSel[0][@"ID_PUT"]
                                 //, HUsers.Id //ID_USER
                                 //, -1 //ID_SOURCE
@@ -792,17 +829,17 @@ namespace TepCommon
                                 , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT //QUALITY
                                 , (iAVG == 0) ? cntBasePeriod * (double)rowsSel[0][@"VALUE"] : (double)rowsSel[0][@"VALUE"] //VALUE
                                 , HDateTime.ToMoscowTimeZone() //??? GETADTE()
-                                , 0 //EXTENSION_DEFAULT
+                                , string.Format(@"{0}", DateTime.MinValue) //EXTENSION_DEFAULT
                             });
                         else
-                        // по идентификатору найдено не единственное значение для параметра расчета
+                            // по идентификатору найдено не единственное значение для параметра расчета
                             Logging.Logg().Error(string.Format(@"HandlerDbTaskCalculate::mergeTableValues () - для ID_PERIOD={0} ID_PUT={1} найдено больше, чем одно значение ..."
                                 , _Session.CurrentIdPeriod.ToString()
                                 , rValPar[@"ID_PUT"])
                             , Logging.INDEX_MESSAGE.NOT_SET);
                     } else {
                         if (rowsSel.Length > 0)
-                        // добавить из источника
+                            // добавить из источника
                             foreach (DataRow rValSrc in rowsSel)
                                 listValuesToAdd.Add(new object[] {
                                     rValSrc[@"ID_PUT"]
@@ -811,11 +848,11 @@ namespace TepCommon
                                     , _Session.m_Id //ID_SESSION
                                     , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.SOURCE //QUALITY
                                     , (iAVG == 0) ? cntBasePeriod * (double)rValSrc[@"VALUE"] : (double)rValSrc[@"VALUE"] //VALUE
-                                    , HDateTime.ToMoscowTimeZone() //??? GETADTE()
-                                    , 0 //EXTENSION_DEFAULT
+                                    , rValSrc[@"WR_DATETIME"]
+                                    , rValSrc[@"EXTENDED_DEFINITION"]
                                 });
                         else
-                        // по идентификатору найдено не единственное значение для параметра расчета
+                            // по идентификатору найдено не единственное значение для параметра расчета
                             Logging.Logg().Warning(string.Format(@"HandlerDbTaskCalculate::mergeTableValues () - для ID_PERIOD={0} ID_PUT={1} найдено больше, чем одно значение ..."
                                 , _Session.CurrentIdPeriod.ToString()
                                 , rValPar[@"ID_PUT"])
@@ -880,23 +917,21 @@ namespace TepCommon
         {
             err = 0;
             strErr = string.Empty;
-            
-            string strQuery = string.Empty;            
+
+            string strQuery = string.Empty;
 
             //correctValues(ref arTableValues[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]
             //    , ref tablePars);
 
             if ((tableInValues.Columns.Count > 0)
-                && (tableInValues.Rows.Count > 0))
-            {
+                && (tableInValues.Rows.Count > 0)) {
                 //Вставить строку с идентификатором новой сессии
                 insertIdSession(idFPanel/*, cntBasePeriod*/, out err);
                 //Вставить строки в таблицу БД со входными значениями для расчета
                 insertInValues(tableInValues, out err);
                 //Вставить строки в таблицу БД с выходными значениями для расчета
-                insertOutNullValues(out err);                
-            }
-            else
+                insertOutNullValues(out err);
+            } else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::CreateSession () - отсутствуют строки для вставки ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
@@ -965,8 +1000,7 @@ namespace TepCommon
 
             arTypeColumns = new Type[tableInValues.Columns.Count];
             arNameColumns = new string[tableInValues.Columns.Count];
-            foreach (DataColumn c in tableInValues.Columns)
-            {
+            foreach (DataColumn c in tableInValues.Columns) {
                 arTypeColumns[c.Ordinal] = c.DataType;
                 if (c.ColumnName.Equals(@"ID") == true)
                     strNameColumn = @"ID_PUT";
@@ -982,8 +1016,7 @@ namespace TepCommon
 
             iCntToInsert = 0;
             strQuery = strBaseQuery;
-            foreach (DataRow r in tableInValues.Rows)
-            {
+            foreach (DataRow r in tableInValues.Rows) {
                 strQuery += @"(";
                 // вставить значения в запрос
                 foreach (DataColumn c in tableInValues.Columns)
@@ -996,8 +1029,7 @@ namespace TepCommon
 
                 iCntToInsert++;
 
-                if (iCntToInsert > MAX_ROWCOUNT_TO_INSERT)
-                {
+                if (iCntToInsert > MAX_ROWCOUNT_TO_INSERT) {
                     // исключить лишнюю запятую
                     strQuery = strQuery.Substring(0, strQuery.Length - 1);
                     //Вставить во временную таблицу в БД входные для расчета значения
@@ -1005,8 +1037,7 @@ namespace TepCommon
                     // обнулить счетчик строк, основной запрос
                     iCntToInsert = 0;
                     strQuery = strBaseQuery;
-                }
-                else
+                } else
                     ;
             }
             // исключить лишнюю запятую
@@ -1059,10 +1090,8 @@ namespace TepCommon
                 @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @" VALUES ";
 
             iRowCounterToInsert = 0;
-            foreach (DataRow rPar in tableParameters.Rows)
-            {
-                if (iRowCounterToInsert > MAX_ROWCOUNT_TO_INSERT)
-                {
+            foreach (DataRow rPar in tableParameters.Rows) {
+                if (iRowCounterToInsert > MAX_ROWCOUNT_TO_INSERT) {
                     // исключить лишнюю запятую
                     strQuery = strQuery.Substring(0, strQuery.Length - 1);
                     // вставить строки в таблицу
@@ -1076,8 +1105,7 @@ namespace TepCommon
 
                     strQuery = strBaseQuery;
                     iRowCounterToInsert = 0;
-                }
-                else
+                } else
                     ;
 
                 strQuery += @"(";
@@ -1095,14 +1123,12 @@ namespace TepCommon
                 iRowCounterToInsert++;
             }
 
-            if (err == 0)
-            {
+            if (err == 0) {
                 // исключить лишнюю запятую
                 strQuery = strQuery.Substring(0, strQuery.Length - 1);
                 // вставить строки в таблицу
                 DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-            }
-            else
+            } else
                 ; // при ошибке - не продолжать
         }
 
@@ -1119,28 +1145,22 @@ namespace TepCommon
             int iRegDbConn = -1; // признак регистрации соединения с БД
             string strQuery = string.Empty;
 
-            if (IsDeleteSession == true)
-            {
+            if (IsDeleteSession == true) {
                 RegisterDbConnection(out iRegDbConn);
 
-                if (!(iRegDbConn < 0))
-                {
+                if (!(iRegDbConn < 0)) {
                     strQuery = @"DELETE FROM [dbo].[" + HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.SESSION].m_name + @"]"
                         + @" WHERE [ID_CALCULATE]=" + _Session.m_Id;
 
                     DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-                }
-                else
+                } else
                     ;
 
-                if (!(iRegDbConn > 0))
-                {
+                if (!(iRegDbConn > 0)) {
                     UnRegisterDbConnection();
-                }
-                else
+                } else
                     ;
-            }
-            else
+            } else
                 ;
             // очистить сессию
             if (err == 0)
@@ -1200,8 +1220,7 @@ namespace TepCommon
             string strRes = string.Empty
                 , strJoinValues = string.Empty;
 
-            if (!(type == TaskCalculate.TYPE.UNKNOWN))
-            {
+            if (!(type == TaskCalculate.TYPE.UNKNOWN)) {
                 strJoinValues = getRangeAlg(type);
                 if (strJoinValues.Equals(string.Empty) == false)
                     strJoinValues = @" JOIN [" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT AND p.ID_ALG" + strJoinValues;
@@ -1211,8 +1230,7 @@ namespace TepCommon
                 strRes = @"SELECT v.* FROM " + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @" as v"
                     + strJoinValues
                     + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-            }
-            else
+            } else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::getQueryValuesVar () - неизвестный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return strRes;
@@ -1229,8 +1247,7 @@ namespace TepCommon
             ID_START_RECORD idRecStart = ID_START_RECORD.ALG
                 , idRecEnd = ID_START_RECORD.PUT;
 
-            switch (type)
-            {
+            switch (type) {
                 case TaskCalculate.TYPE.IN_VALUES:
                     break;
                 case TaskCalculate.TYPE.OUT_TEP_NORM_VALUES:
@@ -1258,8 +1275,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            switch (type)
-            {
+            switch (type) {
                 case TaskCalculate.TYPE.IN_VALUES:
                     break;
                 case TaskCalculate.TYPE.OUT_TEP_NORM_VALUES:
@@ -1287,8 +1303,7 @@ namespace TepCommon
             //else
             //    ;
 
-            if (!(type == TaskCalculate.TYPE.UNKNOWN))
-            {
+            if (!(type == TaskCalculate.TYPE.UNKNOWN)) {
                 // аналог в 'getQueryValuesVar'
                 whereParameters = getWhereRangeAlg(type);
                 if (whereParameters.Equals(string.Empty) == false)
@@ -1349,7 +1364,7 @@ namespace TepCommon
                 default:
                     base.AddTableDictPrj(id, out err);
                     break;
-            }            
+            }
         }
         ///// <summary>
         ///// Возвратить наименование таблицы 
@@ -1388,28 +1403,28 @@ namespace TepCommon
                             arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
                         else
                             if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                            // крайний элемент массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                        else
+                            // для элементов в "середине" массива
+                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
             else
                 if (bEndMonthBoudary == true)
-                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
-                    // + использование следующей за 'dtEnd' таблицы
-                    for (i = 0; i < arRangesRes.Length; i++)
-                        if (i == 0)
-                            // предыдущих значений нет
-                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-                        else
-                            if (i == arRangesRes.Length - 1)
-                                // крайний элемент массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                            else
-                                // для элементов в "середине" массива
-                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-                else
-                    ;
+                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
+                // + использование следующей за 'dtEnd' таблицы
+                for (i = 0; i < arRangesRes.Length; i++)
+                    if (i == 0)
+                        // предыдущих значений нет
+                        arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                    else
+                        if (i == arRangesRes.Length - 1)
+                        // крайний элемент массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                    else
+                        // для элементов в "середине" массива
+                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+            else
+                ;
 
             return arRangesRes;
         }
@@ -1445,8 +1460,7 @@ namespace TepCommon
                 , whereParameters = string.Empty
                 , subQuery = string.Empty;
 
-            if (!(type == TaskCalculate.TYPE.UNKNOWN))
-            {
+            if (!(type == TaskCalculate.TYPE.UNKNOWN)) {
                 // аналог в 'GetQueryParameters'
                 whereParameters = getWhereRangeAlg(type);
                 if (whereParameters.Equals(string.Empty) == false)
@@ -1458,8 +1472,7 @@ namespace TepCommon
                 bool bLastItem = false
                     , bEquDatetime = false;
 
-                for (i = 0; i < arQueryRanges.Length; i++)
-                {
+                for (i = 0; i < arQueryRanges.Length; i++) {
                     bLastItem = !(i < (arQueryRanges.Length - 1));
 
                     subQuery += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
@@ -1471,7 +1484,7 @@ namespace TepCommon
                         + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
                         + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
                             + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
-                            + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = "
+                            + @" RIGHT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = "
                             + (int)_iIdTask + whereParameters
                             + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                         + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
@@ -1521,8 +1534,7 @@ namespace TepCommon
                         + @", v.[AVG], v.[EXTENDED_DEFINITION]";
                 else
                     ;
-            }
-            else
+            } else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::getQueryValuesVar () - неизветстный тип расчета...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return strRes;
@@ -1633,34 +1645,28 @@ namespace TepCommon
 
             RegisterDbConnection(out iRegDbConn);
 
-            if (!(iRegDbConn < 0))
-            {
+            if (!(iRegDbConn < 0)) {
                 // прочитать параметры сессии для текущего пользователя
                 tableSession = DbTSQLInterface.Select(ref _dbConnection, querySession, null, null, out err);//??ID_PANEL
                 // получить количество зарегистрированных сессий для пользователя
                 iCntSession = tableSession.Rows.Count;
 
                 if ((err == 0)
-                    && (iCntSession == 1))
-                {
+                    && (iCntSession == 1)) {
                     rowSession = tableSession.Rows[0];
                     _Session.Initialize(rowSession);
-                }
-                else
+                } else
                     if (err == 0)
-                        switch (iCntSession)
-                        {
-                            case 0:
-                                err = -101;
-                                break;
-                            default:
-                                err = -102;
-                                break;
-                        }
-                    else
-                        ; // ошибка получения параметров сессии
-            }
-            else
+                    switch (iCntSession) {
+                        case 0:
+                            err = -101;
+                            break;
+                        default:
+                            err = -102;
+                            break;
+                    } else
+                    ; // ошибка получения параметров сессии
+            } else
                 ;
 
             if (!(iRegDbConn > 0))
@@ -1691,8 +1697,8 @@ namespace TepCommon
                 listRes.Add(new VALUES() { m_IdPut = int.Parse(r[@"ID_PUT"].ToString())
                     , m_iQuality = int.Parse(r[@"QUALITY"].ToString())
                     , value = float.Parse(r[@"VALUE"].ToString())
-                    , stamp_value = (DateTime)r[@"DATE_TIME"]
-                    , stamp_write = (DateTime)r[@"WR_DATETIME"]
+                    , stamp_value = !(r[@"DATE_TIME"] is DBNull) ? DateTime.Parse((string)r[@"DATE_TIME"]) : DateTime.MinValue
+                    , stamp_write = !(r[@"WR_DATETIME"] is DBNull) ? (DateTime)r[@"WR_DATETIME"] : DateTime.MinValue
                 });
 
             return listRes;
@@ -1737,7 +1743,7 @@ namespace TepCommon
                 if (err == 0) {
                     // получить результирующаю таблицу
                     tableRes = mergeTableValues(tablePars, arTableOrigin, _Session.CountBasePeriod);
-                    
+
                 } else
                     strErr = @"ошибка получения данных по умолчанию с " + _Session.m_DatetimeRange.Begin.ToString()
                         + @" по " + _Session.m_DatetimeRange.End.ToString();
@@ -1798,8 +1804,7 @@ namespace TepCommon
 
             if (isRegisterDbConnection == true)
                 // проверить наличие сессии
-                if (_Session.m_Id > 0)
-                {
+                if (_Session.m_Id > 0) {
                     // получить таблицу со значеняими нормативных графиков
                     tableVal = GetDataTable(ID_DBTABLE.FTABLE, out err);
                     listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.FTABLE, m_table = tableVal.Copy() });
@@ -1810,30 +1815,25 @@ namespace TepCommon
                     tableVal = getVariableTableValues(TaskCalculate.TYPE.IN_VALUES, out err);
                     listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
 
-                    if (IdTask == ID_TASK.TEP)
-                    {
+                    if (IdTask == ID_TASK.TEP) {
                         // получить описание выходных-нормативных парметров в алгоритме расчета
                         tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES), out err);
                         listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_NORM_PARAMETER, m_table = tableVal.Copy() });
                         // получить выходные-нормативные значения для сессии
                         tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
                         listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_NORM_VALUES, m_table = tableVal.Copy() });
-                    }
-                    else
+                    } else
                         ;
 
-                    if (type == TaskCalculate.TYPE.OUT_VALUES)
-                    {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
+                    if (type == TaskCalculate.TYPE.OUT_VALUES) {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
                         tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err);
                         listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_PARAMETER, m_table = tableVal.Copy() });
                         // получить выходные значения для сессии
                         tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_VALUES, out err);
                         listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_VALUES, m_table = tableVal.Copy() });
-                    }
-                    else
+                    } else
                         ;
-                }
-                else
+                } else
                     Logging.Logg().Error(@"HandlerDbTaskCalculate::prepareTepCalculateValues () - при получении идентифкатора сессии расчета...", Logging.INDEX_MESSAGE.NOT_SET);
             else
                 ; // ошибка при регистрации соединения с БД
@@ -1856,10 +1856,8 @@ namespace TepCommon
             // регистрация соединения с БД
             RegisterDbConnection(out iRegDbConn);
 
-            if (!(iRegDbConn < 0))
-            {
-                switch (IdTask)
-                {
+            if (!(iRegDbConn < 0)) {
+                switch (IdTask) {
                     case ID_TASK.TEP:
                     case ID_TASK.AUTOBOOK:
                     case ID_TASK.BAL_TEPLO: //Для работы с балансом тепла 6,06,2016 Апельганс
@@ -1873,8 +1871,7 @@ namespace TepCommon
                         Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - неизвестный тип задачи расчета...", Logging.INDEX_MESSAGE.NOT_SET);
                         break;
                 }
-            }
-            else
+            } else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при регистрации соединения...", Logging.INDEX_MESSAGE.NOT_SET);
 
             // отмена регистрации БД - только, если регистрация произведена в текущем контексте
@@ -1898,26 +1895,41 @@ namespace TepCommon
 
             tableEdit = tableOrigin.Clone();
 
-            foreach (DataRow r in tableOrigin.Rows)
-            {
+            foreach (DataRow r in tableOrigin.Rows) {
                 rowSel = tableRes.Select(@"ID=" + r[@"ID_PUT"]);
 
-                if (rowSel.Length == 1)
-                {
+                if (rowSel.Length == 1) {
                     tableEdit.Rows.Add(new object[] {
                         //r[@"ID"],
                         r[@"ID_SESSION"]
                         , r[@"ID_PUT"]
                         , rowSel[0][@"QUALITY"]
-                        , rowSel[0][@"VALUE"]                        
+                        , rowSel[0][@"VALUE"]
                         , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
                     });
-                }
-                else
+                } else
                     ; //??? ошибка
             }
 
             RecUpdateInsertDelete(s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name, @"ID_PUT", string.Empty, tableOrigin, tableEdit, out err);
+        }
+
+        public Dictionary<string, HTepUsers.VISUAL_SETTING> GetParameterVisualSettings(int[] fields, out int err)
+        {
+            Dictionary<string, HTepUsers.VISUAL_SETTING> dictRes;
+
+            int iRegDbConn = -1;
+
+            RegisterDbConnection(out iRegDbConn);
+
+            dictRes = HTepUsers.GetParameterVisualSettings(_dbConnection, fields, out err);
+
+            if (!(iRegDbConn > 0))
+                UnRegisterDbConnection();
+            else
+                ;
+
+            return dictRes;
         }
     }
 }

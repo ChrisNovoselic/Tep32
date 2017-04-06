@@ -42,26 +42,10 @@ namespace PluginTaskReaktivka
             /// </summary>
             private void InitializeComponents()
             {
-                Dock = DockStyle.Fill;
-                //Запретить выделение "много" строк
-                MultiSelect = false;
-                //Установить режим выделения - "полная" строка
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                //Установить режим "невидимые" заголовки столбцов
-                ColumnHeadersVisible = true;
-                //Запрет изменения размера строк
-                AllowUserToResizeRows = false;
-                //Отменить возможность добавления строк
-                AllowUserToAddRows = false;
-                //Отменить возможность удаления строк
-                AllowUserToDeleteRows = false;
-                //Отменить возможность изменения порядка следования столбцов строк
-                AllowUserToOrderColumns = false;
+                // Dock, MultiSelect, SelectionMode, ColumnHeadersVisible, ColumnHeadersHeightSizeMode, AllowUserToResizeColumns, AllowUserToResizeRows, AllowUserToAddRows, AllowUserToDeleteRows, AllowUserToOrderColumns
+                // - устанавливаются в базовом классе
                 //Не отображать заголовки строк
-                RowHeadersVisible = false;
-                //Ширина столбцов под видимую область
-                //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+                RowHeadersVisible = true;
 
                 //AddColumn(-2, string.Empty, INDEX_SERVICE_COLUMN.ALG.ToString(), true, false);
                 //AddColumn(-1, "Дата", INDEX_SERVICE_COLUMN.DATE.ToString(), true, true);
@@ -100,7 +84,7 @@ namespace PluginTaskReaktivka
                         } else
                             ;
 
-                    DataGridViewColumn column = new DataGridViewColumn();
+                    DataGridViewColumn column = new DataGridViewTextBoxColumn();
                     column.Tag = putPar;
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -108,7 +92,7 @@ namespace PluginTaskReaktivka
                     if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
                         ; // оставить значения по умолчанию
                     else
-                    {// для добавлямых столбцов
+                    {// для добавляемых столбцов
                         if (putPar.IdComponent < 0)
                         {// для служебных столбцов
                             if (putPar.m_bVisibled == true) {// только для столбца с [SYMBOL]
@@ -305,66 +289,68 @@ namespace PluginTaskReaktivka
             /// Отображение значений
             /// </summary>
             /// <param name="source">таблица с даными</param>
-            public void ShowValues(DataTable source)
+            public void ShowValues(IEnumerable<HandlerDbTaskCalculate.VALUES> inValues
+                , IEnumerable<HandlerDbTaskCalculate.VALUES> outValues)
             {
                 int idAlg = -1
-                   , idParameter = -1
+                   , idPut = -1
                    , iQuality = -1
-                   , iCol = 0, iRow = 0
-                   , vsRatioValue = -1;
+                   , iCol = 0;
                 double dblVal = -1F,
                     dbSumVal = 0;
-                DataRow[] parameterRows = null;
+                DataGridViewRow row;
+                IEnumerable<HandlerDbTaskCalculate.VALUES> componentValues = null;
 
                 //if ((int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE == (int)typeValues)
                 //    ;
 
-                foreach (DataGridViewColumn col in Columns) {
-                    try {
-                        parameterRows = source.Select(string.Format(source.Locale, "ID_PUT = " + ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).IdComponent));
-                    } catch (Exception e) {
-                        Logging.Logg().Exception(e, @"DataGridViewValuesReaktivka::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                    }
+                if (RowCount > 1)
+                    foreach (DataGridViewColumn col in Columns) {
+                        try {
+                            componentValues = inValues.Where(value => { return value.m_IdPut == ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id; } );
 
-                    foreach (DataGridViewRow row in Rows) {
-                        dbSumVal = 0;
+                            idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_idNAlg;
+                            idPut = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id;
+                            iCol = Columns.IndexOf(col);
+                        } catch (Exception e) {
+                            Logging.Logg().Exception(e, @"DataGridViewValuesReaktivka::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
 
-                        if (row.Index != RowCount - 1) {
-                            try
-                            {
-                                idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_idNAlg;
-                            } catch (Exception exp) {
-                                Logging.Logg().Exception(exp, @"DataGridViewValuesReaktivka::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                            }
+                        if (!(componentValues == null)) {
+                            dbSumVal = 0F;
 
-                            for (int i = 0; i < parameterRows.Count(); i++) {
-                                //??? как можно сравнить дату/время в строках
-                                //??? сравнивать дату, но при этом добавлять минуты
-                                //??? зачем учитывать смещение
-                                if (Convert.ToDateTime(parameterRows[i][@"WR_DATETIME"]).AddMinutes(180/*m_currentOffSet*/).AddDays(-1).ToShortDateString() ==
-                                    ((DateTime)row.Tag).ToString()) {
-                                    idParameter = (int)parameterRows[i][@"ID_PUT"];
-                                    dblVal = ((double)parameterRows[i][@"VALUE"]);
-                                    iQuality = (int)parameterRows[i][@"QUALITY"];
+                            foreach (HandlerDbTaskCalculate.VALUES value in componentValues) {
+                                
+                                dblVal = value.value;
+                                iQuality = value.m_iQuality;
 
+                                dbSumVal += dblVal;
+
+                                row = Rows.Cast<DataGridViewRow>().FirstOrDefault(r => { return (r.Tag is DateTime) ? value.stamp_value.Equals(((DateTime)(r.Tag))) == true : false; });
+
+                                if (!(row == null)) {
                                     if ((row.Cells[iCol].ReadOnly = double.IsNaN(dblVal)) == false) {
-                                        dblVal = GetValueCellAsRatio(idAlg, dblVal);
-
-                                        row.Cells[iCol].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
-                                        dbSumVal += dblVal;
+                                        dblVal = GetValueCellAsRatio(idAlg, idPut, dblVal);
                                     } else
-                                        ;
+                                        dblVal = 0F;
+
+                                    row.Cells[iCol].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
                                 } else
-                                    ;
+                                // не найдена строка для даты в наборе данных для отображения
+                                    Logging.Logg().Warning(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - не найдена строка для даты [DATETIME={0}] в наборе данных для отображения..."
+                                            , value.stamp_value.Date)
+                                        , Logging.INDEX_MESSAGE.NOT_SET);
                             }
+
+                            dbSumVal = GetValueCellAsRatio(idAlg, idPut, dbSumVal);
+                            Rows[Rows.Count - 1].Cells[iCol].Value = dbSumVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);                        
                         } else
-                            row.Cells[iCol].Value = dbSumVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
-
-                        iRow++;
+                            Logging.Logg().Error(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
+                                    , ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id, inValues.Count())
+                                , Logging.INDEX_MESSAGE.NOT_SET);
                     }
-
-                    iCol++;                    
-                }
+                else
+                    Logging.Logg().Error(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             /// <summary>

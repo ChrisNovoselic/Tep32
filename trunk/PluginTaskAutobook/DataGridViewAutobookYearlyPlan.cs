@@ -238,7 +238,7 @@ namespace PluginTaskAutobook
                                     GetMonth.ElementAt(Convert.ToDateTime(tbOrigin.Rows[j]["WR_DATETIME"]).AddMonths(-1).Month - 1))
                                 {
                                     if (double.TryParse(tbOrigin.Rows[j]["VALUE"].ToString(), out dblVal) == true)
-                                        dblVal = GetValueCellAsRatio(idAlg, dblVal);
+                                        dblVal = GetValueCellAsRatio(idAlg, -1, dblVal);
                                     else
                                     //???
                                         dblVal = 0F;

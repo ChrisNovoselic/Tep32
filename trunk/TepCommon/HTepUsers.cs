@@ -520,7 +520,22 @@ namespace TepCommon
         /// <returns>Таблица с установками для отображения значений</returns>
         public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(ConnectionSettings connSett, int[] fields, out int err)
         {
-            err = -1; //Обшая ошибка
+            Dictionary<string, VISUAL_SETTING> dictRes;
+
+            int idListener = -1;
+
+            idListener = DbSources.Sources().Register(connSett, false, @"HTepUsers");
+
+            dictRes = GetParameterVisualSettings(DbSources.Sources().GetConnection(idListener, out err), fields, out err);
+
+            DbSources.Sources().UnRegister(idListener);
+
+            return dictRes;
+        }
+
+        public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(DbConnection dbConn, int[] fields, out int err)
+        {
+            err = -1; //Общая ошибка
 
             DictionaryProfileItem dictProfileItem = null
                 , objects = null;
@@ -535,52 +550,53 @@ namespace TepCommon
             Dictionary<string, VISUAL_SETTING> dictRes = new Dictionary<string, VISUAL_SETTING>();
             DataTable tblRes = new DataTable()
                 //, tblRatio
-                ;            
+                ;
 
-            if (fields.Length == (int)INDEX_VISUALSETTINGS_PARAMS.COUNT)
-            {
+            if (fields.Length == (int)INDEX_VISUALSETTINGS_PARAMS.COUNT) {
                 //Получения элемента со словарями атрибутов и вложенных элементов для панели
                 dictProfileItem = HTepProfilesXml.GetProfileUserPanel(Id, Role, fields[(int)INDEX_VISUALSETTINGS_PARAMS.TAB]);
 
                 objects = null;
-                //Перебор Item'ов в панели
-                if (dictProfileItem.ContainsKey(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()) == true)
-                {
-                    //Словарь с объектами в Item
-                    objects = dictProfileItem.GetObjects(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString());
-                    
-                    foreach (string rAlg in objects.Keys)
-                    {
-                        ratio = 0;
-                        round = 0;
 
-                        foreach (string idUnit in objects[rAlg].Attributes.Keys)
-                        {
-                            switch ((ID_ALLOWED)short.Parse(idUnit))
-                            {
-                                case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
-                                    ratio = int.Parse(objects[rAlg].Attributes[idUnit]);
+                if ((!(dictProfileItem == null))
+                    && (dictProfileItem.Count == 1)) {
+                //Перебор Item'ов в панели
+                    if (dictProfileItem.ContainsKey(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()) == true) {
+                        dictProfileItem = 
+                        //Словарь с объектами в Item
+                        objects =
+                            dictProfileItem[fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()];
+
+                        foreach (string rAlg in objects.Keys) {
+                            ratio = 0;
+                            round = 0;
+
+                            foreach (string idUnit in objects[rAlg].Attributes.Keys) {
+                                switch ((ID_ALLOWED)short.Parse(idUnit)) {
+                                    case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
+                                        ratio = int.Parse(objects[rAlg].Attributes[idUnit]);
+                                        break;
+                                    case ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND:
+                                        round = int.Parse(objects[rAlg].Attributes[idUnit]);
+                                        break;
+                                    default:
+                                        break;
+                                }
+
+                                curSum += id_unit;
+
+                                if (curSum == checkSum)
                                     break;
-                                case ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND:
-                                    round = int.Parse(objects[rAlg].Attributes[idUnit]);
-                                    break;
-                                default:
-                                    break;
+                                else
+                                    ;
                             }
 
-                            curSum += id_unit;
-
-                            if (curSum == checkSum)
-                                break;
-                            else
-                                ;
+                            dictRes.Add(rAlg.Trim(), new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
                         }
-
-                        dictRes.Add(rAlg.Trim(), new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
                     }
-                }
-            }
-            else
+                } else
+                    ;
+            } else
                 ; // невозможно сформировать запрос - недостаточно параметров
 
             return dictRes;

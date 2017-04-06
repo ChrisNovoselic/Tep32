@@ -492,7 +492,7 @@ namespace PluginTaskTepMain
                                 //row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictNAlgProperties[idAlg].m_strSymbol
                                 //    + @",[" + m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_nameRU + m_dictNAlgProperties[idAlg].m_strMeausure + @"]";
 
-                                dblVal = GetValueCellAsRatio(idAlg, dblVal);
+                                dblVal = GetValueCellAsRatio(idAlg, idPut, dblVal);
 
                                 // отобразить с количеством знаков в соответствии с настройками
                                 row.Cells[indxCol].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);

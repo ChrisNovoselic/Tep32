@@ -19,10 +19,6 @@ namespace PluginTaskAutobook
         protected DataTable[] m_arTableOrigin
             , m_arTableEdit;
         /// <summary>
-        /// Перечисление - режимы работы вкладки
-        /// </summary>
-        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
-        /// <summary>
         /// 
         /// </summary>
         public static string[] GetMonth =
@@ -364,12 +360,10 @@ namespace PluginTaskAutobook
                     //Заполнить элемент управления с часовыми поясами
                     idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.TIMEZONE));
                     PanelManagement.FillValueTimezone (m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], idProfileTimezone);
-                    Session.CurrentIdTimezone = idProfileTimezone;
                         //, (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(string.Format(@"ID={0}", (int)idProfileTimezone))[0][@"OFFSET_UTC"]);
                     //Заполнить элемент управления с периодами расчета
                     idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME], idProfilePeriod);
-                    Session.CurrentIdPeriod = idProfilePeriod;
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelTaskAutoBook::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }

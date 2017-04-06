@@ -34,11 +34,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Объект для производства расчетов
         /// </summary>
-        protected TaskAutobookCalculate m_AutoBookCalculate;
-        /// <summary>
-        /// Перечисление - режимы работы вкладки
-        /// </summary>
-        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
+        protected TaskAutobookCalculate m_AutoBookCalculate;        
         /// <summary>
         /// Перечисление - столбцы отображения
         /// </summary>
@@ -53,7 +49,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Набор элементов
         /// </summary>
-        protected enum INDEX_CONTROL { UNKNOWN = -1, LABEL_DESC = 1, DGV_DATA = 3 }
+        protected enum INDEX_CONTROL { UNKNOWN = -1, LABEL_DESC = 1, DGV_VALUES = 3 }
         /// <summary>
         /// Объект для взаимодействия с БД
         /// </summary>
@@ -71,14 +67,6 @@ namespace PluginTaskAutobook
         /// </summary>
         private DataGridViewAutobookMonthValues m_dgvValues;
         /// <summary>
-        /// to Outlook
-        /// </summary>
-        protected ReportsToNSS m_rptsNSS;
-        /// <summary>
-        /// to Excel
-        /// </summary>
-        protected ReportExcel m_rptExcel;
-        /// <summary>
         /// Создание панели управления
         /// </summary>
         protected PanelManagementAutobookMonthValues PanelManagement
@@ -91,7 +79,6 @@ namespace PluginTaskAutobook
                 return _panelManagement as PanelManagementAutobookMonthValues;
             }
         }
-
         /// <summary>
         /// Создать объект класса для обращений (чтение/запись) к БД
         /// </summary>
@@ -264,7 +251,7 @@ namespace PluginTaskAutobook
         /// Класс по работе с формированием 
         /// и отправкой отчета NSS
         /// </summary>
-        public class ReportsToNSS
+        public class ReportEMailNSS
         {
             /// <summary>
             /// Экземпляр класса
@@ -274,7 +261,7 @@ namespace PluginTaskAutobook
             /// <summary>
             /// Конструктор класса
             /// </summary>
-            public ReportsToNSS()
+            public ReportEMailNSS()
             {
                 m_crtMsg = new OutlookMessage();
             }
@@ -441,7 +428,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// Класс формирования отчета Excel 
         /// </summary>
-        public class ReportExcel
+        public class ReportMSExcel
         {
             /// <summary>
             /// Экземпляр приложения Excel
@@ -470,7 +457,7 @@ namespace PluginTaskAutobook
             /// <summary>
             /// конструктор(основной)
             /// </summary>
-            public ReportExcel()
+            public ReportMSExcel()
             {
                 m_excApp = new Excel.Application();
                 m_excApp.Visible = false;
@@ -479,9 +466,9 @@ namespace PluginTaskAutobook
             /// <summary>
             /// Подключение шаблона листа экселя и его заполнение
             /// </summary>
-            /// <param name="dgView">отрбражение данных</param>
+            /// <param name="dgv">отрбражение данных</param>
             /// <param name="dtRange">дата</param>
-            public void CreateExcel(DataGridView dgView, DateTimeRange dtRange)
+            public void Create(DataGridView dgv, DateTimeRange dtRange)
             {
                 if (addWorkBooks())
                 {
@@ -491,13 +478,13 @@ namespace PluginTaskAutobook
                     int indxRow = 1;
 
                     try {
-                        for (int i = 0; i < dgView.Columns.Count; i++) {
-                            if (dgView.Columns[i].HeaderText != "") {
+                        for (int i = 0; i < dgv.Columns.Count; i++) {
+                            if (dgv.Columns[i].HeaderText != "") {
                                 Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxRow];
 
                                 foreach (Excel.Range cell in colRange.Cells)
-                                    if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText)) {
-                                        fillSheetExcel(colRange, dgView, i, cell.Row);
+                                    if (Convert.ToString(cell.Value) == splitString(dgv.Columns[i].HeaderText)) {
+                                        fillSheetExcel(colRange, dgv, i, cell.Row);
 
                                         break;
                                     } else
@@ -506,11 +493,11 @@ namespace PluginTaskAutobook
                             } else
                                 ;
                         }
-                        setPlanMonth(m_wrkSheet, dgView, dtRange);
+                        setPlanMonth(m_wrkSheet, dgv, dtRange);
                         m_excApp.Visible = true;
                         Marshal.ReleaseComObject(m_excApp);
                     } catch (Exception e) {
-                        CloseExcel();
+                        Close();
                         MessageBox.Show("Ошибка экспорта данных!" + e);
                     }
                 }
@@ -532,7 +519,7 @@ namespace PluginTaskAutobook
                 }
                 catch (Exception exp)
                 {
-                    CloseExcel();
+                    Close();
                     bflag = false;
                     MessageBox.Show("Отсутствует шаблон для отчета Excel" + exp);
                 }
@@ -545,7 +532,7 @@ namespace PluginTaskAutobook
             /// <param name="Cancel"></param>
             void workBook_BeforeClose(ref bool Cancel)
             {
-                CloseExcel();
+                Close();
             }
 
             /// <summary>
@@ -554,7 +541,7 @@ namespace PluginTaskAutobook
             /// <param name="Success"></param>
             void workBook_AfterSave(bool Success)
             {
-                CloseExcel();
+                Close();
             }
 
             /// <summary>
@@ -618,7 +605,7 @@ namespace PluginTaskAutobook
             /// <summary>
             /// вызов закрытия Excel
             /// </summary>
-            public void CloseExcel()
+            public void Close()
             {
                 //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
                 //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
@@ -640,6 +627,10 @@ namespace PluginTaskAutobook
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             m_AutoBookCalculate = new TaskAutobookCalculate();
+
+            m_listNAlgParameter = new List<HandlerDbTaskCalculate.NALG_PARAMETER>();
+            m_listPutParameter = new List<HandlerDbTaskCalculate.PUT_PARAMETER>();
+            m_listTECComponent = new List<HandlerDbTaskCalculate.TECComponent>();
 
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
@@ -785,24 +776,15 @@ namespace PluginTaskAutobook
             /// <param name="ev">Аргумент события</param>
             protected override void onItemCheck(object obj, EventArgs ev)
             {
-                throw new NotImplementedException();
+                // не используется
+                //throw new NotImplementedException();
             }
 
             protected override void activateControlChecked_onChanged(bool bActivate)
             {
-                throw new NotImplementedException();
-            }
-
-            ///// <summary>
-            ///// Обработчик события - изменение дата/время окончания периода
-            ///// </summary>
-            ///// <param name="obj">Составной объект - календарь</param>
-            ///// <param name="ev">Аргумент события</param>
-            //protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
-            //{
-            //    HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
-            //    DateTimeRangeValue_Changed?.Invoke(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
-            //}
+                // не используется
+                //throw new NotImplementedException();
+            }            
         }
 
         /// <summary>
@@ -819,7 +801,7 @@ namespace PluginTaskAutobook
             SuspendLayout();
 
             posRow = 0;
-            m_dgvValues = new DataGridViewAutobookMonthValues(INDEX_CONTROL.DGV_DATA.ToString());            
+            m_dgvValues = new DataGridViewAutobookMonthValues(INDEX_CONTROL.DGV_VALUES.ToString());            
             Controls.Add(m_dgvValues, posColdgvValues, posRow);
             SetColumnSpan(m_dgvValues, ColumnCount - posColdgvValues); SetRowSpan(m_dgvValues, 10);
             //
@@ -858,8 +840,8 @@ namespace PluginTaskAutobook
         /// <param name="e">данные события</param>
         private void btnExport_onClick(object sender, EventArgs e)
         {
-            m_rptExcel = new ReportExcel();
-            m_rptExcel.CreateExcel(m_dgvValues, Session.m_DatetimeRange);
+            ReportMSExcel rep = new ReportMSExcel();
+            rep.Create(m_dgvValues, Session.m_DatetimeRange);
         }
 
         /// <summary>
@@ -869,13 +851,13 @@ namespace PluginTaskAutobook
         /// <param name="e">данные события</param>
         private void btnSend_onClick(object sender, EventArgs e)
         {
-            m_rptsNSS = new ReportsToNSS();
+            ReportEMailNSS rep = new ReportEMailNSS();
 
             string toSend = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
             DateTime dtSend = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CALENDAR.ToString(), true)[0] as DateTimePicker).Value;
             m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = m_dgvValues.FillTableValueDay();
             //
-            m_rptsNSS.SendMailToNSS(m_TableEdit, dtSend, toSend);
+            rep.SendMailToNSS(m_TableEdit, dtSend, toSend);
         }
 
         /// <summary>
@@ -987,22 +969,22 @@ namespace PluginTaskAutobook
         //      = m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Clone();
         //}
 
-        /// <summary>
-        /// Проверка выбранного диапазона
-        /// </summary>
-        /// <param name="dtRange">диапазон дат</param>
-        /// <returns></returns>
-        private bool rangeCheking(DateTimeRange[] dtRange)
-        {
-            bool bflag = false;
+        ///// <summary>
+        ///// Проверка выбранного диапазона
+        ///// </summary>
+        ///// <param name="dtRange">диапазон дат</param>
+        ///// <returns></returns>
+        //private bool rangeCheking(DateTimeRange[] dtRange)
+        //{
+        //    bool bflag = false;
 
-            for (int i = 0; i < dtRange.Length; i++)
-                if (dtRange[i].Begin.Month > DateTime.Now.Month)
-                    if (dtRange[i].End.Year >= DateTime.Now.Year)
-                        bflag = true;
+        //    for (int i = 0; i < dtRange.Length; i++)
+        //        if (dtRange[i].Begin.Month > DateTime.Now.Month)
+        //            if (dtRange[i].End.Year >= DateTime.Now.Year)
+        //                bflag = true;
 
-            return bflag;
-        }
+        //    return bflag;
+        //}
 
         ///// <summary>
         ///// Загрузка сырых значений
@@ -1176,16 +1158,27 @@ namespace PluginTaskAutobook
 
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMEZONE, COMP, MEASURE, RATIO
-            initialize(new ID_DBTABLE[] { ID_DBTABLE.TIME, ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP_LIST, ID_DBTABLE.MEASURE, ID_DBTABLE.RATIO }
+            initialize(new ID_DBTABLE[] {
+                    ID_DBTABLE.TIME
+                    , ID_DBTABLE.TIMEZONE
+                    , IsInParameters == true ? ID_DBTABLE.IN_PARAMETER : ID_DBTABLE.UNKNOWN
+                    , IsOutParameters == true ? ID_DBTABLE.OUT_PARAMETER : ID_DBTABLE.UNKNOWN
+                    , ID_DBTABLE.COMP_LIST
+                    , ID_DBTABLE.MEASURE
+                    , ID_DBTABLE.RATIO
+                }
                 , out err, out errMsg);
 
             HandlerDb.FilterDbTableTimezone = HandlerDbTaskCalculate.DbTableTimezone.Msk;
             HandlerDb.FilterDbTableTime = HandlerDbTaskCalculate.DbTableTime.Month;
+            HandlerDb.FilterDbTableCompList = HandlerDbTaskCalculate.DbTableCompList.Tec
+                | HandlerDbTaskCalculate.DbTableCompList.Gtp
+                | HandlerDbTaskCalculate.DbTableCompList.Tg;
 
             // возможность_редактирвоания_значений
             try {
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
-                    if ((MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_DATA, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE)
+                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
+                    if ((MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE)
                         (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
                     else
                         (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
@@ -1216,7 +1209,6 @@ namespace PluginTaskAutobook
                     idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , idProfilePeriod);
-                    Session.CurrentIdPeriod = PanelManagement.IdPeriod;
 
                     ctrl = Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0];
                     // из profiles
@@ -1227,12 +1219,21 @@ namespace PluginTaskAutobook
                         Logging.Logg().Warning(string.Format(@"PanelTaskAutoBook::initialize () - в словаре 'm_dictProfile' не определен ключ [{0:1}]..."
                             , key, PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL)
                                 , Logging.INDEX_MESSAGE.NOT_SET);
+
+                    PanelManagement.AllowUserPeriodChanged = false;
+                    PanelManagement.AllowUserTimezoneChanged = false;
                 }
                 else
                     Logging.Logg().Error(MethodBase.GetCurrentMethod(), errMsg, Logging.INDEX_MESSAGE.NOT_SET);
             } catch (Exception e) {
-                Logging.Logg().Exception(e, @"PanelTaskAutobookMonthVakues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Exception(e, @"PanelTaskAutobookMonthValues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
+        }
+
+        private void addValueRows()
+        {
+            m_dgvValues.DatetimeStamp = PanelManagement.DatetimeRange.Begin + (TimeSpan.FromDays(1) - Session.m_curOffsetUTC);
+            m_dgvValues.AddRows(m_dgvValues.DatetimeStamp, TimeSpan.FromDays(1));
         }
 
         /// <summary>
@@ -1260,7 +1261,18 @@ namespace PluginTaskAutobook
             else
                 ;
         }
-
+        /// <summary>
+        /// Список параметров алгоритма расчета, не связанных с компонентом станции (верхний/1-ый уровень)
+        /// </summary>
+        private List<HandlerDbTaskCalculate.NALG_PARAMETER> m_listNAlgParameter;
+        /// <summary>
+        /// Список компонентов станции
+        /// </summary>
+        private List<HandlerDbTaskCalculate.TECComponent> m_listTECComponent;
+        /// <summary>
+        /// Список параметров алгоритма расчета, связанных с компонентом станции (нижний/2-ой уровень)
+        /// </summary>
+        private List<HandlerDbTaskCalculate.PUT_PARAMETER> m_listPutParameter;
         //protected override void panelManagement_OnEventDetailChanged(object obj)
         //{
         //    base.panelManagement_OnEventDetailChanged(obj);
@@ -1271,20 +1283,38 @@ namespace PluginTaskAutobook
         protected override void panelManagement_DatetimeRange_onChanged()
         {
             base.panelManagement_DatetimeRange_onChanged();
+
+            addValueRows();
         }
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
         /// </summary>
         protected override void panelManagement_TimezoneChanged()
         {
+            m_listNAlgParameter.Clear();
+            m_listPutParameter.Clear();
+            m_listTECComponent.Clear();
+
             base.panelManagement_TimezoneChanged();
-        }
+
+            m_dgvValues.BuildStructure(m_listNAlgParameter, m_listPutParameter);
+
+            addValueRows();
+        }        
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
         /// </summary>
         protected override void panelManagement_Period_onChanged()
         {
+            m_listNAlgParameter.Clear();
+            m_listPutParameter.Clear();
+            m_listTECComponent.Clear();
+
             base.panelManagement_Period_onChanged();
+
+            m_dgvValues.BuildStructure(m_listNAlgParameter, m_listPutParameter);
+
+            addValueRows();
         }
         /// <summary>
         /// Обработчик события - добавить NAlg-параметр
@@ -1292,7 +1322,7 @@ namespace PluginTaskAutobook
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
         protected override void onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
-            m_dgvValues.AddNAlgParameter(new DataGridViewValues.NALG_PROPERTY(obj));
+            m_listNAlgParameter.Add(obj);
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
@@ -1300,6 +1330,7 @@ namespace PluginTaskAutobook
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
         protected override void onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
+            m_listPutParameter.Add(obj);
         }
         /// <summary>
         /// Обработчик события - добавить компонент станции (оборудовнаие)
@@ -1307,21 +1338,20 @@ namespace PluginTaskAutobook
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
         protected override void onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
         {
-            
+            m_listTECComponent.Add(obj);
         }
         #endregion
 
         /// <summary>
-        /// очистка грида
+        /// Очистить значения, при необходимости, удалить строки в представлении для отображения значений
         /// </summary>
-        /// <param name="bClose"></param>
+        /// <param name="bClose">Признак неодбходимости удаления строк
         protected override void clear(bool bClose = false)
         {
             //??? повторная проверка
             if (bClose == true)
             {
-                m_dgvValues.ClearRows();
-                //dgvAB.ClearColumns();
+                m_dgvValues.Clear();
             } else
                 // очистить содержание представления
                 m_dgvValues.ClearValues();
@@ -1342,7 +1372,7 @@ namespace PluginTaskAutobook
             //valuesFence();
 
             m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = getStructurOutval(
-                GetNameTableOut(PanelManagement.DatetimeRange.Begin), out err);
+                getNameTableOut(PanelManagement.DatetimeRange.Begin), out err);
 
             m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
                 HandlerDb.SaveResOut(m_TableOrigin, m_TableEdit, out err);
@@ -1370,7 +1400,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="dtInsert">дата</param>
         /// <returns>имя таблицы</returns>
-        public string GetNameTableOut(DateTime dtInsert)
+        private string getNameTableOut(DateTime dtInsert)
         {
             string strRes = string.Empty;
 
@@ -1409,7 +1439,7 @@ namespace PluginTaskAutobook
             //
             sortingDataToTable(HandlerDb.GetDataOutval(HandlerDb.getDateTimeRangeExtremeVal(), out err)
                 , m_TableEdit
-                , GetNameTableOut(PanelManagement.DatetimeRange.Begin)
+                , getNameTableOut(PanelManagement.DatetimeRange.Begin)
                 , @""
                 , out err);
         }

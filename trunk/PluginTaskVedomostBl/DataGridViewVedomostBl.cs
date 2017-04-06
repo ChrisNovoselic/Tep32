@@ -95,28 +95,11 @@ namespace PluginTaskVedomostBl
             private void InitializeComponents()
             {
                 Name = string.Format(@"DGV_BLOCK_{0}", IdComponent);
-                Dock = DockStyle.None;
-                //Запретить выделение "много" строк
-                MultiSelect = false;
-                //Установить режим выделения - "полная" строка
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                //Установить режим "невидимые" заголовки столбцов
-                ColumnHeadersVisible = true;
-                //
-                AllowUserToResizeColumns = false;
-                //Запрет изменения размера строк
-                AllowUserToResizeRows = false;
-                //Отменить возможность добавления строк
-                AllowUserToAddRows = false;
-                //Отменить возможность удаления строк
-                AllowUserToDeleteRows = false;
-                //Отменить возможность изменения порядка следования столбцов строк
-                AllowUserToOrderColumns = false;
+                // Dock, MultiSelect, SelectionMode, ColumnHeadersVisible, ColumnHeadersHeightSizeMode, AllowUserToResizeColumns, AllowUserToResizeRows, AllowUserToAddRows, AllowUserToDeleteRows, AllowUserToOrderColumns
+                // - устанавливаются в базовом классе
                 //Не отображать заголовки строк
-                RowHeadersVisible = false;
-
-                RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders | DataGridViewRowHeadersWidthSizeMode.DisableResizing;                
-                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;                
+                RowHeadersVisible = true;
+                
                 ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.BottomCenter;
                 ColumnHeadersHeight = ColumnHeadersHeight * s_GroupHeaderCount;//высота от нижнего(headerText)
 
@@ -124,21 +107,6 @@ namespace PluginTaskVedomostBl
             }
 
             public int IdComponent { get { return ((HandlerDbTaskCalculate.TECComponent)Tag).m_Id; } }
-
-            private DateTime _datetimeBegin;
-
-            public DateTime DatetimeBegin { set { _datetimeBegin = value; } }
-
-            /// <summary>
-            /// кол-во дней в текущем месяце
-            /// </summary>
-            /// <returns>кол-во дней</returns>
-            public int DaysInMonth
-            {
-                get {
-                    return DateTime.DaysInMonth(_datetimeBegin.Year, _datetimeBegin.Month);
-                }
-            }
 
             public override void BuildStructure(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
@@ -148,7 +116,7 @@ namespace PluginTaskVedomostBl
 
                 AddColumns(listPutParameter);
 
-                AddRows(_datetimeBegin, TimeSpan.FromDays(1), DaysInMonth);
+                AddRows(DatetimeStamp, TimeSpan.FromDays(1));
 
                 ResizeControls();
 
@@ -176,26 +144,6 @@ namespace PluginTaskVedomostBl
                 /// Имя общей группы колонки
                 /// </summary>
                 public string m_textTopHeader;
-            }
-
-            public void AddRow(DateTime dtRow, bool bEnded)
-            {
-                int indxRow = -1;
-
-                indxRow = Rows.Add();
-
-                if (bEnded == true) {
-                // окончание периода - месяц
-                    Rows[indxRow].Tag = -1;
-                    Rows[indxRow].HeaderCell.Value = @"ИТОГО";
-                } else {
-                // обычные сутки
-                    Rows[indxRow].Tag = dtRow;
-                    if (RowHeadersVisible == true)
-                        Rows[indxRow].HeaderCell.Value = dtRow.ToShortDateString();
-                    else
-                        Rows[indxRow].Cells[0].Value = dtRow.ToShortDateString();
-                }
             }
 
             /// <summary>
@@ -548,20 +496,6 @@ namespace PluginTaskVedomostBl
                             , m_putParameter = listPutParameter[col]
                         });
                 }
-            }
-
-            /// <summary>
-            /// Добавить строки в количестве 'cnt', очередная строка имеет
-            /// </summary>
-            /// <param name="dtStart">Дата для 1-ой строки предсавления</param>
-            /// <param name="tsAdding">Смещение между метками времени строк</param>
-            /// <param name="cnt">Количество строк в представлении (дней в месяце)</param>
-            public void AddRows(DateTime dtStart, TimeSpan tsAdding, int cnt)
-            {
-                DateTime dtCurrent = dtStart;
-
-                for (int i = 0; i < cnt + 1; i++, dtCurrent += tsAdding)
-                    AddRow(dtCurrent, !(i < cnt));
             }
 
             /// <summary>

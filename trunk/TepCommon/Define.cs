@@ -92,6 +92,7 @@ namespace TepCommon
         , TEC = 1
         , GTP = 100
         , TG = 1000
+        , VYVOD = 2000
     }
 
     public enum COMP_PARAMETER

@@ -30,11 +30,11 @@ namespace PluginTaskReaktivka
         /// 
         /// </summary>
         protected HandlerDbTaskReaktivkaCalculate HandlerDb { get { return __handlerDb as HandlerDbTaskReaktivkaCalculate; } }
-        /// <summary>
-        /// Таблицы со значениями для редактирования
-        /// </summary>
-        protected DataTable[] m_arTableOrigin
-            , m_arTableEdit;
+        ///// <summary>
+        ///// Таблицы со значениями для редактирования
+        ///// </summary>
+        //protected DataTable[] m_arTableOrigin
+        //    , m_arTableEdit;
         /// <summary>
         /// 
         /// </summary>
@@ -95,8 +95,8 @@ namespace PluginTaskReaktivka
         {
             HandlerDb.IdTask = ID_TASK.REAKTIVKA;
 
-            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
+            //m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
+            //m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
 
             InitializeComponents();            
         }
@@ -142,7 +142,7 @@ namespace PluginTaskReaktivka
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
             (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskReaktivka_ClickExport;
             //(PanelManagement as PanelManagementReaktivka).ItemCheck += new PanelManagementReaktivka.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
-            m_dgvValues.CellEndEdit += m_dgvReak_CellEndEdit;
+            m_dgvValues.CellEndEdit += dgvValues_CellEndEdit;
             //m_dgvReak.CellParsing += m_dgvReak_CellParsing;
         }
 
@@ -151,11 +151,12 @@ namespace PluginTaskReaktivka
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        void m_dgvReak_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        void dgvValues_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            m_dgvValues.SumValue(e.ColumnIndex, e.RowIndex);
-            if(m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] != null)
-            m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = valuesFence;
+            //m_dgvValues.SumValue(e.ColumnIndex, e.RowIndex);
+
+            //if(m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] != null)
+            //    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = valuesFence;
         }
 
         /// <summary>
@@ -212,7 +213,7 @@ namespace PluginTaskReaktivka
 
             HandlerDb.FilterDbTableTimezone = HandlerDbTaskCalculate.DbTableTimezone.Msk;
             HandlerDb.FilterDbTableTime = HandlerDbTaskCalculate.DbTableTime.Month;
-            HandlerDb.FilterDbTableCompList = HandlerDbTaskCalculate.DbTableCompList.Tec | HandlerDbTaskCalculate.DbTableCompList.Tg;
+            HandlerDb.FilterDbTableCompList = HandlerDbTaskCalculate.DbTableCompList.Tg;
 
             if (err == 0) {
                 m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
@@ -222,12 +223,13 @@ namespace PluginTaskReaktivka
                     idProfilePeriod = ID_PERIOD.MONTH;
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , idProfilePeriod); //??? активный период требуется прочитать из [profile]
-                    Session.CurrentIdPeriod = PanelManagement.IdPeriod;
                     //Заполнить элемент управления с часовыми поясами
                     idProfileTimezone = ID_TIMEZONE.MSK;
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , idProfileTimezone); //??? активный пояс требуется прочитать из [profile]
-                    Session.CurrentIdTimezone = PanelManagement.IdTimezone;
+
+                    PanelManagement.AllowUserPeriodChanged = false;
+                    PanelManagement.AllowUserTimezoneChanged = false;
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelTaskReaktivka::initialize () - инициализация стандартных элементов управления...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -253,6 +255,12 @@ namespace PluginTaskReaktivka
                 }
             } else
                 errMsg = @"Неизвестная ошибка";
+        }
+
+        private void addValueRows()
+        {
+            m_dgvValues.DatetimeStamp = PanelManagement.DatetimeRange.Begin + (TimeSpan.FromDays(1) - Session.m_curOffsetUTC);
+            m_dgvValues.AddRows(m_dgvValues.DatetimeStamp, TimeSpan.FromDays(1));
         }
 
         #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
@@ -281,6 +289,8 @@ namespace PluginTaskReaktivka
         protected override void panelManagement_DatetimeRange_onChanged()
         {
             base.panelManagement_DatetimeRange_onChanged();
+
+            addValueRows();
         }
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
@@ -288,6 +298,8 @@ namespace PluginTaskReaktivka
         protected override void panelManagement_TimezoneChanged()
         {
             base.panelManagement_TimezoneChanged();
+
+            addValueRows();
         }
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
@@ -295,6 +307,8 @@ namespace PluginTaskReaktivka
         protected override void panelManagement_Period_onChanged()
         {
             base.panelManagement_Period_onChanged();
+
+            addValueRows();
         }
         /// <summary>
         /// Обработчик события - добавить NAlg-параметр
@@ -302,6 +316,7 @@ namespace PluginTaskReaktivka
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
         protected override void onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
+            m_dgvValues.AddNAlgParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
@@ -309,6 +324,9 @@ namespace PluginTaskReaktivka
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
         protected override void onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
+            m_dgvValues.AddPutParameter(obj);
+
+            m_dgvValues.AddColumn(obj);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
@@ -321,16 +339,14 @@ namespace PluginTaskReaktivka
         #endregion
 
         /// <summary>
-        /// очистка грида
+        /// Очистить представление (полнота ~ признака)
         /// </summary>
-        /// <param name="iCtrl"></param>
-        /// <param name="bClose"></param>
+        /// <param name="bClose">Признак полноты очистки представления</param>
         protected override void clear(bool bClose = false)
         {
             //??? повторная проверка
             if (bClose == true) {
-                m_dgvValues.ClearRows();
-                //dgvReak.ClearColumns();
+                m_dgvValues.Clear();
             }
             else
                 // очистить содержание представления
@@ -361,8 +377,8 @@ namespace PluginTaskReaktivka
         /// </summary>
         protected override void successRecUpdateInsertDelete()
         {
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-              m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Copy();
+            //m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
+            //  m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Copy();
         }
 
         /// <summary>
@@ -397,6 +413,8 @@ namespace PluginTaskReaktivka
         protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
             Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD;
+
+            clear();
 
             // ... - загрузить/отобразить значения из БД
             updateDataValues();
@@ -668,20 +686,20 @@ namespace PluginTaskReaktivka
             (m_dgvValues as DataGridViewValuesReaktivka).UpdateStructure(ev);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        protected DataTable m_TableOrigin
-        {
-            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        protected DataTable m_TableEdit
-        {
-            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
-        }
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        //protected DataTable m_TableOrigin
+        //{
+        //    get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
+        //}
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        //protected DataTable m_TableEdit
+        //{
+        //    get { return m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
+        //}
 
         ///// <summary>
         ///// загрузка/обновление данных
@@ -734,10 +752,21 @@ namespace PluginTaskReaktivka
 
         protected override void onSetValuesCompleted()
         {
-            // отобразить значения
-            m_dgvValues.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues]);
-            //
-            m_arTableEdit[(int)Session.m_ViewValues] = valuesFence;
+            //// отобразить значения
+            //m_dgvValues.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues]);
+            ////
+            //m_arTableEdit[(int)Session.m_ViewValues] = valuesFence;
+
+            HandlerDbTaskCalculate.KEY_VALUES key;
+            IEnumerable<HandlerDbTaskCalculate.VALUES> inValues
+                , outValues;
+
+            key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
+            inValues = (m_dictValues.ContainsKey(key) == true) ? m_dictValues[key] : new List<HandlerDbTaskCalculate.VALUES>();
+            key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
+            outValues = (m_dictValues.ContainsKey(key) == true) ? m_dictValues[key] : new List<HandlerDbTaskCalculate.VALUES>();
+
+            m_dgvValues.ShowValues(inValues, outValues);
         }
 
         ///// <summary>
@@ -796,16 +825,19 @@ namespace PluginTaskReaktivka
         //     m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Clone();
         //}
 
-        /// <summary>
-        /// формирование таблицы данных
-        /// </summary>
-        private DataTable valuesFence
-        {
-            get
-            { //сохранить вх. знач. в DataTable
-                return m_dgvValues.GetValue(m_TableOrigin, (int)Session.m_Id, Session.m_ViewValues);
-            }
-        }
+        ///// <summary>
+        ///// формирование таблицы данных
+        ///// </summary>
+        //private DataTable valuesFence
+        //{
+        //    get
+        //    { //сохранить вх. знач. в DataTable
+        //        return
+        //            //m_dgvValues.GetValue(m_TableOrigin, (int)Session.m_Id, Session.m_ViewValues)
+        //            new DataTable()
+        //            ;
+        //    }
+        //}
 
         /// <summary>
         /// Получение имени таблицы вх.зн. в БД

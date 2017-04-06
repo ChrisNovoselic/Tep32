@@ -71,7 +71,7 @@ namespace TepCommon
                 /// <summary>
                 /// Идентификатор выбранного элемента списка
                 /// </summary>
-                public int SelectedId { get { return /*m_listId*/((ITEM)Items[SelectedIndex]).Id; } }
+                public int SelectedId { get { return ((!(SelectedIndex < 0)) && (SelectedIndex < Items.Count)) ? ((ITEM)Items[SelectedIndex]).Id : -1; } }
 
                 /// <summary>
                 /// Добавить элемент в список
@@ -385,24 +385,24 @@ namespace TepCommon
                 ComboBox cbx = null;
 
                 indxCtrl = PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_PERIOD;
-                //activateComboBoxSelectedIndex_onChanged(indxCtrl, cbxPeriod_SelectedIndexChanged);
-                //cbx = Controls.Find(indxCtrl.ToString(), true)[0] as ComboBox;
-                //cbx.Enabled = false;
-                ////??? даже после отмены регистрации обработчика он вызывается, поэтому не очищаем 
-                //cbx.DataSource = null;
-                ////cbx.Items.Clear(); // элементы удалены автоматически
+                activateComboBoxSelectedIndex_onChanged(indxCtrl, cbxPeriod_SelectedIndexChanged);
+                cbx = Controls.Find(indxCtrl.ToString(), true)[0] as ComboBox;
+                cbx.Enabled = false;
+                //??? даже после отмены регистрации обработчика он вызывается, поэтому не очищаем 
+                cbx.DataSource = null;
+                //cbx.Items.Clear(); // элементы удалены автоматически
 
                 indxCtrl = PanelManagementTaskCalculate.INDEX_CONTROL_BASE.CBX_TIMEZONE;
-                //activateComboBoxSelectedIndex_onChanged(indxCtrl, cbxTimezone_SelectedIndexChanged);
-                //cbx = Controls.Find(indxCtrl.ToString(), true)[0] as ComboBox;
-                //cbx.Enabled = false;
-                //cbx.DataSource = null;
-                //// элементы удалены автоматически
+                activateComboBoxSelectedIndex_onChanged(indxCtrl, cbxTimezone_SelectedIndexChanged);
+                cbx = findControl(indxCtrl.ToString()) as ComboBox;
+                cbx.Enabled = false;
+                cbx.DataSource = null;
+                // элементы удалены автоматически
             }
 
             private void activateComboBoxSelectedIndex_onChanged(INDEX_CONTROL_BASE indxCtrl, EventHandler handler, bool bActivate = false)
             {
-                ComboBox cbx = Controls.Find(indxCtrl.ToString(), true)[0] as ComboBox;
+                ComboBox cbx = findControl(indxCtrl.ToString()) as ComboBox;
 
                 // вариант №1
                 // всегда отписываться
@@ -410,7 +410,7 @@ namespace TepCommon
 
                 // при необходимости подписаться
                 if (bActivate == true)
-                    cbx.SelectedIndexChanged += new EventHandler(handler);
+                    cbx.SelectedIndexChanged += handler;
                 else
                     ;
 
@@ -466,6 +466,23 @@ namespace TepCommon
             public event DelegateObjectFunc EventIndexControlBaseValueChanged;
 
             public event DelegateObjectFunc EventIndexControlCustomValueChanged;
+
+            public enum READY { ERROR = -1, Ok, PARTIAL }
+
+            //private READY _ready;
+
+            public READY Ready
+            {
+                get
+                {
+                    return ((IdPeriod == ID_PERIOD.UNKNOWN) && (IdTimezone == ID_TIMEZONE.UNKNOWN)) ? READY.ERROR :
+                        (((!(IdPeriod == ID_PERIOD.UNKNOWN)) && (IdTimezone == ID_TIMEZONE.UNKNOWN))
+                        || ((IdPeriod == ID_PERIOD.UNKNOWN) && (!(IdTimezone == ID_TIMEZONE.UNKNOWN)))) ? READY.PARTIAL :
+                            READY.Ok;
+                }
+                
+                //set { _ready = value; }
+            }
             /// <summary>
             /// Обработчик события при изменении периода расчета
             /// </summary>
@@ -479,11 +496,15 @@ namespace TepCommon
                 setModeDatetimeRange();
                 //Возобновить обработку события - изменение начала/окончания даты/времени
                 activateDateTimeRangeValue_OnChanged(true);
-                //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-                activateControlChecked_onChanged(false);                
-                EventIndexControlBaseValueChanged?.Invoke(ID_DBTABLE.TIME);
-                //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
-                activateControlChecked_onChanged(true);
+                //if (Ready == READY.Ok) {
+                    //Отменить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
+                    activateControlChecked_onChanged(false);
+                    // оповестить подписчика о событии
+                    EventIndexControlBaseValueChanged?.Invoke(ID_DBTABLE.TIME);
+                    //Возобновить обработку событий - изменения состояния параметра в алгоритме расчета ТЭП
+                    activateControlChecked_onChanged(true);
+                //} else
+                //    ;
             }
 
             protected abstract void activateControlChecked_onChanged(bool bActivate);
@@ -721,7 +742,7 @@ namespace TepCommon
             /// <param name="ev">Аргумент события</param>
             private void datetimeRangeValue_onChanged(DateTime dtBegin, DateTime dtEnd)
             {
-                EventIndexControlBaseValueChanged(ID_DBTABLE.UNKNOWN);
+                EventIndexControlBaseValueChanged?.Invoke(ID_DBTABLE.UNKNOWN);
             }
         }
     }

@@ -75,6 +75,7 @@ namespace TepCommon
                 {
                     NotSet
                     , Equale
+                    , Between
                     , NotEquale
                     , Above
                     , Below
@@ -82,7 +83,7 @@ namespace TepCommon
 
                 private string _nameField;
 
-                private object _limit;
+                private object[] _limits;
 
                 public string Value { get; }
 
@@ -90,23 +91,54 @@ namespace TepCommon
 
                 public int Ready { get; }
 
-                public TSQLWhereItem(string nameField, object limit, RULE rules)
+                public TSQLWhereItem(string nameField, RULE rules, params object[] limits)
                 {
+                    //int lim_max = -1
+                    //    , range = -1;
+
                     _nameField = nameField;
-                    _limit = limit;
+                    if ((!(limits == null))
+                        && (limits.Length > 0)) {
+                        if (limits.Length == 1) { // единственный объект
+                            if (limits[0] is Array) {
+                            // предполагаем, что все объекты переданы в массиве единственного параметра
+                                //Array.Copy(limits[0] as Array, _limits, (limits[0] as Array).Length);
+                                _limits = new object[(limits[0] as Array).Length];
+                                (limits[0] as Array).CopyTo(_limits, 0);
+                            } else {
+                            // предполагаем, что единственный объект простой, пригодный для использования в запросе для ограничения
+                                _limits = new object[limits.Length];
+                                limits.CopyTo(_limits, 0);
+                            }
+                        } else { // объектов более, чем 1
+                        // предполагаем, что все объекты простые, пригодные для использования в запросе для ограничения
+                            _limits = new object[limits.Length];
+                            limits.CopyTo(_limits, 0);
+                        }
+                    } else
+                        ;
                     Rules = rules;
 
                     Ready = 0;
+
+                    //lim_max = (int)_limit;
+                    //range = 1;
+                    //while ((lim_max / range) > 0) range *= 10;
+                    //lim_max += range;
 
                     foreach (RULE rule in Enum.GetValues(typeof(RULE)))
                         if ((rule & Rules) == rule)
                             switch (rule) {
                                 case RULE.Equale:
-                                    Value = string.Format(@"{0}<{1} OR {0}>{1}", _nameField, _limit);
+                                    Value = string.Format(@"{0}={1}", _nameField, (int)_limits[0]);
+                                    break;
+                                case RULE.Between:
+                                    Value = string.Format(@"{0}>{1} AND {0}<{2}", _nameField, (int)_limits[0], (int)_limits[1]);
                                     break;
                                 default:
                                     break;
-                            } else
+                            }
+                        else
                             ;
                 }
             }
@@ -133,7 +165,7 @@ namespace TepCommon
                                     else
                                         strRes = string.Format(@"({0})", item.Value);
                                 else
-                                    strRes += string.Format(@" AND ({0})", item.Value);
+                                    strRes += string.Format(@" OR ({0})", item.Value);
                             } else
                                 ;
                         }
@@ -157,13 +189,30 @@ namespace TepCommon
 
                 ID_DBTABLE idDbTable = where.IdDbTable;
                 string filter = where.Value;
-                List<DataRow> rowsToDelete = new List<DataRow>();
+                List<DataRow> rowsToTake = null
+                    , rowsToRemove = null
+                    ;
 
                 try {
+                    rowsToTake = new List<DataRow>();
+                    rowsToRemove = new List<DataRow>();
+
                     if ((!(idDbTable == ID_DBTABLE.UNKNOWN))
                         && (string.IsNullOrEmpty(filter) == false))
                         if (ContainsKey(idDbTable) == true) {
-                            rowsToDelete = this[idDbTable].Select(filter).ToList();
+                            // получить удерживаемые строки
+                            rowsToTake =
+                                this[idDbTable].Select(filter).ToList()
+                                ;
+                            // получить удаляемые строки                            
+                            foreach (DataRow row in this[idDbTable].Rows)
+                                foreach (DataRow rowToTake in rowsToTake)                                    
+                                    // удалению все строки, отличающиеся от удерживаемых
+                                    if ((rowsToTake.IndexOf(row) < 0)
+                                        && (rowsToRemove.IndexOf(row) < 0))
+                                        rowsToRemove.Add(row);
+                                    else
+                                        ;
 
                             iRes = Error.Not; // Ok
                         } else
@@ -178,15 +227,16 @@ namespace TepCommon
 
                 try {
                     if (iRes == Error.Not) {
-                        foreach (DataRow row in rowsToDelete)
-                            this[idDbTable].Rows.Remove(row);
+                    // удление строк "к удалению"
+                        foreach (DataRow rowToRemove in rowsToRemove)
+                            this[idDbTable].Rows.Remove(rowToRemove);
                     } else
                         ;
 
                     this[idDbTable].AcceptChanges();
                 } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}, idDbTable={1}) - строк для удаления={2}..."
-                        , where.ToString(), idDbTable, rowsToDelete.Count)
+                    Logging.Logg().Exception(e, string.Format(@"SetDbTableFilter (DbFilter={0}, idDbTable={1}) - строк для сохранения={2}..."
+                        , where.ToString(), idDbTable, rowsToTake.Count)
                             , Logging.INDEX_MESSAGE.NOT_SET);
 
                     iRes = Error.ExRowRemove; // исключение при удалении строк

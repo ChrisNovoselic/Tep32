@@ -18,46 +18,76 @@ namespace TepCommon
 {
     public abstract partial class HPanelTepCommon : HPanelCommon
     {
+        /// <summary>
+        /// Перечисление - режимы работы вкладки
+        /// </summary>
+        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
+        /// <summary>
+        /// Тип(ы) расчетов, выполняемых на вкладке (м.б. установлены смешанные)
+        /// </summary>
         protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE TaskCalculateType;
-
+        /// <summary>
+        /// Список значений, загруженных из БД
+        /// </summary>
         protected Dictionary<KEY_VALUES, List<VALUES>> m_dictValues;
-
+        /// <summary>
+        /// Конструктор - основной (с параметрами)
+        /// </summary>
+        /// <param name="plugIn">Объект для связи с вызывающей программой</param>
+        /// <param name="type">Тип(ы) расчетов, выполняемых на вкладке</param>
         public HPanelTepCommon(IPlugIn plugIn, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base (plugIn)
         {
             TaskCalculateType = type;
+
+            m_dictValues = new Dictionary<KEY_VALUES, List<VALUES>>();
 
             eventAddNAlgParameter += new Action<NALG_PARAMETER>(onAddNAlgParameter);
 
             eventAddPutParameter += new Action<PUT_PARAMETER>(onAddPutParameter);
 
             eventAddComponent += new Action<TECComponent>(onAddComponent);
+
+            eventSetValuesCompleted += new Action(onSetValuesCompleted);
         }
-
+        /// <summary>
+        /// Поле
+        /// </summary>
         private PanelManagementTaskCalculate __panelManagement;
-
+        /// <summary>
+        /// Свойство для обращения к панели управления
+        ///  для автоматического назначения обработчиков событий
+        ///  для реализации шаблона Singleton
+        /// </summary>
         protected PanelManagementTaskCalculate _panelManagement
         {
             get { return __panelManagement; }
 
             set {
-                __panelManagement = value;
-                // обработчик события при изменении значений в основных элементах управления
-                __panelManagement.EventIndexControlBaseValueChanged += new DelegateObjectFunc(panelManagement_EventIndexControlBase_onValueChanged);
-                // обработчик события при изменении значений в дополнительных(добавленных программистом в наследуемых классах) элементах управления
-                __panelManagement.EventIndexControlCustomValueChanged += new DelegateObjectFunc(panelManagement_EventIndexControlCustom_onValueChanged);
+                if (__panelManagement == null) {
+                    __panelManagement = value;
+                    // обработчик события при изменении значений в основных элементах управления
+                    __panelManagement.EventIndexControlBaseValueChanged += new DelegateObjectFunc(panelManagement_EventIndexControlBase_onValueChanged);
+                    // обработчик события при изменении значений в дополнительных(добавленных программистом в наследуемых классах) элементах управления
+                    __panelManagement.EventIndexControlCustomValueChanged += new DelegateObjectFunc(panelManagement_EventIndexControlCustom_onValueChanged);
 
-                __panelManagement.ItemCheck += new PanelManagementTaskCalculate.ItemCheckedParametersEventHandler(panelManagement_onItemCheck);
+                    __panelManagement.ItemCheck += new PanelManagementTaskCalculate.ItemCheckedParametersEventHandler(panelManagement_onItemCheck);
+                } else
+                    throw new Exception(string.Format(@"HPanelTepCommon._panelManagement::set () - повторное создание панели управления..."));
             }
         }
-
+        /// <summary>
+        /// Признак необходимости загрузки из БД входных значений
+        /// </summary>
         public bool IsInParameters
         {
             get {
                 return ((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES);
             }
         }
-
+        /// <summary>
+        /// Признак необходимости загрузки из БД выходных значений
+        /// </summary>
         public bool IsOutParameters
         {
             get {
@@ -66,7 +96,10 @@ namespace TepCommon
                     || ((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME);
             }
         }
-
+        /// <summary>
+        /// Класс для описания аргумента события на панели управления, связанное с основными элементами управления
+        ///  : период расчета, часовой пояс, диапазон для расчета
+        /// </summary>
         public class EventIndexControlBaseValueChangedArgs : EventArgs
         {
         }
@@ -82,9 +115,14 @@ namespace TepCommon
         /// Событие при добавлении компонента(оборудования) станции
         /// </summary>
         protected event Action<TECComponent> eventAddComponent;
-
+        /// <summary>
+        /// Событие для оповещения панелей о завершении загрузки значений из БД
+        /// </summary>
         protected event Action eventSetValuesCompleted;
-
+        /// <summary>
+        /// Метод для создания объекта панели управления
+        /// </summary>
+        /// <returns></returns>
         protected abstract PanelManagementTaskCalculate createPanelManagement();
         /// <summary>
         /// Удалить сессию (+ очистить реквизиты сессии)
@@ -92,6 +130,10 @@ namespace TepCommon
         protected virtual void deleteSession()
         {
             int err = -1;
+
+            m_dictValues.Clear();
+
+            Session.Clear();
 
             (__handlerDb as HandlerDbTaskCalculate).DeleteSession(out err);
         }
@@ -107,7 +149,12 @@ namespace TepCommon
         /// <param name="bClose">Признак полной/частичной очистки</param>
         protected override void clear(bool bClose = false)
         {
-            deleteSession();
+            if (bClose == true)
+                _panelManagement.Clear();
+            else
+                ;
+
+            deleteSession();            
 
             base.clear();
         }
@@ -120,18 +167,26 @@ namespace TepCommon
             if ((obj == null)
                 || ((!(obj == null))
                     && ((ID_DBTABLE)obj == ID_DBTABLE.UNKNOWN))) {
-                // изменен DateTimeRange
+            // изменен DateTimeRange
                 //??? перед очисткой или после (не требуются ли предыдущий диапазон даты/времени)
                 Session.SetDatetimeRange(_panelManagement.DatetimeRange);
 
-                panelManagement_DatetimeRange_onChanged();
+                if (_panelManagement.Ready == PanelManagementTaskCalculate.READY.Ok)
+                    panelManagement_DatetimeRange_onChanged();
+                else
+                    ;
             } else {
-                // изменены PERIOD или TIMEZONE
+            // изменены PERIOD или TIMEZONE
                 switch ((ID_DBTABLE)obj) {
                     case ID_DBTABLE.TIME:
                         Session.CurrentIdPeriod = _panelManagement.IdPeriod;
 
-                        panelManagement_Period_onChanged();
+                        if (_panelManagement.Ready == PanelManagementTaskCalculate.READY.Ok) {
+                            //clear();
+
+                            panelManagement_Period_onChanged();
+                        } else
+                            ;
                         break;
                     case ID_DBTABLE.TIMEZONE:
                         Session.CurrentIdTimezone = _panelManagement.IdTimezone;
@@ -139,7 +194,12 @@ namespace TepCommon
 
                         Session.SetDatetimeRange(_panelManagement.DatetimeRange);
 
-                        panelManagement_TimezoneChanged();
+                        if (_panelManagement.Ready == PanelManagementTaskCalculate.READY.Ok) {
+                            //clear();
+
+                            panelManagement_TimezoneChanged();
+                        } else
+                            ;
                         break;
                     default:
                         throw new Exception(string.Format(@"HPanelTepCommon::panelManagement_EventIndexControlBase_onValueChanged () - {} неизвестный тип события...", obj));
@@ -147,28 +207,28 @@ namespace TepCommon
                 }
             }
 
-            // очистить содержание представления
-            clear();
-            //// при наличии признака - загрузить/отобразить значения из БД
-            //if (s_bAutoUpdateValues == true)
-            //    updateDataValues();
-            //else ;
+            //// очистить содержание представления
+            //clear();
+            ////// при наличии признака - загрузить/отобразить значения из БД
+            ////if (s_bAutoUpdateValues == true)
+            ////    updateDataValues();
+            ////else ;
         }
         /// <summary>
         /// Обработчик события при изменении значений в дополнительных элементах управления на панели упарвления
         /// </summary>
         /// <param name="obj">Аргумент события</param>
         protected virtual void panelManagement_EventIndexControlCustom_onValueChanged(object obj) { }        
-
-        protected abstract void panelManagement_onItemCheck(PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev);
-
-        protected virtual void panelManagement_DatetimeRange_onChanged() { }
         /// <summary>
-        /// Обработчик события при изменении периода расчета
+        /// Обработчик события на панели управления - изменение признака выбора снятия/постановки на отображение элемента
+        ///  , включения/выключения из расчета элемента
         /// </summary>
-        /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        protected virtual void panelManagement_Period_onChanged()
+        protected abstract void panelManagement_onItemCheck(PanelManagementTaskCalculate.ItemCheckedParametersEventArgs ev);
+        /// <summary>
+        /// Добавить на панель все элементы: параметры в алгоритме расчета, компоненты станции
+        /// </summary>
+        private void add_all()
         {
             addComponents();
 
@@ -181,29 +241,69 @@ namespace TepCommon
                 addAlgParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
             else
                 ;
-
-            Session.CurrentIdPeriod = _panelManagement.IdPeriod;
         }
-
+        /// <summary>
+        /// Обработчик события - изменение диапазона времени расчета
+        /// </summary>
+        protected virtual void panelManagement_DatetimeRange_onChanged()
+        {
+        }
+        /// <summary>
+        /// Обработчик события при изменении периода расчета
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
+        protected virtual void panelManagement_Period_onChanged()
+        {
+            add_all();
+        }
+        /// <summary>
+        /// Обработчик события - изменение часового пояса
+        /// </summary>
         protected virtual void panelManagement_TimezoneChanged()
         {
-            Session.CurrentIdTimezone = _panelManagement.IdTimezone;
+            add_all();
         }
-
+        /// <summary>
+        /// Метод по завершению загрузки из БД одного параметра в алгоритме расчета
+        /// </summary>
+        /// <param name="obj">Параметр в алгоритме расчета</param>
         protected abstract void onAddNAlgParameter(NALG_PARAMETER obj);
-
+        /// <summary>
+        /// Метод по завершению загрузки из БД одного параметра, связанного с компонентом станции, в алгоритме расчета
+        /// </summary>
+        /// <param name="obj">Параметр в алгоритме расчета, связанный с компонентом станции</param>
         protected abstract void onAddPutParameter(PUT_PARAMETER obj);
-
+        /// <summary>
+        /// Метод по завершению загрузки информации по компоненту станции
+        /// </summary>
+        /// <param name="comp">Объект, описывающий компонент станции</param>
         protected abstract void onAddComponent(TECComponent comp);
-
+        /// <summary>
+        /// Обраюотчик события - завершение загрузки значений из БД
+        /// </summary>
         protected abstract void onSetValuesCompleted();
 
         #region Добавление компонентов, параметров в алгоритме расчета
         private bool getIdComponentOwner(int id_comp, out int id_comp_owner)
         {
-            return int.TryParse((string)m_dictTableDictPrj[ID_DBTABLE.COMP_VALUES].Select(string.Format(@"ID={0} AND ID_PAR={1}", id_comp, (int)COMP_PARAMETER.OWNER))[0][@"VALUE"], out id_comp_owner);
-        }
+            bool bRes = false;
 
+            DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.COMP_VALUES].Select(string.Format(@"ID={0} AND ID_PAR={1}", id_comp, (int)COMP_PARAMETER.OWNER));
+
+            if (rows.Length == 1)
+                bRes = int.TryParse((string)rows[0][@"VALUE"], out id_comp_owner);
+            else {
+                id_comp_owner = -1;
+
+                bRes = false;
+            }
+
+            return bRes;
+        }
+        /// <summary>
+        /// Добавить компоненты станции для панели
+        /// </summary>
         private void addComponents()
         {
             int err = -1
@@ -236,12 +336,15 @@ namespace TepCommon
                             , bVisibled
                         ));
                     } else
-                        Logging.Logg().Error(string.Format(@"HPanelTepCommon::panelManagement_PeriodChanged () - не определенный идентификатор родительского компонента для {}...", id_comp), Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Error(string.Format(@"HPanelTepCommon::panelManagement_PeriodChanged () - не определенный идентификатор родительского компонента для {0}...", id_comp), Logging.INDEX_MESSAGE.NOT_SET);
                 } else
                     Logging.Logg().Error(string.Format(@"HPanelTepCommon::panelManagement_PeriodChanged () - не определенный идентификатор компонента..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
-
+        /// <summary>
+        /// Добавить параметры из алгоритма расчета
+        /// </summary>
+        /// <param name="type">Тип расчета</param>
         private void addAlgParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
         {
             int err = -1
@@ -251,10 +354,13 @@ namespace TepCommon
                 , enabled = -1, visibled = -1;
             bool bEnabled = false
                 , bVisibled = false;
-            string n_alg = string.Empty;
+            string n_alg = string.Empty
+                , comp_shr_name = string.Empty;
             List<int> listIdNAlg = new List<int>();
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
             HandlerDbTaskCalculate.TECComponent component;
+
+            dictVisualSettings = _handlerDb.GetParameterVisualSettings(new int[] { m_Id, (int)Session.CurrentIdPeriod }, out err);
 
             //Список параметров для отображения
             IEnumerable<DataRow> listParameter =
@@ -285,7 +391,7 @@ namespace TepCommon
                 // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
                 if (listIdNAlg.IndexOf(id_alg) < 0) {
                     // добавить в список идентификатор параметра алгоритма расчета
-                    listIdNAlg.Add(id_alg);
+                    listIdNAlg.Add(id_alg);                    
 
                     //strItem = string.Format(@"{0} ({1})", n_alg, ((string)r[@"NAME_SHR"]).Trim());                    
                     // получить значения для настройки визуального отображения
@@ -310,7 +416,8 @@ namespace TepCommon
                         , r[@"SYMBOL"] is DBNull ? string.Empty : ((string)r[@"SYMBOL"]).Trim()
                         , bEnabled
                         , bVisibled
-                        , prjRatio, vsRatio, vsRound
+                        //, prjRatio
+                        , vsRatio, vsRound
                     ));
                 } else {
                     // параметр уже был добавлен                    
@@ -320,23 +427,36 @@ namespace TepCommon
                 id_comp = (int)r[@"ID_COMP"];
                 if ((id_comp > 0)
                     && (getIdComponentOwner(id_comp, out id_comp_owner) == true)) {
-                    component = new TECComponent(id_comp
-                        , id_comp_owner
-                        , string.Empty //??? m_strNameShr = ((string)r[@"NAME_SHR"]).Trim()                        
-                        , bEnabled
-                        , bVisibled
-                    );
-                    // только, если назначенн обработчик в 'PanelTaskTepOutVal'
-                    eventAddPutParameter?.Invoke(new PUT_PARAMETER() {
-                        /*Key = new PUT_PARAMETER.KEY() {*/ m_idNAlg = id_alg/*, m_idComp = id_comp }*/
-                        , m_Id = (int)r[@"ID"]
-                        , m_component = component
-                        , m_bEnabled = bEnabled
-                        , m_bVisibled = bVisibled
-                        ,
-                    });
+                    if (m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Select(string.Format(@"ID={0}", id_comp)).Length == 1) {
+                        comp_shr_name = m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Select(string.Format(@"ID={0}", id_comp))[0][@"DESCRIPTION"].ToString().Trim();                    
+
+                        component = new TECComponent(id_comp
+                            , id_comp_owner
+                            , comp_shr_name
+                            , bEnabled
+                            , bVisibled
+                        );
+
+                        prjRatio = (int)r[@"ID_RATIO"];
+
+                        // только, если назначенн обработчик в 'PanelTaskTepOutVal'
+                        eventAddPutParameter?.Invoke(new PUT_PARAMETER() {
+                            /*Key = new PUT_PARAMETER.KEY() {*/ m_idNAlg = id_alg/*, m_idComp = id_comp }*/
+                            , m_Id = (int)r[@"ID"]
+                            , m_component = component
+                            , m_prjRatio = prjRatio
+                            , m_bEnabled = bEnabled
+                            , m_bVisibled = bVisibled
+                            ,
+                        });
+                    } else
+                        Logging.Logg().Error(string.Format(@"::addAlgParameters () - для ID_ALG={0}, N_ALG={1}, ID_COMPONENT={2} компонент вне установленного фильтра компонентов задачи..."
+                                , id_alg, n_alg, id_comp)
+                            , Logging.INDEX_MESSAGE.NOT_SET);
                 } else
-                    Logging.Logg().Error(string.Format(@"::addAlgParameters () - некорректный идентификатор параметра в алгоритме расчета..."), Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Error(string.Format(@"::addAlgParameters () - для ID_ALG={0}, N_ALG={1} некорректный идентификатор (ID_COMPONENT не найден) параметра в алгоритме расчета..."
+                            , id_alg, n_alg)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
         #endregion
@@ -369,7 +489,7 @@ namespace TepCommon
                     // создать копии для возможности сохранения изменений
                     cloneValues();
                     // отобразить значения
-                    eventSetValuesCompleted();
+                    eventSetValuesCompleted?.Invoke();
                 } else {
                     // в случае ошибки "обнулить" идентификатор сессии
                     deleteSession();
@@ -401,15 +521,16 @@ namespace TepCommon
 
             Session.NewId();
 
+            //m_dictValues.Clear(); - очищена в 'deleteSession'
             dictTableValues = new Dictionary<KEY_VALUES, DataTable>();
 
             foreach (TaskCalculate.TYPE type in Enum.GetValues(typeof(TaskCalculate.TYPE)))
                 if (((!((int)type == 0)) && ((int)type > 0) && (!(type == TaskCalculate.TYPE.UNKNOWN)))
-                    && (TaskCalculateType & type) == type)
+                    && (TaskCalculateType & type) == type) {
                     //m_dictValues[new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = type }] =
-                    dictTableValues[new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = type }] =
-                        _handlerDb.GetTableValues(m_Id, type, out err, out strErr);
-                else
+                    dictTableValues.Add(new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = type }
+                        , _handlerDb.GetTableValues(m_Id, type, out err, out strErr));
+                } else
                     ;
 
             //Начать новую сессию расчета
@@ -419,7 +540,8 @@ namespace TepCommon
                 , new DataTable()
                 , out err, out strErr);
 
-            foreach (KEY_VALUES keyValues in m_dictValues.Keys) {
+            //foreach (KEY_VALUES keyValues in m_dictValues.Keys) {
+            foreach (KEY_VALUES keyValues in dictTableValues.Keys) {
                 idDbTable = keyValues.TypeCalculate == TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.INVALUES :
                     keyValues.TypeCalculate == TaskCalculate.TYPE.OUT_VALUES ? ID_DBTABLE.OUTVALUES :
                         ID_DBTABLE.UNKNOWN; // не найдено наименование таблицы, ошибка в запросе
@@ -427,16 +549,16 @@ namespace TepCommon
                 if (!(idDbTable == ID_DBTABLE.UNKNOWN)) {
                 // получить результирующаю таблицу
                 // получить входные для расчета значения для возможности редактирования
-                    strQuery = string.Format(@"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME]" // as [ID]
+                    strQuery = string.Format(@"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [EXTENDED_DEFINITION] as [DATE_TIME], [WR_DATETIME]" // [ID_PUT] as [ID] 
                         + @" FROM [{0}]"
                         + @" WHERE [ID_SESSION]={1}"
                             , HandlerDbValues.s_dictDbTables[idDbTable].m_name
                             , Session.m_Id);
 
-                    m_dictValues[keyValues] =
-                        //HandlerDbTaskCalculate.TableToListValues(dictTableValues[keyValues]) // простое копирование из таблицы
-                        HandlerDbTaskCalculate.TableToListValues(_handlerDb.Select(strQuery, out err)) // сложное обращение к БД, но происходит дополнительная проверка (создание новой сессии с корректными данными)
-                        ;
+                    m_dictValues.Add(keyValues
+                        //, HandlerDbTaskCalculate.TableToListValues(dictTableValues[keyValues]) // простое копирование из таблицы
+                        , HandlerDbTaskCalculate.TableToListValues(_handlerDb.Select(strQuery, out err)) // сложное обращение к БД, но происходит дополнительная проверка (создание новой сессии с корректными данными)
+                        );
                 } else
                     Logging.Logg().Error (string.Format(@"HPanelTepCommon::setValues () - не найден идентификатор таблицы БД..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
@@ -447,6 +569,8 @@ namespace TepCommon
         /// </summary>
         protected virtual void cloneValues()
         {
+            List<KEY_VALUES> keys = new List<KEY_VALUES>();
+
             //for (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES indx = (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.UNKNOWN + 1);
             //    indx < TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT;
             //    indx++)
@@ -456,9 +580,18 @@ namespace TepCommon
             //    else
             //        ;
 
-            foreach (KEY_VALUES keyValues in m_dictValues.Keys)
+            keys = m_dictValues.Keys.ToList();
+
+            foreach (KEY_VALUES key in keys)
             //??? создается ли новая копия
-                m_dictValues.Add(new KEY_VALUES() { }, new List<VALUES> (m_dictValues[keyValues]));
+                m_dictValues.Add(new KEY_VALUES() { TypeCalculate = key.TypeCalculate, TypeState = HandlerDbValues.STATE_VALUE.EDIT }, new List<VALUES> (m_dictValues[key]));
+        }
+
+        public override void Stop()
+        {
+            clear(true);
+
+            base.Stop();
         }
 
         /// <summary>

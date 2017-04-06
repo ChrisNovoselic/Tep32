@@ -1109,16 +1109,20 @@ namespace TepCommon
         /// <returns>Признак выполнения функции</returns>
         private int nodeAfterSelect(TreeNode node, DataTable tblProp, ID_LEVEL level, bool bThrow)
         {
-            int iErr = 0;
+            int iErr = 0
+                , idTask = -1
+                , idNode = -1;
+            DataRow[] rowsProp;
+
             m_dgvPrjProp.Rows.Clear();
-            int idNode = -1;
-            if (Int32.TryParse (getIdNodePart(node.Name, level), out idNode) == true)
+
+            if ((Int32.TryParse(getIdNodePart(node.Name, ID_LEVEL.TASK), out idTask) == true)
+                && (Int32.TryParse (getIdNodePart(node.Name, level), out idNode) == true))
             //if (m_idAlg > 0)
             {
-                DataRow[] rowsProp = tblProp.Select(@"ID=" +                    
-                    idNode
-                    //m_idAlg
-                );
+                rowsProp = level == ID_LEVEL.N_ALG ? tblProp.Select(string.Format(@"ID={0} AND ID_TASK={1}", idNode, idTask))
+                    : tblProp.Select(string.Format(@"ID={0}", idNode));
+
                 if (rowsProp.Length == 1)
                 {
                     //Заполнение содержимым...

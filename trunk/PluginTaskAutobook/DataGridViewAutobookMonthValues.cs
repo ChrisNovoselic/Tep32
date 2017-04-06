@@ -17,10 +17,10 @@ namespace PluginTaskAutobook
         /// </summary>
         private class DataGridViewAutobookMonthValues : DataGridViewValues
         {
-            /// <summary>
-            /// Перечисление для индексации столбцов со служебной информацией
-            /// </summary>
-            protected enum INDEX_SERVICE_COLUMN : uint { ALG, DATE, COUNT }
+            ///// <summary>
+            ///// Перечисление для индексации столбцов со служебной информацией
+            ///// </summary>
+            //protected enum INDEX_SERVICE_COLUMN : uint { ALG, DATE, COUNT }
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
@@ -37,50 +37,65 @@ namespace PluginTaskAutobook
             private void InitializeComponents()
             {
                 Dock = DockStyle.Fill;
-                Name = INDEX_CONTROL.DGV_DATA.ToString();                                
-                //Запретить выделение "много" строк
-                MultiSelect = false;
-                //Установить режим выделения - "полная" строка
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                //Установить режим "невидимые" заголовки столбцов
-                ColumnHeadersVisible = true;
-                //Отменить возможность добавления строк
-                AllowUserToAddRows = false;
-                //Отменить возможность удаления строк
-                AllowUserToDeleteRows = false;
-                //Отменить возможность изменения порядка следования столбцов строк
-                AllowUserToOrderColumns = false;
-                //Не отображать заголовки строк
-                RowHeadersVisible = false;
-                //
-                AllowUserToResizeRows = false;
+                Name = INDEX_CONTROL.DGV_VALUES.ToString();                                
+
                 //Ширина столбцов под видимую область
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+
+                RowHeadersVisible = true;
 
                 //AddColumn(-2, string.Empty, INDEX_SERVICE_COLUMN.ALG.ToString(), true, false);
                 //AddColumn(-1, "Дата", INDEX_SERVICE_COLUMN.DATE.ToString(), true, true);
             }
 
-
             public override void BuildStructure(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
-                throw new NotImplementedException();
-            }
+                List<HandlerDbTaskCalculate.TECComponent> listTECComponent;
+                HandlerDbTaskCalculate.TECComponent comp_tec;
 
-            /// <summary>
-            /// Класс для описания дополнительных свойств столбца в отображении (таблице)
-            /// </summary>
-            private class HDataGridViewColumn : DataGridViewTextBoxColumn
-            {
-                /// <summary>
-                /// Идентификатор компонента
-                /// </summary>
-                public int m_iIdComp;
-                /// <summary>
-                /// Признак запрета участия в расчете
-                /// </summary>
-                public bool m_bCalcDeny;
+                listTECComponent = new List<HandlerDbTaskCalculate.TECComponent>();
+
+                listPutParameter.ForEach(putPar => {
+                    if (listTECComponent.IndexOf(putPar.m_component) < 0)
+                        listTECComponent.Add(putPar.m_component);
+                    else
+                        ;
+                });
+                // сортировать ГТП: 1,2 ПЕРЕД 3-6
+                listTECComponent.Sort(delegate (HandlerDbTaskCalculate.TECComponent comp1, HandlerDbTaskCalculate.TECComponent comp2) {
+                    return comp1.m_Id < comp2.m_Id ? -1
+                        : comp1.m_Id > comp2.m_Id ? 1
+                            : 0;
+                });
+                //ГТП - Корректировка ПТО
+                listTECComponent.ForEach(comp => {
+                    if (comp.IsGtp == true)
+                        Columns.Add(string.Format(@"COLUMN_CORRECT_{0}", comp.m_Id), string.Format(@"Корр-ка ПТО {0}", comp.m_nameShr));
+                    else
+                        ;
+                });
+                //ГТП - Значения
+                listTECComponent.ForEach(comp => {
+                    if (comp.IsGtp == true)
+                        Columns.Add(string.Format(@"COLUMN_{0}", comp.m_Id), string.Format(@"{0}", comp.m_nameShr));
+                    else
+                        ;
+                });
+                //Станция - компонент
+                comp_tec = listTECComponent.Find(comp => { return comp.IsTec; });
+                //Станция - Значения - ежесуточные
+                Columns.Add(string.Format(@"COLUMN_ST_DAY_{0}", comp_tec.m_Id), string.Format(@"{0} значения", comp_tec.m_nameShr));
+                //Станция - Значения - нарастающие
+                Columns.Add(string.Format(@"COLUMN_ST_SUM_{0}", comp_tec.m_Id), string.Format(@"{0} нараст.", comp_tec.m_nameShr));
+                //Станция - План - ежесуточный
+                Columns.Add(string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id), string.Format(@"План нараст."));
+                //Станция - План - отклонение
+                Columns.Add(string.Format(@"COLUMN_PALN_DEV_{0}", comp_tec.m_Id), string.Format(@"План отклон."));
+
+                //Columns.Add(string.Format(@""), string.Format(@""));
+                //Columns.Add(string.Format(@""), string.Format(@""));
+                //Columns.Add(string.Format(@""), string.Format(@""));
             }
 
             ///// <summary>
@@ -128,15 +143,27 @@ namespace PluginTaskAutobook
             /// <summary>
             /// Установка возможности редактирования столбцов
             /// </summary>
-            /// <param name="bRead">true/false</param>
             /// <param name="nameCol">имя стобца</param>
-            public void AddBRead(bool bRead, string nameCol)
+            /// <param name="bReadOnly">true/false</param>            
+            public void SetReadOnly(string nameCol, bool bReadOnly)
             {
-                foreach (HDataGridViewColumn col in Columns)
+                foreach (DataGridViewColumn col in Columns)
                     if (col.Name == nameCol)
-                        col.ReadOnly = bRead;
+                        col.ReadOnly = bReadOnly;
                     else
                         ;
+            }
+
+            private Dictionary<int, HandlerDbTaskCalculate.TECComponent> m_dictTECComponent;
+
+            public override void AddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER putPar)
+            {
+                base.AddPutParameter(putPar);
+
+                if (m_dictTECComponent.ContainsKey(putPar.IdComponent) == false)
+                    m_dictTECComponent.Add(putPar.IdComponent, putPar.m_component);
+                else
+                    ;
             }
 
             /// <summary>
@@ -150,8 +177,7 @@ namespace PluginTaskAutobook
                 , HandlerDbTaskCalculate.ID_VIEW_VALUES viewValues)
             {
                 int idAlg = -1
-                  //, vsRatioValue = -1
-                  , corOffset = 0;
+                  , idComp = -1;
                 DataRow[] arRowValues = null;
                 Array namePut = Enum.GetValues(typeof(INDEX_COLUMN));
                 bool bflg = false;
@@ -160,70 +186,67 @@ namespace PluginTaskAutobook
                 ClearValues();
                 //заполнение ячеек с плановыми значениями
                 if (tablePlanMonth.Rows.Count > 0)
-                    showPlanValues(tablePlanMonth.Rows[0]["VALUE"].ToString()
-                        , Convert.ToDateTime(tablePlanMonth.Rows[0]["WR_DATETIME"].ToString()));
+                    //showPlanValues(tablePlanMonth.Rows[0]["VALUE"].ToString()
+                    //    , Convert.ToDateTime(tablePlanMonth.Rows[0]["WR_DATETIME"].ToString()))
+                        ;
                 else
                     ;
                 //заполнение столбцов с корр. знач.
                 foreach (DataGridViewRow row in Rows) {
-                    idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
+                    foreach (DataGridViewColumn col in Columns) {
+                        idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_idNAlg;
+                        idComp = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).IdComponent;
 
-                    foreach (HDataGridViewColumn col in Columns) {
-                        if (col.Index > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) {
-                            // сформировать скорректированные значения для отображения
-                            arRowValues = formingValue(tablesOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
-                               , ((DateTime)row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value).Date
-                               //??? зачем это смещение
-                               , 180 /*m_currentOffSet*/
-                               , col.m_iIdComp);                            
+                        // сформировать скорректированные значения для отображения
+                        arRowValues = formingValue(tablesOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
+                            , (DateTime)row.Tag
+                            ////??? зачем это смещение
+                            //, 180 /*m_currentOffSet*/
+                            , idComp);
                             
-                            if (!(arRowValues == null))
-                            // заполнить ячейки с корректированными значениями
-                                for (int t = 0; t < arRowValues.Count(); t++) {
-                                    dblVal = GetValueCellAsRatio(idAlg, Convert.ToDouble(arRowValues[t]["VALUE"]));
+                        if (!(arRowValues == null))
+                        // заполнить ячейки с корректированными значениями
+                            for (int t = 0; t < arRowValues.Count(); t++) {
+                                dblVal = GetValueCellAsRatio(idAlg, -1, Convert.ToDouble(arRowValues[t]["VALUE"]));
+
+                                row.Cells[col.Index].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+                            }
+                        else
+                            ;
+
+                        //if (HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD == viewValues)
+                        //    corOffset = 1;
+                        //else
+                        //    ;
+
+                        arRowValues = formingValue(tablesOrigin[(int)viewValues]
+                            , (DateTime)row.Tag
+                            ////??? зачем это смещение
+                            //, (180 /*m_currentOffSet*/ * corOffset)                               
+                            , idComp);
+
+                        if ((!(arRowValues == null))
+                            && (arRowValues.Count() > 0))
+                        // заполнение столбцов ГТП, ТЭЦ
+                            for (int p = 0; p < arRowValues.Count(); p++)
+                                if (((DateTime)row.Tag).Equals(Convert.ToDateTime(arRowValues[p]["WR_DATETIME"])) == true) {
+                                    //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+
+                                    dblVal = correctingValues(/*Math.Pow(10F, -1 * vsRatioValue)
+                                        , */arRowValues[p]["VALUE"]
+                                        , col.Name
+                                        , ref bflg
+                                        , row
+                                        , viewValues);                                        
+
+                                    //dblVal *= Math.Pow(10F, -1 * vsRatioValue);
+                                    dblVal = GetValueCellAsRatio(idAlg, -1, dblVal);
 
                                     row.Cells[col.Index].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
-                                }
-                            else
-                                ;
-
-                            if (HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD == viewValues)
-                                corOffset = 1;
-                            else
-                                ;
-
-                            arRowValues = formingValue(tablesOrigin[(int)viewValues]
-                               , ((DateTime)row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value).Date
-                               //??? зачем это смещение
-                               , (180 /*m_currentOffSet*/ * corOffset)                               
-                               , col.m_iIdComp);
-
-                            if ((!(arRowValues == null))
-                                && (arRowValues.Count() > 0))
-                            // заполнение столбцов ГТП, ТЭЦ
-                                for (int p = 0; p < arRowValues.Count(); p++)
-                                    if (row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString() ==
-                                        //??? зачем учитывать смещение
-                                        Convert.ToDateTime(arRowValues[p]["WR_DATETIME"]).AddMinutes(180 /*m_currentOffSet*/).AddDays(-1).ToShortDateString()) {
-                                        //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
-
-                                        dblVal = correctingValues(/*Math.Pow(10F, -1 * vsRatioValue)
-                                            , */arRowValues[p]["VALUE"]
-                                            , col.Name
-                                            , ref bflg
-                                            , row
-                                            , viewValues);                                        
-
-                                        //dblVal *= Math.Pow(10F, -1 * vsRatioValue);
-                                        dblVal = GetValueCellAsRatio(idAlg, dblVal);
-
-                                        row.Cells[col.Index].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
-                                    } else
-                                        ;
-                            else
-                                ;
-
-                        }
+                                } else
+                                    ;
+                        else
+                            ;
                     }
 
                     editCells(row);
@@ -303,42 +326,42 @@ namespace PluginTaskAutobook
                 return valRes;
             }
 
-            /// <summary>
-            /// Вычисление месячного плана
-            /// </summary>
-            /// <param name="value">значение</param>
-            /// <param name="date">дата</param>
-            private void showPlanValues(string value, DateTime date)
-            {
-                int idAlg
-                     //, vsRatioValue = -1
-                     , indxLastRow = -1;
-                double planDay
-                   , dbValue
-                    , increment = 0;
+            ///// <summary>
+            ///// Вычисление месячного плана
+            ///// </summary>
+            ///// <param name="value">значение</param>
+            ///// <param name="date">дата</param>
+            //private void showPlanValues(string value, DateTime date)
+            //{
+            //    int idAlg
+            //         //, vsRatioValue = -1
+            //         , indxLastRow = -1;
+            //    double planDay
+            //       , dblValue
+            //        , increment = 0;
 
-                idAlg = (int)Rows[0].Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+            //    idAlg = (int)Rows[0].Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
+            //    //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
 
-                planDay = (Convert.ToSingle(value)
-                   / DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month));
+            //    planDay = (Convert.ToSingle(value)
+            //       / DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month));
 
-                for (int i = 0; i < Rows.Count - 1; i++)
-                {
-                    increment = increment + planDay;
-                    dbValue = increment * GetValueCellAsRatio(idAlg, increment);
+            //    for (int i = 0; i < Rows.Count - 1; i++)
+            //    {
+            //        increment = increment + planDay;
+            //        dblValue = increment * GetValueCellAsRatio(idAlg, -1, increment);
 
-                    Rows[i].Cells["PlanSwen"].Value =
-                        dbValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
-                }
-                //Значение для крайней строки - индекс строки
-                indxLastRow = DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month) - 1;
-                //Значение для крайней строки - значение
-                dbValue = GetValueCellAsRatio(idAlg, float.Parse(value));
-                //Значение для крайней строки - форматирование значения
-                Rows[indxLastRow].Cells["PlanSwen"].Value =
-                    dbValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
-            }
+            //        Rows[i].Cells["PlanSwen"].Value =
+            //            dblValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+            //    }
+            //    //Значение для крайней строки - индекс строки
+            //    indxLastRow = DateTime.DaysInMonth(date.Year, date.AddMonths(-1).Month) - 1;
+            //    //Значение для крайней строки - значение
+            //    dblValue = GetValueCellAsRatio(idAlg, -1, float.Parse(value));
+            //    //Значение для крайней строки - форматирование значения
+            //    Rows[indxLastRow].Cells["PlanSwen"].Value =
+            //        dblValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+            //}
 
             /// <summary>
             /// Редактирование значений ввиду новых корр. значений
@@ -584,41 +607,41 @@ namespace PluginTaskAutobook
                 return arRowRes;
             }
 
-            /// <summary>
-            /// Отбор строк по дате и идПуту
-            /// </summary>
-            /// <param name="dtOrigin">таблица значений</param>
-            /// <param name="date">дата</param>
-            /// <param name="offSet">часовая разница</param>
-            /// <param name="idPut">идЭлемента</param>
-            /// <returns>набор строк</returns>
-            private DataRow[] formingValue(DataTable tableOrigin
-                , DateTime date
-                , int offSet
-                , int idPut)
-            {
-                DateTime dateOffSet;
-                DataRow[] arRowRes = null;
+            ///// <summary>
+            ///// Отбор строк по дате и идПуту
+            ///// </summary>
+            ///// <param name="dtOrigin">таблица значений</param>
+            ///// <param name="date">дата</param>
+            ///// <param name="offSet">часовая разница</param>
+            ///// <param name="idPut">идЭлемента</param>
+            ///// <returns>набор строк</returns>
+            //private DataRow[] formingValue(DataTable tableOrigin
+            //    , DateTime date
+            //    , int offSet
+            //    , int idPut)
+            //{
+            //    DateTime dateOffSet;
+            //    DataRow[] arRowRes = null;
 
-                var m_enumResIDPUT = (from r in tableOrigin.AsEnumerable()
-                                      orderby r.Field<DateTime>("WR_DATETIME")
-                                      select new
-                                      {
-                                          WR_DATE_TIME = r.Field<DateTime>("WR_DATETIME"),
-                                      }).Distinct();
+            //    var m_enumResIDPUT = (from r in tableOrigin.AsEnumerable()
+            //                          orderby r.Field<DateTime>("WR_DATETIME")
+            //                          select new
+            //                          {
+            //                              WR_DATE_TIME = r.Field<DateTime>("WR_DATETIME"),
+            //                          }).Distinct();
 
-                for (int i = 0; i < m_enumResIDPUT.Count(); i++)
-                {
-                    dateOffSet = m_enumResIDPUT.ElementAt(i).WR_DATE_TIME.AddMinutes(offSet).AddDays(-1);
+            //    for (int i = 0; i < m_enumResIDPUT.Count(); i++)
+            //    {
+            //        dateOffSet = m_enumResIDPUT.ElementAt(i).WR_DATE_TIME.AddMinutes(offSet).AddDays(-1);
 
-                    if (date == dateOffSet.Date)
-                    {
-                        arRowRes = tableOrigin.Select(string.Format(tableOrigin.Locale, "WR_DATETIME = '{0:o}' AND ID_PUT = {1}", m_enumResIDPUT.ElementAt(i).WR_DATE_TIME, idPut));
-                        break;
-                    }
-                }
-                return arRowRes;
-            }
+            //        if (date == dateOffSet.Date)
+            //        {
+            //            arRowRes = tableOrigin.Select(string.Format(tableOrigin.Locale, "WR_DATETIME = '{0:o}' AND ID_PUT = {1}", m_enumResIDPUT.ElementAt(i).WR_DATE_TIME, idPut));
+            //            break;
+            //        }
+            //    }
+            //    return arRowRes;
+            //}
 
             /// <summary>
             /// Формирование таблицы корр. значений
@@ -628,62 +651,57 @@ namespace PluginTaskAutobook
             /// <returns></returns>
             public DataTable FillTableCorValue(int offset, DataGridViewCellParsingEventArgs e)
             {
-                double valueToRes;
-                int idComp = -1
-                     , idAlg = -1;
-                DateTime timeRes;
-                HDataGridViewColumn cols = (HDataGridViewColumn)Columns[e.ColumnIndex];
+                DataTable tableRes = null;
 
-                DataTable dtSourceEdit = new DataTable();
-                dtSourceEdit.Columns.AddRange(new DataColumn[] {
-                        new DataColumn (@"ID_PUT", typeof (int))
-                        , new DataColumn (@"ID_SESSION", typeof (long))
-                        , new DataColumn (@"QUALITY", typeof (int))
-                        , new DataColumn (@"VALUE", typeof (float))
-                        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
-                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
-                    });
+                //double valueToRes;
+                //int idComp = -1
+                //     , idAlg = -1;
+                //DateTime timeRes;
+                //DataGridViewColumn cols = (DataGridViewColumn)Columns[e.ColumnIndex];
 
+                //tableSourceEdit = new DataTable();
+                //tableSourceEdit.Columns.AddRange(new DataColumn[] {
+                //        new DataColumn (@"ID_PUT", typeof (int))
+                //        , new DataColumn (@"ID_SESSION", typeof (long))
+                //        , new DataColumn (@"QUALITY", typeof (int))
+                //        , new DataColumn (@"VALUE", typeof (float))
+                //        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
+                //        , new DataColumn (@"EXTENDED_DEFINITION", typeof (float))
+                //    });
 
-                for (int i = 0; i < Rows.Count; i++)
-                {
-                    foreach (HDataGridViewColumn col in Columns)
-                    {
-                        if (col.Index > (int)INDEX_COLUMN.GTP36 & col.Index < (int)INDEX_COLUMN.CorGTP36)
-                        {
-                            idAlg = (int)Rows[0].Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
+                //for (int i = 0; i < Rows.Count; i++) {
+                //    foreach (DataGridViewColumn col in Columns) {
+                //        if (col.Index > (int)INDEX_COLUMN.GTP36 & col.Index < (int)INDEX_COLUMN.CorGTP36) {
+                //            idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_idNAlg;
 
-                            if (cols.m_iIdComp == col.m_iIdComp &&
-                                Rows[i].Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value == Rows[e.RowIndex].Cells["Date"].Value)
-                            {
-                                valueToRes = GetValueCellAsRatio(idAlg, AsParseToF(e.Value.ToString()));
-                                idComp = cols.m_iIdComp;
-                            }
-                            else
-                                if (double.TryParse(Rows[i].Cells[col.Index].Value.ToString(), out valueToRes))
-                            {
-                                valueToRes = GetValueCellAsRatio(idAlg, valueToRes);
-                                idComp = col.m_iIdComp;
-                            }
-                            else
-                                valueToRes = -1;
+                //            if (cols.m_iIdComp == col.m_iIdComp &&
+                //                Rows[i].Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value == Rows[e.RowIndex].Cells["Date"].Value) {
+                //                valueToRes = GetValueCellAsRatio(idAlg, -1, AsParseToF(e.Value.ToString()));
+                //                idComp = cols.m_iIdComp;
+                //            } else
+                //                if (double.TryParse(Rows[i].Cells[col.Index].Value.ToString(), out valueToRes)) {
+                //                valueToRes = GetValueCellAsRatio(idAlg, -1, valueToRes);
+                //                idComp = col.m_iIdComp;
+                //            } else
+                //                valueToRes = -1;
 
-                            timeRes = Convert.ToDateTime(Rows[i].Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString());
-                            //при -1 не нужно записывать значение в таблицу
-                            if (valueToRes > -1)
-                                dtSourceEdit.Rows.Add(new object[]
-                                {
-                                    idComp
-                                    , -1
-                                    , 1.ToString()
-                                    , valueToRes
-                                    , timeRes.AddMinutes(-offset).ToString("F",dtSourceEdit.Locale)
-                                    , i
-                                });
-                        }
-                    }
-                }
-                return dtSourceEdit;
+                //            timeRes = Convert.ToDateTime(Rows[i].Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString());
+                //            //при -1 не нужно записывать значение в таблицу
+                //            if (valueToRes > -1)
+                //                tableSourceEdit.Rows.Add(new object[]
+                //                {
+                //                    idComp
+                //                    , -1
+                //                    , 1.ToString()
+                //                    , valueToRes
+                //                    , timeRes.AddMinutes(-offset).ToString("F",tableSourceEdit.Locale)
+                //                    , i
+                //                });
+                //        }
+                //    }
+                //}
+
+                return tableRes;
             }
 
             /// <summary>
@@ -693,63 +711,58 @@ namespace PluginTaskAutobook
             /// <returns>таблица значений</returns>
             public DataTable FillTableCorValue(int offset)
             {
-                int idAlg
-                    //, vsRatioValue = -1
-                    ;
-                double valueToRes = -1;
-                DateTime dtRes = new DateTime();
+                DataTable tableRes = null;
 
-                DataTable dtSourceEdit = new DataTable();
-                dtSourceEdit.Columns.AddRange(new DataColumn[] {
-                        new DataColumn (@"ID_PUT", typeof (int))
-                        , new DataColumn (@"ID_SESSION", typeof (long))
-                        , new DataColumn (@"QUALITY", typeof (int))
-                        , new DataColumn (@"VALUE", typeof (float))
-                        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
-                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (string))
-                    });
+                //int idAlg
+                //    //, vsRatioValue = -1
+                //    ;
+                //double valueToRes = -1;
+                //DateTime dtRes = new DateTime();
 
-                foreach (DataGridViewRow row in Rows)
-                {
-                    foreach (HDataGridViewColumn col in Columns)
-                    {
-                        if (col.Index > (int)INDEX_COLUMN.GTP36 & col.Index < (int)INDEX_COLUMN.CorGTP36)
-                        {
-                            try
-                            {
-                                idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                                //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
-                                dtRes = Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString());
+                //dtSourceEdit = new DataTable();
+                //dtSourceEdit.Columns.AddRange(new DataColumn[] {
+                //        new DataColumn (@"ID_PUT", typeof (int))
+                //        , new DataColumn (@"ID_SESSION", typeof (long))
+                //        , new DataColumn (@"QUALITY", typeof (int))
+                //        , new DataColumn (@"VALUE", typeof (float))
+                //        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
+                //        , new DataColumn (@"EXTENDED_DEFINITION", typeof (string))
+                //    });
 
-                                if (row.Cells[col.Index].Value != null)
-                                    if (string.IsNullOrEmpty(row.Cells[col.Index].Value.ToString()) == false)
-                                    {
-                                        valueToRes = AsParseToF(row.Cells[col.Index].Value.ToString());
-                                        //valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
-                                        valueToRes = GetValueCellAsRatio(idAlg, valueToRes);
-                                    }
-                                    else
-                                        valueToRes = -1;
-                            }
-                            catch (Exception)
-                            {
+                //foreach (DataGridViewRow row in Rows)
+                //    foreach (HDataGridViewColumn col in Columns)
+                //        if (col.Index > (int)INDEX_COLUMN.GTP36 & col.Index < (int)INDEX_COLUMN.CorGTP36) {
+                //            try {
+                //                idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
+                //                //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+                //                dtRes = Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString());
 
-                            }
+                //                if (row.Cells[col.Index].Value != null)
+                //                    if (string.IsNullOrEmpty(row.Cells[col.Index].Value.ToString()) == false) {
+                //                        valueToRes = AsParseToF(row.Cells[col.Index].Value.ToString());
+                //                        //valueToRes *= Math.Pow(10F, 1 * vsRatioValue);
+                //                        valueToRes = GetValueCellAsRatio(idAlg, valueToRes);
+                //                    } else
+                //                        valueToRes = -1;
+                //            } catch (Exception) {
 
-                            if (valueToRes > -1)
-                                dtSourceEdit.Rows.Add(new object[]
-                                {
-                                    col.m_iIdComp
-                                    , -1
-                                    , 1.ToString()
-                                    , valueToRes
-                                    , dtRes.AddMinutes(-offset).ToString("F",dtSourceEdit.Locale)
-                                    , row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString()
-                                });
-                        }
-                    }
-                }
-                return dtSourceEdit;
+                //            }
+
+                //            if (valueToRes > -1)
+                //                dtSourceEdit.Rows.Add(new object[] {
+                //                    col.m_iIdComp
+                //                    , -1
+                //                    , 1.ToString()
+                //                    , valueToRes
+                //                    , dtRes.AddMinutes(-offset).ToString("F",dtSourceEdit.Locale)
+                //                    , row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString()
+                //                });
+                //        } else
+                //            ;
+                //// цикл по столбцам - окончание
+                //// цикл по строкам - окончание
+
+                return tableRes;
             }
 
             /// <summary>
@@ -758,53 +771,57 @@ namespace PluginTaskAutobook
             /// <returns></returns>
             public DataTable FillTableValueDay()
             {
-                Array namePut = Enum.GetValues(typeof(INDEX_COLUMN));
-                int idAlg
-                   //, vsRatioValue = -1
-                   ;
-                double valueToRes = 0F;
+                DataTable tableRes = null;
 
-                DataTable dtSourceEdit = new DataTable();
-                dtSourceEdit.Columns.AddRange(new DataColumn[] {
-                        new DataColumn (@"ID_PUT", typeof (int))
-                        , new DataColumn (@"ID_SESSION", typeof (long))
-                        , new DataColumn (@"QUALITY", typeof (int))
-                        , new DataColumn (@"VALUE", typeof (float))
-                        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
-                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (string))
-                    });
+                //Array namePut = Enum.GetValues(typeof(INDEX_COLUMN));
+                //int idAlg
+                //   //, vsRatioValue = -1
+                //   ;
+                //double valueToRes = 0F;
 
-                foreach (HDataGridViewColumn col in Columns)
-                {
-                    if (col.Index > (int)INDEX_COLUMN.CorGTP12 & col.Index <= (int)INDEX_COLUMN.COUNT + 1)
-                        foreach (DataGridViewRow row in Rows)
-                        {
-                            if (Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value) <= DateTime.Now.Date)
-                            {
-                                idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
-                                //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
-                                //vsRatio = vsRatioValue;
+                //tableRes = new DataTable();
+                //tableRes.Columns.AddRange(new DataColumn[] {
+                //        new DataColumn (@"ID_PUT", typeof (int))
+                //        , new DataColumn (@"ID_SESSION", typeof (long))
+                //        , new DataColumn (@"QUALITY", typeof (int))
+                //        , new DataColumn (@"VALUE", typeof (float))
+                //        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
+                //        , new DataColumn (@"EXTENDED_DEFINITION", typeof (string))
+                //    });
 
-                                if (row.Cells[col.Index].Value != null)
-                                {
-                                    AsParseToF(row.Cells[col.Index].Value.ToString());
+                //foreach (DataGridViewColumn col in Columns) {
+                //    if (col.Index > (int)INDEX_COLUMN.CorGTP12 & col.Index <= (int)INDEX_COLUMN.COUNT + 1)
+                //        foreach (DataGridViewRow row in Rows) {
+                //            if (Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value) <= DateTime.Now.Date) {
+                //                idAlg = (int)row.Cells[INDEX_SERVICE_COLUMN.ALG.ToString()].Value;
+                //                //vsRatioValue = m_dictRatio[m_dictNAlgProperties[idAlg].m_vsRatio].m_value;
+                //                //vsRatio = vsRatioValue;
 
-                                    valueToRes = GetValueCellAsRatio(idAlg, valueToRes);
+                //                if (row.Cells[col.Index].Value != null) {
+                //                    AsParseToF(row.Cells[col.Index].Value.ToString());
 
-                                    dtSourceEdit.Rows.Add(new object[]
-                                    {
-                                        col.m_iIdComp
-                                        , -1
-                                        , 1.ToString()
-                                        , valueToRes
-                                        , Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString()).ToString("F", dtSourceEdit.Locale)
-                                        , row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString()
-                                    });
-                                }
-                            }
-                        }
-                }
-                return dtSourceEdit;
+                //                    valueToRes = GetValueCellAsRatio(idAlg, -1, valueToRes);
+
+                //                    tableRes.Rows.Add(new object[]
+                //                    {
+                //                        col.m_iIdComp
+                //                        , -1
+                //                        , 1.ToString()
+                //                        , valueToRes
+                //                        , Convert.ToDateTime(row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString()).ToString("F", tableRes.Locale)
+                //                        , row.Cells[INDEX_SERVICE_COLUMN.DATE.ToString()].Value.ToString()
+                //                    });
+                //                }
+                //            }
+                //        }
+                //}
+
+                return tableRes;
+            }
+
+            public override void Clear()
+            {
+                base.Clear();
             }
         }
     }

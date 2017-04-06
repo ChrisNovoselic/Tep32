@@ -172,7 +172,12 @@ namespace PluginTaskReaktivka
             /// <param name="ev">Аргумент события</param>
             protected override void onItemCheck(object obj, EventArgs ev)
             {
-                itemCheck((obj as IControl).SelectedId, ItemCheckedParametersEventArgs.TYPE.VISIBLE, (ev as ItemCheckEventArgs).NewValue);
+                int iSelectedId = (obj as IControl).SelectedId;
+
+                if (!(iSelectedId < 0))
+                    itemCheck(iSelectedId, ItemCheckedParametersEventArgs.TYPE.VISIBLE, (ev as ItemCheckEventArgs).NewValue);
+                else
+                    ;
             }
 
             protected override void activateControlChecked_onChanged(bool bActivate)

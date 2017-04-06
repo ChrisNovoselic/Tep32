@@ -103,11 +103,9 @@ namespace PluginTaskTepMain
                     //Заполнить элемент управления с периодами расчета
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME]
                         , ID_PERIOD.DAY); //??? активный период требуется прочитать из [profile]
-                    Session.CurrentIdPeriod = PanelManagement.IdPeriod;
                     //Заполнить элемент управления с часовыми поясами
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , ID_TIMEZONE.MSK); //??? активный пояс требуется прочитать из [profile]
-                    Session.CurrentIdTimezone = PanelManagement.IdTimezone;
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelTaskTepValues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }

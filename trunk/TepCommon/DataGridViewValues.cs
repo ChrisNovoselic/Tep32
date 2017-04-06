@@ -15,7 +15,40 @@ namespace TepCommon
 
             public ModeData _modeData;
 
-            public DataGridViewValues(ModeData modeData) : base() { _modeData = modeData; }
+            public DataGridViewValues(ModeData modeData)
+                : base()
+            {
+                _modeData = modeData;
+
+                InitializeComponents();
+            }
+
+            private void InitializeComponents()
+            {
+                Dock = DockStyle.Fill;
+                //Запретить выделение "много" строк
+                MultiSelect = false;
+                //Установить режим выделения - "полная" строка
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                //Установить режим "невидимые" заголовки столбцов
+                ColumnHeadersVisible = true;
+                // 
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+                //Запрет изменения размера строк
+                AllowUserToResizeRows = false;
+                //Отменить возможность добавления строк
+                AllowUserToAddRows = false;
+                //Отменить возможность удаления строк
+                AllowUserToDeleteRows = false;
+                //Отменить возможность изменения порядка следования столбцов строк
+                AllowUserToOrderColumns = false;
+                //Не отображать заголовки строк
+                RowHeadersVisible = false;
+                //
+                RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders | DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+                ////Ширина столбцов под видимую область
+                //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            }
             /// <summary>
             /// Построить структуру представления (столбцы, строки)
             /// </summary>
@@ -134,11 +167,43 @@ namespace TepCommon
                     });
             }
 
+            private DateTime _datetimeStamp;
+            /// <summary>
+            /// Метка времени отображающихся значений, интерперетируется в ~ от типа DataGridView
+            /// </summary>
+            public DateTime DatetimeStamp
+            {
+                get { return _datetimeStamp; }
+
+                set
+                {
+                    if (_datetimeStamp.Equals(value) == false) {
+                        _datetimeStamp = value;
+
+                        if (_modeData == ModeData.DATETIME) {
+                            ClearRows();
+                        } else
+                            ;
+                    } else
+                        ;
+                }
+            }
+            /// <summary>
+            /// кол-во дней в текущем месяце
+            /// </summary>
+            /// <returns>кол-во дней</returns>
+            public int DaysInMonth
+            {
+                get {
+                    return DateTime.DaysInMonth(DatetimeStamp.Year, DatetimeStamp.Month);
+                }
+            }
+
             private int _prevIdNAlgAsRatio;
             private int _prevVsRatioValue;
             private int _prevPrjRatioValue;
 
-            public double GetValueCellAsRatio(int idNAlg, double value)
+            public double GetValueCellAsRatio(int idNAlg, int idPut, double value)
             {
                 double dblRes = -1F;
 
@@ -153,7 +218,7 @@ namespace TepCommon
                     // Множитель для значения - исходный в БД
                     prjRatioValue =
                         //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
-                        m_dictRatio[m_dictNAlgProperties[idNAlg].m_prjRatio].m_value
+                        m_dictRatio[m_dictNAlgProperties[idNAlg].m_dictPutParameters[idPut].m_prjRatio].m_value
                         ;
 
                     _prevVsRatioValue = vsRatioValue;
@@ -165,7 +230,7 @@ namespace TepCommon
                 // проверить требуется ли преобразование
                 if (!(prjRatioValue == vsRatioValue))
                 // домножить значение на коэффициент
-                    dblRes = value * Math.Pow(10F, prjRatioValue - vsRatioValue);
+                    dblRes = value * Math.Pow(10F, vsRatioValue - prjRatioValue);
                 else
                 //отображать без изменений
                     dblRes = value;
@@ -189,6 +254,79 @@ namespace TepCommon
 
             public virtual void AddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER putPar)
             {
+                if (m_dictNAlgProperties.ContainsKey(putPar.m_idNAlg) == true) {
+                    if (m_dictNAlgProperties[putPar.m_idNAlg].m_dictPutParameters == null)
+                        m_dictNAlgProperties[putPar.m_idNAlg].m_dictPutParameters = new Dictionary<int, HandlerDbTaskCalculate.PUT_PARAMETER>();
+                    else
+                        ;
+
+                    if (m_dictNAlgProperties[putPar.m_idNAlg].m_dictPutParameters.ContainsKey(putPar.m_Id) == false)
+                        m_dictNAlgProperties[putPar.m_idNAlg].m_dictPutParameters.Add(putPar.m_Id, putPar);
+                    else
+                        ;
+                } else
+                    ;
+            }
+            /// <summary>
+            /// Добавить строки в количестве 'cnt', очередная строка имеет
+            /// </summary>
+            /// <param name="dtStart">Дата для 1-ой строки предсавления</param>
+            /// <param name="tsAdding">Смещение между метками времени строк</param>
+            /// <param name="cnt">Количество строк в представлении (дней в месяце)</param>
+            protected virtual void addRows(DateTime dtStart, TimeSpan tsAdding, int cnt)
+            {
+                DateTime dtCurrent = dtStart;
+
+                if (_modeData == ModeData.DATETIME)
+                    if (DatetimeStamp.Equals(DateTime.MinValue) == false)
+                        if (dtStart.Equals(DatetimeStamp) == true)
+                            for (int i = 0; i < cnt + 1; i++, dtCurrent += tsAdding)
+                                addRow(dtCurrent, !(i < cnt));
+                        else
+                            throw new Exception(@"HPanelTepCommon.DataGridViewValues::AddRows () - дата для 1-ой строки не совпадает с установленной ранее меткой для DataGridView в целом...");
+                    else
+                        throw new Exception(@"HPanelTepCommon.DataGridViewValues::AddRows () - не установлена метка даты для DataGridView в целом...");
+                else
+                    throw new Exception(string.Format(@"HPanelTepCommon.DataGridViewValues::AddRows () - вызов метода не соответствует его типу {0}...", _modeData));
+            }
+
+            public virtual void AddRows(DateTime dtStart, TimeSpan tsAdding)
+            {
+                addRows(dtStart, tsAdding, DaysInMonth);
+            }
+
+            public virtual void AddRows(TimeSpan tsAdding)
+            {
+                addRows(DatetimeStamp, tsAdding, DaysInMonth);
+            }
+
+            protected virtual void addRow(DateTime dtRow, bool bEnded)
+            {
+                int indxRow = -1;
+
+                indxRow = Rows.Add();
+
+                if (bEnded == true) {
+                    // окончание периода - месяц
+                    Rows[indxRow].Tag = -1;
+                    Rows[indxRow].HeaderCell.Value = @"ИТОГО";
+                } else {
+                    // обычные сутки
+                    Rows[indxRow].Tag = dtRow;
+                    if (RowHeadersVisible == true)
+                        Rows[indxRow].HeaderCell.Value = dtRow.ToShortDateString();
+                    else
+                        Rows[indxRow].Cells[0].Value = dtRow.ToShortDateString();
+                }
+            }
+
+            public virtual void Clear()
+            {
+                ClearValues();
+
+                ClearRows();
+
+                Columns.Clear();
             }
             /// <summary>
             /// Удалить все строки представления

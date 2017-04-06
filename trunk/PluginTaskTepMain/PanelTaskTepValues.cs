@@ -94,10 +94,10 @@ namespace PluginTaskTepMain
                 new EventHandler(panelTepCommon_btnUpdate_onClick);
             (btn.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(panelManagement_btnHistory_onClick);
-            (Controls.Find(INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
+            (findControl(INDEX_CONTROL.BUTTON_SAVE.ToString()) as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
 
-            (Controls.Find(INDEX_CONTROL.BUTTON_IMPORT.ToString(), true)[0] as Button).Click += new EventHandler(panelManagement_btnImport_onClick);
-            (Controls.Find(INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += new EventHandler(panelManagement_btnExport_onClick);
+            (findControl(INDEX_CONTROL.BUTTON_IMPORT.ToString()) as Button).Click += new EventHandler(panelManagement_btnImport_onClick);
+            (findControl(INDEX_CONTROL.BUTTON_EXPORT.ToString()) as Button).Click += new EventHandler(panelManagement_btnExport_onClick);
 
             //(PanelManagement as PanelManagementTaskTepValues).ItemCheck += new PanelManagementTaskTepValues.ItemCheckedParametersEventHandler(panelManagement_onItemCheck);
         }
@@ -172,8 +172,6 @@ namespace PluginTaskTepMain
         /// </summary>
         public override void Stop()
         {
-            clear(true);
-
             base.Stop();
         }
 
