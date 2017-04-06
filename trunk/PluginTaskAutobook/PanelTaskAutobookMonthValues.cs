@@ -1232,8 +1232,10 @@ namespace PluginTaskAutobook
 
         private void addValueRows()
         {
-            m_dgvValues.DatetimeStamp = PanelManagement.DatetimeRange.Begin + (TimeSpan.FromDays(1) - Session.m_curOffsetUTC);
-            m_dgvValues.AddRows(m_dgvValues.DatetimeStamp, TimeSpan.FromDays(1));
+            m_dgvValues.AddRows (new DataGridViewValues.DateTimeStamp() {
+                Start = PanelManagement.DatetimeRange.Begin + (TimeSpan.FromDays(1) - Session.m_curOffsetUTC)
+                , Increment = TimeSpan.FromDays(1)
+            });
         }
 
         /// <summary>
@@ -1297,7 +1299,7 @@ namespace PluginTaskAutobook
 
             base.panelManagement_TimezoneChanged();
 
-            m_dgvValues.BuildStructure(m_listNAlgParameter, m_listPutParameter);
+            m_dgvValues.AddColumns(m_listNAlgParameter, m_listPutParameter);
 
             addValueRows();
         }        
@@ -1312,7 +1314,7 @@ namespace PluginTaskAutobook
 
             base.panelManagement_Period_onChanged();
 
-            m_dgvValues.BuildStructure(m_listNAlgParameter, m_listPutParameter);
+            m_dgvValues.AddColumns(m_listNAlgParameter, m_listPutParameter);
 
             addValueRows();
         }

@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using HClassLibrary;
 
 namespace TepCommon
 {
@@ -14,6 +15,13 @@ namespace TepCommon
             public enum ModeData { NALG, DATETIME }
 
             public ModeData _modeData;
+
+            public struct DateTimeStamp
+            {
+                public DateTime Start;
+
+                public TimeSpan Increment;
+            }
 
             public DataGridViewValues(ModeData modeData)
                 : base()
@@ -52,7 +60,7 @@ namespace TepCommon
             /// <summary>
             /// Построить структуру представления (столбцы, строки)
             /// </summary>
-            public abstract void BuildStructure(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER>listPutParameter);
+            public abstract void AddColumns(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER>listPutParameter);
 
             protected class DictNAlgProperty : Dictionary <int, NALG_PROPERTY>
             {
@@ -167,18 +175,19 @@ namespace TepCommon
                     });
             }
 
-            private DateTime _datetimeStamp;
+            private DateTimeStamp _datetimeRange;
             /// <summary>
             /// Метка времени отображающихся значений, интерперетируется в ~ от типа DataGridView
+            /// , ??? зачем public (временно, из-за странной реализации DataGridViewVedomostBl)
             /// </summary>
-            public DateTime DatetimeStamp
+            public DateTimeStamp DatetimeStamp
             {
-                get { return _datetimeStamp; }
+                get { return _datetimeRange; }
 
                 set
                 {
-                    if (_datetimeStamp.Equals(value) == false) {
-                        _datetimeStamp = value;
+                    if (_datetimeRange.Equals(value) == false) {
+                        _datetimeRange = value;
 
                         if (_modeData == ModeData.DATETIME) {
                             ClearRows();
@@ -195,7 +204,9 @@ namespace TepCommon
             public int DaysInMonth
             {
                 get {
-                    return DateTime.DaysInMonth(DatetimeStamp.Year, DatetimeStamp.Month);
+                    return (DatetimeStamp.Start.Equals(DateTime.MinValue) == false)
+                        ? DateTime.DaysInMonth(DatetimeStamp.Start.Year, DatetimeStamp.Start.Month)
+                            : -1;
                 }
             }
 
@@ -273,31 +284,39 @@ namespace TepCommon
             /// <param name="dtStart">Дата для 1-ой строки предсавления</param>
             /// <param name="tsAdding">Смещение между метками времени строк</param>
             /// <param name="cnt">Количество строк в представлении (дней в месяце)</param>
-            protected virtual void addRows(DateTime dtStart, TimeSpan tsAdding, int cnt)
+            protected virtual void addRows()
             {
-                DateTime dtCurrent = dtStart;
+                DateTime dtCurrent;
+                TimeSpan tsIncrement = TimeSpan.Zero;
+                int cnt = -1;
+
+                dtCurrent = DatetimeStamp.Start;
+                tsIncrement = DatetimeStamp.Increment;
+                cnt = DaysInMonth;
 
                 if (_modeData == ModeData.DATETIME)
-                    if (DatetimeStamp.Equals(DateTime.MinValue) == false)
-                        if (dtStart.Equals(DatetimeStamp) == true)
-                            for (int i = 0; i < cnt + 1; i++, dtCurrent += tsAdding)
+                    if (RowCount == 0)
+                        if (dtCurrent.Equals(DateTime.MinValue) == false)
+                            for (int i = 0; i < cnt + 1; i++, dtCurrent += tsIncrement)
                                 addRow(dtCurrent, !(i < cnt));
                         else
-                            throw new Exception(@"HPanelTepCommon.DataGridViewValues::AddRows () - дата для 1-ой строки не совпадает с установленной ранее меткой для DataGridView в целом...");
+                            throw new Exception(@"HPanelTepCommon.DataGridViewValues::addRows () - не установлена метка даты для DataGridView в целом...");
                     else
-                        throw new Exception(@"HPanelTepCommon.DataGridViewValues::AddRows () - не установлена метка даты для DataGridView в целом...");
+                        Logging.Logg().Error(string.Format(@"HPanelTepCommon.DataGridViewValues::addRows () - строки уже добавлены..."), Logging.INDEX_MESSAGE.NOT_SET);
                 else
-                    throw new Exception(string.Format(@"HPanelTepCommon.DataGridViewValues::AddRows () - вызов метода не соответствует его типу {0}...", _modeData));
+                    throw new Exception(string.Format(@"HPanelTepCommon.DataGridViewValues::addRows () - для объекта с типом {0} вызов метода не допускается...", _modeData));
             }
 
-            public virtual void AddRows(DateTime dtStart, TimeSpan tsAdding)
-            {
-                addRows(dtStart, tsAdding, DaysInMonth);
-            }
+            //public virtual void AddRows()
+            //{
+            //    addRows();
+            //}
 
-            public virtual void AddRows(TimeSpan tsAdding)
+            public virtual void AddRows(DateTimeStamp dtStamp)
             {
-                addRows(DatetimeStamp, tsAdding, DaysInMonth);
+                DatetimeStamp = dtStamp;
+
+                addRows();
             }
 
             protected virtual void addRow(DateTime dtRow, bool bEnded)

@@ -394,8 +394,11 @@ namespace PluginTaskVedomostBl
             //for (int i = 0; i < m_listTECComponent.Count; i++)
             foreach (DataGridViewVedomostBl dgv in m_listDataGridViewVedomostBl)
             {
-                dgv.DatetimeStamp = PanelManagement.DatetimeRange.Begin; // Session.m_rangeDatetime.Begin;
-                dgv.BuildStructure(m_listNAlgParameter, m_listPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));
+                dgv.DatetimeStamp = new DataGridViewValues.DateTimeStamp() {
+                    Start = PanelManagement.DatetimeRange.Begin
+                    , Increment = TimeSpan.FromDays(1)
+                };
+                dgv.AddColumns(m_listNAlgParameter, m_listPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));                
 
                 pictureBox = new PictureBoxVedomostBl();
                 pictureBox.AddControl(dgv);

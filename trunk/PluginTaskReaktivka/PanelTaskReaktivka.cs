@@ -259,8 +259,9 @@ namespace PluginTaskReaktivka
 
         private void addValueRows()
         {
-            m_dgvValues.DatetimeStamp = PanelManagement.DatetimeRange.Begin + (TimeSpan.FromDays(1) - Session.m_curOffsetUTC);
-            m_dgvValues.AddRows(m_dgvValues.DatetimeStamp, TimeSpan.FromDays(1));
+            TimeSpan tsOffsetUTC = TimeSpan.FromDays(1) - Session.m_curOffsetUTC;
+
+            m_dgvValues.AddRows(new DataGridViewValues.DateTimeStamp() { Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC, Increment = TimeSpan.FromDays(1) });
         }
 
         #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'

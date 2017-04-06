@@ -69,7 +69,7 @@ namespace PluginTaskTepMain
             /// </summary>
             public event DataGridViewTEPValuesCellValueChangedEventHandler EventCellValueChanged;
 
-            public override void BuildStructure(List<TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
+            public override void AddColumns(List<TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
                 throw new NotImplementedException();
             }

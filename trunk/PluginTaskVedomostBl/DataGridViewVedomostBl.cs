@@ -108,7 +108,7 @@ namespace PluginTaskVedomostBl
 
             public int IdComponent { get { return ((HandlerDbTaskCalculate.TECComponent)Tag).m_Id; } }
 
-            public override void BuildStructure(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
+            public override void AddColumns(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
                 AddHeaderColumns(getListHeaders(listNAlgParameter, listPutParameter)); // cловарь заголовков
                 ////??? каждый раз получаем полный список и выбираем необходимый
@@ -116,7 +116,8 @@ namespace PluginTaskVedomostBl
 
                 AddColumns(listPutParameter);
 
-                AddRows(DatetimeStamp, TimeSpan.FromDays(1));
+                //???
+                addRows();
 
                 ResizeControls();
 

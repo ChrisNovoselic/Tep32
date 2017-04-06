@@ -49,7 +49,7 @@ namespace PluginTaskAutobook
                 //AddColumn(-1, "Дата", INDEX_SERVICE_COLUMN.DATE.ToString(), true, true);
             }
 
-            public override void BuildStructure(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
+            public override void AddColumns(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
                 List<HandlerDbTaskCalculate.TECComponent> listTECComponent;
                 HandlerDbTaskCalculate.TECComponent comp_tec;
