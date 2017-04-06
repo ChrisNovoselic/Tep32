@@ -362,6 +362,12 @@ namespace TepCommon
         /// Объект для произведения расчетов
         /// </summary>
         protected TaskCalculate m_taskCalculate;
+
+        public enum MODE_DATA_DATETIME { Begined, Ended }
+
+        private MODE_DATA_DATETIME _modeDataDateTime;
+
+        public MODE_DATA_DATETIME ModeDataDateTime { set { _modeDataDateTime = value; } }
         /// <summary>
         /// Параметры сессии
         /// </summary>
@@ -424,9 +430,10 @@ namespace TepCommon
                 get { return _currentIdPeriod; }
 
                 set { if (!(_currentIdPeriod == value)) { _currentIdPeriod = value; } else; }
-            }            /// <summary>
-                         /// Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
-                         /// </summary>
+            }
+            /// <summary>
+            /// ??? Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
+            /// </summary>
             public ID_PERIOD ActualIdPeriod { get { return m_ViewValues == ID_VIEW_VALUES.SOURCE_LOAD ? ID_PERIOD.DAY : _currentIdPeriod; } }
             /// <summary>
             /// Идентификатор текущий выбранного часового пояса
@@ -764,7 +771,7 @@ namespace TepCommon
         //}
         #endregion
 
-        public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN/*, int idFPanel = -1*/)
+        public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN, MODE_DATA_DATETIME modeDataDateTime = MODE_DATA_DATETIME.Ended)
             : base()
         {
             _filterDbTableCompList = DbTableCompList.NotSet;
@@ -1389,6 +1396,12 @@ namespace TepCommon
             DateTime dtBegin = _Session.m_DatetimeRange.Begin.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
                 , dtEnd = _Session.m_DatetimeRange.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes);
 
+            if (_modeDataDateTime == MODE_DATA_DATETIME.Begined) {
+                dtBegin -= TimeSpan.FromDays(1);
+                dtEnd -= TimeSpan.FromDays(1);
+            } else
+                ;
+
             arRangesRes = new DateTimeRange[(dtEnd.Month - dtBegin.Month) + 12 * (dtEnd.Year - dtBegin.Year) + 1];
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
             if (bEndMonthBoudary == false)
@@ -1444,9 +1457,9 @@ namespace TepCommon
             return strRes;
         }
 
-        public enum ModeAgregateGetValues { OFF, ONN }
+        public enum MODE_AGREGATE_GETVALUES { OFF, ON }
 
-        public ModeAgregateGetValues m_modeAgregateGetValues;
+        public MODE_AGREGATE_GETVALUES ModeAgregateGetValues;
         /// <summary>
         /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
         ///  , структура таблицы совместима с [inval], [outval]
@@ -1458,7 +1471,25 @@ namespace TepCommon
         {
             string strRes = string.Empty
                 , whereParameters = string.Empty
-                , subQuery = string.Empty;
+                , subQuery = string.Empty
+                , partDateadd = string.Empty;
+
+            switch (idPeriod) {
+                case ID_PERIOD.YEAR:
+                    partDateadd = @"YEAR";
+                    break;
+                case ID_PERIOD.MONTH:
+                    partDateadd = @"MONTH";
+                    break;
+                case ID_PERIOD.DAY:
+                    partDateadd = @"DAY";
+                    break;
+                case ID_PERIOD.HOUR: //???
+                    partDateadd = @"HOUR";
+                    break;
+                default:
+                    break;
+            }
 
             if (!(type == TaskCalculate.TYPE.UNKNOWN)) {
                 // аналог в 'GetQueryParameters'
@@ -1475,20 +1506,26 @@ namespace TepCommon
                 for (i = 0; i < arQueryRanges.Length; i++) {
                     bLastItem = !(i < (arQueryRanges.Length - 1));
 
-                    subQuery += @"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
-                            //+ @", " + _Session.m_Id + @" as [ID_SESSION]"
-                            + (m_modeAgregateGetValues == ModeAgregateGetValues.ONN ? @", m.[AVG]" : m_modeAgregateGetValues == ModeAgregateGetValues.OFF ? string.Empty : string.Empty)
+                    subQuery += string.Format(@"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
+                            + @"{0}"
                             + @", v.[WR_DATETIME]"
-                            + @", CONVERT(varchar, v.[DATE_TIME], 127)" + @" as [EXTENDED_DEFINITION]"
-                        //+ @", GETDATE () as [WR_DATETIME]"
-                        + @" FROM [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE) + @"_"
-                        + arQueryRanges[i].Begin.ToString(@"yyyyMM") + @"] v"
-                            + @" LEFT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT) + @"] p ON p.ID = v.ID_PUT"
-                            + @" RIGHT JOIN [dbo].[" + getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG) + @"] a ON a.ID = p.ID_ALG AND a.ID_TASK = "
-                            + (int)_iIdTask + whereParameters
+                            + @", CONVERT(varchar, {1}, 127)" + @" as [EXTENDED_DEFINITION]"
+                        + @" FROM [dbo].[{2}_{3}] v"
+                            + @" LEFT JOIN [dbo].[{4}] p ON p.ID = v.ID_PUT"
+                            + @" RIGHT JOIN [dbo].[{5}] a ON a.ID = p.ID_ALG AND a.ID_TASK = {6}"
                             + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                        + @" WHERE v.[ID_TIME] = " + (int)idPeriod //???ID_PERIOD.HOUR //??? _currIdPeriod
-                        ;
+                        + @" WHERE v.[ID_TIME] = {7}" //???ID_PERIOD.HOUR //??? _currIdPeriod
+                            , (ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON ? @", m.[AVG]" : ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.OFF ? string.Empty : string.Empty)
+                            , (_modeDataDateTime == MODE_DATA_DATETIME.Begined) ? string.Format(@"DATEADD({0}, 1, v.[DATE_TIME])", partDateadd)
+                                    : (_modeDataDateTime == MODE_DATA_DATETIME.Ended) ? @"v.[DATE_TIME]"
+                                        : string.Empty
+                            , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE)
+                            , arQueryRanges[i].Begin.ToString(@"yyyyMM")
+                            , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT)
+                            , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
+                            , (int)_iIdTask + whereParameters
+                            , (int)idPeriod
+                        );
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
                     // 'Begin' == 'End'
                     if (bLastItem == true)
@@ -1510,7 +1547,7 @@ namespace TepCommon
 
                 strRes = @"SELECT v.ID_PUT" // as [ID]"
                         + @", " + _Session.m_Id + @" as [ID_SESSION]";
-                if (m_modeAgregateGetValues == ModeAgregateGetValues.ONN)
+                if (ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON)
                     strRes += @", CASE"
                             + @" WHEN COUNT (*) = " + cntBasePeriod + @" THEN MIN(v.[QUALITY])"
                             + @" WHEN COUNT (*) = 0 THEN " + (int)ID_QUALITY_VALUE.NOT_REC
@@ -1529,7 +1566,7 @@ namespace TepCommon
                            + @", [EXTENDED_DEFINITION]"
                     + @" FROM (" + subQuery + @") as v";
 
-                if (m_modeAgregateGetValues == ModeAgregateGetValues.ONN)
+                if (ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON)
                     strRes += @" GROUP BY v.ID_PUT"
                         + @", v.[AVG], v.[EXTENDED_DEFINITION]";
                 else

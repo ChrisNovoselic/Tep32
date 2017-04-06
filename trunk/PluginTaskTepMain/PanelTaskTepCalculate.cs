@@ -46,6 +46,8 @@ namespace PluginTaskTepMain
             : base(iFunc, type)
         {
             HandlerDb.IdTask = ID_TASK.TEP;
+            HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
+            HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
 
             InitializeComponents();
 

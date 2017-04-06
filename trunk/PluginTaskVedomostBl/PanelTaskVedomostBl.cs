@@ -182,6 +182,8 @@ namespace PluginTaskVedomostBl
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
+            HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
+            HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
 
             m_listNAlgParameter = new List<HandlerDbTaskCalculate.NALG_PARAMETER>();
             m_listTECComponent = new List<HandlerDbTaskCalculate.TECComponent>();
@@ -394,11 +396,18 @@ namespace PluginTaskVedomostBl
             //for (int i = 0; i < m_listTECComponent.Count; i++)
             foreach (DataGridViewVedomostBl dgv in m_listDataGridViewVedomostBl)
             {
-                dgv.DatetimeStamp = new DataGridViewValues.DateTimeStamp() {
+                //dgv.DatetimeStamp = new DataGridViewValues.DateTimeStamp() {
+                //    Start = PanelManagement.DatetimeRange.Begin
+                //    , Increment = TimeSpan.FromDays(1)
+                //};
+                dgv.AddColumns(m_listNAlgParameter, m_listPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));
+                dgv.AddRows(new DataGridViewValues.DateTimeStamp() {
                     Start = PanelManagement.DatetimeRange.Begin
-                    , Increment = TimeSpan.FromDays(1)
-                };
-                dgv.AddColumns(m_listNAlgParameter, m_listPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));                
+                    ,
+                    Increment = TimeSpan.FromDays(1)
+                });
+                dgv.ResizeControls();
+                dgv.ConfigureColumns();
 
                 pictureBox = new PictureBoxVedomostBl();
                 pictureBox.AddControl(dgv);

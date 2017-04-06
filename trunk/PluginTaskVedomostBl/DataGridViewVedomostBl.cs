@@ -110,18 +110,18 @@ namespace PluginTaskVedomostBl
 
             public override void AddColumns(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
-                AddHeaderColumns(getListHeaders(listNAlgParameter, listPutParameter)); // cловарь заголовков
+                m_listHeaders = new List<HEADER>(getListHeaders(listNAlgParameter, listPutParameter)); // cловарь заголовков                
                 ////??? каждый раз получаем полный список и выбираем необходимый
                 //dictVisualSett = getVisualSettingsOfIdComponent((int)dgv.Tag);
 
                 AddColumns(listPutParameter);
 
-                //???
-                addRows();
+                ////???
+                //addRows();
 
-                ResizeControls();
+                //ResizeControls();
 
-                ConfigureColumns();
+                //ConfigureColumns();
             }
 
             /// <summary>
@@ -215,7 +215,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             private void formingTitleLists()
             {
-                string oldItem = string.Empty;
+                string prevValue = string.Empty;
                 COLUMN_PROPERTY col_prop;
                 //List<string> listTop = new List<string>()
                 //    , listMiddle = new List<string>();
@@ -231,16 +231,16 @@ namespace PluginTaskVedomostBl
                     if (!(col_prop.m_putParameter.m_idNAlg < 0))
                         if (col.Visible == true)
                             if (col_prop.m_textTopHeader.Equals(string.Empty) == false)
-                                if (col_prop.m_textTopHeader.Equals(oldItem) == false)
-                                {
-                                    oldItem = col_prop.m_textTopHeader;
+                                if (col_prop.m_textTopHeader.Equals(prevValue) == false) {
+                                    prevValue = col_prop.m_textTopHeader;
                                     m_listTextHeaderTop.Add(col_prop.m_textTopHeader);
-                                }
-                                else;
+                                } else;
                             else
                                 m_listTextHeaderTop.Add(col_prop.m_textTopHeader);
-                        else;
-                    else;
+                        else
+                            ;
+                    else
+                        ;
                 }
 
                 //m_headerTop.Add(idTG, listTop);
@@ -251,14 +251,15 @@ namespace PluginTaskVedomostBl
                 //    ;
 
                 m_listTextHeaderMiddle.Clear();
+                prevValue = string.Empty;
 
                 foreach (DataGridViewColumn col in Columns) {
                     col_prop = (COLUMN_PROPERTY)col.Tag;
 
                     if (!(col_prop.m_putParameter.m_idNAlg < 0))
                         if (col.Visible == true)
-                            if (col.Name != oldItem) {
-                                oldItem = col.Name;
+                            if (col.Name.Equals(prevValue) == false) {
+                                prevValue = col.Name;
                                 m_listTextHeaderMiddle.Add(col.Name);
                             } else
                                 ;
@@ -458,11 +459,6 @@ namespace PluginTaskVedomostBl
                 }
 
                 //(sender as DGVVedomostBl).Paint -= new PaintEventHandler(dataGridView1_Paint);
-            }
-
-            public void AddHeaderColumns(List<HEADER> listHeaders)
-            {
-                m_listHeaders = new List<HEADER>(listHeaders);
             }
 
             public void AddColumns(List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
@@ -841,7 +837,8 @@ namespace PluginTaskVedomostBl
 
                 foreach (HandlerDbTaskCalculate.PUT_PARAMETER put in listPutParameter) {
                     if ((nalg_prop == null)
-                        || ((!(nalg_prop == null)) && (!(nalg_prop.m_Id == put.m_Id))))
+                        || ((!(nalg_prop == null))
+                            && (!(nalg_prop.m_Id == put.m_Id))))
                         nalg_prop = listNAlgParameter.Find(nAlg => { return nAlg.m_Id == put.m_idNAlg; });
                     else
                         ;

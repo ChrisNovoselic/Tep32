@@ -626,6 +626,8 @@ namespace PluginTaskAutobook
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
+            HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
+            HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
             m_AutoBookCalculate = new TaskAutobookCalculate();
 
             m_listNAlgParameter = new List<HandlerDbTaskCalculate.NALG_PARAMETER>();
