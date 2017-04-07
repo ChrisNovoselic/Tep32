@@ -90,10 +90,22 @@ namespace TepCommon
         /// События изменения значения
         /// </summary>
         public event EventHandler ValueChanged;
-
-        private enum INDEX_VALUE : uint { PREVIOUS, CURRENT }
+        /// <summary>
+        /// Перечисление - индексы для элементов массива с предыдущим и текущим значением
+        /// </summary>
+        private enum INDEX_VALUE : uint {
+            /// <summary>
+            /// Предыдущий
+            /// </summary>
+            PREVIOUS,
+            /// <summary>
+            /// Текущий
+            /// </summary>
+            CURRENT }
+        /// <summary>
+        /// _значение дата/время объекта
+        /// </summary>
         private DateTime[] _value;
-
         /// <summary>
         /// Значение дата/время объекта
         /// </summary>

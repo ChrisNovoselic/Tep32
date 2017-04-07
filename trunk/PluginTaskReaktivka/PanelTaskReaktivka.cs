@@ -761,6 +761,16 @@ namespace PluginTaskReaktivka
             m_dgvValues.ShowValues(inValues, outValues);
         }
 
+        protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
+        {
+            throw new NotImplementedException();
+        }
+
         ///// <summary>
         ///// получение значений
         ///// создание сессии
@@ -958,7 +968,6 @@ namespace PluginTaskReaktivka
         /// </summary>
         public override void Stop()
         {
-            HandlerDb.Clear();
             HandlerDb.Stop();
 
             base.Stop();

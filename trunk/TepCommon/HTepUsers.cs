@@ -1551,8 +1551,7 @@ namespace TepCommon
 
                 if (!(err == 0))
                     errMsg = @"нет соединения с БД";
-                else
-                {
+                else {
                     query = @"SELECT * from " + s_nameTableProfilesUnit;
                     m_tblTypes = DbTSQLInterface.Select(ref dbConn, query, null, null, out err);
 
@@ -1561,6 +1560,8 @@ namespace TepCommon
                     else
                         ;
                 }
+
+                DbSources.Sources().UnRegister(idListener);
             }
             /// <summary>
             /// Список параметров

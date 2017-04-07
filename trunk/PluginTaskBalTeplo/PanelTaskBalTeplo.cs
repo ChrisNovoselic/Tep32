@@ -637,7 +637,6 @@ namespace PluginTaskBalTeplo
         /// </summary>
         public override void Stop()
         {
-            HandlerDb.Clear();
             HandlerDb.Stop();
 
             base.Stop();
@@ -1046,6 +1045,16 @@ namespace PluginTaskBalTeplo
             ////сохранить вых.корр. знач. в DataTable
             //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
             //    dgvBlock.FillTableCorValue(HandlerDb.OutValues(out err), dgvBlock);
+        }
+
+        protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>

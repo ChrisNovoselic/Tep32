@@ -90,6 +90,16 @@ namespace PluginTaskTepForm15506
         {
             throw new NotImplementedException();
         }
+
+        protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class PlugIn : HFuncDbEdit

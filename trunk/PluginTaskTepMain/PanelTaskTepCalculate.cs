@@ -208,11 +208,8 @@ namespace PluginTaskTepMain
         /// <param name="bClose">Признак полной/частичной очистки</param>
         protected override void clear(bool bClose = false)
         {
-            HandlerDb.Clear();
             //??? повторная проверка
             if (bClose == true) {
-                PanelManagement.Clear(); // прежде удаления элементов из списка отменить регистрацию обработки событий "изменение текущ./индекса"
-
                 m_dgvValues.ClearRows();
                 m_dgvValues.ClearColumns();
             }

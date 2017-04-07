@@ -761,6 +761,16 @@ namespace PluginTaskVedomostBl
             //m_arTableEdit[(int)Session.m_ViewValues] = valuesFence();
         }
 
+        protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Обновить/Вставить/Удалить
         /// </summary>

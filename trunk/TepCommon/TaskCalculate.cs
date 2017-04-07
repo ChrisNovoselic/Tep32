@@ -16,7 +16,7 @@ namespace TepCommon
         public abstract class TaskCalculate : Object
         {
             /// <summary>
-            /// Перечисление - индексы типов вкладок (объектов наследуемых классов)
+            /// Перечисление - индексы (идентифкаторы) загружаемых/отображаемых значений
             /// </summary>
             [Flags]
             public enum TYPE { UNKNOWN = 0x0

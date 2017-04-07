@@ -526,6 +526,16 @@ namespace PluginTaskAutobook
             m_dgvValues.ShowValues(m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]);
         }
 
+        protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
+        {
+            throw new NotImplementedException();
+        }
+
         ///// <summary>
         ///// Проверка выбранного диапазона
         ///// </summary>
@@ -735,7 +745,6 @@ namespace PluginTaskAutobook
         /// </summary>
         public override void Stop()
         {
-            HandlerDb.Clear();
             HandlerDb.Stop();
 
             base.Stop();

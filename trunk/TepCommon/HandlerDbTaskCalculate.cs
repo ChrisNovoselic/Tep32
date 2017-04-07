@@ -805,7 +805,17 @@ namespace TepCommon
         /// Событие для оповещения панелей о завершении загрузки значений из БД
         /// </summary>
         public event Action<RESULT> EventSetValuesCompleted;
-
+        /// <summary>
+        /// Событие для оповещения панелей о завершении расчета
+        /// </summary>
+        public event Action<RESULT> EventCalculateCompleted;
+        /// <summary>
+        /// Событие для оповещения панелей о выполнении процесса расчета
+        /// </summary>
+        public event Action<object> EventCalculateProccess;
+        /// <summary>
+        /// Очистить объект (списки со значениями, параметрами, компонентами) - !!!удалить сессиию
+        /// </summary>
         public override void Clear()
         {
             _dictValues.Clear();
@@ -818,7 +828,12 @@ namespace TepCommon
 
             base.Clear();
         }
-
+        /// <summary>
+        /// Обновить значения в объекте - загрузить из БД
+        /// </summary>
+        /// <param name="idFPanel">Идентиыикатор панели</param>
+        /// <param name="taskCalculateType">Тип(ы) загружаемых значений для заполнения выходной временной таблицы (если значения архивные - игнорируется)</param>
+        /// <param name="viewValues">Тип значений для загрузки из БД</param>
         public virtual void UpdateDataValues(int idFPanel, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE taskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES viewValues)
         {
             _Session.m_ViewValues = viewValues;
@@ -829,9 +844,10 @@ namespace TepCommon
         /// <summary>
         /// Выполнить запрос к БД, отобразить рез-т запроса
         ///  в случае загрузки "сырых" значений = ID_PERIOD.HOUR
-        ///  в случае загрузки "учтенных" значений -  в зависимости от установленного пользователем</param>
+        ///  в случае загрузки "учтенных" значений -  в зависимости от установленного пользователем
         /// </summary>
-        /// </summary>
+        /// <param name="idFPanel">Идентифкатор панели</param>
+        /// <param name="taskCalculateType">Тип(ы) загружаемых значений</param>
         public virtual void UpdateDataValues(int idFPanel, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE taskCalculateType)
         {
             int err = -1
@@ -843,6 +859,11 @@ namespace TepCommon
             RegisterDbConnection(out iRegDbConn);
 
             if (!(iRegDbConn < 0)) {
+                deleteSession();
+                _dictValues.Clear();
+
+                _Session.NewId();
+                
                 // установить значения в таблицах для расчета, создать новую сессию
                 // предыдущая сессия удалена в 'clear'
                 setValues(idFPanel, taskCalculateType, out err, out errMsg);
@@ -869,19 +890,45 @@ namespace TepCommon
                 ;
         }
         /// <summary>
-        /// Удалить сессию (+ очистить реквизиты сессии)
+        /// Удалить запись о параметрах сессии расчета (по триггеру - все входные и выходные значения, + очистить реквизиты сессии)
         /// </summary>
         protected virtual void deleteSession()
         {
-            int err = -1;
+            int err = 0; // предполагаем, ошибки нет
 
             _Session.Clear();
 
-            (this as HandlerDbTaskCalculate).DeleteSession(out err);
+            int iRegDbConn = -1; // признак регистрации соединения с БД
+            string strQuery = string.Empty;
+
+            if (IsDeleteSession == true) {
+                RegisterDbConnection(out iRegDbConn);
+
+                if (!(iRegDbConn < 0)) {
+                    strQuery = @"DELETE FROM [dbo].[" + HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.SESSION].m_name + @"]"
+                        + @" WHERE [ID_CALCULATE]=" + _Session.m_Id;
+
+                    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+                } else
+                    ;
+
+                if (!(iRegDbConn > 0)) {
+                    UnRegisterDbConnection();
+                } else
+                    ;
+            } else
+                ;
+            // очистить сессию
+            if (err == 0)
+                _Session.m_Id = -1;
+            else
+                ;
         }
         /// <summary>
         /// Установить значения таблиц для редактирования
         /// </summary>
+        /// <param name="idFPanel">Идентифкатор панели</param>
+        /// <param name="taskCalculateType">Тип(ы) загружаемых значений</param>
         /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
         /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
         protected virtual void setValues(int idFPanel, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE taskCalculateType, out int err, out string strErr)
@@ -892,8 +939,6 @@ namespace TepCommon
             string strQuery = string.Empty;
             ID_DBTABLE idDbTable = ID_DBTABLE.UNKNOWN;
             Dictionary<KEY_VALUES, DataTable> dictTableValues;
-
-            _Session.NewId();
 
             //m_dictValues.Clear(); - очищена в 'deleteSession'
             dictTableValues = new Dictionary<KEY_VALUES, DataTable>();
@@ -1308,41 +1353,6 @@ namespace TepCommon
         }
 
         protected virtual bool IsDeleteSession { get { return _Session.m_Id > 0; } }
-        /// <summary>
-        /// Удалить запись о параметрах сессии расчета (по триггеру - все входные и выходные значения)
-        /// </summary>
-        /// <param name="idSession">Идентификатор сессии расчета</param>
-        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
-        public void DeleteSession(out int err)
-        {
-            err = 0; // предполагаем, ошибки нет
-
-            int iRegDbConn = -1; // признак регистрации соединения с БД
-            string strQuery = string.Empty;
-
-            if (IsDeleteSession == true) {
-                RegisterDbConnection(out iRegDbConn);
-
-                if (!(iRegDbConn < 0)) {
-                    strQuery = @"DELETE FROM [dbo].[" + HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.SESSION].m_name + @"]"
-                        + @" WHERE [ID_CALCULATE]=" + _Session.m_Id;
-
-                    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-                } else
-                    ;
-
-                if (!(iRegDbConn > 0)) {
-                    UnRegisterDbConnection();
-                } else
-                    ;
-            } else
-                ;
-            // очистить сессию
-            if (err == 0)
-                _Session.m_Id = -1;
-            else
-                ;
-        }
         /// <summary>
         /// Обновить значения во временой таблице
         /// </summary>
@@ -2251,11 +2261,18 @@ namespace TepCommon
                     case ID_TASK.AUTOBOOK:
                     case ID_TASK.BAL_TEPLO: //Для работы с балансом тепла 6,06,2016 Апельганс
                         calculate(type, out tableOrigin, out tableCalcRes, out err);
-                        if (!(err == 0))
+                        if (!(err == 0)) {
+                            EventCalculateCompleted(RESULT.Error);
+
                             Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - ошибка при выполнеии расчета задачи ID=" + IdTask.ToString() + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
-                        else
-                        // сохранить результаты вычисления
+                        } else {
+                            // сохранить результаты вычисления вр временной таблице
                             saveResult(tableOrigin, tableCalcRes, out err);
+                            // забрать значения из временной таблицы
+                            _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }] = TableToListValues(getVariableTableValues(type, out err));
+
+                            EventCalculateCompleted(RESULT.Ok);
+                        }
                         break;
                     default:
                         Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - неизвестный тип задачи расчета...", Logging.INDEX_MESSAGE.NOT_SET);

@@ -365,6 +365,7 @@ namespace TepCommon
                 if (!(err == 0))
                     Logging.Logg().Error(@"HandlerDbTaskCalculate::RegisterDbConnection () - ошибка соединения с БД...", Logging.INDEX_MESSAGE.NOT_SET);
                 else
+                    //Console.WriteLine(string.Format(@"HandlerDbTaskCalculate::RegisterDbConnection () - _iListenerId={0}...", _iListenerId))
                     ;
             }
             else
@@ -377,13 +378,13 @@ namespace TepCommon
         public void UnRegisterDbConnection()
         {
             // проверить требуется ли регистрация
-            if (isRegisterDbConnection == true)
-            {
+            if (isRegisterDbConnection == true) {
+                //Console.WriteLine(string.Format(@"HandlerDbTaskCalculate::UnRegisterDbConnection () - _iListenerId={0}...", _iListenerId));
+
                 DbSources.Sources().UnRegister(_iListenerId);
                 _dbConnection = null;
                 _iListenerId = -1;
-            }
-            else
+            } else
                 ;
         }
         /// <summary>

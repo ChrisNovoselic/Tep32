@@ -164,6 +164,16 @@ namespace PluginTaskTepMain
             throw new NotImplementedException();
         }
 
+        protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
+        {
+            throw new NotImplementedException();
+        }
+
         private class PanelManagementTaskTepRealTime : HPanelTepCommon.PanelManagementTaskCalculate
         {
             public PanelManagementTaskTepRealTime()

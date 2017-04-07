@@ -897,7 +897,6 @@ namespace PluginTaskAutobook
         /// </summary>
         public override void Stop()
         {
-            HandlerDb.Clear();
             HandlerDb.Stop();
 
             base.Stop();
@@ -1052,10 +1051,14 @@ namespace PluginTaskAutobook
 
         protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
         {
-            int err = -1;
-
             //вычисление значений, сохранение во временной таблице
             HandlerDb.Calculate(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+        }
+
+        protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)
+        {
+            int err = -1;
+
             // отобразить значения
             m_dgvValues.ShowValues(m_arTableOrigin
                 , HandlerDb.GetPlanOnMonth(TaskCalculateType
@@ -1063,8 +1066,11 @@ namespace PluginTaskAutobook
                     , Session.ActualIdPeriod
                     , out err)
                 , Session.m_ViewValues);
-            ////??? формирование таблиц на основе грида
-            //valuesFence();
+        }
+
+        protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>

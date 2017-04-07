@@ -58,6 +58,9 @@ namespace Tep64
                                 + @", " + Environment.MachineName
                                 + @", " + Environment.UserDomainName + @"\" + Environment.UserName;
                             break;
+                        //case (int)HFunc.ID_DATAASKED_HOST.FORMABOUT_SHOWDIALOG:
+                        //    rec = null;
+                        //    break;
                         default: // обработка индивидуальных для каждой вкладки запросов
                             switch ((int)((EventArgsDataHost)obj).id_detail)
                             {

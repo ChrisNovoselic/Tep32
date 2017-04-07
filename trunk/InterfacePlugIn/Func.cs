@@ -10,7 +10,7 @@ namespace InterfacePlugIn
 {
     public abstract class HFunc : PlugInMenuItem
     {
-        public enum ID_DATAASKED_HOST { ICON_MAINFORM = 1001, STR_PRODUCTVERSION = 1002 //Запросить данные у главной формы
+        public enum ID_DATAASKED_HOST { ICON_MAINFORM = 1001, STR_PRODUCTVERSION = 1002 /*, FORMABOUT_SHOWDIALOG*/ //Запросить данные у главной формы
                                     , CONNSET_MAIN_DB = 10001
                                     , ACTIVATE_TAB = 10101
                                     };

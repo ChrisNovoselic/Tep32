@@ -37,12 +37,12 @@ namespace TepCommon
             TaskCalculateType = type;            
 
             _handlerDb.EventAddNAlgParameter += new Action<NALG_PARAMETER>(handlerDbTaskCalculate_onAddNAlgParameter);
-
             _handlerDb.EventAddPutParameter += new Action<PUT_PARAMETER>(handlerDbTaskCalculate_onAddPutParameter);
-
             _handlerDb.EventAddComponent += new Action<TECComponent>(handlerDbTaskCalculate_onAddComponent);
 
             _handlerDb.EventSetValuesCompleted += new Action<RESULT>(handlerDbTaskCalculate_onSetValuesCompleted);
+            _handlerDb.EventCalculateCompleted += new Action<RESULT>(handlerDbTaskCalculate_onCalculateCompleted);
+            _handlerDb.EventCalculateProccess += new Action<object>(handlerDbTaskCalculate_onCalculateProcess);
         }
         /// <summary>
         /// Поле
@@ -250,6 +250,12 @@ namespace TepCommon
         /// Обраюотчик события - завершение загрузки значений из БД
         /// </summary>
         protected abstract void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res);
+        /// <summary>
+        /// Обраюотчик события - завершение выполнения расчета
+        /// </summary>
+        protected abstract void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res);
+
+        protected abstract void handlerDbTaskCalculate_onCalculateProcess(object obj);
         /// <summary>
         /// Ссылка на объект для обращения к БД
         /// </summary>

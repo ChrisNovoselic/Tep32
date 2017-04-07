@@ -238,6 +238,16 @@ namespace PluginTaskTepMain
             m_dgvValues.ShowValues(m_TableEdit/*, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]*/);
         }
 
+        protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Обработчик события - нажатие на кнопку "Загрузить" (кнопка - аналог "Обновить")
         /// </summary>

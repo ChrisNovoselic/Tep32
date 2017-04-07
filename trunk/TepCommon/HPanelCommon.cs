@@ -363,15 +363,15 @@ namespace TepCommon
             try {
                 if ((bRes == true)
                     && (active == true)
-                    && (IsFirstActivated == true))
-                        initialize(out err, out strErrMsg);
-                else
+                    && (IsFirstActivated == true)) {
+                    initialize(out err, out strErrMsg);
+
+                    initializeDescPanel();
+                } else
                     ;
             } catch (Exception e) {
                 Logging.Logg().Exception(e, @"HPanelTepCommon::Activate () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
-
-            initializeDescPanel();
 
             return bRes;
         }

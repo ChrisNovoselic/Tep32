@@ -10,6 +10,8 @@ using System.Windows.Forms;
 using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
+using System.Collections;
+using System.Threading;
 
 namespace PluginAboutTepProgram
 {
@@ -17,12 +19,18 @@ namespace PluginAboutTepProgram
     {
         IPlugIn _iFuncPlugin;
 
+        public ManualResetEvent m_mnlResetEventReady;
+
         public FormAboutTepProgram(IPlugIn iFunc)
         {
             InitializeComponent();
             this._iFuncPlugin = iFunc;
 
+            this.m_lblProductVersion.Text = string.Empty;
+
             this.FormClosing += new FormClosingEventHandler(FormAboutTepProgram_FormClosing);
+
+            m_mnlResetEventReady = new ManualResetEvent(false);
         }
 
         void FormAboutTepProgram_FormClosing(object sender, FormClosingEventArgs e)
@@ -39,9 +47,9 @@ namespace PluginAboutTepProgram
 
         public void UpdateGUI (object obj) {
             if (this.InvokeRequired == true)
-                this.BeginInvoke (new DelegateObjectFunc (updateGUI), obj);
+                this.BeginInvoke(new DelegateObjectFunc(updateGUI), obj);
             else
-                ;
+                updateGUI(obj);
         }
 
         private void updateGUI  (object obj) {
@@ -57,6 +65,12 @@ namespace PluginAboutTepProgram
                 default:
                     break;
             }
+
+            if ((!(this.m_pictureBox.Image == null))
+                && (this.m_lblProductVersion.Text.Equals(string.Empty) == false))
+                m_mnlResetEventReady.Set();
+            else
+                ;
         }
     }
 
@@ -70,25 +84,48 @@ namespace PluginAboutTepProgram
         public override void OnClickMenuItem(object obj, /*PlugInMenuItem*/EventArgs ev)
         {
             int id = -1;
-            KeyValuePair<int, int> pair;
+            KeyValuePair<int, int> pairIconMainForm
+                , pairProductVersion
+                , pairShowDialog;
             
             base.OnClickMenuItem(obj, ev);
 
             id = (int)(obj as ToolStripMenuItem).Tag;
-            pair = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.ICON_MAINFORM);
-            
-            if (m_dictDataHostCounter.ContainsKey (pair) == false)
-                DataAskedHost (new object [] {id, (int)ID_DATAASKED_HOST.ICON_MAINFORM});
-            else
-                ;
+            pairIconMainForm = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.ICON_MAINFORM);
+            pairProductVersion = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.STR_PRODUCTVERSION);
+            //pairShowDialog = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.FORMABOUT_SHOWDIALOG);
 
-            pair = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.STR_PRODUCTVERSION);
-            if (m_dictDataHostCounter.ContainsKey(pair) == false)
-                DataAskedHost(new object[] { id, (int)ID_DATAASKED_HOST.STR_PRODUCTVERSION });
-            else
-                ;
+            if ((m_dictDataHostCounter.ContainsKey(pairIconMainForm) == true)
+                && (m_dictDataHostCounter.ContainsKey(pairProductVersion) == true)) {
+                ShowDialog();
+            } else {
+            // запрашиваем значения
+                // пиктограмма
+                if (m_dictDataHostCounter.ContainsKey(pairIconMainForm) == false)
+                    DataAskedHost(new object[] { pairIconMainForm.Key, (int)pairIconMainForm.Value });
+                else
+                    ;
+                // версия программы
+                if (m_dictDataHostCounter.ContainsKey(pairProductVersion) == false)
+                    DataAskedHost(new object[] { pairProductVersion.Key, (int)pairProductVersion.Value });
+                else
+                    ;
+                //// запрашиваем отображение
+                //if (m_dictDataHostCounter.ContainsKey(pairShowDialog) == false)
+                //    DataAskedHost(new object[] { pairShowDialog.Key, (int)pairShowDialog.Value });
+                //else
+                //    ;
 
-            (_objects[id] as FormAboutTepProgram).ShowDialog(Host as IWin32Window);
+                if (WaitHandle.WaitAny(new WaitHandle[] { (_objects[_Id] as FormAboutTepProgram).m_mnlResetEventReady }) == 0)
+                    ShowDialog();
+                else
+                    ;
+            }
+        }
+
+        public void ShowDialog()
+        {
+            (_objects[_Id] as FormAboutTepProgram).ShowDialog();
         }
 
         public override void OnEvtDataRecievedHost(object obj)
@@ -106,6 +143,9 @@ namespace PluginAboutTepProgram
                 case (int)ID_DATAASKED_HOST.STR_PRODUCTVERSION:
                     (_objects[id] as FormAboutTepProgram).UpdateGUI(obj);
                     break;
+                //case (int)ID_DATAASKED_HOST.FORMABOUT_SHOWDIALOG:
+                //    ShowDialog();
+                //    break;
                 default:
                     break;
             }
