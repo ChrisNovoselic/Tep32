@@ -637,7 +637,8 @@ namespace PluginTaskBalTeplo
         /// </summary>
         public override void Stop()
         {
-            deleteSession();
+            HandlerDb.Clear();
+            HandlerDb.Stop();
 
             base.Stop();
         }
@@ -807,7 +808,7 @@ namespace PluginTaskBalTeplo
             Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE;
 
             // ... - загрузить/отобразить значения из БД
-            updateDataValues();
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE);
         }
 
         /// <summary>
@@ -817,10 +818,8 @@ namespace PluginTaskBalTeplo
         /// <param name="ev">Аргумент события</param>
         protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD;
-
             // ... - загрузить/отобразить значения из БД
-            updateDataValues();
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
         }
         /// <summary>
         /// 
@@ -999,22 +998,25 @@ namespace PluginTaskBalTeplo
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void onAddNAlgParameter(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddNAlgParameter(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
+            base.handlerDbTaskCalculate_onAddNAlgParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
+            base.handlerDbTaskCalculate_onAddPutParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(TepCommon.HandlerDbTaskCalculate.TECComponent obj)
+        protected override void handlerDbTaskCalculate_onAddComponent(TepCommon.HandlerDbTaskCalculate.TECComponent obj)
         {
+            base.handlerDbTaskCalculate_onAddComponent(obj);
         }
         #endregion
 
@@ -1022,10 +1024,10 @@ namespace PluginTaskBalTeplo
         /// Обработчик события - завершение загрузки значений
         ///  , сигнал для их отображения
         /// </summary>
-        protected override void onSetValuesCompleted()
+        protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             dgvBlock.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                            , m_dictTableDictPrj);
+                , m_dictTableDictPrj);
             dgvOutput.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
                 , m_dictTableDictPrj);
             dgvTeploBL.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out

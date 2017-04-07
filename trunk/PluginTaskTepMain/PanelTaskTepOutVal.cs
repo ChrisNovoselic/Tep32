@@ -120,25 +120,14 @@ namespace PluginTaskTepMain
         //protected override void btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE type)
         //{
         //    throw new NotImplementedException();
-        //}
-        /// <summary>
-        /// Удалить сессию (+ очистить реквизиты сессии)
-        /// </summary>
-        protected override void deleteSession()
-        {
-            base.deleteSession();
-
-            int err = -1;
-
-            HandlerDb.InitSession(out err);
-        }
+        //}        
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
-            base.onAddPutParameter(obj);
+            base.handlerDbTaskCalculate_onAddPutParameter(obj);
 
             (PanelManagement as PanelManagementTaskTepOutVal).AddPutParameter(obj);
         }

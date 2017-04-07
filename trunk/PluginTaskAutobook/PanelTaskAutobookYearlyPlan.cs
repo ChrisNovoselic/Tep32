@@ -429,22 +429,25 @@ namespace PluginTaskAutobook
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
+            base.handlerDbTaskCalculate_onAddNAlgParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
+            base.handlerDbTaskCalculate_onAddPutParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
+        protected override void handlerDbTaskCalculate_onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
         {
+            base.handlerDbTaskCalculate_onAddComponent(obj);
         }
         #endregion
 
@@ -518,7 +521,7 @@ namespace PluginTaskAutobook
         //        m_handlerDb.UnRegisterDbConnection();
         //}
 
-        protected override void onSetValuesCompleted()
+        protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
         {
             m_dgvValues.ShowValues(m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]);
         }
@@ -703,7 +706,7 @@ namespace PluginTaskAutobook
             Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD;
 
             // ... - загрузить/отобразить значения из БД
-            updateDataValues();
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
         }
 
         ///// <summary>
@@ -732,7 +735,8 @@ namespace PluginTaskAutobook
         /// </summary>
         public override void Stop()
         {
-            deleteSession();
+            HandlerDb.Clear();
+            HandlerDb.Stop();
 
             base.Stop();
         }

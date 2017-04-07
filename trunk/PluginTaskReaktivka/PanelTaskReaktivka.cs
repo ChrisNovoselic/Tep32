@@ -2,10 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Drawing;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Windows.Forms;
 using TepCommon;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -23,34 +20,22 @@ namespace PluginTaskReaktivka
             DATAGRIDVIEW_VALUES, LABEL_DESC
         }
         /// <summary>
-        /// Перечисление - режимы работы вкладки
-        /// </summary>
-        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
-        /// <summary>
-        /// 
+        /// Объект для обращения к БД (чтение/сохранение значений)
         /// </summary>
         protected HandlerDbTaskReaktivkaCalculate HandlerDb { get { return __handlerDb as HandlerDbTaskReaktivkaCalculate; } }
-        ///// <summary>
-        ///// Таблицы со значениями для редактирования
-        ///// </summary>
-        //protected DataTable[] m_arTableOrigin
-        //    , m_arTableEdit;
         /// <summary>
-        /// 
+        /// Объект для создания отчета в MS Excel
         /// </summary>
         protected ReportExcel m_reportExcel;
-        ///// <summary>
-        ///// Таблицы со значениями словарных, проектных данных
-        ///// </summary>
-        //protected DataTable[] m_dictTableDictPrj;
         /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
         ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
         /// </summary>
         protected enum INDEX_VIEW_VALUES : short
         {
-            UNKNOWN = -1, SOURCE,
-            ARCHIVE, COUNT
+            UNKNOWN = -1
+                , SOURCE, ARCHIVE
+                , COUNT
         }
         /// <summary>
         /// Создание панели управления
@@ -317,16 +302,20 @@ namespace PluginTaskReaktivka
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
+            base.handlerDbTaskCalculate_onAddNAlgParameter(obj);
+
             m_dgvValues.AddNAlgParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
+            base.handlerDbTaskCalculate_onAddPutParameter(obj);
+
             m_dgvValues.AddPutParameter(obj);
 
             m_dgvValues.AddColumn(obj);
@@ -335,8 +324,10 @@ namespace PluginTaskReaktivka
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
+        protected override void handlerDbTaskCalculate_onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
         {
+            base.handlerDbTaskCalculate_onAddComponent(obj);
+
             PanelManagement.AddComponent(obj);
         }
         #endregion
@@ -415,12 +406,10 @@ namespace PluginTaskReaktivka
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD;
-
-            clear();
-
+            ////???
+            //clear();
             // ... - загрузить/отобразить значения из БД
-            updateDataValues();
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
         }
 
         /// <summary>
@@ -430,10 +419,10 @@ namespace PluginTaskReaktivka
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
         private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE;
-
+            ////???
+            //clear();
             // ... - загрузить/отобразить значения из БД
-            updateDataValues();
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE);
         }
 
         /// <summary>
@@ -753,7 +742,7 @@ namespace PluginTaskReaktivka
         //        m_handlerDb.UnRegisterDbConnection();
         //}
 
-        protected override void onSetValuesCompleted()
+        protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
         {
             //// отобразить значения
             //m_dgvValues.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues]);
@@ -765,9 +754,9 @@ namespace PluginTaskReaktivka
                 , outValues;
 
             key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
-            inValues = (m_dictValues.ContainsKey(key) == true) ? m_dictValues[key] : new List<HandlerDbTaskCalculate.VALUES>();
+            inValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUES>();
             key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
-            outValues = (m_dictValues.ContainsKey(key) == true) ? m_dictValues[key] : new List<HandlerDbTaskCalculate.VALUES>();
+            outValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUES>();
 
             m_dgvValues.ShowValues(inValues, outValues);
         }
@@ -969,7 +958,8 @@ namespace PluginTaskReaktivka
         /// </summary>
         public override void Stop()
         {
-            deleteSession();
+            HandlerDb.Clear();
+            HandlerDb.Stop();
 
             base.Stop();
         }

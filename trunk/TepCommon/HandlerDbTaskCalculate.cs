@@ -774,6 +774,12 @@ namespace TepCommon
         public HandlerDbTaskCalculate(ID_TASK idTask = ID_TASK.UNKNOWN, MODE_DATA_DATETIME modeDataDateTime = MODE_DATA_DATETIME.Ended)
             : base()
         {
+            _listNAlgParameter = new List<HandlerDbTaskCalculate.NALG_PARAMETER>();
+            _listTECComponent = new List<HandlerDbTaskCalculate.TECComponent>();
+            _listPutParameter = new List<HandlerDbTaskCalculate.PUT_PARAMETER>();
+
+            _dictValues = new Dictionary<KEY_VALUES, List<VALUES>>();
+
             _filterDbTableCompList = DbTableCompList.NotSet;
             _filterDbTableTime = DbTableTime.NotSet;
             _filterDbTableTimezone = DbTableTimezone.NotSet;
@@ -792,6 +798,167 @@ namespace TepCommon
                 m_taskCalculate = null;
             else
                 ;
+        }
+
+        public enum RESULT { Error = -1, Ok, Warning }
+        /// <summary>
+        /// Событие для оповещения панелей о завершении загрузки значений из БД
+        /// </summary>
+        public event Action<RESULT> EventSetValuesCompleted;
+
+        public override void Clear()
+        {
+            _dictValues.Clear();
+
+            _listNAlgParameter.Clear();
+            _listPutParameter.Clear();
+            _listTECComponent.Clear();
+
+            deleteSession();
+
+            base.Clear();
+        }
+
+        public virtual void UpdateDataValues(int idFPanel, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE taskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES viewValues)
+        {
+            _Session.m_ViewValues = viewValues;
+
+            // ... - загрузить/отобразить значения из БД
+            UpdateDataValues(idFPanel, taskCalculateType);
+        }
+        /// <summary>
+        /// Выполнить запрос к БД, отобразить рез-т запроса
+        ///  в случае загрузки "сырых" значений = ID_PERIOD.HOUR
+        ///  в случае загрузки "учтенных" значений -  в зависимости от установленного пользователем</param>
+        /// </summary>
+        /// </summary>
+        public virtual void UpdateDataValues(int idFPanel, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE taskCalculateType)
+        {
+            int err = -1
+                //, cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
+                , iAVG = -1
+                , iRegDbConn = -1; // признак установленного соединения (ошибка, был создан ранее, новое соединение)
+            string errMsg = string.Empty;
+
+            RegisterDbConnection(out iRegDbConn);
+
+            if (!(iRegDbConn < 0)) {
+                // установить значения в таблицах для расчета, создать новую сессию
+                // предыдущая сессия удалена в 'clear'
+                setValues(idFPanel, taskCalculateType, out err, out errMsg);
+
+                if (err == 0) {
+                    // создать копии для возможности сохранения изменений
+                    cloneValues();
+                    // отобразить значения
+                    EventSetValuesCompleted?.Invoke(RESULT.Ok);
+                } else {
+                    // в случае ошибки "обнулить" идентификатор сессии
+                    Clear();
+
+                    EventSetValuesCompleted?.Invoke(RESULT.Error);
+
+                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
+                }
+            } else
+                ;
+
+            if (!(iRegDbConn > 0))
+                UnRegisterDbConnection();
+            else
+                ;
+        }
+        /// <summary>
+        /// Удалить сессию (+ очистить реквизиты сессии)
+        /// </summary>
+        protected virtual void deleteSession()
+        {
+            int err = -1;
+
+            _Session.Clear();
+
+            (this as HandlerDbTaskCalculate).DeleteSession(out err);
+        }
+        /// <summary>
+        /// Установить значения таблиц для редактирования
+        /// </summary>
+        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
+        /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
+        protected virtual void setValues(int idFPanel, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE taskCalculateType, out int err, out string strErr)
+        {
+            err = 0;
+            strErr = string.Empty;
+
+            string strQuery = string.Empty;
+            ID_DBTABLE idDbTable = ID_DBTABLE.UNKNOWN;
+            Dictionary<KEY_VALUES, DataTable> dictTableValues;
+
+            _Session.NewId();
+
+            //m_dictValues.Clear(); - очищена в 'deleteSession'
+            dictTableValues = new Dictionary<KEY_VALUES, DataTable>();
+
+            foreach (TaskCalculate.TYPE type in Enum.GetValues(typeof(TaskCalculate.TYPE)))
+                if (((!((int)type == 0)) && ((int)type > 0) && (!(type == TaskCalculate.TYPE.UNKNOWN)))
+                    && (taskCalculateType & type) == type) {
+                    //m_dictValues[new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = type }] =
+                    dictTableValues.Add(new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = type }
+                        , GetTableValues(idFPanel, type, out err, out strErr));
+                } else
+                    ;
+
+            //Начать новую сессию расчета
+            CreateSession(idFPanel
+                //, Session.CountBasePeriod
+                , dictTableValues[new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = TaskCalculate.TYPE.IN_VALUES }]
+                , new DataTable()
+                , out err, out strErr);
+
+            //foreach (KEY_VALUES keyValues in m_dictValues.Keys) {
+            foreach (KEY_VALUES keyValues in dictTableValues.Keys) {
+                idDbTable = keyValues.TypeCalculate == TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.INVALUES :
+                    keyValues.TypeCalculate == TaskCalculate.TYPE.OUT_VALUES ? ID_DBTABLE.OUTVALUES :
+                        ID_DBTABLE.UNKNOWN; // не найдено наименование таблицы, ошибка в запросе
+
+                if (!(idDbTable == ID_DBTABLE.UNKNOWN)) {
+                    // получить результирующаю таблицу
+                    // получить входные для расчета значения для возможности редактирования
+                    strQuery = string.Format(@"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [EXTENDED_DEFINITION] as [DATE_TIME], [WR_DATETIME]" // [ID_PUT] as [ID] 
+                        + @" FROM [{0}]"
+                        + @" WHERE [ID_SESSION]={1}"
+                            , HandlerDbValues.s_dictDbTables[idDbTable].m_name
+                            , _Session.m_Id);
+
+                    _dictValues.Add(keyValues
+                        //, HandlerDbTaskCalculate.TableToListValues(dictTableValues[keyValues]) // простое копирование из таблицы
+                        , HandlerDbTaskCalculate.TableToListValues(Select(strQuery, out err)) // сложное обращение к БД, но происходит дополнительная проверка (создание новой сессии с корректными данными)
+                        );
+                } else
+                    Logging.Logg().Error(string.Format(@"HPanelTepCommon::setValues () - не найден идентификатор таблицы БД..."), Logging.INDEX_MESSAGE.NOT_SET);
+            }
+        }
+
+        /// <summary>
+        /// Установить значения таблиц для редактирования
+        /// </summary>
+        protected virtual void cloneValues()
+        {
+            List<KEY_VALUES> keys = new List<KEY_VALUES>();
+
+            //for (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES indx = (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.UNKNOWN + 1);
+            //    indx < TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT;
+            //    indx++)
+            //    if (!(m_arTableOrigin[(int)indx] == null))
+            //        m_arTableEdit[(int)indx] =
+            //            m_arTableOrigin[(int)indx].Copy();
+            //    else
+            //        ;
+
+            keys = _dictValues.Keys.ToList();
+
+            foreach (KEY_VALUES key in keys)
+                //??? создается ли новая копия
+                _dictValues.Add(new KEY_VALUES() { TypeCalculate = key.TypeCalculate, TypeState = HandlerDbValues.STATE_VALUE.EDIT }, new List<VALUES>(_dictValues[key]));
         }
 
         private DataTable mergeTableValues(DataTable tablePars, DataTable[] arTableValues, int cntBasePeriod)
@@ -1060,17 +1227,18 @@ namespace TepCommon
         {
             err = -1;
 
-            if (IdTask == ID_TASK.TEP)
-                insertOutNullValues(_Session.m_Id, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
-            else
-                ;
-            if (IdTask == ID_TASK.AUTOBOOK)
-                insertOutNullValues(_Session.m_Id, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
+            TaskCalculate.TYPE type = TaskCalculate.TYPE.UNKNOWN;
+
+            if ((IdTask == ID_TASK.TEP)
+                || (IdTask == ID_TASK.AUTOBOOK))
+                type = TaskCalculate.TYPE.OUT_TEP_NORM_VALUES;
+            else if (IdTask == ID_TASK.AUTOBOOK)
+                type = TaskCalculate.TYPE.OUT_VALUES;
             else
                 ;
 
-            if (err == 0)
-                insertOutNullValues(_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err);
+            if (type.Equals(TaskCalculate.TYPE.UNKNOWN) == false)
+                insertOutNullValues(_Session.m_Id, type, out err);
             else
                 ;
         }
@@ -1119,10 +1287,10 @@ namespace TepCommon
 
                 strQuery += idSession + @"," //ID_SEESION
                     + rPar[@"ID"] + @"," //ID_PUT
-                    + 0.ToString() + @"," //QUALITY
-                    + 0.ToString() + @"," //VALUE
-                    + @"GETDATE()" + @","
-                    + 0.ToString() //EXTENSION_DEFENITION
+                    + (-3).ToString() + @"," //QUALITY
+                    + 0F.ToString() + @"," //VALUE
+                    + string.Format(@"CONVERT(varchar, CONVERT(datetime2, '{0}', 102), 127)", DateTime.MinValue.ToString(@"yyyyMMdd HH:mm:ss")) + @","
+                    + string.Format(@"'{0}'", DateTime.MinValue.ToString(@"yyyyMMdd HH:mm:ss")) //EXTENSION_DEFENITION
                     ;
 
                 strQuery += @"),";
@@ -1345,13 +1513,231 @@ namespace TepCommon
             return s_dictDbTables[id].m_name;
         }
         /// <summary>
-        /// Список строк с параметрами(входными) алгоритма расчета для текущего периода расчета
+        /// Список значений, загруженных из БД
         /// </summary>
-        public List<DataRow> ListInParameter { get { return m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select().ToList<DataRow>(); } }
+        protected Dictionary<KEY_VALUES, List<VALUES>> _dictValues;
         /// <summary>
-        /// Список строк с параметрами(входными) алгоритма расчета для текущего периода расчета
+        /// Список значений, загруженных из БД
         /// </summary>
-        public List<DataRow> ListOutParameter { get { return m_dictTableDictPrj[ID_DBTABLE.OUT_PARAMETER].Select().ToList<DataRow>(); } }
+        public Dictionary<KEY_VALUES, List<VALUES>> Values { get { return _dictValues; } }
+        #region Добавление компонентов, параметров в алгоритме расчета
+        /// <summary>
+        /// Список параметров алгоритма расчета, не связанных с компонентом станции (верхний/1-ый уровень)
+        /// </summary>
+        private List<HandlerDbTaskCalculate.NALG_PARAMETER> _listNAlgParameter;
+        /// <summary>
+        /// Список параметров алгоритма расчета, не связанных с компонентом станции (верхний/1-ый уровень)
+        /// </summary>
+        public List<HandlerDbTaskCalculate.NALG_PARAMETER> ListNAlgParameter { get { return _listNAlgParameter; } }
+        /// <summary>
+        /// Список компонентов станции
+        /// </summary>
+        private List<HandlerDbTaskCalculate.TECComponent> _listTECComponent;
+        /// <summary>
+        /// Список компонентов станции
+        /// </summary>
+        public List<HandlerDbTaskCalculate.TECComponent> ListTECComponent { get { return _listTECComponent; } }
+        /// <summary>
+        /// Список параметров алгоритма расчета, связанных с компонентом станции (нижний/2-ой уровень)
+        /// </summary>
+        private List<HandlerDbTaskCalculate.PUT_PARAMETER> _listPutParameter;
+        /// <summary>
+        /// Список параметров алгоритма расчета, связанных с компонентом станции (нижний/2-ой уровень)
+        /// </summary>
+        public List<HandlerDbTaskCalculate.PUT_PARAMETER> ListPutParameter { get { return _listPutParameter; } }
+        /// <summary>
+        /// Событие для добавления основного параметра для панели управления
+        /// </summary>
+        public event Action<NALG_PARAMETER> EventAddNAlgParameter;
+        /// <summary>
+        /// Событие для добавления детализированного (компонент) параметра для панели управления
+        /// </summary>
+        public event Action<PUT_PARAMETER> EventAddPutParameter;
+        /// <summary>
+        /// Событие при добавлении компонента(оборудования) станции
+        /// </summary>
+        public event Action<TECComponent> EventAddComponent;
+        /// <summary>
+        /// Получить идентификатор родительского объекта для компонента (оборудования)
+        /// </summary>
+        /// <param name="id_comp">Идентификатор компонента</param>
+        /// <param name="id_comp_owner">Результат - идентификатор родительского объекта</param>
+        /// <returns>Признак успеха/ошибка порлучения результата</returns>
+        private bool getIdComponentOwner(int id_comp, out int id_comp_owner)
+        {
+            bool bRes = false;
+
+            DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.COMP_VALUES].Select(string.Format(@"ID={0} AND ID_PAR={1}", id_comp, (int)COMP_PARAMETER.OWNER));
+
+            if (rows.Length == 1)
+                bRes = int.TryParse((string)rows[0][@"VALUE"], out id_comp_owner);
+            else {
+                id_comp_owner = -1;
+
+                bRes = false;
+            }
+
+            return bRes;
+        }
+        /// <summary>
+        /// Добавить компоненты станции для панели
+        /// </summary>
+        public void AddComponents(HTepUsers.DictionaryProfileItem profile)
+        {
+            int err = -1
+                , id_comp = -1, id_comp_owner = -1
+                , enabled = -1, visibled = -1;
+            bool bEnabled = false
+                , bVisibled = false;
+
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows) {
+                id_comp = r[@"ID"] is DBNull ? -1 : (short)r[@"ID"];
+
+                if (id_comp > 0) {
+                    if (getIdComponentOwner(id_comp, out id_comp_owner) == true) {
+                        if (int.TryParse(profile.GetAttribute(_Session.CurrentIdPeriod, id_comp, HTepUsers.ID_ALLOWED.ENABLED_ITEM), out enabled) == false)
+                            enabled = -1;
+                        else
+                            ;
+                        bEnabled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true;
+
+                        if (int.TryParse(profile.GetAttribute(_Session.CurrentIdPeriod, id_comp, HTepUsers.ID_ALLOWED.VISIBLED_ITEM), out visibled) == false)
+                            visibled = -1;
+                        else
+                            ;
+                        bVisibled = !(visibled < 0) ? visibled == 0 ? false : visibled == 1 ? true : true : true;
+
+                        EventAddComponent(new TECComponent(id_comp
+                            , id_comp_owner
+                            , r[@"DESCRIPTION"] is DBNull ? string.Empty : ((string)r[@"DESCRIPTION"]).Trim()
+                            , bEnabled
+                            , bVisibled
+                        ));
+                    } else
+                        Logging.Logg().Error(string.Format(@"HPanelTepCommon::panelManagement_PeriodChanged () - не определенный идентификатор родительского компонента для {0}...", id_comp), Logging.INDEX_MESSAGE.NOT_SET);
+                } else
+                    Logging.Logg().Error(string.Format(@"HPanelTepCommon::panelManagement_PeriodChanged () - не определенный идентификатор компонента..."), Logging.INDEX_MESSAGE.NOT_SET);
+            }
+        }
+        /// <summary>
+        /// Добавить параметры из алгоритма расчета
+        /// </summary>
+        /// <param name="type">Тип расчета</param>
+        public void AddAlgParameters(int idFPanel, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, HTepUsers.DictionaryProfileItem profile)
+        {
+            int err = -1
+                , id_alg = -1
+                , id_comp = -1, id_comp_owner = -1
+                , prjRatio = -1, vsRatio = -1, vsRound = -1
+                , enabled = -1, visibled = -1;
+            bool bEnabled = false
+                , bVisibled = false;
+            string n_alg = string.Empty
+                , comp_shr_name = string.Empty;
+            List<int> listIdNAlg = new List<int>();
+            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
+            HandlerDbTaskCalculate.TECComponent component;
+
+            dictVisualSettings = GetParameterVisualSettings(new int[] { idFPanel, (int)_Session.CurrentIdPeriod }, out err);
+
+            //Список параметров для отображения
+            IEnumerable<DataRow> listParameter =
+                // в каждой строке значения полей, относящихся к параметру алгоритма расчета одинаковые, т.к. 'ListParameter' объединение 2-х таблиц
+                //ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]
+                type == HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES ? m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER].Select().Select(x => x)
+                    : type == HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES ? m_dictTableDictPrj[ID_DBTABLE.OUT_PARAMETER].Select().Select(x => x)
+                        : new List<DataRow>()
+                            ;
+
+            //Заполнить элементы управления с компонентами станции 
+            foreach (DataRow r in listParameter) {
+                id_alg = (int)r[@"ID_ALG"];
+                n_alg = r[@"N_ALG"].ToString().Trim();
+
+                if (int.TryParse(profile.GetAttribute(_Session.CurrentIdPeriod, n_alg, HTepUsers.ID_ALLOWED.ENABLED_ITEM), out enabled) == false)
+                    enabled = -1;
+                else
+                    ;
+                bEnabled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true;
+
+                if (int.TryParse(profile.GetAttribute(_Session.CurrentIdPeriod, n_alg, HTepUsers.ID_ALLOWED.VISIBLED_ITEM), out visibled) == false)
+                    visibled = -1;
+                else
+                    ;
+                bVisibled = !(visibled < 0) ? visibled == 0 ? false : visibled == 1 ? true : true : true;
+
+                // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
+                if (listIdNAlg.IndexOf(id_alg) < 0) {
+                    // добавить в список идентификатор параметра алгоритма расчета
+                    listIdNAlg.Add(id_alg);                    
+
+                    //strItem = string.Format(@"{0} ({1})", n_alg, ((string)r[@"NAME_SHR"]).Trim());                    
+                    // получить значения для настройки визуального отображения
+                    if (dictVisualSettings.ContainsKey(n_alg) == true) {
+                        // установленные в проекте
+                        vsRatio = dictVisualSettings[n_alg].m_ratio;
+                        vsRound = dictVisualSettings[n_alg].m_round;
+                    } else {
+                        // по умолчанию
+                        vsRatio = HTepUsers.s_iRatioDefault;
+                        vsRound = HTepUsers.s_iRoundDefault;
+                    }
+
+                    EventAddNAlgParameter(new NALG_PARAMETER(
+                        type
+                        , id_alg, n_alg
+                        , r[@"NAME_SHR"] is DBNull ? string.Empty : ((string)r[@"NAME_SHR"]).Trim()
+                        , r[@"DESCRIPTION"] is DBNull ? string.Empty : ((string)r[@"DESCRIPTION"]).Trim()
+                        , (AGREGATE_ACTION)short.Parse(r[@"AVG"].ToString().Trim())
+                        , ((int)r[@"ID_MEASURE"])
+                        , r[@"NAME_SHR_MEASURE"] is DBNull ? string.Empty : ((string)r[@"NAME_SHR_MEASURE"]).Trim()
+                        , r[@"SYMBOL"] is DBNull ? string.Empty : ((string)r[@"SYMBOL"]).Trim()
+                        , bEnabled
+                        , bVisibled
+                        //, prjRatio
+                        , vsRatio, vsRound
+                    ));
+                } else {
+                    // параметр уже был добавлен                    
+                }
+
+                // всегда добавлять (каждый параметр)
+                id_comp = (int)r[@"ID_COMP"];
+                if ((id_comp > 0)
+                    && (getIdComponentOwner(id_comp, out id_comp_owner) == true)) {
+                    if (m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Select(string.Format(@"ID={0}", id_comp)).Length == 1) {
+                        comp_shr_name = m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Select(string.Format(@"ID={0}", id_comp))[0][@"DESCRIPTION"].ToString().Trim();                    
+
+                        component = new TECComponent(id_comp
+                            , id_comp_owner
+                            , comp_shr_name
+                            , bEnabled
+                            , bVisibled
+                        );
+
+                        prjRatio = (int)r[@"ID_RATIO"];
+
+                        // только, если назначенн обработчик в 'PanelTaskTepOutVal'
+                        EventAddPutParameter?.Invoke(new PUT_PARAMETER() {
+                            /*Key = new PUT_PARAMETER.KEY() {*/ m_idNAlg = id_alg/*, m_idComp = id_comp }*/
+                            , m_Id = (int)r[@"ID"]
+                            , m_component = component
+                            , m_prjRatio = prjRatio
+                            , m_bEnabled = bEnabled
+                            , m_bVisibled = bVisibled
+                            ,
+                        });
+                    } else
+                        Logging.Logg().Error(string.Format(@"::addAlgParameters () - для ID_ALG={0}, N_ALG={1}, ID_COMPONENT={2} компонент вне установленного фильтра компонентов задачи..."
+                                , id_alg, n_alg, id_comp)
+                            , Logging.INDEX_MESSAGE.NOT_SET);
+                } else
+                    Logging.Logg().Error(string.Format(@"::addAlgParameters () - для ID_ALG={0}, N_ALG={1} некорректный идентификатор (ID_COMPONENT не найден) параметра в алгоритме расчета..."
+                            , id_alg, n_alg)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+            }
+        }
+        #endregion
         /// <summary>
         /// Добавить таблицу в словарь со словарно-проектными значениями
         /// </summary>
@@ -1510,17 +1896,16 @@ namespace TepCommon
                             + @"{0}"
                             + @", v.[WR_DATETIME]"
                             + @", CONVERT(varchar, {1}, 127)" + @" as [EXTENDED_DEFINITION]"
-                        + @" FROM [dbo].[{2}_{3}] v"
-                            + @" LEFT JOIN [dbo].[{4}] p ON p.ID = v.ID_PUT"
-                            + @" RIGHT JOIN [dbo].[{5}] a ON a.ID = p.ID_ALG AND a.ID_TASK = {6}"
+                        + @" FROM [dbo].[{2}] v"
+                            + @" LEFT JOIN [dbo].[{3}] p ON p.ID = v.ID_PUT"
+                            + @" RIGHT JOIN [dbo].[{4}] a ON a.ID = p.ID_ALG AND a.ID_TASK = {5}"
                             + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
-                        + @" WHERE v.[ID_TIME] = {7}" //???ID_PERIOD.HOUR //??? _currIdPeriod
+                        + @" WHERE v.[ID_TIME] = {6}" //???ID_PERIOD.HOUR //??? _currIdPeriod
                             , (ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON ? @", m.[AVG]" : ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.OFF ? string.Empty : string.Empty)
                             , (_modeDataDateTime == MODE_DATA_DATETIME.Begined) ? string.Format(@"DATEADD({0}, 1, v.[DATE_TIME])", partDateadd)
                                     : (_modeDataDateTime == MODE_DATA_DATETIME.Ended) ? @"v.[DATE_TIME]"
                                         : string.Empty
-                            , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE)
-                            , arQueryRanges[i].Begin.ToString(@"yyyyMM")
+                            , string.Format(@"{0}_{1}", getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE), arQueryRanges[i].Begin.ToString(@"yyyyMM"))
                             , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT)
                             , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
                             , (int)_iIdTask + whereParameters
@@ -1576,7 +1961,6 @@ namespace TepCommon
 
             return strRes;
         }
-
         /// <summary>
         /// Возвратить объект-таблицу со значенями по умолчанию
         /// </summary>
@@ -1600,7 +1984,7 @@ namespace TepCommon
         /// <param name="type">Тип значений (входные, выходные)</param>
         /// <param name="err">Признак выполнения функции</param>
         /// <returns>Объект-таблица</returns>
-        private DataTable getVariableTableValues(TaskCalculate.TYPE type
+        protected DataTable getVariableTableValues(TaskCalculate.TYPE type
             , out int err)
         {
             DataTable tableRes = new DataTable();
@@ -1723,6 +2107,8 @@ namespace TepCommon
         {
             List<VALUES> listRes = new List<VALUES>();
 
+            DateTime dtValue;
+
             //listRes = (from r in arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Rows.Cast<DataRow>()
             //    select new VALUES() {
             //        m_IdPut = int.Parse(r[@"ID_PUT"].ToString())
@@ -1730,13 +2116,20 @@ namespace TepCommon
             //        , value = float.Parse(r[@"VALUE"].ToString())
             //        , stamp = (DateTime)r[@"WR_DATETIME"]
             //    }).ToList();
-            foreach (DataRow r in table.Rows)
+            foreach (DataRow r in table.Rows) {
+                if ((!(r[@"DATE_TIME"] is DBNull))
+                    && (DateTime.TryParse((string)r[@"DATE_TIME"], out dtValue) == true))
+                    ;
+                else
+                    dtValue = DateTime.MinValue;
+
                 listRes.Add(new VALUES() { m_IdPut = int.Parse(r[@"ID_PUT"].ToString())
                     , m_iQuality = int.Parse(r[@"QUALITY"].ToString())
                     , value = float.Parse(r[@"VALUE"].ToString())
-                    , stamp_value = !(r[@"DATE_TIME"] is DBNull) ? DateTime.Parse((string)r[@"DATE_TIME"]) : DateTime.MinValue
+                    , stamp_value = dtValue
                     , stamp_write = !(r[@"WR_DATETIME"] is DBNull) ? (DateTime)r[@"WR_DATETIME"] : DateTime.MinValue
                 });
+            }
 
             return listRes;
         }
@@ -1831,58 +2224,13 @@ namespace TepCommon
         /// </summary>
         /// <param name="err">Признак ошибки при выполнении функции</param>
         /// <returns>Массив таблиц со значенями для расчета</returns>
-        protected TaskCalculate.ListDATATABLE prepareTepCalculateValues(TaskCalculate.TYPE type, out int err)
-        {
-            TaskCalculate.ListDATATABLE listRes = new TaskCalculate.ListDATATABLE();
-            err = -1;
-
-            //long idSession = -1;
-            DataTable tableVal = null;
-
-            if (isRegisterDbConnection == true)
-                // проверить наличие сессии
-                if (_Session.m_Id > 0) {
-                    // получить таблицу со значеняими нормативных графиков
-                    tableVal = GetDataTable(ID_DBTABLE.FTABLE, out err);
-                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.FTABLE, m_table = tableVal.Copy() });
-                    // получить описание входных парметров в алгоритме расчета
-                    tableVal = Select(getQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err);
-                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_PARAMETER, m_table = tableVal.Copy() });
-                    // получить входные значения для сессии
-                    tableVal = getVariableTableValues(TaskCalculate.TYPE.IN_VALUES, out err);
-                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
-
-                    if (IdTask == ID_TASK.TEP) {
-                        // получить описание выходных-нормативных парметров в алгоритме расчета
-                        tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES), out err);
-                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_NORM_PARAMETER, m_table = tableVal.Copy() });
-                        // получить выходные-нормативные значения для сессии
-                        tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
-                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_NORM_VALUES, m_table = tableVal.Copy() });
-                    } else
-                        ;
-
-                    if (type == TaskCalculate.TYPE.OUT_VALUES) {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
-                        tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err);
-                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_PARAMETER, m_table = tableVal.Copy() });
-                        // получить выходные значения для сессии
-                        tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_VALUES, out err);
-                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_VALUES, m_table = tableVal.Copy() });
-                    } else
-                        ;
-                } else
-                    Logging.Logg().Error(@"HandlerDbTaskCalculate::prepareTepCalculateValues () - при получении идентифкатора сессии расчета...", Logging.INDEX_MESSAGE.NOT_SET);
-            else
-                ; // ошибка при регистрации соединения с БД
-
-            return listRes;
-        }
+        protected abstract TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err);
 
         //protected virtual void correctValues(ref DataTable tableValues, ref DataTable tablePars) { }
 
-        protected abstract void calculate(TaskCalculate.TYPE type, out int err);
+        protected abstract void calculate(TaskCalculate.TYPE type, out DataTable tableOrigin, out DataTable tableCalc, out int err);
         /// <summary>
-        /// Расчитать выходные-нормативные значения для задачи "Расчет ТЭП"
+        /// Расчитать выходные-нормативные значения для задачи (например, "Расчет ТЭП")
         ///  , сохранить значения во временной таблице для возможности предварительного просмотра результата
         /// </summary>
         public void Calculate(TaskCalculate.TYPE type)
@@ -1890,19 +2238,24 @@ namespace TepCommon
             int err = -1
                 , iRegDbConn = -1;
 
+            DataTable tableOrigin
+                , tableCalcRes;
+
             // регистрация соединения с БД
             RegisterDbConnection(out iRegDbConn);
 
             if (!(iRegDbConn < 0)) {
                 switch (IdTask) {
                     case ID_TASK.TEP:
+                    //case ID_TASK.REAKTIVKA:// для этой задачи нет вычислений
                     case ID_TASK.AUTOBOOK:
                     case ID_TASK.BAL_TEPLO: //Для работы с балансом тепла 6,06,2016 Апельганс
-                        calculate(type, out err);
+                        calculate(type, out tableOrigin, out tableCalcRes, out err);
                         if (!(err == 0))
                             Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - ошибка при выполнеии расчета задачи ID=" + IdTask.ToString() + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
                         else
-                            ;
+                        // сохранить результаты вычисления
+                            saveResult(tableOrigin, tableCalcRes, out err);
                         break;
                     default:
                         Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - неизвестный тип задачи расчета...", Logging.INDEX_MESSAGE.NOT_SET);

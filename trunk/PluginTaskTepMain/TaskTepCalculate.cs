@@ -54,25 +54,74 @@ namespace PluginTaskTepMain
 
             m_taskCalculate = new HandlerDbTaskCalculate.TaskTepCalculate();
         }
-        ///// <summary>
-        ///// Корректировка входных (сырых) значений - аналог 'import.prg'
-        ///// </summary>
-        //protected override void correctValues(ref DataTable tableSesion, ref DataTable tableProject)
-        //{
-        //    //(m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CorrectValues(ref tableSesion, ref tableProject);
-        //}
-
-        protected override void calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type, out int err)
+        /// <summary>
+        /// Подготовить таблицы для проведения расчета
+        /// </summary>
+        /// <param name="err">Признак ошибки при выполнении функции</param>
+        /// <returns>Массив таблиц со значенями для расчета</returns>
+        protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
         {
+            TaskCalculate.ListDATATABLE listRes = new TaskCalculate.ListDATATABLE();
             err = -1;
 
-            DataTable tableOrigin = null
-                , tableCalcRes = null;
+            //long idSession = -1;
+            DataTable tableVal = null;
+
+            if (isRegisterDbConnection == true)
+                // проверить наличие сессии
+                if (_Session.m_Id > 0) {
+                    // получить таблицу со значеняими нормативных графиков
+                    tableVal = GetDataTable(ID_DBTABLE.FTABLE, out err);
+                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.FTABLE, m_table = tableVal.Copy() });
+                    // получить описание входных парметров в алгоритме расчета
+                    tableVal = Select(getQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err);
+                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_PARAMETER, m_table = tableVal.Copy() });
+                    // получить входные значения для сессии
+                    tableVal = getVariableTableValues(TaskCalculate.TYPE.IN_VALUES, out err);
+                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
+
+                    if (IdTask == ID_TASK.TEP) {
+                        // получить описание выходных-нормативных парметров в алгоритме расчета
+                        tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES), out err);
+                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_NORM_PARAMETER, m_table = tableVal.Copy() });
+                        // получить выходные-нормативные значения для сессии
+                        tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
+                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_NORM_VALUES, m_table = tableVal.Copy() });
+                    } else
+                        ;
+
+                    if (type == TaskCalculate.TYPE.OUT_VALUES) {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
+                        tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err);
+                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_PARAMETER, m_table = tableVal.Copy() });
+                        // получить выходные значения для сессии
+                        tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_VALUES, out err);
+                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_VALUES, m_table = tableVal.Copy() });
+                    } else
+                        ;
+                } else
+                    Logging.Logg().Error(@"HandlerDbTaskCalculate::prepareTepCalculateValues () - при получении идентифкатора сессии расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+            else
+                ; // ошибка при регистрации соединения с БД
+
+            return listRes;
+        }
+        /// <summary>
+        /// Рассчитать выходные значения
+        /// </summary>
+        /// <param name="type">Тип расчета</param>
+        /// <param name="tableOrigin">Оригинальная таблица</param>
+        /// <param name="tableCalc">Выходная таблмца с рассчитанными значениями</param>
+        /// <param name="err">Признак ошибки при выполнении метода</param>
+        protected override void calculate(TaskCalculate.TYPE type, out DataTable tableOrigin, out DataTable tableCalc, out int err)
+        {
+            tableOrigin = new DataTable();
+            tableCalc = new DataTable();
+            err = -1;
 
             TepCommon.HandlerDbTaskCalculate.TaskCalculate.ListDATATABLE listDataTables = null;
 
             // подготовить таблицы для расчета
-            listDataTables = prepareTepCalculateValues(type, out err);
+            listDataTables = prepareCalculateValues(type, out err);
             if (err == 0)
             {
                 // произвести вычисления
@@ -80,19 +129,19 @@ namespace PluginTaskTepMain
                 {
                     case TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES:
                         tableOrigin = listDataTables.FindDataTable(TepCommon.HandlerDbTaskCalculate.TaskCalculate.INDEX_DATATABLE.OUT_NORM_VALUES);
-                        tableCalcRes = (m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CalculateNormative(listDataTables);
+                        tableCalc = (m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CalculateNormative(listDataTables);
                         break;
                     case TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES:
-                        tableCalcRes = (m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CalculateMaket(listDataTables);
+                        tableOrigin = listDataTables.FindDataTable(TepCommon.HandlerDbTaskCalculate.TaskCalculate.INDEX_DATATABLE.OUT_VALUES);
+                        tableCalc = (m_taskCalculate as HandlerDbTaskCalculate.TaskTepCalculate).CalculateMaket(listDataTables);
                         break;
                     default:
+                        throw new Exception(string.Format(@"TaskTepCalculate::calculate () - неизвестный тип [{0}] расчета...", type.ToString()));
                         break;
-                }
-                // сохранить результаты вычисления
-                saveResult(tableOrigin, tableCalcRes, out err);
+                }                
             }
             else
-                Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при подготовке данных для расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Error(@"HandlerDbTaskЕузCalculate::Calculate () - при подготовке данных для расчета...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)

@@ -260,9 +260,16 @@ namespace TepCommon
                 && (m_dictTableDictPrj.Count > 0)) {
                 Logging.Logg().Warning(@"HPanelTepCommon::initialize () - словарно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                m_dictTableDictPrj.Clear();
+                Clear();
             } else
                 m_dictTableDictPrj = new DictionaryTableDictProject();
+        }
+        /// <summary>
+        /// Очистить все словари/списки со словарно-проектными величинами
+        /// </summary>
+        public virtual void Clear()
+        {
+            m_dictTableDictPrj.Clear();
         }
         /// <summary>
         /// Добавить таблицу в словарь со словарно-проектными величинами

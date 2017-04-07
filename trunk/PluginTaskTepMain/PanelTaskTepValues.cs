@@ -177,10 +177,8 @@ namespace PluginTaskTepMain
 
         private void panelManagement_btnImport_onClick(object sender, EventArgs e)
         {
-            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT;
-
             // ... - загрузить/отобразить значения из БД
-            updateDataValues();
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT);
         }
 
         private void panelManagement_btnExport_onClick(object sender, EventArgs e)
@@ -234,7 +232,7 @@ namespace PluginTaskTepMain
         //        ;
         //}
 
-        protected override void onSetValuesCompleted()
+        protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskTepCalculate.RESULT res)
         {
             // отобразить значения
             m_dgvValues.ShowValues(m_TableEdit/*, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]*/);
@@ -247,10 +245,8 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD;
-
             // ... - загрузить/отобразить значения из БД
-            updateDataValues();
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
         }
 
         /// <summary>
@@ -260,10 +256,8 @@ namespace PluginTaskTepMain
         /// <param name="ev">Аргумент события</param>
         private void panelManagement_btnHistory_onClick(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE;
-
             // ... - загрузить/отобразить значения из БД
-            updateDataValues();
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE);
         }
 
         /// <summary>
@@ -398,9 +392,9 @@ namespace PluginTaskTepMain
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void onAddNAlgParameter(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddNAlgParameter(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
-            base.onAddNAlgParameter(obj);
+            base.handlerDbTaskCalculate_onAddNAlgParameter(obj);
 
             (PanelManagement as PanelManagementTaskTepValues).AddNAlgParameter(obj);
 
@@ -414,9 +408,9 @@ namespace PluginTaskTepMain
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
-            base.onAddPutParameter(obj);
+            base.handlerDbTaskCalculate_onAddPutParameter(obj);
 
             // добавить свойства для строки таблицы со значениями
             m_dgvValues.AddPutParameter(obj);
@@ -425,9 +419,9 @@ namespace PluginTaskTepMain
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(TepCommon.HandlerDbTaskCalculate.TECComponent obj)
+        protected override void handlerDbTaskCalculate_onAddComponent(TepCommon.HandlerDbTaskCalculate.TECComponent obj)
         {
-            base.onAddComponent(obj);
+            base.handlerDbTaskCalculate_onAddComponent(obj);
 
             (PanelManagement as PanelManagementTaskTepValues).AddComponent(obj);
 

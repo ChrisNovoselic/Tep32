@@ -27,10 +27,6 @@ namespace TepCommon
         /// </summary>
         protected TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE TaskCalculateType;
         /// <summary>
-        /// Список значений, загруженных из БД
-        /// </summary>
-        protected Dictionary<KEY_VALUES, List<VALUES>> m_dictValues;
-        /// <summary>
         /// Конструктор - основной (с параметрами)
         /// </summary>
         /// <param name="plugIn">Объект для связи с вызывающей программой</param>
@@ -38,17 +34,15 @@ namespace TepCommon
         public HPanelTepCommon(IPlugIn plugIn, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base (plugIn)
         {
-            TaskCalculateType = type;
+            TaskCalculateType = type;            
 
-            m_dictValues = new Dictionary<KEY_VALUES, List<VALUES>>();
+            _handlerDb.EventAddNAlgParameter += new Action<NALG_PARAMETER>(handlerDbTaskCalculate_onAddNAlgParameter);
 
-            eventAddNAlgParameter += new Action<NALG_PARAMETER>(onAddNAlgParameter);
+            _handlerDb.EventAddPutParameter += new Action<PUT_PARAMETER>(handlerDbTaskCalculate_onAddPutParameter);
 
-            eventAddPutParameter += new Action<PUT_PARAMETER>(onAddPutParameter);
+            _handlerDb.EventAddComponent += new Action<TECComponent>(handlerDbTaskCalculate_onAddComponent);
 
-            eventAddComponent += new Action<TECComponent>(onAddComponent);
-
-            eventSetValuesCompleted += new Action(onSetValuesCompleted);
+            _handlerDb.EventSetValuesCompleted += new Action<RESULT>(handlerDbTaskCalculate_onSetValuesCompleted);
         }
         /// <summary>
         /// Поле
@@ -104,39 +98,10 @@ namespace TepCommon
         {
         }
         /// <summary>
-        /// Событие для добавления основного параметра для панели управления
-        /// </summary>
-        protected event Action<NALG_PARAMETER> eventAddNAlgParameter;
-        /// <summary>
-        /// Событие для добавления детализированного (компонент) параметра для панели управления
-        /// </summary>
-        protected event Action<PUT_PARAMETER> eventAddPutParameter;
-        /// <summary>
-        /// Событие при добавлении компонента(оборудования) станции
-        /// </summary>
-        protected event Action<TECComponent> eventAddComponent;
-        /// <summary>
-        /// Событие для оповещения панелей о завершении загрузки значений из БД
-        /// </summary>
-        protected event Action eventSetValuesCompleted;
-        /// <summary>
         /// Метод для создания объекта панели управления
         /// </summary>
         /// <returns></returns>
-        protected abstract PanelManagementTaskCalculate createPanelManagement();
-        /// <summary>
-        /// Удалить сессию (+ очистить реквизиты сессии)
-        /// </summary>
-        protected virtual void deleteSession()
-        {
-            int err = -1;
-
-            m_dictValues.Clear();
-
-            Session.Clear();
-
-            (__handlerDb as HandlerDbTaskCalculate).DeleteSession(out err);
-        }
+        protected abstract PanelManagementTaskCalculate createPanelManagement();        
         /// <summary>
         /// Значения параметров сессии
         /// </summary>
@@ -154,7 +119,7 @@ namespace TepCommon
             else
                 ;
 
-            deleteSession();            
+            _handlerDb.Clear();            
 
             base.clear();
         }
@@ -182,8 +147,6 @@ namespace TepCommon
                         Session.CurrentIdPeriod = _panelManagement.IdPeriod;
 
                         if (_panelManagement.Ready == PanelManagementTaskCalculate.READY.Ok) {
-                            //clear();
-
                             panelManagement_Period_onChanged();
                         } else
                             ;
@@ -195,8 +158,6 @@ namespace TepCommon
                         Session.SetDatetimeRange(_panelManagement.DatetimeRange);
 
                         if (_panelManagement.Ready == PanelManagementTaskCalculate.READY.Ok) {
-                            //clear();
-
                             panelManagement_TimezoneChanged();
                         } else
                             ;
@@ -230,18 +191,18 @@ namespace TepCommon
         /// </summary>
         private void add_all()
         {
-            addComponents();
+            _handlerDb.AddComponents(m_dictProfile);
 
             if (IsInParameters == true)
-                addAlgParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES);
+                _handlerDb.AddAlgParameters(m_Id, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, m_dictProfile);
             else
                 ;
 
             if (IsOutParameters == true)
-                addAlgParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+                _handlerDb.AddAlgParameters(m_Id, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, m_dictProfile);
             else
                 ;
-        }
+        }        
         /// <summary>
         /// Обработчик события - изменение диапазона времени расчета
         /// </summary>
@@ -268,324 +229,31 @@ namespace TepCommon
         /// Метод по завершению загрузки из БД одного параметра в алгоритме расчета
         /// </summary>
         /// <param name="obj">Параметр в алгоритме расчета</param>
-        protected abstract void onAddNAlgParameter(NALG_PARAMETER obj);
+        protected virtual void handlerDbTaskCalculate_onAddNAlgParameter(NALG_PARAMETER obj)
+        {
+        }
         /// <summary>
         /// Метод по завершению загрузки из БД одного параметра, связанного с компонентом станции, в алгоритме расчета
         /// </summary>
         /// <param name="obj">Параметр в алгоритме расчета, связанный с компонентом станции</param>
-        protected abstract void onAddPutParameter(PUT_PARAMETER obj);
+        protected virtual void handlerDbTaskCalculate_onAddPutParameter(PUT_PARAMETER obj)
+        {
+        }
         /// <summary>
         /// Метод по завершению загрузки информации по компоненту станции
         /// </summary>
         /// <param name="comp">Объект, описывающий компонент станции</param>
-        protected abstract void onAddComponent(TECComponent comp);
+        protected virtual void handlerDbTaskCalculate_onAddComponent(TECComponent comp)
+        {
+        }
         /// <summary>
         /// Обраюотчик события - завершение загрузки значений из БД
         /// </summary>
-        protected abstract void onSetValuesCompleted();
-
-        #region Добавление компонентов, параметров в алгоритме расчета
-        private bool getIdComponentOwner(int id_comp, out int id_comp_owner)
-        {
-            bool bRes = false;
-
-            DataRow[] rows = m_dictTableDictPrj[ID_DBTABLE.COMP_VALUES].Select(string.Format(@"ID={0} AND ID_PAR={1}", id_comp, (int)COMP_PARAMETER.OWNER));
-
-            if (rows.Length == 1)
-                bRes = int.TryParse((string)rows[0][@"VALUE"], out id_comp_owner);
-            else {
-                id_comp_owner = -1;
-
-                bRes = false;
-            }
-
-            return bRes;
-        }
-        /// <summary>
-        /// Добавить компоненты станции для панели
-        /// </summary>
-        private void addComponents()
-        {
-            int err = -1
-                , id_comp = -1, id_comp_owner = -1
-                , enabled = -1, visibled = -1;
-            bool bEnabled = false
-                , bVisibled = false;
-
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows) {
-                id_comp = r[@"ID"] is DBNull ? -1 : (short)r[@"ID"];
-
-                if (id_comp > 0) {
-                    if (getIdComponentOwner(id_comp, out id_comp_owner) == true) {
-                        if (int.TryParse(m_dictProfile.GetAttribute(Session.CurrentIdPeriod, id_comp, HTepUsers.ID_ALLOWED.ENABLED_ITEM), out enabled) == false)
-                            enabled = -1;
-                        else
-                            ;
-                        bEnabled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true;
-
-                        if (int.TryParse(m_dictProfile.GetAttribute(Session.CurrentIdPeriod, id_comp, HTepUsers.ID_ALLOWED.VISIBLED_ITEM), out visibled) == false)
-                            visibled = -1;
-                        else
-                            ;
-                        bVisibled = !(visibled < 0) ? visibled == 0 ? false : visibled == 1 ? true : true : true;
-
-                        eventAddComponent(new TECComponent(id_comp
-                            , id_comp_owner
-                            , r[@"DESCRIPTION"] is DBNull ? string.Empty : ((string)r[@"DESCRIPTION"]).Trim()
-                            , bEnabled
-                            , bVisibled
-                        ));
-                    } else
-                        Logging.Logg().Error(string.Format(@"HPanelTepCommon::panelManagement_PeriodChanged () - не определенный идентификатор родительского компонента для {0}...", id_comp), Logging.INDEX_MESSAGE.NOT_SET);
-                } else
-                    Logging.Logg().Error(string.Format(@"HPanelTepCommon::panelManagement_PeriodChanged () - не определенный идентификатор компонента..."), Logging.INDEX_MESSAGE.NOT_SET);
-            }
-        }
-        /// <summary>
-        /// Добавить параметры из алгоритма расчета
-        /// </summary>
-        /// <param name="type">Тип расчета</param>
-        private void addAlgParameters(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
-        {
-            int err = -1
-                , id_alg = -1
-                , id_comp = -1, id_comp_owner = -1
-                , prjRatio = -1, vsRatio = -1, vsRound = -1
-                , enabled = -1, visibled = -1;
-            bool bEnabled = false
-                , bVisibled = false;
-            string n_alg = string.Empty
-                , comp_shr_name = string.Empty;
-            List<int> listIdNAlg = new List<int>();
-            Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
-            HandlerDbTaskCalculate.TECComponent component;
-
-            dictVisualSettings = _handlerDb.GetParameterVisualSettings(new int[] { m_Id, (int)Session.CurrentIdPeriod }, out err);
-
-            //Список параметров для отображения
-            IEnumerable<DataRow> listParameter =
-                // в каждой строке значения полей, относящихся к параметру алгоритма расчета одинаковые, т.к. 'ListParameter' объединение 2-х таблиц
-                //ListParameter.GroupBy(x => x[@"ID_ALG"]).Select(y => y.First()) // исключить дублирование по полю [ID_ALG]
-                type == HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES ? _handlerDb.ListInParameter.Select(x => x)
-                    : type == HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES ? _handlerDb.ListOutParameter.Select(x => x)
-                        : new List<DataRow>()
-                            ;
-
-            //Заполнить элементы управления с компонентами станции 
-            foreach (DataRow r in listParameter) {
-                id_alg = (int)r[@"ID_ALG"];
-                n_alg = r[@"N_ALG"].ToString().Trim();
-
-                if (int.TryParse(m_dictProfile.GetAttribute(Session.CurrentIdPeriod, n_alg, HTepUsers.ID_ALLOWED.ENABLED_ITEM), out enabled) == false)
-                    enabled = -1;
-                else
-                    ;
-                bEnabled = !(enabled < 0) ? enabled == 0 ? false : enabled == 1 ? true : true : true;
-
-                if (int.TryParse(m_dictProfile.GetAttribute(Session.CurrentIdPeriod, n_alg, HTepUsers.ID_ALLOWED.VISIBLED_ITEM), out visibled) == false)
-                    visibled = -1;
-                else
-                    ;
-                bVisibled = !(visibled < 0) ? visibled == 0 ? false : visibled == 1 ? true : true : true;
-
-                // не допустить добавление строк с одинаковым идентификатором параметра алгоритма расчета
-                if (listIdNAlg.IndexOf(id_alg) < 0) {
-                    // добавить в список идентификатор параметра алгоритма расчета
-                    listIdNAlg.Add(id_alg);                    
-
-                    //strItem = string.Format(@"{0} ({1})", n_alg, ((string)r[@"NAME_SHR"]).Trim());                    
-                    // получить значения для настройки визуального отображения
-                    if (dictVisualSettings.ContainsKey(n_alg) == true) {
-                        // установленные в проекте
-                        vsRatio = dictVisualSettings[n_alg].m_ratio;
-                        vsRound = dictVisualSettings[n_alg].m_round;
-                    } else {
-                        // по умолчанию
-                        vsRatio = HTepUsers.s_iRatioDefault;
-                        vsRound = HTepUsers.s_iRoundDefault;
-                    }
-
-                    eventAddNAlgParameter(new NALG_PARAMETER(
-                        type
-                        , id_alg, n_alg
-                        , r[@"NAME_SHR"] is DBNull ? string.Empty : ((string)r[@"NAME_SHR"]).Trim()
-                        , r[@"DESCRIPTION"] is DBNull ? string.Empty : ((string)r[@"DESCRIPTION"]).Trim()
-                        , (AGREGATE_ACTION)short.Parse(r[@"AVG"].ToString().Trim())
-                        , ((int)r[@"ID_MEASURE"])
-                        , r[@"NAME_SHR_MEASURE"] is DBNull ? string.Empty : ((string)r[@"NAME_SHR_MEASURE"]).Trim()
-                        , r[@"SYMBOL"] is DBNull ? string.Empty : ((string)r[@"SYMBOL"]).Trim()
-                        , bEnabled
-                        , bVisibled
-                        //, prjRatio
-                        , vsRatio, vsRound
-                    ));
-                } else {
-                    // параметр уже был добавлен                    
-                }
-
-                // всегда добавлять (каждый параметр)
-                id_comp = (int)r[@"ID_COMP"];
-                if ((id_comp > 0)
-                    && (getIdComponentOwner(id_comp, out id_comp_owner) == true)) {
-                    if (m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Select(string.Format(@"ID={0}", id_comp)).Length == 1) {
-                        comp_shr_name = m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Select(string.Format(@"ID={0}", id_comp))[0][@"DESCRIPTION"].ToString().Trim();                    
-
-                        component = new TECComponent(id_comp
-                            , id_comp_owner
-                            , comp_shr_name
-                            , bEnabled
-                            , bVisibled
-                        );
-
-                        prjRatio = (int)r[@"ID_RATIO"];
-
-                        // только, если назначенн обработчик в 'PanelTaskTepOutVal'
-                        eventAddPutParameter?.Invoke(new PUT_PARAMETER() {
-                            /*Key = new PUT_PARAMETER.KEY() {*/ m_idNAlg = id_alg/*, m_idComp = id_comp }*/
-                            , m_Id = (int)r[@"ID"]
-                            , m_component = component
-                            , m_prjRatio = prjRatio
-                            , m_bEnabled = bEnabled
-                            , m_bVisibled = bVisibled
-                            ,
-                        });
-                    } else
-                        Logging.Logg().Error(string.Format(@"::addAlgParameters () - для ID_ALG={0}, N_ALG={1}, ID_COMPONENT={2} компонент вне установленного фильтра компонентов задачи..."
-                                , id_alg, n_alg, id_comp)
-                            , Logging.INDEX_MESSAGE.NOT_SET);
-                } else
-                    Logging.Logg().Error(string.Format(@"::addAlgParameters () - для ID_ALG={0}, N_ALG={1} некорректный идентификатор (ID_COMPONENT не найден) параметра в алгоритме расчета..."
-                            , id_alg, n_alg)
-                        , Logging.INDEX_MESSAGE.NOT_SET);
-            }
-        }
-        #endregion
+        protected abstract void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res);
         /// <summary>
         /// Ссылка на объект для обращения к БД
         /// </summary>
-        protected HandlerDbTaskCalculate _handlerDb { get { return __handlerDb as HandlerDbTaskCalculate; } }
-        /// <summary>
-        /// Выполнить запрос к БД, отобразить рез-т запроса
-        ///  в случае загрузки "сырых" значений = ID_PERIOD.HOUR
-        ///  в случае загрузки "учтенных" значений -  в зависимости от установленного пользователем</param>
-        /// </summary>
-        /// </summary>
-        protected virtual void updateDataValues()
-        {
-            int err = -1
-                //, cnt = CountBasePeriod //(int)(m_panelManagement.m_dtRange.End - m_panelManagement.m_dtRange.Begin).TotalHours - 0
-                , iAVG = -1
-                , iRegDbConn = -1; // признак установленного соединения (ошибка, был создан ранее, новое соединение)
-            string errMsg = string.Empty;
-
-            __handlerDb.RegisterDbConnection(out iRegDbConn);
-
-            if (!(iRegDbConn < 0)) {
-                // установить значения в таблицах для расчета, создать новую сессию
-                // предыдущая сессия удалена в 'clear'
-                setValues(out err, out errMsg);
-
-                if (err == 0) {
-                    // создать копии для возможности сохранения изменений
-                    cloneValues();
-                    // отобразить значения
-                    eventSetValuesCompleted?.Invoke();
-                } else {
-                    // в случае ошибки "обнулить" идентификатор сессии
-                    deleteSession();
-
-                    throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-                }
-            } else
-                ;
-
-            if (!(iRegDbConn > 0))
-                __handlerDb.UnRegisterDbConnection();
-            else
-                ;
-        }
-
-        /// <summary>
-        /// Установить значения таблиц для редактирования
-        /// </summary>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        /// <param name="strErr">Строка текста сообщения при наличии ошибки</param>
-        protected virtual void setValues(out int err, out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-
-            string strQuery = string.Empty;
-            ID_DBTABLE idDbTable = ID_DBTABLE.UNKNOWN;
-            Dictionary<KEY_VALUES, DataTable> dictTableValues;
-
-            Session.NewId();
-
-            //m_dictValues.Clear(); - очищена в 'deleteSession'
-            dictTableValues = new Dictionary<KEY_VALUES, DataTable>();
-
-            foreach (TaskCalculate.TYPE type in Enum.GetValues(typeof(TaskCalculate.TYPE)))
-                if (((!((int)type == 0)) && ((int)type > 0) && (!(type == TaskCalculate.TYPE.UNKNOWN)))
-                    && (TaskCalculateType & type) == type) {
-                    //m_dictValues[new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = type }] =
-                    dictTableValues.Add(new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = type }
-                        , _handlerDb.GetTableValues(m_Id, type, out err, out strErr));
-                } else
-                    ;
-
-            //Начать новую сессию расчета
-            _handlerDb.CreateSession(m_Id
-                //, Session.CountBasePeriod
-                , dictTableValues[new KEY_VALUES() { TypeState = HandlerDbValues.STATE_VALUE.ORIGINAL, TypeCalculate = TaskCalculate.TYPE.IN_VALUES }]
-                , new DataTable()
-                , out err, out strErr);
-
-            //foreach (KEY_VALUES keyValues in m_dictValues.Keys) {
-            foreach (KEY_VALUES keyValues in dictTableValues.Keys) {
-                idDbTable = keyValues.TypeCalculate == TaskCalculate.TYPE.IN_VALUES ? ID_DBTABLE.INVALUES :
-                    keyValues.TypeCalculate == TaskCalculate.TYPE.OUT_VALUES ? ID_DBTABLE.OUTVALUES :
-                        ID_DBTABLE.UNKNOWN; // не найдено наименование таблицы, ошибка в запросе
-
-                if (!(idDbTable == ID_DBTABLE.UNKNOWN)) {
-                // получить результирующаю таблицу
-                // получить входные для расчета значения для возможности редактирования
-                    strQuery = string.Format(@"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [EXTENDED_DEFINITION] as [DATE_TIME], [WR_DATETIME]" // [ID_PUT] as [ID] 
-                        + @" FROM [{0}]"
-                        + @" WHERE [ID_SESSION]={1}"
-                            , HandlerDbValues.s_dictDbTables[idDbTable].m_name
-                            , Session.m_Id);
-
-                    m_dictValues.Add(keyValues
-                        //, HandlerDbTaskCalculate.TableToListValues(dictTableValues[keyValues]) // простое копирование из таблицы
-                        , HandlerDbTaskCalculate.TableToListValues(_handlerDb.Select(strQuery, out err)) // сложное обращение к БД, но происходит дополнительная проверка (создание новой сессии с корректными данными)
-                        );
-                } else
-                    Logging.Logg().Error (string.Format(@"HPanelTepCommon::setValues () - не найден идентификатор таблицы БД..."), Logging.INDEX_MESSAGE.NOT_SET);
-            }
-        }
-
-        /// <summary>
-        /// Установить значения таблиц для редактирования
-        /// </summary>
-        protected virtual void cloneValues()
-        {
-            List<KEY_VALUES> keys = new List<KEY_VALUES>();
-
-            //for (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES indx = (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.UNKNOWN + 1);
-            //    indx < TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT;
-            //    indx++)
-            //    if (!(m_arTableOrigin[(int)indx] == null))
-            //        m_arTableEdit[(int)indx] =
-            //            m_arTableOrigin[(int)indx].Copy();
-            //    else
-            //        ;
-
-            keys = m_dictValues.Keys.ToList();
-
-            foreach (KEY_VALUES key in keys)
-            //??? создается ли новая копия
-                m_dictValues.Add(new KEY_VALUES() { TypeCalculate = key.TypeCalculate, TypeState = HandlerDbValues.STATE_VALUE.EDIT }, new List<VALUES> (m_dictValues[key]));
-        }
+        protected HandlerDbTaskCalculate _handlerDb { get { return __handlerDb as HandlerDbTaskCalculate; } }        
 
         public override void Stop()
         {

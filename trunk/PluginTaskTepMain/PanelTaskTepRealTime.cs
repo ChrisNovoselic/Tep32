@@ -82,17 +82,14 @@ namespace PluginTaskTepMain
         {
             int err = -1;
             string strErr = string.Empty;
-            
-            // удалить устаревшую сессию
-            deleteSession();
-            ////??? создать новую сессию
-            //arQueryRanges = HandlerDb.GetDateTimeRangeVariableValues();
-            //??? загрузить значения для новой сесии
 
-            // произвести расчет
-            HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME);
+            // удалить устаревшую сессию
+            HandlerDb.Clear();
+            //??? создать новую сессию
             // установить/отобразить значения
-            setValues(out err, out strErr);
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
+            // произвести расчет
+            HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME);            
         }
         ///// <summary>
         ///// Инициировать подготовку к расчету
@@ -104,16 +101,6 @@ namespace PluginTaskTepMain
         //{
         //    throw new NotImplementedException();
         //}
-        /// <summary>
-        /// Установить значения таблиц для редактирования
-        /// </summary>
-        /// <param name="err">Идентификатор ошибки при выполнеинии функции</param>
-        /// <param name="strErr">Строка текста сообщения при галичии ошибки</param>
-        protected override void setValues(out int err, out string strErr)
-        {
-            err = 0;
-            strErr = string.Empty;
-        }
         /// <summary>
         /// Класс для отображения значений входных/выходных для расчета ТЭП  параметров
         /// </summary>
@@ -172,7 +159,7 @@ namespace PluginTaskTepMain
             throw new NotImplementedException();
         }
 
-        protected override void onSetValuesCompleted()
+        protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             throw new NotImplementedException();
         }

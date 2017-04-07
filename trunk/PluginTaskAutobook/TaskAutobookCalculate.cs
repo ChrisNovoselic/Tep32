@@ -24,16 +24,20 @@ namespace PluginTaskAutobook
             base.createTaskCalculate();
         }
         /// <summary>
-        /// 
+        /// Рассчитать выходные значения
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="err"></param>
-        protected override void calculate(TaskCalculate.TYPE type, out int err)
+        /// <param name="type">Тип расчета</param>
+        /// <param name="tableOrigin">Оригинальная таблица</param>
+        /// <param name="tableCalc">Выходная таблмца с рассчитанными значениями</param>
+        /// <param name="err">Признак ошибки при выполнении метода</param>
+        protected override void calculate(TaskCalculate.TYPE type, out DataTable tableOrigin, out DataTable tableCalc, out int err)
         {
+            tableOrigin = new DataTable();
+            tableCalc = new DataTable();
             err = 0;
         }
 
-        private const int MAX_ROWCOUNT_TO_INSERT = 666;
+        //private const int MAX_ROWCOUNT_TO_INSERT = 666;
 
         /// <summary>
         /// получение временного диапазона 
@@ -426,76 +430,77 @@ namespace PluginTaskAutobook
         {
             err = -1;
 
-            if (IdTask == ID_TASK.AUTOBOOK)
-                insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err, tableRes);
+            //if (IdTask == ID_TASK.AUTOBOOK)
+            //    insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err, tableRes);
+
             //if (err == 0)
             //    insertOutValues(_Session.m_Id, TaskCalculate.TYPE.OUT_VALUES, out err);
             //else
             //    ;
         }
 
-        /// <summary>
-        /// Вставить значения в таблицу для временных выходных значений сессии расчета
-        /// </summary>
-        /// <param name="idSession">Идентификатор сессии расчета</param>
-        /// <param name="typeCalc">Тип расчета</param>
-        /// <param name="tableRes">таблица с данными</param>
-        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
-        private void insertOutValues(long idSession, TaskCalculate.TYPE typeCalc, out int err, DataTable tableRes)
-        {
-            err = 0;
-            string strBaseQuery = string.Empty
-                , strQuery = string.Empty;
-            int iRowCounterToInsert = -1;
+        ///// <summary>
+        ///// Вставить значения в таблицу для временных выходных значений сессии расчета
+        ///// </summary>
+        ///// <param name="idSession">Идентификатор сессии расчета</param>
+        ///// <param name="typeCalc">Тип расчета</param>
+        ///// <param name="tableRes">таблица с данными</param>
+        ///// <param name="err">Идентификатор ошибки при выполнении функции</param>
+        //private void insertOutValues(long idSession, TaskCalculate.TYPE typeCalc, out int err, DataTable tableRes)
+        //{
+        //    err = 0;
+        //    string strBaseQuery = string.Empty
+        //        , strQuery = string.Empty;
+        //    int iRowCounterToInsert = -1;
 
-            strBaseQuery =
-            strQuery =
-                @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @" VALUES ";
+        //    strBaseQuery =
+        //    strQuery =
+        //        @"INSERT INTO " + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @" VALUES ";
 
-            if (true)
-            {
-                iRowCounterToInsert = 0;
-                foreach (DataRow rowSel in tableRes.Rows)
-                {
-                    if (iRowCounterToInsert > MAX_ROWCOUNT_TO_INSERT)
-                    {
-                        // исключить лишнюю запятую
-                        strQuery = strQuery.Substring(0, strQuery.Length - 1);
-                        // вставить строки в таблицу
-                        DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+        //    if (true)
+        //    {
+        //        iRowCounterToInsert = 0;
+        //        foreach (DataRow rowSel in tableRes.Rows)
+        //        {
+        //            if (iRowCounterToInsert > MAX_ROWCOUNT_TO_INSERT)
+        //            {
+        //                // исключить лишнюю запятую
+        //                strQuery = strQuery.Substring(0, strQuery.Length - 1);
+        //                // вставить строки в таблицу
+        //                DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
 
-                        if (!(err == 0))
-                            // при ошибке - не продолжать
-                            break;
+        //                if (!(err == 0))
+        //                    // при ошибке - не продолжать
+        //                    break;
 
-                        strQuery = strBaseQuery;
-                        iRowCounterToInsert = 0;
-                    }
+        //                strQuery = strBaseQuery;
+        //                iRowCounterToInsert = 0;
+        //            }
 
-                    strQuery += @"(";
+        //            strQuery += @"(";
 
-                    strQuery += idSession + @"," //ID_SEESION
-                      + rowSel[@"ID_PUT"] + @"," //ID_PUT
-                      + rowSel[@"QUALITY"] + @"," //QUALITY
-                      + rowSel[@"VALUE"] + @"," + //VALUE
-                    "'" + Convert.ToDateTime(rowSel[@"WR_DATETIME"]).ToString(@"yyyyMMdd hh:mm:ss.fff") + "',"
-                      + rowSel[@"EXTENDED_DEFINITION"]
-                      ;
+        //            strQuery += idSession + @"," //ID_SEESION
+        //              + rowSel[@"ID_PUT"] + @"," //ID_PUT
+        //              + rowSel[@"QUALITY"] + @"," //QUALITY
+        //              + rowSel[@"VALUE"] + @"," + //VALUE
+        //            "'" + Convert.ToDateTime(rowSel[@"WR_DATETIME"]).ToString(@"yyyyMMdd hh:mm:ss.fff") + "',"
+        //              + rowSel[@"EXTENDED_DEFINITION"]
+        //              ;
 
-                    strQuery += @"),";
+        //            strQuery += @"),";
 
-                    iRowCounterToInsert++;
-                }
+        //            iRowCounterToInsert++;
+        //        }
 
-                if (err == 0)
-                {
-                    // исключить лишнюю запятую
-                    strQuery = strQuery.Substring(0, strQuery.Length - 1);
-                    // вставить строки в таблицу
-                    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
-                }
-            }
-        }
+        //        if (err == 0)
+        //        {
+        //            // исключить лишнюю запятую
+        //            strQuery = strQuery.Substring(0, strQuery.Length - 1);
+        //            // вставить строки в таблицу
+        //            DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Получение корр. PUT's
@@ -538,118 +543,123 @@ namespace PluginTaskAutobook
             return Select(strQuery, out err);
         }
 
-        /// <summary>
-        /// Вых. PUT's
-        /// </summary>
-        /// <param name="err">Индентификатор ошибки</param>
-        /// <returns>таблица значений</returns>
-        public DataTable GetOutPut(out int err)
-        {
-            DataTable tableParameters = null;
-            string strQuery = string.Empty;
+        ///// <summary>
+        ///// Вых. PUT's
+        ///// </summary>
+        ///// <param name="err">Индентификатор ошибки</param>
+        ///// <returns>таблица значений</returns>
+        //public DataTable GetOutPut(out int err)
+        //{
+        //    DataTable tableParameters = null;
+        //    string strQuery = string.Empty;
 
-            strQuery = getQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES);
+        //    strQuery = getQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES);
 
-            return tableParameters = Select(strQuery, out err);
-        }
+        //    return tableParameters = Select(strQuery, out err);
+        //}
 
-        /// <summary>
-        /// Получение данных из OUTVAL
-        /// </summary>
-        /// <param name="err">Индентификатор ошибки</param>
-        /// <returns>таблица значений</returns>
-        public DataTable OutValues(out int err)
-        {
-            string strQuery;
-            strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
-                + @" WHERE [ID_SESSION]=" + _Session.m_Id;
+        ///// <summary>
+        ///// Получение данных из OUTVAL
+        ///// </summary>
+        ///// <param name="err">Индентификатор ошибки</param>
+        ///// <returns>таблица значений</returns>
+        //public DataTable OutValues(out int err)
+        //{
+        //    string strQuery;
+        //    strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
+        //        + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
+        //        + @" WHERE [ID_SESSION]=" + _Session.m_Id;
 
-            return Select(strQuery, out err);
-        }
+        //    return Select(strQuery, out err);
+        //}
 
-        /// <summary>
-        /// Формирование таблицы для сохранения значений OUT
-        /// </summary>
-        /// <param name="tableOrigin">первичная таблица</param>
-        /// <param name="tableRes">таблица с параметрами</param>
-        /// <param name="idTZ">timezone</param>
-        /// <param name="err">Индентификатор ошибки</param>
-        /// <returns>таблицу значений</returns>
-        public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes/*, ID_TIMEZONE idTimezone*/, out int err)
-        {
-            err = -1;
-            DataTable tableEdit = new DataTable();
-            string rowSel = null;
-            tableEdit = tableOrigin.Clone();//копия структуры
+        ///// <summary>
+        ///// Формирование таблицы для сохранения значений OUT
+        ///// </summary>
+        ///// <param name="tableOrigin">первичная таблица</param>
+        ///// <param name="tableRes">таблица с параметрами</param>
+        ///// <param name="idTZ">timezone</param>
+        ///// <param name="err">Индентификатор ошибки</param>
+        ///// <returns>таблицу значений</returns>
+        //public DataTable SaveResOut(DataTable tableOrigin, DataTable tableRes/*, ID_TIMEZONE idTimezone*/, out int err)
+        //{
+        //    err = -1;
+        //    DataTable tableEdit = new DataTable();
+        //    string rowSel = null;
+        //    tableEdit = tableOrigin.Clone();//копия структуры
 
-            if (tableRes != null)
-            {
-                for (int i = 0; i < tableRes.Rows.Count; i++)
-                {
-                    rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
+        //    if (tableRes != null)
+        //    {
+        //        for (int i = 0; i < tableRes.Rows.Count; i++)
+        //        {
+        //            rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
 
-                    tableEdit.Rows.Add(new object[]
-                    {
-                        DbTSQLInterface.GetIdNext(tableEdit, out err)
-                        , rowSel
-                        , HUsers.Id.ToString()
-                        , 0.ToString()
-                        , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
-                        , ID_PERIOD.DAY
-                        , _Session.CurrentIdTimezone //??? точно ли значение идентификатора
-                        , 1.ToString()
-                        , tableRes.Rows[i]["VALUE"]
-                        , DateTime.Now
-                    });
-                }
-            }
+        //            tableEdit.Rows.Add(new object[]
+        //            {
+        //                DbTSQLInterface.GetIdNext(tableEdit, out err)
+        //                , rowSel
+        //                , HUsers.Id.ToString()
+        //                , 0.ToString()
+        //                , Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString()).AddDays(1).ToString(CultureInfo.InvariantCulture)
+        //                , ID_PERIOD.DAY
+        //                , _Session.CurrentIdTimezone //??? точно ли значение идентификатора
+        //                , 1.ToString()
+        //                , tableRes.Rows[i]["VALUE"]
+        //                , DateTime.Now
+        //            });
+        //        }
+        //    }
 
-            return tableEdit;
-        }
+        //    return tableEdit;
+        //}
 
-        /// <summary>
-        /// Формирование таблицы для сохранения значений IN
-        /// </summary>
-        /// <param name="tableOrigin">первичная таблица</param>
-        /// <param name="tableRes">таблица с параметрами</param>
-        /// <param name="err">Индентификатор ошибки</param>
-        /// <returns>таблицу значений</returns>
-        public DataTable SaveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
-        {
-            err = -1;
-            DataTable tableEdit = new DataTable();
-            DateTime dtRes;
-            string rowSel = null;
-            tableEdit = tableOrigin.Clone();//копия структуры
+        ///// <summary>
+        ///// Формирование таблицы для сохранения значений IN
+        ///// </summary>
+        ///// <param name="tableOrigin">первичная таблица</param>
+        ///// <param name="tableRes">таблица с параметрами</param>
+        ///// <param name="err">Индентификатор ошибки</param>
+        ///// <returns>таблицу значений</returns>
+        //public DataTable SaveResInval(DataTable tableOrigin, DataTable tableRes, out int err)
+        //{
+        //    err = -1;
+        //    DataTable tableEdit = new DataTable();
+        //    DateTime dtRes;
+        //    string rowSel = null;
+        //    tableEdit = tableOrigin.Clone();//копия структуры
 
-            if (tableRes != null)
-            {
-                for (int i = 0; i < tableRes.Rows.Count; i++)
-                {
-                    rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
-                    dtRes = Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString());
+        //    if (tableRes != null)
+        //    {
+        //        for (int i = 0; i < tableRes.Rows.Count; i++)
+        //        {
+        //            rowSel = tableRes.Rows[i]["ID_PUT"].ToString();
+        //            dtRes = Convert.ToDateTime(tableRes.Rows[i]["WR_DATETIME"].ToString());
 
-                    tableEdit.Rows.Add(new object[]
-                    {
-                        DbTSQLInterface.GetIdNext(tableEdit, out err)
-                        , rowSel
-                        , HUsers.Id.ToString()
-                        , 0.ToString()
-                        , dtRes.ToString(CultureInfo.InvariantCulture)
-                        , ID_PERIOD.DAY
-                        , _Session.CurrentIdTimezone
-                        , 1.ToString()
-                        , tableRes.Rows[i]["VALUE"]
-                        , DateTime.Now.ToString(CultureInfo.InvariantCulture)
-                    });
-                }
-            }
+        //            tableEdit.Rows.Add(new object[]
+        //            {
+        //                DbTSQLInterface.GetIdNext(tableEdit, out err)
+        //                , rowSel
+        //                , HUsers.Id.ToString()
+        //                , 0.ToString()
+        //                , dtRes.ToString(CultureInfo.InvariantCulture)
+        //                , ID_PERIOD.DAY
+        //                , _Session.CurrentIdTimezone
+        //                , 1.ToString()
+        //                , tableRes.Rows[i]["VALUE"]
+        //                , DateTime.Now.ToString(CultureInfo.InvariantCulture)
+        //            });
+        //        }
+        //    }
 
-            return tableEdit;
-        }
+        //    return tableEdit;
+        //}
 
         public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
         {
             throw new NotImplementedException();
         }
@@ -669,16 +679,20 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// 
+        /// Рассчитать выходные значения
         /// </summary>
-        /// <param name="type">тип задачи</param>
-        /// <param name="err">Индентификатор ошибки</param>
-        protected override void calculate(TaskCalculate.TYPE type, out int err)
+        /// <param name="type">Тип расчета</param>
+        /// <param name="tableOrigin">Оригинальная таблица</param>
+        /// <param name="tableCalc">Выходная таблмца с рассчитанными значениями</param>
+        /// <param name="err">Признак ошибки при выполнении метода</param>
+        protected override void calculate(TaskCalculate.TYPE type, out DataTable tableOrigin, out DataTable tableCalc, out int err)
         {
+            tableOrigin = new DataTable();
+            tableCalc = new DataTable();
             err = 0;
         }
 
-        private const int MAX_ROWCOUNT_TO_INSERT = 666;
+        //private const int MAX_ROWCOUNT_TO_INSERT = 666;
 
         ///// <summary>
         ///// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
@@ -1103,6 +1117,11 @@ namespace PluginTaskAutobook
         }
 
         public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
         {
             throw new NotImplementedException();
         }

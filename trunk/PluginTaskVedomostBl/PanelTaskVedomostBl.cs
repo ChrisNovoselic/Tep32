@@ -33,19 +33,7 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// ??? экземпляр делегата(возврат Ид)
         /// </summary>
-        public static Func<int> s_delegateGetIdActiveComponent;
-        /// <summary>
-        /// Список параметров алгоритма расчета, не связанных с компонентом станции (верхний/1-ый уровень)
-        /// </summary>
-        private List<HandlerDbTaskCalculate.NALG_PARAMETER> m_listNAlgParameter;
-        /// <summary>
-        /// Список компонентов станции
-        /// </summary>
-        private List<HandlerDbTaskCalculate.TECComponent> m_listTECComponent;
-        /// <summary>
-        /// Список параметров алгоритма расчета, связанных с компонентом станции (нижний/2-ой уровень)
-        /// </summary>
-        private List<HandlerDbTaskCalculate.PUT_PARAMETER> m_listPutParameter;
+        public static Func<int> s_delegateGetIdActiveComponent;        
         /// <summary>
         /// Список представлений для каждого из компонентов станции 
         /// </summary>
@@ -184,10 +172,7 @@ namespace PluginTaskVedomostBl
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
             HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
-
-            m_listNAlgParameter = new List<HandlerDbTaskCalculate.NALG_PARAMETER>();
-            m_listTECComponent = new List<HandlerDbTaskCalculate.TECComponent>();
-            m_listPutParameter = new List<HandlerDbTaskCalculate.PUT_PARAMETER>();
+            
             m_listDataGridViewVedomostBl = new List<DataGridViewVedomostBl>();
 
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
@@ -400,7 +385,7 @@ namespace PluginTaskVedomostBl
                 //    Start = PanelManagement.DatetimeRange.Begin
                 //    , Increment = TimeSpan.FromDays(1)
                 //};
-                dgv.AddColumns(m_listNAlgParameter, m_listPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));
+                dgv.AddColumns(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));
                 dgv.AddRows(new DataGridViewValues.DateTimeStamp() {
                     Start = PanelManagement.DatetimeRange.Begin
                     ,
@@ -546,14 +531,6 @@ namespace PluginTaskVedomostBl
             int err = -1;
             string errMsg = string.Empty;
 
-            //// панель управления - очистка
-            //PanelManagement.Clear();
-            //
-            m_listNAlgParameter.Clear();
-            // удалить все компоненты за указанный ранее (предыдущий) период
-            m_listTECComponent.Clear();
-            // удалить все параметры расчета(связанные с компонентом) за указанный ранее (предыдущий) период
-            m_listPutParameter.Clear();
             // удалить все представления за указанный ранее период
             m_listDataGridViewVedomostBl.Clear();
 
@@ -563,16 +540,15 @@ namespace PluginTaskVedomostBl
             //??? Dgv's
             initializeDataGridView(out err, out errMsg);
             //Переключатели для выбора компонентов(эн./блоков, котлов)
-            PanelManagement.AddComponent(m_listTECComponent, out err, out errMsg);
+            PanelManagement.AddComponent(HandlerDb.ListTECComponent, out err, out errMsg);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
-            //??? с единственной целью - формирования заголовков представления
-            m_listNAlgParameter.Add(obj);
+            base.handlerDbTaskCalculate_onAddNAlgParameter(obj);
 
             m_listDataGridViewVedomostBl.ForEach(dgv => { dgv.AddNAlgParameter(obj); });
         }
@@ -580,18 +556,17 @@ namespace PluginTaskVedomostBl
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
-            m_listPutParameter.Add(obj);
+            base.handlerDbTaskCalculate_onAddPutParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
+        protected override void handlerDbTaskCalculate_onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
         {
-            // собираем для вызова 'PanelManagement.AddComponent' по окончанию сбора всех компонентов
-            m_listTECComponent.Add(obj);
+            base.handlerDbTaskCalculate_onAddComponent(obj);
 
             m_listDataGridViewVedomostBl.Add(new DataGridViewVedomostBl(obj));
         }
@@ -778,7 +753,7 @@ namespace PluginTaskVedomostBl
         //        m_handlerDb.UnRegisterDbConnection();
         //}
 
-        protected override void onSetValuesCompleted()
+        protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             // отобразить значения
             ActiveDataGridView.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues], Session.m_ViewValues);
@@ -1052,10 +1027,8 @@ namespace PluginTaskVedomostBl
         /// <param name="ev">Аргумент события</param>
         protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD;
-
             // ... - загрузить/отобразить значения из БД
-            updateDataValues();
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
         }
 
         /// <summary>
@@ -1065,10 +1038,8 @@ namespace PluginTaskVedomostBl
         /// <param name="ev">Аргумент события</param>
         private void panelTepCommon_btnHistory_onClick(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE;
-
             // ... - загрузить/отобразить значения из БД
-            updateDataValues();
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE);
         }
     }
 

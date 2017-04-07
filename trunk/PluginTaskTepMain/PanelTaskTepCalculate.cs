@@ -178,22 +178,25 @@ namespace PluginTaskTepMain
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void onAddNAlgParameter(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddNAlgParameter(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
+            base.handlerDbTaskCalculate_onAddNAlgParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
+            base.handlerDbTaskCalculate_onAddPutParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(TepCommon.HandlerDbTaskCalculate.TECComponent obj)
+        protected override void handlerDbTaskCalculate_onAddComponent(TepCommon.HandlerDbTaskCalculate.TECComponent obj)
         {
+            base.handlerDbTaskCalculate_onAddComponent(obj);
         }
         #endregion
 
@@ -205,7 +208,7 @@ namespace PluginTaskTepMain
         /// <param name="bClose">Признак полной/частичной очистки</param>
         protected override void clear(bool bClose = false)
         {
-            deleteSession();
+            HandlerDb.Clear();
             //??? повторная проверка
             if (bClose == true) {
                 PanelManagement.Clear(); // прежде удаления элементов из списка отменить регистрацию обработки событий "изменение текущ./индекса"

@@ -630,10 +630,6 @@ namespace PluginTaskAutobook
             HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
             m_AutoBookCalculate = new TaskAutobookCalculate();
 
-            m_listNAlgParameter = new List<HandlerDbTaskCalculate.NALG_PARAMETER>();
-            m_listPutParameter = new List<HandlerDbTaskCalculate.PUT_PARAMETER>();
-            m_listTECComponent = new List<HandlerDbTaskCalculate.TECComponent>();
-
             m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
             m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
 
@@ -901,7 +897,8 @@ namespace PluginTaskAutobook
         /// </summary>
         public override void Stop()
         {
-            deleteSession();
+            HandlerDb.Clear();
+            HandlerDb.Stop();
 
             base.Stop();
         }
@@ -1053,17 +1050,12 @@ namespace PluginTaskAutobook
         //    //}
         //}
 
-        protected override void onSetValuesCompleted()
+        protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
         {
             int err = -1;
 
-            //вычисление значений
-            m_AutoBookCalculate.getTable(m_arTableOrigin, HandlerDb.GetOutPut(out err));
-            //
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-                m_AutoBookCalculate.calcTable[(int)INDEX_COLUMN.TEC].Copy();
-            //запись выходных значений во временную таблицу
-            HandlerDb.insertOutValues(out err, m_AutoBookCalculate.calcTable[(int)INDEX_COLUMN.TEC]);
+            //вычисление значений, сохранение во временной таблице
+            HandlerDb.Calculate(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
             // отобразить значения
             m_dgvValues.ShowValues(m_arTableOrigin
                 , HandlerDb.GetPlanOnMonth(TaskCalculateType
@@ -1083,10 +1075,8 @@ namespace PluginTaskAutobook
         private void btnHistory_OnClick(object obj, EventArgs ev)
         {
             try {
-                Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE;
-
                 // ... - загрузить/отобразить значения из БД
-                updateDataValues();
+                HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE);
             } catch (Exception e) {
                 Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues::btnHistory_OnClick () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
@@ -1101,10 +1091,8 @@ namespace PluginTaskAutobook
         {
             try
             {
-                Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD;
-
                 // ... - загрузить/отобразить значения из БД
-                updateDataValues();
+                HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
             } catch (Exception e) {
                 Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues::panelTepCommon_btnUpdate_onClick () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
@@ -1265,18 +1253,6 @@ namespace PluginTaskAutobook
             else
                 ;
         }
-        /// <summary>
-        /// Список параметров алгоритма расчета, не связанных с компонентом станции (верхний/1-ый уровень)
-        /// </summary>
-        private List<HandlerDbTaskCalculate.NALG_PARAMETER> m_listNAlgParameter;
-        /// <summary>
-        /// Список компонентов станции
-        /// </summary>
-        private List<HandlerDbTaskCalculate.TECComponent> m_listTECComponent;
-        /// <summary>
-        /// Список параметров алгоритма расчета, связанных с компонентом станции (нижний/2-ой уровень)
-        /// </summary>
-        private List<HandlerDbTaskCalculate.PUT_PARAMETER> m_listPutParameter;
         //protected override void panelManagement_OnEventDetailChanged(object obj)
         //{
         //    base.panelManagement_OnEventDetailChanged(obj);
@@ -1295,13 +1271,9 @@ namespace PluginTaskAutobook
         /// </summary>
         protected override void panelManagement_TimezoneChanged()
         {
-            m_listNAlgParameter.Clear();
-            m_listPutParameter.Clear();
-            m_listTECComponent.Clear();
-
             base.panelManagement_TimezoneChanged();
 
-            m_dgvValues.AddColumns(m_listNAlgParameter, m_listPutParameter);
+            m_dgvValues.AddColumns(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter);
 
             addValueRows();
         }        
@@ -1310,13 +1282,9 @@ namespace PluginTaskAutobook
         /// </summary>
         protected override void panelManagement_Period_onChanged()
         {
-            m_listNAlgParameter.Clear();
-            m_listPutParameter.Clear();
-            m_listTECComponent.Clear();
-
             base.panelManagement_Period_onChanged();
 
-            m_dgvValues.AddColumns(m_listNAlgParameter, m_listPutParameter);
+            m_dgvValues.AddColumns(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter);
 
             addValueRows();
         }
@@ -1324,25 +1292,25 @@ namespace PluginTaskAutobook
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
-            m_listNAlgParameter.Add(obj);
+            base.handlerDbTaskCalculate_onAddNAlgParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
-            m_listPutParameter.Add(obj);
+            base.handlerDbTaskCalculate_onAddPutParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить компонент станции (оборудовнаие)
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
+        protected override void handlerDbTaskCalculate_onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
         {
-            m_listTECComponent.Add(obj);
+            base.handlerDbTaskCalculate_onAddComponent(obj);
         }
         #endregion
 
@@ -1375,11 +1343,11 @@ namespace PluginTaskAutobook
             ////???сбор значений
             //valuesFence();
 
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = getStructurOutval(
-                getNameTableOut(PanelManagement.DatetimeRange.Begin), out err);
+            //m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = getStructurOutval(
+            //    getNameTableOut(PanelManagement.DatetimeRange.Begin), out err);
 
-            m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-                HandlerDb.SaveResOut(m_TableOrigin, m_TableEdit, out err);
+            //m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
+            //    HandlerDb.SaveResOut(m_TableOrigin, m_TableEdit, out err);
 
             //if (m_TableEdit.Rows.Count > 0)
                 ////???save вх. значений

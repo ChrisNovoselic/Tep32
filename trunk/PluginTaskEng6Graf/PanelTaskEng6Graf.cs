@@ -73,22 +73,22 @@ namespace PluginTaskEng6Graf
             throw new NotImplementedException();
         }
 
-        protected override void onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
             throw new NotImplementedException();
         }
 
-        protected override void onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
             throw new NotImplementedException();
         }
 
-        protected override void onAddComponent(HandlerDbTaskCalculate.TECComponent comp)
+        protected override void handlerDbTaskCalculate_onAddComponent(HandlerDbTaskCalculate.TECComponent comp)
         {
             throw new NotImplementedException();
         }
 
-        protected override void onSetValuesCompleted()
+        protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
         {
             throw new NotImplementedException();
         }
