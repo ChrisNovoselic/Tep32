@@ -47,7 +47,7 @@ namespace PluginTaskTepMain
         {
             HandlerDb.IdTask = ID_TASK.TEP;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
-            HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
+            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
 
             InitializeComponents();
 
@@ -297,10 +297,6 @@ namespace PluginTaskTepMain
             }
 
             protected abstract void addColumn(TepCommon.HandlerDbTaskCalculate.TECComponent comp, ModeAddColumn mode);
-
-            //public abstract void AddRow(NALG_PARAMETER nAlgParameter);
-
-            public abstract void ShowValues(DataTable values/*, DataTable parameter, bool bUseRatio = true*/);
 
             public abstract void ClearColumns();
 

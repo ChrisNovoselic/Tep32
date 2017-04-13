@@ -52,36 +52,6 @@ namespace PluginTaskTepMain
         {
             return new HandlerDbTaskTepCalculate(m_Id);
         }
-
-        /// <summary>
-        /// Сохранить изменения в редактируемых таблицах
-        /// </summary>
-        /// <param name="err">Признак ошибки при выполнении сохранения в БД</param>
-        protected override void recUpdateInsertDelete(out int err)
-        {
-            err = -1;
-
-            //m_handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_dictDbTables[(int)INDEX_DBTABLE_NAME.INVALUES]
-            //    , @"ID_PUT, ID_TIME"
-            //    , m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]
-            //    , m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]
-            //    , out err);
-
-            __handlerDb.RecUpdateInsertDelete(HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVAL_DEF].m_name
-                , @"ID_PUT, ID_TIME"
-                , string.Empty
-                , m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
-                , m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
-                , out err);
-        }
-        /// <summary>
-        /// Обработчик события при успешном сохранении изменений в редактируемых на вкладке таблицах
-        /// </summary>
-        protected override void successRecUpdateInsertDelete()
-        {
-            m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-                m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Copy();
-        }
         /// <summary>
         /// Освободить (при закрытии), связанные с функционалом ресурсы
         /// </summary>

@@ -27,16 +27,6 @@ namespace PluginTaskTepForm3Tech
             err = 0;
             errMsg = string.Empty;
         }
-
-        protected override void recUpdateInsertDelete(out int err)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void successRecUpdateInsertDelete()
-        {
-            throw new NotImplementedException();
-        }
         /// <summary>
         /// Создать объект для взаимодействия с БД
         /// </summary>

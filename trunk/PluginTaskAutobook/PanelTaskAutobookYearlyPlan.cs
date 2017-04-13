@@ -14,11 +14,6 @@ namespace PluginTaskAutobook
     public partial class PanelTaskAutobookYearlyPlan : HPanelTepCommon
     {
         /// <summary>
-        /// Таблицы со значениями для редактирования
-        /// </summary>
-        protected DataTable[] m_arTableOrigin
-            , m_arTableEdit;
-        /// <summary>
         /// 
         /// </summary>
         public static string[] GetMonth =
@@ -38,32 +33,13 @@ namespace PluginTaskAutobook
         protected enum INDEX_CONTROL
         {
             UNKNOWN = -1,
-            DGV_PLANEYAR = 2,
+            DGV_VALUES = 2,
             LABEL_DESC, LABEL_YEARPLAN
         }
-        ///// <summary>
-        ///// Индексы массива списков идентификаторов
-        ///// </summary>
-        //protected enum INDEX_ID
-        //{
-        //    UNKNOWN = -1,
-        //    /*PERIOD, // идентификаторы периодов расчетов, использующихся на форме
-        //    TIMEZONE, // идентификаторы (целочисленные, из БД системы) часовых поясов*/
-        //    ALL_COMPONENT, ALL_NALG, // все идентификаторы компонентов ТЭЦ/параметров
-        //    //    , DENY_COMP_CALCULATED,
-        //    //DENY_PARAMETER_CALCULATED // запрещенных для расчета
-        //    //    , DENY_COMP_VISIBLED,
-        //    //DENY_PARAMETER_VISIBLED // запрещенных для отображения
-        //    COUNT
-        //}
         /// <summary>
         /// Отображение значений в табличном представлении(план)
         /// </summary>
         protected DataGridViewAutobookYearlyPlan m_dgvValues;
-        ///// <summary>
-        ///// 
-        ///// </summary>
-        //public static DateTime s_dtDefaultAU = new DateTime(DateTime.Today.Year, 1, 1);
         /// <summary>
         /// Метод для создания панели с активными объектами управления
         /// </summary>
@@ -103,7 +79,8 @@ namespace PluginTaskAutobook
             public enum INDEX_CONTROL
             {
                 UNKNOWN = -1
-                , BUTTON_SAVE, BUTTON_LOAD
+                , BUTTON_LOAD, BUTTON_SAVE
+                , DGV_VALUES
                 , CHKBX_EDIT
                     , COUNT
             }
@@ -130,60 +107,51 @@ namespace PluginTaskAutobook
             /// </summary>
             private void InitializeComponents()
             {
+                //initializeLayoutStyle();
                 Control ctrl = new Control();
-                int posRow = -1; // позиция по оси "X" при позиционировании элемента управления
+                ;
+                // переменные для инициализации кнопок "Добавить", "Удалить"
+                string strPartLabelButtonDropDownMenuItem = string.Empty;
+                int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
+                    , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"    
+                                 //int posColdgvTEPValues = 6;
+                SuspendLayout();
 
                 //CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
-
-                SuspendLayout();
 
                 posRow = 6;
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
                 ctrl = new Button();
                 ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
-                //ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
-                //indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
-                //ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString();
-                //indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Архивные значения"));
-                //ctrl.ContextMenuStrip.Items[indx].Name = INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString();
                 ctrl.Text = @"Загрузить";
-                //ctrl.Dock = DockStyle.Top;
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow);
-                SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
+                SetColumnSpan(ctrl, ColumnCount / 2);
+                SetRowSpan(ctrl, 1);
                 //Кнопка - сохранить
                 ctrl = new Button();
                 ctrl.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
                 ctrl.Text = @"Сохранить";
-                //ctrl.Dock = DockStyle.Top;
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, ColumnCount / 2, posRow);
-                SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
-                //Признак Корректировка_включена/корректировка_отключена 
+                SetColumnSpan(ctrl, ColumnCount / 2);
+                SetRowSpan(ctrl, 1);
+                //Признак редактирование_разрешено/редактирование_запрещено 
                 ctrl = new CheckBox();
                 ctrl.Name = INDEX_CONTROL.CHKBX_EDIT.ToString();
-                ctrl.Text = @"Корректировка значений разрешена";
+                ctrl.Text = @"Редактирование разрешено";
                 ctrl.Dock = DockStyle.Top;
                 ctrl.Enabled = false;
                 (ctrl as CheckBox).Checked = true;
                 Controls.Add(ctrl, 0, posRow = posRow + 1);
-                SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
+                SetColumnSpan(ctrl, ColumnCount);
+                SetRowSpan(ctrl, 1);
 
                 ResumeLayout(false);
                 PerformLayout();
             }
 
-            ///// <summary>
-            ///// Обработчик события - изменение дата/время окончания периода
-            ///// </summary>
-            ///// <param name="obj">Составной объект - календарь</param>
-            ///// <param name="ev">Аргумент события</param>
-            //protected void hdtpEnd_onValueChanged(object obj, EventArgs ev)
-            //{
-            //    HDateTimePicker hdtpEndtimePer = obj as HDateTimePicker;
-            //    DateTimeRangeValue_Changed?.Invoke(hdtpEndtimePer.LeadingValue, hdtpEndtimePer.Value);
-            //}
             /// <summary>
             /// Обработчик события - изменение значения из списка признаков отображения/снятия_с_отображения
             /// </summary>
@@ -196,7 +164,7 @@ namespace PluginTaskAutobook
 
             protected override void activateControlChecked_onChanged(bool bActivate)
             {
-                throw new NotImplementedException();
+                // не требуется, т.к. отсутствуют необходимые элементы управления
             }
         }
 
@@ -204,15 +172,12 @@ namespace PluginTaskAutobook
         /// Класс панели - ИРЗ Учет активной электроэнергии - плановые значения (месяц-год)
         /// </summary>
         /// <param name="iFunc">Объект для взаимодействия с вызывающей программой</param>
-        public PanelTaskAutobookYearlyPlan(IPlugIn iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        public PanelTaskAutobookYearlyPlan(IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
-            HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
-
-            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
+            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
 
             InitializeComponent();
 
@@ -224,85 +189,38 @@ namespace PluginTaskAutobook
         /// </summary>
         private void InitializeComponent()
         {
-            Control ctrl = new Control(); ;
+            m_dgvValues = new DataGridViewAutobookYearlyPlan(INDEX_CONTROL.DGV_VALUES.ToString());
+
+            foreach (DataGridViewColumn column in m_dgvValues.Columns)
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+
+            Control ctrl = new Control();
+            ;
             // переменные для инициализации кнопок "Добавить", "Удалить"
-            int posRow = -1; // позиция по оси "X" при позиционировании элемента управления   
-            int posColdgvValues = 4;
+            int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
+                , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"
+            int posColdgvValues = 4
+                , heightRowdgvValues = 10;
 
             SuspendLayout();
 
-            posRow = 0;
-
-            m_dgvValues = new DataGridViewAutobookYearlyPlan(INDEX_CONTROL.DGV_PLANEYAR.ToString());
-            m_dgvValues.Dock = DockStyle.Fill;
-            m_dgvValues.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            m_dgvValues.AllowUserToResizeRows = false;
-            m_dgvValues.AddColumn("Выработка, тыс. кВтч", false, "Output");
-
-            m_dgvValues.Columns["DATE"].Visible = false;
-            foreach (DataGridViewColumn column in m_dgvValues.Columns)
-                column.SortMode = DataGridViewColumnSortMode.NotSortable;
-            m_dgvValues.CellEndEdit += dgvYear_CellEndEdit;
-            //
-            Label lblyearDGV = new Label();
-            lblyearDGV.Dock = DockStyle.Top;
-            lblyearDGV.Text = @"Плановая выработка электроэнергии на "
-                + DateTime.Now.Year + " год.";
-            lblyearDGV.Name = INDEX_CONTROL.LABEL_YEARPLAN.ToString();
-            Label lblTEC = new Label();
-            lblTEC.Dock = DockStyle.Top;
-            lblTEC.Text = @"Новосибирская ТЭЦ-5";
-            //
-            TableLayoutPanel tlpYear = new TableLayoutPanel();
-            tlpYear.Dock = DockStyle.Fill;
-            tlpYear.AutoSize = true;
-            tlpYear.AutoSizeMode = AutoSizeMode.GrowOnly;
-            tlpYear.Controls.Add(lblyearDGV, 0, 0);
-            tlpYear.Controls.Add(lblTEC, 0, 1);
-            tlpYear.Controls.Add(m_dgvValues, 0, 2);
-            Controls.Add(tlpYear, 1, posRow);
-            SetColumnSpan(tlpYear, 9); SetRowSpan(tlpYear, 10);
-            //
-            Controls.Add(PanelManagement, 0, posRow);
+            Controls.Add(PanelManagement, 0, posRow = posRow);
             SetColumnSpan(PanelManagement, posColdgvValues);
             SetRowSpan(PanelManagement, RowCount);
 
-            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4, 10);
+            Controls.Add(m_dgvValues, posColdgvValues, posRow);
+            SetColumnSpan(m_dgvValues, this.ColumnCount - posColdgvValues);
+            SetRowSpan(m_dgvValues, heightRowdgvValues);
+
+            addLabelDesc(INDEX_CONTROL.LABEL_DESC.ToString(), 4);
 
             ResumeLayout(false);
             PerformLayout();
 
-            Button btn = (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_LOAD.ToString(), true)[0] as Button);
-            btn.Click += new EventHandler(panelTepCommon_btnUpdate_onClick);
-            //(btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
-            //    new EventHandler(HPanelTepCommon_btnUpdate_Click);
-            //(btn.ContextMenuStrip.Items.Find(PanelManagementAutobook.INDEX_CONTROL_BASE.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
-            //    new EventHandler(hPanelAutobook_btnHistory_Click);
-            (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
-
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        protected DataTable m_TableOrigin
-        {
-            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
-        }
-        protected DataTable m_TableEdit
-        {
-            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
-        }
-
-        /// <summary>
-        /// обработчик события - конец редактирования занчения в ячейке
-        /// </summary>
-        /// <param name="sender">Объект, инициировавший событие</param>
-        /// <param name="e">данные события</param>
-        void dgvYear_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-                m_dgvValues.FillTableEdit((int)Session.m_Id);
+            Button btn = (findControl(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_LOAD.ToString()) as Button);
+            btn.Click += // действие по умолчанию
+                new EventHandler(panelTepCommon_btnUpdate_onClick);            
+            (findControl(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString()) as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
         }
 
         /// <summary>
@@ -317,42 +235,40 @@ namespace PluginTaskAutobook
 
             ID_PERIOD idProfilePeriod;
             ID_TIMEZONE idProfileTimezone;
-            string strItem = string.Empty;
-            int id_comp = -1;
+            bool bEnabled = true;
 
             int role = HTepUsers.Role;
 
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMIZONE, COMP, PARAMETER(OUT_VALUES), MEASURE, RATIO
-            initialize(new ID_DBTABLE[] { ID_DBTABLE.TIMEZONE, ID_DBTABLE.TIME, ID_DBTABLE.COMP_LIST, ID_DBTABLE.RATIO }, out err, out errMsg);
+            initialize(new ID_DBTABLE[] { ID_DBTABLE.TIMEZONE, ID_DBTABLE.TIME, ID_DBTABLE.IN_PARAMETER, ID_DBTABLE.COMP_LIST, ID_DBTABLE.RATIO }, out err, out errMsg);
 
             HandlerDb.FilterDbTableTimezone =  HandlerDbTaskCalculate.DbTableTimezone.Msk;
-            HandlerDb.FilterDbTableTime = HandlerDbTaskCalculate.DbTableTime.Month;
-            HandlerDb.FilterDbTableCompList = HandlerDbTaskCalculate.DbTableCompList.Tec | HandlerDbTaskCalculate.DbTableCompList.Tg;
-
-            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.COMP_LIST].Rows) {
-                id_comp = (short)r[@"ID"];
-                //m_arListIds[(int)INDEX_ID.ALL_COMPONENT].Add(id_comp);
-
-                m_dgvValues.AddIdComp(id_comp, "Output");
-            }
+            HandlerDb.FilterDbTableTime = HandlerDbTaskCalculate.DbTableTime.Year;
+            HandlerDb.FilterDbTableCompList = HandlerDbTaskCalculate.DbTableCompList.Tec;
 
             m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
             try {
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_PLANEYAR, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
-                        (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked =
-                            (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_PLANEYAR, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
+                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
+                    bEnabled =
+                        (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
                 else
-                    (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+                    bEnabled = false;
 
-                m_dgvValues.AddBRead(!(Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked);
+                (findControl(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString()) as CheckBox).Checked =
+                m_dgvValues.ReadOnly =
+                    bEnabled;
 
+                bEnabled = true; // значение по умолчанию для кнопки "Сохранить"
                 if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == true)
-                    (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
+                    bEnabled =
                         (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
                 else
-                    (Controls.Find(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+                    bEnabled = false;
+
+                (findControl(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString()) as Button).Enabled =
+                    bEnabled;
             } catch (Exception e) {
                 Logging.Logg().Exception(e, @"PanelTaskAutoBookYarlyPlan::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
@@ -366,6 +282,9 @@ namespace PluginTaskAutobook
                     //Заполнить элемент управления с периодами расчета
                     idProfilePeriod = (ID_PERIOD)Enum.Parse(typeof(ID_PERIOD), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.PERIOD));
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME], idProfilePeriod);
+
+                    PanelManagement.AllowUserPeriodChanged = false;
+                    PanelManagement.AllowUserTimezoneChanged = false;
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelTaskAutoBook::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -389,11 +308,16 @@ namespace PluginTaskAutobook
                 ;
         }
 
-        //protected override void panelManagement_OnEventDetailChanged(object obj)
-        //{
-        //    base.panelManagement_OnEventDetailChanged(obj);
-        //}
+        private void addValueRows()
+        {
+            TimeSpan tsOffsetUTC = TimeSpan.FromDays(1) - Session.m_curOffsetUTC;
 
+            m_dgvValues.AddRows(new DataGridViewValues.DateTimeStamp() {
+                Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC
+                , Increment = TimeSpan.MaxValue
+                , ModeDataDatetime = HandlerDb.ModeDataDatetime
+            });
+        }
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
         /// </summary>
@@ -403,13 +327,22 @@ namespace PluginTaskAutobook
         {
             throw new NotImplementedException();
         }
-
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
         /// </summary>
         protected override void panelManagement_DatetimeRange_onChanged()
         {
             base.panelManagement_DatetimeRange_onChanged();
+
+            addValueRows();
+        }
+
+        private void buildStructureValues()
+        {
+            m_dgvValues.AddColumns(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter);
+
+            addValueRows();
+            
         }
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
@@ -417,6 +350,8 @@ namespace PluginTaskAutobook
         protected override void panelManagement_TimezoneChanged()
         {
             base.panelManagement_TimezoneChanged();
+
+            buildStructureValues();
         }
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
@@ -424,6 +359,8 @@ namespace PluginTaskAutobook
         protected override void panelManagement_Period_onChanged()
         {
             base.panelManagement_Period_onChanged();
+
+            buildStructureValues();
         }
         /// <summary>
         /// Обработчик события - добавить NAlg-параметр
@@ -450,32 +387,6 @@ namespace PluginTaskAutobook
             base.handlerDbTaskCalculate_onAddComponent(obj);
         }
         #endregion
-
-        /// <summary>
-        /// Обработчик события при успешном сохранении изменений в редактируемых на вкладке таблицах
-        /// </summary>
-        protected override void successRecUpdateInsertDelete()
-        {
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-              m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Copy();
-        }
-
-        /// <summary>
-        ///  Сохранить изменения в редактируемых таблицах
-        /// </summary>
-        /// <param name="err">номер ошибки</param>
-        protected override void recUpdateInsertDelete(out int err)
-        {
-            err = -1;
-
-            __handlerDb.RecUpdateInsertDelete(GetNameTableIn(PanelManagement.DatetimeRange.Begin) //??? почему 'Begin', а не 'End'
-                , @"DATE_TIME"
-                , @"ID"
-                , m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]
-                , m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]
-                , out err
-            );
-        }
 
         ///// <summary>
         ///// загрузка/обновление данных
@@ -523,7 +434,15 @@ namespace PluginTaskAutobook
 
         protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
         {
-            m_dgvValues.ShowValues(m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]);
+            int err = -1;
+
+            m_dgvValues.ShowValues(((TaskCalculateType & HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES) == HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
+                    ? HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                        : new List<HandlerDbTaskCalculate.VALUE>()
+                , ((TaskCalculateType & HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES) == HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+                    ? HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                        : new List<HandlerDbTaskCalculate.VALUE>()
+                , out err);
         }
 
         protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)
@@ -620,11 +539,8 @@ namespace PluginTaskAutobook
             //??? повторная проверка
             if (bClose == true) {
                 // удалить все строки
-                m_dgvValues.ClearRows();
-                //// удалить все столбцы
-                //dgvAB.ClearColumns();
-            }
-            else
+                m_dgvValues.Clear();
+            } else
                 // очистить содержание представления
                 m_dgvValues.ClearValues();
 
@@ -638,56 +554,8 @@ namespace PluginTaskAutobook
         /// <param name="ev">Аргумент события(пустой)</param>
         protected override void panelTepCommon_btnSave_onClick(object obj, EventArgs ev)
         {
-            int err = -1;
-            string errMsg = string.Empty;
-            DataRow[] dr_saveValue;
-            DateTimeRange[] dtrPer = HandlerDb.GetDateTimeRangeToSave();
-
-            for (int i = 0; i < m_dgvValues.Rows.Count; i++)
-            {
-                m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = getStructurInval(dtrPer[i], out err);
-                dr_saveValue = valuesFence.Select(string.Format(m_TableEdit.Locale, "WR_DATETIME = '{0:o}'", m_dgvValues.Rows[i].Cells["DATE"].Value));
-
-                if (dr_saveValue.Count() > 0) {
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-                        HandlerDb.SavePlanValue(m_TableOrigin, dr_saveValue, (int)Session.CurrentIdTimezone, out err);
-
-                    //s_dtDefaultAU = dtrPer[i].Begin.AddMonths(1);
-                    base.panelTepCommon_btnSave_onClick(obj, ev);
-                }
-                else
-                    ;
-            }
-        }
-
-        /// <summary>
-        /// формирование таблицы данных
-        /// </summary>
-        private DataTable valuesFence
-        {
-            get
-            { //сохранить вх. знач. в DataTable
-                return m_dgvValues.FillTableEdit((int)Session.m_Id);
-            }
-        }
-
-        /// <summary>
-        /// получает структуру таблицы 
-        /// INVAL_XXXXXX???
-        /// </summary>
-        /// <param name="arQueryRanges">временной промежуток</param>
-        /// <param name="err">Индентификатор ошибки</param>
-        /// <returns>таблица</returns>
-        private DataTable getStructurInval(DateTimeRange arQueryRanges, out int err)
-        {
-            string strRes = string.Empty;
-
-            strRes += "SELECT * FROM "
-                + GetNameTableIn(arQueryRanges.End)
-                + " WHERE ID_TIME = " + (int)Session.ActualIdPeriod;
-
-            return HandlerDb.Select(strRes, out err);
-        }
+            base.panelTepCommon_btnSave_onClick(obj, ev);
+        }        
 
         /// <summary>
         /// Получение имени таблицы вх.зн. в БД
@@ -713,8 +581,6 @@ namespace PluginTaskAutobook
         /// <param name="ev">Аргумент события</param>
         protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
-            Session.m_ViewValues = HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD;
-
             // ... - загрузить/отобразить значения из БД
             HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
         }

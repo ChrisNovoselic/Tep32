@@ -127,12 +127,12 @@ namespace TepCommon
                 for (indx = (INDEX_CONTROL.UNKNOWN + 1); indx < INDEX_CONTROL.COUNT; indx++)
                 {
                     cbx = Controls.Find(indx.ToString(), true)[0] as ComboBox;
-                    cbx.SelectedIndexChanged -= m_arSelectIndexChangedHandlers[(int)indx];
+                    cbx.SelectedIndexChanged -= new EventHandler(m_arSelectIndexChangedHandlers[(int)indx]);
                 }
 
                 indx = INDEX_CONTROL.YEAR;
                 cbx = Controls.Find(indx.ToString(), true)[0] as ComboBox;
-                cbx.SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Year - (_value[(int)INDEX_VALUE.CURRENT].Year - s_iBackwardYears);
+                cbx.SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Year - (DateTime.Today.Year - s_iBackwardYears);
                 indx = INDEX_CONTROL.MONTH;
                 cbx = Controls.Find(indx.ToString(), true)[0] as ComboBox;
                 cbx.SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Month - 1;
@@ -151,7 +151,7 @@ namespace TepCommon
                 for (indx = (INDEX_CONTROL.UNKNOWN + 1); indx < INDEX_CONTROL.COUNT; indx++)
                 {
                     cbx = Controls.Find(indx.ToString(), true)[0] as ComboBox;
-                    cbx.SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)indx];
+                    cbx.SelectedIndexChanged += new EventHandler(m_arSelectIndexChangedHandlers[(int)indx]);
                 }
             }
         }
@@ -486,6 +486,8 @@ namespace TepCommon
 
                     m_tsLeading +=
                         (TimeSpan.FromDays(DateTime.DaysInMonth(objLeading._value[(int)INDEX_VALUE.CURRENT].Year, objLeading._value[(int)INDEX_VALUE.CURRENT].Month)));
+
+                    m_tsLeading -= TimeSpan.FromDays(1);
                 } else
                     if (_mode == MODE.YEAR)
                         m_tsLeading =
@@ -493,7 +495,8 @@ namespace TepCommon
                 else
                     ;
 
-                m_tsLeading -= TimeSpan.FromDays(1);
+                //??? только для MONTH
+                //m_tsLeading -= TimeSpan.FromDays(1);
             } else
                 ;
 
@@ -509,10 +512,10 @@ namespace TepCommon
             cbxDay = Controls.Find(INDEX_CONTROL.DAY.ToString(), true)[0] as ComboBox;
             cbxHour = Controls.Find(INDEX_CONTROL.HOUR.ToString(), true)[0] as ComboBox;
 
-            cbxYear.SelectedIndexChanged -= m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.YEAR];
-            cbxMonth.SelectedIndexChanged -= m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.MONTH];
-            cbxDay.SelectedIndexChanged -= m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY];
-            cbxHour.SelectedIndexChanged -= m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.HOUR];
+            cbxYear.SelectedIndexChanged -= new EventHandler(m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.YEAR]);
+            cbxMonth.SelectedIndexChanged -= new EventHandler(m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.MONTH]);
+            cbxDay.SelectedIndexChanged -= new EventHandler(m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY]);
+            cbxHour.SelectedIndexChanged -= new EventHandler(m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.HOUR]);
 
             try
             {
@@ -530,10 +533,10 @@ namespace TepCommon
                 Logging.Logg().Exception(e, @"HDateTimePicker::leading_ValueChanged (INDEX_CONTROL=" + (ev as EventDatePartArgs).m_index + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
-            cbxYear.SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.YEAR];
-            cbxMonth.SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.MONTH];
-            cbxDay.SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY];
-            cbxHour.SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.HOUR];
+            cbxYear.SelectedIndexChanged += new EventHandler(m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.YEAR]);
+            cbxMonth.SelectedIndexChanged += new EventHandler(m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.MONTH]);
+            cbxDay.SelectedIndexChanged += new EventHandler(m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY]);
+            cbxHour.SelectedIndexChanged += new EventHandler(m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.HOUR]);
 
             ValueChanged(this, EventArgs.Empty);
         }
@@ -572,7 +575,7 @@ namespace TepCommon
         {
             ComboBox cbx = Controls.Find(INDEX_CONTROL.DAY.ToString(), true)[0] as ComboBox;
             if (bRegHandler == true)
-                cbx.SelectedIndexChanged -= m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY];
+                cbx.SelectedIndexChanged -= new EventHandler(m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY]);
             else
                 ;
 
@@ -602,7 +605,7 @@ namespace TepCommon
 
             cbx.SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Day - 1;
             if (bRegHandler == true)
-                cbx.SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY];
+                cbx.SelectedIndexChanged += new EventHandler(m_arSelectIndexChangedHandlers[(int)INDEX_CONTROL.DAY]);
             else
                 ;
         }
@@ -661,7 +664,7 @@ namespace TepCommon
             for (i = 0; i < cntDays; i++)//DateTime.DaysInMonth(_value[(int)INDEX_VALUE.CURRENT].Year, _value[(int)INDEX_VALUE.CURRENT].Month)
                 (ctrl as ComboBox).Items.Add(i + 1);
             (ctrl as ComboBox).SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Day - 1;
-            (ctrl as ComboBox).SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)indx];
+            (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(m_arSelectIndexChangedHandlers[(int)indx]);
 
             //Дата - наименование месяца
             indx = INDEX_CONTROL.MONTH;
@@ -674,7 +677,7 @@ namespace TepCommon
             for (i = 0; i < 12; i++)
                 (ctrl as ComboBox).Items.Add(HDateTime.NameMonths[i]);
             (ctrl as ComboBox).SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Month - 1;
-            (ctrl as ComboBox).SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)indx];
+            (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(m_arSelectIndexChangedHandlers[(int)indx]);
 
             //Дата - год
             indx = INDEX_CONTROL.YEAR;
@@ -687,7 +690,7 @@ namespace TepCommon
             for (i = (_value[(int)INDEX_VALUE.CURRENT].Year - s_iBackwardYears); i < (_value[(int)INDEX_VALUE.CURRENT].Year + s_iForwardYears); i++)
                 (ctrl as ComboBox).Items.Add(i.ToString());
             (ctrl as ComboBox).SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Year - (_value[(int)INDEX_VALUE.CURRENT].Year - s_iBackwardYears);
-            (ctrl as ComboBox).SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)indx];
+            (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(m_arSelectIndexChangedHandlers[(int)indx]);
 
             //Время - час
             indx = INDEX_CONTROL.HOUR;
@@ -700,7 +703,7 @@ namespace TepCommon
             for (i = 0; i < 24; i++)
                 (ctrl as ComboBox).Items.Add(i + 0);
             (ctrl as ComboBox).SelectedIndex = _value[(int)INDEX_VALUE.CURRENT].Hour - 0;
-            (ctrl as ComboBox).SelectedIndexChanged += m_arSelectIndexChangedHandlers[(int)indx];
+            (ctrl as ComboBox).SelectedIndexChanged += new EventHandler(m_arSelectIndexChangedHandlers[(int)indx]);
 
             ResumeLayout(false);
             PerformLayout();

@@ -711,7 +711,7 @@ namespace TepCommon
                             , 1
                             , 0
                             , 0
-                            , 0).AddYears(-1);
+                            , 0).AddYears(0);
                         hdtpEnd.Value = hdtpBegin.Value.AddYears(1);
                         hdtpBegin.Mode =
                         hdtpEnd.Mode =

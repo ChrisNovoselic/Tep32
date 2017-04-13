@@ -161,7 +161,7 @@ namespace PluginTaskBalTeplo
         {
             HandlerDb.IdTask = ID_TASK.BAL_TEPLO;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
-            HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
+            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
             m_calculate = new TaskBalTeploCalculate();
             m_dt_profile = new DataTable();
 
@@ -1179,60 +1179,6 @@ namespace PluginTaskBalTeplo
             strRes = TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
 
             return strRes;
-        }
-
-        /// <summary>
-        /// Сохранить изменения в редактируемых таблицах
-        /// </summary>
-        /// <param name="err">Признак ошибки при выполнении сохранения в БД</param>
-        protected override void recUpdateInsertDelete(out int err)
-        {
-            err = -1;
-
-            HandlerDb.RecUpdateInsertDelete(GetNameTableIn(
-                PanelManagement.DatetimeRange.Begin)
-                , @"ID_PUT, DATE_TIME, ID_USER, ID_SOURCE"
-                , @""
-                , m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]
-                , m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]
-                , out err
-            );
-
-            HandlerDb.RecUpdateInsertDelete(
-                GetNameTableOut(PanelManagement.DatetimeRange.Begin)
-                , @"ID_PUT, DATE_TIME, ID_USER, ID_SOURCE"
-                , @""
-                , m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]
-                , m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]
-                , out err
-            );
-        }
-
-        /// <summary>
-        /// Обработчик события при успешном сохранении изменений в редактируемых на вкладке таблицах
-        /// </summary>
-        protected override void successRecUpdateInsertDelete()
-        {
-            m_arTableOrigin_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-               m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Copy();
-            m_arTableOrigin_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-               m_arTableEdit_out[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Copy();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns>key</returns>
-        private int findMyID()
-        {
-            int Res = 0;
-            Dictionary<int, Type> dictRegId = (_iFuncPlugin as PlugInBase).GetRegisterTypes();
-
-            foreach (var item in dictRegId)
-                if (item.Value == this.GetType())
-                    Res = item.Key;
-
-            return Res;
         }
     }
 

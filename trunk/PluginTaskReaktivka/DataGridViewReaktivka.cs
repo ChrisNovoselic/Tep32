@@ -284,14 +284,17 @@ namespace PluginTaskReaktivka
                     ;
             }
 
-
             /// <summary>
-            /// Отображение значений
+            /// Отобразить значения
             /// </summary>
-            /// <param name="source">таблица с даными</param>
-            public void ShowValues(IEnumerable<HandlerDbTaskCalculate.VALUES> inValues
-                , IEnumerable<HandlerDbTaskCalculate.VALUES> outValues)
+            /// <param name="inValues">Список с входными значениями</param>
+            /// <param name="outValues">Список с выходными значениями</param>
+            public override void ShowValues(IEnumerable<HandlerDbTaskCalculate.VALUE> inValues
+                , IEnumerable<HandlerDbTaskCalculate.VALUE> outValues
+                , out int err)
             {
+                err = 0;
+
                 int idAlg = -1
                    , idPut = -1
                    , iQuality = -1
@@ -299,7 +302,7 @@ namespace PluginTaskReaktivka
                 double dblVal = -1F,
                     dbSumVal = 0;
                 DataGridViewRow row;
-                IEnumerable<HandlerDbTaskCalculate.VALUES> componentValues = null;
+                IEnumerable<HandlerDbTaskCalculate.VALUE> componentValues = null;
 
                 //if ((int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE == (int)typeValues)
                 //    ;
@@ -319,7 +322,7 @@ namespace PluginTaskReaktivka
                         if (!(componentValues == null)) {
                             dbSumVal = 0F;
 
-                            foreach (HandlerDbTaskCalculate.VALUES value in componentValues) {
+                            foreach (HandlerDbTaskCalculate.VALUE value in componentValues) {
                                 
                                 dblVal = value.value;
                                 iQuality = value.m_iQuality;

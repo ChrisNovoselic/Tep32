@@ -171,7 +171,7 @@ namespace PluginTaskVedomostBl
         {
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
-            HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
+            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
             
             m_listDataGridViewVedomostBl = new List<DataGridViewVedomostBl>();
 
@@ -376,6 +376,9 @@ namespace PluginTaskVedomostBl
             errMsg = string.Empty;
 
             PictureBoxVedomostBl pictureBox;
+            TimeSpan tsOffsetUTC = TimeSpan.MinValue;
+
+            tsOffsetUTC = TimeSpan.FromDays(1) - Session.m_curOffsetUTC;
 
             //создание грида со значениями
             //for (int i = 0; i < m_listTECComponent.Count; i++)
@@ -387,9 +390,9 @@ namespace PluginTaskVedomostBl
                 //};
                 dgv.AddColumns(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));
                 dgv.AddRows(new DataGridViewValues.DateTimeStamp() {
-                    Start = PanelManagement.DatetimeRange.Begin
-                    ,
-                    Increment = TimeSpan.FromDays(1)
+                    Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC
+                    , Increment = TimeSpan.FromDays(1)
+                    , ModeDataDatetime = HandlerDb.ModeDataDatetime
                 });
                 dgv.ResizeControls();
                 dgv.ConfigureColumns();
@@ -755,10 +758,12 @@ namespace PluginTaskVedomostBl
 
         protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
+            int err = -1;
+
             // отобразить значения
-            ActiveDataGridView.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues], Session.m_ViewValues);
-            ////сохранить готовые значения в таблицу
-            //m_arTableEdit[(int)Session.m_ViewValues] = valuesFence();
+            ActiveDataGridView.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                , HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                , out err);
         }
 
         protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)
@@ -771,25 +776,25 @@ namespace PluginTaskVedomostBl
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// Обновить/Вставить/Удалить
-        /// </summary>
-        /// <param name="nameTable">имя таблицы</param>
-        /// <param name="origin">оригинальная таблица</param>
-        /// <param name="edit">таблица с данными</param>
-        /// <param name="unCol">столбец, неучаствующий в InsetUpdate</param>
-        /// <param name="err">номер ошибки</param>
-        private void updateInsertDel(string nameTable, DataTable origin, DataTable edit, string unCol, out int err)
-        {
-            err = -1;
+        ///// <summary>
+        ///// Обновить/Вставить/Удалить
+        ///// </summary>
+        ///// <param name="nameTable">имя таблицы</param>
+        ///// <param name="origin">оригинальная таблица</param>
+        ///// <param name="edit">таблица с данными</param>
+        ///// <param name="unCol">столбец, неучаствующий в InsetUpdate</param>
+        ///// <param name="err">номер ошибки</param>
+        //private void updateInsertDel(string nameTable, DataTable origin, DataTable edit, string unCol, out int err)
+        //{
+        //    err = -1;
 
-            __handlerDb.RecUpdateInsertDelete(nameTable
-                    , @"ID_PUT, DATE_TIME, QUALITY"
-                    , unCol
-                    , origin
-                    , edit
-                    , out err);
-        }
+        //    __handlerDb.RecUpdateInsertDelete(nameTable
+        //            , @"ID_PUT, DATE_TIME, QUALITY"
+        //            , unCol
+        //            , origin
+        //            , edit
+        //            , out err);
+        //}
 
         ///// <summary>
         ///// получение значений
@@ -863,56 +868,6 @@ namespace PluginTaskVedomostBl
             set { s_flagBl = value; }
         }
 
-        ///// <summary>
-        ///// формирование запросов 
-        ///// для справочных данных
-        ///// </summary>
-        ///// <returns>запрос</returns>
-        //private string[] getQueryDictPrj()
-        //{
-        //    string[] arRes = null;
-
-        //    arRes = new string[]
-        //    {
-        //        //PERIOD
-        //        HandlerDb.GetQueryTimePeriods(m_strIdPeriods)
-        //        //TIMEZONE
-        //        , HandlerDb.GetQueryTimezones(m_strIdTimezones)
-        //        // список компонентов
-        //        , HandlerDb.GetQueryComp(Type)
-        //        // параметры расчета
-        //        , HandlerDb.GetQueryParameters(Type)
-        //        //// настройки визуального отображения значений
-        //        //, @""
-        //        // режимы работы
-        //        //, HandlerDb.GetQueryModeDev()
-        //        //// единицы измерения
-        //        //, m_handlerDb.GetQueryMeasures()
-        //        // коэффициенты для единиц измерения
-        //        , HandlerDb.GetQueryRatio()
-        //    };
-
-        //    return arRes;
-        //}
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="err">номер ошибки</param>
-        protected override void recUpdateInsertDelete(out int err)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// удачное заврешение UpdateInsertDelete
-        /// </summary>
-        protected override void successRecUpdateInsertDelete()
-        {
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-               m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Copy();
-        }
-
         /// <summary>
         /// Обработчик события - нажатие кнопки сохранить
         /// </summary>
@@ -937,98 +892,7 @@ namespace PluginTaskVedomostBl
             //    , out err);
 
             //saveInvalValue(out err);
-        }
-
-        ///// <summary>
-        ///// Сохранение входных знчений
-        ///// </summary>
-        ///// <param name="err">номер ошибки</param>
-        //private void saveInvalValue(out int err)
-        //{
-        //    DateTimeRange[] dtrPer;
-
-        //    if (!WhichBlIsSelected)
-        //        dtrPer = HandlerDb.getDateTimeRangeVariableValues();
-        //    else
-        //        dtrPer = HandlerDb.GetDateTimeRangeValuesVarExtremeBL();
-
-        //    sortingDataToTable(m_arTableOrigin[(int)Session.m_ViewValues]
-        //        , m_arTableEdit[(int)Session.m_ViewValues]
-        //        , HandlerDb.GetNameTableOut(dtrPer[0].Begin)
-        //        , @"ID"
-        //        , out err
-        //    );
-        //}
-
-        /// <summary>
-        /// разбор данных по разным табилца(взависимости от месяца)
-        /// </summary>
-        /// <param name="origin">оригинальная таблица</param>
-        /// <param name="edit">таблица с данными</param>
-        /// <param name="nameTable">имя таблицы</param>
-        /// <param name="unCol">столбец, неучаствующий в InsertUpdate</param>
-        /// <param name="err">номер ошибки</param>
-        private void sortingDataToTable(DataTable origin
-            , DataTable edit
-            , string nameTable
-            , string unCol
-            , out int err)
-        {
-            string nameTableExtrmRow = string.Empty
-                          , nameTableNew = string.Empty;
-            DataTable editTemporary = new DataTable()
-                , originTemporary = new DataTable();
-
-            err = -1;
-            editTemporary = edit.Clone();
-            originTemporary = origin.Clone();
-            nameTableNew = nameTable;
-
-            foreach (DataRow row in edit.Rows)
-            {
-                nameTableExtrmRow = extremeRow(row["DATE_TIME"].ToString(), nameTableNew);
-
-                if (nameTableExtrmRow != nameTableNew)
-                {
-                    foreach (DataRow rowOrigin in origin.Rows)
-                        if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month != Convert.ToDateTime(row["DATE_TIME"]).Month)
-                            originTemporary.Rows.Add(rowOrigin.ItemArray);
-
-                    updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
-
-                    nameTableNew = nameTableExtrmRow;
-                    editTemporary.Rows.Clear();
-                    originTemporary.Rows.Clear();
-                    editTemporary.Rows.Add(row.ItemArray);
-                }
-                else
-                    editTemporary.Rows.Add(row.ItemArray);
-            }
-
-            if (editTemporary.Rows.Count > 0)
-            {
-                foreach (DataRow rowOrigin in origin.Rows)
-                    if (extremeRow(Convert.ToDateTime(rowOrigin["DATE_TIME"]).ToString(), nameTableNew) == nameTableNew)
-                        originTemporary.Rows.Add(rowOrigin.ItemArray);
-
-                updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
-            }
-        }
-
-        /// <summary>
-        /// Нахождение имени таблицы для крайних строк
-        /// </summary>
-        /// <param name="strDate">дата</param>
-        /// <param name="nameTable">изначальное имя таблицы</param>
-        /// <returns>имя таблицы</returns>
-        private static string extremeRow(string strDate, string nameTable)
-        {
-            DateTime dtStr = Convert.ToDateTime(strDate);
-            string newNameTable = dtStr.Year.ToString() + dtStr.Month.ToString(@"00");
-            string[] pref = nameTable.Split('_');
-
-            return pref[0] + "_" + newNameTable;
-        }
+        }        
 
         /// <summary>
         /// Обработчик события - нажатие кнопки загрузить(сыр.)

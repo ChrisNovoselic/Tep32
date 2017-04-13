@@ -12,23 +12,64 @@ namespace TepCommon
     {
         protected abstract class DataGridViewValues : DataGridView
         {
-            public enum ModeData { NALG, DATETIME }
-
+            /// <summary>
+            /// Перечисления для указания режима отображения значений
+            /// </summary>
+            public enum ModeData {
+                /// <summary>
+                /// Столбцы - компоненты оборудования
+                ///  , строки - параметры алгоритма расчета 1-го уровня (НЕ связаны с компонентами оборудования)
+                ///  , метка времени для всех значений одинаковы
+                /// </summary>
+                NALG
+                /// <summary>
+                /// Столбцы - параметры алгоритма расчета 2-го уровня (СВЯЗаны с компонентами оборудования)
+                ///  , строки - в соответствии с меткой времени
+                ///  , метка времени для значений в одной строке одинакова
+                /// </summary>
+                , DATETIME }
+            /// <summary>
+            /// Режим отображения значений
+            /// </summary>
             public ModeData _modeData;
-
+            /// <summary>
+            /// Метка времени начальная (для отображения значений в режиме 'ModeData.DATETIME')
+            /// </summary>
             public struct DateTimeStamp
             {
+                /// <summary>
+                /// Значение начальной метки даты/времени
+                /// </summary>
                 public DateTime Start;
-
+                /// <summary>
+                /// Приращение для начальной метки даты/времени (от строки - к строке)
+                ///  , зависит от периода расчета (например, для месяца - сутки, для суток - час)
+                /// </summary>
                 public TimeSpan Increment;
+
+                public HandlerDbTaskCalculate.MODE_DATA_DATETIME ModeDataDatetime;
             }
 
+            public event Action<HandlerDbTaskCalculate.VALUE> EventCellValueChanged;
+            /// <summary>
+            /// Конструктор - основной (с параметром)
+            /// </summary>
+            /// <param name="modeData">Режим отображения значений</param>
             public DataGridViewValues(ModeData modeData)
                 : base()
             {
                 _modeData = modeData;
 
                 InitializeComponents();
+
+                CellParsing += onCellParsing;
+            }
+
+            private void onCellParsing(object sender, DataGridViewCellParsingEventArgs ev)
+            {
+                ev.ParsingApplied = true;
+
+                EventCellValueChanged(new HandlerDbTaskCalculate.VALUE() { m_IdPut = -1, value = -1F, m_iQuality = -1, stamp_value = DateTime.MinValue });
             }
 
             private void InitializeComponents()
@@ -198,22 +239,46 @@ namespace TepCommon
                 }
             }
             /// <summary>
-            /// кол-во дней в текущем месяце
+            /// Количество дней в текущем(установленном текущим для объекта) месяце
             /// </summary>
-            /// <returns>кол-во дней</returns>
-            public int DaysInMonth
+            /// <returns>Количество дней</returns>
+            public int MaxRowCount
             {
                 get {
-                    return (DatetimeStamp.Start.Equals(DateTime.MinValue) == false)
-                        ? DateTime.DaysInMonth(DatetimeStamp.Start.Year, DatetimeStamp.Start.Month)
-                            : -1;
+                    int iRes = -1;
+
+                    if (_modeData == ModeData.DATETIME)
+                        iRes = (DatetimeStamp.Start.Equals(DateTime.MinValue) == false)
+                            ? DatetimeStamp.Increment.Equals(TimeSpan.MaxValue) == false
+                                ? DateTime.DaysInMonth(DatetimeStamp.Start.Year, DatetimeStamp.Start.Month)
+                                    : 12
+                                        : -1;
+                    else
+                        ;
+
+                    return iRes;
                 }
             }
-
+            /// <summary>
+            /// Идентификатор параметра алгоритма расчета 1-го уровня
+            ///  , использовавшийся ранее для определения множителя и точности при округлении для отображения
+            /// </summary>
             private int _prevIdNAlgAsRatio;
+            /// <summary>
+            /// Идентификатор для определения множителя при отображении (настройка отображения)
+            /// </summary>
             private int _prevVsRatioValue;
+            /// <summary>
+            /// Идентификатор для определения множителя при отображении (проект, исходный множитель из БД источника)
+            /// </summary>
             private int _prevPrjRatioValue;
-
+            /// <summary>
+            /// Возвратить значение в соответствии 
+            /// </summary>
+            /// <param name="idNAlg">Идентификатор парметра в алгоритме расчета 1-го уровня</param>
+            /// <param name="idPut">Идентификатор парметра в алгоритме расчета 2-го уровня</param>
+            /// <param name="value">Значение, которое требуется преобразовать (применить множитель)</param>
+            /// <returns></returns>
             public double GetValueCellAsRatio(int idNAlg, int idPut, double value)
             {
                 double dblRes = -1F;
@@ -249,7 +314,10 @@ namespace TepCommon
                 return dblRes;
             }
             #endregion
-
+            /// <summary>
+            /// Добавить объект с информацией о параметре в алгоритме расчета 1-го уровня
+            /// </summary>
+            /// <param name="nAlg">Объект с информацией о параметре в алгоритме расчета 1-го уровня</param>
             public virtual void AddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER nAlg)
             {
                 if (m_dictNAlgProperties == null)
@@ -262,7 +330,10 @@ namespace TepCommon
                 else
                     ;
             }
-
+            /// <summary>
+            /// Добавить объект с информацией о параметре в алгоритме расчета 2-го уровня
+            /// </summary>
+            /// <param name="putPar">Объект с информацией о параметре в алгоритме расчета 2-го уровня</param>
             public virtual void AddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER putPar)
             {
                 if (m_dictNAlgProperties.ContainsKey(putPar.m_idNAlg) == true) {
@@ -279,26 +350,30 @@ namespace TepCommon
                     ;
             }
             /// <summary>
-            /// Добавить строки в количестве 'cnt', очередная строка имеет
+            /// Добавить строки в количестве 'cnt', очередная строка имеет смещение метки даты/времени, указанное во 2-ом аргументе
             /// </summary>
-            /// <param name="dtStart">Дата для 1-ой строки предсавления</param>
+            /// <param name="dtStart">Дата для 1-ой строки представления</param>
             /// <param name="tsAdding">Смещение между метками времени строк</param>
             /// <param name="cnt">Количество строк в представлении (дней в месяце)</param>
             protected virtual void addRows()
             {
                 DateTime dtCurrent;
-                TimeSpan tsIncrement = TimeSpan.Zero;
+                //TimeSpan tsIncrement = TimeSpan.Zero; // только для вариант №1
                 int cnt = -1;
 
                 dtCurrent = DatetimeStamp.Start;
-                tsIncrement = DatetimeStamp.Increment;
-                cnt = DaysInMonth;
+                //tsIncrement = DatetimeStamp.Increment;
+                cnt = MaxRowCount;
 
                 if (_modeData == ModeData.DATETIME)
                     if (RowCount == 0)
                         if (dtCurrent.Equals(DateTime.MinValue) == false)
-                            for (int i = 0; i < cnt + 1; i++, dtCurrent += tsIncrement)
-                                addRow(dtCurrent, !(i < cnt));
+                            //// вариант №1
+                            //for (int i = 0; i < cnt + 1; i++, dtCurrent += tsIncrement)
+                            //    addRow(dtCurrent, !(i < cnt));
+                            // вариант №2
+                            for (int i = 0; i < cnt + 1; i++)
+                                addRow((RowCount + 1) == cnt + 1);
                         else
                             throw new Exception(@"HPanelTepCommon.DataGridViewValues::addRows () - не установлена метка даты для DataGridView в целом...");
                     else
@@ -306,37 +381,66 @@ namespace TepCommon
                 else
                     throw new Exception(string.Format(@"HPanelTepCommon.DataGridViewValues::addRows () - для объекта с типом {0} вызов метода не допускается...", _modeData));
             }
-
-            //public virtual void AddRows()
-            //{
-            //    addRows();
-            //}
-
+            /// <summary>
+            /// Добавить строки, назначить начальную метку даты/времени
+            /// </summary>
+            /// <param name="dtStamp">Метка даты/времени начальная</param>
             public virtual void AddRows(DateTimeStamp dtStamp)
             {
                 DatetimeStamp = dtStamp;
 
                 addRows();
             }
-
+            /// <summary>
+            /// Добавить одну строку
+            /// </summary>
+            /// <param name="dtRow">Метка даты/времени для строки</param>
+            /// <param name="bEnded">Признак итоговой строки</param>
             protected virtual void addRow(DateTime dtRow, bool bEnded)
             {
                 int indxRow = -1;
 
-                indxRow = Rows.Add();
+                if (_modeData == ModeData.DATETIME) {
+                    indxRow = Rows.Add();
 
-                if (bEnded == true) {
-                    // окончание периода - месяц
-                    Rows[indxRow].Tag = -1;
-                    Rows[indxRow].HeaderCell.Value = @"ИТОГО";
-                } else {
-                    // обычные сутки
-                    Rows[indxRow].Tag = dtRow;
-                    if (RowHeadersVisible == true)
-                        Rows[indxRow].HeaderCell.Value = dtRow.ToShortDateString();
-                    else
-                        Rows[indxRow].Cells[0].Value = dtRow.ToShortDateString();
-                }
+                    if (bEnded == true) {
+                        // окончание периода - месяц
+                        Rows[indxRow].Tag = -1;
+                        Rows[indxRow].HeaderCell.Value = @"ИТОГО";
+                    } else {
+                        // обычные сутки
+                        Rows[indxRow].Tag = dtRow;
+                        if (RowHeadersVisible == true)
+                            Rows[indxRow].HeaderCell.Value = dtRow.ToShortDateString();
+                        else
+                            Rows[indxRow].Cells[0].Value = dtRow.ToShortDateString();
+                    }
+                } else
+                    throw new Exception(string.Format(@"DataGridViewValues::addRow () - нельзя добавить строку: элемент не в режиме 'ModeData.DATETIME'..."));
+            }
+
+            protected virtual void addRow(bool bEnded)
+            {
+                DateTime dtRow = DateTime.MinValue;
+                int incrementTotalMinutes = -1;
+
+                if (bEnded == false) {
+                    dtRow = ((RowCount == 0) ? DatetimeStamp.Start : (DateTime)Rows[RowCount - 1].Tag);
+
+                    if (RowCount > 0) {
+                        incrementTotalMinutes = DatetimeStamp.Increment < TimeSpan.MaxValue
+                            ? (int)DatetimeStamp.Increment.TotalMinutes
+                                : DatetimeStamp.Increment == TimeSpan.MaxValue
+                                    ? DateTime.DaysInMonth(DatetimeStamp.Start.AddMonths(RowCount).Year, RowCount + 0) * 24 * 60
+                                        : -1;
+
+                        dtRow += TimeSpan.FromMinutes(incrementTotalMinutes);
+                    } else
+                        ;
+                } else
+                    ;
+
+                addRow(dtRow, bEnded);
             }
 
             public virtual void Clear()
@@ -366,6 +470,15 @@ namespace TepCommon
                     foreach (DataGridViewCell c in r.Cells)
                         c.Value = string.Empty;
             }
+
+            /// <summary>
+            /// Отобразить значения
+            /// </summary>
+            /// <param name="inValues">Список с входными значениями</param>
+            /// <param name="outValues">Список с выходными значениями</param>
+            public abstract void ShowValues(IEnumerable<HandlerDbTaskCalculate.VALUE> inValues
+                , IEnumerable<HandlerDbTaskCalculate.VALUE> outValues
+                , out int err);
         }
     }
 }

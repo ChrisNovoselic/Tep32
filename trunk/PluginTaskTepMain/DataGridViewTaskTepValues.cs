@@ -446,15 +446,17 @@ namespace PluginTaskTepMain
             /// Отобразить значения
             /// </summary>
             /// <param name="values">Значения для отображения</param>
-            public override void ShowValues(DataTable values/*, DataTable parameter, bool bUseRatio = true*/)
+            public override void ShowValues(IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> inValues, IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> outValues, out int err)
             {
+                err = 0;
+
                 int idAlg = -1
                     , idPut = -1
                     , idComp = -1
                     , iQuality = -1
                     , indxCol = 0;
                 double dblVal = -1F;
-                DataRow[] cellRows = null
+                TepCommon.HandlerDbTaskCalculate.VALUE[] cellRows = null
                     //, parameterRows = null
                     ;
                 Color clrCell = Color.Empty;
@@ -471,12 +473,12 @@ namespace PluginTaskTepMain
                             idAlg = (int)row.Cells[0].Value;
                             idPut = m_dictNAlgProperties[idAlg].m_dictPutParameters[idComp].m_Id;
 
-                            cellRows = values.Select(@"ID_PUT=" + idPut);
+                            cellRows = inValues.Where(item => { return item.m_IdPut == idPut; }).ToArray();
 
                             if (cellRows.Length == 1) {
                                 //idPut = (int)cellRows[0][@"ID_PUT"];
-                                dblVal = ((double)cellRows[0][@"VALUE"]);
-                                iQuality = (int)cellRows[0][@"QUALITY"];
+                                dblVal = ((double)cellRows[0].value);
+                                iQuality = (int)cellRows[0].m_iQuality;
                             } else
                                 //??? continue
                                 ;
@@ -512,7 +514,7 @@ namespace PluginTaskTepMain
             /// </summary>
             public override void ClearValues()
             {
-                CellValueChanged -= onCellValueChanged;
+                CellValueChanged -= new DataGridViewCellEventHandler(onCellValueChanged);
 
                 foreach (DataGridViewRow r in Rows)
                     foreach (DataGridViewCell c in r.Cells)
@@ -568,10 +570,6 @@ namespace PluginTaskTepMain
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"DataGridViewTEPValues::onCellValueChanged () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
-            }
-
-            private void onRowsRemoved(object obj, DataGridViewRowsRemovedEventArgs ev)
-            {
             }
         }
     }

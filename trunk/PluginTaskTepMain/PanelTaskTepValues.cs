@@ -234,8 +234,12 @@ namespace PluginTaskTepMain
 
         protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskTepCalculate.RESULT res)
         {
+            int err = -1;
+
             // отобразить значения
-            m_dgvValues.ShowValues(m_TableEdit/*, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]*/);
+            m_dgvValues.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                , HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                , out err);
         }
 
         protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)

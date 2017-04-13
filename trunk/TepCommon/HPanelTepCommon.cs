@@ -119,7 +119,7 @@ namespace TepCommon
             else
                 ;
 
-            _handlerDb.Clear();            
+            _handlerDb.Clear();          
 
             base.clear();
         }
@@ -268,6 +268,19 @@ namespace TepCommon
             base.Stop();
         }
 
+        sealed protected override void recUpdateInsertDelete(out int err)
+        {
+            err = 0;
+        }
+
+        sealed protected override void successRecUpdateInsertDelete()
+        {
+        }
+
+        protected virtual void dgvValues_onEventCellValueChanged(VALUE value)
+        {
+            _handlerDb.SetValue(value);
+        }
         /// <summary>
         /// ??? дублирование метода 'HMath::Parse' преобразование числа в нужный формат отображения
         /// </summary>

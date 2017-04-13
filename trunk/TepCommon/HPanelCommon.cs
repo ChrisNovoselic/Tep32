@@ -36,7 +36,7 @@ namespace TepCommon
             errMsg = string.Empty;
 
             // проверить наличие элементов при необходимости очистить
-            __handlerDb.DictTableDictPrjValidate();
+            __handlerDb.ValidateDictTableDictPrj();
 
             foreach (ID_DBTABLE id in /*Enum.GetValues(typeof(ID_DBTABLE))*/arIdTableDictPrj) {
                 if (!(id == ID_DBTABLE.UNKNOWN))
@@ -92,7 +92,7 @@ namespace TepCommon
         {
             //??? повторная проверка
             if (bClose == true) {
-                clearTableDictPrj();
+                __handlerDb.Clear();
 
                 //_panelManagement.Clear(bClose);
 
@@ -221,13 +221,6 @@ namespace TepCommon
         }
 
         protected HandlerDbValues.DictionaryTableDictProject m_dictTableDictPrj { get { return __handlerDb.m_dictTableDictPrj; } }
-
-        private void clearTableDictPrj()
-        {
-            foreach (ID_DBTABLE id in Enum.GetValues(typeof(ID_DBTABLE))) {
-                m_dictTableDictPrj[id].Clear();
-            }
-        }
 
         protected void initializeDescPanel()
         {

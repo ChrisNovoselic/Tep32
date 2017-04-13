@@ -74,13 +74,13 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Конструктор
         /// </summary>
-        /// <param name="iFunc"></param>
+        /// <param name="iFunc">Объект для взаимодействия с вызывающей программой</param>
         public PanelTaskReaktivka(IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.REAKTIVKA;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
-            HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
+            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
 
             //m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
             //m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
@@ -100,7 +100,6 @@ namespace PluginTaskReaktivka
 
             Control ctrl = new Control(); ;
             // переменные для инициализации кнопок "Добавить", "Удалить"
-            string strPartLabelButtonDropDownMenuItem = string.Empty;
             int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
                 , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"
             int posColdgvValues = 4
@@ -125,35 +124,9 @@ namespace PluginTaskReaktivka
             (btn.ContextMenuStrip.Items.Find(PanelManagementReaktivka.INDEX_CONTROL.MENUITEM_UPDATE.ToString(), true)[0] as ToolStripMenuItem).Click +=
                 new EventHandler(panelTepCommon_btnUpdate_onClick);
             (btn.ContextMenuStrip.Items.Find(PanelManagementReaktivka.INDEX_CONTROL.MENUITEM_HISTORY.ToString(), true)[0] as ToolStripMenuItem).Click +=
-                new EventHandler(HPanelTepCommon_btnHistory_Click);
-            (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
-            (Controls.Find(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click += PanelTaskReaktivka_ClickExport;
-            //(PanelManagement as PanelManagementReaktivka).ItemCheck += new PanelManagementReaktivka.ItemCheckedParametersEventHandler(panelManagement_ItemCheck);
-            m_dgvValues.CellEndEdit += dgvValues_CellEndEdit;
-            //m_dgvReak.CellParsing += m_dgvReak_CellParsing;
-        }
-
-        /// <summary>
-        /// Обработчик события - окончание редактирования отображения
-        /// </summary>
-        /// <param name="sender">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        void dgvValues_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            //m_dgvValues.SumValue(e.ColumnIndex, e.RowIndex);
-
-            //if(m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] != null)
-            //    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = valuesFence;
-        }
-
-        /// <summary>
-        /// Обработчик события изменения значения в ячейке
-        /// </summary>
-        /// <param name="sender">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        void m_dgvReak_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
-        {
-
+                new EventHandler(panelTaskReaktivka_btnHistory_onClick);
+            (findControl(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_SAVE.ToString())as Button).Click += new EventHandler(panelTepCommon_btnSave_onClick);
+            (findControl(PanelManagementReaktivka.INDEX_CONTROL.BUTTON_EXPORT.ToString()) as Button).Click += panelTaskReaktivka_btnExport_onClick;
         }
 
         /// <summary>
@@ -161,7 +134,7 @@ namespace PluginTaskReaktivka
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события</param>
-        void PanelTaskReaktivka_ClickExport(object sender, EventArgs e)
+        void panelTaskReaktivka_btnExport_onClick(object sender, EventArgs e)
         {
             m_reportExcel = new ReportExcel();//
             m_reportExcel.CreateExcel(m_dgvValues, Session.m_DatetimeRange);
@@ -248,7 +221,11 @@ namespace PluginTaskReaktivka
         {
             TimeSpan tsOffsetUTC = TimeSpan.FromDays(1) - Session.m_curOffsetUTC;
 
-            m_dgvValues.AddRows(new DataGridViewValues.DateTimeStamp() { Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC, Increment = TimeSpan.FromDays(1) });
+            m_dgvValues.AddRows(new DataGridViewValues.DateTimeStamp() {
+                Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC
+                , Increment = TimeSpan.FromDays(1)
+                , ModeDataDatetime = HandlerDb.ModeDataDatetime
+            });
         }
 
         #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
@@ -348,33 +325,6 @@ namespace PluginTaskReaktivka
 
             base.clear(bClose);
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="err"></param>
-        protected override void recUpdateInsertDelete(out int err)
-        {
-            err = -1;
-            //DateTimeRange[] dtRangeArr = HandlerDb.GetDateTimeRangeValuesVar();
-
-            //m_handlerDb.RecUpdateInsertDelete(getNameTableIn(dtRangeArr[0].Begin)
-            //        , @"ID_PUT, DATE_TIME"
-            //        , @""
-            //        , m_TableOrigin
-            //        , m_TableEdit
-            //        , out err);
-        }
-
-        /// <summary>
-        /// Метод обратного вызова при условии успешного выполнения операции обновление-вставка-удаление
-        /// </summary>
-        protected override void successRecUpdateInsertDelete()
-        {
-            //m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-            //  m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Copy();
-        }
-
         /// <summary>
         /// Обработчик события - нажатие кнопки сохранить
         /// </summary>
@@ -417,24 +367,12 @@ namespace PluginTaskReaktivka
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
-        private void HPanelTepCommon_btnHistory_Click(object obj, EventArgs ev)
+        private void panelTaskReaktivka_btnHistory_onClick(object obj, EventArgs ev)
         {
             ////???
             //clear();
             // ... - загрузить/отобразить значения из БД
             HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE);
-        }
-
-        /// <summary>
-        /// кол-во дней в текущем месяце
-        /// </summary>
-        /// <returns>кол-во дней</returns>
-        public int DaysInMonth
-        {
-            get
-            {
-                return DateTime.DaysInMonth(Session.m_DatetimeRange.Begin.Year, Session.m_DatetimeRange.Begin.Month);
-            }
         }
 
         /// <summary>
@@ -744,21 +682,23 @@ namespace PluginTaskReaktivka
 
         protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
         {
+            int err = -1;
+
             //// отобразить значения
             //m_dgvValues.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues]);
             ////
             //m_arTableEdit[(int)Session.m_ViewValues] = valuesFence;
 
             HandlerDbTaskCalculate.KEY_VALUES key;
-            IEnumerable<HandlerDbTaskCalculate.VALUES> inValues
+            IEnumerable<HandlerDbTaskCalculate.VALUE> inValues
                 , outValues;
 
             key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
-            inValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUES>();
+            inValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUE>();
             key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
-            outValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUES>();
+            outValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUE>();
 
-            m_dgvValues.ShowValues(inValues, outValues);
+            m_dgvValues.ShowValues(inValues, outValues, out err);
         }
 
         protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)

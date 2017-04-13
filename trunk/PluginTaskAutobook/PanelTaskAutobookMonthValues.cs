@@ -17,20 +17,6 @@ namespace PluginTaskAutobook
 {
     public partial class PanelTaskAutobookMonthValues : HPanelTepCommon
     {
-        ///// <summary>
-        ///// ???
-        ///// </summary>
-        //public static int vsRatio;
-        /// <summary>
-        /// флаг очистки отображения
-        /// </summary>
-        bool m_bflgClear = true;
-        //public event DelegateBoolFunc EvtChangeRow;
-        /// <summary>
-        /// Таблицы со значениями для редактирования
-        /// </summary>
-        protected DataTable[] m_arTableOrigin
-            , m_arTableEdit;        
         /// <summary>
         /// Объект для производства расчетов
         /// </summary>
@@ -253,28 +239,29 @@ namespace PluginTaskAutobook
         /// </summary>
         public class ReportEMailNSS
         {
-            /// <summary>
-            /// Экземпляр класса
-            /// </summary>
-            OutlookMessage m_crtMsg;
+            ///// <summary>
+            ///// Экземпляр класса
+            ///// </summary>
+            //OutlookMessage m_crtMsg;
 
             /// <summary>
             /// Конструктор класса
             /// </summary>
             public ReportEMailNSS()
             {
-                m_crtMsg = new OutlookMessage();
             }
 
             /// <summary>
             /// Класс создания письма
             /// </summary>
-            private class OutlookMessage
+            private class OutlookMessage : IDisposable
             {
                 /// <summary>
                 /// 
                 /// </summary>
                 Outlook.Application m_outlookApp;
+
+                Outlook.MailItem _newMail;
 
                 /// <summary>
                 /// конструктор(основной)
@@ -284,39 +271,35 @@ namespace PluginTaskAutobook
                     m_outlookApp = new Outlook.Application();
                 }
 
+                public void Dispose()
+                {
+                    closeOutlook();
+                }
+
                 /// <summary>
                 /// Формирование письма
                 /// </summary>
                 /// <param name="subject">тема письма</param>
                 /// <param name="body">тело сообщения</param>
                 /// <param name="to">кому/куда</param>
-                public void FormingMessage(string subject, string body, string to)
+                public void Format(string subject, string body, string to)
                 {
-                    try
-                    {
-                        Outlook.MailItem newMail = (Outlook.MailItem)m_outlookApp.CreateItem(Outlook.OlItemType.olMailItem);
-                        newMail.To = to;
-                        newMail.Subject = subject;
-                        newMail.Body = body;
-                        newMail.Importance = Outlook.OlImportance.olImportanceNormal;
-                        newMail.Display();
-                        sendMail(newMail);
-                    }
-                    catch (Exception ex)
-                    {
+                    try {
+                        _newMail = (Outlook.MailItem)m_outlookApp.CreateItem(Outlook.OlItemType.olMailItem);
+                        _newMail.To = to;
+                        _newMail.Subject = subject;
+                        _newMail.Body = body;
+                        _newMail.Importance = Outlook.OlImportance.olImportanceNormal;
+                        _newMail.Display();
+                    } catch (Exception ex) {
                         MessageBox.Show(ex.Message);
                     }
 
                 }
 
-                /// <summary>
-                /// 
-                /// </summary>
-                /// <param name="mail"></param>
-                private void sendMail(Outlook.MailItem mail)
+                public void Send()
                 {
-                    //отправка
-                    mail.Send();
+                    _newMail.Send();
                 }
 
                 /// <summary>
@@ -330,14 +313,14 @@ namespace PluginTaskAutobook
                     attachment.Title = "Select a file to send";
                     attachment.ShowDialog();
 
-                    if (attachment.FileName.Length > 0)
-                    {
+                    if (attachment.FileName.Length > 0) {
                         mail.Attachments.Add(
                             attachment.FileName,
                             Outlook.OlAttachmentType.olByValue,
                             1,
                             attachment.FileName);
-                    }
+                    } else
+                        ;
                 }
 
                 /// <summary>
@@ -356,21 +339,18 @@ namespace PluginTaskAutobook
             /// </summary>
             /// <param name="sourceTable">таблица с данными</param>
             /// <param name="dtSend">дата</param>
-            private void createBodyToSend(ref string sbjct
-                , ref string bodyMsg
-                , DataTable sourceTable
-                , DateTime dtSend)
+            private string createBodyToSend(IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> values
+                , DateTime reportDate)
             {
-                DataRow[] drReportDay;
-                DateTime reportDate;
+                string strRes = string.Empty;
 
-                reportDate = dtSend.AddHours(6).Date;//??
-                drReportDay =
-                    sourceTable.Select(string.Format(sourceTable.Locale, @"WR_DATETIME = '{0:o}'", reportDate));
+                HandlerDbTaskCalculate.VALUE[] dayValues;
 
-                if ((double)drReportDay.Length != 0)
-                {
-                    bodyMsg = @"BEGIN " + "\r\n"
+                dayValues =
+                    values.Where(item => { return item.stamp_write.Equals(reportDate) == true; }).ToArray();
+
+                if (dayValues.Length > 0) {
+                    strRes = @"BEGIN " + "\r\n"
                         + @"(DATE):" + reportDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) + "\r\n"
                         + @"(01): "
                             +
@@ -392,9 +372,10 @@ namespace PluginTaskAutobook
                         + @"Станция, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ";\r\n"
                         + @"Блоки 1-2, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ";\r\n"
                         + @"Блоки 3-6, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]);*/
+                } else
+                    ;
 
-                    sbjct = @"Отчет о выработке электроэнергии НТЭЦ-5 за " + reportDate.ToShortDateString();
-                }
+                return strRes;
             }
 
             ///// <summary>
@@ -410,18 +391,26 @@ namespace PluginTaskAutobook
             /// <summary>
             /// Создание. Подготовка. Отправка письма.
             /// </summary>
-            /// <param name="sourceTable">таблица с данными</param>
+            /// <param name="tableSource">таблица с данными</param>
             /// <param name="dtSend">выбранный промежуток</param>
             /// <param name="to">получатель</param>
-            public void SendMailToNSS(DataTable sourceTable, DateTime dtSend, string to)
+            public void SendMailToNSS(IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> values, DateTime dtSend, string to)
             {
                 string bodyMsg = string.Empty
-                 , sbjct = string.Empty;
+                    , sbjct = string.Empty;
+                DateTime reportDate = DateTime.MinValue;
 
-                createBodyToSend(ref sbjct, ref bodyMsg, sourceTable, dtSend);
+                reportDate = dtSend.AddHours(6).Date;//??
+                sbjct = @"Отчет о выработке электроэнергии НТЭЦ-5 за " + reportDate.ToShortDateString();
+                bodyMsg = createBodyToSend(values, reportDate);
 
-                if (sbjct != "")
-                    m_crtMsg.FormingMessage(sbjct, bodyMsg, to);
+                if (sbjct.Equals(string.Empty) == false)
+                    using (OutlookMessage outlookMessage = new OutlookMessage()) {
+                        outlookMessage.Format(sbjct, bodyMsg, to);
+                        outlookMessage.Send();
+                    }
+                else
+                    ;
             }
         }
 
@@ -627,11 +616,8 @@ namespace PluginTaskAutobook
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
-            HandlerDb.ModeDataDateTime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
+            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
             m_AutoBookCalculate = new TaskAutobookCalculate();
-
-            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
 
             InitializeComponent();
 
@@ -658,8 +644,8 @@ namespace PluginTaskAutobook
             public enum INDEX_CONTROL
             {
                 UNKNOWN = -1,
-                BUTTON_SEND, BUTTON_SAVE, BUTTON_LOAD, BUTTON_EXPORT,
-                TXTBX_EMAIL, CALENDAR,
+                BUTTON_SEND_EMAIL, BUTTON_SAVE, BUTTON_LOAD, BUTTON_EXPORT,
+                TXTBX_EMAIL, CALENDAR_EMAIL,
                 MENUITEM_UPDATE, MENUITEM_HISTORY,
                 CHKBX_EDIT,
                 COUNT
@@ -712,7 +698,7 @@ namespace PluginTaskAutobook
                 SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //Календарь
                 ctrl = new DateTimePicker();
-                ctrl.Name = INDEX_CONTROL.CALENDAR.ToString();
+                ctrl.Name = INDEX_CONTROL.CALENDAR_EMAIL.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 (ctrl as DateTimePicker).DropDownAlign = LeftRightAlignment.Right;
                 (ctrl as DateTimePicker).Format = DateTimePickerFormat.Custom;
@@ -746,7 +732,7 @@ namespace PluginTaskAutobook
                 SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //Кнопка - Отправить
                 ctrl = new Button();
-                ctrl.Name = INDEX_CONTROL.BUTTON_SEND.ToString();
+                ctrl.Name = INDEX_CONTROL.BUTTON_SEND_EMAIL.ToString();
                 ctrl.Text = @"Отправить";
                 //ctrlBSend.Enabled = false;
                 //ctrl.Dock = DockStyle.Top;
@@ -821,14 +807,13 @@ namespace PluginTaskAutobook
                 new EventHandler(btnHistory_OnClick);
             (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Click +=
                 new EventHandler(panelTepCommon_btnSave_onClick);
-            (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SEND.ToString(), true)[0] as Button).Click +=
+            (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SEND_EMAIL.ToString(), true)[0] as Button).Click +=
                 new EventHandler(btnSend_onClick);
             (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
                  new EventHandler(btnExport_onClick);
             //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CALENDAR.ToString(), true)[0] as Button).
 
-            m_dgvValues.CellParsing += dgvValues_CellParsing;
-            //m_dgvAB.SelectionChanged += dgvAB_SelectionChanged;
+            m_dgvValues.EventCellValueChanged += dgvValues_onEventCellValueChanged;
         }
 
         /// <summary>
@@ -850,46 +835,15 @@ namespace PluginTaskAutobook
         private void btnSend_onClick(object sender, EventArgs e)
         {
             ReportEMailNSS rep = new ReportEMailNSS();
+            DateTime dtValues = DateTime.MinValue;
+            string e_mail = string.Empty;
 
-            string toSend = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
-            DateTime dtSend = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CALENDAR.ToString(), true)[0] as DateTimePicker).Value;
-            m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = m_dgvValues.FillTableValueDay();
+            dtValues = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CALENDAR_EMAIL.ToString(), true)[0] as DateTimePicker).Value;
+            e_mail = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
             //
-            rep.SendMailToNSS(m_TableEdit, dtSend, toSend);
-        }
-
-        /// <summary>
-        /// обработчик события датагрида -
-        /// редактирвание значений.
-        /// сохранение изменений в DataTable
-        /// </summary>
-        /// <param name="sender">Объект, инициировавший событие</param>
-        /// <param name="e">данные события</param>
-        void dgvValues_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
-        {
-            int numMonth = PanelManagement.DatetimeRange.Begin.Month
-                , day = m_dgvValues.Rows.Count;
-
-            switch ((INDEX_COLUMN)Enum.Parse(typeof(INDEX_COLUMN), m_dgvValues.Columns[e.ColumnIndex].Name)) {
-                case INDEX_COLUMN.CorGTP12:
-                    //корректировка значений
-                    m_dgvValues.editCells(e, INDEX_COLUMN.GTP12.ToString());
-                    //сбор корр.значений
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = m_dgvValues.FillTableCorValue((int)Session.m_curOffsetUTC.TotalMinutes, e);
-                    //сбор значений
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = m_dgvValues.FillTableValueDay();
-                    break;
-                case INDEX_COLUMN.CorGTP36:
-                    //корректировка значений
-                    m_dgvValues.editCells(e, INDEX_COLUMN.GTP36.ToString());
-                    //сбор корр.значений
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = m_dgvValues.FillTableCorValue((int)Session.m_curOffsetUTC.TotalMinutes, e);
-                    //сбор значений
-                    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = m_dgvValues.FillTableValueDay();
-                    break;
-                default:
-                    break;
-            }
+            rep.SendMailToNSS(HandlerDb.Values[new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                , dtValues
+                , e_mail);
         }
 
         /// <summary>
@@ -902,153 +856,6 @@ namespace PluginTaskAutobook
             base.Stop();
         }
 
-        ///// <summary>
-        ///// получение значений
-        ///// создание сессии
-        ///// </summary>
-        ///// <param name="arQueryRanges"></param>
-        ///// <param name="err">номер ошибки</param>
-        ///// <param name="strErr"></param>
-        //private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
-        //{
-        //    err = 0;
-        //    strErr = string.Empty;
-        //    //Создание сессии
-        //    Session.New();
-        //    //Запрос для получения архивных данных
-        //    m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = HandlerDb.GetDataOutval(arQueryRanges, out err);
-        //    //Запрос для получения автоматически собираемых данных
-        //    m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
-        //        (
-        //        TaskCalculateType
-        //        , Session.ActualIdPeriod
-        //        , Session.CountBasePeriod
-        //        , arQueryRanges
-        //       , out err
-        //        );
-        //    //Получение значений корр. input
-        //    m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-        //        HandlerDb.GetCorInPut(TaskCalculateType
-        //        , arQueryRanges
-        //        , Session.ActualIdPeriod
-        //        , out err);
-        //    //Проверить признак выполнения запроса
-        //    if (err == 0)
-        //    {
-        //        //Проверить признак выполнения запроса
-        //        if (err == 0)
-        //            //Начать новую сессию расчета
-        //            //, получить входные для расчета значения для возможности редактирования
-        //            HandlerDb.CreateSession(m_Id
-        //                , Session.CountBasePeriod
-        //                , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
-        //                , ref m_arTableOrigin
-        //                , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
-        //                , out err, out strErr);
-        //        else
-        //            strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
-        //                + @" по " + Session.m_rangeDatetime.End.ToString();
-        //    }
-        //    else
-        //        strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
-        //            + @" по " + Session.m_rangeDatetime.End.ToString();
-        //}
-
-        ///// <summary>
-        ///// copy
-        ///// </summary>
-        //private void setValues()
-        //{
-        //    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-        //        m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT].Clone();
-        //    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
-        //        = m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Clone();
-        //    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE]
-        //      = m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE].Clone();
-        //}
-
-        ///// <summary>
-        ///// Проверка выбранного диапазона
-        ///// </summary>
-        ///// <param name="dtRange">диапазон дат</param>
-        ///// <returns></returns>
-        //private bool rangeCheking(DateTimeRange[] dtRange)
-        //{
-        //    bool bflag = false;
-
-        //    for (int i = 0; i < dtRange.Length; i++)
-        //        if (dtRange[i].Begin.Month > DateTime.Now.Month)
-        //            if (dtRange[i].End.Year >= DateTime.Now.Year)
-        //                bflag = true;
-
-        //    return bflag;
-        //}
-
-        ///// <summary>
-        ///// Загрузка сырых значений
-        ///// </summary>
-        ///// <param name="typeValues">тип загружаемых значений</param>
-        //private void updateDataValues(HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
-        //{
-        //    int err = -1
-        //        , cnt = Session.CountBasePeriod
-        //        , iRegDbConn = -1;
-        //    string errMsg = string.Empty;
-        //    DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
-
-        //    //if (rangeCheking(dtrGet))
-        //    //    MessageBox.Show("Выбранный диапазон месяцев неверен");
-        //    //else
-        //    //{
-        //    clear();
-        //    m_handlerDb.RegisterDbConnection(out iRegDbConn);
-
-        //    if (!(iRegDbConn < 0))
-        //    {
-        //        // установить значения в таблицах для расчета, создать новую сессию
-        //        setValues(dtrGet, out err, out errMsg);
-
-        //        if (err == 0)
-        //        {
-        //            if (m_TableOrigin.Rows.Count > 0)
-        //            {
-        //                // создать копии для возможности сохранения изменений
-        //                setValues();
-        //                //вычисление значений
-        //                m_AutoBookCalculate.getTable(m_arTableOrigin, HandlerDb.GetOutPut(out err));
-        //                //
-        //                m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-        //                    m_AutoBookCalculate.calcTable[(int)INDEX_COLUMN.TEC].Copy();
-        //                //запись выходных значений во временную таблицу
-        //                HandlerDb.insertOutValues(out err, m_AutoBookCalculate.calcTable[(int)INDEX_COLUMN.TEC]);
-        //                // отобразить значения
-        //                m_dgvValues.ShowValues(m_arTableOrigin
-        //                    , HandlerDb.GetPlanOnMonth(TaskCalculateType
-        //                    , HandlerDb.GetDateTimeRangeValuesVarPlanMonth()
-        //                    , Session.ActualIdPeriod
-        //                    , out err)
-        //                    , typeValues);
-        //                //формирование таблиц на основе грида
-        //                valuesFence();
-        //            }
-        //            else
-        //                deleteSession();
-        //        }
-        //        else
-        //        {
-        //            // в случае ошибки "обнулить" идентификатор сессии
-        //            deleteSession();
-        //            throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-        //        }
-        //    }
-        //    else
-        //        deleteSession();
-
-        //    if (!(iRegDbConn > 0))
-        //        m_handlerDb.UnRegisterDbConnection();
-        //    //}
-        //}
-
         protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
         {
             //вычисление значений, сохранение во временной таблице
@@ -1060,12 +867,9 @@ namespace PluginTaskAutobook
             int err = -1;
 
             // отобразить значения
-            m_dgvValues.ShowValues(m_arTableOrigin
-                , HandlerDb.GetPlanOnMonth(TaskCalculateType
-                    , HandlerDb.GetDateTimeRangeValuesVarPlanMonth()
-                    , Session.ActualIdPeriod
-                    , out err)
-                , Session.m_ViewValues);
+            m_dgvValues.ShowValues(HandlerDb.Values[new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                , HandlerDb.Values[new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                , out err);
         }
 
         protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
@@ -1103,18 +907,6 @@ namespace PluginTaskAutobook
                 Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues::panelTepCommon_btnUpdate_onClick () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
 
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        protected DataTable m_TableOrigin
-        {
-            get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
-        }
-        protected DataTable m_TableEdit
-        {
-            get { return m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
         }
 
         /// <summary>
@@ -1228,9 +1020,12 @@ namespace PluginTaskAutobook
 
         private void addValueRows()
         {
+            TimeSpan tsOffsetUTC = TimeSpan.FromDays(1) - Session.m_curOffsetUTC;
+
             m_dgvValues.AddRows (new DataGridViewValues.DateTimeStamp() {
-                Start = PanelManagement.DatetimeRange.Begin + (TimeSpan.FromDays(1) - Session.m_curOffsetUTC)
+                Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC
                 , Increment = TimeSpan.FromDays(1)
+                , ModeDataDatetime = HandlerDb.ModeDataDatetime
             });
         }
 
@@ -1408,21 +1203,6 @@ namespace PluginTaskAutobook
         }
 
         /// <summary>
-        /// Сохранить изменения в редактируемых таблицах
-        /// </summary>
-        /// <param name="err">Признак ошибки при выполнении сохранения в БД</param>
-        protected override void recUpdateInsertDelete(out int err)
-        {
-            err = -1;
-            //
-            sortingDataToTable(HandlerDb.GetDataOutval(HandlerDb.getDateTimeRangeExtremeVal(), out err)
-                , m_TableEdit
-                , getNameTableOut(PanelManagement.DatetimeRange.Begin)
-                , @""
-                , out err);
-        }
-
-        /// <summary>
         /// Обновить/Вставить/Удалить
         /// </summary>
         /// <param name="nameTable">имя таблицы</param>
@@ -1534,15 +1314,6 @@ namespace PluginTaskAutobook
         //        , @"ID"
         //        , out err);
         //}
-
-        /// <summary>
-        /// Обработчик события при успешном сохранении изменений в редактируемых на вкладке таблицах
-        /// </summary>
-        protected override void successRecUpdateInsertDelete()
-        {
-            m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-               m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Copy();
-        }
     }
 }
 

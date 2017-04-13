@@ -254,22 +254,48 @@ namespace TepCommon
         /// Проверить возможность добавления таблиц в словарь словарно-проектных величин
         ///  , при необходимости обеспечить такую возможность
         /// </summary>
-        public void DictTableDictPrjValidate()
+        public void ValidateDictTableDictPrj()
         {
-            if ((!(m_dictTableDictPrj == null))
-                && (m_dictTableDictPrj.Count > 0)) {
-                Logging.Logg().Warning(@"HPanelTepCommon::initialize () - словарно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
+            int iClear = Clear();
 
-                Clear();
-            } else
+            if (iClear > 0) {
+                Logging.Logg().Warning(@"HPanelTepCommon::initialize () - словарно-проектные таблицы повторная инициализация...", Logging.INDEX_MESSAGE.NOT_SET);
+            } else if (iClear < 0)
                 m_dictTableDictPrj = new DictionaryTableDictProject();
+            else
+                ;
         }
         /// <summary>
         /// Очистить все словари/списки со словарно-проектными величинами
         /// </summary>
-        public virtual void Clear()
+        public virtual int Clear()
         {
-            m_dictTableDictPrj.Clear();
+            int iRes = -1;
+
+            iRes = clearTableDictPrj();
+
+            return iRes;
+        }
+
+        private int clearTableDictPrj()
+        {
+            int iRes = 0;
+
+            if (!(m_dictTableDictPrj == null)) {
+                iRes = m_dictTableDictPrj.Count;
+
+                if (iRes > 0)
+                    m_dictTableDictPrj.Clear();
+                else
+                    ;
+            } else {
+                iRes = -1;
+
+                Logging.Logg().Error(string.Format(@"HandlerDbValues::Clear () - словарь со словарно-проектными величинами пуст...")
+                    , Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
+            return iRes;
         }
         /// <summary>
         /// Добавить таблицу в словарь со словарно-проектными величинами

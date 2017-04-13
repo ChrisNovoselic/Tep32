@@ -311,7 +311,7 @@ namespace TepCommon
         /// <summary>
         /// Значение для параметра в алгоритме расчета и его свойства
         /// </summary>
-        public struct VALUES
+        public struct VALUE
         {
             public int m_IdPut;
 
@@ -322,6 +322,17 @@ namespace TepCommon
             public DateTime stamp_value;
 
             public DateTime stamp_write;
+        }
+
+        public struct CHANGE_VALUE
+        {
+            public KEY_VALUES m_keyValues;
+
+            public int m_IdPut;
+
+            public float value;
+
+            public DateTime stamp_action;
         }
         /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
@@ -365,9 +376,9 @@ namespace TepCommon
 
         public enum MODE_DATA_DATETIME { Begined, Ended }
 
-        private MODE_DATA_DATETIME _modeDataDateTime;
+        private MODE_DATA_DATETIME _modeDataDatetime;
 
-        public MODE_DATA_DATETIME ModeDataDateTime { set { _modeDataDateTime = value; } }
+        public MODE_DATA_DATETIME ModeDataDatetime { get { return _modeDataDatetime; } set { if (!(_modeDataDatetime == value)) _modeDataDatetime = value; else; } }
         /// <summary>
         /// Параметры сессии
         /// </summary>
@@ -712,6 +723,7 @@ namespace TepCommon
             , Hour = 0x1
             , Day = 0x2
             , Month = 0x4
+            , Year = 0x8
         }
 
         DbTableTime _filterDbTableTime;
@@ -743,6 +755,9 @@ namespace TepCommon
                                     break;
                                 case DbTableTime.Month:
                                     idPeriod = ID_PERIOD.MONTH;
+                                    break;
+                                case DbTableTime.Year:
+                                    idPeriod = ID_PERIOD.YEAR;
                                     break;
                                 default:
                                     break;
@@ -778,7 +793,8 @@ namespace TepCommon
             _listTECComponent = new List<HandlerDbTaskCalculate.TECComponent>();
             _listPutParameter = new List<HandlerDbTaskCalculate.PUT_PARAMETER>();
 
-            _dictValues = new Dictionary<KEY_VALUES, List<VALUES>>();
+            _dictValues = new Dictionary<KEY_VALUES, List<VALUE>>();
+            _listChanges = new List<CHANGE_VALUE>();
 
             _filterDbTableCompList = DbTableCompList.NotSet;
             _filterDbTableTime = DbTableTime.NotSet;
@@ -816,20 +832,19 @@ namespace TepCommon
         /// <summary>
         /// Очистить объект (списки со значениями, параметрами, компонентами) - !!!удалить сессиию
         /// </summary>
-        public override void Clear()
+        public override int Clear()
         {
-            _dictValues.Clear();
+            deleteSession();
 
             _listNAlgParameter.Clear();
             _listPutParameter.Clear();
             _listTECComponent.Clear();
 
-            deleteSession();
-
-            base.Clear();
+            return base.Clear();
         }
         /// <summary>
         /// Обновить значения в объекте - загрузить из БД
+        ///  , одновременно изменить значение параметра сессии (тип отображаемых значений)
         /// </summary>
         /// <param name="idFPanel">Идентиыикатор панели</param>
         /// <param name="taskCalculateType">Тип(ы) загружаемых значений для заполнения выходной временной таблицы (если значения архивные - игнорируется)</param>
@@ -860,7 +875,6 @@ namespace TepCommon
 
             if (!(iRegDbConn < 0)) {
                 deleteSession();
-                _dictValues.Clear();
 
                 _Session.NewId();
                 
@@ -875,8 +889,6 @@ namespace TepCommon
                     EventSetValuesCompleted?.Invoke(RESULT.Ok);
                 } else {
                     // в случае ошибки "обнулить" идентификатор сессии
-                    Clear();
-
                     EventSetValuesCompleted?.Invoke(RESULT.Error);
 
                     throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
@@ -896,6 +908,8 @@ namespace TepCommon
         {
             int err = 0; // предполагаем, ошибки нет
 
+            _listChanges.Clear();
+            _dictValues.Clear();
             _Session.Clear();
 
             int iRegDbConn = -1; // признак регистрации соединения с БД
@@ -982,7 +996,6 @@ namespace TepCommon
                     Logging.Logg().Error(string.Format(@"HPanelTepCommon::setValues () - не найден идентификатор таблицы БД..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
-
         /// <summary>
         /// Установить значения таблиц для редактирования
         /// </summary>
@@ -1003,7 +1016,28 @@ namespace TepCommon
 
             foreach (KEY_VALUES key in keys)
                 //??? создается ли новая копия
-                _dictValues.Add(new KEY_VALUES() { TypeCalculate = key.TypeCalculate, TypeState = HandlerDbValues.STATE_VALUE.EDIT }, new List<VALUES>(_dictValues[key]));
+                _dictValues.Add(new KEY_VALUES() { TypeCalculate = key.TypeCalculate, TypeState = HandlerDbValues.STATE_VALUE.EDIT }, new List<VALUE>(_dictValues[key]));
+        }
+        /// <summary>
+        /// Принять отредактированное значение, сохранить в истории изменений
+        /// </summary>
+        /// <param name="value">Новое значение</param>
+        public void SetValue(VALUE newValue)
+        {
+            VALUE prevValue;
+
+            foreach (KeyValuePair<KEY_VALUES, List<VALUE>> pair in _dictValues) {
+                prevValue = pair.Value.Find(item => { return ((item.m_IdPut == newValue.m_IdPut)
+                    && (item.stamp_value == newValue.stamp_value)); });
+
+                if (!(prevValue.stamp_value.Equals(DateTime.MinValue) == false)) {
+                    _listChanges.Add(new CHANGE_VALUE() { m_keyValues = pair.Key, m_IdPut = newValue.m_IdPut, value = newValue.value, stamp_action = DateTime.UtcNow });
+
+                    break;
+                } else
+                    Logging.Logg().Error(string.Format(@"handlerDbTaskCalculate::SetValue () - изменения не зафиксированы, параметр (ID_PUT={0}) не найден...", newValue.m_IdPut)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
 
         private DataTable mergeTableValues(DataTable tablePars, DataTable[] arTableValues, int cntBasePeriod)
@@ -1525,11 +1559,19 @@ namespace TepCommon
         /// <summary>
         /// Список значений, загруженных из БД
         /// </summary>
-        protected Dictionary<KEY_VALUES, List<VALUES>> _dictValues;
+        protected Dictionary<KEY_VALUES, List<VALUE>> _dictValues;
+        /// <summary>
+        /// Список изменений значений (редактирование значений), выполненных пользователем
+        /// </summary>
+        protected List<CHANGE_VALUE> _listChanges;
         /// <summary>
         /// Список значений, загруженных из БД
         /// </summary>
-        public Dictionary<KEY_VALUES, List<VALUES>> Values { get { return _dictValues; } }
+        public Dictionary<KEY_VALUES, List<VALUE>> Values { get { return _dictValues; } }
+        /// <summary>
+        /// Список изменений значений (редактирование значений), выполненных пользователем
+        /// </summary>
+        public List<CHANGE_VALUE> Changes { get { return _listChanges; } }
         #region Добавление компонентов, параметров в алгоритме расчета
         /// <summary>
         /// Список параметров алгоритма расчета, не связанных с компонентом станции (верхний/1-ый уровень)
@@ -1646,6 +1688,8 @@ namespace TepCommon
                 , comp_shr_name = string.Empty;
             List<int> listIdNAlg = new List<int>();
             Dictionary<string, HTepUsers.VISUAL_SETTING> dictVisualSettings = new Dictionary<string, HTepUsers.VISUAL_SETTING>();
+            NALG_PARAMETER nAlgPar;
+            PUT_PARAMETER putPar;
             HandlerDbTaskCalculate.TECComponent component;
 
             dictVisualSettings = GetParameterVisualSettings(new int[] { idFPanel, (int)_Session.CurrentIdPeriod }, out err);
@@ -1693,8 +1737,7 @@ namespace TepCommon
                         vsRound = HTepUsers.s_iRoundDefault;
                     }
 
-                    EventAddNAlgParameter(new NALG_PARAMETER(
-                        type
+                    nAlgPar = new NALG_PARAMETER(type
                         , id_alg, n_alg
                         , r[@"NAME_SHR"] is DBNull ? string.Empty : ((string)r[@"NAME_SHR"]).Trim()
                         , r[@"DESCRIPTION"] is DBNull ? string.Empty : ((string)r[@"DESCRIPTION"]).Trim()
@@ -1706,7 +1749,10 @@ namespace TepCommon
                         , bVisibled
                         //, prjRatio
                         , vsRatio, vsRound
-                    ));
+                    );
+
+                    _listNAlgParameter.Add(nAlgPar);
+                    EventAddNAlgParameter(nAlgPar);
                 } else {
                     // параметр уже был добавлен                    
                 }
@@ -1725,10 +1771,11 @@ namespace TepCommon
                             , bVisibled
                         );
 
+                        _listTECComponent.Add(component);
+
                         prjRatio = (int)r[@"ID_RATIO"];
 
-                        // только, если назначенн обработчик в 'PanelTaskTepOutVal'
-                        EventAddPutParameter?.Invoke(new PUT_PARAMETER() {
+                        putPar = new PUT_PARAMETER() {
                             /*Key = new PUT_PARAMETER.KEY() {*/ m_idNAlg = id_alg/*, m_idComp = id_comp }*/
                             , m_Id = (int)r[@"ID"]
                             , m_component = component
@@ -1736,13 +1783,17 @@ namespace TepCommon
                             , m_bEnabled = bEnabled
                             , m_bVisibled = bVisibled
                             ,
-                        });
+                        };
+
+                        _listPutParameter.Add(putPar);
+                        // только, если назначенн обработчик в 'PanelTaskTepOutVal'
+                        EventAddPutParameter?.Invoke(putPar);
                     } else
-                        Logging.Logg().Error(string.Format(@"::addAlgParameters () - для ID_ALG={0}, N_ALG={1}, ID_COMPONENT={2} компонент вне установленного фильтра компонентов задачи..."
+                        Logging.Logg().Error(string.Format(@"::addAlgParameters (ID_ALG={0}, N_ALG={1}) - компонент [ID_COMPONENT={2}] вне установленного фильтра компонентов задачи..."
                                 , id_alg, n_alg, id_comp)
                             , Logging.INDEX_MESSAGE.NOT_SET);
                 } else
-                    Logging.Logg().Error(string.Format(@"::addAlgParameters () - для ID_ALG={0}, N_ALG={1} некорректный идентификатор (ID_COMPONENT не найден) параметра в алгоритме расчета..."
+                    Logging.Logg().Error(string.Format(@"::addAlgParameters (ID_ALG={0}, N_ALG={1}) - некорректный идентификатор (ID_COMPONENT не найден) параметра в алгоритме расчета..."
                             , id_alg, n_alg)
                         , Logging.INDEX_MESSAGE.NOT_SET);
             }
@@ -1792,7 +1843,7 @@ namespace TepCommon
             DateTime dtBegin = _Session.m_DatetimeRange.Begin.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
                 , dtEnd = _Session.m_DatetimeRange.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes);
 
-            if (_modeDataDateTime == MODE_DATA_DATETIME.Begined) {
+            if (_modeDataDatetime == MODE_DATA_DATETIME.Begined) {
                 dtBegin -= TimeSpan.FromDays(1);
                 dtEnd -= TimeSpan.FromDays(1);
             } else
@@ -1912,8 +1963,8 @@ namespace TepCommon
                             + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                         + @" WHERE v.[ID_TIME] = {6}" //???ID_PERIOD.HOUR //??? _currIdPeriod
                             , (ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON ? @", m.[AVG]" : ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.OFF ? string.Empty : string.Empty)
-                            , (_modeDataDateTime == MODE_DATA_DATETIME.Begined) ? string.Format(@"DATEADD({0}, 1, v.[DATE_TIME])", partDateadd)
-                                    : (_modeDataDateTime == MODE_DATA_DATETIME.Ended) ? @"v.[DATE_TIME]"
+                            , (_modeDataDatetime == MODE_DATA_DATETIME.Begined) ? string.Format(@"DATEADD({0}, 1, v.[DATE_TIME])", partDateadd)
+                                    : (_modeDataDatetime == MODE_DATA_DATETIME.Ended) ? @"v.[DATE_TIME]"
                                         : string.Empty
                             , string.Format(@"{0}_{1}", getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE), arQueryRanges[i].Begin.ToString(@"yyyyMM"))
                             , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT)
@@ -2113,9 +2164,9 @@ namespace TepCommon
         /// <returns>Смещение относительно UTC</returns>
         public delegate TimeSpan TimeSpanDelegateIdTimezoneFunc(ID_TIMEZONE id);
 
-        public static List<VALUES> TableToListValues(DataTable table)
+        public static List<VALUE> TableToListValues(DataTable table)
         {
-            List<VALUES> listRes = new List<VALUES>();
+            List<VALUE> listRes = new List<VALUE>();
 
             DateTime dtValue;
 
@@ -2133,7 +2184,7 @@ namespace TepCommon
                 else
                     dtValue = DateTime.MinValue;
 
-                listRes.Add(new VALUES() { m_IdPut = int.Parse(r[@"ID_PUT"].ToString())
+                listRes.Add(new VALUE() { m_IdPut = int.Parse(r[@"ID_PUT"].ToString())
                     , m_iQuality = int.Parse(r[@"QUALITY"].ToString())
                     , value = float.Parse(r[@"VALUE"].ToString())
                     , stamp_value = dtValue

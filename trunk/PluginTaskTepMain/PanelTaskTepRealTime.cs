@@ -63,16 +63,6 @@ namespace PluginTaskTepMain
         //protected override void initialize()
         //{
         //}
-
-        protected override void recUpdateInsertDelete(out int err)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void successRecUpdateInsertDelete()
-        {
-            throw new NotImplementedException();
-        }
         /// <summary>
         /// Обработчик события - нажатие кнопки "Результирующее действие - Расчет"
         /// </summary>
@@ -117,8 +107,9 @@ namespace PluginTaskTepMain
             {
             }            
 
-            public override void ShowValues(DataTable values/*, DataTable parameter, bool bUseRatio = true*/)
+            public override void ShowValues(IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> inValues, IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> outValues, out int err)
             {
+                err = 0;
             }
 
             public override void ClearColumns()

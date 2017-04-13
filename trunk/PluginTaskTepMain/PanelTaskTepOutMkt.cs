@@ -36,31 +36,6 @@ namespace PluginTaskTepMain
         {
         }
 
-        //protected override System.Data.DataTable m_TableOrigin
-        //{
-        //    get { throw new NotImplementedException(); }
-        //}
-
-        //protected override System.Data.DataTable m_TableEdit
-        //{
-        //    get { throw new NotImplementedException(); }
-        //}
-
-        protected override void recUpdateInsertDelete(out int err)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void successRecUpdateInsertDelete()
-        {
-            throw new NotImplementedException();
-        }
-
-        //protected override void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
         protected override PanelTaskTepCalculate.PanelManagementTaskCalculate createPanelManagement()
         {
             return new PanelManagementTaskTepOuMkt();
