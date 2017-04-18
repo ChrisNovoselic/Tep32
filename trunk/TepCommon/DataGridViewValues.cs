@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -45,8 +47,26 @@ namespace TepCommon
                 /// Приращение для начальной метки даты/времени (от строки - к строке)
                 ///  , зависит от периода расчета (например, для месяца - сутки, для суток - час)
                 /// </summary>
-                public TimeSpan Increment;
-
+                public int GetIncrementToatalMinutes(int month)
+                {
+                    return _increment < TimeSpan.MaxValue // признак отображения: менее, чем год по-месячно (кол-во минут известно; DatetimeStamp.Increment указано)
+                        ? (int)_increment.TotalMinutes
+                            : _increment == TimeSpan.MaxValue // признак отображения: год по-месячно (кол-во минут неизвестно; ; DatetimeStamp.Increment не указано, но установлено в специальное значение)
+                                ? DateTime.DaysInMonth(Start.AddMonths(month).Year, month) * 24 * 60
+                                    : -1;
+                }
+                /// <summary>
+                /// Интервал времени между метками(Tag) 2-х соседних строк
+                ///  , может быть вычисляемой, если например отображаются данные в размере год - месяц (в месяце не одинаковое кол-во суток)
+                /// </summary>
+                private TimeSpan _increment;
+                /// <summary>
+                /// Интервал времени между метками(Tag) 2-х соседних строк
+                /// </summary>
+                public TimeSpan Increment { get { return _increment; } set { if (_increment.Equals(value) == false) { _increment = value; } else; } }
+                /// <summary>
+                /// Режим отображения меток времени - просто копия аналогичного режима родительской панели
+                /// </summary>
                 public HandlerDbTaskCalculate.MODE_DATA_DATETIME ModeDataDatetime;
             }
 
@@ -62,15 +82,77 @@ namespace TepCommon
 
                 InitializeComponents();
 
-                CellParsing += onCellParsing;
+                //CellParsing += onCellParsing;
+                CellValueChanged += onCellValueChanged;
             }
+            /// <summary>
+            /// Перечисления для индексирования массива со значениями цветов для фона ячеек
+            /// </summary>
+            protected enum INDEX_COLOR : uint
+            {
+                EMPTY
+                /// <summary>
+                /// Индексы: изменена_но_не_сохранена, значение_по_умолчанию, отключена_только_для_чтения, не_может_быть_отображена, не_достоверна, нет_записей_в_БД, превышена_уставка
+                /// </summary>               
+                , VARIABLE, DEFAULT, DISABLED, NAN, PARTIAL, NOT_REC, LIMIT
+                , USER
+                    , COUNT
+            }
+            /// <summary>
+            /// Массив со значениями цветов для фона ячеек
+            /// </summary>
+            protected static Color[] s_arCellColors = new Color[(int)INDEX_COLOR.COUNT] { Color.Gray //EMPTY
+                , Color.White //VARIABLE
+                , Color.Yellow //DEFAULT
+                , Color.LightGray //CALC_DENY
+                , Color.White //NAN
+                , Color.BlueViolet //PARTIAL
+                , Color.Sienna //NOT_REC
+                , Color.Red //LIMIT
+                , Color.White //USER
+            };
 
             private void onCellParsing(object sender, DataGridViewCellParsingEventArgs ev)
             {
                 ev.ParsingApplied = true;
 
-                EventCellValueChanged(new HandlerDbTaskCalculate.VALUE() { m_IdPut = -1, value = -1F, m_iQuality = -1, stamp_value = DateTime.MinValue });
+                EventCellValueChanged?.Invoke(new HandlerDbTaskCalculate.VALUE() { m_IdPut = -1, value = -1F, m_iQuality = TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC, stamp_value = DateTime.MinValue });
             }
+
+            private void onCellValueChanged(object sender, DataGridViewCellEventArgs e)
+            {
+                HandlerDbTaskCalculate.PUT_PARAMETER putPar;
+                int idNAlg = -1
+                    , idPut = -1;
+                float fltValue = -1F;
+                CELL_PROPERTY cellProperty;
+                TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC;
+                DateTime stamp_value = DateTime.MinValue;
+
+                if (((!(e.ColumnIndex < 0))
+                    && (!(e.RowIndex < 0)))
+                        && (!(Rows[e.RowIndex].Cells[e.ColumnIndex].Tag == null))) {
+                    cellProperty = (CELL_PROPERTY)Rows[e.RowIndex].Cells[e.ColumnIndex].Tag;
+
+                    if ((!(cellProperty.IsEmpty == true))
+                        && (float.TryParse(Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString(), out fltValue) == true)) {
+                        putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)Columns[e.ColumnIndex].Tag;
+                        idNAlg = putPar.m_idNAlg;
+                        idPut = putPar.m_Id;
+                        iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER; // значение изменено пользователем
+                        cellProperty.SetQuality(HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER);
+                        stamp_value = (DateTime)Rows[e.RowIndex].Tag;
+                    
+                        fltValue = (float)GetValueDbAsRatio(idNAlg, idPut, (double)fltValue);
+
+                        EventCellValueChanged?.Invoke(new HandlerDbTaskCalculate.VALUE() { m_IdPut = idPut, value = fltValue, m_iQuality = iQuality, stamp_value = stamp_value });
+                    } else
+                        Logging.Logg().Error(string.Format(@"DataGridViewValues::onCellValueChanged ({0}) - не удалось преобразовать в значение..."
+                                , Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString())
+                            , Logging.INDEX_MESSAGE.NOT_SET);
+                } else
+                    ;
+            }            
 
             private void InitializeComponents()
             {
@@ -167,6 +249,8 @@ namespace TepCommon
                 /// </summary>
                 public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality { get { return _iQuality; } set { _iQuality = value; counter(); } }
 
+                public void SetQuality(TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE quality) { m_iQuality = quality; }
+
                 public CELL_PROPERTY(float value, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
                 {
                     _cntSet = CNT_SET; //!!! по количеству свойств
@@ -175,7 +259,7 @@ namespace TepCommon
                     _iQuality = iQuality;
                 }
 
-                public bool IsNaN { get { return _cntSet < CNT_SET; } }
+                public bool IsEmpty { get { return _cntSet < CNT_SET; } }
             }            
 
             protected DictNAlgProperty m_dictNAlgProperties;
@@ -250,9 +334,11 @@ namespace TepCommon
                     if (_modeData == ModeData.DATETIME)
                         iRes = (DatetimeStamp.Start.Equals(DateTime.MinValue) == false)
                             ? DatetimeStamp.Increment.Equals(TimeSpan.MaxValue) == false
-                                ? DateTime.DaysInMonth(DatetimeStamp.Start.Year, DatetimeStamp.Start.Month)
-                                    : 12
-                                        : -1;
+                                ? DatetimeStamp.Increment < TimeSpan.FromDays(1)
+                                    ? 24 // сутки - час
+                                        : DateTime.DaysInMonth(DatetimeStamp.Start.Year, DatetimeStamp.Start.Month) // месяц - сутки
+                                            : 12 // год - месяц
+                                                : -1;
                     else
                         ;
 
@@ -272,14 +358,8 @@ namespace TepCommon
             /// Идентификатор для определения множителя при отображении (проект, исходный множитель из БД источника)
             /// </summary>
             private int _prevPrjRatioValue;
-            /// <summary>
-            /// Возвратить значение в соответствии 
-            /// </summary>
-            /// <param name="idNAlg">Идентификатор парметра в алгоритме расчета 1-го уровня</param>
-            /// <param name="idPut">Идентификатор парметра в алгоритме расчета 2-го уровня</param>
-            /// <param name="value">Значение, которое требуется преобразовать (применить множитель)</param>
-            /// <returns></returns>
-            public double GetValueCellAsRatio(int idNAlg, int idPut, double value)
+
+            public double get_value_as_ratio(int idNAlg, int idPut, double value, int iReverse)
             {
                 double dblRes = -1F;
 
@@ -305,19 +385,35 @@ namespace TepCommon
                 }
                 // проверить требуется ли преобразование
                 if (!(prjRatioValue == vsRatioValue))
-                // домножить значение на коэффициент
-                    dblRes = value * Math.Pow(10F, vsRatioValue - prjRatioValue);
+                    // домножить значение на коэффициент
+                    dblRes = value * Math.Pow(10F, -1 * iReverse * vsRatioValue + iReverse * prjRatioValue);
                 else
-                //отображать без изменений
+                    //отображать без изменений
                     dblRes = value;
 
                 return dblRes;
             }
-            #endregion
             /// <summary>
-            /// Добавить объект с информацией о параметре в алгоритме расчета 1-го уровня
+            /// Возвратить значение в соответствии 
             /// </summary>
-            /// <param name="nAlg">Объект с информацией о параметре в алгоритме расчета 1-го уровня</param>
+            /// <param name="idNAlg">Идентификатор парметра в алгоритме расчета 1-го уровня</param>
+            /// <param name="idPut">Идентификатор парметра в алгоритме расчета 2-го уровня</param>
+            /// <param name="value">Значение, которое требуется преобразовать (применить множитель)</param>
+            /// <returns></returns>
+            public double GetValueCellAsRatio(int idNAlg, int idPut, double value)
+            {
+                return get_value_as_ratio(idNAlg, idPut, value, -1);
+            }
+
+            public double GetValueDbAsRatio(int idNAlg, int idPut, double value)
+            {
+                return get_value_as_ratio(idNAlg, idPut, value, 1);
+            }
+            #endregion
+                /// <summary>
+                /// Добавить объект с информацией о параметре в алгоритме расчета 1-го уровня
+                /// </summary>
+                /// <param name="nAlg">Объект с информацией о параметре в алгоритме расчета 1-го уровня</param>
             public virtual void AddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER nAlg)
             {
                 if (m_dictNAlgProperties == null)
@@ -425,15 +521,15 @@ namespace TepCommon
                 int incrementTotalMinutes = -1;
 
                 if (bEnded == false) {
-                    dtRow = ((RowCount == 0) ? DatetimeStamp.Start : (DateTime)Rows[RowCount - 1].Tag);
+                    incrementTotalMinutes = DatetimeStamp.GetIncrementToatalMinutes(RowCount + 1);
+
+                    dtRow = ((RowCount == 0)
+                        ? (DatetimeStamp.ModeDataDatetime == HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined)
+                            ? DatetimeStamp.Start
+                                : DatetimeStamp.Start + TimeSpan.FromMinutes(incrementTotalMinutes) // HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended
+                                    : (DateTime)Rows[RowCount - 1].Tag);
 
                     if (RowCount > 0) {
-                        incrementTotalMinutes = DatetimeStamp.Increment < TimeSpan.MaxValue
-                            ? (int)DatetimeStamp.Increment.TotalMinutes
-                                : DatetimeStamp.Increment == TimeSpan.MaxValue
-                                    ? DateTime.DaysInMonth(DatetimeStamp.Start.AddMonths(RowCount).Year, RowCount + 0) * 24 * 60
-                                        : -1;
-
                         dtRow += TimeSpan.FromMinutes(incrementTotalMinutes);
                     } else
                         ;
@@ -466,19 +562,169 @@ namespace TepCommon
             /// </summary>
             public virtual void ClearValues()
             {
+                CellValueChanged -= onCellValueChanged;
+
+                bool bCellClear = false;
+
                 foreach (DataGridViewRow r in Rows)
-                    foreach (DataGridViewCell c in r.Cells)
-                        c.Value = string.Empty;
+                    foreach (DataGridViewCell c in r.Cells) {
+                        bCellClear = (Columns[r.Cells.IndexOf(c)].Tag == null)
+                            ? false
+                                : Columns[r.Cells.IndexOf(c)].Tag is HandlerDbTaskCalculate.TECComponent
+                                    ? ((HandlerDbTaskCalculate.TECComponent)Columns[r.Cells.IndexOf(c)].Tag).m_Id > 0
+                                        : Columns[r.Cells.IndexOf(c)].Tag is HandlerDbTaskCalculate.PUT_PARAMETER
+                                            ? ((HandlerDbTaskCalculate.PUT_PARAMETER)Columns[r.Cells.IndexOf(c)].Tag).m_Id > 0
+                                                : false;
+
+                        if (bCellClear == true) {
+                            // только для реальных компонетов - нельзя удалять идентификатор параметра
+                            c.Value = string.Empty;
+                            c.Style.BackColor = s_arCellColors[(int)INDEX_COLOR.EMPTY];
+                        } else
+                            ;
+                    }
+                //??? если установить 'true' - редактирование невозможно
+                ReadOnly = false;
+
+                CellValueChanged += onCellValueChanged;
             }
 
             /// <summary>
-            /// Отобразить значения
+            /// Возвратить цвет ячейки по номеру столбца, строки
+            /// </summary>
+            /// <param name="id_alg">Идентификатор...</param>
+            /// <param name="id_comp">Идентификатор...</param>
+            /// <param name="clrRes">Результат - цвет ячейки</param>
+            /// <returns>Признак возможности размещения значения в ячейке</returns>
+            private bool getColorCellToValue(int id_alg, int id_put, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, out Color clrRes)
+            {
+                bool bRes = false;
+
+                bRes = !m_dictNAlgProperties[id_alg].m_dictPutParameters[id_put].IsNaN;
+                clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
+
+                if (bRes == true)
+                    switch (iQuality) { //??? USER, LIMIT
+                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT: // только для входной таблицы - значение по умолчанию [inval_def]
+                            clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
+                            break;
+                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL: // см. 'getQueryValuesVar' - неполные данные
+                            clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
+                            break;
+                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC: // см. 'getQueryValuesVar' - нет ни одной записи
+                            clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
+                            break;
+                        default:
+                            clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                            break;
+                    } else
+                    clrRes = s_arCellColors[(int)INDEX_COLOR.NAN];
+
+                return bRes;
+            }            
+
+            protected abstract bool isRowToShowValues(DataGridViewRow r, HandlerDbTaskCalculate.VALUE value);
+
+            /// <summary>
+            /// Отобразить значения (!!! не забывать перед отображением значений отменить регистрацию события - изменение значения в ячейке
+            ///  , а после отображения снова зарегистрировать !!!)
             /// </summary>
             /// <param name="inValues">Список с входными значениями</param>
             /// <param name="outValues">Список с выходными значениями</param>
-            public abstract void ShowValues(IEnumerable<HandlerDbTaskCalculate.VALUE> inValues
+            public void ShowValues(IEnumerable<HandlerDbTaskCalculate.VALUE> inValues
                 , IEnumerable<HandlerDbTaskCalculate.VALUE> outValues
-                , out int err);
+                , out int err)
+            {
+                err = 0;
+
+                int idAlg = -1
+                   , idPut = -1
+                   , iCol = 0;
+                TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC;
+                double dblVal = -1F,
+                    dblColumnAgregateValue = 0;
+                AGREGATE_ACTION columnAction;
+                DataGridViewRow row;
+                HandlerDbTaskCalculate.PUT_PARAMETER putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
+                IEnumerable<HandlerDbTaskCalculate.VALUE> columnValues = null;
+                Color clrCell = Color.Empty;
+
+                // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
+                if (RowCount > 1) {
+                    foreach (DataGridViewColumn col in Columns) {
+                        try {
+                            putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag;
+                            columnValues = inValues.Where(value => { return value.m_IdPut == putPar.m_Id; });
+
+                            idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_idNAlg;
+                            idPut = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id;
+                            iCol = Columns.IndexOf(col);
+                        } catch (Exception e) {
+                            Logging.Logg().Exception(e, @"DataGridViewValuesReaktivka::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+
+                        if ((putPar.IdComponent > 0)
+                            && (!(columnValues == null))) {
+                            dblColumnAgregateValue = 0F;
+                            columnAction = Rows[RowCount - 1].Tag.GetType().IsPrimitive == true // есть ли итоговая строка?
+                                ? m_dictNAlgProperties[idAlg].m_sAverage // итоговая строка - есть (операция по агрегации известна)
+                                    : AGREGATE_ACTION.UNKNOWN; // итоговой строки - нет (операция по агрегации неизвестна и не выполняется)
+
+                            foreach (HandlerDbTaskCalculate.VALUE value in columnValues) {
+
+                                dblVal = value.value;
+                                iQuality = value.m_iQuality;
+
+                                if (!(columnAction == AGREGATE_ACTION.UNKNOWN))
+                                    dblColumnAgregateValue += dblVal;
+                                else
+                                    ;
+
+                                row = Rows.Cast<DataGridViewRow>().FirstOrDefault(r => isRowToShowValues(r, value));
+
+                                if (!(row == null)) {
+                                    row.Cells[iCol].Tag = new CELL_PROPERTY() { m_Value = dblVal, m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality };
+                                    row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
+
+                                    if (getColorCellToValue(idAlg, idPut, (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality, out clrCell) == true) {
+                                        //// символ (??? один для строки, но назначается много раз по числу столбцов)
+                                        //row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictNAlgProperties[idAlg].m_strSymbol
+                                        //    + @",[" + m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_nameRU + m_dictNAlgProperties[idAlg].m_strMeausure + @"]";
+
+                                        dblVal = GetValueCellAsRatio(idAlg, idPut, dblVal);
+
+                                        // отобразить с количеством знаков в соответствии с настройками
+                                        row.Cells[iCol].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
+                                    } else
+                                        ;
+
+                                    row.Cells[iCol].Style.BackColor = clrCell;
+                                } else
+                                    // не найдена строка для даты в наборе данных для отображения
+                                    Logging.Logg().Warning(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - не найдена строка для даты [DATETIME={0}] в наборе данных для отображения..."
+                                            , value.stamp_value.Date)
+                                        , Logging.INDEX_MESSAGE.NOT_SET);
+                            }
+
+                            if (!(columnAction == AGREGATE_ACTION.UNKNOWN)) {
+                                if (columnAction == AGREGATE_ACTION.SUMMA)
+                                    dblColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, dblColumnAgregateValue);
+                                else if (columnAction == AGREGATE_ACTION.AVERAGE)
+                                    dblColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, dblColumnAgregateValue);
+                                else
+                                    ;
+
+                                Rows[Rows.Count - 1].Cells[iCol].Value = dblColumnAgregateValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+                            } else
+                                ;
+                        } else
+                            Logging.Logg().Error(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
+                                    , ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id, inValues.Count())
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+                    }
+                } else
+                    Logging.Logg().Error(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
     }
 }

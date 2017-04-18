@@ -62,40 +62,40 @@ namespace PluginTaskTepMain
             base.Stop();
         }        
 
-        /// <summary>
-        /// Обработчик события - изменение значения в отображении для сохранения
-        /// </summary>
-        /// <param name="dgv">Объект, инициировавший событие</param>
-        /// <param name="ev">Аргумент события</param>
-        protected override void onEventCellValueChanged(object dgv, DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
-        {
-            DataRow[] rowsParameter = null;
+        ///// <summary>
+        ///// Обработчик события - изменение значения в отображении для сохранения
+        ///// </summary>
+        ///// <param name="dgv">Объект, инициировавший событие</param>
+        ///// <param name="ev">Аргумент события</param>
+        //protected override void onEventCellValueChanged(object dgv, DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
+        //{
+        //    DataRow[] rowsParameter = null;
 
-            for (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES indx = (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.UNKNOWN + 1);
-                indx < TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT;
-                indx++)
-                if (!(indx == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT)
-                    || ((indx == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT) && (ev.m_iQuality == TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT)))
-                {
-                    if ((!(m_arTableEdit[(int)indx] == null))
-                        && (m_arTableEdit[(int)indx].Columns.Contains(@"ID_PUT") == true))
-                    {
-                        rowsParameter = m_arTableEdit[(int)indx].Select(@"ID_PUT=" + ev.m_IdParameter);
+        //    for (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES indx = (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.UNKNOWN + 1);
+        //        indx < TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT;
+        //        indx++)
+        //        if (!(indx == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT)
+        //            || ((indx == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT) && (ev.m_iQuality == TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT)))
+        //        {
+        //            if ((!(m_arTableEdit[(int)indx] == null))
+        //                && (m_arTableEdit[(int)indx].Columns.Contains(@"ID_PUT") == true))
+        //            {
+        //                rowsParameter = m_arTableEdit[(int)indx].Select(@"ID_PUT=" + ev.m_IdParameter);
 
-                        if (rowsParameter.Length == 1)
-                        {
-                            rowsParameter[0][@"VALUE"] = ev.m_Value;
-                            //rowsParameter[0][@"QUALITY"] = (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER;
-                        }
-                        else
-                            Logging.Logg().Error(@"PanelTaskInval::onEventCellValueChanged (INDEX_TABLE_VALUES=" + indx.ToString() + @") - не найден параметр при изменении значения (по умолчанию) в 'DataGridView' ...", Logging.INDEX_MESSAGE.NOT_SET);
-                    }
-                    else
-                        ; //??? ошибка - таблица не инициализирована ИЛИ таблица не содержит столбец 'ID_PUT'
-                }
-                else
-                    ;
-        }
+        //                if (rowsParameter.Length == 1)
+        //                {
+        //                    rowsParameter[0][@"VALUE"] = ev.m_Value;
+        //                    //rowsParameter[0][@"QUALITY"] = (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER;
+        //                }
+        //                else
+        //                    Logging.Logg().Error(@"PanelTaskInval::onEventCellValueChanged (INDEX_TABLE_VALUES=" + indx.ToString() + @") - не найден параметр при изменении значения (по умолчанию) в 'DataGridView' ...", Logging.INDEX_MESSAGE.NOT_SET);
+        //            }
+        //            else
+        //                ; //??? ошибка - таблица не инициализирована ИЛИ таблица не содержит столбец 'ID_PUT'
+        //        }
+        //        else
+        //            ;
+        //}
 
         /// <summary>
         /// Обработчик события - нажатие кнопки "Предварительное действие - К нормативу"

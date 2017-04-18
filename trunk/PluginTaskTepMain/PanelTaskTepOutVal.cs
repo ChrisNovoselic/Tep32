@@ -65,44 +65,6 @@ namespace PluginTaskTepMain
             return bRes;
         }
         /// <summary>
-        /// Обработчик события - изменение значения в отображении для сохранения
-        /// </summary>
-        /// <param name="pars"></param>
-        protected override void onEventCellValueChanged(object dgv, PanelTaskTepValues.DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventArgs ev)
-        {
-            throw new NotImplementedException();
-        }
-
-        //protected override void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
-        //{
-        //    err = 0;
-        //    strErr = string.Empty;
-        //    //Запрос для получения ранее учтенных (сохраненных) данных
-        //    m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] =
-        //        //HandlerDb.GetValuesVar(Type
-        //        //    , Session.CurrentIdPeriod
-        //        //    , CountBasePeriod
-        //        //    , getDateTimeRangeValuesVar ()
-        //        //    , out err)
-        //        new DataTable()
-        //            ;
-        //    //Запрос для получения автоматически собираемых данных
-        //    m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE ?
-        //        HandlerDb.GetVariableValues(TaskCalculateType, out err) : Session.m_ViewValues == TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_IMPORT ? ImpExpPrevVersionValues.Import(TaskCalculateType
-        //            , Session.m_Id
-        //            , (int)TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER, m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
-        //            , m_dictTableDictPrj[ID_DBTABLE.RATIO]
-        //            , out err) :
-        //                new DataTable ();
-
-        //    switch (err)
-        //    {
-        //        case 0:
-        //        default:
-        //            break;
-        //    }
-        //}
-        /// <summary>
         /// Обработчик события - нажатие кнопки "Результирующее действие - К макету"
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
@@ -110,17 +72,7 @@ namespace PluginTaskTepMain
         protected override void btnRunRes_onClick(object obj, EventArgs ev)
         {
             throw new NotImplementedException();
-        }
-        ///// <summary>
-        ///// Инициировать подготовку к расчету
-        /////  , выполнить расчет
-        /////  , актуализировать таблицы с временными значениями
-        ///// </summary>
-        ///// <param name="type">Тип требуемого расчета</param>
-        //protected override void btnRun_onClick(HandlerDbTaskCalculate.TaskCalculate.TYPE type)
-        //{
-        //    throw new NotImplementedException();
-        //}        
+        }       
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>

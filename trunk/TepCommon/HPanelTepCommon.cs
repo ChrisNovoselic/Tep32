@@ -142,6 +142,8 @@ namespace TepCommon
                     ;
             } else {
             // изменены PERIOD или TIMEZONE
+                Session.SetDatetimeRange(_panelManagement.DatetimeRange);
+
                 switch ((ID_DBTABLE)obj) {
                     case ID_DBTABLE.TIME:
                         Session.CurrentIdPeriod = _panelManagement.IdPeriod;
@@ -153,9 +155,7 @@ namespace TepCommon
                         break;
                     case ID_DBTABLE.TIMEZONE:
                         Session.CurrentIdTimezone = _panelManagement.IdTimezone;
-                            //, (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)_panelManagement.IdTimezone)[0][@"OFFSET_UTC"]);
-
-                        Session.SetDatetimeRange(_panelManagement.DatetimeRange);
+                            //, (int)m_dictTableDictPrj[ID_DBTABLE.TIMEZONE].Select(@"ID=" + (int)_panelManagement.IdTimezone)[0][@"OFFSET_UTC"]);                        
 
                         if (_panelManagement.Ready == PanelManagementTaskCalculate.READY.Ok) {
                             panelManagement_TimezoneChanged();

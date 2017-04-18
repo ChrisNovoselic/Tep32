@@ -101,11 +101,15 @@ namespace TepCommon
         , OWNER_GTP = 2
         , OWNER_TG = 3
     }
-
-    public enum AGREGATE_ACTION
+    /// <summary>
+    /// Перечисление - признак для выполнения группвых действий над величиной
+    /// </summary>
+    public enum AGREGATE_ACTION : short
     {
-        SUMMA
+        UNKNOWN = -1
+        , SUMMA
         , AVERAGE
         , VZVESH
+        , AS_IS
     }
 }

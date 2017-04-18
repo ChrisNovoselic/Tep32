@@ -376,7 +376,7 @@ namespace PluginTaskReaktivka
         }
 
         /// <summary>
-        /// Класс формирования отчета Excel 
+        /// Класс формирования отчета MS Excel 
         /// </summary>
         public class ReportExcel
         {
@@ -386,17 +386,7 @@ namespace PluginTaskReaktivka
             private object _missingObj = System.Reflection.Missing.Value;
 
             /// <summary>
-            /// 
-            /// </summary>
-            protected enum INDEX_DIVISION : int
-            {
-                UNKNOW = -1,
-                SEPARATE_CELL,
-                ADJACENT_CELL
-            }
-
-            /// <summary>
-            /// конструктор(основной)
+            /// Конструктор - основной (без параметров)
             /// </summary>
             public ReportExcel()
             {
@@ -411,28 +401,36 @@ namespace PluginTaskReaktivka
             /// <param name="dtRange">дата</param>
             public void CreateExcel(DataGridView dgView, DateTimeRange dtRange)
             {
-                if (addWorkBooks())
-                {
+                string cellValue = string.Empty;
+
+                if (addWorkBooks() == true) {
+                    // успешное добавление листа в книгу
                     m_workBook.AfterSave += workBook_AfterSave;
                     m_workBook.BeforeClose += workBook_BeforeClose;
                     m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("Reaktivka");
                     int indxCol = 1;
 
-                    try
-                    {
-                        for (int i = 0; i < dgView.Columns.Count; i++)
-                        {
-                            if (dgView.Columns[i].HeaderText != "")
-                            {
+                    try {
+                        for (int i = 0; i < dgView.Columns.Count; i++) {
+                            if (dgView.Columns[i].HeaderText.Equals(string.Empty) == false) {
                                 Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
 
-                                foreach (Excel.Range cell in colRange.Cells)
-                                    if (Convert.ToString(cell.Value) != "")
-                                        if (Convert.ToString(cell.Value) == splitString(dgView.Columns[i].HeaderText))
-                                        {
+                                foreach (Excel.Range cell in colRange.Cells) {
+                                    cellValue = Convert.ToString(cell.Value);
+
+                                    if (cellValue.Equals(string.Empty) == false)
+                                        if (cellValue == splitString(dgView.Columns[i].HeaderText)) {
                                             fillSheetExcel(colRange, dgView, i, cell.Row);
+
                                             break;
-                                        }
+                                        } else
+                                        // продолжать поиск
+                                            ;
+                                    else
+                                    // продолжать поиск
+                                        ;
+                                }
+
                                 indxCol++;
                             }
                         }
@@ -441,13 +439,13 @@ namespace PluginTaskReaktivka
                         m_excApp.Visible = true;
                         closeExcel();
                         //System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
-                    }
-                    catch (Exception e)
-                    {
+                    } catch (Exception e) {
                         closeExcel();
-                        MessageBox.Show("Ошибка экспорта данных!");
+
+                        Logging.Logg().Exception(e, string.Format("Panelreaktivka.ReportExcel::CreateExcel () - ошибка экспорта данных..."), Logging.INDEX_MESSAGE.NOT_SET);
                     }
-                }
+                } else
+                    throw new Exception(string.Format(@"Panelreaktivka.ReportExcel::CreateExcel () - ошибка добавления листа в книгу MS Excel..."));
             }
 
             /// <summary>
@@ -504,18 +502,20 @@ namespace PluginTaskReaktivka
             }
 
             /// <summary>
-            /// Деление 
+            /// Возвратить одну из частей строки, при наличии разделителя
             /// </summary>
-            /// <param name="headerTxt">строка</param>
-            /// <returns>часть строки</returns>
-            private string splitString(string headerTxt)
+            /// <param name="headerTxt">Исходная строка, в которой присутствует разделитель</param>
+            /// <returns>Часть строки</returns>
+            private string splitString(string headerTxt, char chSeparate = ',')
             {
-                string[] spltHeader = headerTxt.Split(',');
+                string[] spltHeader = headerTxt.Split(chSeparate);
 
-                if (spltHeader.Length > (int)INDEX_DIVISION.ADJACENT_CELL)
-                    return spltHeader[(int)INDEX_DIVISION.ADJACENT_CELL].TrimStart();
+                if (spltHeader.Length > 1)
+                // разделитель присутствует - вернуть крайнюю часть
+                    return spltHeader[1].TrimStart();
                 else
-                    return spltHeader[(int)INDEX_DIVISION.SEPARATE_CELL];
+                // разделитель отсутствует - вернуть исходную строку
+                    return spltHeader[0];
             }
 
             /// <summary>

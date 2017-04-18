@@ -177,11 +177,11 @@ namespace PluginTaskAutobook
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
-            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
+            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
 
             InitializeComponent();
 
-            //Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddMonths(1));
+            m_dgvValues.EventCellValueChanged += dgvValues_onEventCellValueChanged;
         }
 
         /// <summary>
@@ -310,11 +310,11 @@ namespace PluginTaskAutobook
 
         private void addValueRows()
         {
-            TimeSpan tsOffsetUTC = TimeSpan.FromDays(1) - Session.m_curOffsetUTC;
+            TimeSpan tsOffsetUTC = /*TimeSpan.FromDays(1)*/ - Session.m_curOffsetUTC;
 
             m_dgvValues.AddRows(new DataGridViewValues.DateTimeStamp() {
                 Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC
-                , Increment = TimeSpan.MaxValue
+                , Increment = TimeSpan.MaxValue // значение неизвестно (в каждом месяце - разное кол-во суток), но является признаком для определения рассчитываемого значения
                 , ModeDataDatetime = HandlerDb.ModeDataDatetime
             });
         }
@@ -369,6 +369,8 @@ namespace PluginTaskAutobook
         protected override void handlerDbTaskCalculate_onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
             base.handlerDbTaskCalculate_onAddNAlgParameter(obj);
+
+            m_dgvValues.AddNAlgParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
@@ -377,6 +379,8 @@ namespace PluginTaskAutobook
         protected override void handlerDbTaskCalculate_onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
             base.handlerDbTaskCalculate_onAddPutParameter(obj);
+
+            m_dgvValues.AddPutParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр

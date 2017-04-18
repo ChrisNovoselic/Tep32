@@ -174,14 +174,10 @@ namespace PluginTaskAutobook
 
                 m_dictTECComponent.Clear();
             }
-            /// <summary>
-            /// Отобразить значения
-            /// </summary>
-            /// <param name="inValues">Входные значения</param>
-            /// <param name="outValues">Выходные значения</param>
-            public override void ShowValues(IEnumerable<HandlerDbTaskCalculate.VALUE> inValues, IEnumerable<HandlerDbTaskCalculate.VALUE> outValues, out int err)
+
+            protected override bool isRowToShowValues(DataGridViewRow r, HandlerDbTaskCalculate.VALUE value)
             {
-                throw new NotImplementedException();
+                return (r.Tag is DateTime) ? value.stamp_value.Equals(((DateTime)(r.Tag))) == true : false;
             }
         }
     }

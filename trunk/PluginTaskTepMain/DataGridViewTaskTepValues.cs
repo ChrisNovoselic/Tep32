@@ -22,52 +22,52 @@ namespace PluginTaskTepMain
         /// </summary>
         protected class DataGridViewTaskTepValues : DataGridViewTaskTepCalculate
         {
-            /// <summary>
-            /// Класс для описания аргумента события - изменения значения ячейки
-            /// </summary>
-            public class DataGridViewTEPValuesCellValueChangedEventArgs : EventArgs
-            {
-                public int m_IdComp
-                    , m_IdAlg
-                    , m_IdParameter;
-                public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
-                public double m_Value;
+            ///// <summary>
+            ///// Класс для описания аргумента события - изменения значения ячейки
+            ///// </summary>
+            //public class DataGridViewTEPValuesCellValueChangedEventArgs : EventArgs
+            //{
+            //    public int m_IdComp
+            //        , m_IdAlg
+            //        , m_IdParameter;
+            //    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
+            //    public double m_Value;
 
-                public DataGridViewTEPValuesCellValueChangedEventArgs()
-                    : base()
-                {
-                    m_IdAlg =
-                    m_IdComp =
-                    m_IdParameter =
-                        -1;
-                    m_iQuality = TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT;
-                    m_Value = -1F;
-                }
+            //    public DataGridViewTEPValuesCellValueChangedEventArgs()
+            //        : base()
+            //    {
+            //        m_IdAlg =
+            //        m_IdComp =
+            //        m_IdParameter =
+            //            -1;
+            //        m_iQuality = TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT;
+            //        m_Value = -1F;
+            //    }
 
-                public DataGridViewTEPValuesCellValueChangedEventArgs(int id_alg
-                    , int id_comp
-                    , int id_par
-                    , TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE quality
-                    , double val)
-                        : this()
-                {
-                    m_IdAlg = id_alg;
-                    m_IdComp = id_comp;
-                    m_IdParameter = id_par;
-                    m_iQuality = quality;
-                    m_Value = val;
-                }
-            }
-            /// <summary>
-            /// Тип делегата для обработки события - изменение значения в ячейке
-            /// </summary>
-            /// <param name="obj">Объект, инициировавший событие (DataGridViewTepValues)</param>
-            /// <param name="ev">Аргумент события</param>
-            public delegate void DataGridViewTEPValuesCellValueChangedEventHandler(object obj, DataGridViewTEPValuesCellValueChangedEventArgs ev);
-            /// <summary>
-            /// Событие - изменение значения ячейки
-            /// </summary>
-            public event DataGridViewTEPValuesCellValueChangedEventHandler EventCellValueChanged;
+            //    public DataGridViewTEPValuesCellValueChangedEventArgs(int id_alg
+            //        , int id_comp
+            //        , int id_par
+            //        , TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE quality
+            //        , double val)
+            //            : this()
+            //    {
+            //        m_IdAlg = id_alg;
+            //        m_IdComp = id_comp;
+            //        m_IdParameter = id_par;
+            //        m_iQuality = quality;
+            //        m_Value = val;
+            //    }
+            //}
+            ///// <summary>
+            ///// Тип делегата для обработки события - изменение значения в ячейке
+            ///// </summary>
+            ///// <param name="obj">Объект, инициировавший событие (DataGridViewTepValues)</param>
+            ///// <param name="ev">Аргумент события</param>
+            //public delegate void DataGridViewTEPValuesCellValueChangedEventHandler(object obj, DataGridViewTEPValuesCellValueChangedEventArgs ev);
+            ///// <summary>
+            ///// Событие - изменение значения ячейки
+            ///// </summary>
+            //public event DataGridViewTEPValuesCellValueChangedEventHandler EventCellValueChanged;
 
             public override void AddColumns(List<TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
@@ -81,10 +81,6 @@ namespace PluginTaskTepMain
             {
                 //Разместить ячейки, установить свойства объекта
                 InitializeComponents();
-                //Назначить (внутренний) обработчик события - изменение значения ячейки
-                // для дальнейшей ретрансляции родительскому объекту
-                CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
-                //RowsRemoved += new DataGridViewRowsRemovedEventHandler (onRowsRemoved);
             }
             /// <summary>
             /// Инициализация элементов управления объекта (создание, размещение)
@@ -118,11 +114,6 @@ namespace PluginTaskTepMain
                     }
                 } else
                     ;
-            }
-
-            public void AddComponent(TepCommon.HandlerDbTaskCalculate.TECComponent comp)
-            {
-                ;
             }
 
             public void AddColumn(TepCommon.HandlerDbTaskCalculate.TECComponent comp)
@@ -326,41 +317,7 @@ namespace PluginTaskTepMain
                     ;
 
                 return bRes;
-            }
-
-            /// <summary>
-            /// Возвратить цвет ячейки по номеру столбца, строки
-            /// </summary>
-            /// <param name="id_alg">Идентификатор...</param>
-            /// <param name="id_comp">Идентификатор...</param>
-            /// <param name="clrRes">Результат - цвет ячейки</param>
-            /// <returns>Признак возможности размещения значения в ячейке</returns>
-            private bool getColorCellToValue(int id_alg, int id_comp, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, out Color clrRes)
-            {
-                bool bRes = false;
-
-                bRes = !m_dictNAlgProperties[id_alg].m_dictPutParameters[id_comp].IsNaN;
-                clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
-
-                if (bRes == true)
-                    switch (iQuality) { //??? USER, LIMIT
-                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT: // только для входной таблицы - значение по умолчанию [inval_def]
-                            clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
-                            break;
-                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL: // см. 'getQueryValuesVar' - неполные данные
-                            clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
-                            break;
-                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC: // см. 'getQueryValuesVar' - нет ни одной записи
-                            clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
-                            break;
-                        default:
-                            clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
-                            break;
-                    } else
-                    clrRes = s_arCellColors[(int)INDEX_COLOR.NAN];
-
-                return bRes;
-            }
+            }            
 
             /// <summary>
             /// Обновить структуру таблицы (доступность(цвет)/видимость столбцов/строк)
@@ -442,71 +399,9 @@ namespace PluginTaskTepMain
                     ;
             }
 
-            /// <summary>
-            /// Отобразить значения
-            /// </summary>
-            /// <param name="values">Значения для отображения</param>
-            public override void ShowValues(IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> inValues, IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> outValues, out int err)
+            protected override bool isRowToShowValues(DataGridViewRow r, TepCommon.HandlerDbTaskCalculate.VALUE value)
             {
-                err = 0;
-
-                int idAlg = -1
-                    , idPut = -1
-                    , idComp = -1
-                    , iQuality = -1
-                    , indxCol = 0;
-                double dblVal = -1F;
-                TepCommon.HandlerDbTaskCalculate.VALUE[] cellRows = null
-                    //, parameterRows = null
-                    ;
-                Color clrCell = Color.Empty;
-
-                CellValueChanged -= onCellValueChanged;
-
-                foreach (DataGridViewColumn col in Columns) {
-                    idComp = ((TepCommon.HandlerDbTaskCalculate.TECComponent)col.Tag).m_Id;
-
-                    if (idComp > 0)
-                        foreach (DataGridViewRow row in Rows) {
-                            dblVal = double.NaN;
-                            iQuality = -1;
-                            idAlg = (int)row.Cells[0].Value;
-                            idPut = m_dictNAlgProperties[idAlg].m_dictPutParameters[idComp].m_Id;
-
-                            cellRows = inValues.Where(item => { return item.m_IdPut == idPut; }).ToArray();
-
-                            if (cellRows.Length == 1) {
-                                //idPut = (int)cellRows[0][@"ID_PUT"];
-                                dblVal = ((double)cellRows[0].value);
-                                iQuality = (int)cellRows[0].m_iQuality;
-                            } else
-                                //??? continue
-                                ;
-
-                            indxCol = Columns.IndexOf(col);
-                            //iRow = Rows.IndexOf(row);
-
-                            row.Cells[indxCol].Tag = new CELL_PROPERTY() { m_Value = dblVal, m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality };
-                            row.Cells[indxCol].ReadOnly = double.IsNaN(dblVal);
-
-                            if (getColorCellToValue(idAlg, idComp, (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality, out clrCell) == true) {
-                                //// символ (??? один для строки, но назначается много раз по числу столбцов)
-                                //row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictNAlgProperties[idAlg].m_strSymbol
-                                //    + @",[" + m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_nameRU + m_dictNAlgProperties[idAlg].m_strMeausure + @"]";
-
-                                dblVal = GetValueCellAsRatio(idAlg, idPut, dblVal);
-
-                                // отобразить с количеством знаков в соответствии с настройками
-                                row.Cells[indxCol].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
-                            } else
-                                ;
-
-                            row.Cells[indxCol].Style.BackColor = clrCell;
-                        } else
-                        ;
-                }
-
-                CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
+                return m_dictNAlgProperties[(int)r.Tag].m_dictPutParameters.ContainsKey(value.m_IdPut) == true;
             }
 
             /// <summary>
@@ -514,63 +409,50 @@ namespace PluginTaskTepMain
             /// </summary>
             public override void ClearValues()
             {
-                CellValueChanged -= new DataGridViewCellEventHandler(onCellValueChanged);
-
-                foreach (DataGridViewRow r in Rows)
-                    foreach (DataGridViewCell c in r.Cells)
-                        if (((TepCommon.HandlerDbTaskCalculate.TECComponent)Columns[r.Cells.IndexOf(c)].Tag).m_Id > 0) {
-                            // только для реальных компонетов - нельзя удалять идентификатор параметра
-                            c.Value = string.Empty;
-                            c.Style.BackColor = s_arCellColors[(int)INDEX_COLOR.EMPTY];
-                        } else
-                            ;
-                //??? если установить 'true' - редактирование невозможно
-                ReadOnly = false;
-
-                CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
+                base.ClearValues();
             }
 
-            /// <summary>
-            /// обработчик события - изменение значения в ячейке
-            /// </summary>
-            /// <param name="obj">Обхект, иницировавший событие</param>
-            /// <param name="ev">Аргумент события</param>
-            private void onCellValueChanged(object obj, DataGridViewCellEventArgs ev)
-            {
-                string strValue = string.Empty;
-                double dblValue = double.NaN;
-                int id_alg = -1
-                    , id_comp = -1;
+            ///// <summary>
+            ///// обработчик события - изменение значения в ячейке
+            ///// </summary>
+            ///// <param name="obj">Обхект, иницировавший событие</param>
+            ///// <param name="ev">Аргумент события</param>
+            //private void onCellValueChanged(object obj, DataGridViewCellEventArgs ev)
+            //{
+            //    string strValue = string.Empty;
+            //    double dblValue = double.NaN;
+            //    int id_alg = -1
+            //        , id_comp = -1;
 
-                try {
-                    if ((!(ev.ColumnIndex < 0))
-                        && (!(ev.RowIndex < 0))) {
-                        id_alg = (int)Rows[ev.RowIndex].Tag;
-                        id_comp = ((TepCommon.HandlerDbTaskCalculate.TECComponent)Columns[ev.ColumnIndex].Tag).m_Id; //Идентификатор компонента
+            //    try {
+            //        if ((!(ev.ColumnIndex < 0))
+            //            && (!(ev.RowIndex < 0))) {
+            //            id_alg = (int)Rows[ev.RowIndex].Tag;
+            //            id_comp = ((TepCommon.HandlerDbTaskCalculate.TECComponent)Columns[ev.ColumnIndex].Tag).m_Id; //Идентификатор компонента
 
-                        if ((id_comp > 0) // только для реальных компонентов
-                            && (!(ev.RowIndex < 0))) {
-                            strValue = (string)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value;
+            //            if ((id_comp > 0) // только для реальных компонентов
+            //                && (!(ev.RowIndex < 0))) {
+            //                strValue = (string)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value;
 
-                            if (double.TryParse(strValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out dblValue) == true) {
-                                ((CELL_PROPERTY)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Tag).SetValue(dblValue);
+            //                if (double.TryParse(strValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out dblValue) == true) {
+            //                    ((CELL_PROPERTY)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Tag).SetValue(dblValue);
 
-                                EventCellValueChanged(this, new DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventArgs(
-                                    id_alg //Идентификатор параметра [alg]
-                                    , id_comp
-                                    , m_dictNAlgProperties[id_alg].m_dictPutParameters[id_comp].m_Id //Идентификатор параметра с учетом периода расчета [put]
-                                    , ((CELL_PROPERTY)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Tag).m_iQuality
-                                    , ((CELL_PROPERTY)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Tag).m_Value));
-                            } else
-                                ; //??? невозможно преобразовать значение - отобразить сообщение для пользователя
-                        } else
-                            ; // в 0-ом столбце идентификатор параметра расчета
-                    } else
-                        ; // невозможно адресовать ячейку
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, @"DataGridViewTEPValues::onCellValueChanged () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
+            //                    EventCellValueChanged(this, new DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventArgs(
+            //                        id_alg //Идентификатор параметра [alg]
+            //                        , id_comp
+            //                        , m_dictNAlgProperties[id_alg].m_dictPutParameters[id_comp].m_Id //Идентификатор параметра с учетом периода расчета [put]
+            //                        , ((CELL_PROPERTY)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Tag).m_iQuality
+            //                        , ((CELL_PROPERTY)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Tag).m_Value));
+            //                } else
+            //                    ; //??? невозможно преобразовать значение - отобразить сообщение для пользователя
+            //            } else
+            //                ; // в 0-ом столбце идентификатор параметра расчета
+            //        } else
+            //            ; // невозможно адресовать ячейку
+            //    } catch (Exception e) {
+            //        Logging.Logg().Exception(e, @"DataGridViewTEPValues::onCellValueChanged () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //    }
+            //}
         }
     }
 }

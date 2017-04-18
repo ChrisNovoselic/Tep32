@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using TepCommon;
+using System.Globalization;
 
 namespace PluginTaskAutobook
 {
@@ -33,6 +34,7 @@ namespace PluginTaskAutobook
             /// </summary>
             private void InitializeComponents()
             {
+                this.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 this.RowHeadersVisible = true;
             }
 
@@ -45,22 +47,14 @@ namespace PluginTaskAutobook
             {
                 Columns.Add(@"VALUE", @"Значения");
                 Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                Columns[0].CellTemplate.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
 
-                ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                Columns[0].Tag = putPar;
             }
 
-            /// <summary>
-            /// заполнение датагрида
-            /// </summary>
-            /// <param name="tbOrigin">таблица значений</param>
-            /// <param name="dgvView">контрол</param>
-            public override void ShowValues(IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> inValues, IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> outValues, out int err)
+            protected override bool isRowToShowValues(DataGridViewRow r, HandlerDbTaskCalculate.VALUE value)
             {
-                err = 0;
-
-                double dblVal = -1F;
-                int idAlg = -1;
-
+                return (r.Tag is DateTime) ? value.stamp_value.Equals(((DateTime)(r.Tag))) == true : false;
             }
         }
     }

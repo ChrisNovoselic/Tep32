@@ -864,68 +864,9 @@ namespace PluginTaskVedomostBl
                 return listHeaderRes;
             }
 
-            public override void ShowValues(IEnumerable<HandlerDbTaskCalculate.VALUE> inValues, IEnumerable<HandlerDbTaskCalculate.VALUE> outValues, out int err)
+            protected override bool isRowToShowValues(DataGridViewRow r, TepCommon.HandlerDbTaskCalculate.VALUE value)
             {
-                err = 0;
-
-                //    DataTable tableOriginCopy = new DataTable();
-                //    int cntDay = -1
-                //       , hoursOffSet
-                //       , iCol = 0;
-
-                //    DataRow[] editRow = null;
-                //    NALG_PROPERTY nalg_prop;
-                //    COLUMN_PROPERTY col_prop;
-
-                //    tableOriginCopy = tableOrigin.Copy();
-                //    ClearValues();
-
-                //    if ((int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD == (int)typeValues)
-                //        if (s_flagBl)
-                //            hoursOffSet = -1 * (-(TimeZoneInfo.Local.BaseUtcOffset.Hours + 1) + 24);
-                //        else
-                //            hoursOffSet = (s_currentOffSet / 60);
-                //    else
-                //        hoursOffSet = s_currentOffSet / 60;
-
-                //    if (tableOriginCopy.Rows.Count > 0)
-                //        foreach (DataGridViewColumn col in Columns) {
-                //            col_prop = (COLUMN_PROPERTY)col.Tag;
-                //            nalg_prop = m_dictNAlgProperties[col_prop.m_putParameter.m_idNAlg];
-
-                //            try {
-                //                editRow = tableOriginCopy.Select(string.Format(tableOriginCopy.Locale, "ID_PUT = " + col_prop.m_putParameter.m_Id));
-                //            } catch (Exception e) {
-                //                Logging.Logg().Exception(e, string.Format(@"DataGridViewVedomostBl::ShowValues () - ошибка выборки данных ID_PUT={0}...", col_prop.m_putParameter.m_Id), Logging.INDEX_MESSAGE.NOT_SET);
-                //            }
-
-                //            for (int i = 0; i < editRow.Count(); i++) {
-                //                //??? почему сравниваются строки, а не значения
-                //                if (Convert.ToDateTime(editRow[i][@"WR_DATETIME"]).AddHours(hoursOffSet).ToShortDateString() ==
-                //                    Rows[i].Cells["Date"].Value.ToString()) {
-                //                    Rows[i].Cells[iCol].Value =
-                //                        ((double)editRow[i][@"VALUE"]).ToString(nalg_prop.FormatRound, CultureInfo.InvariantCulture);
-                //                } else
-                //                    ;
-                //            }
-
-                //            try {
-                //                if (nalg_prop.m_sAverage == 0)
-                //                    Rows[RowCount - 1].Cells[iCol].Value =
-                //                        summaColumnValues(col.Index, out cntDay).ToString(nalg_prop.FormatRound, CultureInfo.InvariantCulture);
-                //                else
-                //                    Rows[RowCount - 1].Cells[iCol].Value =
-                //                        averageColumnValues(col.Index, out cntDay).ToString(nalg_prop.FormatRound, CultureInfo.InvariantCulture);
-                //            } catch (Exception e) {
-                //                Logging.Logg().Exception(e
-                //                    , string.Format("???DataGridViewVedomostBl::ShowValues () - усредненние данных по столбцу name={0}", col_prop.m_textTopHeader)
-                //                    , Logging.INDEX_MESSAGE.NOT_SET);
-                //            }
-
-                //            iCol++;
-                //        } // цикл по столбцам представления
-                //    else
-                //        ;
+                throw new NotImplementedException();
             }
         }
     }

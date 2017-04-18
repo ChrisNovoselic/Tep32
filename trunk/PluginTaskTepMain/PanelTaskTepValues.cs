@@ -59,7 +59,7 @@ namespace PluginTaskTepMain
             InitializeComponents();
             // назначить обработчики для кнопок 'Результат'
             (Controls.Find(INDEX_CONTROL.BUTTON_RUN_RES.ToString(), true)[0] as Button).Click += new EventHandler(btnRunRes_onClick);
-            (m_dgvValues as DataGridViewTaskTepValues).EventCellValueChanged += new DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventHandler(onEventCellValueChanged);
+            //(m_dgvValues as DataGridViewTaskTepValues).EventCellValueChanged += new DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventHandler(onEventCellValueChanged);
             (m_dgvValues as DataGridViewTaskTepValues).SelectionChanged += new EventHandler(dgvValues_onSelectionChanged);
         }
         /// <summary>
@@ -439,7 +439,6 @@ namespace PluginTaskTepMain
 
             (PanelManagement as PanelManagementTaskTepValues).AddComponent(obj);
 
-            (m_dgvValues as DataGridViewTaskTepValues).AddComponent(obj);
             (m_dgvValues as DataGridViewTaskTepValues).AddColumn(obj);
         }
         #endregion
@@ -460,11 +459,11 @@ namespace PluginTaskTepMain
             //m_dgvValues.UpdateStructure ();            
             (m_dgvValues as DataGridViewTaskTepValues).UpdateStructure(ev);
         }
-        /// <summary>
-        /// Обработчик события - изменение значения в отображении для сохранения
-        /// </summary>
-        /// <param name="pars"></param>
-        protected abstract void onEventCellValueChanged(object dgv, DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventArgs ev);
+        ///// <summary>
+        ///// Обработчик события - изменение значения в отображении для сохранения
+        ///// </summary>
+        ///// <param name="pars"></param>
+        //protected abstract void onEventCellValueChanged(object dgv, DataGridViewTaskTepValues.DataGridViewTEPValuesCellValueChangedEventArgs ev);
 
         protected void dgvValues_onSelectionChanged(object sender, EventArgs ev)
         {

@@ -621,7 +621,7 @@ namespace PluginTaskAutobook
 
             InitializeComponent();
 
-            //Session.SetDatetimeRange(s_dtDefaultAU, s_dtDefaultAU.AddDays(1));
+            m_dgvValues.EventCellValueChanged += dgvValues_onEventCellValueChanged;
         }
 
         /// <summary>
@@ -812,8 +812,6 @@ namespace PluginTaskAutobook
             (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_EXPORT.ToString(), true)[0] as Button).Click +=
                  new EventHandler(btnExport_onClick);
             //(Controls.Find(PanelManagementAutobook.INDEX_CONTROL.CALENDAR.ToString(), true)[0] as Button).
-
-            m_dgvValues.EventCellValueChanged += dgvValues_onEventCellValueChanged;
         }
 
         /// <summary>

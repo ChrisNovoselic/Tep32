@@ -105,11 +105,11 @@ namespace PluginTaskTepMain
             /// </summary>
             private void InitializeComponents ()
             {
-            }            
+            }
 
-            public override void ShowValues(IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> inValues, IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> outValues, out int err)
+            protected override bool isRowToShowValues(DataGridViewRow r, TepCommon.HandlerDbTaskCalculate.VALUE value)
             {
-                err = 0;
+                throw new NotImplementedException();
             }
 
             public override void ClearColumns()

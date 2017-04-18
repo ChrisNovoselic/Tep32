@@ -360,7 +360,6 @@ namespace TepCommon
             {
                 HDateTimePicker hdtpEnd = obj as HDateTimePicker;
                 DateTimeRangeValue_Changed?.Invoke(hdtpEnd.LeadingValue, hdtpEnd.Value);
-
             }
 
             /// <summary>
@@ -650,18 +649,18 @@ namespace TepCommon
             /// <summary>
             /// Признак доступности элемента управления для выбора часового пояса
             /// </summary>
-            public bool AllowUserTimezoneChanged { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString(), true)[0].Enabled = value; } }
+            public bool AllowUserTimezoneChanged { get { return findControl(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString()).Enabled; } set { findControl(INDEX_CONTROL_BASE.CBX_TIMEZONE.ToString()).Enabled = value; } }
             /// <summary>
             /// Признак доступности элемента управления для выбора периода расчета
             /// </summary>
-            public bool AllowUserPeriodChanged { get { return Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled; } set { Controls.Find(INDEX_CONTROL_BASE.CBX_PERIOD.ToString(), true)[0].Enabled = value; } }
+            public bool AllowUserPeriodChanged { get { return findControl(INDEX_CONTROL_BASE.CBX_PERIOD.ToString()).Enabled; } set { findControl(INDEX_CONTROL_BASE.CBX_PERIOD.ToString()).Enabled = value; } }
 
             private void setModeDatetimeRange()
             {
                 ID_PERIOD idPeriod = IdPeriod;
 
-                HDateTimePicker hdtpBegin = Controls.Find(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString(), true)[0] as HDateTimePicker
-                    , hdtpEnd = Controls.Find(INDEX_CONTROL_BASE.HDTP_END.ToString(), true)[0] as HDateTimePicker;
+                HDateTimePicker hdtpBegin = findControl(INDEX_CONTROL_BASE.HDTP_BEGIN.ToString()) as HDateTimePicker
+                    , hdtpEnd = findControl(INDEX_CONTROL_BASE.HDTP_END.ToString()) as HDateTimePicker;
                 //Выполнить запрос на получение значений для заполнения 'DataGridView'
                 switch (idPeriod)
                 {

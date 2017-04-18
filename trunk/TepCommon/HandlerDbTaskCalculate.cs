@@ -315,7 +315,7 @@ namespace TepCommon
         {
             public int m_IdPut;
 
-            public int m_iQuality;
+            public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
 
             public float value;
 
@@ -430,7 +430,7 @@ namespace TepCommon
             /// Идентификатор сессии - уникальный идентификатор
             ///  для наборов входных, расчетных (нормативных, макетных) значений
             /// </summary>
-            public long m_Id { get { return _id; } set { _id = value; } }
+            public long m_Id { get { return _id; } /*set { _id = value; }*/ }
             /// <summary>
             /// Текущий выбранный идентификатор периода расчета
             /// </summary>
@@ -445,7 +445,16 @@ namespace TepCommon
             /// <summary>
             /// ??? Актуальный идентификатор периода расчета (с учетом режима отображаемых данных)
             /// </summary>
-            public ID_PERIOD ActualIdPeriod { get { return m_ViewValues == ID_VIEW_VALUES.SOURCE_LOAD ? ID_PERIOD.DAY : _currentIdPeriod; } }
+            public ID_PERIOD ActualIdPeriod
+            {
+                get
+                {
+                    return m_ViewValues == ID_VIEW_VALUES.SOURCE_LOAD
+                        ? _currentIdPeriod == ID_PERIOD.YEAR ? ID_PERIOD.MONTH
+                            : ID_PERIOD.DAY // для SOURCE_LOAD
+                                : _currentIdPeriod; // не для SOURCE_LOAD
+                }
+            }
             /// <summary>
             /// Идентификатор текущий выбранного часового пояса
             /// </summary>
@@ -519,22 +528,32 @@ namespace TepCommon
                 //, TimeSpanDelegateIdTimezoneFunc getOffsetUTC
                 )
             {
-                m_Id = id;
+                _id = id;
                 CurrentIdPeriod = idPeriod;
                 _currentIdTimezone = idTimezone;
-                m_curOffsetUTC = getOffsetUTC(_currentIdTimezone);
+                if ((!(getOffsetUTC == null))
+                    && (!(_currentIdTimezone == ID_TIMEZONE.UNKNOWN)))
+                    m_curOffsetUTC = getOffsetUTC(_currentIdTimezone);
+                else
+                    ;
                 m_DatetimeRange = rangeDatetime;
             }
 
-            public void Clear()
+            public void Clear(bool bFlush = false)
             {
-                _currentIdPeriod = ID_PERIOD.UNKNOWN;
-                _currentIdTimezone = ID_TIMEZONE.UNKNOWN;
+                _id = -1;
+
+                if (bFlush == true) {
+                    _currentIdPeriod = ID_PERIOD.UNKNOWN;
+                    _currentIdTimezone = ID_TIMEZONE.UNKNOWN;
+                    m_DatetimeRange.Set(DateTime.MinValue, DateTime.MaxValue);
+                } else
+                    ;
             }
 
             public void NewId()
             {
-                m_Id = HMath.GetRandomNumber();
+                _id = HMath.GetRandomNumber();
             }
 
             public void SetDatetimeRange(DateTimeRange dtRange)
@@ -569,13 +588,19 @@ namespace TepCommon
             public SESSION(TimeSpanDelegateIdTimezoneFunc getOffsetUTC)
                 : base()
             {
-                m_Id = -1;
+                Initialize(-1
+                    , ID_PERIOD.UNKNOWN
+                    , ID_TIMEZONE.UNKNOWN
+                    , new DateTimeRange(DateTime.MinValue, DateTime.MaxValue)
+                );
+
+                //m_Id = -1;
                 m_IdFpanel = -1;
                 m_ViewValues = ID_VIEW_VALUES.UNKNOWN;
-                CurrentIdPeriod = ID_PERIOD.UNKNOWN;
-                CurrentIdTimezone = ID_TIMEZONE.UNKNOWN;
-                //, m_curOffsetUTC = TimeSpan.MinValue
-                m_DatetimeRange = new DateTimeRange();
+                //CurrentIdPeriod = ID_PERIOD.UNKNOWN;
+                //CurrentIdTimezone = ID_TIMEZONE.UNKNOWN;
+                ////, m_curOffsetUTC = TimeSpan.MinValue
+                //m_DatetimeRange = new DateTimeRange();
 
                 this.getOffsetUTC = getOffsetUTC;
             }
@@ -904,13 +929,9 @@ namespace TepCommon
         /// <summary>
         /// Удалить запись о параметрах сессии расчета (по триггеру - все входные и выходные значения, + очистить реквизиты сессии)
         /// </summary>
-        protected virtual void deleteSession()
+        protected virtual void deleteSession(bool bFlush = false)
         {
             int err = 0; // предполагаем, ошибки нет
-
-            _listChanges.Clear();
-            _dictValues.Clear();
-            _Session.Clear();
 
             int iRegDbConn = -1; // признак регистрации соединения с БД
             string strQuery = string.Empty;
@@ -933,9 +954,11 @@ namespace TepCommon
             } else
                 ;
             // очистить сессию
-            if (err == 0)
-                _Session.m_Id = -1;
-            else
+            if (err == 0) {
+                _listChanges.Clear();
+                _dictValues.Clear();
+                _Session.Clear();
+            } else
                 ;
         }
         /// <summary>
@@ -1028,7 +1051,7 @@ namespace TepCommon
 
             foreach (KeyValuePair<KEY_VALUES, List<VALUE>> pair in _dictValues) {
                 prevValue = pair.Value.Find(item => { return ((item.m_IdPut == newValue.m_IdPut)
-                    && (item.stamp_value == newValue.stamp_value)); });
+                    && (item.stamp_value.Equals(newValue.stamp_value) == true)); });
 
                 if (!(prevValue.stamp_value.Equals(DateTime.MinValue) == false)) {
                     _listChanges.Add(new CHANGE_VALUE() { m_keyValues = pair.Key, m_IdPut = newValue.m_IdPut, value = newValue.value, stamp_action = DateTime.UtcNow });
@@ -1839,13 +1862,37 @@ namespace TepCommon
 
             int i = -1;
             bool bEndMonthBoudary = false;
+            TimeSpan tsModeDataDatetimeBegin = TimeSpan.Zero
+                , tsModeDataDatetimeEnd = TimeSpan.Zero;
             // привести дату/время к UTC
             DateTime dtBegin = _Session.m_DatetimeRange.Begin.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
                 , dtEnd = _Session.m_DatetimeRange.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes);
 
             if (_modeDataDatetime == MODE_DATA_DATETIME.Begined) {
-                dtBegin -= TimeSpan.FromDays(1);
-                dtEnd -= TimeSpan.FromDays(1);
+                switch (_Session.ActualIdPeriod) {
+                    case ID_PERIOD.HOUR:
+                        tsModeDataDatetimeBegin =
+                        tsModeDataDatetimeEnd =
+                            TimeSpan.FromHours(1);
+                        break;
+                    case ID_PERIOD.MONTH:
+                        tsModeDataDatetimeBegin = dtBegin - dtBegin.AddMonths(-1);
+                        tsModeDataDatetimeEnd = dtEnd - dtEnd.AddMonths(-1);
+                        break;
+                    case ID_PERIOD.DAY:
+                    default:                    
+                        tsModeDataDatetimeBegin =
+                        tsModeDataDatetimeEnd =
+                            TimeSpan.FromDays(1);
+                        break;
+                }
+
+                if ((tsModeDataDatetimeBegin > TimeSpan.Zero)
+                    && (tsModeDataDatetimeEnd > TimeSpan.Zero)) {
+                    dtBegin -= tsModeDataDatetimeBegin;
+                    dtEnd -= tsModeDataDatetimeEnd;
+                } else
+                    throw new Exception (string.Format(@"HandlerDbTaskCalculate::getDateTimeRangeVariableValues () - не определено смещение для дат начала/окончания опроса..."));
             } else
                 ;
 
@@ -1918,7 +1965,7 @@ namespace TepCommon
         {
             string strRes = string.Empty
                 , whereParameters = string.Empty
-                , subQuery = string.Empty
+                , query = string.Empty, subQuery = string.Empty
                 , partDateadd = string.Empty;
 
             switch (idPeriod) {
@@ -1953,7 +2000,7 @@ namespace TepCommon
                 for (i = 0; i < arQueryRanges.Length; i++) {
                     bLastItem = !(i < (arQueryRanges.Length - 1));
 
-                    subQuery += string.Format(@"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
+                    subQuery = string.Format(@"SELECT v.ID_PUT, v.QUALITY, v.[VALUE]"
                             + @"{0}"
                             + @", v.[WR_DATETIME]"
                             + @", CONVERT(varchar, {1}, 127)" + @" as [EXTENDED_DEFINITION]"
@@ -1964,8 +2011,8 @@ namespace TepCommon
                         + @" WHERE v.[ID_TIME] = {6}" //???ID_PERIOD.HOUR //??? _currIdPeriod
                             , (ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON ? @", m.[AVG]" : ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.OFF ? string.Empty : string.Empty)
                             , (_modeDataDatetime == MODE_DATA_DATETIME.Begined) ? string.Format(@"DATEADD({0}, 1, v.[DATE_TIME])", partDateadd)
-                                    : (_modeDataDatetime == MODE_DATA_DATETIME.Ended) ? @"v.[DATE_TIME]"
-                                        : string.Empty
+                                : (_modeDataDatetime == MODE_DATA_DATETIME.Ended) ? @"v.[DATE_TIME]"
+                                    : string.Empty
                             , string.Format(@"{0}_{1}", getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE), arQueryRanges[i].Begin.ToString(@"yyyyMM"))
                             , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT)
                             , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
@@ -1985,8 +2032,10 @@ namespace TepCommon
                     else
                         subQuery += string.Format(@" AND [DATE_TIME] = '{0:yyyyMMdd HH:mm:ss}'", arQueryRanges[i].Begin);
 
+                    query += subQuery;
+
                     if (bLastItem == false)
-                        subQuery += @" UNION ALL ";
+                        query += @" UNION ALL ";
                     else
                         ;
                 }
@@ -2010,7 +2059,7 @@ namespace TepCommon
 
                 strRes += @", v.[WR_DATETIME] as [WR_DATETIME]"
                            + @", [EXTENDED_DEFINITION]"
-                    + @" FROM (" + subQuery + @") as v";
+                    + @" FROM (" + query + @") as v";
 
                 if (ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON)
                     strRes += @" GROUP BY v.ID_PUT"
@@ -2123,7 +2172,7 @@ namespace TepCommon
             int iRegDbConn = -1
                 , iCntSession = -1;
 
-            _Session.m_Id = -1;
+            _Session.Clear(true);
 
             RegisterDbConnection(out iRegDbConn);
 
@@ -2168,6 +2217,7 @@ namespace TepCommon
         {
             List<VALUE> listRes = new List<VALUE>();
 
+            TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE quality = ID_QUALITY_VALUE.NOT_REC;
             DateTime dtValue;
 
             //listRes = (from r in arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Rows.Cast<DataRow>()
@@ -2185,7 +2235,7 @@ namespace TepCommon
                     dtValue = DateTime.MinValue;
 
                 listRes.Add(new VALUE() { m_IdPut = int.Parse(r[@"ID_PUT"].ToString())
-                    , m_iQuality = int.Parse(r[@"QUALITY"].ToString())
+                    , m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)int.Parse (r[@"QUALITY"].ToString())
                     , value = float.Parse(r[@"VALUE"].ToString())
                     , stamp_value = dtValue
                     , stamp_write = !(r[@"WR_DATETIME"] is DBNull) ? (DateTime)r[@"WR_DATETIME"] : DateTime.MinValue
@@ -2232,9 +2282,8 @@ namespace TepCommon
                 //arValuesOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = getValues(arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]);
                 //Проверить признак выполнения запроса
                 if (err == 0) {
-                    // получить результирующаю таблицу
+                    // получить результирующую таблицу
                     tableRes = mergeTableValues(tablePars, arTableOrigin, _Session.CountBasePeriod);
-
                 } else
                     strErr = @"ошибка получения данных по умолчанию с " + _Session.m_DatetimeRange.Begin.ToString()
                         + @" по " + _Session.m_DatetimeRange.End.ToString();

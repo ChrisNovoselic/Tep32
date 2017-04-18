@@ -259,32 +259,6 @@ namespace PluginTaskTepMain
                 AllowUserToResizeRows = false;
                 RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders | DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             }
-            ///// <summary>
-            ///// Перечисление для индексации столбцов со служебной информацией
-            ///// </summary>
-            //protected enum INDEX_SERVICE_COLUMN : uint { ID_ALG, SYMBOL, COUNT }            
-            /// <summary>
-            /// Перечисления для индексирования массива со значениями цветов для фона ячеек
-            /// </summary>
-            protected enum INDEX_COLOR : uint
-            {
-                EMPTY, VARIABLE, DEFAULT, DISABLED, NAN, PARTIAL, NOT_REC, LIMIT,
-                USER
-                    , COUNT
-            }
-            /// <summary>
-            /// Массив со значениями цветов для фона ячеек
-            /// </summary>
-            protected static Color[] s_arCellColors = new Color[(int)INDEX_COLOR.COUNT] { Color.Gray //EMPTY
-                , Color.White //VARIABLE
-                , Color.Yellow //DEFAULT
-                , Color.LightGray //CALC_DENY
-                , Color.White //NAN
-                , Color.BlueViolet //PARTIAL
-                , Color.Sienna //NOT_REC
-                , Color.Red //LIMIT
-                , Color.White //USER
-            };
 
             [Flags]
             protected enum ModeAddColumn
