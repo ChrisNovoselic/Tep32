@@ -9,6 +9,8 @@ using System.Text;
 using HClassLibrary;
 using InterfacePlugIn;
 using TepCommon;
+using Microsoft.Build.Framework;
+using System.Text.RegularExpressions;
 
 namespace TepCommon
 {
@@ -307,13 +309,39 @@ namespace TepCommon
             public TaskCalculate.TYPE TypeCalculate;
 
             public STATE_VALUE TypeState;
+
+            public static bool operator==(KEY_VALUES obj1, KEY_VALUES obj2)
+            {
+                return obj1.Equals(obj2);
+            }
+
+            public static bool operator!=(KEY_VALUES obj1, KEY_VALUES obj2)
+            {
+                return !obj1.Equals(obj2);
+            }
+
+            public bool Equals(KEY_VALUES obj)
+            {
+                return (this.TypeCalculate == obj.TypeCalculate)
+                    && (this.TypeState == obj.TypeState);
+            }
+
+            public override bool Equals(object obj)
+            {
+                return Equals((KEY_VALUES)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return base.GetHashCode();
+            }
         }
         /// <summary>
         /// Значение для параметра в алгоритме расчета и его свойства
         /// </summary>
         public struct VALUE
         {
-            public int m_IdPut;
+            public int m_IdPut;            
 
             public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
 
@@ -326,11 +354,14 @@ namespace TepCommon
 
         public struct CHANGE_VALUE
         {
+            ///// <summary>
+            ///// Тип параметра (входной, выходной) 
+            ///// </summary>
+            //public TaskCalculate.TYPE m_taskCalculateType;
+
             public KEY_VALUES m_keyValues;
 
-            public int m_IdPut;
-
-            public float value;
+            public VALUE value;
 
             public DateTime stamp_action;
         }
@@ -1026,15 +1057,6 @@ namespace TepCommon
         {
             List<KEY_VALUES> keys = new List<KEY_VALUES>();
 
-            //for (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES indx = (TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.UNKNOWN + 1);
-            //    indx < TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT;
-            //    indx++)
-            //    if (!(m_arTableOrigin[(int)indx] == null))
-            //        m_arTableEdit[(int)indx] =
-            //            m_arTableOrigin[(int)indx].Copy();
-            //    else
-            //        ;
-
             keys = _dictValues.Keys.ToList();
 
             foreach (KEY_VALUES key in keys)
@@ -1045,22 +1067,82 @@ namespace TepCommon
         /// Принять отредактированное значение, сохранить в истории изменений
         /// </summary>
         /// <param name="value">Новое значение</param>
-        public void SetValue(VALUE newValue)
+        public void SetValue(CHANGE_VALUE changeValue)
         {
-            VALUE prevValue;
+            int err = -1;
+            string query = string.Empty;
+            VALUE prevValue
+                , newValue;
+            CHANGE_VALUE prevChangeValue;
 
-            foreach (KeyValuePair<KEY_VALUES, List<VALUE>> pair in _dictValues) {
-                prevValue = pair.Value.Find(item => { return ((item.m_IdPut == newValue.m_IdPut)
+            newValue = changeValue.value;
+
+            //foreach (KeyValuePair<KEY_VALUES, List<VALUE>> pair in _dictValues) {
+                prevValue = _dictValues[changeValue.m_keyValues].Find(item => { return ((item.m_IdPut == changeValue.value.m_IdPut)
                     && (item.stamp_value.Equals(newValue.stamp_value) == true)); });
 
-                if (!(prevValue.stamp_value.Equals(DateTime.MinValue) == false)) {
-                    _listChanges.Add(new CHANGE_VALUE() { m_keyValues = pair.Key, m_IdPut = newValue.m_IdPut, value = newValue.value, stamp_action = DateTime.UtcNow });
+                if (prevValue.stamp_value.Equals(DateTime.MinValue) == false) {
+                    prevChangeValue = _listChanges.Find(item => { return (item.m_keyValues == changeValue.m_keyValues)
+                        && (item.value.m_IdPut == prevValue.m_IdPut)
+                        && (item.value.stamp_value == newValue.stamp_value);
+                    });
 
-                    break;
+                    query = string.Format("UPDATE [dbo].[{1}]"
+                        + " SET [QUALITY] = {2}, [VALUE] = {3}, [WR_DATETIME] = GETUTCDATE()"
+                        + " WHERE [ID_SESSION] = {4} AND [ID_PUT] = {5} AND CONVERT(datetime2(7), [EXTENDED_DEFINITION]) = '{6}'"
+                        //+ "{0}GO"
+                        //+ "{0}SELECT * FROM [inval]"
+                        //+ " WHERE [ID_SESSION] = {4} AND [ID_PUT] = {5} AND [EXTENDED_DEFINITION] = CONVERT(varchar, '{6}', 102);"
+                        , "\t" //Environment.NewLine
+                        , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
+                        , (int)newValue.m_iQuality, newValue.value.ToString(CultureInfo.InvariantCulture)
+                        , _Session.m_Id, newValue.m_IdPut, newValue.stamp_value.ToString(@"yyyyMMdd HH:mm:ss"));
+
+                    //break;
+                } else {
+                    prevChangeValue = new CHANGE_VALUE() { m_keyValues = changeValue.m_keyValues
+                        , value = new VALUE() { m_IdPut = newValue.m_IdPut, m_iQuality = newValue.m_iQuality, value = newValue.value, stamp_value = newValue.stamp_value }
+                    };
+
+                    query = string.Format("INSERT INTO [dbo].[{1}]"
+                        + @" ([ID_SESSION], [ID_PUT], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION])"
+                        + @" VALUES ({2}, {3}, {4}, {5}, GETUTCDATE(), CONVERT(varchar, CONVERT(datetime2(7), '{6}'), 127))"
+                        , "\t" //Environment.NewLine
+                        , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
+                        , _Session.m_Id
+                        , newValue.m_IdPut, (int)newValue.m_iQuality, newValue.value.ToString(CultureInfo.InvariantCulture), newValue.stamp_value.ToString(@"yyyyMMdd HH:mm:ss"));
+                }
+            //}
+
+            if (string.IsNullOrEmpty(query) == false) {
+                ExecNonQuery(query, out err);
+
+                if (err == 0) {
+                    if (prevValue.stamp_value.Equals(DateTime.MinValue) == true)
+                        _dictValues[changeValue.m_keyValues].Add(prevChangeValue.value);
+                    else
+                        ;
+
+                    if (prevChangeValue.stamp_action.Equals(DateTime.MinValue) == true)
+                        // параметр ни разу не изменялся с момента сохранения
+                        _listChanges.Add(new CHANGE_VALUE() { m_keyValues = changeValue.m_keyValues, value = newValue, stamp_action = DateTime.UtcNow });
+                    else {
+                        prevChangeValue.value.value = newValue.value;
+                        prevChangeValue.stamp_action = DateTime.UtcNow;
+                    }
                 } else
-                    Logging.Logg().Error(string.Format(@"handlerDbTaskCalculate::SetValue () - изменения не зафиксированы, параметр (ID_PUT={0}) не найден...", newValue.m_IdPut)
+                    Logging.Logg().Error(string.Format(@"handlerDbTaskCalculate::SetValue () - изменения не зарегистрированы, запрос [QUERY={0}] на обновление выполнен с ошибкой [err={1}]..."
+                            , query, err)
                         , Logging.INDEX_MESSAGE.NOT_SET);
-            }
+            } else
+                Logging.Logg().Error(string.Format(@"handlerDbTaskCalculate::SetValue () - изменения не зарегистрированы, запрос на обновление не сформирован..."
+                        , query, err)
+                    , Logging.INDEX_MESSAGE.NOT_SET);
+
+            if (!(err == 0)) {
+            //??? вернуть исходное значение
+            } else
+                ;
         }
 
         private DataTable mergeTableValues(DataTable tablePars, DataTable[] arTableValues, int cntBasePeriod)

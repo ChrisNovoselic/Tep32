@@ -277,9 +277,9 @@ namespace TepCommon
         {
         }
 
-        protected virtual void dgvValues_onEventCellValueChanged(VALUE value)
+        protected virtual void dgvValues_onEventCellValueChanged(CHANGE_VALUE change_value)
         {
-            _handlerDb.SetValue(value);
+            _handlerDb.SetValue(change_value);
         }
         /// <summary>
         /// ??? дублирование метода 'HMath::Parse' преобразование числа в нужный формат отображения

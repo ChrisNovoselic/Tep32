@@ -458,6 +458,30 @@ namespace TepCommon
             return tableRes;
         }
         /// <summary>
+        /// Выполнить запрос с возвращением результата в виде таблицы
+        /// </summary>
+        /// <param name="query">Содержание запроса к БД</param>
+        /// <param name="err">Идентификатор ошибки при выполнении функции</param>
+        /// <returns>Таблица - результат запроса</returns>
+        public void ExecNonQuery(string query, out int err)
+        {
+            err = -1;
+
+            int iRegDbConn = -1;
+
+            RegisterDbConnection(out iRegDbConn);
+
+            if (!(iRegDbConn < 0))
+                DbTSQLInterface.ExecNonQuery(ref _dbConnection, query, null, null, out err);
+            else
+                ;
+
+            if (!(iRegDbConn > 0)) {
+                UnRegisterDbConnection();
+            } else
+                ;
+        }
+        /// <summary>
         /// Возвратить значения одной таблицы
         /// </summary>
         /// <param name="strNameTable">Наименование таблицы</param>

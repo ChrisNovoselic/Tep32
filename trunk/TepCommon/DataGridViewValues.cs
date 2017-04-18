@@ -70,7 +70,7 @@ namespace TepCommon
                 public HandlerDbTaskCalculate.MODE_DATA_DATETIME ModeDataDatetime;
             }
 
-            public event Action<HandlerDbTaskCalculate.VALUE> EventCellValueChanged;
+            public event Action<HandlerDbTaskCalculate.CHANGE_VALUE> EventCellValueChanged;
             /// <summary>
             /// Конструктор - основной (с параметром)
             /// </summary>
@@ -116,7 +116,12 @@ namespace TepCommon
             {
                 ev.ParsingApplied = true;
 
-                EventCellValueChanged?.Invoke(new HandlerDbTaskCalculate.VALUE() { m_IdPut = -1, value = -1F, m_iQuality = TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC, stamp_value = DateTime.MinValue });
+                EventCellValueChanged?.Invoke(new HandlerDbTaskCalculate.CHANGE_VALUE() {
+                    m_keyValues = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.UNKNOWN, TypeState = HandlerDbValues.STATE_VALUE.EDIT }
+                    //, m_taskCalculateType = HandlerDbTaskCalculate.TaskCalculate.TYPE.UNKNOWN //??? повтор                    
+                    , value = new HandlerDbTaskCalculate.VALUE() { m_iQuality = TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC }
+                    , stamp_action = DateTime.MinValue
+                });
             }
 
             private void onCellValueChanged(object sender, DataGridViewCellEventArgs e)
@@ -126,26 +131,34 @@ namespace TepCommon
                     , idPut = -1;
                 float fltValue = -1F;
                 CELL_PROPERTY cellProperty;
-                TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC;
                 DateTime stamp_value = DateTime.MinValue;
 
-                if (((!(e.ColumnIndex < 0))
-                    && (!(e.RowIndex < 0)))
-                        && (!(Rows[e.RowIndex].Cells[e.ColumnIndex].Tag == null))) {
-                    cellProperty = (CELL_PROPERTY)Rows[e.RowIndex].Cells[e.ColumnIndex].Tag;
+                if ((!(e.ColumnIndex < 0))
+                    && (!(e.RowIndex < 0))) {
+                    if (!(Rows[e.RowIndex].Cells[e.ColumnIndex].Tag == null))
+                        cellProperty = (CELL_PROPERTY)Rows[e.RowIndex].Cells[e.ColumnIndex].Tag;
+                    else
+                        cellProperty = new CELL_PROPERTY() { m_iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC, m_Value = float.MinValue };
 
                     if ((!(cellProperty.IsEmpty == true))
                         && (float.TryParse(Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString(), out fltValue) == true)) {
                         putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)Columns[e.ColumnIndex].Tag;
                         idNAlg = putPar.m_idNAlg;
                         idPut = putPar.m_Id;
-                        iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER; // значение изменено пользователем
-                        cellProperty.SetQuality(HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER);
-                        stamp_value = (DateTime)Rows[e.RowIndex].Tag;
-                    
-                        fltValue = (float)GetValueDbAsRatio(idNAlg, idPut, (double)fltValue);
+                        cellProperty.SetValue((float)GetValueDbAsRatio(idNAlg, idPut, fltValue));
+                        cellProperty.SetQuality(HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER); // значение изменено пользователем
+                        if (_modeData == ModeData.DATETIME) {
+                            stamp_value = (DateTime)Rows[e.RowIndex].Tag;
+                        } else if (_modeData == ModeData.NALG)
+                            //??? метка даты/времени - константа 
+                            stamp_value = (DateTime)Tag;
+                        else
+                            ;
 
-                        EventCellValueChanged?.Invoke(new HandlerDbTaskCalculate.VALUE() { m_IdPut = idPut, value = fltValue, m_iQuality = iQuality, stamp_value = stamp_value });
+                        EventCellValueChanged?.Invoke(new HandlerDbTaskCalculate.CHANGE_VALUE() {
+                            m_keyValues = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = m_dictNAlgProperties[idNAlg].m_type, TypeState = HandlerDbValues.STATE_VALUE.EDIT }
+                            , value = new HandlerDbTaskCalculate.VALUE() { m_IdPut = idPut, m_iQuality = cellProperty.m_iQuality, value = cellProperty.m_Value, stamp_value = stamp_value }
+                        });
                     } else
                         Logging.Logg().Error(string.Format(@"DataGridViewValues::onCellValueChanged ({0}) - не удалось преобразовать в значение..."
                                 , Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString())
@@ -235,13 +248,13 @@ namespace TepCommon
                 /// </summary>
                 private void counter() { if (_cntSet < CNT_SET) _cntSet++; else/*дальнейшее увеличение необязательно*/; }
 
-                private double _value;
+                private float _value;
                 /// <summary>
                 /// Значение в ячейке
                 /// </summary>
-                public double m_Value { get { return _value; } set { _value = value; counter(); } }
+                public float m_Value { get { return _value; } set { _value = value; counter(); } }
 
-                public void SetValue(double value) { m_Value = value; }
+                public void SetValue(float value) { m_Value = value; }
 
                 private TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE _iQuality;
                 /// <summary>
@@ -359,9 +372,9 @@ namespace TepCommon
             /// </summary>
             private int _prevPrjRatioValue;
 
-            public double get_value_as_ratio(int idNAlg, int idPut, double value, int iReverse)
+            public float get_value_as_ratio(int idNAlg, int idPut, float value, int iReverse)
             {
-                double dblRes = -1F;
+                float fltRes = -1F;
 
                 int vsRatioValue = -1
                     , prjRatioValue = -1;
@@ -386,12 +399,12 @@ namespace TepCommon
                 // проверить требуется ли преобразование
                 if (!(prjRatioValue == vsRatioValue))
                     // домножить значение на коэффициент
-                    dblRes = value * Math.Pow(10F, -1 * iReverse * vsRatioValue + iReverse * prjRatioValue);
+                    fltRes = value * (float)Math.Pow(10F, -1 * iReverse * vsRatioValue + iReverse * prjRatioValue);
                 else
                     //отображать без изменений
-                    dblRes = value;
+                    fltRes = value;
 
-                return dblRes;
+                return fltRes;
             }
             /// <summary>
             /// Возвратить значение в соответствии 
@@ -400,12 +413,12 @@ namespace TepCommon
             /// <param name="idPut">Идентификатор парметра в алгоритме расчета 2-го уровня</param>
             /// <param name="value">Значение, которое требуется преобразовать (применить множитель)</param>
             /// <returns></returns>
-            public double GetValueCellAsRatio(int idNAlg, int idPut, double value)
+            public float GetValueCellAsRatio(int idNAlg, int idPut, float value)
             {
                 return get_value_as_ratio(idNAlg, idPut, value, -1);
             }
 
-            public double GetValueDbAsRatio(int idNAlg, int idPut, double value)
+            public float GetValueDbAsRatio(int idNAlg, int idPut, float value)
             {
                 return get_value_as_ratio(idNAlg, idPut, value, 1);
             }
@@ -558,7 +571,7 @@ namespace TepCommon
                     ;
             }
             /// <summary>
-            /// Очитсить значения в ячейках представления
+            /// Очистить значения в ячейках представления
             /// </summary>
             public virtual void ClearValues()
             {
@@ -568,12 +581,12 @@ namespace TepCommon
 
                 foreach (DataGridViewRow r in Rows)
                     foreach (DataGridViewCell c in r.Cells) {
-                        bCellClear = (Columns[r.Cells.IndexOf(c)].Tag == null)
-                            ? false
-                                : Columns[r.Cells.IndexOf(c)].Tag is HandlerDbTaskCalculate.TECComponent
-                                    ? ((HandlerDbTaskCalculate.TECComponent)Columns[r.Cells.IndexOf(c)].Tag).m_Id > 0
-                                        : Columns[r.Cells.IndexOf(c)].Tag is HandlerDbTaskCalculate.PUT_PARAMETER
-                                            ? ((HandlerDbTaskCalculate.PUT_PARAMETER)Columns[r.Cells.IndexOf(c)].Tag).m_Id > 0
+                        bCellClear = (Columns[c.ColumnIndex].Tag == null) // установлены ли для столбца свойства
+                            ? false // свойства не установлены - очищать ячейку не требуется
+                                : Columns[c.ColumnIndex].Tag is HandlerDbTaskCalculate.TECComponent // свойства установлены - это компонент?
+                                    ? ((HandlerDbTaskCalculate.TECComponent)Columns[c.ColumnIndex].Tag).m_Id > 0 // свойсто столбца - компонент - очищать, если это реальный, а не псевдо-компонент
+                                        : Columns[c.ColumnIndex].Tag is HandlerDbTaskCalculate.PUT_PARAMETER // свойсто столбца - не компонент - значит это параметр алгоритма расчета 2-го порядка
+                                            ? ((HandlerDbTaskCalculate.PUT_PARAMETER)Columns[c.ColumnIndex].Tag).m_Id > 0 // свойсто столбца - параметр алгоритма расчета 2-го порядка - очищать, если это реальный параметр
                                                 : false;
 
                         if (bCellClear == true) {
@@ -641,8 +654,8 @@ namespace TepCommon
                    , idPut = -1
                    , iCol = 0;
                 TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC;
-                double dblVal = -1F,
-                    dblColumnAgregateValue = 0;
+                float fltVal = -1F,
+                    fltColumnAgregateValue = 0;
                 AGREGATE_ACTION columnAction;
                 DataGridViewRow row;
                 HandlerDbTaskCalculate.PUT_PARAMETER putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
@@ -651,6 +664,8 @@ namespace TepCommon
 
                 // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
                 if (RowCount > 1) {
+                    CellValueChanged -= onCellValueChanged;
+
                     foreach (DataGridViewColumn col in Columns) {
                         try {
                             putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag;
@@ -665,36 +680,35 @@ namespace TepCommon
 
                         if ((putPar.IdComponent > 0)
                             && (!(columnValues == null))) {
-                            dblColumnAgregateValue = 0F;
+                            fltColumnAgregateValue = 0F;
                             columnAction = Rows[RowCount - 1].Tag.GetType().IsPrimitive == true // есть ли итоговая строка?
                                 ? m_dictNAlgProperties[idAlg].m_sAverage // итоговая строка - есть (операция по агрегации известна)
                                     : AGREGATE_ACTION.UNKNOWN; // итоговой строки - нет (операция по агрегации неизвестна и не выполняется)
 
                             foreach (HandlerDbTaskCalculate.VALUE value in columnValues) {
-
-                                dblVal = value.value;
+                                fltVal = value.value;
                                 iQuality = value.m_iQuality;
 
                                 if (!(columnAction == AGREGATE_ACTION.UNKNOWN))
-                                    dblColumnAgregateValue += dblVal;
+                                    fltColumnAgregateValue += fltVal;
                                 else
                                     ;
 
                                 row = Rows.Cast<DataGridViewRow>().FirstOrDefault(r => isRowToShowValues(r, value));
 
                                 if (!(row == null)) {
-                                    row.Cells[iCol].Tag = new CELL_PROPERTY() { m_Value = dblVal, m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality };
-                                    row.Cells[iCol].ReadOnly = double.IsNaN(dblVal);
+                                    row.Cells[iCol].Tag = new CELL_PROPERTY() { m_Value = fltVal, m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality };
+                                    row.Cells[iCol].ReadOnly = double.IsNaN(fltVal);
 
                                     if (getColorCellToValue(idAlg, idPut, (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality, out clrCell) == true) {
                                         //// символ (??? один для строки, но назначается много раз по числу столбцов)
                                         //row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictNAlgProperties[idAlg].m_strSymbol
                                         //    + @",[" + m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_nameRU + m_dictNAlgProperties[idAlg].m_strMeausure + @"]";
 
-                                        dblVal = GetValueCellAsRatio(idAlg, idPut, dblVal);
+                                        fltVal = GetValueCellAsRatio(idAlg, idPut, fltVal);
 
                                         // отобразить с количеством знаков в соответствии с настройками
-                                        row.Cells[iCol].Value = dblVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
+                                        row.Cells[iCol].Value = fltVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
                                     } else
                                         ;
 
@@ -708,13 +722,13 @@ namespace TepCommon
 
                             if (!(columnAction == AGREGATE_ACTION.UNKNOWN)) {
                                 if (columnAction == AGREGATE_ACTION.SUMMA)
-                                    dblColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, dblColumnAgregateValue);
+                                    fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
                                 else if (columnAction == AGREGATE_ACTION.AVERAGE)
-                                    dblColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, dblColumnAgregateValue);
+                                    fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
                                 else
                                     ;
 
-                                Rows[Rows.Count - 1].Cells[iCol].Value = dblColumnAgregateValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+                                Rows[Rows.Count - 1].Cells[iCol].Value = fltColumnAgregateValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
                             } else
                                 ;
                         } else
@@ -722,6 +736,8 @@ namespace TepCommon
                                     , ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id, inValues.Count())
                                 , Logging.INDEX_MESSAGE.NOT_SET);
                     }
+
+                    CellValueChanged += onCellValueChanged;
                 } else
                     Logging.Logg().Error(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
