@@ -5,12 +5,12 @@ using TepCommon;
 
 namespace PluginTaskTepMain
 {
-    public partial class HandlerDbTaskCalculate : HandlerDbValues
+    public partial class HandlerDbTaskTepCalculate
     {
         /// <summary>
         /// Класс для расчета технико-экономических показателей
         /// </summary>
-        public partial class TaskTepCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
+        partial class TaskTepCalculate
         {            
             private float calculateMaket(string nAlg)
             {

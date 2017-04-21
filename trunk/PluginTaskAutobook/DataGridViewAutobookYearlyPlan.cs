@@ -38,12 +38,12 @@ namespace PluginTaskAutobook
                 this.RowHeadersVisible = true;
             }
 
-            public override void AddColumns(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
+            public override void AddColumns(List<TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
                 addColumn(listNAlgParameter[0], listPutParameter[0]);
             }
 
-            private void addColumn(HandlerDbTaskCalculate.NALG_PARAMETER nAlgPar, HandlerDbTaskCalculate.PUT_PARAMETER putPar)
+            private void addColumn(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER nAlgPar, TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar)
             {
                 Columns.Add(@"VALUE", @"Значения");
                 Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -52,7 +52,7 @@ namespace PluginTaskAutobook
                 Columns[0].Tag = putPar;
             }
 
-            protected override bool isRowToShowValues(DataGridViewRow r, HandlerDbTaskCalculate.VALUE value)
+            protected override bool isRowToShowValues(DataGridViewRow r, TepCommon.HandlerDbTaskCalculate.VALUE value)
             {
                 return (r.Tag is DateTime) ? value.stamp_value.Equals(((DateTime)(r.Tag))) == true : false;
             }

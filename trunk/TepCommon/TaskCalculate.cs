@@ -67,7 +67,7 @@ namespace TepCommon
                     /// <summary>
                     /// Признак усреднения величины
                     /// </summary>
-                    public short m_sAVG;
+                    public AGREGATE_ACTION m_avg;
                     /// <summary>
                     /// Класс для хранения значений для одного из компонентов станции
                     ///  в рамках параметра в алгоритме рачета
@@ -151,13 +151,11 @@ namespace TepCommon
                     DataTable tableRes = null;
 
                     foreach (DATATABLE dataTable in this)
-                        if (dataTable.m_indx == indxDataTable)
-                        {
+                        if (dataTable.m_indx == indxDataTable) {
                             tableRes = dataTable.m_table;
 
                             break;
-                        }
-                        else
+                        } else
                             ;
 
                     return tableRes;
@@ -175,9 +173,9 @@ namespace TepCommon
             /// Конструктор основной (с параметром)
             /// </summary>
             /// <param name="type">Тип расчета</param>
-            public TaskCalculate(/*TYPE type*/)
+            public TaskCalculate(ListDATATABLE listDataTables)
             {
-                //Type = type;
+                initValues(listDataTables);
             }
             /// <summary>
             /// Возвратить индкус таблицы БД по указанным типам расчета и рассчитываемых значений
@@ -283,7 +281,7 @@ namespace TepCommon
                         {// добавить параметр в алгоритме расчета
                             pAlg.Add(strNAlg, new P_ALG.P_PUT());
 
-                            pAlg[strNAlg].m_sAVG = (Int16)rPar[@"AVG"];
+                            pAlg[strNAlg].m_avg = (AGREGATE_ACTION)(Int16)rPar[@"AVG"];
                             pAlg[strNAlg].m_bDeny = false;
                         }
                         else
@@ -293,28 +291,20 @@ namespace TepCommon
 
                         if (pAlg[strNAlg].ContainsKey(idComponent) == false)
                             pAlg[strNAlg].Add(idComponent, new P_ALG.P_PUT.P_VAL()
-                            // добавить параметр компонента в алгоритме расчета
+                        // добавить параметр компонента в алгоритме расчета
                             {
                                 m_iId = idPut
-                                    //, m_iIdComponent = idComponent
-                                ,
-                                m_bDeny = false
-                                ,
-                                value = (float)(double)rVal[0][@"VALUE"]
-                                ,
-                                m_sQuality = ID_QUALITY_VALUE.DEFAULT // не рассчитывался
-                                ,
-                                m_idRatio = (int)rPar[@"ID_RATIO"]
-                                ,
-                                m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (float)rPar[@"MINVALUE"] //??? - ошибка д.б. float
-                                ,
-                                m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (float)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
+                                //, m_iIdComponent = idComponent
+                                , m_bDeny = false
+                                , value = (float)(double)rVal[0][@"VALUE"]
+                                , m_sQuality = ID_QUALITY_VALUE.DEFAULT // не рассчитывался
+                                , m_idRatio = (int)rPar[@"ID_RATIO"]
+                                , m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (float)rPar[@"MINVALUE"] //??? - ошибка д.б. float
+                                , m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (float)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
                             });
                         else
                             ;
-                    }
-                    else
-                    {// ошибка - не найдено соответствие параметр-значение
+                    } else {// ошибка - не найдено соответствие параметр-значение
                         iRes = -1;
 
                         Logging.Logg().Error(@"TaskCalculate::initValues (ID_PUT=" + idPut + @") - не найдено соответствие параметра и значения...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -323,6 +313,8 @@ namespace TepCommon
 
                 return iRes;
             }
+
+            public abstract DataTable Calculate(TYPE type);
         }
     }
 }

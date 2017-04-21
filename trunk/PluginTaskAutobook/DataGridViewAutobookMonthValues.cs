@@ -31,7 +31,7 @@ namespace PluginTaskAutobook
 
                 InitializeComponents();
 
-                m_dictTECComponent = new Dictionary<int, HandlerDbTaskCalculate.TECComponent>();
+                m_dictTECComponent = new Dictionary<int, TepCommon.HandlerDbTaskCalculate.TECComponent>();
             }
             /// <summary>
             /// Инициализация элементов управления объекта (создание, размещение)
@@ -51,12 +51,13 @@ namespace PluginTaskAutobook
                 //AddColumn(-1, "Дата", INDEX_SERVICE_COLUMN.DATE.ToString(), true, true);
             }
 
-            public override void AddColumns(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
+            public override void AddColumns(List<TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter
+                , List<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
-                List<HandlerDbTaskCalculate.TECComponent> listTECComponent;
-                HandlerDbTaskCalculate.TECComponent comp_tec;
+                List<TepCommon.HandlerDbTaskCalculate.TECComponent> listTECComponent;
+                TepCommon.HandlerDbTaskCalculate.TECComponent comp_tec;
 
-                listTECComponent = new List<HandlerDbTaskCalculate.TECComponent>();
+                listTECComponent = new List<TepCommon.HandlerDbTaskCalculate.TECComponent>();
 
                 listPutParameter.ForEach(putPar => {
                     if (listTECComponent.IndexOf(putPar.m_component) < 0)
@@ -64,24 +65,26 @@ namespace PluginTaskAutobook
                     else
                         ;
                 });
-                // сортировать ГТП: 1,2 ПЕРЕД 3-6
-                listTECComponent.Sort(delegate (HandlerDbTaskCalculate.TECComponent comp1, HandlerDbTaskCalculate.TECComponent comp2) {
+                // сортировать ГТП: сначала 1,2 затем 3-6
+                listTECComponent.Sort(delegate (TepCommon.HandlerDbTaskCalculate.TECComponent comp1, TepCommon.HandlerDbTaskCalculate.TECComponent comp2) {
                     return comp1.m_Id < comp2.m_Id ? -1
                         : comp1.m_Id > comp2.m_Id ? 1
                             : 0;
                 });
                 //ГТП - Корректировка ПТО
                 listTECComponent.ForEach(comp => {
-                    if (comp.IsGtp == true)
+                    if (comp.IsGtp == true) {
                         Columns.Add(string.Format(@"COLUMN_CORRECT_{0}", comp.m_Id), string.Format(@"Корр-ка ПТО {0}", comp.m_nameShr));
-                    else
+                        Columns[ColumnCount - 1].Tag = listPutParameter.Find(putPar => { return putPar.IdComponent == comp.m_Id; });
+                    } else
                         ;
                 });
                 //ГТП - Значения
                 listTECComponent.ForEach(comp => {
-                    if (comp.IsGtp == true)
+                    if (comp.IsGtp == true) {
                         Columns.Add(string.Format(@"COLUMN_{0}", comp.m_Id), string.Format(@"{0}", comp.m_nameShr));
-                    else
+                        Columns[ColumnCount - 1].Tag = listPutParameter.Find(putPar => { return putPar.IdComponent == comp.m_Id; });
+                    } else
                         ;
                 });
                 //Станция - компонент
@@ -156,9 +159,9 @@ namespace PluginTaskAutobook
                         ;
             }
 
-            private Dictionary<int, HandlerDbTaskCalculate.TECComponent> m_dictTECComponent;
+            private Dictionary<int, TepCommon.HandlerDbTaskCalculate.TECComponent> m_dictTECComponent;
 
-            public override void AddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER putPar)
+            public override void AddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar)
             {
                 base.AddPutParameter(putPar);
 
@@ -175,7 +178,7 @@ namespace PluginTaskAutobook
                 m_dictTECComponent.Clear();
             }
 
-            protected override bool isRowToShowValues(DataGridViewRow r, HandlerDbTaskCalculate.VALUE value)
+            protected override bool isRowToShowValues(DataGridViewRow r, TepCommon.HandlerDbTaskCalculate.VALUE value)
             {
                 return (r.Tag is DateTime) ? value.stamp_value.Equals(((DateTime)(r.Tag))) == true : false;
             }

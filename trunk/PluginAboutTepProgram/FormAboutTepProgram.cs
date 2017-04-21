@@ -55,11 +55,11 @@ namespace PluginAboutTepProgram
         private void updateGUI  (object obj) {
             switch (((EventArgsDataHost)obj).id_detail)
             {
-                case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
+                case (int)HFunc.ID_FUNC_DATA_ASKED_HOST.ICON_MAINFORM:
                     this.Icon = (Icon)((EventArgsDataHost)obj).par[0];
                     this.m_pictureBox.Image = this.Icon.ToBitmap ();
                     break;
-                case (int)HFunc.ID_DATAASKED_HOST.STR_PRODUCTVERSION:
+                case (int)HFunc.ID_FUNC_DATA_ASKED_HOST.STR_PRODUCTVERSION:
                     this.m_lblProductVersion.Text = (string)((EventArgsDataHost)obj).par[0];
                     break;
                 default:
@@ -91,8 +91,8 @@ namespace PluginAboutTepProgram
             base.OnClickMenuItem(obj, ev);
 
             id = (int)(obj as ToolStripMenuItem).Tag;
-            pairIconMainForm = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.ICON_MAINFORM);
-            pairProductVersion = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.STR_PRODUCTVERSION);
+            pairIconMainForm = new KeyValuePair<int, int>(id, (int)ID_FUNC_DATA_ASKED_HOST.ICON_MAINFORM);
+            pairProductVersion = new KeyValuePair<int, int>(id, (int)ID_FUNC_DATA_ASKED_HOST.STR_PRODUCTVERSION);
             //pairShowDialog = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.FORMABOUT_SHOWDIALOG);
 
             if ((m_dictDataHostCounter.ContainsKey(pairIconMainForm) == true)
@@ -139,8 +139,8 @@ namespace PluginAboutTepProgram
             base.OnEvtDataRecievedHost(obj);
 
             switch (((EventArgsDataHost)obj).id_detail) {
-                case (int)ID_DATAASKED_HOST.ICON_MAINFORM:
-                case (int)ID_DATAASKED_HOST.STR_PRODUCTVERSION:
+                case (int)ID_FUNC_DATA_ASKED_HOST.ICON_MAINFORM:
+                case (int)ID_FUNC_DATA_ASKED_HOST.STR_PRODUCTVERSION:
                     (_objects[id] as FormAboutTepProgram).UpdateGUI(obj);
                     break;
                 //case (int)ID_DATAASKED_HOST.FORMABOUT_SHOWDIALOG:

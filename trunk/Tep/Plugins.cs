@@ -22,15 +22,15 @@ namespace Tep64
             /// <summary>
             /// Делегат обработки события - выбор п. меню
             /// </summary>
-            public DelegateObjectFunc delegateOnClickMenuPluginItem;
+            public Action<EventArgsDataHost> delegateOnEvtDataAskedHost;
             /// <summary>
             /// Конструктор - основной (с параметрами)
             /// </summary>
             /// <param name="fClickMenuItem">Делегат обработки события - ваыбор п. меню</param>
-            public PlugIns(DelegateObjectFunc fClickMenuItem) : base ()
+            public PlugIns(Action<EventArgsDataHost> fOnEvtDataAskedHost) : base ()
             {
                 //_dictPlugins = new Dictionary<int, IPlugIn>();
-                delegateOnClickMenuPluginItem = fClickMenuItem;
+                delegateOnEvtDataAskedHost = fOnEvtDataAskedHost;
             }
             /// <summary>
             /// Обработчик запросов от загруженных плюгИнов
@@ -44,42 +44,43 @@ namespace Tep64
                 {
                     switch ((int)((EventArgsDataHost)obj).par[0])
                     {
-                        case (int)HFunc.ID_DATAASKED_HOST.CONNSET_MAIN_DB:
+                        case (int)HFunc.ID_FUNC_DATA_ASKED_HOST.CONNSET_MAIN_DB:
                             rec = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
                             break;
-                        case (int)HFunc.ID_DATAASKED_HOST.ICON_MAINFORM:
+                        case (int)HFunc.ID_FUNC_DATA_ASKED_HOST.ICON_MAINFORM:
                             rec =
                                 //TepCommon.Properties.Resources.TepApp
                                 Tep64.Properties.Resources.TepApp
                                 ;
                             break;
-                        case (int)HFunc.ID_DATAASKED_HOST.STR_PRODUCTVERSION:
+                        case (int)HFunc.ID_FUNC_DATA_ASKED_HOST.STR_PRODUCTVERSION:
                             rec = Application.ProductVersion
                                 + @", " + Environment.MachineName
                                 + @", " + Environment.UserDomainName + @"\" + Environment.UserName;
                             break;
-                        //case (int)HFunc.ID_DATAASKED_HOST.FORMABOUT_SHOWDIALOG:
-                        //    rec = null;
-                        //    break;
+                        case (int)HFunc.ID_FUNC_DATA_ASKED_HOST.MESSAGE_TO_STATUSSTRIP:
+                            // TODO: отобразить сообщение в строке статуса 
+                            delegateOnEvtDataAskedHost(obj as EventArgsDataHost);
+                            break;
                         default: // обработка индивидуальных для каждой вкладки запросов
-                            switch ((int)((EventArgsDataHost)obj).id_detail)
+                            switch ((ID_FPANEL)((EventArgsDataHost)obj).id_detail)
                             {
-                                case 1: //FormAboutTepProgram
+                                case ID_FPANEL.ABOUT: //FormAboutTepProgram
                                     switch ((int)((EventArgsDataHost)obj).par[0])
                                     {                                        
                                         default:
                                             break;
                                     }
                                     break;
-                                case 2: //PanelTepDictPlugIns
+                                case ID_FPANEL.DICTIONARY_PLUGINS: //PanelTepDictPlugIns
                                     switch ((int)((EventArgsDataHost)obj).par[0])
                                     {
                                         default:
                                             break;
                                     }
                                     break;
-                                case 17: //PanelTaskTepValues, Расчет ТЭП - входные значения
-                                case 18: //PanelTaskTepValues, Расчет ТЭП - вЫходные значения
+                                case ID_FPANEL.TEPMAIN_INVALUES: //PanelTaskTepValues, Расчет ТЭП - входные значения
+                                case ID_FPANEL.TEPMAIN_OUTVALUES: //PanelTaskTepValues, Расчет ТЭП - вЫходные значения
                                     switch ((int)((EventArgsDataHost)obj).par[0])
                                     {
                                         default:
@@ -104,7 +105,7 @@ namespace Tep64
                     {
                         try
                         {
-                            delegateOnClickMenuPluginItem(obj);
+                            delegateOnEvtDataAskedHost(obj as EventArgsDataHost);
                         }
                         catch (Exception e)
                         {

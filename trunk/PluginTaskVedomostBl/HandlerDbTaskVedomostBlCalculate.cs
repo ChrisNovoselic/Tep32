@@ -9,26 +9,30 @@ namespace PluginTaskVedomostBl
 {
     public class HandlerDbTaskVedomostBlCalculate : HandlerDbTaskCalculate
     {
+        private partial class TaskVedomostBlCalculate : TaskCalculate
+        {
+            public TaskVedomostBlCalculate(ListDATATABLE listDataTables) : base(listDataTables)
+            {
+            }
+
+            protected override int initValues(ListDATATABLE listDataTables)
+            {
+                int iRes = -1;
+
+                return iRes;
+            }
+
+            public override DataTable Calculate(TYPE type)
+            {
+                throw new NotImplementedException();
+            }
+        }
         /// <summary>
         /// Создать объект для расчета выходных значений
         /// </summary>
-        protected override void createTaskCalculate()
+        protected override TaskCalculate createTaskCalculate(TaskCalculate.ListDATATABLE listDataTable)
         {
-            base.createTaskCalculate();
-        }
-
-        /// <summary>
-        /// Рассчитать выходные значения
-        /// </summary>
-        /// <param name="type">Тип расчета</param>
-        /// <param name="tableOrigin">Оригинальная таблица</param>
-        /// <param name="tableCalc">Выходная таблмца с рассчитанными значениями</param>
-        /// <param name="err">Признак ошибки при выполнении метода</param>
-        protected override void calculate(TaskCalculate.TYPE type, out DataTable tableOrigin, out DataTable tableCalc, out int err)
-        {
-            tableOrigin = new DataTable();
-            tableCalc = new DataTable();
-            err = 0;
+            return new TaskVedomostBlCalculate(listDataTable);
         }
 
         public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)

@@ -10,10 +10,15 @@ namespace InterfacePlugIn
 {
     public abstract class HFunc : PlugInMenuItem
     {
-        public enum ID_DATAASKED_HOST { ICON_MAINFORM = 1001, STR_PRODUCTVERSION = 1002 /*, FORMABOUT_SHOWDIALOG*/ //Запросить данные у главной формы
-                                    , CONNSET_MAIN_DB = 10001
-                                    , ACTIVATE_TAB = 10101
-                                    };
+        /// <summary>
+        /// Перечисление - идентификаторы обмена данными между приложением и функциональными библиотеками
+        ///  , ??? в дополнение к HClassLibrary.ID_DATA_ASKED_HOST
+        /// </summary>
+        public enum ID_FUNC_DATA_ASKED_HOST { ICON_MAINFORM = 1001, STR_PRODUCTVERSION = 1002 /*, FORMABOUT_SHOWDIALOG*/ //Запросить данные у главной формы
+            , CONNSET_MAIN_DB = 10001
+            , ACTIVATE_TAB = 10101
+            , MESSAGE_TO_STATUSSTRIP = 10201
+        };
     }
 
     public abstract class HFuncDbEdit : HFunc
@@ -31,15 +36,15 @@ namespace InterfacePlugIn
             base.OnClickMenuItem(obj, ev);
 
             id = (int)(obj as ToolStripMenuItem).Tag;
-            pair = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB);
+            pair = new KeyValuePair<int, int>(id, (int)ID_FUNC_DATA_ASKED_HOST.CONNSET_MAIN_DB);
 
             //Проверить признак выполнения запроса к вызвавшему объекту на получение параметров соединения с БД 
             if (m_dictDataHostCounter.ContainsKey(pair) == false)
                 // отправить запрос на получение параметров соединения с БД
-                DataAskedHost(new object [] {id, (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB}); //Start
+                DataAskedHost(new object [] {id, (int)ID_FUNC_DATA_ASKED_HOST.CONNSET_MAIN_DB}); //Start
             else
                 if (m_dictDataHostCounter[pair] % 2 == 0)
-                    DataAskedHost(new object [] {id, (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB}); //Start
+                    DataAskedHost(new object [] {id, (int)ID_FUNC_DATA_ASKED_HOST.CONNSET_MAIN_DB}); //Start
                 else
                 {
                     m_dictDataHostCounter[pair]++;
@@ -64,10 +69,10 @@ namespace InterfacePlugIn
 
             switch (((EventArgsDataHost)obj).id_detail)
             {
-                case (int)ID_DATAASKED_HOST.CONNSET_MAIN_DB:
+                case (int)ID_FUNC_DATA_ASKED_HOST.CONNSET_MAIN_DB:
                     ((IObjectDbEdit)_objects[id]).Start((obj as EventArgsDataHost).par[0]);
                     break;
-                case (int)ID_DATAASKED_HOST.ACTIVATE_TAB:
+                case (int)ID_FUNC_DATA_ASKED_HOST.ACTIVATE_TAB:
                     (_objects[id] as HPanelCommon).Activate((bool)(obj as EventArgsDataHost).par[0]);
                     break;
                 default:

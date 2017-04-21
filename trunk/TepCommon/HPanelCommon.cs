@@ -115,7 +115,7 @@ namespace TepCommon
 
         protected HTepUsers.DictionaryProfileItem m_dictProfile;
 
-        public enum ID_AREA
+        public enum ID_SUBPANEL
         {
             MAIN = 1 //Главная
             , PROP = 2 //Свойства
@@ -276,7 +276,7 @@ namespace TepCommon
                         ;
 
                     if (!(Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Columns.IndexOf("ID_TABLE") < 0)) {
-                        rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_AREA.MAIN);
+                        rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_SUBPANEL.MAIN);
 
                         if (rows.Length == 1)
                             Logging.Logg().Error("TepCommon.HpanelTepCommon initializeDescPanel - Select выполнен с ошибкой: " + err, Logging.INDEX_MESSAGE.NOT_SET);
@@ -285,19 +285,19 @@ namespace TepCommon
 
                         //DataRow[] rows = null;
                         if (!(Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Columns.IndexOf("ID_TABLE=") < 0)) {
-                            rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_AREA.MAIN);
+                            rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_SUBPANEL.MAIN);
                             if (rows.Length == 1)
                                 ((HPanelDesc)ctrl).SetLblDGV1Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                             else
                                 ;
 
-                            rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_AREA.PROP);
+                            rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_SUBPANEL.PROP);
                             if (rows.Length == 1)
                                 ((HPanelDesc)ctrl).SetLblDGV2Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                             else
                                 ;
 
-                            rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_AREA.DESC);
+                            rows = Descriptions[(int)INDEX_DATATABLE_DESCRIPTION.TABLE].Select("ID_TABLE=" + (int)ID_SUBPANEL.DESC);
                             if (rows.Length == 1) {
                                 ((HPanelDesc)ctrl).SetLblDGV3Desc = new string[] { rows[0]["NAME"].ToString(), rows[0]["DESCRIPTION"].ToString() };
                                 ((HPanelDesc)ctrl).SetLblDGV3Desc_View = false;
@@ -336,7 +336,6 @@ namespace TepCommon
             
             //HTepUsers.HTepProfilesXml.UpdateProfile(m_handlerDb.ConnectionSettings);
             m_dictProfile = HTepUsers.HTepProfilesXml.GetProfileUserPanel(HTepUsers.Id, HTepUsers.Role, m_Id);
-
         }
 
         //public override void Stop()

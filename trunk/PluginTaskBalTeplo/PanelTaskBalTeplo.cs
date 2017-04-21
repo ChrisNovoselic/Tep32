@@ -39,7 +39,7 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// ???
         /// </summary>
-        protected TaskBalTeploCalculate m_calculate;
+        protected HandlerDbTaskBalTeploCalculate m_calculate;
 
         /// <summary>
         /// 
@@ -131,28 +131,6 @@ namespace PluginTaskBalTeplo
         }
 
         /// <summary>
-        /// калькулятор значений
-        /// </summary>
-        public class TaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
-        {
-            /// <summary>
-            /// Конструктор основной (без аргументов)
-            /// </summary>
-            public TaskBalTeploCalculate()
-            {
-            }
-
-            /// <summary>
-            /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
-            /// </summary>
-            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
-            protected override int initValues(ListDATATABLE listDataTables)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        /// <summary>
         /// Конструктор - основной
         /// </summary>
         /// <param name="iFunc">Объект для взаимодействия с вызывающим приложением</param>
@@ -162,7 +140,7 @@ namespace PluginTaskBalTeplo
             HandlerDb.IdTask = ID_TASK.BAL_TEPLO;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
             HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
-            m_calculate = new TaskBalTeploCalculate();
+            m_calculate = new HandlerDbTaskBalTeploCalculate();
             m_dt_profile = new DataTable();
 
             m_arTableOrigin_in = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
@@ -557,8 +535,8 @@ namespace PluginTaskBalTeplo
             int err = -1;
             string toSend = (Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0] as TextBox).Text;
 
-            m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-                dgvBlock.FillTableValueDay(HandlerDb.OutValues(out err), dgvBlock, HandlerDb.getOutPut(out err));
+            //m_arTableEdit_in[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
+            //    dgvBlock.FillTableValueDay(HandlerDb.OutValues(out err), dgvBlock, HandlerDb.getOutPut(out err));
             //rptsNSS.SendMailToNSS(m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]
             //, HandlerDb.GetDateTimeRangeValuesVar(), toSend);
         }

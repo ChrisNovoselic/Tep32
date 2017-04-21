@@ -17,10 +17,10 @@ namespace PluginTaskAutobook
 {
     public partial class PanelTaskAutobookMonthValues : HPanelTepCommon
     {
-        /// <summary>
-        /// Объект для производства расчетов
-        /// </summary>
-        protected TaskAutobookCalculate m_AutoBookCalculate;        
+        ///// <summary>
+        ///// Объект для производства расчетов
+        ///// </summary>
+        //protected TaskAutobookCalculate m_AutoBookCalculate;
         /// <summary>
         /// Перечисление - столбцы отображения
         /// </summary>
@@ -77,7 +77,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// калькулятор значений
         /// </summary>
-        public class TaskAutobookCalculate : HandlerDbTaskCalculate.TaskCalculate
+        public class TaskAutobookCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
             /// <summary>
             /// 
@@ -87,16 +87,20 @@ namespace PluginTaskAutobook
             /// выходные значения
             /// </summary>
             public List<string> value;
-
             /// <summary>
-            /// Конструктор
+            /// Конструктор - основной (с параметром)
             /// </summary>
-            public TaskAutobookCalculate()
+            public TaskAutobookCalculate(ListDATATABLE listDataTables)
+                : base(listDataTables)
             {
                 calcTable = new DataTable[(int)INDEX_COLUMN.COUNT];
                 value = new List<string>((int)INDEX_COLUMN.COUNT);
             }
 
+            public override DataTable Calculate(TYPE type)
+            {
+                throw new NotImplementedException();
+            }
             /// <summary>
             /// Суммирование значений ТГ
             /// </summary>
@@ -111,7 +115,6 @@ namespace PluginTaskAutobook
 
                 return value;
             }
-
             /// <summary>
             /// разбор данных по гтп
             /// </summary>
@@ -126,7 +129,7 @@ namespace PluginTaskAutobook
                 calcTable[(int)INDEX_COLUMN.TEC] = dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Clone();
                 calcTable[(int)INDEX_COLUMN.GTP36] = dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Clone();
                 //
-                var m_enumDT = (from r in dtOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].AsEnumerable()
+                var m_enumDT = (from r in dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].AsEnumerable()
                     orderby r.Field<DateTime>("WR_DATETIME")
                     select new
                     {
@@ -140,8 +143,8 @@ namespace PluginTaskAutobook
                     calcTable[(int)INDEX_COLUMN.GTP36].Rows.Clear();
 
                     DataRow[] drOrigin =
-                        dtOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].
-                        Select(string.Format(dtOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Locale
+                        dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].
+                        Select(string.Format(dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Locale
                         , "WR_DATETIME = '{0:o}'", m_enumDT.ElementAt(j).WR_DATE_TIME));
 
                     foreach (DataRow row in drOrigin)
@@ -176,10 +179,10 @@ namespace PluginTaskAutobook
                         calcTable[(int)INDEX_COLUMN.TEC].Rows.Add(new object[]
                         {
                             dtOut.Rows[t]["ID"]
-                            ,dtOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Rows[j]["ID_SESSION"]
-                            ,dtOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Rows[j]["QUALITY"]
+                            ,dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Rows[j]["ID_SESSION"]
+                            ,dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Rows[j]["QUALITY"]
                             ,value[t]
-                            ,Convert.ToDateTime(String.Format(dtOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Locale
+                            ,Convert.ToDateTime(String.Format(dtOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Locale
                             ,m_enumDT.ElementAt(j).WR_DATE_TIME.ToString()))
                             ,count
                         });
@@ -223,10 +226,6 @@ namespace PluginTaskAutobook
                 }
             }
 
-            /// <summary>
-            /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
-            /// </summary>
-            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
             protected override int initValues(ListDATATABLE listDataTables)
             {
                 throw new NotImplementedException();
@@ -344,7 +343,7 @@ namespace PluginTaskAutobook
             {
                 string strRes = string.Empty;
 
-                HandlerDbTaskCalculate.VALUE[] dayValues;
+                TepCommon.HandlerDbTaskCalculate.VALUE[] dayValues;
 
                 dayValues =
                     values.Where(item => { return item.stamp_write.Equals(reportDate) == true; }).ToArray();
@@ -612,28 +611,16 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="iFunc"></param>
         public PanelTaskAutobookMonthValues(IPlugIn iFunc)
-            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+            : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
             HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
-            m_AutoBookCalculate = new TaskAutobookCalculate();
+            //m_AutoBookCalculate = new TaskAutobookCalculate();
 
             InitializeComponent();
 
             m_dgvValues.EventCellValueChanged += dgvValues_onEventCellValueChanged;
-        }
-
-        /// <summary>
-        /// кол-во дней в текущем месяце
-        /// </summary>
-        /// <returns>кол-во дней</returns>
-        protected int DaysInMonth
-        {
-            get
-            {
-                return DateTime.DaysInMonth(Session.m_DatetimeRange.Begin.Year, Session.m_DatetimeRange.Begin.Month);
-            }
         }
 
         /// <summary>
@@ -839,7 +826,9 @@ namespace PluginTaskAutobook
             dtValues = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CALENDAR_EMAIL.ToString(), true)[0] as DateTimePicker).Value;
             e_mail = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
             //
-            rep.SendMailToNSS(HandlerDb.Values[new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+            rep.SendMailToNSS(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                    TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+                    , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
                 , dtValues
                 , e_mail);
         }
@@ -854,20 +843,36 @@ namespace PluginTaskAutobook
             base.Stop();
         }
 
-        protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
-            //вычисление значений, сохранение во временной таблице
-            HandlerDb.Calculate(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+            dataAskedHostMessageToStatusStrip(res, string.Format(@"Получение значений из БД"));
+
+            if ((res == TepCommon.HandlerDbTaskCalculate.RESULT.Ok)
+                || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
+            // вычисление значений, сохранение во временной таблице
+                HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+            else
+                ;            
         }
 
-        protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             int err = -1;
 
+            dataAskedHostMessageToStatusStrip(res, string.Format(@"Расчет значений"));
+
+            if ((res == TepCommon.HandlerDbTaskCalculate.RESULT.Ok)
+                || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
             // отобразить значения
-            m_dgvValues.ShowValues(HandlerDb.Values[new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                , HandlerDb.Values[new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                , out err);
+                m_dgvValues.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                        TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+                        , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                    , HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                        TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
+                        , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                    , out err);
+            else
+                ;
         }
 
         protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
@@ -884,7 +889,7 @@ namespace PluginTaskAutobook
         {
             try {
                 // ... - загрузить/отобразить значения из БД
-                HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE);
+                HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE);
             } catch (Exception e) {
                 Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues::btnHistory_OnClick () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
@@ -900,7 +905,7 @@ namespace PluginTaskAutobook
             try
             {
                 // ... - загрузить/отобразить значения из БД
-                HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
+                HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
             } catch (Exception e) {
                 Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues::panelTepCommon_btnUpdate_onClick () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
@@ -921,7 +926,11 @@ namespace PluginTaskAutobook
 
             if (bRes == true)
                 if (activate == true)
-                    HandlerDb.InitSession(out err);
+                    ;
+                else
+                    ;
+            else
+                ;
 
             return bRes;
         }
@@ -955,11 +964,11 @@ namespace PluginTaskAutobook
                 }
                 , out err, out errMsg);
 
-            HandlerDb.FilterDbTableTimezone = HandlerDbTaskCalculate.DbTableTimezone.Msk;
-            HandlerDb.FilterDbTableTime = HandlerDbTaskCalculate.DbTableTime.Month;
-            HandlerDb.FilterDbTableCompList = HandlerDbTaskCalculate.DbTableCompList.Tec
-                | HandlerDbTaskCalculate.DbTableCompList.Gtp
-                | HandlerDbTaskCalculate.DbTableCompList.Tg;
+            HandlerDb.FilterDbTableTimezone = TepCommon.HandlerDbTaskCalculate.DbTableTimezone.Msk;
+            HandlerDb.FilterDbTableTime = TepCommon.HandlerDbTaskCalculate.DbTableTime.Month;
+            HandlerDb.FilterDbTableCompList = TepCommon.HandlerDbTaskCalculate.DbTableCompList.Tec
+                | TepCommon.HandlerDbTaskCalculate.DbTableCompList.Gtp
+                | TepCommon.HandlerDbTaskCalculate.DbTableCompList.Tg;
 
             // возможность_редактирвоания_значений
             try {
@@ -1091,23 +1100,27 @@ namespace PluginTaskAutobook
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void handlerDbTaskCalculate_onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddNAlgParameter(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
             base.handlerDbTaskCalculate_onAddNAlgParameter(obj);
+
+            m_dgvValues.AddNAlgParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void handlerDbTaskCalculate_onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
             base.handlerDbTaskCalculate_onAddPutParameter(obj);
+
+            m_dgvValues.AddPutParameter(obj);
         }
         /// <summary>
         /// Обработчик события - добавить компонент станции (оборудовнаие)
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void handlerDbTaskCalculate_onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
+        protected override void handlerDbTaskCalculate_onAddComponent(TepCommon.HandlerDbTaskCalculate.TECComponent obj)
         {
             base.handlerDbTaskCalculate_onAddComponent(obj);
         }
@@ -1289,29 +1302,6 @@ namespace PluginTaskAutobook
 
             return pref[0] + "_" + m_nametable;
         }
-
-        ///// <summary>
-        ///// Сохранение входных знчений(корр. величины)
-        ///// </summary>
-        ///// <param name="err">Признак выполнения операций внутри метода</param>
-        //private void saveInvalValue(out int err)
-        //{
-        //    DateTimeRange[] dtrPer = HandlerDb.getDateTimeRangeVariableValues();
-
-        //    m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-        //        HandlerDb.GetInPutID(TaskCalculateType, dtrPer, Session.ActualIdPeriod, out err);
-
-        //    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-        //    HandlerDb.SaveResInval(m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
-        //        , m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
-        //        , out err);
-
-        //    sortingDataToTable(m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
-        //        , m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]
-        //        , getNameTableIn(dtrPer[0].Begin)
-        //        , @"ID"
-        //        , out err);
-        //}
     }
 }
 

@@ -22,53 +22,6 @@ namespace PluginTaskTepMain
         /// </summary>
         protected class DataGridViewTaskTepValues : DataGridViewTaskTepCalculate
         {
-            ///// <summary>
-            ///// Класс для описания аргумента события - изменения значения ячейки
-            ///// </summary>
-            //public class DataGridViewTEPValuesCellValueChangedEventArgs : EventArgs
-            //{
-            //    public int m_IdComp
-            //        , m_IdAlg
-            //        , m_IdParameter;
-            //    public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
-            //    public double m_Value;
-
-            //    public DataGridViewTEPValuesCellValueChangedEventArgs()
-            //        : base()
-            //    {
-            //        m_IdAlg =
-            //        m_IdComp =
-            //        m_IdParameter =
-            //            -1;
-            //        m_iQuality = TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT;
-            //        m_Value = -1F;
-            //    }
-
-            //    public DataGridViewTEPValuesCellValueChangedEventArgs(int id_alg
-            //        , int id_comp
-            //        , int id_par
-            //        , TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE quality
-            //        , double val)
-            //            : this()
-            //    {
-            //        m_IdAlg = id_alg;
-            //        m_IdComp = id_comp;
-            //        m_IdParameter = id_par;
-            //        m_iQuality = quality;
-            //        m_Value = val;
-            //    }
-            //}
-            ///// <summary>
-            ///// Тип делегата для обработки события - изменение значения в ячейке
-            ///// </summary>
-            ///// <param name="obj">Объект, инициировавший событие (DataGridViewTepValues)</param>
-            ///// <param name="ev">Аргумент события</param>
-            //public delegate void DataGridViewTEPValuesCellValueChangedEventHandler(object obj, DataGridViewTEPValuesCellValueChangedEventArgs ev);
-            ///// <summary>
-            ///// Событие - изменение значения ячейки
-            ///// </summary>
-            //public event DataGridViewTEPValuesCellValueChangedEventHandler EventCellValueChanged;
-
             public override void AddColumns(List<TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
                 throw new NotImplementedException();
@@ -93,6 +46,8 @@ namespace PluginTaskTepMain
                         , @"Размерность"
                         , false, false)
                     , ModeAddColumn.Service | ModeAddColumn.Visibled);
+
+                RowHeadersVisible = true;
             }
 
             public override void ClearColumns()
@@ -192,6 +147,8 @@ namespace PluginTaskTepMain
                 //!!! Объект уже добавлен в словарь
                 //!!! столбец с 'SYMBOL' уже добавлен
 
+                activateCellValue_onChanged(false);
+
                 iRes = Rows.Add(new DataGridViewRow());
                 Rows[iRes].Tag = obj.m_Id;
 
@@ -201,6 +158,8 @@ namespace PluginTaskTepMain
                 Rows[iRes].HeaderCell.ToolTipText = obj.m_strDescription;
                 // установить значение для обозначения параметра и его ед./измерения
                 Rows[iRes].Cells[0].Value = string.Format(@"{0},[{1}]", obj.m_strSymbol, obj.m_strMeausure);
+
+                activateCellValue_onChanged(true);
 
                 return iRes;
             }

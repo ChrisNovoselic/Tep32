@@ -146,10 +146,14 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public VedomostBlCalculate()
-                : base()
+            public VedomostBlCalculate(ListDATATABLE listDataTable)
+                : base(listDataTable)
             {
+            }
 
+            public override DataTable Calculate(TYPE type)
+            {
+                throw new NotImplementedException();
             }
 
             /// <summary>

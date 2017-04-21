@@ -40,20 +40,19 @@ namespace Tep64
 
             s_plugIns = new PlugIns(FormMain_EvtDataAskedHost);
 
+            //??? принять наименование файла из командной строки
             s_fileConnSett = new FIleConnSett(@"connsett.ini", FIleConnSett.MODE.FILE);
             s_listFormConnectionSettings = new List<FormConnectionSettings> ();
             s_listFormConnectionSettings.Add(new FormConnectionSettings(-1, s_fileConnSett.ReadSettingsFile, s_fileConnSett.SaveSettingsFile));
 
             int idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString ());
 
-            if (! (idListener < 0))
-            {
+            if (! (idListener < 0)) {
                 initProfiles(idListener);
 
                 //ConnectionSettingsSource connSettSource = new ConnectionSettingsSource(idListener);
                 //s_listFormConnectionSettings.Add(new FormConnectionSettings(idListener, connSettSource.Read, connSettSource.Save));
-            }
-            else
+            } else
                 ;
 
             DbSources.Sources().UnRegister(idListener);
@@ -390,9 +389,18 @@ namespace Tep64
         /// Делегат обработки события - выбор п. меню
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие (плюгИн вкладки)</param>
-        private void FormMain_EvtDataAskedHost(object obj)
+        private void FormMain_EvtDataAskedHost(EventArgsDataHost ev)
         {
-            this.BeginInvoke(new DelegateObjectFunc(postOnClickMenuItem), obj);
+            //??? повторная проверка типов аргументов сообщения
+            //  первоначально разбирается в 'Plugins.OnEvtDataAskedHost'
+            if (ev.par[0] is ToolStripMenuItem)
+                this.BeginInvoke(new Action<EventArgsDataHost>(postOnClickMenuItem), ev);
+            else if ((ev.par[0].GetType().IsPrimitive == true)
+                && ((HFunc.ID_FUNC_DATA_ASKED_HOST)ev.par[0] == HFunc.ID_FUNC_DATA_ASKED_HOST.MESSAGE_TO_STATUSSTRIP))
+                // TODO: отобразить сообщение в строке статуса
+                ;
+            else
+                throw new Exception(string.Format(@"Неизвестный объект для обработки из функциональной библиотеки..."));
         }
         /// <summary>
         /// Дополнительные действия по инициализации плюг'ина
@@ -555,13 +563,13 @@ namespace Tep64
         /// Обработчик события выбора (отобразить/закрыть вкладку) п. меню
         /// </summary>
         /// <param name="obj">Объект загруженной библиотеки вкладки</param>
-        private void postOnClickMenuItem (object obj) {
-            int idPlugIn = (int)((EventArgsDataHost)obj).id_main
-                , idFPanel = (int)((EventArgsDataHost)obj).id_detail;
+        private void postOnClickMenuItem (EventArgsDataHost ev) {
+            int idPlugIn = (int)ev.id_main
+                , idFPanel = (int)ev.id_detail;
             PlugInMenuItem plugIn = s_plugIns[idPlugIn] as PlugInMenuItem;
             bool bMenuItemChecked =
-            ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked =
-                ! ((ToolStripMenuItem)((EventArgsDataHost)obj).par[0]).Checked;
+            ((ToolStripMenuItem)ev.par[0]).Checked =
+                ! ((ToolStripMenuItem)ev.par[0]).Checked;
             bool bTabRemoved = false;
 
             if (bMenuItemChecked == true)
@@ -727,7 +735,7 @@ namespace Tep64
 
                 if (!(id_plugIn < 0))
                     //Отправить ответ (исходный идентификатор + требуемый объект)
-                    ((PlugInBase)s_plugIns[id_plugIn]).OnEvtDataRecievedHost(new EventArgsDataHost(id_fpanel, (int)HFunc.ID_DATAASKED_HOST.ACTIVATE_TAB, new object[] { bActivate }));
+                    ((PlugInBase)s_plugIns[id_plugIn]).OnEvtDataRecievedHost(new EventArgsDataHost(id_fpanel, (int)HFunc.ID_FUNC_DATA_ASKED_HOST.ACTIVATE_TAB, new object[] { bActivate }));
                 else
                     ;
             }

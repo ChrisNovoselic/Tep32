@@ -173,7 +173,7 @@ namespace PluginTaskAutobook
         /// </summary>
         /// <param name="iFunc">Объект для взаимодействия с вызывающей программой</param>
         public PanelTaskAutobookYearlyPlan(IPlugIn iFunc)
-            : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
+            : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
@@ -243,9 +243,9 @@ namespace PluginTaskAutobook
             // PERIOD, TIMIZONE, COMP, PARAMETER(OUT_VALUES), MEASURE, RATIO
             initialize(new ID_DBTABLE[] { ID_DBTABLE.TIMEZONE, ID_DBTABLE.TIME, ID_DBTABLE.IN_PARAMETER, ID_DBTABLE.COMP_LIST, ID_DBTABLE.RATIO }, out err, out errMsg);
 
-            HandlerDb.FilterDbTableTimezone =  HandlerDbTaskCalculate.DbTableTimezone.Msk;
-            HandlerDb.FilterDbTableTime = HandlerDbTaskCalculate.DbTableTime.Year;
-            HandlerDb.FilterDbTableCompList = HandlerDbTaskCalculate.DbTableCompList.Tec;
+            HandlerDb.FilterDbTableTimezone = TepCommon.HandlerDbTaskCalculate.DbTableTimezone.Msk;
+            HandlerDb.FilterDbTableTime = TepCommon.HandlerDbTaskCalculate.DbTableTime.Year;
+            HandlerDb.FilterDbTableCompList = TepCommon.HandlerDbTaskCalculate.DbTableCompList.Tec;
 
             m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
@@ -366,7 +366,7 @@ namespace PluginTaskAutobook
         /// Обработчик события - добавить NAlg-параметр
         /// </summary>
         /// <param name="obj">Объект - NAlg-параметр(основной элемент алгоритма расчета)</param>
-        protected override void handlerDbTaskCalculate_onAddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddNAlgParameter(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER obj)
         {
             base.handlerDbTaskCalculate_onAddNAlgParameter(obj);
 
@@ -376,7 +376,7 @@ namespace PluginTaskAutobook
         /// Обработчик события - добавить Put-параметр
         /// </summary>
         /// <param name="obj">Объект - Put-параметр(дополнительный, в составе NAlg, элемент алгоритма расчета)</param>
-        protected override void handlerDbTaskCalculate_onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
+        protected override void handlerDbTaskCalculate_onAddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
             base.handlerDbTaskCalculate_onAddPutParameter(obj);
 
@@ -386,7 +386,7 @@ namespace PluginTaskAutobook
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
         /// <param name="obj">Объект - компонент станции(оборудование)</param>
-        protected override void handlerDbTaskCalculate_onAddComponent(HandlerDbTaskCalculate.TECComponent obj)
+        protected override void handlerDbTaskCalculate_onAddComponent(TepCommon.HandlerDbTaskCalculate.TECComponent obj)
         {
             base.handlerDbTaskCalculate_onAddComponent(obj);
         }
@@ -436,20 +436,27 @@ namespace PluginTaskAutobook
         //        m_handlerDb.UnRegisterDbConnection();
         //}
 
-        protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             int err = -1;
 
-            m_dgvValues.ShowValues(((TaskCalculateType & HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES) == HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
-                    ? HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                        : new List<HandlerDbTaskCalculate.VALUE>()
-                , ((TaskCalculateType & HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES) == HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
-                    ? HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                        : new List<HandlerDbTaskCalculate.VALUE>()
-                , out err);
+            dataAskedHostMessageToStatusStrip(res, string.Format(@"Получение значений из БД"));
+
+            if ((res == TepCommon.HandlerDbTaskCalculate.RESULT.Ok)
+                || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
+            // отображать значения при отсутствии ошибок
+                m_dgvValues.ShowValues(((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
+                        ? HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                            : new List<TepCommon.HandlerDbTaskCalculate.VALUE>()
+                    , ((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+                        ? HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                            : new List<TepCommon.HandlerDbTaskCalculate.VALUE>()
+                    , out err);
+            else
+                ;
         }
 
-        protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             throw new NotImplementedException();
         }
@@ -586,7 +593,7 @@ namespace PluginTaskAutobook
         protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
             // ... - загрузить/отобразить значения из БД
-            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
+            HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
         }
 
         ///// <summary>

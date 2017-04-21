@@ -112,6 +112,16 @@ namespace TepCommon
                 , Color.White //USER
             };
 
+            protected void activateCellValue_onChanged(bool bActivate)
+            {
+                CellValueChanged -= onCellValueChanged;
+
+                if (bActivate == true)
+                    CellValueChanged += onCellValueChanged;
+                else
+                    ;
+            }
+
             private void onCellParsing(object sender, DataGridViewCellParsingEventArgs ev)
             {
                 ev.ParsingApplied = true;
@@ -664,80 +674,85 @@ namespace TepCommon
 
                 // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
                 if (RowCount > 1) {
-                    CellValueChanged -= onCellValueChanged;
+                    activateCellValue_onChanged(false);
 
                     foreach (DataGridViewColumn col in Columns) {
-                        try {
-                            putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag;
-                            columnValues = inValues.Where(value => { return value.m_IdPut == putPar.m_Id; });
+                        if ((!(col.Tag == null))
+                            && (col.Tag is HandlerDbTaskCalculate.PUT_PARAMETER)) {
+                            try {
+                                putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag;
+                                columnValues = inValues.Where(value => { return value.m_IdPut == putPar.m_Id; });
 
-                            idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_idNAlg;
-                            idPut = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id;
-                            iCol = Columns.IndexOf(col);
-                        } catch (Exception e) {
-                            Logging.Logg().Exception(e, @"DataGridViewValuesReaktivka::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                        }
-
-                        if ((putPar.IdComponent > 0)
-                            && (!(columnValues == null))) {
-                            fltColumnAgregateValue = 0F;
-                            columnAction = Rows[RowCount - 1].Tag.GetType().IsPrimitive == true // есть ли итоговая строка?
-                                ? m_dictNAlgProperties[idAlg].m_sAverage // итоговая строка - есть (операция по агрегации известна)
-                                    : AGREGATE_ACTION.UNKNOWN; // итоговой строки - нет (операция по агрегации неизвестна и не выполняется)
-
-                            foreach (HandlerDbTaskCalculate.VALUE value in columnValues) {
-                                fltVal = value.value;
-                                iQuality = value.m_iQuality;
-
-                                if (!(columnAction == AGREGATE_ACTION.UNKNOWN))
-                                    fltColumnAgregateValue += fltVal;
-                                else
-                                    ;
-
-                                row = Rows.Cast<DataGridViewRow>().FirstOrDefault(r => isRowToShowValues(r, value));
-
-                                if (!(row == null)) {
-                                    row.Cells[iCol].Tag = new CELL_PROPERTY() { m_Value = fltVal, m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality };
-                                    row.Cells[iCol].ReadOnly = double.IsNaN(fltVal);
-
-                                    if (getColorCellToValue(idAlg, idPut, (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality, out clrCell) == true) {
-                                        //// символ (??? один для строки, но назначается много раз по числу столбцов)
-                                        //row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictNAlgProperties[idAlg].m_strSymbol
-                                        //    + @",[" + m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_nameRU + m_dictNAlgProperties[idAlg].m_strMeausure + @"]";
-
-                                        fltVal = GetValueCellAsRatio(idAlg, idPut, fltVal);
-
-                                        // отобразить с количеством знаков в соответствии с настройками
-                                        row.Cells[iCol].Value = fltVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
-                                    } else
-                                        ;
-
-                                    row.Cells[iCol].Style.BackColor = clrCell;
-                                } else
-                                    // не найдена строка для даты в наборе данных для отображения
-                                    Logging.Logg().Warning(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - не найдена строка для даты [DATETIME={0}] в наборе данных для отображения..."
-                                            , value.stamp_value.Date)
-                                        , Logging.INDEX_MESSAGE.NOT_SET);
+                                idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_idNAlg;
+                                idPut = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id;
+                                iCol = Columns.IndexOf(col);
+                            } catch (Exception e) {
+                                Logging.Logg().Exception(e, @"DataGridViewValuesReaktivka::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                             }
 
-                            if (!(columnAction == AGREGATE_ACTION.UNKNOWN)) {
-                                if (columnAction == AGREGATE_ACTION.SUMMA)
-                                    fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
-                                else if (columnAction == AGREGATE_ACTION.AVERAGE)
-                                    fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
-                                else
-                                    ;
+                            if ((putPar.IdComponent > 0)
+                                && (!(columnValues == null))) {
+                                fltColumnAgregateValue = 0F;
+                                columnAction = Rows[RowCount - 1].Tag.GetType().IsPrimitive == true // есть ли итоговая строка?
+                                    ? m_dictNAlgProperties[idAlg].m_sAverage // итоговая строка - есть (операция по агрегации известна)
+                                        : AGREGATE_ACTION.UNKNOWN; // итоговой строки - нет (операция по агрегации неизвестна и не выполняется)
 
-                                Rows[Rows.Count - 1].Cells[iCol].Value = fltColumnAgregateValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+                                foreach (HandlerDbTaskCalculate.VALUE value in columnValues) {
+                                    fltVal = value.value;
+                                    iQuality = value.m_iQuality;
+
+                                    if (!(columnAction == AGREGATE_ACTION.UNKNOWN))
+                                        fltColumnAgregateValue += fltVal;
+                                    else
+                                        ;
+
+                                    row = Rows.Cast<DataGridViewRow>().FirstOrDefault(r => isRowToShowValues(r, value));
+
+                                    if (!(row == null)) {
+                                        row.Cells[iCol].Tag = new CELL_PROPERTY() { m_Value = fltVal, m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality };
+                                        row.Cells[iCol].ReadOnly = double.IsNaN(fltVal);
+
+                                        if (getColorCellToValue(idAlg, idPut, (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality, out clrCell) == true) {
+                                            //// символ (??? один для строки, но назначается много раз по числу столбцов)
+                                            //row.Cells[(int)INDEX_SERVICE_COLUMN.SYMBOL].Value = m_dictNAlgProperties[idAlg].m_strSymbol
+                                            //    + @",[" + m_dictRatio[m_dictNAlgProperties[idAlg].m_iRatio].m_nameRU + m_dictNAlgProperties[idAlg].m_strMeausure + @"]";
+
+                                            fltVal = GetValueCellAsRatio(idAlg, idPut, fltVal);
+
+                                            // отобразить с количеством знаков в соответствии с настройками
+                                            row.Cells[iCol].Value = fltVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
+                                        } else
+                                            ;
+
+                                        row.Cells[iCol].Style.BackColor = clrCell;
+                                    } else
+                                    // не найдена строка для даты в наборе данных для отображения
+                                        Logging.Logg().Warning(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - не найдена строка для даты [DATETIME={0}] в наборе данных для отображения..."
+                                                , value.stamp_value.Date)
+                                            , Logging.INDEX_MESSAGE.NOT_SET);
+                                }
+
+                                if (!(columnAction == AGREGATE_ACTION.UNKNOWN)) {
+                                    if (columnAction == AGREGATE_ACTION.SUMMA)
+                                        fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
+                                    else if (columnAction == AGREGATE_ACTION.AVERAGE)
+                                        fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
+                                    else
+                                        ;
+
+                                    Rows[Rows.Count - 1].Cells[iCol].Value = fltColumnAgregateValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+                                } else
+                                    ;
                             } else
-                                ;
+                                Logging.Logg().Error(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
+                                        , ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id, inValues.Count())
+                                    , Logging.INDEX_MESSAGE.NOT_SET);
                         } else
-                            Logging.Logg().Error(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
-                                    , ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id, inValues.Count())
-                                , Logging.INDEX_MESSAGE.NOT_SET);
+                        // для столбца не указан параметр алгоритма расчета 2-го порядка (связанный с компонентом станции)
+                            ;
                     }
 
-                    CellValueChanged += onCellValueChanged;
+                    activateCellValue_onChanged(true);
                 } else
                     Logging.Logg().Error(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
             }

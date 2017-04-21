@@ -107,6 +107,23 @@ namespace TepCommon
         /// </summary>
         protected HandlerDbTaskCalculate.SESSION Session { get { return (__handlerDb as HandlerDbTaskCalculate)._Session; } }
         /// <summary>
+        /// Отправить сообщение главной форме для отображения в строке статуса
+        /// </summary>
+        /// <param name="res">Результат выполнения операции</param>
+        /// <param name="message"></param>
+        protected void dataAskedHostMessageToStatusStrip(RESULT res, string message)
+        {
+            (_iFuncPlugin as HFuncDbEdit).DataAskedHost(new object[] { m_Id
+                , (int)HFunc.ID_FUNC_DATA_ASKED_HOST.MESSAGE_TO_STATUSSTRIP // par[0] должен быть 'IsPrimitive'
+                , res == HandlerDbTaskCalculate.RESULT.Exception ? TYPE_MESSAGE.EXCEPTION
+                    : res == HandlerDbTaskCalculate.RESULT.Error ? TYPE_MESSAGE.ERROR
+                        : res == HandlerDbTaskCalculate.RESULT.Warning ? TYPE_MESSAGE.WARNING
+                            : res == HandlerDbTaskCalculate.RESULT.Ok ? TYPE_MESSAGE.ACTION
+                                : res == HandlerDbTaskCalculate.RESULT.Debug ? TYPE_MESSAGE.DEBUG
+                                    : TYPE_MESSAGE.UNKNOWN
+                , message });
+        }
+        /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
         /// </summary>
         /// <param name="indxCtrl">Индекс элемента управления, инициировавшего очистку
