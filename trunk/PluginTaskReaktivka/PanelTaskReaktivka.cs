@@ -12,12 +12,22 @@ namespace PluginTaskReaktivka
     public partial class PanelTaskReaktivka : HPanelTepCommon
     {
         /// <summary>
-        /// Набор элементов
+        /// Перечисление - идентификаторы элементов управления на панели
         /// </summary>
         protected enum INDEX_CONTROL
         {
+            /// <summary>
+            /// Неизвестный элемент
+            /// </summary>
             UNKNOWN = -1,
-            DATAGRIDVIEW_VALUES, LABEL_DESC
+            /// <summary>
+            /// Представление для отображения значений
+            /// </summary>
+            DATAGRIDVIEW_VALUES,
+            /// <summary>
+            /// Панель оперативной справочной информпции
+            /// </summary>
+            LABEL_DESC
         }
         /// <summary>
         /// Объект для обращения к БД (чтение/сохранение значений)
@@ -597,18 +607,6 @@ namespace PluginTaskReaktivka
         {
             int idItem = -1;
 
-            ////Изменить признак состояния компонента ТЭЦ/параметра алгоритма расчета
-            //if (ev.NewCheckState == CheckState.Unchecked)
-            //    if (m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0)
-            //        m_arListIds[(int)ev.m_indxId].Add(idItem);
-            //    else; //throw new Exception (@"");
-            //else
-            //    if (ev.NewCheckState == CheckState.Checked)
-            //    if (!(m_arListIds[(int)ev.m_indxId].IndexOf(idItem) < 0))
-            //        m_arListIds[(int)ev.m_indxId].Remove(idItem);
-            //    else; //throw new Exception (@"");
-            //else;
-
             //??? Отправить сообщение главной форме об изменении/сохранении индивидуальных настроек
             // или в этом же плюгИне измененить/сохраннить индивидуальные настройки
             //m_dictProfile.SetAttribute();
@@ -616,78 +614,9 @@ namespace PluginTaskReaktivka
             (m_dgvValues as DataGridViewValuesReaktivka).UpdateStructure(ev);
         }
 
-        ///// <summary>
-        ///// 
-        ///// </summary>
-        //protected DataTable m_TableOrigin
-        //{
-        //    get { return m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
-        //}
-        ///// <summary>
-        ///// 
-        ///// </summary>
-        //protected DataTable m_TableEdit
-        //{
-        //    get { return m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD]; }
-        //}
-
-        ///// <summary>
-        ///// загрузка/обновление данных
-        ///// </summary>
-        //private void updateDataValues()
-        //{
-        //    int err = -1
-        //        , cnt = Session.CountBasePeriod
-        //        , iRegDbConn = -1;
-        //    string errMsg = string.Empty;
-        //    DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
-
-        //    clear();
-        //    m_handlerDb.RegisterDbConnection(out iRegDbConn);
-
-        //    if (!(iRegDbConn < 0))
-        //    {
-        //        // установить значения в таблицах для расчета, создать новую сессию
-        //        setValues(dtrGet, out err, out errMsg);
-
-        //        if (err == 0)
-        //        {
-        //            if (m_arTableOrigin[(int)Session.m_ViewValues].Rows.Count > 0)
-        //            {
-        //                // создать копии для возможности сохранения изменений
-        //                setValues();
-        //                // отобразить значения
-        //                m_dgvValues.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues]);
-        //                //
-        //                m_arTableEdit[(int)Session.m_ViewValues] = valuesFence;
-        //            }
-        //            else {
-        //                deleteSession();
-        //                throw new Exception(@"PanelTaskreaktivka::updatedataValues() - " + errMsg);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            // в случае ошибки "обнулить" идентификатор сессии
-        //            deleteSession();
-        //            throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
-        //        }
-        //    }
-        //    else
-        //        deleteSession();
-
-        //    if (!(iRegDbConn > 0))
-        //        m_handlerDb.UnRegisterDbConnection();
-        //}
-
         protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
         {
             int err = -1;
-
-            //// отобразить значения
-            //m_dgvValues.ShowValues(m_arTableOrigin[(int)Session.m_ViewValues]);
-            ////
-            //m_arTableEdit[(int)Session.m_ViewValues] = valuesFence;
 
             HandlerDbTaskCalculate.KEY_VALUES key;
             IEnumerable<HandlerDbTaskCalculate.VALUE> inValues
@@ -711,76 +640,6 @@ namespace PluginTaskReaktivka
             throw new NotImplementedException();
         }
 
-        ///// <summary>
-        ///// получение значений
-        ///// создание сессии
-        ///// </summary>
-        ///// <param name="arQueryRanges"></param>
-        ///// <param name="err">номер ошибки</param>
-        ///// <param name="strErr">текст ошибки</param>
-        //private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
-        //{
-        //    err = 0;
-        //    strErr = string.Empty;
-        //    //Создание сессии
-        //    Session.New();
-        //    if (Session.m_ViewValues == HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE)
-        //        //Запрос для получения архивных данных
-        //        m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = HandlerDb.GetDataOutvalArch(TaskCalculateType, HandlerDb.GetDateTimeRangeValuesVarArchive(), out err);
-        //    //Запрос для получения автоматически собираемых данных
-        //    m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
-        //        (
-        //        TaskCalculateType
-        //        , Session.ActualIdPeriod
-        //        , Session.CountBasePeriod
-        //        , arQueryRanges
-        //       , out err
-        //        );
-        //    //Проверить признак выполнения запроса
-        //    if (err == 0)
-        //    {
-        //        //Проверить признак выполнения запроса
-        //        if (err == 0)
-        //            //Начать новую сессию расчета
-        //            //, получить входные для расчета значения для возможности редактирования
-        //            HandlerDb.CreateSession(m_Id
-        //                , Session.CountBasePeriod
-        //                , m_dictTableDictPrj[ID_DBTABLE.COMP]
-        //                , ref m_arTableOrigin
-        //                , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
-        //                , out err, out strErr);
-        //        else
-        //            strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
-        //                + @" по " + Session.m_rangeDatetime.End.ToString();
-        //    }
-        //    else
-        //        strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
-        //            + @" по " + Session.m_rangeDatetime.End.ToString();
-        //}
-
-        ///// <summary>
-        ///// copy
-        ///// </summary>
-        //private void setValues()
-        //{
-        //    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-        //     m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Clone();
-        //}
-
-        ///// <summary>
-        ///// формирование таблицы данных
-        ///// </summary>
-        //private DataTable valuesFence
-        //{
-        //    get
-        //    { //сохранить вх. знач. в DataTable
-        //        return
-        //            //m_dgvValues.GetValue(m_TableOrigin, (int)Session.m_Id, Session.m_ViewValues)
-        //            new DataTable()
-        //            ;
-        //    }
-        //}
-
         /// <summary>
         /// Получение имени таблицы вх.зн. в БД
         /// </summary>
@@ -798,21 +657,6 @@ namespace PluginTaskReaktivka
             return strRes;
         }
 
-        ///// <summary>
-        ///// Сохранение входных знчений
-        ///// </summary>
-        ///// <param name="err">номер ошибки</param>
-        //private void saveInvalValue(out int err)
-        //{
-        //    DateTimeRange[] dtrPer = HandlerDb.getDateTimeRangeVariableValues();
-
-        //    sortingDataToTable(m_TableOrigin
-        //        , m_TableEdit
-        //        , getNameTableIn(dtrPer[0].Begin)
-        //        , @"ID"
-        //        , out err);
-        //}
-
         /// <summary>
         /// Обновить/Вставить/Удалить
         /// </summary>
@@ -826,11 +670,11 @@ namespace PluginTaskReaktivka
             err = -1;
 
             __handlerDb.RecUpdateInsertDelete(nameTable
-                    , @"ID_PUT, DATE_TIME"
-                    , unCol
-                    , origin
-                    , edit
-                    , out err);
+                , @"ID_PUT, DATE_TIME"
+                , unCol
+                , origin
+                , edit
+                , out err);
         }
 
         /// <summary>

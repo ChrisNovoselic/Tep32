@@ -2,18 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Data;
-using System.Data.Common;
-using System.Text;
 
 using HClassLibrary;
-using InterfacePlugIn;
-using TepCommon;
 
 namespace TepCommon
 {
     public partial class HandlerDbTaskCalculate
     {
-        public abstract class TaskCalculate : Object
+        public abstract class TaskCalculate : Object, IDisposable
         {
             /// <summary>
             /// Перечисление - индексы (идентифкаторы) загружаемых/отображаемых значений
@@ -24,23 +20,35 @@ namespace TepCommon
                 , OUT_TEP_NORM_VALUES = 2
                 , OUT_VALUES = 4
                 , OUT_TEP_REALTIME = 8
-                    , }
-            private TYPE _type;
+                ,
+            }
+
+            protected TYPE _types;
             /// <summary>
-            /// Индекс типа вкладки для текущего объекта
+            /// Признак - единственный ли флаг установлен в наборе флагов _types
             /// </summary>
-            //public TYPE Type { get { return _type; } set { _type = value; } }
-            /// <summary>
-            /// Перечисление - индексы таблиц, передаваемых объекту в качестве элементов массива-аргумента
-            /// </summary>
-            public enum INDEX_DATATABLE : short
+            /// <param name="flags">Набор типов расчета</param>
+            /// <returns>Признак наличия единственногофлага из набора</returns>            
+            public static bool GetIsSingleTaskCalculateType(TYPE flags)
             {
-                UNKNOWN = -1
-                , FTABLE
-                , IN_PARAMETER, IN_VALUES
-                , OUT_NORM_PARAMETER, OUT_NORM_VALUES
-                , OUT_PARAMETER, OUT_VALUES
-                    , COUNT
+                bool bRes = false;
+
+                int counter = 0;
+
+                foreach (TYPE type in Enum.GetValues(typeof(TYPE)))
+                    if (!(type == TYPE.UNKNOWN))
+                        counter += ((type & flags) == type) ? 1 : 0;
+                    else
+                        ;
+
+                return bRes = (counter == 1);
+            }
+
+            public bool IsSingleTaskCalculateType
+            {
+                get {
+                    return GetIsSingleTaskCalculateType(_types);
+                }
             }
             /// <summary>
             /// Класс для хранения всех значений, необходимых для расчета
@@ -120,45 +128,14 @@ namespace TepCommon
                         /// </summary>
                         public int m_idRatio;
                         /// <summary>
-                        /// Минимальное, максимальное значение
+                        /// Минимальное значение
                         /// </summary>
                         public float m_fMinValue;
+                        /// <summary>
+                        /// Максимальное значение
+                        /// </summary>
                         public float m_fMaxValue;
                     }
-                }
-            }
-            /// <summary>
-            /// Структура - элемент массива при передаче аргумента в функции расчета
-            /// </summary>
-            public struct DATATABLE
-            {
-                /// <summary>
-                /// Индекс - указание на предназначение таблицы
-                /// </summary>
-                public INDEX_DATATABLE m_indx;
-                /// <summary>
-                /// Таблица со значениями для выполнения расчета
-                /// </summary>
-                public DataTable m_table;
-            }
-            /// <summary>
-            /// Класс для представления аргументов при инициализации расчета
-            /// </summary>
-            public class ListDATATABLE : List<DATATABLE>
-            {
-                public DataTable FindDataTable(INDEX_DATATABLE indxDataTable)
-                {
-                    DataTable tableRes = null;
-
-                    foreach (DATATABLE dataTable in this)
-                        if (dataTable.m_indx == indxDataTable) {
-                            tableRes = dataTable.m_table;
-
-                            break;
-                        } else
-                            ;
-
-                    return tableRes;
                 }
             }
             /// <summary>
@@ -166,16 +143,47 @@ namespace TepCommon
             /// </summary>
             protected P_ALG In;
             /// <summary>
+            /// Словарь с расчетными НОРМативными параметрами - ключ - идентификатор в алгоритме расчета
+            ///  (инициализируется в ~ от переданного параметра - требуемые типы расчета)
+            /// </summary>
+            protected P_ALG Norm;
+            /// <summary>
             /// Словарь с расчетными ВЫХОДными параметрами - ключ - идентификатор в алгоритме расчета
             /// </summary>
             protected P_ALG Out;
+
+            protected Dictionary<TaskCalculate.TYPE, P_ALG> _dictPAlg;
             /// <summary>
             /// Конструктор основной (с параметром)
             /// </summary>
             /// <param name="type">Тип расчета</param>
-            public TaskCalculate(ListDATATABLE listDataTables)
+            public TaskCalculate(TYPE types
+                , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+                , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+                , Dictionary<KEY_VALUES, List<VALUE>> dictValues)
+            //public TaskCalculate(TYPE types, ListDATATABLE listDataTables)
             {
-                initValues(listDataTables);
+                _types = types;
+
+                In = new P_ALG();
+                Out = new P_ALG();
+
+                _dictPAlg = new Dictionary<TYPE, P_ALG>() {
+                     { TYPE.IN_VALUES, In }
+                    , { TYPE.OUT_VALUES, Out }
+                };
+
+                if ((types & TYPE.OUT_TEP_NORM_VALUES) == TYPE.OUT_TEP_NORM_VALUES) {
+                    Norm = new P_ALG();
+                    _dictPAlg.Add(TYPE.OUT_TEP_NORM_VALUES, Norm);
+                } else
+                    ;
+
+                if (initValues(listNAlg, listPutPar, dictValues) < 0)
+                    Logging.Logg().Error(string.Format(@"TaskCalculate::ctor () - вызов 'initValues ()' ...")
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+                else
+                    ;
             }
             /// <summary>
             /// Возвратить индкус таблицы БД по указанным типам расчета и рассчитываемых значений
@@ -244,77 +252,184 @@ namespace TepCommon
 
                 return idRes;
             }
-            /// <summary>
-            /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
-            /// </summary>
-            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
-            protected abstract int initValues(ListDATATABLE listDataTables);
-            /// <summary>
-            /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
-            /// </summary>
-            /// <param name="pAlg">Объект - словарь структур для расчета</param>
-            /// <param name="tablePar">Таблица с параметрами</param>
-            /// <param name="tableVal">Таблица со значениями</param>
-            protected int initValues(P_ALG pAlg, DataTable tablePar, DataTable tableVal)
+
+            protected abstract int initValues(IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+                , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+                , Dictionary<KEY_VALUES, List<VALUE>> dictValues);
+
+            protected int initValues(P_ALG pAlg
+                , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+                , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+                , IEnumerable<VALUE> values)
             {
-                int iRes = 0; //Предположение, что ошибки нет
+                int iRes = -1;
 
-                DataRow[] rVal = null;
-                int idPut = -1
-                    , idComponent = -1;
-                string strNAlg = string.Empty;
+                NALG_PARAMETER nAlg;
+                VALUE value;
 
-                pAlg.Clear();
+                foreach (PUT_PARAMETER putPar in listPutPar) {
+                    if (putPar.IsNaN == false) {
+                        nAlg = listNAlg.First(item => { return item.m_Id == putPar.m_idNAlg; });
+                        value = values.First(item => { return item.m_IdPut == putPar.m_Id; });
 
-                // цикл по всем параметрам расчета
-                foreach (DataRow rPar in tablePar.Rows)
-                {
-                    // найти соответствие параметра в алгоритме расчета и значения для него
-                    idPut = (int)rPar[@"ID"];
-                    // идентификатор параметра в алгоритме расчета - ключ для словаря с его характеристиками
-                    strNAlg = ((string)rPar[@"N_ALG"]).Trim();
-                    rVal = tableVal.Select(@"ID_PUT=" + idPut);
-                    // проверить успешность нахождения соответствия
-                    if (rVal.Length == 1)
-                    {
-                        if (pAlg.ContainsKey(strNAlg) == false)
-                        {// добавить параметр в алгоритме расчета
-                            pAlg.Add(strNAlg, new P_ALG.P_PUT());
+                        if ((!(nAlg.m_Id < 0))
+                            && (value.m_IdPut > 0)
+                                && (((value.stamp_value.Equals(DateTime.MinValue) == false)))) {
+                            if (pAlg.ContainsKey(nAlg.m_nAlg) == false)
+                                pAlg.Add(nAlg.m_nAlg, new P_ALG.P_PUT());
+                            else
+                                ;
 
-                            pAlg[strNAlg].m_avg = (AGREGATE_ACTION)(Int16)rPar[@"AVG"];
-                            pAlg[strNAlg].m_bDeny = false;
-                        }
-                        else
+                            if (pAlg[nAlg.m_nAlg].ContainsKey(putPar.IdComponent) == false)
+                                pAlg[nAlg.m_nAlg].Add(putPar.IdComponent
+                                    , new P_ALG.P_PUT.P_VAL() {
+                                        m_iId = putPar.m_Id
+                                        , m_bDeny = !putPar.IsEnabled
+                                        , m_idRatio = putPar.m_prjRatio
+                                        , m_sQuality = value.m_iQuality
+                                        , value = value.value
+                                        , m_fMinValue = putPar.m_fltMinValue
+                                        , m_fMaxValue = putPar.m_fltMaxValue
+                                    });
+                            else
+                            // для параметра 1-го порядка уже содержится значение параметра 2-го порядка
+                                ;
+                        } else
+                        // не найден либо параметр 1-го порядка, либо значение для параметра 2-го порядка
                             ;
-                        // идентификатор компонента станции - ключ для словаря со значением и характеристиками для него
-                        idComponent = (int)rPar[@"ID_COMP"];
-
-                        if (pAlg[strNAlg].ContainsKey(idComponent) == false)
-                            pAlg[strNAlg].Add(idComponent, new P_ALG.P_PUT.P_VAL()
-                        // добавить параметр компонента в алгоритме расчета
-                            {
-                                m_iId = idPut
-                                //, m_iIdComponent = idComponent
-                                , m_bDeny = false
-                                , value = (float)(double)rVal[0][@"VALUE"]
-                                , m_sQuality = ID_QUALITY_VALUE.DEFAULT // не рассчитывался
-                                , m_idRatio = (int)rPar[@"ID_RATIO"]
-                                , m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (float)rPar[@"MINVALUE"] //??? - ошибка д.б. float
-                                , m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (float)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
-                            });
-                        else
-                            ;
-                    } else {// ошибка - не найдено соответствие параметр-значение
-                        iRes = -1;
-
-                        Logging.Logg().Error(@"TaskCalculate::initValues (ID_PUT=" + idPut + @") - не найдено соответствие параметра и значения...", Logging.INDEX_MESSAGE.NOT_SET);
-                    }
+                    } else
+                    // параметр 2-го порядка не достоверен
+                        ;
                 }
 
                 return iRes;
             }
+            ///// <summary>
+            ///// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
+            ///// </summary>
+            ///// <param name="pAlg">Объект - словарь структур для расчета</param>
+            ///// <param name="tablePar">Таблица с параметрами</param>
+            ///// <param name="tableVal">Таблица со значениями</param>
+            //protected int initValues(P_ALG pAlg, DataTable tablePar, DataTable tableVal)
+            //{
+            //    int iRes = 0; //Предположение, что ошибки нет
 
-            public abstract DataTable Calculate(TYPE type);
+            //    DataRow[] rVal = null;
+            //    int idPut = -1
+            //        , idComponent = -1;
+            //    string strNAlg = string.Empty;
+
+            //    pAlg.Clear();
+
+            //    // цикл по всем параметрам расчета
+            //    foreach (DataRow rPar in tablePar.Rows)
+            //    {
+            //        // найти соответствие параметра в алгоритме расчета и значения для него
+            //        idPut = (int)rPar[@"ID"];
+            //        // идентификатор параметра в алгоритме расчета - ключ для словаря с его характеристиками
+            //        strNAlg = ((string)rPar[@"N_ALG"]).Trim();
+            //        rVal = tableVal.Select(@"ID_PUT=" + idPut);
+            //        // проверить успешность нахождения соответствия
+            //        if (rVal.Length == 1)
+            //        {
+            //            if (pAlg.ContainsKey(strNAlg) == false)
+            //            {// добавить параметр в алгоритме расчета
+            //                pAlg.Add(strNAlg, new P_ALG.P_PUT());
+
+            //                pAlg[strNAlg].m_avg = (AGREGATE_ACTION)(Int16)rPar[@"AVG"];
+            //                pAlg[strNAlg].m_bDeny = false;
+            //            }
+            //            else
+            //                ;
+            //            // идентификатор компонента станции - ключ для словаря со значением и характеристиками для него
+            //            idComponent = (int)rPar[@"ID_COMP"];
+
+            //            if (pAlg[strNAlg].ContainsKey(idComponent) == false)
+            //                pAlg[strNAlg].Add(idComponent, new P_ALG.P_PUT.P_VAL()
+            //            // добавить параметр компонента в алгоритме расчета
+            //                {
+            //                    m_iId = idPut
+            //                    //, m_iIdComponent = idComponent
+            //                    , m_bDeny = false
+            //                    , value = (float)(double)rVal[0][@"VALUE"]
+            //                    , m_sQuality = ID_QUALITY_VALUE.DEFAULT // не рассчитывался
+            //                    , m_idRatio = (int)rPar[@"ID_RATIO"]
+            //                    , m_fMinValue = (rPar[@"MINVALUE"] is DBNull) ? 0 : (float)rPar[@"MINVALUE"] //??? - ошибка д.б. float
+            //                    , m_fMaxValue = (rPar[@"MAXVALUE"] is DBNull) ? 0 : (float)rPar[@"MAXVALUE"] //??? - ошибка д.б. float
+            //                });
+            //            else
+            //                ;
+            //        } else {// ошибка - не найдено соответствие параметр-значение
+            //            iRes = -1;
+
+            //            Logging.Logg().Error(@"TaskCalculate::initValues (ID_PUT=" + idPut + @") - не найдено соответствие параметра и значения...", Logging.INDEX_MESSAGE.NOT_SET);
+            //        }
+            //    }
+
+            //    return iRes;
+            //}
+
+            public abstract void Execute(Action <TYPE, IEnumerable<VALUE>, RESULT> delegateResultDataTable, Action<TYPE, string, RESULT> delegateResultPAlg);
+            /// <summary>
+            /// Преобразование словаря с результатом в таблицу для БД
+            /// </summary>
+            /// <param name="pAlg">Словарь с результатами расчета</param>
+            /// <returns>Таблица для БД с результатами расчета</returns>
+            protected DataTable resultToTable(P_ALG pAlg)
+            {
+                DataTable tableRes = new DataTable();
+
+                tableRes.Columns.AddRange(new DataColumn[] {
+                    new DataColumn (@"ID", typeof(int))
+                    , new DataColumn (@"QUALITY", typeof(short))
+                    , new DataColumn (@"VALUE", typeof(float))
+                });
+
+                foreach (P_ALG.P_PUT pPut in pAlg.Values)
+                    foreach (P_ALG.P_PUT.P_VAL val in pPut.Values)
+                        tableRes.Rows.Add(new object[]
+                            {
+                                val.m_iId //ID_PUT
+                                , val.m_sQuality //QUALITY
+                                //VALUE
+                                , ((double.IsNaN (val.value) == false) && (double.IsInfinity (val.value) == false)) ? val.value : -1F
+                            });
+
+                return tableRes;
+            }
+
+            #region IDisposable Support
+            private bool disposedValue = false; // Для определения избыточных вызовов
+
+            protected virtual void Dispose(bool disposing)
+            {
+                if (!disposedValue) {
+                    if (disposing) {
+                        // TODO: освободить управляемое состояние (управляемые объекты).
+                    }
+
+                    // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
+                    // TODO: задать большим полям значение NULL.
+
+                    disposedValue = true;
+                }
+            }
+
+            // TODO: переопределить метод завершения, только если Dispose(bool disposing) выше включает код для освобождения неуправляемых ресурсов.
+            // ~TaskCalculate() {
+            //   // Не изменяйте этот код. Разместите код очистки выше, в методе Dispose(bool disposing).
+            //   Dispose(false);
+            // }
+
+            // Этот код добавлен для правильной реализации шаблона высвобождаемого класса.
+            void IDisposable.Dispose()
+            {
+                // Не изменяйте этот код. Разместите код очистки выше, в методе Dispose(bool disposing).
+                Dispose(true);
+                // TODO: раскомментировать следующую строку, если метод завершения переопределен выше.
+                // GC.SuppressFinalize(this);
+            }
+            #endregion
         }
     }
 }

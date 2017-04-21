@@ -3,14 +3,8 @@ using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data;
-using System.Data.Common;
-using System.Text;
 
 using HClassLibrary;
-using InterfacePlugIn;
-using TepCommon;
-using Microsoft.Build.Framework;
-using System.Text.RegularExpressions;
 
 namespace TepCommon
 {
@@ -143,6 +137,10 @@ namespace TepCommon
             /// Признак отображения
             /// </summary>
             public bool m_bVisibled;
+
+            public float m_fltMinValue;
+
+            public float m_fltMaxValue;
             /// <summary>
             /// Конструктор объекта - 
             /// </summary>
@@ -160,7 +158,7 @@ namespace TepCommon
             //{
             //}
 
-            public PUT_PARAMETER(int id_alg/*KEY key*/, int id_put, TECComponent comp, int prjRatio, bool enabled, bool visibled)
+            public PUT_PARAMETER(int id_alg/*KEY key*/, int id_put, TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue)
             {
                 m_idNAlg = id_alg //Key = key
                     ;
@@ -169,6 +167,8 @@ namespace TepCommon
                 m_prjRatio = prjRatio;
                 m_bEnabled = enabled;
                 m_bVisibled = visibled;
+                m_fltMinValue = minValue;
+                m_fltMaxValue = maxValue;
             }
 
             public void SetEnabled(bool value)
@@ -220,9 +220,13 @@ namespace TepCommon
             /// Наименовнаие (полное) параметра
             /// </summary>
             public string m_strDescription;
-
+            /// <summary>
+            /// Признак выполенеия групповой (агрегатной) операции
+            /// </summary>
             public AGREGATE_ACTION m_sAverage;
-
+            /// <summary>
+            /// Идентификатор единицы измерения
+            /// </summary>
             public int m_iIdMeasure;
             /// <summary>
             /// Наименовнаие единиц измерения
@@ -864,7 +868,10 @@ namespace TepCommon
         /// Создать объект расчета для типа задачи
         /// </summary>
         /// <param name="type">Тип расчетной задачи</param>
-        protected abstract TaskCalculate createTaskCalculate(TaskCalculate.ListDATATABLE listDataTable);
+        protected abstract TaskCalculate createTaskCalculate(TaskCalculate.TYPE types
+            , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+            , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listInPutPar
+            , Dictionary<KEY_VALUES, List<VALUE>> dictValues);
 
         public enum RESULT { Exception = -2, Error, Ok, Warning, Debug }
         /// <summary>
@@ -2311,16 +2318,10 @@ namespace TepCommon
         {
             List<VALUE> listRes = new List<VALUE>();
 
-            TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE quality = ID_QUALITY_VALUE.NOT_REC;
+            int iQuality =1;
+            ID_QUALITY_VALUE quality = ID_QUALITY_VALUE.NOT_REC;
             DateTime dtValue;
 
-            //listRes = (from r in arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD].Rows.Cast<DataRow>()
-            //    select new VALUES() {
-            //        m_IdPut = int.Parse(r[@"ID_PUT"].ToString())
-            //        , m_iQuality = int.Parse(r[@"QUALITY"].ToString())
-            //        , value = float.Parse(r[@"VALUE"].ToString())
-            //        , stamp = (DateTime)r[@"WR_DATETIME"]
-            //    }).ToList();
             foreach (DataRow r in table.Rows) {
                 if ((!(r[@"DATE_TIME"] is DBNull))
                     && (DateTime.TryParse((string)r[@"DATE_TIME"], out dtValue) == true))
@@ -2328,8 +2329,13 @@ namespace TepCommon
                 else
                     dtValue = DateTime.MinValue;
 
+                if (int.TryParse(r[@"QUALITY"].ToString(), out iQuality) == true)
+                    quality = (ID_QUALITY_VALUE)iQuality;
+                else
+                    ;
+
                 listRes.Add(new VALUE() { m_IdPut = int.Parse(r[@"ID_PUT"].ToString())
-                    , m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)int.Parse (r[@"QUALITY"].ToString())
+                    , m_iQuality = quality
                     , value = float.Parse(r[@"VALUE"].ToString())
                     , stamp_value = dtValue
                     , stamp_write = !(r[@"WR_DATETIME"] is DBNull) ? (DateTime)r[@"WR_DATETIME"] : DateTime.MinValue
@@ -2337,6 +2343,55 @@ namespace TepCommon
             }
 
             return listRes;
+        }
+
+        public static DataTable CloneVariableDataTable
+        {
+            get
+            {
+                DataTable tableRes;
+
+                tableRes = new DataTable();
+
+                tableRes.Columns.AddRange(
+                    new DataColumn[] {
+                        new DataColumn (@"ID_PUT", typeof (int))
+                        , new DataColumn (@"ID_SESSION", typeof (long))
+                        , new DataColumn (@"QUALITY", typeof (int))
+                        , new DataColumn (@"VALUE", typeof (float))
+                        , new DataColumn (@"WR_DATETIME", typeof (DateTime))
+                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (string))
+                });
+
+                return tableRes;
+            }
+        }
+
+        public static DataTable ListValueToTable(long idSession, IEnumerable<VALUE> listValues)
+        {
+            DataTable tableRes = CloneVariableDataTable;
+
+            object[] values;
+
+            foreach (VALUE value in listValues) {
+                values = new object[] {
+                    value.m_IdPut
+                    , idSession
+                    , (int)value.m_iQuality
+                    , value.value
+                    , value.stamp_write
+                    , string.Format(@"{0:o}", value.stamp_value)
+                };
+
+                tableRes.Rows.Add(values);
+            }
+
+            return tableRes;
+        }
+
+        public DataTable ListValueToTable(TaskCalculate.TYPE type, STATE_VALUE state = STATE_VALUE.ORIGINAL)
+        {
+            return ListValueToTable(_Session.m_Id, Values[new KEY_VALUES() { TypeCalculate = type, TypeState = state }]);
         }
 
         public virtual DataTable GetTableValues(int idFPanel, TaskCalculate.TYPE type, out int err, out string strErr)
@@ -2423,55 +2478,25 @@ namespace TepCommon
 
             return tsRes;
         }
-        /// <summary>
-        /// Подготовить таблицы для проведения расчета
-        /// </summary>
-        /// <param name="err">Признак ошибки при выполнении функции</param>
-        /// <returns>Массив таблиц со значенями для расчета</returns>
-        protected abstract TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err);
+        ///// <summary>
+        ///// Подготовить таблицы для проведения расчета
+        ///// </summary>
+        ///// <param name="err">Признак ошибки при выполнении функции</param>
+        ///// <returns>Массив таблиц со значенями для расчета</returns>
+        //protected abstract TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err);
 
         //protected virtual void correctValues(ref DataTable tableValues, ref DataTable tablePars) { }
 
         /// <summary>
-        /// Рассчитать выходные значения
-        /// </summary>
-        /// <param name="type">Тип расчета</param>
-        /// <param name="tableOrigin">Оригинальная таблица</param>
-        /// <param name="tableCalc">Выходная таблмца с рассчитанными значениями</param>
-        /// <param name="err">Признак ошибки при выполнении метода</param>
-        private void calculate(TaskCalculate.TYPE type, out DataTable tableOrigin, out DataTable tableCalc, out int err)
-        {
-            TaskCalculate taskCalculate;
-
-            tableOrigin = new DataTable();
-            tableCalc = new DataTable();
-            err = -1;
-
-            TepCommon.HandlerDbTaskCalculate.TaskCalculate.ListDATATABLE listDataTables = null;
-
-            // подготовить таблицы для расчета
-            listDataTables = prepareCalculateValues(type, out err);
-
-            if (err == 0) {                
-            // произвести вычисления
-                tableOrigin = listDataTables.FindDataTable(TepCommon.HandlerDbTaskCalculate.TaskCalculate.INDEX_DATATABLE.OUT_NORM_VALUES);
-
-                taskCalculate = createTaskCalculate(listDataTables);
-                tableCalc = taskCalculate.Calculate(type);
-            } else
-                Logging.Logg().Error(@"HandlerDbTaskЕузCalculate::Calculate () - при подготовке данных для расчета...", Logging.INDEX_MESSAGE.NOT_SET);
-        }
-        /// <summary>
         /// Расчитать выходные-нормативные значения для задачи (например, "Расчет ТЭП")
         ///  , сохранить значения во временной таблице для возможности предварительного просмотра результата
         /// </summary>
-        public void Calculate(TaskCalculate.TYPE type)
+        public void Calculate(TaskCalculate.TYPE types)
         {
             int err = -1
                 , iRegDbConn = -1;
 
-            DataTable tableOrigin
-                , tableCalcRes;
+            //TaskCalculate.ListDATATABLE listDataTables;
 
             // регистрация соединения с БД
             RegisterDbConnection(out iRegDbConn);
@@ -2482,20 +2507,41 @@ namespace TepCommon
                         case ID_TASK.TEP:
                         //case ID_TASK.REAKTIVKA:// для этой задачи нет вычислений
                         case ID_TASK.AUTOBOOK:
-                        case ID_TASK.BAL_TEPLO: //Для работы с балансом тепла 6,06,2016 Апельганс
-                            calculate(type, out tableOrigin, out tableCalcRes, out err);
-                            if (!(err == 0)) {
-                                EventCalculateCompleted(RESULT.Error);
+                        case ID_TASK.BAL_TEPLO: //Для работы с балансом тепла 6.06.2016 Апельганс
+                            // произвести вычисления
+                            using (TaskCalculate taskCalculate = createTaskCalculate(types
+                                , ListNAlgParameter
+                                , ListPutParameter
+                                , Values)) {
+                                taskCalculate.Execute(
+                                    delegate (TaskCalculate.TYPE type, IEnumerable<VALUE> values, RESULT res) {
+                                        DataTable tableOrigin;
 
-                                Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - ошибка при выполнеии расчета задачи ID=" + IdTask.ToString() + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
-                            } else {
-                                // сохранить результаты вычисления вр временной таблице
-                                saveResult(tableOrigin, tableCalcRes, out err);
-                                // забрать значения из временной таблицы
-                                _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }] = TableToListValues(getVariableTableValues(type, out err));
+                                        err = res == RESULT.Ok ? 0 : res == RESULT.Warning ? 1 : -1;
 
-                                EventCalculateCompleted(RESULT.Ok);
-                            }
+                                        if (err == 0) {
+                                            tableOrigin = ListValueToTable(_Session.m_Id, _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }]);
+                                            // сохранить результаты вычисления вр временной таблице
+                                            saveResult(tableOrigin, ListValueToTable(_Session.m_Id, values), out err);
+                                            // забрать значения из временной таблицы
+                                            _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }] = TableToListValues(getVariableTableValues(type, out err));
+                                        } else
+                                            ;
+                                    }
+                                    , delegate (TaskCalculate.TYPE type, string pAlg, RESULT res) {
+                                        EventCalculateProccess(res == 0 ? RESULT.Ok : RESULT.Error);
+                                    }
+                                );
+
+                                if (!(err == 0)) {
+                                    EventCalculateCompleted(RESULT.Error);
+
+                                    Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - ошибка при выполнеии расчета задачи ID=" + IdTask.ToString() + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                                } else {
+
+                                    EventCalculateCompleted(RESULT.Ok);
+                                }
+                            }                            
                             break;
                         default:
                             Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - неизвестный тип задачи расчета...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -2515,6 +2561,7 @@ namespace TepCommon
             else
                 ;
         }
+
         /// <summary>
         /// Сохранить результаты вычислений в таблице для временных значений
         /// </summary>

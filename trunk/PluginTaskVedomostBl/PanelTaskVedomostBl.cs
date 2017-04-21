@@ -139,34 +139,6 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        ///класс для обработки данных
-        /// </summary>
-        public class VedomostBlCalculate : HandlerDbTaskCalculate.TaskCalculate
-        {
-            /// <summary>
-            /// Конструктор - основной (без параметров)
-            /// </summary>
-            public VedomostBlCalculate(ListDATATABLE listDataTable)
-                : base(listDataTable)
-            {
-            }
-
-            public override DataTable Calculate(TYPE type)
-            {
-                throw new NotImplementedException();
-            }
-
-            /// <summary>
-            /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
-            /// </summary>
-            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
-            protected override int initValues(ListDATATABLE listDataTables)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        /// <summary>
         /// Конструктор
         /// </summary>
         /// <param name="iFunc"></param>

@@ -4,25 +4,40 @@ using System.Data;
 using System.Globalization;
 using System.Windows.Forms;
 using TepCommon;
+using System.Collections.Generic;
 
 namespace PluginTaskVedomostBl
 {
     public class HandlerDbTaskVedomostBlCalculate : HandlerDbTaskCalculate
     {
-        private partial class TaskVedomostBlCalculate : TaskCalculate
+        /// <summary>
+        ///класс для обработки данных
+        /// </summary>
+        public class TaskVedomostBlCalculate : HandlerDbTaskCalculate.TaskCalculate
         {
-            public TaskVedomostBlCalculate(ListDATATABLE listDataTables) : base(listDataTables)
+            /// <summary>
+            /// Конструктор - основной (без параметров)
+            /// </summary>
+            public TaskVedomostBlCalculate(TYPE types
+                , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+                , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+                , Dictionary<KEY_VALUES, List<VALUE>> dictValues)
+                : base(types, listNAlg, listPutPar, dictValues)
             {
             }
 
-            protected override int initValues(ListDATATABLE listDataTables)
+            public override void Execute(Action<TYPE, IEnumerable<VALUE>, RESULT> delegateResultDataTable, Action<TYPE, string, RESULT> delegateResultPAlg)
             {
-                int iRes = -1;
-
-                return iRes;
+                throw new NotImplementedException();
             }
 
-            public override DataTable Calculate(TYPE type)
+            /// <summary>
+            /// Преобразование входных для расчета значений в структуры, пригодные для производства расчетов
+            /// </summary>
+            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
+            protected override int initValues(IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+                , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+                , Dictionary<KEY_VALUES, List<VALUE>> dictValues)
             {
                 throw new NotImplementedException();
             }
@@ -30,9 +45,12 @@ namespace PluginTaskVedomostBl
         /// <summary>
         /// Создать объект для расчета выходных значений
         /// </summary>
-        protected override TaskCalculate createTaskCalculate(TaskCalculate.ListDATATABLE listDataTable)
+        protected override TaskCalculate createTaskCalculate(TaskCalculate.TYPE types
+            , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+            , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+            , Dictionary<KEY_VALUES, List<VALUE>> dictValues)
         {
-            return new TaskVedomostBlCalculate(listDataTable);
+            return new TaskVedomostBlCalculate(types, listNAlg, listPutPar, dictValues);
         }
 
         public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
@@ -40,9 +58,9 @@ namespace PluginTaskVedomostBl
             throw new NotImplementedException();
         }
 
-        protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
-        {
-            throw new NotImplementedException();
-        }
+        //protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }

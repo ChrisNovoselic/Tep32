@@ -18,10 +18,19 @@ namespace PluginTaskBalTeplo
         /// </summary>
         public /*partial*/ class TaskBalTeploCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
-            protected override int initValues(TepCommon.HandlerDbTaskCalculate.TaskCalculate.ListDATATABLE listDataTables)
+            protected override int initValues(IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+                , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+                , Dictionary<KEY_VALUES, List<VALUE>> dictValues)
             {
-                initValues(Out, listDataTables.FindDataTable(INDEX_DATATABLE.OUT_PARAMETER), listDataTables.FindDataTable(INDEX_DATATABLE.OUT_VALUES));
-                initValues(In, listDataTables.FindDataTable(INDEX_DATATABLE.IN_PARAMETER), listDataTables.FindDataTable(INDEX_DATATABLE.IN_VALUES));
+                int iRes = -1;
+
+                #region инициализация входных параметров/значений
+                iRes = initValues(In
+                    , listNAlg
+                    , listPutPar
+                    , dictValues[new KEY_VALUES() { TypeCalculate = TYPE.IN_VALUES, TypeState = STATE_VALUE.EDIT }]);
+                #endregion
+
                 return 0;
             }
 
@@ -73,11 +82,12 @@ namespace PluginTaskBalTeplo
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public TaskBalTeploCalculate(ListDATATABLE listDataTable)
-                : base(listDataTable)
+            public TaskBalTeploCalculate(TYPE types
+                , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+                , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+                , Dictionary<KEY_VALUES, List<VALUE>> dictValues)
+                : base(types, listNAlg, listPutPar, dictValues)
             {
-                In = new P_ALG();
-                Out = new P_ALG();
             }
 
             /// <summary>
@@ -85,40 +95,34 @@ namespace PluginTaskBalTeplo
             /// </summary>
             /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
             /// <returns>Таблица выходных значений, совместимая со структурой выходныъ значений в БД</returns>
-            public DataTable[] CalculateOut(ListDATATABLE listDataTables)
+            public DataTable[] CalculateOut()
             {
-                int iInitValuesRes = -1;
-
                 DataTable tableRes = null;
                 DataTable tableResIn = null;
 
-                iInitValuesRes = initValues(listDataTables);
-
-                if (iInitValuesRes == 0) {
-                    var items = from pair in In
-                                orderby pair.Key ascending
-                                select pair;
-                    // расчет
-                    foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in items) {
-                        //pAlg.Value[ID_COMP[ST]].value = calculateOut(pAlg.Key);
-                        calculateIn(pAlg.Key);
-                    }
-                    // преобразование в таблицу
-                    tableResIn = resultToTable(In);
-
-                    items = from pair in Out
+                var items = from pair in In
                             orderby pair.Key ascending
                             select pair;
+                // расчет
+                foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in items) {
+                    //pAlg.Value[ID_COMP[ST]].value = calculateOut(pAlg.Key);
+                    calculateIn(pAlg.Key);
+                }
+                // преобразование в таблицу
+                tableResIn = resultToTable(In);
 
-                    // расчет
-                    foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in items) {
-                        //pAlg.Value[ID_COMP[ST]].value = calculateOut(pAlg.Key);
-                        calculateOut(pAlg.Key);
-                    }
-                    // преобразование в таблицу
-                    tableRes = resultToTable(Out);
-                } else
-                    ; // ошибка при инициализации параметров, значений
+                items = from pair in Out
+                        orderby pair.Key ascending
+                        select pair;
+
+                // расчет
+                foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in items) {
+                    //pAlg.Value[ID_COMP[ST]].value = calculateOut(pAlg.Key);
+                    calculateOut(pAlg.Key);
+                }
+                // преобразование в таблицу
+                tableRes = resultToTable(Out);
+                
                 return new DataTable[] { tableResIn, tableRes };
             }
 
@@ -725,29 +729,7 @@ namespace PluginTaskBalTeplo
                 return fRes;
             }
 
-            private DataTable resultToTable(P_ALG pAlg)
-            {
-                DataTable tableRes = new DataTable();
-
-                tableRes.Columns.AddRange(new DataColumn[] {
-                    new DataColumn (@"ID", typeof(int))
-                    , new DataColumn (@"QUALITY", typeof(short))
-                    , new DataColumn (@"VALUE", typeof(float))
-                });
-
-                foreach (P_ALG.P_PUT pPut in pAlg.Values)
-                    foreach (P_ALG.P_PUT.P_VAL val in pPut.Values)
-                        tableRes.Rows.Add(new object[]
-                            {
-                                val.m_iId //ID_PUT
-                                , val.m_sQuality //QUALITY
-                                , val.value //VALUE
-                            });
-
-                return tableRes;
-            }
-
-            public override DataTable Calculate(TYPE type)
+            public override void Execute(Action<TYPE, IEnumerable<VALUE>, RESULT> delegateResultDataTable, Action<TYPE, string, RESULT> delegateResultPAlg)
             {
                 throw new NotImplementedException();
             }
@@ -756,25 +738,13 @@ namespace PluginTaskBalTeplo
         /// Создать объект расчета для типа задачи
         /// </summary>
         /// <param name="type">Тип расчетной задачи</param>
-        protected override TaskCalculate createTaskCalculate(TaskCalculate.ListDATATABLE listDataTable)
+        protected override TaskCalculate createTaskCalculate(TaskCalculate.TYPE types
+                , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+                , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+                , Dictionary<KEY_VALUES, List<VALUE>> dictValues)
         {
-            return new TaskBalTeploCalculate(listDataTable);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="err"></param>
-        /// <returns></returns>
-        public DataTable OutValues(out int err)
-        {
-            string strQuery;
-            strQuery = @"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION]" // as [ID]
-                + @" FROM [" + s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"]"
-                + @" WHERE [ID_SESSION]=" + _Session.m_Id;
-
-            return Select(strQuery, out err);
-        }        
+            return new TaskBalTeploCalculate(types, listNAlg, listPutPar, dictValues);
+        }     
 
         /// <summary>
         /// Формирование таблицы для сохранения значений OUT
@@ -881,43 +851,43 @@ namespace PluginTaskBalTeplo
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// Подготовить таблицы для проведения расчета
-        /// </summary>
-        /// <param name="err">Признак ошибки при выполнении функции</param>
-        /// <returns>Массив таблиц со значенями для расчета</returns>
-        protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
-        {
-            TaskCalculate.ListDATATABLE listRes = new TaskCalculate.ListDATATABLE();
-            err = -1;
+        ///// <summary>
+        ///// Подготовить таблицы для проведения расчета
+        ///// </summary>
+        ///// <param name="err">Признак ошибки при выполнении функции</param>
+        ///// <returns>Массив таблиц со значенями для расчета</returns>
+        //protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
+        //{
+        //    TaskCalculate.ListDATATABLE listRes = new TaskCalculate.ListDATATABLE();
+        //    err = -1;
 
-            //long idSession = -1;
-            DataTable tableVal = null;
+        //    //long idSession = -1;
+        //    DataTable tableVal = null;
 
-            if (isRegisterDbConnection == true)
-                // проверить наличие сессии
-                if (_Session.m_Id > 0) {
-                    // получить описание входных парметров в алгоритме расчета
-                    tableVal = Select(getQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err);
-                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_PARAMETER, m_table = tableVal.Copy() });
-                    // получить входные значения для сессии
-                    tableVal = getVariableTableValues(TaskCalculate.TYPE.IN_VALUES, out err);
-                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
+        //    if (isRegisterDbConnection == true)
+        //        // проверить наличие сессии
+        //        if (_Session.m_Id > 0) {
+        //            // получить описание входных парметров в алгоритме расчета
+        //            tableVal = Select(getQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err);
+        //            listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_PARAMETER, m_table = tableVal.Copy() });
+        //            // получить входные значения для сессии
+        //            tableVal = getVariableTableValues(TaskCalculate.TYPE.IN_VALUES, out err);
+        //            listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
 
-                    if (type == TaskCalculate.TYPE.OUT_VALUES) {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
-                        tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err);
-                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_PARAMETER, m_table = tableVal.Copy() });
-                        // получить выходные значения для сессии
-                        tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_VALUES, out err);
-                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_VALUES, m_table = tableVal.Copy() });
-                    } else
-                        ;
-                } else
-                    Logging.Logg().Error(@"HandlerDbTaskCalculate::prepareTepCalculateValues () - при получении идентифкатора сессии расчета...", Logging.INDEX_MESSAGE.NOT_SET);
-            else
-                ; // ошибка при регистрации соединения с БД
+        //            if (type == TaskCalculate.TYPE.OUT_VALUES) {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
+        //                tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err);
+        //                listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_PARAMETER, m_table = tableVal.Copy() });
+        //                // получить выходные значения для сессии
+        //                tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_VALUES, out err);
+        //                listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_VALUES, m_table = tableVal.Copy() });
+        //            } else
+        //                ;
+        //        } else
+        //            Logging.Logg().Error(@"HandlerDbTaskCalculate::prepareTepCalculateValues () - при получении идентифкатора сессии расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+        //    else
+        //        ; // ошибка при регистрации соединения с БД
 
-            return listRes;
-        }
+        //    return listRes;
+        //}
     }
 }

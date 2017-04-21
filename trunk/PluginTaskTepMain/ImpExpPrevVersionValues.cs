@@ -93,16 +93,7 @@ namespace PluginTaskTepMain
             try {
                 iNumColumnRatio = 3;
 
-                tableRes = new DataTable();
-                tableRes.Columns.AddRange(new DataColumn[] {
-                    new DataColumn ("ID_PUT", typeof(Int32))
-                    , new DataColumn ("ID_SESSION", typeof(long))
-                    , new DataColumn ("QUALITY", typeof(Int16))
-                    , new DataColumn ("VALUE", typeof(double))                    
-                    //, new DataColumn ("AVG", typeof(Int16))
-                    , new DataColumn ("WR_DATETIME", typeof(DateTime))
-                    , new DataColumn ("EXTENDED_DEFINITION", typeof(Int32))
-                });
+                tableRes = HandlerDbTaskTepCalculate.CloneVariableDataTable;
 
                 using (OpenFileDialog openFileDialog = new OpenFileDialog()) {
                     openFileDialog.CheckPathExists =

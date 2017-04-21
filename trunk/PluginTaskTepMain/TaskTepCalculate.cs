@@ -74,10 +74,6 @@ namespace PluginTaskTepMain
             /// </summary>
             private FTable fTable;
             /// <summary>
-            /// Словарь с расчетными НОРМативными параметрами - ключ - идентификатор в алгоритме расчета
-            /// </summary>
-            private P_ALG Norm;
-            /// <summary>
             /// Перечисление - режимы работы оборудования
             /// </summary>
             private enum MODE_DEV : short
@@ -93,42 +89,36 @@ namespace PluginTaskTepMain
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public TaskTepCalculate(ListDATATABLE listDataTable)
-                : base(listDataTable)
+            public TaskTepCalculate(TYPE types
+                , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+                , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+                , Dictionary<KEY_VALUES, List<VALUE>> dictValues
+                , DataTable tableNFunc)
+                : base(types, listNAlg, listPutPar, dictValues)
             {
                 m_indxCompRealTime = INDX_COMP.UNKNOWN;
 
-                In = new P_ALG();
-                Norm = new P_ALG();
-                Out = new P_ALG();
+                fTable = new FTable(tableNFunc);
 
-                fTable = new FTable();
+                ////??? вызывается в конструкторе базового класса
+                //if (initValues(listDataTable) == 0) {
+                //} else
+                //    ; // ошибка при инициализации параметров, значений
             }
 
-            protected override int initValues(ListDATATABLE listDataTables)
+            protected override int initValues(IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+                , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+                , Dictionary<KEY_VALUES, List<VALUE>> dictValues)
             {
                 int iRes = -1;
 
-                // инициализация нормативных значений для оборудования
-                fTable.Set(listDataTables.FindDataTable(INDEX_DATATABLE.FTABLE));
-                // инициализация входных значений
-                iRes = initInValues(listDataTables.FindDataTable(INDEX_DATATABLE.IN_PARAMETER)
-                    , listDataTables.FindDataTable(INDEX_DATATABLE.IN_VALUES));
-
-                // инициализация выходных-нормативных значений
-                iRes = initNormValues(listDataTables.FindDataTable(INDEX_DATATABLE.OUT_NORM_PARAMETER)
-                    , listDataTables.FindDataTable(INDEX_DATATABLE.OUT_NORM_VALUES));
-
-                return iRes;
-            }
-
-            private int initInValues(DataTable tablePar, DataTable tableVal)
-            {
-                int iRes = 0;
-
+                #region инициализация входных параметров/значений
                 MODE_DEV mDev = MODE_DEV.UNKNOWN;
 
-                iRes = initValues(In, tablePar, tableVal);
+                iRes = initValues(In
+                    , listNAlg
+                    , listPutPar
+                    , dictValues[new KEY_VALUES() { TypeCalculate = TYPE.IN_VALUES, TypeState = STATE_VALUE.EDIT }]);
 
                 if (In.ContainsKey(@"74") == true) {
                     _modeDev = new Dictionary<int, MODE_DEV>();
@@ -163,26 +153,29 @@ namespace PluginTaskTepMain
                 } else {
                     iRes = -1;
 
-                    Logging.Logg().Error(@"TaskTepCalculate::initInValues () - во входной таблице не установлен режим оборудования...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Error(@"TaskTepCalculate::initValues () - во входной таблице не установлен режим оборудования...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
+                #endregion
 
-                return iRes;
-            }
+                #region инициализация выходных-нормативных параметров/значений
+                if (iRes == 0)                
+                    iRes = initValues(Norm
+                        , listNAlg
+                        , listPutPar
+                        , dictValues[new KEY_VALUES() { TypeCalculate = TYPE.OUT_TEP_NORM_VALUES, TypeState = STATE_VALUE.EDIT }]);
+                else
+                    ;
+                #endregion
 
-            private int initNormValues(DataTable tablePar, DataTable tableVal)
-            {
-                int iRes = -1;
-
-                iRes = initValues(Norm, tablePar, tableVal);
-
-                return iRes;
-            }
-
-            private int initMktValues(DataTable tablePar, DataTable tableVal)
-            {
-                int iRes = -1;
-
-                iRes = initValues(Out, tablePar, tableVal);
+                #region инициализация выходных параметров/значений
+                if (iRes == 0)
+                    iRes = initValues(Norm
+                        , listNAlg
+                        , listPutPar
+                        , dictValues[new KEY_VALUES() { TypeCalculate = TYPE.OUT_VALUES, TypeState = STATE_VALUE.EDIT }]);
+                else
+                    ;
+                #endregion
 
                 return iRes;
             }
@@ -435,33 +428,32 @@ namespace PluginTaskTepMain
             //}
             #endregion
 
-            public override DataTable Calculate(TYPE type)
+            public override void Execute(Action<TYPE, IEnumerable<VALUE>, RESULT> delegateResultDataTable, Action<TYPE, string, RESULT> delegateResultPAlg)
             {
-                throw new NotImplementedException();
-            }
-            /// <summary>
-            /// Расчитать выходные-нормативные значения
-            /// </summary>
-            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
-            /// <returns>Таблица нормативных значений, совместимая со структурой выходныъ значений в БД</returns>
-            public DataTable CalculateNormative(ListDATATABLE listDataTables)
-            {
-                int iInitValuesRes = -1;
+                RESULT res = RESULT.Ok;
 
-                DataTable tableRes = null;
+                foreach (TYPE type in Enum.GetValues(typeof(TYPE))) {
+                    if ((_types & type) == type) {
+                //if (IsSingleTaskCalculateType == true) {
+                        // расчет
+                        switch (type) {
+                            case TYPE.OUT_TEP_NORM_VALUES:
+                                res = calculateNormative();
+                                break;
+                            case TYPE.OUT_VALUES:
+                                res = calculateMaket();
+                                break;
+                            default:
+                                throw new Exception(string.Format(@"TaskTepCalculate::Execute () - неизвестный тип [{0}] расчета...", type));
+                        }
 
-                iInitValuesRes = initValues(listDataTables);
-
-                if (iInitValuesRes == 0) {
-                    // расчет
-                    calculateNormative();
-
-                    // преобразование в таблицу
-                    tableRes = resultToTable(Norm);
-                } else
-                    ; // ошибка при инициализации параметров, значений
-
-                return tableRes;
+                        // преобразование в таблицу, вернуть
+                        delegateResultDataTable(type, resultToTable(_dictPAlg[type]), res);
+                    } else
+                        ;
+                //} else
+                //    throw new Exception(string.Format(@"TaskTepCalculate::Execute () - указано несколько типов [{0}] для расчета...", type));
+                }
             }
             /// <summary>
             /// Элемент расчета
@@ -477,13 +469,37 @@ namespace PluginTaskTepMain
                 /// </summary>
                 public bool IsGroup;
             }
+
+            private int calculate(P_ALG pAlg, NodeCalc[] arCalculate)
+            {
+                int iRes = 0;
+
+                try {
+                    arCalculate.ToList().ForEach(node => {
+                        try {
+                            if (node.IsGroup == true)
+                                pAlg[node.nAlg][ST].value = calculateMaket(node.nAlg);
+                            else
+                                calculateMaket(node.nAlg);
+                        } catch (Exception e) {
+                            Logging.Logg().Exception(e, string.Format(@"TaskTepCalculate:;calculateNormative () - расчет для nAlg={0}...", node.nAlg), Logging.INDEX_MESSAGE.NOT_SET);
+
+                            iRes--;
+                        }
+                    });
+                } catch {
+                    iRes = -1 * (arCalculate.Length + 1);
+                }
+
+                return iRes;
+            }
             /// <summary>
             /// Расчитать нормативные значения
             /// </summary>
             /// <returns>Признак наличия ошибки при расчете</returns>
-            private int calculateNormative()
+            private RESULT calculateNormative()
             {
-                int iRes = 0;
+                RESULT res = 0;
                 string nAlg = string.Empty;
 
                 #region Определения для элементов расчета
@@ -838,92 +854,26 @@ namespace PluginTaskTepMain
                 };
                 #endregion
 
-                for (int i = 0; i < arCalculate.Length; i++) {
-                    try {
-                        nAlg = arCalculate[i].nAlg;
+                res = !(calculate(_dictPAlg[TYPE.OUT_TEP_NORM_VALUES], arCalculate) < 0) ? RESULT.Ok : RESULT.Error;
 
-                        if (arCalculate[i].IsGroup == true)
-                            Norm[nAlg][ST].value = calculateNormative(nAlg);
-                        else
-                            calculateNormative(nAlg);
-                    } catch (Exception e) {
-                        Logging.Logg().Exception(e, string.Format(@"TaskTepCalculate:;calculateNormative () - расчет для nAlg={0}...", nAlg), Logging.INDEX_MESSAGE.NOT_SET);
-                    }
-                }
-
-                return iRes;
-            }
-            /// <summary>
-            /// Расчитать выходные значения
-            /// </summary>
-            /// <param name="arDataTables">Массив таблиц с указанием их предназначения</param>
-            /// <returns>Таблица выходных значений, совместимая со структурой выходныъ значений в БД</returns>
-            public DataTable CalculateMaket(ListDATATABLE listDataTables)
-            {
-                int iInitValuesRes = -1;
-
-                DataTable tableRes = null;
-
-                iInitValuesRes = initValues(listDataTables);
-
-                if (iInitValuesRes == 0) {
-                    // расчет
-                    foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Norm)
-                        pAlg.Value[ST].value = calculateNormative(pAlg.Key);
-
-                    foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in Out)
-                        pAlg.Value[ST].value = calculateMaket(pAlg.Key);
-
-                    // преобразование в таблицу
-                    tableRes = resultToTable(Out);
-                } else
-                    ; // ошибка при инициализации параметров, значений
-
-                return tableRes;
+                return res;
             }
             /// <summary>
             /// Расчитать выходные значения
             /// </summary>
             /// <returns>Признак наличия/отсутствия ошибки при выполнении метода</returns>
-            private int calculateMaket()
+            private RESULT calculateMaket()
             {
-                int iRes = 0;
+                RESULT res = RESULT.Ok;
 
                 #region Определения для элементов расчета
                 NodeCalc[] arCalculate = new NodeCalc[] {
                 };
                 #endregion
 
-                arCalculate.ToList().ForEach(node => { if (node.IsGroup == true) Out[node.nAlg][ST].value = calculateMaket(node.nAlg); else calculateMaket(node.nAlg); });
+                res = !(calculate(_dictPAlg[TYPE.OUT_VALUES], arCalculate) < 0) ? RESULT.Ok : RESULT.Error;
 
-                return iRes;
-            }
-            /// <summary>
-            /// Преобразование словаря с результатом в таблицу для БД
-            /// </summary>
-            /// <param name="pAlg">Словарь с результатами расчета</param>
-            /// <returns>Таблица для БД с результатами расчета</returns>
-            private DataTable resultToTable(P_ALG pAlg)
-            {
-                DataTable tableRes = new DataTable();
-
-                tableRes.Columns.AddRange(new DataColumn[] {
-                    new DataColumn (@"ID", typeof(int))
-                    , new DataColumn (@"QUALITY", typeof(short))
-                    , new DataColumn (@"VALUE", typeof(float))
-                });
-
-                foreach (P_ALG.P_PUT pPut in pAlg.Values)
-                    foreach (P_ALG.P_PUT.P_VAL val in pPut.Values)
-                        tableRes.Rows.Add(new object[]
-                            {
-                                val.m_iId //ID_PUT
-                                , val.m_sQuality //QUALITY
-                                //VALUE
-                                , ((double.IsNaN (val.value) == false) && (double.IsInfinity (val.value) == false)) ? val.value : -1F
-                            });
-
-                return tableRes;
+                return res;
             }
         }
         /// <summary>
@@ -966,61 +916,66 @@ namespace PluginTaskTepMain
         /// Создать объект расчета для типа задачи
         /// </summary>
         /// <param name="type">Тип расчетной задачи</param>
-        protected override TaskCalculate createTaskCalculate(TaskCalculate.ListDATATABLE listDataTable)
+        protected override TaskCalculate createTaskCalculate(TaskCalculate.TYPE types
+            , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+            , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+            , Dictionary<KEY_VALUES, List<VALUE>> dictValues)
         {
-            return new TaskTepCalculate(listDataTable);
+            int err = -1;
+
+            return new TaskTepCalculate(types, listNAlg, listPutPar, dictValues, GetDataTable(ID_DBTABLE.FTABLE, out err));
         }
-        /// <summary>
-        /// Подготовить таблицы для проведения расчета
-        /// </summary>
-        /// <param name="err">Признак ошибки при выполнении функции</param>
-        /// <returns>Массив таблиц со значенями для расчета</returns>
-        protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
-        {
-            TaskCalculate.ListDATATABLE listRes = new TaskCalculate.ListDATATABLE();
-            err = -1;
+        ///// <summary>
+        ///// Подготовить таблицы для проведения расчета
+        ///// </summary>
+        ///// <param name="err">Признак ошибки при выполнении функции</param>
+        ///// <returns>Массив таблиц со значенями для расчета</returns>
+        //protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE types, out int err)
+        //{
+        //    TaskCalculate.ListDATATABLE listRes = new TaskCalculate.ListDATATABLE();
+        //    err = -1;
 
-            //long idSession = -1;
-            DataTable tableVal = null;
+        //    //long idSession = -1;
+        //    DataTable tableVal = null;
 
-            if (isRegisterDbConnection == true)
-                // проверить наличие сессии
-                if (_Session.m_Id > 0) {
-                    // получить таблицу со значеняими нормативных графиков
-                    tableVal = GetDataTable(ID_DBTABLE.FTABLE, out err);
-                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.FTABLE, m_table = tableVal.Copy() });
-                    // получить описание входных парметров в алгоритме расчета
-                    tableVal = Select(getQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err);
-                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_PARAMETER, m_table = tableVal.Copy() });
-                    // получить входные значения для сессии
-                    tableVal = getVariableTableValues(TaskCalculate.TYPE.IN_VALUES, out err);
-                    listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
+        //    if (isRegisterDbConnection == true)
+        //        // проверить наличие сессии
+        //        if (_Session.m_Id > 0) {
+        //            // получить таблицу со значеняими нормативных графиков
+        //            tableVal = GetDataTable(ID_DBTABLE.FTABLE, out err);
+        //            listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.FTABLE, m_table = tableVal.Copy() });
+        //            // получить описание входных парметров в алгоритме расчета
+        //            tableVal = Select(getQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err);
+        //            listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_PARAMETER, m_table = tableVal.Copy() });
+        //            // получить входные значения для сессии
+        //            tableVal = getVariableTableValues(TaskCalculate.TYPE.IN_VALUES, out err);
+        //            listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.IN_VALUES, m_table = tableVal.Copy() });
 
-                    if (IdTask == ID_TASK.TEP) {
-                        // получить описание выходных-нормативных парметров в алгоритме расчета
-                        tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES), out err);
-                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_NORM_PARAMETER, m_table = tableVal.Copy() });
-                        // получить выходные-нормативные значения для сессии
-                        tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
-                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_NORM_VALUES, m_table = tableVal.Copy() });
-                    } else
-                        ;
+        //            if (IdTask == ID_TASK.TEP) {
+        //                // получить описание выходных-нормативных парметров в алгоритме расчета
+        //                tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES), out err);
+        //                listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_NORM_PARAMETER, m_table = tableVal.Copy() });
+        //                // получить выходные-нормативные значения для сессии
+        //                tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_TEP_NORM_VALUES, out err);
+        //                listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_NORM_VALUES, m_table = tableVal.Copy() });
+        //            } else
+        //                ;
 
-                    if (type == TaskCalculate.TYPE.OUT_VALUES) {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
-                        tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err);
-                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_PARAMETER, m_table = tableVal.Copy() });
-                        // получить выходные значения для сессии
-                        tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_VALUES, out err);
-                        listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_VALUES, m_table = tableVal.Copy() });
-                    } else
-                        ;
-                } else
-                    Logging.Logg().Error(@"HandlerDbTaskCalculate::prepareTepCalculateValues () - при получении идентифкатора сессии расчета...", Logging.INDEX_MESSAGE.NOT_SET);
-            else
-                ; // ошибка при регистрации соединения с БД
+        //            if ((types & TaskCalculate.TYPE.OUT_VALUES) == TaskCalculate.TYPE.OUT_VALUES) {// дополнительно получить описание выходных-нормативных параметров в алгоритме расчета
+        //                tableVal = Select(getQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err);
+        //                listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_PARAMETER, m_table = tableVal.Copy() });
+        //                // получить выходные значения для сессии
+        //                tableVal = getVariableTableValues(TaskCalculate.TYPE.OUT_VALUES, out err);
+        //                listRes.Add(new TaskCalculate.DATATABLE() { m_indx = TaskCalculate.INDEX_DATATABLE.OUT_VALUES, m_table = tableVal.Copy() });
+        //            } else
+        //                ;
+        //        } else
+        //            Logging.Logg().Error(@"HandlerDbTaskCalculate::prepareTepCalculateValues () - при получении идентифкатора сессии расчета...", Logging.INDEX_MESSAGE.NOT_SET);
+        //    else
+        //        ; // ошибка при регистрации соединения с БД
 
-            return listRes;
-        }        
+        //    return listRes;
+        //}        
 
         public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
         {

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Data;
 using HClassLibrary;
 using TepCommon;
+using System.Collections.Generic;
 
 namespace PluginTaskReaktivka
 {
@@ -14,7 +15,10 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Создать объект для расчета выходных значений
         /// </summary>
-        protected override TaskCalculate createTaskCalculate(TaskCalculate.ListDATATABLE listDataTable)
+        protected override TaskCalculate createTaskCalculate(TaskCalculate.TYPE types
+            , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
+            , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
+            , Dictionary<KEY_VALUES, List<VALUE>> dictValues)
         {
             throw new NotImplementedException();
         }
@@ -24,9 +28,9 @@ namespace PluginTaskReaktivka
             throw new NotImplementedException();
         }
 
-        protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
-        {
-            throw new NotImplementedException();
-        }
+        //protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }
