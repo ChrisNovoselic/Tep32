@@ -112,6 +112,8 @@ namespace PluginTaskTepMain
             {
                 int iRes = -1;
 
+                P_ALG.KEY_P_VALUE keyPValue;
+
                 #region инициализация входных параметров/значений
                 MODE_DEV mDev = MODE_DEV.UNKNOWN;
 
@@ -124,7 +126,9 @@ namespace PluginTaskTepMain
                     _modeDev = new Dictionary<int, MODE_DEV>();
 
                     for (int i = (int)INDX_COMP.iBL1; (i < (int)INDX_COMP.COUNT) && (iRes == 0); i++) {
-                        switch ((int)In[@"74"][ID_COMP[i]].value) {
+                        keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = DateTime.MinValue; // дата/время у всех все равно одинаковая
+
+                        switch ((int)In[@"74"][keyPValue].value) {
                             case 1: //[MODE_DEV].1 - Конденсационный
                                 mDev = MODE_DEV.COND_1;
                                 break;
@@ -140,7 +144,7 @@ namespace PluginTaskTepMain
                             default:
                                 iRes = -1;
 
-                                logErrorUnknownModeDev(@"InitInValues", ID_COMP[i]);
+                                logErrorUnknownModeDev(@"InitInValues", keyPValue);
                                 break;
                         }
 
@@ -428,7 +432,7 @@ namespace PluginTaskTepMain
             //}
             #endregion
 
-            public override void Execute(Action<TYPE, IEnumerable<VALUE>, RESULT> delegateResultDataTable, Action<TYPE, string, RESULT> delegateResultPAlg)
+            public override void Execute(Action<TYPE, IEnumerable<VALUE>, RESULT> delegateResultListValue, Action<TYPE, int, RESULT> delegateResultNAlg)
             {
                 RESULT res = RESULT.Ok;
 
@@ -448,7 +452,7 @@ namespace PluginTaskTepMain
                         }
 
                         // преобразование в таблицу, вернуть
-                        delegateResultDataTable(type, resultToTable(_dictPAlg[type]), res);
+                        delegateResultListValue(type, resultToListValue(_dictPAlg[type]), res);
                     } else
                         ;
                 //} else
@@ -474,13 +478,15 @@ namespace PluginTaskTepMain
             {
                 int iRes = 0;
 
+                P_ALG.KEY_P_VALUE keyStationPValue = new P_ALG.KEY_P_VALUE() { Id = ST, Stamp = DateTime.MinValue };
+
                 try {
                     arCalculate.ToList().ForEach(node => {
                         try {
                             if (node.IsGroup == true)
-                                pAlg[node.nAlg][ST].value = calculateMaket(node.nAlg);
+                                pAlg[node.nAlg][keyStationPValue].value = calculateMaket(node.nAlg, DateTime.MinValue);
                             else
-                                calculateMaket(node.nAlg);
+                                calculateMaket(node.nAlg, DateTime.MinValue);
                         } catch (Exception e) {
                             Logging.Logg().Exception(e, string.Format(@"TaskTepCalculate:;calculateNormative () - расчет для nAlg={0}...", node.nAlg), Logging.INDEX_MESSAGE.NOT_SET);
 

@@ -318,6 +318,7 @@ namespace PluginTaskAutobook
                 , ModeDataDatetime = HandlerDb.ModeDataDatetime
             });
         }
+
         /// <summary>
         /// Обработчик события - изменение состояния элемента 'CheckedListBox'
         /// </summary>
@@ -327,6 +328,7 @@ namespace PluginTaskAutobook
         {
             throw new NotImplementedException();
         }
+
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение даты/времени, диапазона даты/времени)
         /// </summary>
@@ -337,13 +339,16 @@ namespace PluginTaskAutobook
             addValueRows();
         }
 
+        /// <summary>
+        /// Построить структуру представления для отображения данных
+        /// </summary>
         private void buildStructureValues()
         {
             m_dgvValues.AddColumns(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter);
 
-            addValueRows();
-            
+            addValueRows();            
         }
+
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
         /// </summary>
@@ -353,6 +358,7 @@ namespace PluginTaskAutobook
 
             buildStructureValues();
         }
+
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
         /// </summary>
@@ -372,6 +378,7 @@ namespace PluginTaskAutobook
 
             m_dgvValues.AddNAlgParameter(obj);
         }
+
         /// <summary>
         /// Обработчик события - добавить Put-параметр
         /// </summary>
@@ -382,6 +389,7 @@ namespace PluginTaskAutobook
 
             m_dgvValues.AddPutParameter(obj);
         }
+
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
         /// </summary>
@@ -392,50 +400,10 @@ namespace PluginTaskAutobook
         }
         #endregion
 
-        ///// <summary>
-        ///// загрузка/обновление данных
-        ///// </summary>
-        //private void updateDataValues()
-        //{
-        //    int err = -1
-        //        , cnt = Session.CountBasePeriod
-        //        , iRegDbConn = -1;
-        //    string errMsg = string.Empty;
-        //    DateTimeRange[] dtrGet = HandlerDb.GetDateTimeRangeValuesVar();
-
-        //    m_handlerDb.RegisterDbConnection(out iRegDbConn);
-        //    clear();
-
-        //    if (!(iRegDbConn < 0))
-        //    {
-        //        // установить значения в таблицах для расчета, создать новую сессию
-        //        setValues(dtrGet, out err, out errMsg);
-
-        //        if (err == 0)
-        //        {
-        //            if (m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Rows.Count > 0)
-        //            {
-        //                // создать копии для возможности сохранения изменений
-        //                setValues();
-
-        //                m_dgvValues.ShowValues(m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE]);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            // в случае ошибки "обнулить" идентификатор сессии
-        //            deleteSession();
-        //            throw new Exception(@"PanelTaskAutobookYearlyPlan::updatedataValues() - " + errMsg);
-        //        }
-        //    }
-        //    else
-        //        //удалить сессию
-        //        deleteSession();
-
-        //    if (!(iRegDbConn > 0))
-        //        m_handlerDb.UnRegisterDbConnection();
-        //}
-
+        /// <summary>
+        /// Обработчик события - завершена загрузка данных (установка значений в коллекциях со значениями)
+        /// </summary>
+        /// <param name="res">Признак успещности/ошибки при выполнении операции</param>
         protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             int err = -1;
@@ -465,82 +433,7 @@ namespace PluginTaskAutobook
         {
             throw new NotImplementedException();
         }
-
-        ///// <summary>
-        ///// Проверка выбранного диапазона
-        ///// </summary>
-        ///// <param name="dtRange">диапазон дат</param>
-        ///// <returns></returns>
-        //private bool rangeCheking(DateTimeRange[] dtRange)
-        //{
-        //    bool bflag = false;
-
-        //    for (int i = 0; i < dtRange.Length; i++)
-        //        if (dtRange[i].End.Month > DateTime.Now.Month)
-        //            if (dtRange[i].End.Year >= DateTime.Now.Year)
-        //                bflag = true;
-
-        //    return bflag;
-        //}
-
-        ///// <summary>
-        ///// получение значений
-        ///// создание сессии
-        ///// </summary>
-        ///// <param name="arQueryRanges">массив временных отрезков</param>
-        ///// <param name="err">номер ошибки</param>
-        ///// <param name="strErr">текст ошибки</param>
-        //private void setValues(DateTimeRange[] arQueryRanges, out int err, out string strErr)
-        //{
-        //    err = 0;
-        //    strErr = string.Empty;
-        //    //Создание сессии
-        //    Session.New();
-        //    //Запрос для получения архивных данных
-        //    m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE] = new DataTable();
-        //    //Запрос для получения автоматически собираемых данных
-        //    m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = HandlerDb.GetValuesVar
-        //        (
-        //        TaskCalculateType
-        //        , Session.ActualIdPeriod
-        //        , Session.CountBasePeriod
-        //        , arQueryRanges
-        //       , out err
-        //        );
-
-        //    //Проверить признак выполнения запроса
-        //    if (err == 0)
-        //    {
-        //        //Проверить признак выполнения запроса
-        //        if (err == 0)
-        //            //Начать новую сессию расчета
-        //            // ,получить входные для расчета значения для возможности редактирования
-        //            HandlerDb.CreateSession(m_Id
-        //                , Session.CountBasePeriod
-        //                , m_dictTableDictPrj[ID_DBTABLE.IN_PARAMETER]
-        //                , ref m_arTableOrigin
-        //                , new DateTimeRange(arQueryRanges[0].Begin, arQueryRanges[arQueryRanges.Length - 1].End)
-        //                , out err, out strErr);
-        //        else
-        //            strErr = @"ошибка получения данных по умолчанию с " + Session.m_rangeDatetime.Begin.ToString()
-        //                + @" по " + Session.m_rangeDatetime.End.ToString();
-        //    }
-        //    else
-        //        strErr = @"ошибка получения автоматически собираемых данных с " + Session.m_rangeDatetime.Begin.ToString()
-        //            + @" по " + Session.m_rangeDatetime.End.ToString();
-        //}
-
-        ///// <summary>
-        ///// copy
-        ///// </summary>
-        //private void setValues()
-        //{
-        //    //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-        //    //         m_arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Clone();
-        //    m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-        //        m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE].Clone();
-        //}
-
+        
         /// <summary>
         /// Очистить содержание представления
         /// </summary>
@@ -595,27 +488,6 @@ namespace PluginTaskAutobook
             // ... - загрузить/отобразить значения из БД
             HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
         }
-
-        ///// <summary>
-        ///// Изменение года)
-        ///// </summary>
-        ///// <param name="dtBegin">дата</param>
-        //private void changeDateInGrid(DateTime dtBegin)
-        //{
-        //    (Controls.Find(INDEX_CONTROL.LABEL_YEARPLAN.ToString(), true)[0] as Label).Text =
-        //        string.Format(@"Плановая выработка электроэнергии на {0} год.", dtBegin.Year);
-
-        //    DateTime dtNew = new DateTime(dtBegin.Year, 1, 1);
-        //    //m_dgvAB.SelectionChanged -= dgvAB_SelectionChanged;
-        //    //заполнение представления
-        //    for (int i = 0; i < GetMonth.Count(); i++)
-        //    {
-        //        m_dgvValues.Rows[i].Cells["DATE"].Value = dtNew.ToShortDateString();
-        //        dtNew = dtNew.AddMonths(1);
-        //    }
-
-        //    m_dgvValues.Rows[dtBegin.Month - 1].Selected = true;
-        //}
 
         /// <summary>
         /// Освободить (при закрытии), связанные с функционалом ресурсы

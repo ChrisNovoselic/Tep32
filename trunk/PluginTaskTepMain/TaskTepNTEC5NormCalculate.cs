@@ -25,21 +25,22 @@ namespace PluginTaskTepMain
             /// <summary>
             /// Зафиксировать в журнале сообщение об ошибке - неизвестный тип режима работы оборудования
             /// </summary>
-            private void logErrorUnknownModeDev(string nAlg, int indxComp)
+            private void logErrorUnknownModeDev(string nAlg, P_ALG.KEY_P_VALUE keyPValue)
             {
-                Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @", ID_COMP=" + ID_COMP[indxComp] + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @", ID_COMP=" + keyPValue.Id + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             /// <summary>
             /// Рассчитать значения для параметра в алгоритме расчета по идентификатору
             /// </summary>
             /// <param name="nAlg">Строковый идентификатор параметра</param>
             /// <returns>Значение для группы компонентов</returns>
-            private float calculateNormative(string nAlg)
+            private float calculateNormative(string nAlg, DateTime stamp)
             {
                 float fRes = 0F; // значение группы компонентов - результат выполнения
 
-                int i = -1 // переменная цикла
-                    , id_comp = -1; // идентификатор компонента
+                int i = -1; // переменная цикла
+                P_ALG.KEY_P_VALUE keyStationPValue
+                    , keyPValue;
                 float fSum = 0F, fSum1 = 0F, fSum2 = 0F // промежуточные для вычисления величины
                     , fTmp = -1F, fTmp1 = 0F, fTmp2 = 0F;
                 int iDay = DateTime.Now.Day
@@ -51,6 +52,8 @@ namespace PluginTaskTepMain
                     , postfixFTable = string.Empty;
                 float[,] fRunk4 = null;
 
+                keyStationPValue = new P_ALG.KEY_P_VALUE() { Id = ID_COMP[ST], Stamp = stamp };
+
                 try
                 {                
                     switch (nAlg)
@@ -59,23 +62,24 @@ namespace PluginTaskTepMain
                         case @"1": //TAU раб
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = In[nAlg][id_comp].value;
+                                Norm[nAlg][keyPValue].value = In[nAlg][keyPValue].value;
                             }
                             //??? для станции и для компонентов д.б. одинаковое значение
-                            fRes = Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value;
+                            keyPValue.Id = BL1; keyPValue.Stamp = stamp;
+                            fRes = Norm[nAlg][keyPValue].value;
                             break;
                         case @"2": //Э т
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
                                 
-                                Norm[nAlg][id_comp].value = In[nAlg][id_comp].value;
+                                Norm[nAlg][keyPValue].value = In[nAlg][keyPValue].value;
                                 //??? чтобы расчет привести к виду в образце
-                                Norm[nAlg][id_comp].value /= 1000000;
+                                Norm[nAlg][keyPValue].value /= 1000000;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -84,19 +88,19 @@ namespace PluginTaskTepMain
                         case @"3": //Q то                            
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 if (isRealTime == true)
-                                    if (In[@"47"][id_comp].value / In[@"1"][id_comp].value < 0.7F)
-                                        Norm[nAlg][id_comp].value = 0F;
+                                    if (In[@"47"][keyPValue].value / In[@"1"][keyPValue].value < 0.7F)
+                                        Norm[nAlg][keyPValue].value = 0F;
                                     else
-                                        Norm[nAlg][id_comp].value = In[@"47"][id_comp].value * (In[@"48"][id_comp].value - In[@"49"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = In[@"47"][keyPValue].value * (In[@"48"][keyPValue].value - In[@"49"][keyPValue].value);
                                 else
-                                    Norm[nAlg][id_comp].value = In[@"47"][id_comp].value * (In[@"48"][id_comp].value - In[@"49"][id_comp].value);
+                                    Norm[nAlg][keyPValue].value = In[@"47"][keyPValue].value * (In[@"48"][keyPValue].value - In[@"49"][keyPValue].value);
                                 //??? чтобы расчет привести к виду в образце
-                                Norm[nAlg][id_comp].value /= 1000;
+                                Norm[nAlg][keyPValue].value /= 1000;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -106,59 +110,59 @@ namespace PluginTaskTepMain
                             if (isRealTime == true)
                                 for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                                 {
-                                    id_comp = ID_COMP[i];
+                                    keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                    if (Norm[@"3"][id_comp].value == 0F)
-                                        Norm[nAlg][id_comp].value = 0F;
+                                    if (Norm[@"3"][keyPValue].value == 0F)
+                                        Norm[nAlg][keyPValue].value = 0F;
                                     else
-                                        Norm[nAlg][id_comp].value = In[@"46"][id_comp].value;
+                                        Norm[nAlg][keyPValue].value = In[@"46"][keyPValue].value;
 
-                                    fRes += Norm[nAlg][id_comp].value;
+                                    fRes += Norm[nAlg][keyPValue].value;
                                 }
                             else
                                 for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                                 {
-                                    id_comp = ID_COMP[i];
+                                    keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                    Norm[nAlg][id_comp].value = In[@"46"][id_comp].value;
+                                    Norm[nAlg][keyPValue].value = In[@"46"][keyPValue].value;
 
-                                    fRes += Norm[nAlg][id_comp].value;
+                                    fRes += Norm[nAlg][keyPValue].value;
                                 }
                             break;
                         #endregion
 
                         #region 5 - Q отп ст
                         case @"5": //Q отп ст
-                            fRes = In[@"81"][ST].value;
+                            fRes = In[@"81"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 6 - Q отп роу
                         case @"6": //Q отп роу
-                            fRes = In[@"82"][ST].value;
+                            fRes = In[@"82"][keyStationPValue].value;
 
                             if (isRealTime == true)
                                 for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                    id_comp = ID_COMP[i];
+                                    keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                    Norm[nAlg][id_comp].value = Norm[@"4"][id_comp].value / 2;
+                                    Norm[nAlg][keyPValue].value = Norm[@"4"][keyPValue].value / 2;
                                 }
                             else
                             {
                                 fSum = 0F;
 
                                 for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                    id_comp = ID_COMP[i];
+                                    keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                    fSum += In[@"3"][id_comp].value == 0 ? 0 : Norm[@"4"][id_comp].value;
+                                    fSum += In[@"3"][keyPValue].value == 0 ? 0 : Norm[@"4"][keyPValue].value;
                                 }
 
                                 for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                    id_comp = ID_COMP[i];
+                                    keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                    Norm[nAlg][id_comp].value = Norm[@"3"][id_comp].value == 0F ? 0F :
-                                        Norm[@"4"][id_comp].value == 0F ? 0F :
-                                            fRes * Norm[@"4"][id_comp].value / fSum;
+                                    Norm[nAlg][keyPValue].value = Norm[@"3"][keyPValue].value == 0F ? 0F :
+                                        Norm[@"4"][keyPValue].value == 0F ? 0F :
+                                            fRes * Norm[@"4"][keyPValue].value / fSum;
                                 }
                             }
                             break;
@@ -166,21 +170,24 @@ namespace PluginTaskTepMain
 
                         #region 7 - Q отп тепл
                         case @"7":
-                            fRes = Norm[@"5"][ST].value - Norm[@"6"][ST].value - In[@"85"][ST].value;
+                            fRes = Norm[@"5"][keyStationPValue].value - Norm[@"6"][keyStationPValue].value - In[@"85"][keyStationPValue].value;
 
                             if (isRealTime == true)
                             {
                                 fTmp = qSeason ? 0.97F : 0.95F;
                                 //16 мая - 30 сентября, 1 октября - 15 мая
-                                for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                                    Norm[nAlg][id_comp].value = Norm[@"3"][id_comp].value * fTmp;
+                                for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
+                                    keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
+
+                                    Norm[nAlg][keyPValue].value = Norm[@"3"][keyPValue].value * fTmp;
+                                }
                             }
                             else
                                 for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                    id_comp = ID_COMP[i];
+                                    keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                    Norm[nAlg][id_comp].value = Norm[@"3"][ST].value == 0F ? 0F :
-                                        fRes * Norm[@"3"][id_comp].value / Norm[@"3"][ST].value;
+                                    Norm[nAlg][keyPValue].value = Norm[@"3"][keyStationPValue].value == 0F ? 0F :
+                                        fRes * Norm[@"3"][keyPValue].value / Norm[@"3"][keyStationPValue].value;
                                 }
                             break;
                         #endregion
@@ -188,11 +195,11 @@ namespace PluginTaskTepMain
                         #region 8 - Q отп
                         case @"8":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"6"][id_comp].value + Norm[@"7"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"6"][keyPValue].value + Norm[@"7"][keyPValue].value;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -200,36 +207,36 @@ namespace PluginTaskTepMain
                         #region 9 - N т
                         case @"9":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (!(Norm[@"1"][id_comp].value == 0F))
-                                    Norm[nAlg][id_comp].value = Norm[@"2"][id_comp].value / Norm[@"1"][id_comp].value;
+                                if (!(Norm[@"1"][keyPValue].value == 0F))
+                                    Norm[nAlg][keyPValue].value = Norm[@"2"][keyPValue].value / Norm[@"1"][keyPValue].value;
                                 else
                                     ;
                             }
 
-                            fRes = Norm[@"2"][ST].value / Norm[@"1"][ST].value;
+                            fRes = Norm[@"2"][keyStationPValue].value / Norm[@"1"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 10 - Q т ср
                         case @"10":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"3"][id_comp].value / Norm[@"1"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"3"][keyPValue].value / Norm[@"1"][keyPValue].value;
                             }
 
-                            fRes = Norm[@"3"][ST].value / Norm[@"1"][ST].value;
+                            fRes = Norm[@"3"][keyStationPValue].value / Norm[@"1"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 10.1 - P вто
                         case @"10.1":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = In[@"37"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = In[@"37"][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -237,12 +244,12 @@ namespace PluginTaskTepMain
                         #region 11 - Q роу ср
                         case @"11":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"4"][id_comp].value / Norm[@"1"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"4"][keyPValue].value / Norm[@"1"][keyPValue].value;
                             }
 
-                            fRes = Norm[@"4"][ST].value / Norm[@"1"][ST].value;
+                            fRes = Norm[@"4"][keyStationPValue].value / Norm[@"1"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -252,28 +259,28 @@ namespace PluginTaskTepMain
                             {
                                 fTmp = 0F;
 
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
-                                        fTmp = fTable.F1(@"2.40:1", Norm[@"9"][id_comp].value);
+                                        fTmp = fTable.F1(@"2.40:1", Norm[@"9"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
-                                        fTmp = fTable.F3(@"2.1:3", Norm[@"9"][id_comp].value, Norm[@"10"][id_comp].value, Norm[@"10.1"][id_comp].value);
+                                        fTmp = fTable.F3(@"2.1:3", Norm[@"9"][keyPValue].value, Norm[@"10"][keyPValue].value, Norm[@"10.1"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
-                                        fTmp = fTable.F3(@"2.86:3", Norm[@"9"][id_comp].value, Norm[@"10"][id_comp].value, In[@"38"][id_comp].value);
+                                        fTmp = fTable.F3(@"2.86:3", Norm[@"9"][keyPValue].value, Norm[@"10"][keyPValue].value, In[@"38"][keyPValue].value);
                                         break;
                                     case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
-                                        fTmp = fTable.F2(@"2.50:2", Norm[@"9"][id_comp].value, Norm[@"10.1"][id_comp].value);
+                                        fTmp = fTable.F2(@"2.50:2", Norm[@"9"][keyPValue].value, Norm[@"10.1"][keyPValue].value);
                                         break;
                                     default:
-                                        logErrorUnknownModeDev(nAlg, i);
+                                        logErrorUnknownModeDev(nAlg, keyPValue);
                                         break;
                                 }
 
-                                Norm[nAlg][id_comp].value = fTmp;
+                                Norm[nAlg][keyPValue].value = fTmp;
                             }
                             break;
                         #endregion
@@ -282,30 +289,30 @@ namespace PluginTaskTepMain
                         case @"13":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 fTmp = 0F;
 
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
-                                        fTmp = fTable.F1(@"2.55:1", Norm[@"9"][id_comp].value);
+                                        fTmp = fTable.F1(@"2.55:1", Norm[@"9"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
-                                        fTmp = fTable.F3(@"2.2:3", Norm[@"9"][id_comp].value, Norm[@"10"][id_comp].value, Norm[@"10.1"][id_comp].value);
+                                        fTmp = fTable.F3(@"2.2:3", Norm[@"9"][keyPValue].value, Norm[@"10"][keyPValue].value, Norm[@"10.1"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
-                                        fTmp = fTable.F3(@"2.87:3", Norm[@"9"][id_comp].value, Norm[@"10"][id_comp].value, In[@"38"][id_comp].value);
+                                        fTmp = fTable.F3(@"2.87:3", Norm[@"9"][keyPValue].value, Norm[@"10"][keyPValue].value, In[@"38"][keyPValue].value);
                                         break;
                                     case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
-                                        fTmp = fTable.F3(@"2.2:3", Norm[@"9"][id_comp].value, Norm[@"10"][id_comp].value, Norm[@"10.1"][id_comp].value);
+                                        fTmp = fTable.F3(@"2.2:3", Norm[@"9"][keyPValue].value, Norm[@"10"][keyPValue].value, Norm[@"10.1"][keyPValue].value);
                                         break;
                                     default:
-                                        logErrorUnknownModeDev(nAlg, i);
+                                        logErrorUnknownModeDev(nAlg, keyPValue);
                                         break;
                                 }
 
-                                Norm[nAlg][id_comp].value = fTmp + In[@"46"][id_comp].value / 0.7F / In[@"1"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = fTmp + In[@"46"][keyPValue].value / 0.7F / In[@"1"][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -316,47 +323,47 @@ namespace PluginTaskTepMain
                             {
                                 fTmp = 0F;
 
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
-                                        fTmp = fTable.F1(@"2.3:1", Norm[@"13"][id_comp].value);
+                                        fTmp = fTable.F1(@"2.3:1", Norm[@"13"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
                                     case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
-                                        fTmp = fTable.F3(@"2.3б:3", Norm[@"13"][id_comp].value, Norm[@"10"][id_comp].value, Norm[@"10.1"][id_comp].value);
+                                        fTmp = fTable.F3(@"2.3б:3", Norm[@"13"][keyPValue].value, Norm[@"10"][keyPValue].value, Norm[@"10.1"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
-                                        fTmp = fTable.F3(@"2.3а:3", Norm[@"13"][id_comp].value, Norm[@"10"][id_comp].value, In[@"38"][id_comp].value);
+                                        fTmp = fTable.F3(@"2.3а:3", Norm[@"13"][keyPValue].value, Norm[@"10"][keyPValue].value, In[@"38"][keyPValue].value);
                                         break;
                                     default:
-                                        logErrorUnknownModeDev(nAlg, i);
+                                        logErrorUnknownModeDev(nAlg, keyPValue);
                                         break;
                                 }
 
-                                Norm[nAlg][id_comp].value = fTmp - In[@"46"][id_comp].value / 0.7F / In[@"1"][id_comp].value;
-                                fSum += Norm[nAlg][id_comp].value;
+                                Norm[nAlg][keyPValue].value = fTmp - In[@"46"][keyPValue].value / 0.7F / In[@"1"][keyPValue].value;
+                                fSum += Norm[nAlg][keyPValue].value;
                             }
 
                             if (isRealTimeBL1456 == true)
                                 //??? почему умножаем на кол-во блоков
                                 //??? как определяется кол-во блоков
-                                Norm[nAlg][ST].value = fSum * n_blokov1;
+                                Norm[nAlg][keyStationPValue].value = fSum * n_blokov1;
                             else
-                                Norm[nAlg][ST].value = fSum;
+                                Norm[nAlg][keyStationPValue].value = fSum;
                             break;
                         #endregion
 
                         #region 14.1 - G цв
                         case @"14.1":
-                            if (In[@"70"][ST].value == 0F)
+                            if (In[@"70"][keyStationPValue].value == 0F)
                                 fRes = 0F;
                             else
                             {
-                                fTmp = (isRealTimeBL1456 == true) ? n_blokov1 : In[@"89"][ST].value;
+                                fTmp = (isRealTimeBL1456 == true) ? n_blokov1 : In[@"89"][keyStationPValue].value;
                                 fRunkValues[(int)FTable.FRUNK.F1] = fTmp;
-                                fRunkValues[(int)FTable.FRUNK.F2] = (float)Math.Round((decimal)(In[@"6"][ST].value / In[@"70"][ST].value / 1.9F), 1);
+                                fRunkValues[(int)FTable.FRUNK.F2] = (float)Math.Round((decimal)(In[@"6"][keyStationPValue].value / In[@"70"][keyStationPValue].value / 1.9F), 1);
 
                                 fRes = fTable.F2(@"2.4а:2", fRunkValues[(int)FTable.FRUNK.F1], fRunkValues[(int)FTable.FRUNK.F2]);
                             }
@@ -369,12 +376,12 @@ namespace PluginTaskTepMain
 
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"14"][id_comp].value;
-                                fRunkValues[(int)FTable.FRUNK.F2] = In[@"28"][id_comp].value;
+                                fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"14"][keyPValue].value;
+                                fRunkValues[(int)FTable.FRUNK.F2] = In[@"28"][keyPValue].value;
 
-                                Norm[nAlg][id_comp].value = fTable.F3(@"2.4:3", fRunkValues);
+                                Norm[nAlg][keyPValue].value = fTable.F3(@"2.4:3", fRunkValues);
                             }
                             break;
                         #endregion
@@ -383,12 +390,12 @@ namespace PluginTaskTepMain
                         case @"15.1":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"15"][id_comp].value;
-                                fRunkValues[(int)FTable.FRUNK.F2] = Norm[@"14"][id_comp].value;
+                                fRunkValues[(int)FTable.FRUNK.F1] = Norm[@"15"][keyPValue].value;
+                                fRunkValues[(int)FTable.FRUNK.F2] = Norm[@"14"][keyPValue].value;
 
-                                Norm[nAlg][id_comp].value = fTable.F2(@"2.84:2", fRunkValues);
+                                Norm[nAlg][keyPValue].value = fTable.F2(@"2.84:2", fRunkValues);
                             }
                             break;
                         #endregion
@@ -397,10 +404,10 @@ namespace PluginTaskTepMain
                         case @"16":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (!(Norm[@"9"][id_comp].value == 0F))
-                                    Norm[nAlg][id_comp].value = 1000 * Norm[@"15.1"][id_comp].value / Norm[@"9"][id_comp].value;
+                                if (!(Norm[@"9"][keyPValue].value == 0F))
+                                    Norm[nAlg][keyPValue].value = 1000 * Norm[@"15.1"][keyPValue].value / Norm[@"9"][keyPValue].value;
                                 else
                                     ;
                             }
@@ -413,24 +420,24 @@ namespace PluginTaskTepMain
                             {
                                 fTmp = 0F;
 
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
-                                        fTmp = fTable.F1(@"2.5а:1", Norm[@"13"][id_comp].value);
+                                        fTmp = fTable.F1(@"2.5а:1", Norm[@"13"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
                                     case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
                                     case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
-                                        fTmp = fTable.F2(@"2.5:2", Norm[@"13"][id_comp].value, Norm[@"10"][id_comp].value);
+                                        fTmp = fTable.F2(@"2.5:2", Norm[@"13"][keyPValue].value, Norm[@"10"][keyPValue].value);
                                         break;
                                     default:
-                                        logErrorUnknownModeDev(nAlg, i);
+                                        logErrorUnknownModeDev(nAlg, keyPValue);
                                         break;
                                 }
 
-                                Norm[nAlg][id_comp].value = fTmp * Norm[@"11"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = fTmp * Norm[@"11"][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -441,7 +448,7 @@ namespace PluginTaskTepMain
                             {
                                 fTmp = 0F;
 
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
@@ -450,20 +457,20 @@ namespace PluginTaskTepMain
                                         Logging.Logg().Warning(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - не расчитывается при режиме '1 - Конденсационный'...", Logging.INDEX_MESSAGE.NOT_SET);
                                         break;
                                     case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
-                                        fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][id_comp].value);
+                                        fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO1_2a: //[MODE_DEV].2а - Электр.граф (1 ст.)
-                                        fTmp = fTable.F1(@"2.89:1", Norm[@"38"][id_comp].value);
+                                        fTmp = fTable.F1(@"2.89:1", Norm[@"38"][keyPValue].value);
                                         break;
                                     case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
-                                        fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][id_comp].value);
+                                        fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][keyPValue].value);
                                         break;
                                     default:
-                                        logErrorUnknownModeDev(nAlg, i);
+                                        logErrorUnknownModeDev(nAlg, keyPValue);
                                         break;
                                 }
 
-                                Norm[nAlg][id_comp].value = fTmp;
+                                Norm[nAlg][keyPValue].value = fTmp;
                             }
                             break;
                         #endregion
@@ -471,9 +478,9 @@ namespace PluginTaskTepMain
                         #region 19 - dt 2
                         case @"19":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = In[@"49"][id_comp].value - Norm[@"18"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = In[@"49"][keyPValue].value - Norm[@"18"][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -483,10 +490,10 @@ namespace PluginTaskTepMain
                             fRunk4 = new float[2, (int)(INDX_COMP.COUNT - 1)];
                             // для левой границы [0, i] 4-х мерной функции
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 nameFTable = @"2.7";
-                                fTmp = Norm[@"10.1"][id_comp].value;
+                                fTmp = Norm[@"10.1"][keyPValue].value;
 
                                 switch (_modeDev[i])
                                 {
@@ -519,7 +526,7 @@ namespace PluginTaskTepMain
                                                                 else
                                                                     ;
 
-                                        if (!(Norm[@"19"][id_comp].value < 0))
+                                        if (!(Norm[@"19"][keyPValue].value < 0))
                                             postfixFTable = @"+";
                                         else
                                             postfixFTable = @"-";
@@ -527,10 +534,10 @@ namespace PluginTaskTepMain
                                         nameFTable += postfixFTable;
                                         nameFTable += @":3";
 
-                                        fRunk4[0, i] = fTable.F3(nameFTable, Norm[@"13"][id_comp].value, Norm[@"10"][id_comp].value, Norm[@"19"][id_comp].value);
+                                        fRunk4[0, i] = fTable.F3(nameFTable, Norm[@"13"][keyPValue].value, Norm[@"10"][keyPValue].value, Norm[@"19"][keyPValue].value);
                                         break;
                                     default:
-                                        logErrorUnknownModeDev(nAlg, i);
+                                        logErrorUnknownModeDev(nAlg, keyPValue);
                                         break;
                                 }
                             }
@@ -538,10 +545,10 @@ namespace PluginTaskTepMain
                             // для правой границы [1, i] 4-х мерной функции
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 nameFTable = @"2.7";
-                                fTmp = Norm[@"10.1"][id_comp].value;
+                                fTmp = Norm[@"10.1"][keyPValue].value;
 
                                 switch (_modeDev[i])
                                 {
@@ -574,7 +581,7 @@ namespace PluginTaskTepMain
                                                                 else
                                                                     ;
 
-                                        if (!(Norm[@"19"][id_comp].value < 0))
+                                        if (!(Norm[@"19"][keyPValue].value < 0))
                                             postfixFTable = @"+";
                                         else
                                             postfixFTable = @"-";
@@ -582,19 +589,19 @@ namespace PluginTaskTepMain
                                         nameFTable += postfixFTable;
                                         nameFTable += @":3";
 
-                                        fRunk4[1, i] = fTable.F3(nameFTable, Norm[@"13"][id_comp].value, Norm[@"10"][id_comp].value, Norm[@"19"][id_comp].value);
+                                        fRunk4[1, i] = fTable.F3(nameFTable, Norm[@"13"][keyPValue].value, Norm[@"10"][keyPValue].value, Norm[@"19"][keyPValue].value);
                                         break;
                                     default:
-                                        logErrorUnknownModeDev(nAlg, i);
+                                        logErrorUnknownModeDev(nAlg, keyPValue);
                                         break;
                                 }
                             }
 
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                fTmp = Norm[@"10.1"][id_comp].value;
+                                fTmp = Norm[@"10.1"][keyPValue].value;
 
                                 switch (_modeDev[i])
                                 {
@@ -604,40 +611,40 @@ namespace PluginTaskTepMain
                                     case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
                                     case MODE_DEV.TEPLO_3: //[MODE_DEV].3 - По тепл. граф.
                                         if (fTmp < 0.8F)
-                                            Norm[nAlg][id_comp].value = fRunk4[0, i];
+                                            Norm[nAlg][keyPValue].value = fRunk4[0, i];
                                         else
                                             if ((!(fTmp < 0.8F)) && (!(fTmp > 0.99F)))
-                                                Norm[nAlg][id_comp].value = (fRunk4[0, i] * (0.99F - fTmp) + fRunk4[1, i] * (fTmp - 0.8F)) / 0.19F;
+                                                Norm[nAlg][keyPValue].value = (fRunk4[0, i] * (0.99F - fTmp) + fRunk4[1, i] * (fTmp - 0.8F)) / 0.19F;
                                             else
                                                 if ((!(fTmp < 1.0F)) && (!(fTmp > 1.19F)))
-                                                    Norm[nAlg][id_comp].value = (fRunk4[0, i] * (1.19F - fTmp) + fRunk4[1, i] * (fTmp - 1.0F)) / 0.19F;
+                                                    Norm[nAlg][keyPValue].value = (fRunk4[0, i] * (1.19F - fTmp) + fRunk4[1, i] * (fTmp - 1.0F)) / 0.19F;
                                                 else
                                                     if ((!(fTmp < 1.2F)) && (!(fTmp > 1.39F)))
-                                                        Norm[nAlg][id_comp].value = (fRunk4[0, i] * (1.39F - fTmp) + fRunk4[1, i] * (fTmp - 1.2F)) / 0.19F;
+                                                        Norm[nAlg][keyPValue].value = (fRunk4[0, i] * (1.39F - fTmp) + fRunk4[1, i] * (fTmp - 1.2F)) / 0.19F;
                                                     else
                                                         if ((!(fTmp < 1.4F)) && (!(fTmp > 1.59F)))
-                                                            Norm[nAlg][id_comp].value = (fRunk4[0, i] * (1.59F - fTmp) + fRunk4[1, i] * (fTmp - 1.4F)) / 0.19F;
+                                                            Norm[nAlg][keyPValue].value = (fRunk4[0, i] * (1.59F - fTmp) + fRunk4[1, i] * (fTmp - 1.4F)) / 0.19F;
                                                         else
                                                             if ((!(fTmp < 1.6F)) && (!(fTmp > 1.79F)))
-                                                                Norm[nAlg][id_comp].value = (fRunk4[0, i] * (1.79F - fTmp) + fRunk4[1, i] * (fTmp - 1.6F)) / 0.19F;
+                                                                Norm[nAlg][keyPValue].value = (fRunk4[0, i] * (1.79F - fTmp) + fRunk4[1, i] * (fTmp - 1.6F)) / 0.19F;
                                                             else
                                                                 if (!(fTmp < 1.8F))
-                                                                    Norm[nAlg][id_comp].value = (fRunk4[0, i] * (1.99F - fTmp) + fRunk4[1, i] * (fTmp - 1.8F)) / 0.19F;
+                                                                    Norm[nAlg][keyPValue].value = (fRunk4[0, i] * (1.99F - fTmp) + fRunk4[1, i] * (fTmp - 1.8F)) / 0.19F;
                                                                 else
-                                                                    Norm[nAlg][id_comp].value = fRunk4[1, i];
+                                                                    Norm[nAlg][keyPValue].value = fRunk4[1, i];
                                         break;
                                     default:
-                                        logErrorUnknownModeDev(nAlg, i);
+                                        logErrorUnknownModeDev(nAlg, keyPValue);
                                         break;
                                 }
                             }
 
                             //??? - зачем предыдущие вычисления, если есть прямая ~ от пар.19 ???
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (Norm[@"19"][id_comp].value == 0F)
-                                    Norm[nAlg][id_comp].value = 0F;
+                                if (Norm[@"19"][keyPValue].value == 0F)
+                                    Norm[nAlg][keyPValue].value = 0F;
                                 else
                                     ;
                             }
@@ -648,17 +655,17 @@ namespace PluginTaskTepMain
                         case @"21":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                fTmp = In[@"25"][id_comp].value / Norm[@"1"][id_comp].value;
+                                fTmp = In[@"25"][keyPValue].value / Norm[@"1"][keyPValue].value;
 
-                                if (fTmp > Norm[@"13"][id_comp].value)
+                                if (fTmp > Norm[@"13"][keyPValue].value)
                                     postfixFTable = @"-";
                                 else
                                     postfixFTable = @"+";
 
-                                if (fTmp == Norm[@"13"][id_comp].value)
-                                    Norm[nAlg][id_comp].value = 0F;
+                                if (fTmp == Norm[@"13"][keyPValue].value)
+                                    Norm[nAlg][keyPValue].value = 0F;
                                 else
                                 {
                                     switch (_modeDev[i])
@@ -669,21 +676,21 @@ namespace PluginTaskTepMain
                                             nameFTable += postfixFTable;
                                             nameFTable += @":1";
 
-                                            Norm[nAlg][id_comp].value = fTable.F1(nameFTable, Norm[@"13"][id_comp].value);
+                                            Norm[nAlg][keyPValue].value = fTable.F1(nameFTable, Norm[@"13"][keyPValue].value);
                                             break;
                                         case MODE_DEV.ELEKTRO2_2:
                                         case MODE_DEV.ELEKTRO1_2a:
                                         case MODE_DEV.TEPLO_3:
                                             nameFTable = @"2.8а";
 
-                                            if (fTmp > Norm[@"13"][id_comp].value)
+                                            if (fTmp > Norm[@"13"][keyPValue].value)
                                                 nameFTable += @"-";
                                             else
                                                 nameFTable += @"+";
 
                                             nameFTable += @":2";
 
-                                            Norm[nAlg][id_comp].value = fTable.F2(nameFTable, Norm[@"13"][id_comp].value, Norm[@"10"][id_comp].value);
+                                            Norm[nAlg][keyPValue].value = fTable.F2(nameFTable, Norm[@"13"][keyPValue].value, Norm[@"10"][keyPValue].value);
                                             break;
                                         default:
                                             //??? ошибка
@@ -698,12 +705,12 @@ namespace PluginTaskTepMain
                         case @"22":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (In[@"72"][id_comp].value > 35000F)
-                                    Norm[nAlg][id_comp].value = (Norm[@"12"][id_comp].value * 0.0085F * In[@"72"][id_comp].value - 35000) / 10000;
+                                if (In[@"72"][keyPValue].value > 35000F)
+                                    Norm[nAlg][keyPValue].value = (Norm[@"12"][keyPValue].value * 0.0085F * In[@"72"][keyPValue].value - 35000) / 10000;
                                 else
-                                    Norm[nAlg][id_comp].value = 0F;
+                                    Norm[nAlg][keyPValue].value = 0F;
                             }
                             break;
                         #endregion
@@ -712,10 +719,10 @@ namespace PluginTaskTepMain
                         case @"23":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (!(Norm[@"2"][id_comp].value == 0))
-                                    Norm[nAlg][id_comp].value = 182.3F * In[@"69"][id_comp].value * 1000 / Norm[@"2"][id_comp].value;
+                                if (!(Norm[@"2"][keyPValue].value == 0))
+                                    Norm[nAlg][keyPValue].value = 182.3F * In[@"69"][keyPValue].value * 1000 / Norm[@"2"][keyPValue].value;
                                 else
                                     ;
                             }
@@ -728,20 +735,20 @@ namespace PluginTaskTepMain
 
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"12"][id_comp].value
-                                    + Norm[@"16"][id_comp].value
-                                    + Norm[@"17"][id_comp].value
-                                    + Norm[@"20"][id_comp].value
-                                    + Norm[@"21"][id_comp].value
-                                    + Norm[@"22"][id_comp].value
-                                    + Norm[@"23"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"12"][keyPValue].value
+                                    + Norm[@"16"][keyPValue].value
+                                    + Norm[@"17"][keyPValue].value
+                                    + Norm[@"20"][keyPValue].value
+                                    + Norm[@"21"][keyPValue].value
+                                    + Norm[@"22"][keyPValue].value
+                                    + Norm[@"23"][keyPValue].value;
 
-                                fTmp += Norm[nAlg][id_comp].value * Norm[@"2"][id_comp].value;
+                                fTmp += Norm[nAlg][keyPValue].value * Norm[@"2"][keyPValue].value;
                             }
 
-                            fRes = fTmp / Norm[@"2"][ST].value;
+                            fRes = fTmp / Norm[@"2"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -749,24 +756,24 @@ namespace PluginTaskTepMain
                         case @"25":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1:
-                                        Norm[nAlg][id_comp].value = 0F;
+                                        Norm[nAlg][keyPValue].value = 0F;
                                         break;
                                     case MODE_DEV.ELEKTRO2_2:
-                                        Norm[nAlg][id_comp].value = fTable.F2(@"2.9:2", Norm[@"13"][id_comp].value, Norm[@"10.1"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = fTable.F2(@"2.9:2", Norm[@"13"][keyPValue].value, Norm[@"10.1"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO1_2a:
-                                        Norm[nAlg][id_comp].value = fTable.F2(@"2.9а:2", Norm[@"13"][id_comp].value, Norm[@"38"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = fTable.F2(@"2.9а:2", Norm[@"13"][keyPValue].value, Norm[@"38"][keyPValue].value);
                                         break;
                                     case MODE_DEV.TEPLO_3:
-                                        Norm[nAlg][id_comp].value = fTable.F2(@"2.9б:2", Norm[@"13"][id_comp].value, Norm[@"38"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = fTable.F2(@"2.9б:2", Norm[@"13"][keyPValue].value, Norm[@"38"][keyPValue].value);
                                         break;
                                     default:
-                                        logErrorUnknownModeDev(nAlg, i);
+                                        logErrorUnknownModeDev(nAlg, keyPValue);
                                         break;
                                 }
                             }
@@ -777,10 +784,10 @@ namespace PluginTaskTepMain
                         case "26":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"4"][id_comp].value
-                                    * (Norm[@"57.1"][id_comp].value - Norm[@"60"][id_comp].value) / .7F / 860;
+                                Norm[nAlg][keyPValue].value = Norm[@"4"][keyPValue].value
+                                    * (Norm[@"57.1"][keyPValue].value - Norm[@"60"][keyPValue].value) / .7F / 860;
                             }
                             break;
                         #endregion
@@ -789,12 +796,12 @@ namespace PluginTaskTepMain
                         case "27":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (Norm[@"4"][id_comp].value == 0)
-                                    Norm[nAlg][id_comp].value = 0;
+                                if (Norm[@"4"][keyPValue].value == 0)
+                                    Norm[nAlg][keyPValue].value = 0;
                                 else
-                                    Norm[nAlg][id_comp].value = fTable.F1("2.9в:1", Norm[@"13"][id_comp].value);
+                                    Norm[nAlg][keyPValue].value = fTable.F1("2.9в:1", Norm[@"13"][keyPValue].value);
                             }
                             break;
                         #endregion
@@ -802,22 +809,22 @@ namespace PluginTaskTepMain
                         #region 28 - N кн (ном)
                         case "28":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value =
-                                    Norm[@"9"][id_comp].value - Norm[@"25"][id_comp].value * Norm[@"10"][id_comp].value / 1000
-                                    - Norm[@"27"][id_comp].value * Norm[@"11"][id_comp].value / 1000;
+                                Norm[nAlg][keyPValue].value =
+                                    Norm[@"9"][keyPValue].value - Norm[@"25"][keyPValue].value * Norm[@"10"][keyPValue].value / 1000
+                                    - Norm[@"27"][keyPValue].value * Norm[@"11"][keyPValue].value / 1000;
                             }
 
                             fSum = 0F;
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"1"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"1"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"1"][ID_COMP[(int)INDX_COMP.iST]].value;
-
+                            keyPValue.Id = ID_COMP[(int)INDX_COMP.iST]; keyPValue.Stamp = stamp;
+                            fRes = fSum / Norm[@"1"][keyPValue].value;
                             break;
                         #endregion
 
@@ -830,9 +837,9 @@ namespace PluginTaskTepMain
                                 0F;
 
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
-                                fSum1 += Norm[@"14"][id_comp].value;
-                                fSum2 += In[@"28"][id_comp].value;
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
+                                fSum1 += Norm[@"14"][keyPValue].value;
+                                fSum2 += In[@"28"][keyPValue].value;
                             }
 
                             if (isRealTime == true)
@@ -895,8 +902,8 @@ namespace PluginTaskTepMain
                             fServiceValues[6] = fServiceValues[5];
                             // 7-ой индекс оставить = "0"
 
-                            fSum1 = (isRealTime == true) ? n_blokov1 : (float)Math.Floor(In[@"89"][ID_COMP[(int)INDX_COMP.iST]].value);
-                            fSum2 = (isRealTime == true) ? n_blokov1 : (float)Math.Ceiling(In[@"89"][ID_COMP[(int)INDX_COMP.iST]].value);
+                            fSum1 = (isRealTime == true) ? n_blokov1 : (float)Math.Floor(In[@"89"][keyStationPValue].value);
+                            fSum2 = (isRealTime == true) ? n_blokov1 : (float)Math.Ceiling(In[@"89"][keyStationPValue].value);
                             fSum2 = fSum2 == fSum1 ? fSum2 + 1 : fSum2;
 
                             fTmp1 = -1F;
@@ -914,8 +921,8 @@ namespace PluginTaskTepMain
                             else
                                 ;
 
-                            fRes = fTmp1 * (fSum2 - ((isRealTime == true) ? n_blokov1 : In[@"89"][ID_COMP[(int)INDX_COMP.iST]].value))
-                                + fTmp2 * (((isRealTime == true) ? n_blokov1 : In[@"89"][ID_COMP[(int)INDX_COMP.iST]].value) - fSum1);
+                            fRes = fTmp1 * (fSum2 - ((isRealTime == true) ? n_blokov1 : In[@"89"][keyStationPValue].value))
+                                + fTmp2 * (((isRealTime == true) ? n_blokov1 : In[@"89"][keyStationPValue].value) - fSum1);
                             break;
                         #endregion
 
@@ -923,9 +930,9 @@ namespace PluginTaskTepMain
                         case "30":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[(int)i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = fTable.F1("2.95:1", Norm[@"13"][id_comp].value);
+                                Norm[nAlg][keyPValue].value = fTable.F1("2.95:1", Norm[@"13"][keyPValue].value);
                             }
                             break;
                         #endregion
@@ -933,9 +940,9 @@ namespace PluginTaskTepMain
                         #region 31 - N бл(н)т
                         case "31":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[(int)i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 0.36F;
+                                Norm[nAlg][keyPValue].value = 0.36F;
                             }
                             break;
                         #endregion
@@ -944,9 +951,9 @@ namespace PluginTaskTepMain
                         case "32":
                             //???n_blokov
                             if (isRealTime == true)
-                                fRes = fTable.F1("2.11:1", Norm[@"14"][ST].value * n_blokov);
+                                fRes = fTable.F1("2.11:1", Norm[@"14"][keyStationPValue].value * n_blokov);
                             else
-                                fRes = fTable.F1("2.11:1", Norm[@"14"][ST].value);
+                                fRes = fTable.F1("2.11:1", Norm[@"14"][keyStationPValue].value);
                             break;
                         #endregion
 
@@ -962,11 +969,11 @@ namespace PluginTaskTepMain
                         #region 35 - Э т сн(пуск)
                         case "35":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[(int)i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 5.19F * In["69"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = 5.19F * In["69"][keyPValue].value;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -975,30 +982,30 @@ namespace PluginTaskTepMain
                         case "36":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 if (isRealTime == true)
                                 {
-                                    Norm[nAlg][id_comp].value = (1.03F * (Norm["30"][id_comp].value * Norm["1"][id_comp].value
-                                        + Norm["31"][id_comp].value * Norm["1"][id_comp].value + (Norm["29"][ST].value
-                                        + Norm["32"][ST].value) * In["70"][ST].value / n_blokov1)
-                                        + Norm["35"][id_comp].value) / Norm["2"][id_comp].value * 100;
+                                    Norm[nAlg][keyPValue].value = (1.03F * (Norm["30"][keyPValue].value * Norm["1"][keyPValue].value
+                                        + Norm["31"][keyPValue].value * Norm["1"][keyPValue].value + (Norm["29"][keyStationPValue].value
+                                        + Norm["32"][keyStationPValue].value) * In["70"][keyStationPValue].value / n_blokov1)
+                                        + Norm["35"][keyPValue].value) / Norm["2"][keyPValue].value * 100;
                                 }
                                 else
-                                    Norm[nAlg][id_comp].value = (1.03F * (Norm["30"][id_comp].value * Norm["1"][id_comp].value
-                                        + Norm["31"][id_comp].value * Norm["1"][id_comp].value + (Norm["29"][ST].value
-                                        + Norm["32"][ST].value) * In["70"][ST].value * Norm[@"2"][id_comp].value
-                                        / Norm[@"2"][ST].value) + Norm["35"][id_comp].value)
-                                        / Norm["2"][id_comp].value * 100;
+                                    Norm[nAlg][keyPValue].value = (1.03F * (Norm["30"][keyPValue].value * Norm["1"][keyPValue].value
+                                        + Norm["31"][keyPValue].value * Norm["1"][keyPValue].value + (Norm["29"][keyStationPValue].value
+                                        + Norm["32"][keyStationPValue].value) * In["70"][keyStationPValue].value * Norm[@"2"][keyPValue].value
+                                        / Norm[@"2"][keyStationPValue].value) + Norm["35"][keyPValue].value)
+                                        / Norm["2"][keyPValue].value * 100;
 
-                                fSum += Norm["30"][id_comp].value * Norm["1"][id_comp].value;
-                                fSum1 += Norm["31"][id_comp].value * Norm["1"][id_comp].value;
+                                fSum += Norm["30"][keyPValue].value * Norm["1"][keyPValue].value;
+                                fSum1 += Norm["31"][keyPValue].value * Norm["1"][keyPValue].value;
 
-                                fSum2 += Norm[nAlg][id_comp].value;
+                                fSum2 += Norm[nAlg][keyPValue].value;
                             }
 
-                            fRes = (1.03F * (fSum + fSum1 + (Norm["29"][ST].value + Norm["32"][ST].value)
-                                * In["70"][ST].value) + fSum2) / Norm["2"][ST].value * 100;
+                            fRes = (1.03F * (fSum + fSum1 + (Norm["29"][keyStationPValue].value + Norm["32"][keyStationPValue].value)
+                                * In["70"][keyStationPValue].value) + fSum2) / Norm["2"][keyStationPValue].value * 100;
                             break;
                         #endregion
 
@@ -1006,44 +1013,44 @@ namespace PluginTaskTepMain
                         case "37":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm["29"][ST].value * In["70"][ST].value * Norm["2"][id_comp].value
-                                    / Norm["2"][ST].value / Norm["28"][id_comp].value / Norm["1"][id_comp].value * 100;
+                                Norm[nAlg][keyPValue].value = Norm["29"][keyStationPValue].value * In["70"][keyStationPValue].value * Norm["2"][keyPValue].value
+                                    / Norm["2"][keyStationPValue].value / Norm["28"][keyPValue].value / Norm["1"][keyPValue].value * 100;
                             }
 
-                            fRes = Norm["29"][ST].value * In["70"][ST].value
-                                / Norm["28"][ST].value / Norm["1"][ST].value * 100;
+                            fRes = Norm["29"][keyStationPValue].value * In["70"][keyStationPValue].value
+                                / Norm["28"][keyStationPValue].value / Norm["1"][keyStationPValue].value * 100;
                             break;
                         #endregion
 
                         #region 38 - Q т.о(отопл)
                         case "38":
-                            if (In["43"][ST].value > 10)
+                            if (In["43"][keyStationPValue].value > 10)
                                 fRes = 0;
                             else
-                                fRes = fTable.F2("2.13:2", In["43"][ID_COMP[(int)INDX_COMP.iST]].value, (In["70"][ST].value
-                                    * 6 - Norm["1"][ST].value) / (6 * In["70"][ST].value));
+                                fRes = fTable.F2("2.13:2", In["43"][keyStationPValue].value, (In["70"][keyStationPValue].value
+                                    * 6 - Norm["1"][keyStationPValue].value) / (6 * In["70"][keyStationPValue].value));
                             break;
                         #endregion
 
                         #region 39 - Q т.о(вент)
                         case "39":
-                            if (In["43"][ST].value > 10)
+                            if (In["43"][keyStationPValue].value > 10)
                                 fRes = 0;
                             else
-                                fRes = fTable.F2("2.13а:2", In["43"][ST].value, Norm[@"65"][ST].value / 447.5F);
+                                fRes = fTable.F2("2.13а:2", In["43"][keyStationPValue].value, Norm[@"65"][keyStationPValue].value / 447.5F);
                             break;
                         #endregion
 
                         #region 40 - Q т сн(пуск)
                         case "40":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 15.4F * In[@"69"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = 15.4F * In[@"69"][keyPValue].value;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -1052,21 +1059,21 @@ namespace PluginTaskTepMain
                         case "41":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 if (isRealTime)
-                                    Norm[nAlg][id_comp].value = (Norm[@"38"][ST].value + Norm[@"38"][ST].value)
-                                        * Norm[@"1"][id_comp].value * 1E5F / n_blokov1 / (Norm[@"24"][ST].value * Norm[@"2"][ST].value);
+                                    Norm[nAlg][keyPValue].value = (Norm[@"38"][keyStationPValue].value + Norm[@"38"][keyStationPValue].value)
+                                        * Norm[@"1"][keyPValue].value * 1E5F / n_blokov1 / (Norm[@"24"][keyStationPValue].value * Norm[@"2"][keyStationPValue].value);
                                 else
-                                    Norm[nAlg][id_comp].value = ((Norm[@"38"][ST].value + Norm[@"39"][ST].value)
-                                        * In[@"70"][ST].value * Norm[@"1"][id_comp].value / Norm[@"1"][ST].value
-                                        + Norm[@"40"][id_comp].value) * 1E5F / (Norm[@"24"][id_comp].value * Norm[@"2"][id_comp].value);
+                                    Norm[nAlg][keyPValue].value = ((Norm[@"38"][keyStationPValue].value + Norm[@"39"][keyStationPValue].value)
+                                        * In[@"70"][keyStationPValue].value * Norm[@"1"][keyPValue].value / Norm[@"1"][keyStationPValue].value
+                                        + Norm[@"40"][keyPValue].value) * 1E5F / (Norm[@"24"][keyPValue].value * Norm[@"2"][keyPValue].value);
 
-                                fSum += Norm[@"40"][id_comp].value;
+                                fSum += Norm[@"40"][keyPValue].value;
                             }
 
-                            fRes = ((Norm[@"48"][ST].value + Norm[@"39"][ST].value) * In[@"70"][ST].value + fSum)
-                                * 1E5F / (Norm[@"24"][ST].value * Norm[@"2"][ST].value);
+                            fRes = ((Norm[@"48"][keyStationPValue].value + Norm[@"39"][keyStationPValue].value) * In[@"70"][keyStationPValue].value + fSum)
+                                * 1E5F / (Norm[@"24"][keyStationPValue].value * Norm[@"2"][keyStationPValue].value);
                             break;
                         #endregion
 
@@ -1074,14 +1081,14 @@ namespace PluginTaskTepMain
                         case "42":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"24"][id_comp].value * (100 + Norm[@"41"][id_comp].value)
-                                    / (100 - Norm[@"36"][id_comp].value);
+                                Norm[nAlg][keyPValue].value = Norm[@"24"][keyPValue].value * (100 + Norm[@"41"][keyPValue].value)
+                                    / (100 - Norm[@"36"][keyPValue].value);
                             }
 
-                            fRes = Norm[@"24"][ST].value * (100 + Norm[@"41"][ST].value)
-                                / (100 - Norm[@"36"][ST].value);
+                            fRes = Norm[@"24"][keyStationPValue].value * (100 + Norm[@"41"][keyStationPValue].value)
+                                / (100 - Norm[@"36"][keyStationPValue].value);
                             break;
                         #endregion
 
@@ -1089,13 +1096,13 @@ namespace PluginTaskTepMain
                         case "43":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = (Norm[@"60"][id_comp].value + (Norm[@"59.1"][id_comp].value
-                                    - Norm[@"60"][id_comp].value) - Norm[@"63"][id_comp].value) / (Norm[@"57.1"][id_comp].value
-                                    + (Norm[@"59"][id_comp].value - Norm[@"60"][id_comp].value) - Norm[@"63"][id_comp].value)
-                                    * (1 + .4F * (Norm[@"57.1"][id_comp].value - Norm[@"60"][id_comp].value) / (Norm[@"57.1"][id_comp].value
-                                    + (Norm[@"59.1"][id_comp].value - Norm[@"60"][id_comp].value) - Norm[@"63"][id_comp].value));
+                                Norm[nAlg][keyPValue].value = (Norm[@"60"][keyPValue].value + (Norm[@"59.1"][keyPValue].value
+                                    - Norm[@"60"][keyPValue].value) - Norm[@"63"][keyPValue].value) / (Norm[@"57.1"][keyPValue].value
+                                    + (Norm[@"59"][keyPValue].value - Norm[@"60"][keyPValue].value) - Norm[@"63"][keyPValue].value)
+                                    * (1 + .4F * (Norm[@"57.1"][keyPValue].value - Norm[@"60"][keyPValue].value) / (Norm[@"57.1"][keyPValue].value
+                                    + (Norm[@"59.1"][keyPValue].value - Norm[@"60"][keyPValue].value) - Norm[@"63"][keyPValue].value));
                             }
                             break;
                         #endregion
@@ -1104,26 +1111,26 @@ namespace PluginTaskTepMain
                         case "44":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                fTmp = Norm[@"59.1"][id_comp].value - Norm[@"60"][id_comp].value;
+                                fTmp = Norm[@"59.1"][keyPValue].value - Norm[@"60"][keyPValue].value;
 
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1:
-                                        Norm[nAlg][id_comp].value = 0;
+                                        Norm[nAlg][keyPValue].value = 0;
                                         break;
                                     case MODE_DEV.ELEKTRO2_2:
                                     case MODE_DEV.ELEKTRO1_2a:
                                     case MODE_DEV.TEPLO_3:
-                                        Norm[nAlg][id_comp].value = ((Norm[@"62"][id_comp].value
-                                            - Norm[@"63"][id_comp].value)
-                                            / (Norm[@"57.1"][id_comp].value + (fTmp)
-                                           - Norm[@"63"][id_comp].value))
-                                           * (1 + .4F * (Norm[@"57.1"][id_comp].value
-                                               + (fTmp) - Norm[@"62"][id_comp].value)
-                                               / (Norm[@"57.1"][id_comp].value + (fTmp)
-                                              - Norm[@"63"][id_comp].value));
+                                        Norm[nAlg][keyPValue].value = ((Norm[@"62"][keyPValue].value
+                                            - Norm[@"63"][keyPValue].value)
+                                            / (Norm[@"57.1"][keyPValue].value + (fTmp)
+                                           - Norm[@"63"][keyPValue].value))
+                                           * (1 + .4F * (Norm[@"57.1"][keyPValue].value
+                                               + (fTmp) - Norm[@"62"][keyPValue].value)
+                                               / (Norm[@"57.1"][keyPValue].value + (fTmp)
+                                              - Norm[@"63"][keyPValue].value));
                                         break;
                                     default:
                                         break;
@@ -1136,17 +1143,17 @@ namespace PluginTaskTepMain
                         case "45":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (Norm[@"3"][id_comp].value + Norm[@"4"][id_comp].value == 0)
+                                if (Norm[@"3"][keyPValue].value + Norm[@"4"][keyPValue].value == 0)
                                 {
-                                    Norm[nAlg][id_comp].value = 0;
+                                    Norm[nAlg][keyPValue].value = 0;
                                 }
                                 else
-                                    Norm[nAlg][id_comp].value = (Norm[@"4"][id_comp].value * (1 - Norm[@"43"][id_comp].value)
-                                        * Norm[@"8"][id_comp].value) / (Norm[@"3"][id_comp].value + Norm[@"4"][id_comp].value);
+                                    Norm[nAlg][keyPValue].value = (Norm[@"4"][keyPValue].value * (1 - Norm[@"43"][keyPValue].value)
+                                        * Norm[@"8"][keyPValue].value) / (Norm[@"3"][keyPValue].value + Norm[@"4"][keyPValue].value);
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -1155,17 +1162,17 @@ namespace PluginTaskTepMain
                         case "46":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (Norm[@"3"][id_comp].value + Norm[@"4"][id_comp].value == 0)
+                                if (Norm[@"3"][keyPValue].value + Norm[@"4"][keyPValue].value == 0)
                                 {
-                                    Norm[nAlg][id_comp].value = 0;
+                                    Norm[nAlg][keyPValue].value = 0;
                                 }
                                 else
-                                    Norm[nAlg][id_comp].value = (Norm[@"4"][id_comp].value * (1 - Norm[@"44"][id_comp].value)
-                                        * Norm[@"8"][id_comp].value) / (Norm[@"3"][id_comp].value + Norm[@"4"][id_comp].value);
+                                    Norm[nAlg][keyPValue].value = (Norm[@"4"][keyPValue].value * (1 - Norm[@"44"][keyPValue].value)
+                                        * Norm[@"8"][keyPValue].value) / (Norm[@"3"][keyPValue].value + Norm[@"4"][keyPValue].value);
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -1174,11 +1181,11 @@ namespace PluginTaskTepMain
                         case "47":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"45"][id_comp].value + Norm[@"46"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"45"][keyPValue].value + Norm[@"46"][keyPValue].value;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -1187,19 +1194,19 @@ namespace PluginTaskTepMain
                         case "48":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = (Norm[@"24"][id_comp].value * Norm[@"2"][id_comp].value
-                                    * (100 + Norm[@"41"][id_comp].value) / 1E5F + Norm[@"47"][id_comp].value)
-                                    / (Norm[@"24"][id_comp].value * Norm[@"2"][id_comp].value * (100 + Norm[@"41"][id_comp].value) / 1E5F);
+                                Norm[nAlg][keyPValue].value = (Norm[@"24"][keyPValue].value * Norm[@"2"][keyPValue].value
+                                    * (100 + Norm[@"41"][keyPValue].value) / 1E5F + Norm[@"47"][keyPValue].value)
+                                    / (Norm[@"24"][keyPValue].value * Norm[@"2"][keyPValue].value * (100 + Norm[@"41"][keyPValue].value) / 1E5F);
 
-                                fSum += Norm[@"47"][id_comp].value;
+                                fSum += Norm[@"47"][keyPValue].value;
                             }
 
-                            fRes += (Norm[@"24"][ST].value * Norm[@"2"][ST].value
-                                * (100 + Norm[@"41"][ST].value) / 1E5F + fSum)
-                                / (Norm[@"24"][ST].value * Norm[@"2"][ST].value
-                                * (100 + Norm[@"41"][ST].value) / 1E5F);
+                            fRes += (Norm[@"24"][keyStationPValue].value * Norm[@"2"][keyStationPValue].value
+                                * (100 + Norm[@"41"][keyStationPValue].value) / 1E5F + fSum)
+                                / (Norm[@"24"][keyStationPValue].value * Norm[@"2"][keyStationPValue].value
+                                * (100 + Norm[@"41"][keyStationPValue].value) / 1E5F);
                             break;
                         #endregion
 
@@ -1209,11 +1216,11 @@ namespace PluginTaskTepMain
 
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = In[@"13"][id_comp].value + In[@"14"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = In[@"13"][keyPValue].value + In[@"14"][keyPValue].value;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -1222,12 +1229,12 @@ namespace PluginTaskTepMain
                         case @"50":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = In[@"49"][id_comp].value / In[@"1"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = In[@"49"][keyPValue].value / In[@"1"][keyPValue].value;
                             }
 
-                            fRes = Norm[@"49"][ST].value / Norm[@"1"][ST].value;
+                            fRes = Norm[@"49"][keyStationPValue].value / Norm[@"1"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -1237,17 +1244,18 @@ namespace PluginTaskTepMain
                             {
                                 if (!(i == (int)INDX_COMP.iBL5))
                                 {
-                                    id_comp = ID_COMP[i];
+                                    keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                    Norm[nAlg][id_comp].value = In[@"17"][id_comp].value + In[@"17.1"][id_comp].value / 2;
+                                    Norm[nAlg][keyPValue].value = In[@"17"][keyPValue].value + In[@"17.1"][keyPValue].value / 2;
                                 }
                                 else
                                     ;
                             }
 
-                            Norm[nAlg][BL5].value = In[@"18"][id_comp].value
-                                + In[@"18.1"][id_comp].value / 2
-                                + fTable.F1(@"2.22:1", Norm[@"50"][BL5].value);
+                            keyPValue.Id = ID_COMP[(int)INDX_COMP.iBL5]; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = In[@"18"][keyPValue].value
+                                + In[@"18.1"][keyPValue].value / 2
+                                + fTable.F1(@"2.22:1", Norm[@"50"][keyPValue].value);
                             break;
                         #endregion
 
@@ -1255,22 +1263,22 @@ namespace PluginTaskTepMain
                         case @"51.1":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
-
                                 switch ((INDX_COMP)i)
                                 {
                                     case INDX_COMP.iBL2:
                                     case INDX_COMP.iBL3:
-                                        Norm[nAlg][BL5].value = In[@"17"][id_comp].value
-                                            + In[@"17.1"][id_comp].value / 2
-                                            - fTable.F1(@"2.22:1", Norm[@"50"][BL5].value);
+                                        keyPValue.Id = ID_COMP[(int)INDX_COMP.iBL3]; keyPValue.Stamp = stamp;
+                                        Norm[nAlg][keyPValue].value = In[@"17"][keyPValue].value
+                                            + In[@"17.1"][keyPValue].value / 2
+                                            - fTable.F1(@"2.22:1", Norm[@"50"][keyPValue].value);
                                         break;
                                     case INDX_COMP.iBL1:
                                     case INDX_COMP.iBL4:
                                     case INDX_COMP.iBL5:
                                     case INDX_COMP.iBL6:
-                                        Norm[nAlg][id_comp].value = In[@"18"][id_comp].value
-                                            + In[@"18.1"][id_comp].value / 2;
+                                        keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
+                                        Norm[nAlg][keyPValue].value = In[@"18"][keyPValue].value
+                                            + In[@"18.1"][keyPValue].value / 2;
                                         break;
                                     default:
                                         break;
@@ -1283,17 +1291,17 @@ namespace PluginTaskTepMain
                         case @"52":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch ((INDX_COMP)i)
                                 {
                                     default:
-                                        Norm[nAlg][id_comp].value = In[@"21"][id_comp].value + In[@"21.1"][id_comp].value / 2;
+                                        Norm[nAlg][keyPValue].value = In[@"21"][keyPValue].value + In[@"21.1"][keyPValue].value / 2;
                                         break;
                                     case INDX_COMP.iBL5:
-                                        Norm[nAlg][id_comp].value = In[@"22"][id_comp].value
-                                            + In[@"22.1"][id_comp].value / 2
-                                            + fTable.F1("2.22б:1", Norm[@"55"][id_comp].value / Norm[@"1"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = In[@"22"][keyPValue].value
+                                            + In[@"22.1"][keyPValue].value / 2
+                                            + fTable.F1("2.22б:1", Norm[@"55"][keyPValue].value / Norm[@"1"][keyPValue].value);
                                         break;
                                 }
                             }
@@ -1304,21 +1312,21 @@ namespace PluginTaskTepMain
                         case @"52.1":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch ((INDX_COMP)i)
                                 {
                                     case INDX_COMP.iBL2:
                                     case INDX_COMP.iBL3:
-                                        Norm[nAlg][id_comp].value = In[@"22"][id_comp].value
-                                            + In[@"22.1"][id_comp].value / 2
-                                            + fTable.F1("2.22б:1", Norm[@"55"][id_comp].value / Norm[@"1"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = In[@"22"][keyPValue].value
+                                            + In[@"22.1"][keyPValue].value / 2
+                                            + fTable.F1("2.22б:1", Norm[@"55"][keyPValue].value / Norm[@"1"][keyPValue].value);
                                         break;
                                     case INDX_COMP.iBL1:
                                     case INDX_COMP.iBL4:
                                     case INDX_COMP.iBL5:
                                     case INDX_COMP.iBL6:
-                                        Norm[nAlg][id_comp].value = In[@"22"][id_comp].value + In[@"22.1"][id_comp].value / 2;
+                                        Norm[nAlg][keyPValue].value = In[@"22"][keyPValue].value + In[@"22.1"][keyPValue].value / 2;
                                         break;
                                     default:
                                         break;
@@ -1331,9 +1339,9 @@ namespace PluginTaskTepMain
                         case @"53":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = In[@"19"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = In[@"19"][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -1342,7 +1350,7 @@ namespace PluginTaskTepMain
                         case @"54":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
@@ -1360,7 +1368,7 @@ namespace PluginTaskTepMain
                                         break;
                                 }
 
-                                Norm[nAlg][id_comp].value = fTable.F1(nameFTable, Norm[@"50"][id_comp].value);
+                                Norm[nAlg][keyPValue].value = fTable.F1(nameFTable, Norm[@"50"][keyPValue].value);
                             }
                             break;
                         #endregion
@@ -1369,9 +1377,9 @@ namespace PluginTaskTepMain
                         case @"55":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"54"][id_comp].value * Norm[@"1"][id_comp].value - In[@"46"][id_comp].value / 0.7F;
+                                Norm[nAlg][keyPValue].value = Norm[@"54"][keyPValue].value * Norm[@"1"][keyPValue].value - In[@"46"][keyPValue].value / 0.7F;
                             }
                             break;
                         #endregion
@@ -1380,10 +1388,10 @@ namespace PluginTaskTepMain
                         case @"56":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = In[@"15"][id_comp].value
-                                    + In[@"15.1"][id_comp].value / 2;
+                                Norm[nAlg][keyPValue].value = In[@"15"][keyPValue].value
+                                    + In[@"15.1"][keyPValue].value / 2;
 
                                 switch ((INDX_COMP)i)
                                 {
@@ -1391,7 +1399,7 @@ namespace PluginTaskTepMain
                                     case INDX_COMP.iBL2:
                                     case INDX_COMP.iBL3:
                                     case INDX_COMP.iBL5:
-                                        Norm[nAlg][id_comp].value += fTable.F1(@"2.41а:1", Norm[@"50"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value += fTable.F1(@"2.41а:1", Norm[@"50"][keyPValue].value);
                                         break;
                                     case INDX_COMP.iBL4:
                                     case INDX_COMP.iBL6:
@@ -1406,9 +1414,9 @@ namespace PluginTaskTepMain
                         case @"56.1":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = In[@"15.2"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = In[@"15.2"][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -1417,20 +1425,20 @@ namespace PluginTaskTepMain
                         case @"57":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                fTmp = Norm[@"51"][id_comp].value + 273.15F;
+                                fTmp = Norm[@"51"][keyPValue].value + 273.15F;
 
-                                Norm[nAlg][id_comp].value = (float)(503.43F
+                                Norm[nAlg][keyPValue].value = (float)(503.43F
                                     + 11.02849F * (float)Math.Log((fTmp) / 647.27F)
                                     + 229.2569F * (fTmp) / 647.27F
                                     + 37.93129F * (float)Math.Pow(((fTmp + 273.15F) / 647.27F), 2)
                                     + 0.758195F - 7.97826F / (float)Math.Pow(((fTmp) / 1000), 2)
                                     - (3.078455F * (fTmp) / 1000 - 0.21549F) / (float)Math.Pow(((fTmp) / 1000 - 0.21F), 3)
-                                        * Norm[@"56"][id_comp].value / 100)
+                                        * Norm[@"56"][keyPValue].value / 100)
                                     + (float)(0.0644126F - 0.268671F / (float)Math.Pow(((fTmp) / 1000), 8)
                                     - 0.216661F / 100 / (float)Math.Pow(((fTmp) / 1000), 14))
-                                        * (float)Math.Pow((Norm[@"56"][id_comp].value / 100), 2);
+                                        * (float)Math.Pow((Norm[@"56"][keyPValue].value / 100), 2);
                             }
                             break;
                         #endregion
@@ -1439,19 +1447,19 @@ namespace PluginTaskTepMain
                         case @"57.1":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                fTmp = Norm[@"51.1"][id_comp].value + 273.15F;
+                                fTmp = Norm[@"51.1"][keyPValue].value + 273.15F;
 
-                                Norm[nAlg][id_comp].value = (float)(503.43F
+                                Norm[nAlg][keyPValue].value = (float)(503.43F
                                    + 11.02849F * (float)Math.Log((fTmp) / 647.27F)
                                    + 229.2569F * (fTmp) / 647.27F
                                    + 37.93129F * (float)Math.Pow(((fTmp + 273.15F) / 647.27F), 2)
                                    + 0.758195F - 7.97826F / (float)Math.Pow(((fTmp) / 1000), 2)
                                    - (3.078455F * (fTmp) / 1000 - 0.21549F) / (float)Math.Pow(((fTmp) / 1000 - 0.21F), 3)
-                                       * Norm[@"56"][id_comp].value / 100) + (float)(0.0644126F - 0.268671F
+                                       * Norm[@"56"][keyPValue].value / 100) + (float)(0.0644126F - 0.268671F
                                        / (float)Math.Pow(((fTmp) / 1000), 8) - 0.216661F / 100 / (float)Math.Pow(((fTmp) / 1000), 14))
-                                       * (float)Math.Pow((Norm[@"56"][id_comp].value / 100), 2);
+                                       * (float)Math.Pow((Norm[@"56"][keyPValue].value / 100), 2);
                             }
                             break;
                         #endregion
@@ -1460,19 +1468,19 @@ namespace PluginTaskTepMain
                         case "58":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                fTmp = In[@"26"][id_comp].value / 100;
+                                fTmp = In[@"26"][keyPValue].value / 100;
 
-                                Norm[nAlg][id_comp].value = (float)(49.4F + 402.5F * fTmp + 4.767F * (float)Math.Pow((fTmp), 2)
+                                Norm[nAlg][keyPValue].value = (float)(49.4F + 402.5F * fTmp + 4.767F * (float)Math.Pow((fTmp), 2)
                                     + .0333F * (float)Math.Pow((fTmp), 6)
                                     + (float)(-9.25F + 1.67F * fTmp + .00736F * (float)Math.Pow((fTmp), 6))
                                     - .008F * (float)Math.Pow((1 / (fTmp + .5F)), 5))
-                                    * (float)(50 - In[@"16"][id_comp].value * .0980665) / 10
+                                    * (float)(50 - In[@"16"][keyPValue].value * .0980665) / 10
                                     + (float)(-.073F + .079F * fTmp + .00068F * (float)Math.Pow((fTmp), 6))
-                                    * (float)Math.Pow(((50 - In[@"16"][id_comp].value * .0980665F) / 10F), 2)
+                                    * (float)Math.Pow(((50 - In[@"16"][keyPValue].value * .0980665F) / 10F), 2)
                                     + 3.39F / 1E8F * (float)Math.Pow((fTmp), 12)
-                                     + (float)Math.Pow(((50 - In[@"16"][id_comp].value * .0980665F) / 10F), 4) / 4.1868F;
+                                     + (float)Math.Pow(((50 - In[@"16"][keyPValue].value * .0980665F) / 10F), 4) / 4.1868F;
                             }
                             break;
                         #endregion
@@ -1481,17 +1489,17 @@ namespace PluginTaskTepMain
                         case "59":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                fTmp = Norm[@"52"][id_comp].value + 273.15F;
+                                fTmp = Norm[@"52"][keyPValue].value + 273.15F;
 
-                                Norm[nAlg][id_comp].value = (float)(503.43F + 11.02849 * (float)Math.Log(fTmp / 647.27F)
+                                Norm[nAlg][keyPValue].value = (float)(503.43F + 11.02849 * (float)Math.Log(fTmp / 647.27F)
                                     + 229.2569F * fTmp / 647.27F + 37.93129F * (float)Math.Pow((fTmp / 647.27F), 2)
                                     + (float)Math.Pow((0.758195F - 7.97826F / (float)(fTmp) / 1000), 2)
                                     - (float)(3.078455F * fTmp / 1000 - .21549F) / (float)Math.Pow((fTmp / 1000 - .21), 3)
-                                    * Norm[@"53"][id_comp].value / 100 + (float)Math.Pow((.0644126F - .268671F / fTmp / 1000), 8)
+                                    * Norm[@"53"][keyPValue].value / 100 + (float)Math.Pow((.0644126F - .268671F / fTmp / 1000), 8)
                                     - .216661F / 100 / (float)Math.Pow((fTmp / 1000), 14)
-                                    * (float)Math.Pow((Norm[@"53"][id_comp].value / 100), 2));
+                                    * (float)Math.Pow((Norm[@"53"][keyPValue].value / 100), 2));
                             }
                             break;
                         #endregion
@@ -1500,16 +1508,16 @@ namespace PluginTaskTepMain
                         case "59.1":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
-                                fTmp = Norm[@"52.1"][id_comp].value + 273.15F;
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
+                                fTmp = Norm[@"52.1"][keyPValue].value + 273.15F;
 
-                                Norm[nAlg][id_comp].value = (float)(503.43F + 11.02849 * (float)Math.Log(fTmp / 647.27F)
+                                Norm[nAlg][keyPValue].value = (float)(503.43F + 11.02849 * (float)Math.Log(fTmp / 647.27F)
                                     + 229.2569F * fTmp / 647.27F + 37.93129F * (float)Math.Pow((fTmp / 647.27F), 2)
                                     + (float)Math.Pow((0.758195F - 7.97826F / (float)(fTmp) / 1000), 2)
                                     - (float)(3.078455F * fTmp / 1000 - .21549F) / (float)Math.Pow((fTmp / 1000 - .21), 3)
-                                    * Norm[@"53"][id_comp].value / 100 + (float)Math.Pow((.0644126F - .268671F / fTmp / 1000), 8)
+                                    * Norm[@"53"][keyPValue].value / 100 + (float)Math.Pow((.0644126F - .268671F / fTmp / 1000), 8)
                                     - .216661F / 100 / (float)Math.Pow((fTmp / 1000), 14)
-                                    * (float)Math.Pow((Norm[@"53"][id_comp].value / 100), 2));
+                                    * (float)Math.Pow((Norm[@"53"][keyPValue].value / 100), 2));
                             }
                             break;
                         #endregion
@@ -1518,16 +1526,16 @@ namespace PluginTaskTepMain
                         case "60":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
-                                fTmp = In[@"24"][id_comp].value + 273.15F;
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
+                                fTmp = In[@"24"][keyPValue].value + 273.15F;
 
-                                Norm[nAlg][id_comp].value = (float)(503.43F + 11.02849 * (float)Math.Log(fTmp / 647.27F)
+                                Norm[nAlg][keyPValue].value = (float)(503.43F + 11.02849 * (float)Math.Log(fTmp / 647.27F)
                                     + 229.2569F * fTmp / 647.27F + 37.93129F * (float)Math.Pow((fTmp / 647.27F), 2)
                                     + (float)Math.Pow((0.758195F - 7.97826F / (float)(fTmp) / 1000), 2)
                                     - (float)(3.078455F * fTmp / 1000 - .21549F) / (float)Math.Pow((fTmp / 1000 - .21), 3)
-                                    * Norm[@"53"][id_comp].value / 100 + (float)Math.Pow((.0644126F - .268671F / fTmp / 1000), 8)
+                                    * Norm[@"53"][keyPValue].value / 100 + (float)Math.Pow((.0644126F - .268671F / fTmp / 1000), 8)
                                     - .216661F / 100 / (float)Math.Pow((fTmp / 1000), 14)
-                                    * (float)Math.Pow((Norm[@"53"][id_comp].value / 100), 2));
+                                    * (float)Math.Pow((Norm[@"53"][keyPValue].value / 100), 2));
                             }
                             break;
                         #endregion
@@ -1536,13 +1544,13 @@ namespace PluginTaskTepMain
                         case "61":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
-                                fTmp = (float)Math.Log(In[@"41"][id_comp].value);
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
+                                fTmp = (float)Math.Log(In[@"41"][keyPValue].value);
 
                                 fSum = 1 / (float)(2.6864264F - .20096551F * fTmp - 2.16688F / 1E3F
                                     * (float)Math.Pow(fTmp, 2) - 9.480808 / 1E5 * (float)Math.Pow(fTmp, 3)
                                     + 6.135062 / 1E6F * (float)Math.Pow(fTmp, 4) + 3.6917245 / 1E6F * (float)Math.Pow(fTmp, 5));
-                                Norm[nAlg][id_comp].value = -753.317F + 6959.4093F * fTmp - 29257.981F * (float)Math.Pow(fTmp, 2)
+                                Norm[nAlg][keyPValue].value = -753.317F + 6959.4093F * fTmp - 29257.981F * (float)Math.Pow(fTmp, 2)
                                     + (float)Math.Pow(fTmp, 5);
                             }
                             break;
@@ -1552,7 +1560,7 @@ namespace PluginTaskTepMain
                         case "62":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
@@ -1560,11 +1568,11 @@ namespace PluginTaskTepMain
                                         //???1 / 0;
                                         break;
                                     case MODE_DEV.ELEKTRO1_2a:
-                                        Norm[nAlg][id_comp].value = fTable.F2("2.83а:2", Norm[@"50"][id_comp].value, In[@"38"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = fTable.F2("2.83а:2", Norm[@"50"][keyPValue].value, In[@"38"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO2_2:
                                     case MODE_DEV.TEPLO_3:
-                                        Norm[nAlg][id_comp].value = fTable.F2("2.83:2", Norm[@"50"][id_comp].value, Norm[@"10.1"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = fTable.F2("2.83:2", Norm[@"50"][keyPValue].value, Norm[@"10.1"][keyPValue].value);
                                         break;
                                     default:
                                         break;
@@ -1575,12 +1583,18 @@ namespace PluginTaskTepMain
 
                         #region 63 - i 2
                         case "63":
-                            Norm[nAlg][BL1].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL1]].value / 98.067F);
-                            Norm[nAlg][BL2].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL2]].value / 98.067F);
-                            Norm[nAlg][BL3].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL3]].value / 98.067F);
-                            Norm[nAlg][BL4].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL4]].value / 98.067F);
-                            Norm[nAlg][BL5].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL5]].value / 98.067F);
-                            Norm[nAlg][BL6].value = fTable.F1("2.91:1", In[@"30"][ID_COMP[(int)INDX_COMP.iBL6]].value);
+                            keyPValue.Id = BL1; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.91:1", In[@"30"][keyPValue].value / 98.067F);
+                            keyPValue.Id = BL2;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.91:1", In[@"30"][keyPValue].value / 98.067F);
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.91:1", In[@"30"][keyPValue].value / 98.067F);
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.91:1", In[@"30"][keyPValue].value / 98.067F);
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.91:1", In[@"30"][keyPValue].value / 98.067F);
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.91:1", In[@"30"][keyPValue].value);
                             break;
                         #endregion
 
@@ -1588,7 +1602,7 @@ namespace PluginTaskTepMain
                         case "64":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[(int)i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (m_indxCompRealTime)
                                 {
@@ -1597,21 +1611,22 @@ namespace PluginTaskTepMain
                                     case INDX_COMP.iBL3:
                                     case INDX_COMP.iBL4:
                                     case INDX_COMP.iBL6:
-                                        Norm[nAlg][id_comp].value = (Norm[@"49"][id_comp].value * (Norm[@"57"][id_comp].value
-                                        - Norm[@"58"][id_comp].value) + Norm[@"55"][id_comp].value
-                                        * (Norm[@"59"][id_comp].value - Norm[@"60"][id_comp].value) + In[@"27"][id_comp].value
-                                        * (Norm[@"61"][id_comp].value - Norm[@"58"][id_comp].value)) / 1000;
+                                        Norm[nAlg][keyPValue].value = (Norm[@"49"][keyPValue].value * (Norm[@"57"][keyPValue].value
+                                        - Norm[@"58"][keyPValue].value) + Norm[@"55"][keyPValue].value
+                                        * (Norm[@"59"][keyPValue].value - Norm[@"60"][keyPValue].value) + In[@"27"][keyPValue].value
+                                        * (Norm[@"61"][keyPValue].value - Norm[@"58"][keyPValue].value)) / 1000;
                                         break;
                                     case INDX_COMP.iBL5:
-                                        Norm[nAlg][id_comp].value = (Norm[@"49"][id_comp].value * (Norm[@"57"][id_comp].value
-                                            - Norm[@"58"][id_comp].value) + Norm[@"55"][id_comp].value
-                                            * (Norm[@"59"][id_comp].value - Norm[@"60"][id_comp].value) + In[@"25"][id_comp].value
-                                            * .004F * (Norm[@"61"][id_comp].value - Norm[@"58"][id_comp].value)) / 1000;
+                                        Norm[nAlg][keyPValue].value = (Norm[@"49"][keyPValue].value * (Norm[@"57"][keyPValue].value
+                                            - Norm[@"58"][keyPValue].value) + Norm[@"55"][keyPValue].value
+                                            * (Norm[@"59"][keyPValue].value - Norm[@"60"][keyPValue].value) + In[@"25"][keyPValue].value
+                                            * .004F * (Norm[@"61"][keyPValue].value - Norm[@"58"][keyPValue].value)) / 1000;
                                         break;
                                     default:
                                         break;
                                 }
-                                fRes += Norm[nAlg][id_comp].value;
+
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -1620,18 +1635,19 @@ namespace PluginTaskTepMain
                         case "65":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"64"][id_comp].value / Norm[@"1"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"64"][keyPValue].value / Norm[@"1"][keyPValue].value;
                             }
-                            fRes = Norm[@"64"][ST].value / Norm[@"1"][ST].value;
+
+                            fRes = Norm[@"64"][keyStationPValue].value / Norm[@"1"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 66 - D пв
                         case "66":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (m_indxCompRealTime)
                                 {
@@ -1640,16 +1656,16 @@ namespace PluginTaskTepMain
                                     case INDX_COMP.iBL3:
                                     case INDX_COMP.iBL4:
                                     case INDX_COMP.iBL6:
-                                        Norm[nAlg][id_comp].value = Norm[@"49"][id_comp].value + In[@"27"][id_comp].value;
+                                        Norm[nAlg][keyPValue].value = Norm[@"49"][keyPValue].value + In[@"27"][keyPValue].value;
                                         break;
                                     case INDX_COMP.iBL5:
-                                        Norm[nAlg][id_comp].value = Norm[@"49"][id_comp].value + In[@"25"][id_comp].value * .004F;
+                                        Norm[nAlg][keyPValue].value = Norm[@"49"][keyPValue].value + In[@"25"][keyPValue].value * .004F;
                                         break;
                                     default:
                                         break;
                                 }
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -1658,34 +1674,46 @@ namespace PluginTaskTepMain
                         case "66.1":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"66"][id_comp].value / Norm[@"1"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"66"][keyPValue].value / Norm[@"1"][keyPValue].value;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
 
                         #region 67 - alfa вэк (н)
                         case "67":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F2("2.65:2", Norm[@"65"][BL1].value, In[@"59"][BL1].value);
-                            Norm[nAlg][BL2].value = fTable.F2("2.65:2", Norm[@"65"][BL2].value, In[@"59"][BL2].value);
-                            Norm[nAlg][BL3].value = fTable.F1("2.65в:1", Norm[@"65"][BL3].value);
-                            Norm[nAlg][BL4].value = fTable.F1("2.65в:1", Norm[@"65"][BL4].value);
-                            Norm[nAlg][BL5].value = fTable.F1("2.63:1", Norm[@"65"][BL5].value);
-                            Norm[nAlg][BL6].value = fTable.F1("2.63:1(6)", Norm[@"65"][BL6].value);
+                            keyPValue.Id = ID_COMP[(int)INDX_COMP.iBL1]; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.65:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = ID_COMP[(int)INDX_COMP.iBL2];
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.65:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.65в:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.65в:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.63:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.63:1(6)", Norm[@"65"][keyPValue].value);
                             break;
                         #endregion
 
                         #region 68 - dalfa ух (н)
                         case "68":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F2("2.82:2", Norm[@"65"][ID_COMP[(int)INDX_COMP.iBL1]].value, In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value);
-                            Norm[nAlg][BL2].value = fTable.F2("2.82:2", Norm[@"65"][BL2].value, In[@"59"][BL2].value);
-                            Norm[nAlg][BL3].value = fTable.F2("2.82:2", Norm[@"65"][BL3].value, In[@"59"][BL3].value);
-                            Norm[nAlg][BL4].value = fTable.F2("2.82:2", Norm[@"65"][BL4].value, In[@"59"][BL4].value);
-                            Norm[nAlg][BL5].value = fTable.F1("2.80:1", Norm[@"65"][BL5].value);
-                            Norm[nAlg][BL6].value = fTable.F1("2.80:1(6)", Norm[@"65"][BL6].value);
+                            keyPValue.Id = BL1; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.82:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL2;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.82:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.82:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.82:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.80:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.80:1(6)", Norm[@"65"][keyPValue].value);
                             break;
                         #endregion
 
@@ -1693,43 +1721,61 @@ namespace PluginTaskTepMain
                         case "69":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"67"][id_comp].value + Norm[@"68"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"67"][keyPValue].value + Norm[@"68"][keyPValue].value;
                             }
                             break;
                         #endregion
 
                         #region 70 - q 4 исх
                         case "70":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F2("2.96:2", Norm[@"65"][ID_COMP[(int)INDX_COMP.iBL1]].value, In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value);
-                            Norm[nAlg][BL2].value = fTable.F2("2.96:2", Norm[@"65"][BL2].value, In[@"59"][BL2].value);
-                            Norm[nAlg][BL3].value = fTable.F1("2.96:1", Norm[@"65"][BL3].value);
-                            Norm[nAlg][BL4].value = fTable.F1("2.96:1", Norm[@"65"][BL4].value);
-                            Norm[nAlg][BL5].value = 0.947F;
-                            Norm[nAlg][BL6].value = fTable.F1("2.96:1(6)", Norm[@"65"][BL6].value);
+                            keyPValue.Id = ID_COMP[(int)INDX_COMP.iBL1]; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.96:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL2;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.96:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.96:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.96:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = 0.947F;
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.96:1(6)", Norm[@"65"][keyPValue].value);
                             break;
                         #endregion
 
                         #region 71 - dq 4 (Ap)
                         case "71":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = .064F * (In[@"55"][ST].value - 14.5F) * (100 - In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value) / 100;
-                            Norm[nAlg][BL2].value = .064F * (In[@"55"][ST].value - 14.5F) * (100 - In[@"59"][BL2].value) / 100;
-                            Norm[nAlg][BL3].value = .064F * (In[@"55"][ST].value - 14.5F) * (100 - In[@"59"][BL3].value) / 100;
-                            Norm[nAlg][BL4].value = .064F * (In[@"55"][ST].value - 14.5F) * (100 - In[@"59"][BL4].value) / 100;
-                            Norm[nAlg][BL5].value = .075F * (In[@"55"][ST].value - 14.5F);
-                            Norm[nAlg][BL6].value = .085F * (In[@"55"][ST].value - 14.5F);
+                            keyPValue.Id = BL1; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = .064F * (In[@"55"][keyStationPValue].value - 14.5F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL2;
+                            Norm[nAlg][keyPValue].value = .064F * (In[@"55"][keyStationPValue].value - 14.5F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = .064F * (In[@"55"][keyStationPValue].value - 14.5F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = .064F * (In[@"55"][keyStationPValue].value - 14.5F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = .075F * (In[@"55"][keyStationPValue].value - 14.5F);
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = .085F * (In[@"55"][keyStationPValue].value - 14.5F);
                             break;
                         #endregion
 
                         #region 72 - dq 4 (Wp)
                         case "72":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = .01F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value) / 100;
-                            Norm[nAlg][BL2].value = .01F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value) / 100;
-                            Norm[nAlg][BL3].value = .01F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value) / 100;
-                            Norm[nAlg][BL4].value = .01F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value) / 100;
-                            Norm[nAlg][BL5].value = .012F * (In[@"55"][ST].value - 13.0F);
-                            Norm[nAlg][BL6].value = .013F * (In[@"55"][ST].value - 13.0F);
+                            keyPValue.Id = BL1; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = .01F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL2;
+                            Norm[nAlg][keyPValue].value = .01F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = .01F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = .01F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = .012F * (In[@"55"][keyStationPValue].value - 13.0F);
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = .013F * (In[@"55"][keyStationPValue].value - 13.0F);
                             break;
                         #endregion
 
@@ -1737,15 +1783,15 @@ namespace PluginTaskTepMain
                         case "73":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"70"][id_comp].value + Norm[@"71"][id_comp].value
-                                    + Norm[@"72"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"70"][keyPValue].value + Norm[@"71"][keyPValue].value
+                                    + Norm[@"72"][keyPValue].value;
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"64"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"64"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"64"][ST].value;
+                            fRes = fSum / Norm[@"64"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -1753,38 +1799,44 @@ namespace PluginTaskTepMain
                         case "74":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1:
-                                        Norm[nAlg][id_comp].value = fTable.F1("2.20:1", Norm[@"50"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = fTable.F1("2.20:1", Norm[@"50"][keyPValue].value);
                                         break;
                                     case MODE_DEV.ELEKTRO2_2:
                                     case MODE_DEV.ELEKTRO1_2a:
                                     case MODE_DEV.TEPLO_3:
-                                        Norm[nAlg][id_comp].value = fTable.F1("2.20а:1", Norm[@"50"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = fTable.F1("2.20а:1", Norm[@"50"][keyPValue].value);
                                         break;
                                     default:
                                         //??? 1/0;
                                         break;
                                 }
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"66"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"66"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"66"][ST].value;
+                            fRes = fSum / Norm[@"66"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 75 - t yx исх
                         case "75":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F2("2.23:2", Norm[@"65"][ID_COMP[(int)INDX_COMP.iBL1]].value, In[@"59"][BL1].value);
-                            Norm[nAlg][BL2].value = fTable.F2("2.23:2", Norm[@"65"][BL2].value, In[@"59"][BL2].value);
-                            Norm[nAlg][BL3].value = fTable.F1("2.23а:1", Norm[@"65"][BL3].value);
-                            Norm[nAlg][BL4].value = fTable.F1("2.23а:1", Norm[@"65"][BL4].value);
-                            Norm[nAlg][BL5].value = fTable.F1("2.21:1", Norm[@"65"][BL5].value);
-                            Norm[nAlg][BL6].value = fTable.F1("2.21:1(6)", Norm[@"65"][BL6].value);
+                            keyPValue.Id = BL1; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.23:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL2;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.23:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.23а:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.23а:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.21:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.21:1(6)", Norm[@"65"][keyPValue].value);
                             break;
                         #endregion
 
@@ -1792,9 +1844,9 @@ namespace PluginTaskTepMain
                         case "76":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = .2F * (In[@"26"][id_comp].value - Norm[@"74"][id_comp].value);
+                                Norm[nAlg][keyPValue].value = .2F * (In[@"26"][keyPValue].value - Norm[@"74"][keyPValue].value);
                             }
                             break;
                         #endregion
@@ -1803,9 +1855,9 @@ namespace PluginTaskTepMain
                         case "77":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = .50F * ((In[@"32"][id_comp].value + In[@"32.1"][id_comp].value) / 2 - 30);
+                                Norm[nAlg][keyPValue].value = .50F * ((In[@"32"][keyPValue].value + In[@"32.1"][keyPValue].value) / 2 - 30);
                             }
                             break;
                         #endregion
@@ -1814,10 +1866,10 @@ namespace PluginTaskTepMain
                         case "78":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = -.3F * ((In[@"32"][id_comp].value + In[@"32.1"][id_comp].value) / 2
-                                    - (In[@"31"][id_comp].value + In[@"31.1"][id_comp].value) / 2);
+                                Norm[nAlg][keyPValue].value = -.3F * ((In[@"32"][keyPValue].value + In[@"32.1"][keyPValue].value) / 2
+                                    - (In[@"31"][keyPValue].value + In[@"31.1"][keyPValue].value) / 2);
                             }
                             break;
                         #endregion
@@ -1826,15 +1878,15 @@ namespace PluginTaskTepMain
                         case "79":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"75"][id_comp].value + Norm[@"76"][id_comp].value
-                                    + Norm[@"77"][id_comp].value + Norm[@"78"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"75"][keyPValue].value + Norm[@"76"][keyPValue].value
+                                    + Norm[@"77"][keyPValue].value + Norm[@"78"][keyPValue].value;
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"64"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"64"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"64"][ST].value;
+                            fRes = fSum / Norm[@"64"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -1842,10 +1894,10 @@ namespace PluginTaskTepMain
                         case "80":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = (3.5F + .02F * 1E3F * In[@"54"][ST].value / In[@"53"][ST].value)
-                                    * (100 - In[@"59"][id_comp].value) / 1E2F + 3.53F * In[@"59"][id_comp].value / 1E2F;
+                                Norm[nAlg][keyPValue].value = (3.5F + .02F * 1E3F * In[@"54"][keyStationPValue].value / In[@"53"][keyStationPValue].value)
+                                    * (100 - In[@"59"][keyPValue].value) / 1E2F + 3.53F * In[@"59"][keyPValue].value / 1E2F;
                             }
                             break;
                         #endregion
@@ -1854,10 +1906,10 @@ namespace PluginTaskTepMain
                         case "81":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = (.4F + .04F * 1E3F * In[@"54"][ST].value / In[@"53"][ST].value)
-                                    * (100 - In[@"59"][id_comp].value) / 1E2F + .6F * In[@"59"][id_comp].value / 1E2F;
+                                Norm[nAlg][keyPValue].value = (.4F + .04F * 1E3F * In[@"54"][keyStationPValue].value / In[@"53"][keyStationPValue].value)
+                                    * (100 - In[@"59"][keyPValue].value) / 1E2F + .6F * In[@"59"][keyPValue].value / 1E2F;
                             }
                             break;
                         #endregion
@@ -1866,10 +1918,10 @@ namespace PluginTaskTepMain
                         case "82":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = .14F * (100F - In[@"59"][id_comp].value)
-                                    / 1E2F + .18F * In[@"59"][id_comp].value / 1E2F;
+                                Norm[nAlg][keyPValue].value = .14F * (100F - In[@"59"][keyPValue].value)
+                                    / 1E2F + .18F * In[@"59"][keyPValue].value / 1E2F;
                             }
                             break;
                         #endregion
@@ -1878,30 +1930,36 @@ namespace PluginTaskTepMain
                         case "83":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = (Norm[@"80"][id_comp].value * Norm[@"69"][id_comp].value)
-                                    * (Norm[@"79"][id_comp].value - Norm[@"69"][id_comp].value * (In[@"31"][id_comp].value
-                                    + In[@"31.1"][id_comp].value) / 2 / (Norm[@"69"][id_comp].value + Norm[@"82"][id_comp].value))
-                                    * (.9805F + .00013F * Norm[@"79"][id_comp].value) * (1 - .01F * Norm[@"73"][id_comp].value) / 1E2F
-                                    + .2F * .95F * In[@"55"][ST].value * (100 - In[@"59"][id_comp].value) / 1E2F
-                                    * Norm[@"79"][id_comp].value / In[@"53"][ST].value;
+                                Norm[nAlg][keyPValue].value = (Norm[@"80"][keyPValue].value * Norm[@"69"][keyPValue].value)
+                                    * (Norm[@"79"][keyPValue].value - Norm[@"69"][keyPValue].value * (In[@"31"][keyPValue].value
+                                    + In[@"31.1"][keyPValue].value) / 2 / (Norm[@"69"][keyPValue].value + Norm[@"82"][keyPValue].value))
+                                    * (.9805F + .00013F * Norm[@"79"][keyPValue].value) * (1 - .01F * Norm[@"73"][keyPValue].value) / 1E2F
+                                    + .2F * .95F * In[@"55"][keyStationPValue].value * (100 - In[@"59"][keyPValue].value) / 1E2F
+                                    * Norm[@"79"][keyPValue].value / In[@"53"][keyStationPValue].value;
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"64"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"64"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"64"][ST].value;
+                            fRes = fSum / Norm[@"64"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 84 - q 5 (н)
                         case "84":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F2("2.98:2", Norm[@"65"][ID_COMP[(int)INDX_COMP.iBL1]].value, In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value);
-                            Norm[nAlg][BL2].value = fTable.F2("2.98:2", Norm[@"65"][BL2].value, In[@"59"][BL2].value);
-                            Norm[nAlg][BL3].value = fTable.F2("2.98:2", Norm[@"65"][BL3].value, In[@"59"][BL3].value);
-                            Norm[nAlg][BL4].value = fTable.F2("2.98:2", Norm[@"65"][BL4].value, In[@"59"][BL4].value);
-                            Norm[nAlg][BL5].value = fTable.F1("2.99:1", Norm[@"65"][BL5].value);
-                            Norm[nAlg][BL6].value = fTable.F1("2.99:1(6)", Norm[@"65"][BL6].value);
+                            keyPValue.Id = ID_COMP[(int)INDX_COMP.iBL1]; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.98:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL2;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.98:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.98:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.98:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.99:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.99:1(6)", Norm[@"65"][keyPValue].value);
                             break;
                         #endregion
 
@@ -1909,9 +1967,9 @@ namespace PluginTaskTepMain
                         case "85":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = (100 - In[@"59"][id_comp].value)
+                                Norm[nAlg][keyPValue].value = (100 - In[@"59"][keyPValue].value)
                                    * 0.02F / 100F;
                             }
                             break;
@@ -1921,13 +1979,13 @@ namespace PluginTaskTepMain
                         case "86":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (In[@"72"][id_comp].value > 35000)
-                                    Norm[nAlg][id_comp].value = .0055F * (In[@"72"][id_comp].value - 35000)
+                                if (In[@"72"][keyPValue].value > 35000)
+                                    Norm[nAlg][keyPValue].value = .0055F * (In[@"72"][keyPValue].value - 35000)
                                         / 1E3F;
                                 else
-                                    Norm[nAlg][id_comp].value = 0;
+                                    Norm[nAlg][keyPValue].value = 0;
                             }
                             break;
                         #endregion
@@ -1936,11 +1994,11 @@ namespace PluginTaskTepMain
                         case "87":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = In[@"69"][id_comp].value * 64.2F * 7 * 1E2F / (Norm[@"64"][id_comp].value * 1E2F
-                                    / (100 - Norm[@"73"][id_comp].value - Norm[@"83"][id_comp].value - Norm[@"84"][id_comp].value
-                                    - Norm[@"85"][id_comp].value - Norm[@"86"][id_comp].value) + 64.2F * 7);
+                                Norm[nAlg][keyPValue].value = In[@"69"][keyPValue].value * 64.2F * 7 * 1E2F / (Norm[@"64"][keyPValue].value * 1E2F
+                                    / (100 - Norm[@"73"][keyPValue].value - Norm[@"83"][keyPValue].value - Norm[@"84"][keyPValue].value
+                                    - Norm[@"85"][keyPValue].value - Norm[@"86"][keyPValue].value) + 64.2F * 7);
                             }
                             break;
                         #endregion
@@ -1949,16 +2007,16 @@ namespace PluginTaskTepMain
                         case "88":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 100 - Norm[@"83"][id_comp].value - Norm[@"73"][id_comp].value
-                                    - Norm[@"84"][id_comp].value - Norm[@"85"][id_comp].value - Norm[@"86"][id_comp].value
-                                    - Norm[@"87"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = 100 - Norm[@"83"][keyPValue].value - Norm[@"73"][keyPValue].value
+                                    - Norm[@"84"][keyPValue].value - Norm[@"85"][keyPValue].value - Norm[@"86"][keyPValue].value
+                                    - Norm[@"87"][keyPValue].value;
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"64"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"64"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"64"][ST].value;
+                            fRes = fSum / Norm[@"64"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -1966,9 +2024,9 @@ namespace PluginTaskTepMain
                         case "89":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 100 - In[@"59"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = 100 - In[@"59"][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -1977,35 +2035,47 @@ namespace PluginTaskTepMain
                         case "90":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"64"][id_comp].value * Norm[@"89"][id_comp].value
-                                    * 1E3F / Norm[@"88"][id_comp].value / In[@"53"][ST].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"64"][keyPValue].value * Norm[@"89"][keyPValue].value
+                                    * 1E3F / Norm[@"88"][keyPValue].value / In[@"53"][keyStationPValue].value;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
 
                         #region 91 - Э тд(н) исх
                         case "91":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F2("2.27:2", Norm[@"65"][ID_COMP[(int)INDX_COMP.iBL1]].value, In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value);
-                            Norm[nAlg][BL2].value = fTable.F2("2.27:2", Norm[@"65"][BL2].value, In[@"59"][BL2].value);
-                            Norm[nAlg][BL3].value = fTable.F1("2.27в:1", Norm[@"65"][BL3].value);
-                            Norm[nAlg][BL4].value = fTable.F1("2.27в:1", Norm[@"65"][BL4].value);
-                            Norm[nAlg][BL5].value = fTable.F1("2.25:1", Norm[@"65"][BL5].value);
-                            Norm[nAlg][BL6].value = fTable.F1("2.25:1(6)", Norm[@"65"][BL6].value);
+                            keyPValue.Id = BL1; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.27:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL2;
+                            Norm[nAlg][keyPValue].value = fTable.F2("2.27:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.27в:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.27в:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.25:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.25:1(6)", Norm[@"65"][keyPValue].value);
                             break;
                         #endregion
 
                         #region 92 - dЭ тд(Wp)
                         case "92":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = .041F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value) / 100;
-                            Norm[nAlg][BL2].value = .041F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][BL2].value) / 100;
-                            Norm[nAlg][BL3].value = .041F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][BL3].value) / 100;
-                            Norm[nAlg][BL4].value = .041F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][BL4].value) / 100;
-                            Norm[nAlg][BL5].value = .04F * (In["54"][ST].value - 13.0F);
-                            Norm[nAlg][BL6].value = .04F * (In["54"][ST].value - 13.0F);
+                            keyPValue.Id = BL1; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = .041F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL2;
+                            Norm[nAlg][keyPValue].value = .041F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = .041F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = .041F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = .04F * (In["54"][keyStationPValue].value - 13.0F);
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = .04F * (In["54"][keyStationPValue].value - 13.0F);
                             break;
                         #endregion
 
@@ -2013,10 +2083,10 @@ namespace PluginTaskTepMain
                         case "93":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = .004F * ((In[@"32"][id_comp].value + In[@"32.1"][id_comp].value) / 2 - 30)
-                                    * (100 - In[@"59"][id_comp].value) / 100;
+                                Norm[nAlg][keyPValue].value = .004F * ((In[@"32"][keyPValue].value + In[@"32.1"][keyPValue].value) / 2 - 30)
+                                    * (100 - In[@"59"][keyPValue].value) / 100;
                             }
                             break;
                         #endregion
@@ -2031,43 +2101,54 @@ namespace PluginTaskTepMain
                         case "95":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"91"][id_comp].value + Norm["92"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"91"][keyPValue].value + Norm["92"][keyPValue].value;
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"64"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"64"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"64"][ST].value;
+                            fRes = fSum / Norm[@"64"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 96 - Э пп (исх)
                         case "96":
-                            if (In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value == 100)
-                                Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = 0;
+                            keyPValue.Id = BL1; keyPValue.Stamp = stamp;
+                            if (In[@"59"][keyPValue].value == 100)
+                                Norm[nAlg][keyPValue].value = 0;
                             else
-                                Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F2("2.26:2", Norm[@"65"][ID_COMP[(int)INDX_COMP.iBL1]].value, In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value);
-                            if (In[@"59"][BL2].value == 100)
-                                Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = 0;
+                                Norm[nAlg][keyPValue].value = fTable.F2("2.26:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL2;
+                            if (In[@"59"][keyPValue].value == 100)
+                                Norm[nAlg][keyPValue].value = 0;
                             else
-                                Norm[nAlg][BL2].value = fTable.F2("2.26:2", Norm[@"65"][BL2].value, In[@"59"][BL2].value);
-
-                            Norm[nAlg][BL3].value = fTable.F1("2.26:1(3)", Norm[@"65"][BL3].value);
-                            Norm[nAlg][BL4].value = fTable.F1("2.26:1(3)", Norm[@"65"][BL4].value);
-                            Norm[nAlg][BL5].value = fTable.F1("2.26а:1", Norm[@"65"][BL5].value);
-                            Norm[nAlg][BL6].value = fTable.F1("2.26:1(6)", Norm[@"65"][BL6].value);
+                                Norm[nAlg][keyPValue].value = fTable.F2("2.26:2", Norm[@"65"][keyPValue].value, In[@"59"][keyPValue].value);
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.26:1(3)", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL1;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.26:1(3)", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL1;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.26а:1", Norm[@"65"][keyPValue].value);
+                            keyPValue.Id = BL1;
+                            Norm[nAlg][keyPValue].value = fTable.F1("2.26:1(6)", Norm[@"65"][keyPValue].value);
                             break;
                         #endregion
 
                         #region 97 - dЭ пп (исх)
                         case "97":
-                            Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = .297F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][ID_COMP[(int)INDX_COMP.iBL1]].value) / 100;
-                            Norm[nAlg][BL2].value = .297F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][BL2].value) / 100;
-                            Norm[nAlg][BL3].value = .297F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][BL3].value) / 100;
-                            Norm[nAlg][BL4].value = .297F * (In[@"54"][ST].value - 13.0F) * (100 - In[@"59"][BL4].value) / 100;
-                            Norm[nAlg][BL5].value = .297F * (In["54"][ST].value - 13.0F);
-                            Norm[nAlg][BL6].value = .297F * (In["54"][ST].value - 13.0F);
+                            keyPValue.Id = BL1; keyPValue.Stamp = stamp;
+                            Norm[nAlg][keyPValue].value = .297F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL2;
+                            Norm[nAlg][keyPValue].value = .297F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL3;
+                            Norm[nAlg][keyPValue].value = .297F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL4;
+                            Norm[nAlg][keyPValue].value = .297F * (In[@"54"][keyStationPValue].value - 13.0F) * (100 - In[@"59"][keyPValue].value) / 100;
+                            keyPValue.Id = BL5;
+                            Norm[nAlg][keyPValue].value = .297F * (In["54"][keyStationPValue].value - 13.0F);
+                            keyPValue.Id = BL6;
+                            Norm[nAlg][keyPValue].value = .297F * (In["54"][keyStationPValue].value - 13.0F);
                             break;
                         #endregion
 
@@ -2075,14 +2156,14 @@ namespace PluginTaskTepMain
                         case "98":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"96"][id_comp].value + Norm["97"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"96"][keyPValue].value + Norm["97"][keyPValue].value;
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"90"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"90"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"90"][ST].value;
+                            fRes = fSum / Norm[@"90"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2090,14 +2171,14 @@ namespace PluginTaskTepMain
                         case "99":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = fTable.F1("2.29:1", Norm[@"66.1"][id_comp].value);
+                                Norm[nAlg][keyPValue].value = fTable.F1("2.29:1", Norm[@"66.1"][keyPValue].value);
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"66"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"66"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"66"][ST].value;
+                            fRes = fSum / Norm[@"66"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2105,25 +2186,25 @@ namespace PluginTaskTepMain
                         case "100":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (In[@"59"][id_comp].value == 100)
-                                    Norm[nAlg][id_comp].value = 0;
+                                if (In[@"59"][keyPValue].value == 100)
+                                    Norm[nAlg][keyPValue].value = 0;
                                 else
-                                    if (In[@"43"][ST].value >= 0)
-                                        Norm[nAlg][id_comp].value = fTable.F1("2.31:1", In[@"43"][ST].value);
+                                    if (In[@"43"][keyStationPValue].value >= 0)
+                                        Norm[nAlg][keyPValue].value = fTable.F1("2.31:1", In[@"43"][keyStationPValue].value);
                                     else
-                                        Norm[nAlg][id_comp].value = fTable.F1("2.31а:1", In[@"43"][ST].value);
+                                        Norm[nAlg][keyPValue].value = fTable.F1("2.31а:1", In[@"43"][keyStationPValue].value);
                             }
                             break;
                         #endregion
 
                         #region 101 - Э разг (н)
                         case "101":
-                            if (In[@"43"][ST].value >= 0)
-                                fRes = fTable.F1("2.32:1", In[@"43"][ST].value);
+                            if (In[@"43"][keyStationPValue].value >= 0)
+                                fRes = fTable.F1("2.32:1", In[@"43"][keyStationPValue].value);
                             else
-                                fRes = fTable.F1("2.32а:1", In[@"43"][ST].value);
+                                fRes = fTable.F1("2.32а:1", In[@"43"][keyStationPValue].value);
                             break;
                         #endregion
 
@@ -2133,44 +2214,47 @@ namespace PluginTaskTepMain
                             if (isRealTime)
                                 fRes = fTable.F1("2.33:1", n_blokov1);
                             else
-                                fRes = fTable.F1("2.33:1", In[@"89"][ST].value);
+                                fRes = fTable.F1("2.33:1", In[@"89"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 103 - N ов (н)
                         case "103":
-                            fRes = fTable.F1("2.34:1", (In[@"78"][ST].value + In[@"79"][ST].value)
-                                / In[@"70"][ST].value);
+                            fRes = fTable.F1("2.34:1", (In[@"78"][keyStationPValue].value + In[@"79"][keyStationPValue].value)
+                                / In[@"70"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 104 - N маз (н)
                         case "104":
-                            if (In[@"92"][ST].value <= 0)
+                            if (In[@"92"][keyStationPValue].value <= 0)
                                 fRes = 208F;
                             else
-                                fRes = fTable.F1("2.34а:1", In[@"92"][ST].value);
+                                fRes = fTable.F1("2.34а:1", In[@"92"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 105 - N доп.пр (н)
                         case "105":
-                            for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
-                                fSum += Norm[@"64"][ID_COMP[i]].value;
+                            for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
+
+                                fSum += Norm[@"64"][keyPValue].value;
+                            }
 
                             if (isRealTime)
                                 fRes = fTable.F1("2.51:1", fSum * n_blokov1);
                             else
-                                fRes = fTable.F1("2.51:1", Norm[@"64"][ST].value / In[@"70"][ST].value);
+                                fRes = fTable.F1("2.51:1", Norm[@"64"][keyStationPValue].value / In[@"70"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 105.1 - Э разм (н)
                         case "105a":
-                            if (In[@"43"][ST].value > 0)
+                            if (In[@"43"][keyStationPValue].value > 0)
                                 fRes = 0;
                             else
-                                fRes = fTable.F1("2.51а:1", In[@"43"][ST].value);
+                                fRes = fTable.F1("2.51а:1", In[@"43"][keyStationPValue].value);
                             break;
                         #endregion
 
@@ -2179,16 +2263,16 @@ namespace PluginTaskTepMain
                             //n_blokov1
                             if (isRealTime)
                             {
-                                fRes = (Norm[@"102"][ST].value + Norm[@"103"][ST].value + Norm[@"104"][ST].value
-                                    + Norm[@"105"][ST].value) * In[@"70"][ST].value / 1E3F / n_blokov1 + Norm[@"101"][ST].value
-                                    * In[@"88"][ST].value / 1E3F + Norm[@"105а"][ST].value * In[@"88"][ST].value / 1E3F;
+                                fRes = (Norm[@"102"][keyStationPValue].value + Norm[@"103"][keyStationPValue].value + Norm[@"104"][keyStationPValue].value
+                                    + Norm[@"105"][keyStationPValue].value) * In[@"70"][keyStationPValue].value / 1E3F / n_blokov1 + Norm[@"101"][keyStationPValue].value
+                                    * In[@"88"][keyStationPValue].value / 1E3F + Norm[@"105а"][keyStationPValue].value * In[@"88"][keyStationPValue].value / 1E3F;
                             }
                             else
-                                fRes = (Norm[@"102"][ST].value + Norm[@"103"][ST].value + Norm[@"104"][ST].value
-                                    + Norm[@"105"][ST].value)
-                                    * In[@"70"][ST].value / 1E3F + Norm[@"101"][ST].value * In[@"88"][ST].value
-                                    / 1E3F + Norm[@"105а"][ST].value
-                                    * In[@"88"][ST].value / 1E3F;
+                                fRes = (Norm[@"102"][keyStationPValue].value + Norm[@"103"][keyStationPValue].value + Norm[@"104"][keyStationPValue].value
+                                    + Norm[@"105"][keyStationPValue].value)
+                                    * In[@"70"][keyStationPValue].value / 1E3F + Norm[@"101"][keyStationPValue].value * In[@"88"][keyStationPValue].value
+                                    / 1E3F + Norm[@"105а"][keyStationPValue].value
+                                    * In[@"88"][keyStationPValue].value / 1E3F;
                             break;
                         #endregion
 
@@ -2196,11 +2280,11 @@ namespace PluginTaskTepMain
                         case "107":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 6.19F * In[@"69"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = 6.19F * In[@"69"][keyPValue].value;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -2209,84 +2293,84 @@ namespace PluginTaskTepMain
                         case "108":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 1.03F * (Norm[@"95"][id_comp].value * Norm[@"64"][id_comp].value
-                                    + Norm[@"98"][id_comp].value * Norm[@"90"][id_comp].value + Norm[@"99"][id_comp].value
-                                    * Norm[@"66"][id_comp].value + Norm[@"100"][id_comp].value * Norm[@"90"][id_comp].value)
-                                    / 1E3F + 1.03F * Norm[@"106"][ST].value * Norm[@"64"][id_comp].value / Norm[@"64"][ST].value
-                                    + Norm[@"107"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = 1.03F * (Norm[@"95"][keyPValue].value * Norm[@"64"][keyPValue].value
+                                    + Norm[@"98"][keyPValue].value * Norm[@"90"][keyPValue].value + Norm[@"99"][keyPValue].value
+                                    * Norm[@"66"][keyPValue].value + Norm[@"100"][keyPValue].value * Norm[@"90"][keyPValue].value)
+                                    / 1E3F + 1.03F * Norm[@"106"][keyStationPValue].value * Norm[@"64"][keyPValue].value / Norm[@"64"][keyStationPValue].value
+                                    + Norm[@"107"][keyPValue].value;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
 
                         #region 109 - Q от к (н)
                         case "109":
-                            if (In[@"43"][ST].value > 10)
+                            if (In[@"43"][keyStationPValue].value > 10)
                                 fRes = 0;
                             else
-                                fRes = fTable.F2("2.93:2", In[@"43"][ST].value, (6 * In[@"70"][ST].value
-                                    - Norm[@"1"][ST].value) / (6 * In[@"70"][ST].value));
+                                fRes = fTable.F2("2.93:2", In[@"43"][keyStationPValue].value, (6 * In[@"70"][keyStationPValue].value
+                                    - Norm[@"1"][keyStationPValue].value) / (6 * In[@"70"][keyStationPValue].value));
                             break;
                         #endregion
 
                         #region 110 - Q от к (н)
                         case "110":
-                            if (In[@"43"][ST].value > 10)
+                            if (In[@"43"][keyStationPValue].value > 10)
                                 fRes = 0;
                             else
-                                fRes = fTable.F2("2.94:2", In[@"43"][ST].value, Norm[@"65"][ST].value / 447.5F);
+                                fRes = fTable.F2("2.94:2", In[@"43"][keyStationPValue].value, Norm[@"65"][keyStationPValue].value / 447.5F);
                             break;
                         #endregion
 
                         #region 111 - Q от IIк (н)
                         case "111":
-                            if (In[@"43"][ST].value > 10)
+                            if (In[@"43"][keyStationPValue].value > 10)
                                 fRes = 0;
                             else
-                                fRes = fTable.F1("2.12:1", In[@"43"][ST].value);
+                                fRes = fTable.F1("2.12:1", In[@"43"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 112 - Q пвк (н)
                         case "112":
-                            if (In[@"43"][ST].value > 10)
+                            if (In[@"43"][keyStationPValue].value > 10)
                                 fRes = 0;
                             else
-                                fRes = fTable.F1("2.14:1", In[@"43"][ST].value);
+                                fRes = fTable.F1("2.14:1", In[@"43"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 113 - Q об.в (н)
                         case "113":
-                            fRes = fTable.F2("2.15:2", (In[@"78"][ST].value + In[@"79"][ST].value)
-                                / In[@"70"][ST].value, In[@"91"][ST].value);
+                            fRes = fTable.F2("2.15:2", (In[@"78"][keyStationPValue].value + In[@"79"][keyStationPValue].value)
+                                / In[@"70"][keyStationPValue].value, In[@"91"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 114 - Q разм (н)
                         case "114":
-                            if (In[@"43"][ST].value > 10)
+                            if (In[@"43"][keyStationPValue].value > 10)
                                 fRes = 0;
                             else
-                                fRes = fTable.F1("2.16:1", In[@"43"][ST].value);
+                                fRes = fTable.F1("2.16:1", In[@"43"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 115 - Q мх (н)
                         case "115":
-                            fRes = fTable.F1("2.28:1", In[@"43"][ST].value);
+                            fRes = fTable.F1("2.28:1", In[@"43"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 116 - Q маз сл (н)
                         case "116":
-                            if (In[@"61"][ST].value == 0)
+                            if (In[@"61"][keyStationPValue].value == 0)
                                 fRes = 0;
                             else
-                                fRes = fTable.F1("2.52:1", In[@"43"][ST].value);
+                                fRes = fTable.F1("2.52:1", In[@"43"][keyStationPValue].value);
                             break;
                         #endregion
 
@@ -2296,14 +2380,16 @@ namespace PluginTaskTepMain
                             if (true)
                                 fRes = 0;
                             else
-                                fRes = fTable.F2("2.56:2", In[@"62"][ST].value, In[@"43"][ST].value);
+                                fRes = fTable.F2("2.56:2", In[@"62"][keyStationPValue].value, In[@"43"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 118 - Q пр (н)
                         case "118":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++) {
-                                fSum += Norm[@"65"][ID_COMP[i]].value;
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
+
+                                fSum += Norm[@"65"][keyPValue].value;
                             }
 
                             fRes = fTable.F1("2.60:1", fSum);
@@ -2314,22 +2400,22 @@ namespace PluginTaskTepMain
                         case "119":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 15.4F * In[@"69"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = 15.4F * In[@"69"][keyPValue].value;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
 
                         #region 120 - Q к сн (н) гр
                         case "120":
-                            fRes = (Norm[@"109"][ST].value + Norm[@"110"][ST].value + Norm[@"111"][ST].value
-                                + Norm[@"112"][ST].value + Norm[@"113"][ST].value + Norm[@"114"][ST].value
-                                + Norm[@"115"][ST].value + Norm[@"118"][ST].value) * In[@"70"][ST].value
-                                + Norm[@"11"][ST].value * In[@"61"][ST].value + Norm[@"117"][ST].value
-                                + Norm[@"119"][ST].value;
+                            fRes = (Norm[@"109"][keyStationPValue].value + Norm[@"110"][keyStationPValue].value + Norm[@"111"][keyStationPValue].value
+                                + Norm[@"112"][keyStationPValue].value + Norm[@"113"][keyStationPValue].value + Norm[@"114"][keyStationPValue].value
+                                + Norm[@"115"][keyStationPValue].value + Norm[@"118"][keyStationPValue].value) * In[@"70"][keyStationPValue].value
+                                + Norm[@"11"][keyStationPValue].value * In[@"61"][keyStationPValue].value + Norm[@"117"][keyStationPValue].value
+                                + Norm[@"119"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2338,24 +2424,24 @@ namespace PluginTaskTepMain
                             //???n_blokov1
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 if (isRealTime)
-                                    Norm[nAlg][id_comp].value = Norm[@"120"][ST].value / n_blokov1 * 1E2F / Norm[@"64"][id_comp].value;
+                                    Norm[nAlg][keyPValue].value = Norm[@"120"][keyStationPValue].value / n_blokov1 * 1E2F / Norm[@"64"][keyPValue].value;
                                 else
                                     switch (_modeDev[i])
                                     {
                                         case MODE_DEV.COND_1:
-                                            Norm[nAlg][id_comp].value = ((Norm[@"120"][ST].value - Norm[@"119"][ST].value)
-                                                * Norm[@"64"][id_comp].value / Norm[@"64"][ST].value + Norm[@"119"][id_comp].value)
-                                                * 1E2F / Norm[@"64"][id_comp].value;
+                                            Norm[nAlg][keyPValue].value = ((Norm[@"120"][keyStationPValue].value - Norm[@"119"][keyStationPValue].value)
+                                                * Norm[@"64"][keyPValue].value / Norm[@"64"][keyStationPValue].value + Norm[@"119"][keyPValue].value)
+                                                * 1E2F / Norm[@"64"][keyPValue].value;
                                             break;
                                         case MODE_DEV.ELEKTRO2_2:
                                         case MODE_DEV.ELEKTRO1_2a:
                                         case MODE_DEV.TEPLO_3:
-                                            Norm[nAlg][id_comp].value = ((Norm[@"120"][ST].value - Norm[@"119"][ST].value)
-                                                * (Norm[@"3"][id_comp].value + Norm["4"][id_comp].value) / (Norm[@"3"][ST].value
-                                                + Norm[@"4"][ST].value + Norm[@"119"][ST].value) * 1E2F / Norm[@"64"][ST].value);
+                                            Norm[nAlg][keyPValue].value = ((Norm[@"120"][keyStationPValue].value - Norm[@"119"][keyStationPValue].value)
+                                                * (Norm[@"3"][keyPValue].value + Norm["4"][keyPValue].value) / (Norm[@"3"][keyStationPValue].value
+                                                + Norm[@"4"][keyStationPValue].value + Norm[@"119"][keyStationPValue].value) * 1E2F / Norm[@"64"][keyStationPValue].value);
                                             break;
                                         case MODE_DEV.COUNT:
                                             break;
@@ -2364,7 +2450,7 @@ namespace PluginTaskTepMain
                                     }
                             }
 
-                            fRes = Norm[@"120"][ST].value * 1E2F / Norm[@"64"][ST].value;
+                            fRes = Norm[@"120"][keyStationPValue].value * 1E2F / Norm[@"64"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2372,21 +2458,23 @@ namespace PluginTaskTepMain
                         case "122":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                Norm[nAlg][ID_COMP[i]].value = fTable.F1("2.17:1", In[@"43"][ST].value);
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
+
+                                Norm[nAlg][keyPValue].value = fTable.F1("2.17:1", In[@"43"][keyStationPValue].value);
                             }
                             break;
                         #endregion
 
                         #region 123 - Q труб (н)
                         case "123":
-                            fRes = fTable.F1("2.18:1", In[@"43"][ST].value);
+                            fRes = fTable.F1("2.18:1", In[@"43"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 124 - Q птс (н)
                         case "124":
-                            fRes = fTable.F2("2.19:2", (In[@"50"][ST].value + In[@"50"][ST].value) * 1E3F
-                                / In[@"70"][ST].value, In[@"91"][ST].value);
+                            fRes = fTable.F2("2.19:2", (In[@"50"][keyStationPValue].value + In[@"50"][keyStationPValue].value) * 1E3F
+                                / In[@"70"][keyStationPValue].value, In[@"91"][keyStationPValue].value);
                             break;
                         #endregion
 
@@ -2394,41 +2482,41 @@ namespace PluginTaskTepMain
                         case "125":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (In[@"85"][ST].value == 0)
-                                    fTmp = fTable.F1("2.12б:1", In[@"43"][ST].value) + Norm[@"112"][ST].value;
+                                if (In[@"85"][keyStationPValue].value == 0)
+                                    fTmp = fTable.F1("2.12б:1", In[@"43"][keyStationPValue].value) + Norm[@"112"][keyStationPValue].value;
                                 else
                                     fTmp = 0;
 
                                 if (isRealTime)
                                 {
-                                    if (Norm[@"8"][id_comp].value == 0)
-                                        Norm[nAlg][id_comp].value = 0;
+                                    if (Norm[@"8"][keyPValue].value == 0)
+                                        Norm[nAlg][keyPValue].value = 0;
                                     else
-                                        Norm[nAlg][id_comp].value = ((Norm[@"123"][ST].value * In[@"71"][ST].value
-                                           + Norm[@"124"][ST].value * In[@"71"][ST].value + 393 * (In[@"50"][ST].value
-                                           + In[@"51"][ST].value) / 1E3F) / n_blokov1 + Norm[@"122"][id_comp].value * In[@"71"][id_comp].value)
-                                           / Norm[@"8"][id_comp].value * 100;
+                                        Norm[nAlg][keyPValue].value = ((Norm[@"123"][keyStationPValue].value * In[@"71"][keyStationPValue].value
+                                           + Norm[@"124"][keyStationPValue].value * In[@"71"][keyStationPValue].value + 393 * (In[@"50"][keyStationPValue].value
+                                           + In[@"51"][keyStationPValue].value) / 1E3F) / n_blokov1 + Norm[@"122"][keyPValue].value * In[@"71"][keyPValue].value)
+                                           / Norm[@"8"][keyPValue].value * 100;
                                 } else {
-                                    if (Norm[@"8"][id_comp].value == 0)
-                                        Norm[nAlg][id_comp].value = 0;
+                                    if (Norm[@"8"][keyPValue].value == 0)
+                                        Norm[nAlg][keyPValue].value = 0;
                                     else
-                                        Norm[nAlg][id_comp].value = ((Norm[@"123"][ST].value * In[@"71"][ST].value
-                                            + (Norm[@"124"][ST].value + fTmp) * In[@"70"][ST].value + 393 * (In[@"50"][ST].value
-                                            + In[@"51"][ST].value) / 1E3F) * Norm[@"8"][id_comp].value / Norm[@"8"][ST].value
-                                            + Norm[@"122"][id_comp].value * In[@"71"][id_comp].value) / Norm[@"8"][id_comp].value * 100;
+                                        Norm[nAlg][keyPValue].value = ((Norm[@"123"][keyStationPValue].value * In[@"71"][keyStationPValue].value
+                                            + (Norm[@"124"][keyStationPValue].value + fTmp) * In[@"70"][keyStationPValue].value + 393 * (In[@"50"][keyStationPValue].value
+                                            + In[@"51"][keyStationPValue].value) / 1E3F) * Norm[@"8"][keyPValue].value / Norm[@"8"][keyStationPValue].value
+                                            + Norm[@"122"][keyPValue].value * In[@"71"][keyPValue].value) / Norm[@"8"][keyPValue].value * 100;
                                 }
 
-                                fSum += Norm[@"122"][id_comp].value * In[@"71"][id_comp].value;
+                                fSum += Norm[@"122"][keyPValue].value * In[@"71"][keyPValue].value;
                             }
 
-                            if (Norm[@"8"][ST].value == 0)
+                            if (Norm[@"8"][keyStationPValue].value == 0)
                                 fRes = 0;
                             else
-                                fRes = (Norm[@"123"][ST].value * In[@"71"][ST].value + (Norm[@"124"][ST].value
-                                    + fTmp) * In[@"70"][ST].value + 393 * (In[@"50"][ST].value + In[@"51"][ST].value)
-                                    / 1E3F + fSum) / Norm[@"8"][ST].value * 100;
+                                fRes = (Norm[@"123"][keyStationPValue].value * In[@"71"][keyStationPValue].value + (Norm[@"124"][keyStationPValue].value
+                                    + fTmp) * In[@"70"][keyStationPValue].value + 393 * (In[@"50"][keyStationPValue].value + In[@"51"][keyStationPValue].value)
+                                    / 1E3F + fSum) / Norm[@"8"][keyStationPValue].value * 100;
                             break;
                         #endregion
 
@@ -2436,11 +2524,11 @@ namespace PluginTaskTepMain
                         case "126":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 1 / 1E3F * 860 * Norm[@"139"][id_comp].value * In[@"71"][id_comp].value * 85 / 1E2F;
+                                Norm[nAlg][keyPValue].value = 1 / 1E3F * 860 * Norm[@"139"][keyPValue].value * In[@"71"][keyPValue].value * 85 / 1E2F;
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -2449,18 +2537,18 @@ namespace PluginTaskTepMain
                         case "126.1":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (Norm[@"8"][id_comp].value == 0)
-                                    Norm[nAlg][id_comp].value = 0;
+                                if (Norm[@"8"][keyPValue].value == 0)
+                                    Norm[nAlg][keyPValue].value = 0;
                                 else
-                                    Norm[nAlg][id_comp].value = Norm[@"126"][id_comp].value / Norm[@"8"][id_comp].value * 1E2F;
+                                    Norm[nAlg][keyPValue].value = Norm[@"126"][keyPValue].value / Norm[@"8"][keyPValue].value * 1E2F;
                             }
 
-                            if (Norm[@"8"][ST].value == 0)
+                            if (Norm[@"8"][keyStationPValue].value == 0)
                                 fRes = 0;
                             else
-                                fRes = Norm[@"126"][ST].value / Norm[@"8"][ST].value * 1E2F;
+                                fRes = Norm[@"126"][keyStationPValue].value / Norm[@"8"][keyStationPValue].value * 1E2F;
                             break;
                         #endregion
 
@@ -2468,35 +2556,35 @@ namespace PluginTaskTepMain
                         case "127":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1:
-                                        Norm[nAlg][id_comp].value = 1;
+                                        Norm[nAlg][keyPValue].value = 1;
                                         break;
                                     case MODE_DEV.ELEKTRO2_2:
                                     case MODE_DEV.ELEKTRO1_2a:
                                     case MODE_DEV.TEPLO_3:
-                                        Norm[nAlg][id_comp].value = (Norm[@"24"][id_comp].value * (100 + Norm[@"41"][id_comp].value)
-                                            * Norm[@"2"][id_comp].value / 1E5F + Norm[@"47"][id_comp].value) / (Norm[@"24"][id_comp].value
-                                            * (100 + Norm[@"41"][id_comp].value) * Norm[@"2"][id_comp].value / 1E5F + Norm[@"47"][id_comp].value
-                                            + (Norm[@"8"][id_comp].value - Norm[@"126"][id_comp].value) * (100 + Norm[@"125"][id_comp].value) / 1E2F);
+                                        Norm[nAlg][keyPValue].value = (Norm[@"24"][keyPValue].value * (100 + Norm[@"41"][keyPValue].value)
+                                            * Norm[@"2"][keyPValue].value / 1E5F + Norm[@"47"][keyPValue].value) / (Norm[@"24"][keyPValue].value
+                                            * (100 + Norm[@"41"][keyPValue].value) * Norm[@"2"][keyPValue].value / 1E5F + Norm[@"47"][keyPValue].value
+                                            + (Norm[@"8"][keyPValue].value - Norm[@"126"][keyPValue].value) * (100 + Norm[@"125"][keyPValue].value) / 1E2F);
                                         break;
                                     default:
                                         break;
                                 }
 
-                                fSum += In[@"47"][id_comp].value;
+                                fSum += In[@"47"][keyPValue].value;
                             }
 
                             if (fSum == 0)
                                 fRes = 0;
                             else
-                                fRes = (Norm[@"24"][ST].value * (100 + Norm[@"41"][ST].value)
-                                    * Norm[@"2"][ST].value / 1E5F + Norm[@"47"][ST].value) / (Norm[@"24"][ST].value
-                                    * (100 + Norm[@"41"][ST].value) * Norm[@"2"][ST].value / 1E5F + Norm[@"47"][ST].value
-                                    + (Norm[@"8"][ST].value - Norm[@"126"][ST].value) * (100 + Norm[@"125"][ST].value) / 1E2F);
+                                fRes = (Norm[@"24"][keyStationPValue].value * (100 + Norm[@"41"][keyStationPValue].value)
+                                    * Norm[@"2"][keyStationPValue].value / 1E5F + Norm[@"47"][keyStationPValue].value) / (Norm[@"24"][keyStationPValue].value
+                                    * (100 + Norm[@"41"][keyStationPValue].value) * Norm[@"2"][keyStationPValue].value / 1E5F + Norm[@"47"][keyStationPValue].value
+                                    + (Norm[@"8"][keyStationPValue].value - Norm[@"126"][keyStationPValue].value) * (100 + Norm[@"125"][keyStationPValue].value) / 1E2F);
                             break;
                         #endregion
 
@@ -2504,14 +2592,14 @@ namespace PluginTaskTepMain
                         case "128":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"36"][id_comp].value + Norm[@"127"][id_comp].value * Norm[@"108"][id_comp].value
-                                    / Norm[@"2"][id_comp].value * 100;
+                                Norm[nAlg][keyPValue].value = Norm[@"36"][keyPValue].value + Norm[@"127"][keyPValue].value * Norm[@"108"][keyPValue].value
+                                    / Norm[@"2"][keyPValue].value * 100;
                             }
 
-                            fRes = Norm[@"36"][ST].value + Norm[@"127"][ST].value * Norm[@"108"][ST].value
-                                / Norm[@"2"][ST].value * 100;
+                            fRes = Norm[@"36"][keyStationPValue].value + Norm[@"127"][keyStationPValue].value * Norm[@"108"][keyStationPValue].value
+                                / Norm[@"2"][keyStationPValue].value * 100;
                             break;
                         #endregion
 
@@ -2519,14 +2607,14 @@ namespace PluginTaskTepMain
                         case "129":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"88"][id_comp].value * (100 - Norm[@"121"][id_comp].value)
-                                    * (100 - Norm[@"126"][id_comp].value) / 100 / (100 - Norm[@"36"][id_comp].value);
+                                Norm[nAlg][keyPValue].value = Norm[@"88"][keyPValue].value * (100 - Norm[@"121"][keyPValue].value)
+                                    * (100 - Norm[@"126"][keyPValue].value) / 100 / (100 - Norm[@"36"][keyPValue].value);
                             }
 
-                            fRes = Norm[@"88"][ST].value * (100 - Norm[@"121"][ST].value)
-                                * (100 - Norm[@"126"][ST].value) / 100 / (100 - Norm[@"36"][ST].value);
+                            fRes = Norm[@"88"][keyStationPValue].value * (100 - Norm[@"121"][keyStationPValue].value)
+                                * (100 - Norm[@"126"][keyStationPValue].value) / 100 / (100 - Norm[@"36"][keyStationPValue].value);
                             break;
                         #endregion
 
@@ -2534,12 +2622,12 @@ namespace PluginTaskTepMain
                         case "130":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 100 - 1.0F * 472.2F / Norm[@"65"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = 100 - 1.0F * 472.2F / Norm[@"65"][keyPValue].value;
                             }
 
-                            fRes = 100 - 1.0F * 472.2F / Norm[@"65"][ST].value;
+                            fRes = 100 - 1.0F * 472.2F / Norm[@"65"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2547,12 +2635,12 @@ namespace PluginTaskTepMain
                         case "131":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"65"][id_comp].value / 472.2F;
+                                Norm[nAlg][keyPValue].value = Norm[@"65"][keyPValue].value / 472.2F;
                             }
 
-                            fRes = Norm[@"65"][ST].value / 472.2F;
+                            fRes = Norm[@"65"][keyStationPValue].value / 472.2F;
                             break;
                         #endregion
 
@@ -2560,17 +2648,17 @@ namespace PluginTaskTepMain
                         case "132":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (fTable.F1("2.35:1", Norm[@"131"][id_comp].value) > 1)
-                                    Norm[nAlg][id_comp].value = 1;
+                                if (fTable.F1("2.35:1", Norm[@"131"][keyPValue].value) > 1)
+                                    Norm[nAlg][keyPValue].value = 1;
                                 else
-                                    Norm[nAlg][id_comp].value = fTable.F1("2.35:1", Norm[@"131"][id_comp].value);
+                                    Norm[nAlg][keyPValue].value = fTable.F1("2.35:1", Norm[@"131"][keyPValue].value);
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"64"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"64"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"64"][ST].value;
+                            fRes = fSum / Norm[@"64"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2578,23 +2666,23 @@ namespace PluginTaskTepMain
                         case "133":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (In[@"84"][id_comp].value == 1)
-                                    Norm[nAlg][id_comp].value = 4;
+                                if (In[@"84"][keyPValue].value == 1)
+                                    Norm[nAlg][keyPValue].value = 4;
                                 else
-                                    if (In[@"84"][id_comp].value == 2)
-                                        Norm[nAlg][id_comp].value = 3;
+                                    if (In[@"84"][keyPValue].value == 2)
+                                        Norm[nAlg][keyPValue].value = 3;
                                     else
-                                        if (In[@"84"][id_comp].value > 2)
-                                            Norm[nAlg][id_comp].value = 0;
+                                        if (In[@"84"][keyPValue].value > 2)
+                                            Norm[nAlg][keyPValue].value = 0;
                                         else
                                             //??1 / 0
                                             ;
-                                fSum += Norm[@"64"][id_comp].value * Norm[nAlg][id_comp].value;
+                                fSum += Norm[@"64"][keyPValue].value * Norm[nAlg][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"64"][ST].value;
+                            fRes = fSum / Norm[@"64"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2602,24 +2690,24 @@ namespace PluginTaskTepMain
                         case "134":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (In[@"84"][id_comp].value == 1)
-                                    Norm[nAlg][id_comp].value = 2;
+                                if (In[@"84"][keyPValue].value == 1)
+                                    Norm[nAlg][keyPValue].value = 2;
                                 else
-                                    if (In[@"84"][id_comp].value == 2)
-                                        Norm[nAlg][id_comp].value = 1.5F;
+                                    if (In[@"84"][keyPValue].value == 2)
+                                        Norm[nAlg][keyPValue].value = 1.5F;
                                     else
-                                        if (In[@"84"][id_comp].value > 2)
-                                            Norm[nAlg][id_comp].value = 0;
+                                        if (In[@"84"][keyPValue].value > 2)
+                                            Norm[nAlg][keyPValue].value = 0;
                                         else
                                             //??1 / 0
                                             ;
 
-                                fSum += Norm[@"64"][id_comp].value * Norm[nAlg][id_comp].value;
+                                fSum += Norm[@"64"][keyPValue].value * Norm[nAlg][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"64"][ST].value;
+                            fRes = fSum / Norm[@"64"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2627,19 +2715,19 @@ namespace PluginTaskTepMain
                         case "135":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = 1 + Norm[@"47"][id_comp].value / (Norm[@"24"][id_comp].value * Norm[@"2"][id_comp].value
-                                    * (100 + Norm[@"41"][id_comp].value) / 1E5F + Norm[@"8"][id_comp].value * (100 - Norm[@"126.1"][id_comp].value)
-                                    * (100 + Norm[@"125"][id_comp].value) / 1E4F);
+                                Norm[nAlg][keyPValue].value = 1 + Norm[@"47"][keyPValue].value / (Norm[@"24"][keyPValue].value * Norm[@"2"][keyPValue].value
+                                    * (100 + Norm[@"41"][keyPValue].value) / 1E5F + Norm[@"8"][keyPValue].value * (100 - Norm[@"126.1"][keyPValue].value)
+                                    * (100 + Norm[@"125"][keyPValue].value) / 1E4F);
                             }
 
-                            if (In[@"81"][ST].value == 0)
+                            if (In[@"81"][keyStationPValue].value == 0)
                                 fRes = 1;
                             else
-                                fRes = 1 + Norm[@"47"][ST].value / (Norm[@"24"][ST].value * Norm[@"2"][ST].value
-                                    * (100 + Norm[@"41"][ST].value) / 1E5F + Norm[@"126"][ST].value / Norm[@"8"][ST].value
-                                    * 100) * (100 + Norm[@"125"][ST].value) / 1E4F;
+                                fRes = 1 + Norm[@"47"][keyStationPValue].value / (Norm[@"24"][keyStationPValue].value * Norm[@"2"][keyStationPValue].value
+                                    * (100 + Norm[@"41"][keyStationPValue].value) / 1E5F + Norm[@"126"][keyStationPValue].value / Norm[@"8"][keyStationPValue].value
+                                    * 100) * (100 + Norm[@"125"][keyStationPValue].value) / 1E4F;
                             break;
                         #endregion
 
@@ -2647,18 +2735,18 @@ namespace PluginTaskTepMain
                         case "136":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"42"][id_comp].value
-                                    * (100 + Norm[@"132"][id_comp].value + Norm[@"133"][id_comp].value)
-                                    * Norm[@"48"][id_comp].value * 100 / (Norm[@"129"][id_comp].value
-                                    * Norm[@"130"][id_comp].value * 7 * Norm[@"135"][id_comp].value);
+                                Norm[nAlg][keyPValue].value = Norm[@"42"][keyPValue].value
+                                    * (100 + Norm[@"132"][keyPValue].value + Norm[@"133"][keyPValue].value)
+                                    * Norm[@"48"][keyPValue].value * 100 / (Norm[@"129"][keyPValue].value
+                                    * Norm[@"130"][keyPValue].value * 7 * Norm[@"135"][keyPValue].value);
                             }
 
-                            fRes = Norm[@"42"][ST].value
-                                * (100 + Norm[@"132"][ST].value + Norm[@"133"][ST].value)
-                                * Norm[@"48"][ST].value * 100 / (Norm[@"129"][ST].value
-                                * Norm[@"130"][ST].value * 7 * Norm[@"135"][ST].value);
+                            fRes = Norm[@"42"][keyStationPValue].value
+                                * (100 + Norm[@"132"][keyStationPValue].value + Norm[@"133"][keyStationPValue].value)
+                                * Norm[@"48"][keyStationPValue].value * 100 / (Norm[@"129"][keyStationPValue].value
+                                * Norm[@"130"][keyStationPValue].value * 7 * Norm[@"135"][keyStationPValue].value);
                             break;
                         #endregion
 
@@ -2666,14 +2754,14 @@ namespace PluginTaskTepMain
                         case "137":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"136"][id_comp].value * (1 + In[@"64"][ST].value
-                                    * (1 - In[@"65"][ST].value));
+                                Norm[nAlg][keyPValue].value = Norm[@"136"][keyPValue].value * (1 + In[@"64"][keyStationPValue].value
+                                    * (1 - In[@"65"][keyStationPValue].value));
                             }
 
-                            fRes = Norm[@"136"][ST].value * (1 + In[@"64"][ST].value
-                                * (1 - In[@"65"][ST].value));
+                            fRes = Norm[@"136"][keyStationPValue].value * (1 + In[@"64"][keyStationPValue].value
+                                * (1 - In[@"65"][keyStationPValue].value));
                             break;
                         #endregion
 
@@ -2681,69 +2769,68 @@ namespace PluginTaskTepMain
                         case "138":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (In[@"71"][id_comp].value == 0)
-                                    Norm[nAlg][id_comp].value = 0;
+                                if (In[@"71"][keyPValue].value == 0)
+                                    Norm[nAlg][keyPValue].value = 0;
                                 else
-                                    Norm[nAlg][id_comp].value = In[@"47"][id_comp].value / In[@"71"][id_comp].value * 1E3F;
+                                    Norm[nAlg][keyPValue].value = In[@"47"][keyPValue].value / In[@"71"][keyPValue].value * 1E3F;
 
-                                fSum += Norm[@"1"][id_comp].value * Norm[nAlg][id_comp].value;
+                                fSum += Norm[@"1"][keyPValue].value * Norm[nAlg][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"1"][ST].value;
+                            fRes = fSum / Norm[@"1"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 139 - N сет
                         case "139":
-                            id_comp = ID_COMP[(int)INDX_COMP.iBL1];
-
-                            if (Norm[@"138"][id_comp].value <= 4500)
-                                Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = (float)(fTable.F1("2.39б:1", Norm[@"138"][id_comp].value)
-                                    * (float)(1.4F - (float)Math.Min(1.4F, In[@"10.1"][id_comp].value
-                                    / In[@"1"][id_comp].value)) + fTable.F1("2.39в:1", Norm[@"138"][id_comp].value)
-                                    * (float)Math.Min(1.4F, In[@"10.1"][id_comp].value / In[@"1"][id_comp].value)) / 1.4F;
+                            keyPValue.Id = ID_COMP[(int)INDX_COMP.iBL1]; keyPValue.Stamp = stamp;
+                            if (Norm[@"138"][keyPValue].value <= 4500)
+                                Norm[nAlg][keyPValue].value = (float)(fTable.F1("2.39б:1", Norm[@"138"][keyPValue].value)
+                                    * (float)(1.4F - (float)Math.Min(1.4F, In[@"10.1"][keyPValue].value
+                                    / In[@"1"][keyPValue].value)) + fTable.F1("2.39в:1", Norm[@"138"][keyPValue].value)
+                                    * (float)Math.Min(1.4F, In[@"10.1"][keyPValue].value / In[@"1"][keyPValue].value)) / 1.4F;
                             else
-                                Norm[nAlg][ID_COMP[(int)INDX_COMP.iBL1]].value = fTable.F1("2.39г:1", Norm[@"138"][id_comp].value);
+                                Norm[nAlg][keyPValue].value = fTable.F1("2.39г:1", Norm[@"138"][keyPValue].value);
 
                             for (i = (int)INDX_COMP.iBL2; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (Norm[@"138"][id_comp].value <= 4500)
+                                if (Norm[@"138"][keyPValue].value <= 4500)
                                 {
-                                    fTmp = (float)(fTable.F1("2.39б:1", Norm[@"138"][id_comp].value)
-                                        * (float)(1.4F - (float)Math.Min(1.4F, In[@"10.1"][id_comp].value
-                                        / In[@"1"][id_comp].value)) + fTable.F1("2.39в:1", Norm[@"138"][id_comp].value)
-                                        * (float)Math.Min(1.4F, In[@"10.1"][id_comp].value / In[@"1"][id_comp].value)) / 1.4F;
+                                    fTmp = (float)(fTable.F1("2.39б:1", Norm[@"138"][keyPValue].value)
+                                        * (float)(1.4F - (float)Math.Min(1.4F, In[@"10.1"][keyPValue].value
+                                        / In[@"1"][keyPValue].value)) + fTable.F1("2.39в:1", Norm[@"138"][keyPValue].value)
+                                        * (float)Math.Min(1.4F, In[@"10.1"][keyPValue].value / In[@"1"][keyPValue].value)) / 1.4F;
                                 }
                                 else
-                                    fTmp = fTable.F1("2.39е:1", Norm[@"138"][id_comp].value);
+                                    fTmp = fTable.F1("2.39е:1", Norm[@"138"][keyPValue].value);
 
-                                Norm[nAlg][id_comp].value = fTmp;
+                                Norm[nAlg][keyPValue].value = fTmp;
                             }
                             break;
                         #endregion
 
                         #region 140 - G птс
                         case "140":
-                            fRes = (In[@"50"][ST].value + In[@"51"][ST].value) / In[@"71"][ST].value * 1E3F;
+                            fRes = (In[@"50"][keyStationPValue].value + In[@"51"][keyStationPValue].value) / In[@"71"][keyStationPValue].value * 1E3F;
                             break;
                         #endregion
 
                         #region 141 - N подп
                         case "141":
-                            fRes = fTable.F1("2.36:1", Norm[@"140"][ST].value);
+                            fRes = fTable.F1("2.36:1", Norm[@"140"][keyStationPValue].value);
                             break;
                         #endregion
 
                         #region 142 - N хов
                         case "142":
-                            if (In[@"43"][ST].value < 8)
-                                fRes = fTable.F1("2.37:1", Norm[@"140"][ST].value);
+                            if (In[@"43"][keyStationPValue].value < 8)
+                                fRes = fTable.F1("2.37:1", Norm[@"140"][keyStationPValue].value);
                             else
-                                fRes = fTable.F1("2.37а:1", Norm[@"140"][ST].value);
+                                fRes = fTable.F1("2.37а:1", Norm[@"140"][keyStationPValue].value);
                             break;
                         #endregion
 
@@ -2751,19 +2838,19 @@ namespace PluginTaskTepMain
                         case "143":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.COND_1:
-                                        Norm[nAlg][id_comp].value = 0;
+                                        Norm[nAlg][keyPValue].value = 0;
                                         break;
                                     case MODE_DEV.ELEKTRO1_2a:
-                                        Norm[nAlg][id_comp].value = fTable.F1("2.38:1", Norm[@"10"][id_comp].value) / 1E3F;
+                                        Norm[nAlg][keyPValue].value = fTable.F1("2.38:1", Norm[@"10"][keyPValue].value) / 1E3F;
                                         break;
                                     case MODE_DEV.ELEKTRO2_2:
                                     case MODE_DEV.TEPLO_3:
-                                        Norm[nAlg][id_comp].value = fTable.F1("2.38а:1", Norm[@"10"][id_comp].value) / 1E3F;
+                                        Norm[nAlg][keyPValue].value = fTable.F1("2.38а:1", Norm[@"10"][keyPValue].value) / 1E3F;
                                         break;
                                     default:
                                         break;
@@ -2776,7 +2863,7 @@ namespace PluginTaskTepMain
                         case "144":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 if (isRealTime)
                                 {
@@ -2787,14 +2874,14 @@ namespace PluginTaskTepMain
                                             case MODE_DEV.UNKNOWN:
                                                 break;
                                             case MODE_DEV.COND_1:
-                                                Norm[nAlg][id_comp].value = 0;
+                                                Norm[nAlg][keyPValue].value = 0;
                                                 break;
                                             case MODE_DEV.ELEKTRO2_2:
                                             case MODE_DEV.ELEKTRO1_2a:
                                             case MODE_DEV.TEPLO_3:
-                                                Norm[nAlg][id_comp].value = (Norm[@"139"][id_comp].value + Norm[@"143"][id_comp].value)
-                                                    * In[@"71"][id_comp].value + (Norm[@"141"][ST].value + Norm[@"142"][ST].value)
-                                                    * In[@"71"][ST].value * Norm[@"8"][id_comp].value / Norm[@"8"][ST].value;
+                                                Norm[nAlg][keyPValue].value = (Norm[@"139"][keyPValue].value + Norm[@"143"][keyPValue].value)
+                                                    * In[@"71"][keyPValue].value + (Norm[@"141"][keyStationPValue].value + Norm[@"142"][keyStationPValue].value)
+                                                    * In[@"71"][keyStationPValue].value * Norm[@"8"][keyPValue].value / Norm[@"8"][keyStationPValue].value;
                                                 break;
                                             case MODE_DEV.COUNT:
                                                 break;
@@ -2809,14 +2896,14 @@ namespace PluginTaskTepMain
                                             case MODE_DEV.UNKNOWN:
                                                 break;
                                             case MODE_DEV.COND_1:
-                                                Norm[nAlg][id_comp].value = 0;
+                                                Norm[nAlg][keyPValue].value = 0;
                                                 break;
                                             case MODE_DEV.ELEKTRO2_2:
                                             case MODE_DEV.ELEKTRO1_2a:
                                             case MODE_DEV.TEPLO_3:
-                                                Norm[nAlg][id_comp].value = (Norm[@"139"][id_comp].value + Norm[@"143"][id_comp].value)
-                                                   * In[@"71"][id_comp].value + (Norm[@"141"][ST].value + Norm[@"142"][ST].value)
-                                                   * In[@"71"][ST].value * Norm[@"7"][id_comp].value / Norm[@"7"][ST].value;
+                                                Norm[nAlg][keyPValue].value = (Norm[@"139"][keyPValue].value + Norm[@"143"][keyPValue].value)
+                                                   * In[@"71"][keyPValue].value + (Norm[@"141"][keyStationPValue].value + Norm[@"142"][keyStationPValue].value)
+                                                   * In[@"71"][keyStationPValue].value * Norm[@"7"][keyPValue].value / Norm[@"7"][keyStationPValue].value;
                                                 break;
                                             case MODE_DEV.COUNT:
                                                 break;
@@ -2832,14 +2919,14 @@ namespace PluginTaskTepMain
                                         case MODE_DEV.UNKNOWN:
                                             break;
                                         case MODE_DEV.COND_1:
-                                            Norm[nAlg][id_comp].value = 0;
+                                            Norm[nAlg][keyPValue].value = 0;
                                             break;
                                         case MODE_DEV.ELEKTRO2_2:
                                         case MODE_DEV.ELEKTRO1_2a:
                                         case MODE_DEV.TEPLO_3:
-                                            Norm[nAlg][id_comp].value = (Norm[@"139"][id_comp].value + Norm[@"143"][id_comp].value)
-                                                    * In[@"71"][id_comp].value + (Norm[@"141"][ST].value + Norm[@"142"][ST].value)
-                                                    * In[@"71"][ST].value * Norm[@"8"][id_comp].value / Norm[@"8"][ST].value;
+                                            Norm[nAlg][keyPValue].value = (Norm[@"139"][keyPValue].value + Norm[@"143"][keyPValue].value)
+                                                    * In[@"71"][keyPValue].value + (Norm[@"141"][keyStationPValue].value + Norm[@"142"][keyStationPValue].value)
+                                                    * In[@"71"][keyStationPValue].value * Norm[@"8"][keyPValue].value / Norm[@"8"][keyStationPValue].value;
                                             break;
                                         case MODE_DEV.COUNT:
                                             break;
@@ -2848,7 +2935,7 @@ namespace PluginTaskTepMain
                                     }
                                 }
 
-                                fRes += Norm[nAlg][id_comp].value;
+                                fRes += Norm[nAlg][keyPValue].value;
                             }
                             break;
                         #endregion
@@ -2857,21 +2944,21 @@ namespace PluginTaskTepMain
                         case "145":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
                                 switch (_modeDev[i])
                                 {
                                     case MODE_DEV.UNKNOWN:
                                         break;
                                     case MODE_DEV.COND_1:
-                                        Norm[nAlg][id_comp].value = 0;
+                                        Norm[nAlg][keyPValue].value = 0;
                                         break;
                                     case MODE_DEV.ELEKTRO2_2:
                                     case MODE_DEV.ELEKTRO1_2a:
                                     case MODE_DEV.TEPLO_3:
-                                        Norm[nAlg][id_comp].value = (100 + Norm[@"125"][id_comp].value) * (100 + Norm[@"132"][id_comp].value
-                                            + Norm[@"134"][id_comp].value) * 1E3F / (Norm[@"129"][id_comp].value * Norm[@"130"][id_comp].value
-                                            * 7 * Norm[@"135"][id_comp].value);
+                                        Norm[nAlg][keyPValue].value = (100 + Norm[@"125"][keyPValue].value) * (100 + Norm[@"132"][keyPValue].value
+                                            + Norm[@"134"][keyPValue].value) * 1E3F / (Norm[@"129"][keyPValue].value * Norm[@"130"][keyPValue].value
+                                            * 7 * Norm[@"135"][keyPValue].value);
                                         break;
                                     case MODE_DEV.COUNT:
                                         break;
@@ -2879,22 +2966,22 @@ namespace PluginTaskTepMain
                                         break;
                                 }
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"8"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"8"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"8"][ST].value;
+                            fRes = fSum / Norm[@"8"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 146 - b тэ пвк
                         case "146":
-                            fRes = In[@"86"][ST].value;
+                            fRes = In[@"86"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 146.1 - alfa пвк
                         case "146.1":
-                            fRes = In[@"85"][ST].value / Norm[@"5"][ST].value;
+                            fRes = In[@"85"][keyStationPValue].value / Norm[@"5"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2902,18 +2989,18 @@ namespace PluginTaskTepMain
                         case "147":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                if (Norm[@"8"][id_comp].value == 0)
-                                    Norm[nAlg][id_comp].value = 0;
+                                if (Norm[@"8"][keyPValue].value == 0)
+                                    Norm[nAlg][keyPValue].value = 0;
                                 else
-                                    Norm[nAlg][id_comp].value = Norm[@"144"][id_comp].value
-                                        * Norm[@"136"][id_comp].value / Norm[@"8"][id_comp].value;
+                                    Norm[nAlg][keyPValue].value = Norm[@"144"][keyPValue].value
+                                        * Norm[@"136"][keyPValue].value / Norm[@"8"][keyPValue].value;
 
-                                fSum += Norm[nAlg][id_comp].value * Norm[@"3"][id_comp].value;
+                                fSum += Norm[nAlg][keyPValue].value * Norm[@"3"][keyPValue].value;
                             }
 
-                            fRes = fSum / Norm[@"3"][ST].value;
+                            fRes = fSum / Norm[@"3"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2921,22 +3008,22 @@ namespace PluginTaskTepMain
                         case "148":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"145"][id_comp].value * (100 - Norm["126.1"][id_comp].value) / 1E2F
-                                    + Norm[@"147"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"145"][keyPValue].value * (100 - Norm["126.1"][keyPValue].value) / 1E2F
+                                    + Norm[@"147"][keyPValue].value;
                             }
 
-                            fRes = Norm[@"145"][ST].value * (100 - Norm["126.1"][ST].value) / 1E2F
-                                + Norm[@"147"][ST].value; ;
+                            fRes = Norm[@"145"][keyStationPValue].value * (100 - Norm["126.1"][keyStationPValue].value) / 1E2F
+                                + Norm[@"147"][keyStationPValue].value; ;
                             break;
                         #endregion
 
                         #region 149 - b тэ (н) ст
                         case "149":
-                            fRes = (Norm[@"145"][ST].value * (100 - Norm[@"146.1"][ST].value - Norm[@"126.1"][ST].value)
-                                + Norm[@"146"][ST].value * Norm[@"146.1"][ST].value) / 1E2F + In[@"87"][ST].value * 1E3F
-                                / Norm[@"5"][ST].value + Norm[@"147"][ST].value;
+                            fRes = (Norm[@"145"][keyStationPValue].value * (100 - Norm[@"146.1"][keyStationPValue].value - Norm[@"126.1"][keyStationPValue].value)
+                                + Norm[@"146"][keyStationPValue].value * Norm[@"146.1"][keyStationPValue].value) / 1E2F + In[@"87"][keyStationPValue].value * 1E3F
+                                / Norm[@"5"][keyStationPValue].value + Norm[@"147"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2944,17 +3031,17 @@ namespace PluginTaskTepMain
                         case "150":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"145"][ST].value * (100 - Norm["126.1"][id_comp].value) / 1E2F
-                                    * (1 + In[@"66"][ST].value * (1 - In[@"67"][ST].value)) + Norm[@"147"][id_comp].value
-                                    * Norm[@"137"][id_comp].value / Norm["136"][id_comp].value;
+                                Norm[nAlg][keyPValue].value = Norm[@"145"][keyStationPValue].value * (100 - Norm["126.1"][keyPValue].value) / 1E2F
+                                    * (1 + In[@"66"][keyStationPValue].value * (1 - In[@"67"][keyStationPValue].value)) + Norm[@"147"][keyPValue].value
+                                    * Norm[@"137"][keyPValue].value / Norm["136"][keyPValue].value;
                             }
 
-                            fRes = Norm[@"145"][ST].value * (100 - Norm["146.1"][ST].value - Norm["126.1"][ST].value)
-                                * (1 + In[@"66"][ST].value * (1 - In[@"67"][ST].value)) / 1E2F + Norm[@"146"][ST].value
-                                * Norm[@"146.1"][ST].value / 1E2F + In[@"87"][ST].value * 1E3F / Norm[@"5"][ST].value
-                                + Norm[@"147"][ST].value * Norm[@"137"][ST].value / Norm[@"136"][ST].value;
+                            fRes = Norm[@"145"][keyStationPValue].value * (100 - Norm["146.1"][keyStationPValue].value - Norm["126.1"][keyStationPValue].value)
+                                * (1 + In[@"66"][keyStationPValue].value * (1 - In[@"67"][keyStationPValue].value)) / 1E2F + Norm[@"146"][keyStationPValue].value
+                                * Norm[@"146.1"][keyStationPValue].value / 1E2F + In[@"87"][keyStationPValue].value * 1E3F / Norm[@"5"][keyStationPValue].value
+                                + Norm[@"147"][keyStationPValue].value * Norm[@"137"][keyStationPValue].value / Norm[@"136"][keyStationPValue].value;
                             break;
                         #endregion
 
@@ -2962,20 +3049,20 @@ namespace PluginTaskTepMain
                         case "151":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = Norm[@"24"][id_comp].value * Norm[@"2"][id_comp].value / 1E3F
-                                    + (Norm[@"8"][id_comp].value - Norm[@"126"][id_comp].value) * (100 + Norm[@"125"][id_comp].value)
-                                    / 1E2F + Norm[@"41"][id_comp].value * Norm[@"24"][id_comp].value * Norm[@"2"][id_comp].value
-                                    / 1E3F / 1E2F + Norm[@"121"][id_comp].value * Norm[@"64"][id_comp].value / 100 + 472.2F
-                                    * Norm[@"1"][id_comp].value / 1E2F;
+                                Norm[nAlg][keyPValue].value = Norm[@"24"][keyPValue].value * Norm[@"2"][keyPValue].value / 1E3F
+                                    + (Norm[@"8"][keyPValue].value - Norm[@"126"][keyPValue].value) * (100 + Norm[@"125"][keyPValue].value)
+                                    / 1E2F + Norm[@"41"][keyPValue].value * Norm[@"24"][keyPValue].value * Norm[@"2"][keyPValue].value
+                                    / 1E3F / 1E2F + Norm[@"121"][keyPValue].value * Norm[@"64"][keyPValue].value / 100 + 472.2F
+                                    * Norm[@"1"][keyPValue].value / 1E2F;
                             }
 
-                            fRes = Norm[@"24"][ST].value * Norm[@"2"][ST].value / 1E3F
-                                    + (Norm[@"8"][ST].value - Norm[@"126"][ST].value) * (100 + Norm[@"125"][ST].value)
-                                    / 1E2F + Norm[@"41"][ST].value * Norm[@"24"][ST].value * Norm[@"2"][ST].value
-                                    / 1E3F / 1E2F + Norm[@"121"][ST].value * Norm[@"64"][ST].value / 100 + 472.2F
-                                    * Norm[@"1"][ST].value / 1E2F;
+                            fRes = Norm[@"24"][keyStationPValue].value * Norm[@"2"][keyStationPValue].value / 1E3F
+                                    + (Norm[@"8"][keyStationPValue].value - Norm[@"126"][keyStationPValue].value) * (100 + Norm[@"125"][keyStationPValue].value)
+                                    / 1E2F + Norm[@"41"][keyStationPValue].value * Norm[@"24"][keyStationPValue].value * Norm[@"2"][keyStationPValue].value
+                                    / 1E3F / 1E2F + Norm[@"121"][keyStationPValue].value * Norm[@"64"][keyStationPValue].value / 100 + 472.2F
+                                    * Norm[@"1"][keyStationPValue].value / 1E2F;
                             break;
                         #endregion
 
@@ -2983,27 +3070,27 @@ namespace PluginTaskTepMain
                         case "152":
                             for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iST; i++)
                             {
-                                id_comp = ID_COMP[i];
+                                keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                                Norm[nAlg][id_comp].value = (Norm[@"64"][id_comp].value - Norm["151"][id_comp].value)
-                                    / Norm[@"64"][id_comp].value * 1E2F;
+                                Norm[nAlg][keyPValue].value = (Norm[@"64"][keyPValue].value - Norm["151"][keyPValue].value)
+                                    / Norm[@"64"][keyPValue].value * 1E2F;
                             }
 
-                            fRes = (Norm[@"64"][ST].value - Norm["151"][ST].value)
-                                    / Norm[@"64"][ST].value * 1E2F;
+                            fRes = (Norm[@"64"][keyStationPValue].value - Norm["151"][keyStationPValue].value)
+                                    / Norm[@"64"][keyStationPValue].value * 1E2F;
                             break;
                         #endregion
 
                         #region 153 - S Э сн (н)
                         case "153":
-                            fRes = Norm[@"36"][ST].value * Norm[@"2"][ST].value / 1E2F + Norm[@"108"][ST].value
-                                + Norm[@"144"][ST].value;
+                            fRes = Norm[@"36"][keyStationPValue].value * Norm[@"2"][keyStationPValue].value / 1E2F + Norm[@"108"][keyStationPValue].value
+                                + Norm[@"144"][keyStationPValue].value;
                             break;
                         #endregion
 
                         #region 154 - S Э сн (ф)
                         case "154":
-                            fRes = In[@"3"][ST].value;
+                            fRes = In[@"3"][keyStationPValue].value;
                             break;
                         #endregion
 

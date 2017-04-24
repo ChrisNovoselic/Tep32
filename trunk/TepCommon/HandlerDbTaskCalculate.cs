@@ -872,7 +872,9 @@ namespace TepCommon
             , IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
             , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listInPutPar
             , Dictionary<KEY_VALUES, List<VALUE>> dictValues);
-
+        /// <summary>
+        /// Перечисление - результат выполнения операции
+        /// </summary>
         public enum RESULT { Exception = -2, Error, Ok, Warning, Debug }
         /// <summary>
         /// Событие для оповещения панелей о завершении загрузки значений из БД
@@ -882,6 +884,54 @@ namespace TepCommon
         /// Событие для оповещения панелей о завершении расчета
         /// </summary>
         public event Action<RESULT> EventCalculateCompleted;
+        /// <summary>
+        /// Класс для описания события при завершении расчета одного из параметров
+        /// </summary>
+        public class CalculateProccessEventArgs : EventArgs
+        {
+            /// <summary>
+            /// Конструктор - дополнительный (без параметров)
+            ///  для запрета создания пустого сообщения
+            /// </summary>
+            private CalculateProccessEventArgs()
+                : base ()
+            {
+            }
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="type">Тип выполняемого процесса расчета</param>
+            /// <param name="idNAlg">Идентификатор параметра 1-го порядка</param>
+            /// <param name="m_result">Результат расчета</param>
+            /// <param name="message">Дополнительное сообщение, детализирующее резултьтат</param>
+            public CalculateProccessEventArgs(TaskCalculate.TYPE type, NALG_PARAMETER nAlg, RESULT result, string message = "")
+                : base()
+            {
+                m_type = type;
+
+                m_nAlg = nAlg;
+
+                m_result = result;
+
+                m_message = message;
+            }
+            /// <summary>
+            /// Тип выполняемого расчета
+            /// </summary>
+            public TaskCalculate.TYPE m_type;
+            /// <summary>
+            /// Параметр в алгоритме расчете 1-го порядка
+            /// </summary>
+            public NALG_PARAMETER m_nAlg;
+            /// <summary>
+            /// Результат выполнения расчета
+            /// </summary>
+            public RESULT m_result;
+            /// <summary>
+            /// Дополнительное сообщение, поясняющее результат
+            /// </summary>
+            public string m_message;
+        }
         /// <summary>
         /// Событие для оповещения панелей о выполнении процесса расчета
         /// </summary>
@@ -1037,7 +1087,7 @@ namespace TepCommon
                 if (!(idDbTable == ID_DBTABLE.UNKNOWN)) {
                     // получить результирующаю таблицу
                     // получить входные для расчета значения для возможности редактирования
-                    strQuery = string.Format(@"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [EXTENDED_DEFINITION] as [DATE_TIME], [WR_DATETIME]" // [ID_PUT] as [ID] 
+                    strQuery = string.Format(@"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [EXTENDED_DEFINITION], [WR_DATETIME]" // [ID_PUT] as [ID] 
                         + @" FROM [{0}]"
                         + @" WHERE [ID_SESSION]={1}"
                             , HandlerDbValues.s_dictDbTables[idDbTable].m_name
@@ -2323,8 +2373,8 @@ namespace TepCommon
             DateTime dtValue;
 
             foreach (DataRow r in table.Rows) {
-                if ((!(r[@"DATE_TIME"] is DBNull))
-                    && (DateTime.TryParse((string)r[@"DATE_TIME"], out dtValue) == true))
+                if ((!(r[@"EXTENDED_DEFINITION"] is DBNull)) // интерпретируется как [DATE_TIME]
+                    && (DateTime.TryParse((string)r[@"EXTENDED_DEFINITION"], out dtValue) == true))
                     ;
                 else
                     dtValue = DateTime.MinValue;
@@ -2360,7 +2410,7 @@ namespace TepCommon
                         , new DataColumn (@"QUALITY", typeof (int))
                         , new DataColumn (@"VALUE", typeof (float))
                         , new DataColumn (@"WR_DATETIME", typeof (DateTime))
-                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (string))
+                        , new DataColumn (@"EXTENDED_DEFINITION", typeof (string)) //EXTENDED_DEFINITION
                 });
 
                 return tableRes;
@@ -2380,7 +2430,7 @@ namespace TepCommon
                     , (int)value.m_iQuality
                     , value.value
                     , value.stamp_write
-                    , string.Format(@"{0:o}", value.stamp_value)
+                    , string.Format(@"{0:s}", value.stamp_value)
                 };
 
                 tableRes.Rows.Add(values);
@@ -2496,7 +2546,28 @@ namespace TepCommon
             int err = -1
                 , iRegDbConn = -1;
 
-            //TaskCalculate.ListDATATABLE listDataTables;
+            // делегат обработки окончательного результата
+            // определен как анонимный метод по причине необходимости изменения локальной переменной 'err'
+            Action <TaskCalculate.TYPE, IEnumerable<VALUE>, RESULT> recievedTaskCalculate = (TaskCalculate.TYPE type, IEnumerable<VALUE> values, RESULT res) =>
+            {
+                DataTable tableOrigin;
+
+                err = res == RESULT.Ok ? 0 : res == RESULT.Warning ? 1 : -1;
+
+                if (err == 0) {
+                    tableOrigin = ListValueToTable(_Session.m_Id, _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }]);
+                    // сохранить результаты вычисления вр временной таблице
+                    saveResult(tableOrigin, ListValueToTable(_Session.m_Id, values), out err);
+                    // забрать значения из временной таблицы
+                    _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }] = TableToListValues(getVariableTableValues(type, out err));
+                } else
+                    ;
+            };
+            // делегат обработки расчета одного из параметров
+            Action<TaskCalculate.TYPE, int, RESULT> recievedNAlgCalculateResult = (TaskCalculate.TYPE type, int idNAlg, RESULT res) =>
+            {
+                EventCalculateProccess?.Invoke(new CalculateProccessEventArgs(type, ListNAlgParameter.FirstOrDefault(item => { return item.m_Id == idNAlg; }), res));
+            };
 
             // регистрация соединения с БД
             RegisterDbConnection(out iRegDbConn);
@@ -2514,32 +2585,17 @@ namespace TepCommon
                                 , ListPutParameter
                                 , Values)) {
                                 taskCalculate.Execute(
-                                    delegate (TaskCalculate.TYPE type, IEnumerable<VALUE> values, RESULT res) {
-                                        DataTable tableOrigin;
-
-                                        err = res == RESULT.Ok ? 0 : res == RESULT.Warning ? 1 : -1;
-
-                                        if (err == 0) {
-                                            tableOrigin = ListValueToTable(_Session.m_Id, _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }]);
-                                            // сохранить результаты вычисления вр временной таблице
-                                            saveResult(tableOrigin, ListValueToTable(_Session.m_Id, values), out err);
-                                            // забрать значения из временной таблицы
-                                            _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }] = TableToListValues(getVariableTableValues(type, out err));
-                                        } else
-                                            ;
-                                    }
-                                    , delegate (TaskCalculate.TYPE type, string pAlg, RESULT res) {
-                                        EventCalculateProccess(res == 0 ? RESULT.Ok : RESULT.Error);
-                                    }
+                                    recievedTaskCalculate
+                                    , recievedNAlgCalculateResult
                                 );
 
                                 if (!(err == 0)) {
-                                    EventCalculateCompleted(RESULT.Error);
+                                    EventCalculateCompleted?.Invoke(RESULT.Error);
 
                                     Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - ошибка при выполнеии расчета задачи ID=" + IdTask.ToString() + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
                                 } else {
 
-                                    EventCalculateCompleted(RESULT.Ok);
+                                    EventCalculateCompleted?.Invoke(RESULT.Ok);
                                 }
                             }                            
                             break;
@@ -2578,7 +2634,7 @@ namespace TepCommon
             tableEdit = tableOrigin.Clone();
 
             foreach (DataRow r in tableOrigin.Rows) {
-                rowSel = tableRes.Select(@"ID=" + r[@"ID_PUT"]);
+                rowSel = tableRes.Select(@"ID_PUT=" + r[@"ID_PUT"]);
 
                 if (rowSel.Length == 1) {
                     tableEdit.Rows.Add(new object[] {
@@ -2588,12 +2644,13 @@ namespace TepCommon
                         , rowSel[0][@"QUALITY"]
                         , rowSel[0][@"VALUE"]
                         , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
+                        , rowSel[0][@"EXTENDED_DEFINITION"]
                     });
                 } else
                     ; //??? ошибка
             }
 
-            RecUpdateInsertDelete(s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name, @"ID_PUT", string.Empty, tableOrigin, tableEdit, out err);
+            RecUpdateInsertDelete(s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name, @"ID_PUT,EXTENDED_DEFINITION", string.Empty, tableOrigin, tableEdit, out err);
         }
 
         public Dictionary<string, HTepUsers.VISUAL_SETTING> GetParameterVisualSettings(int[] fields, out int err)

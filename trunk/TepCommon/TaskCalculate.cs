@@ -55,10 +55,17 @@ namespace TepCommon
             /// </summary>
             protected class P_ALG : Dictionary<string, P_ALG.P_PUT>
             {
+                public struct KEY_P_VALUE
+                {
+                    public int Id;
+
+                    public DateTime Stamp;
+                }
+
                 /// <summary>
                 /// Класс для хранения всех значений для одного из параметров, необходимых для расчета
                 /// </summary>
-                public class P_PUT : Dictionary<int, P_PUT.P_VAL>
+                public class P_PUT : Dictionary<KEY_P_VALUE, P_PUT.P_VALUE>
                 {
                     ///// <summary>
                     ///// Идентификатор - строка - номер алгоритма расчета
@@ -80,7 +87,7 @@ namespace TepCommon
                     /// Класс для хранения значений для одного из компонентов станции
                     ///  в рамках параметра в алгоритме рачета
                     /// </summary>
-                    public class P_VAL
+                    public class P_VALUE
                     {
                         /// <summary>
                         /// Идентификатор - целочисленное значение, уникальное в границах БД
@@ -94,6 +101,9 @@ namespace TepCommon
                         /// Признак запрета на расчет/обновление/использование значения
                         /// </summary>
                         public bool m_bDeny;
+                        /// <summary>
+                        /// Значение параметра в алгоритме расчета
+                        /// </summary>
                         private float _value;
                         /// <summary>
                         /// Значение параметра в алгоритме расчета для компонента станции
@@ -262,15 +272,16 @@ namespace TepCommon
                 , IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> listPutPar
                 , IEnumerable<VALUE> values)
             {
-                int iRes = -1;
+                int iRes = 0;
 
                 NALG_PARAMETER nAlg;
                 VALUE value;
+                P_ALG.KEY_P_VALUE keyPValue;
 
                 foreach (PUT_PARAMETER putPar in listPutPar) {
                     if (putPar.IsNaN == false) {
-                        nAlg = listNAlg.First(item => { return item.m_Id == putPar.m_idNAlg; });
-                        value = values.First(item => { return item.m_IdPut == putPar.m_Id; });
+                        nAlg = listNAlg.FirstOrDefault(item => { return item.m_Id == putPar.m_idNAlg; });
+                        value = values.FirstOrDefault(item => { return item.m_IdPut == putPar.m_Id; });
 
                         if ((!(nAlg.m_Id < 0))
                             && (value.m_IdPut > 0)
@@ -280,9 +291,11 @@ namespace TepCommon
                             else
                                 ;
 
-                            if (pAlg[nAlg.m_nAlg].ContainsKey(putPar.IdComponent) == false)
-                                pAlg[nAlg.m_nAlg].Add(putPar.IdComponent
-                                    , new P_ALG.P_PUT.P_VAL() {
+                            keyPValue = new P_ALG.KEY_P_VALUE() { Id = putPar.IdComponent, Stamp = value.stamp_value };
+
+                            if (pAlg[nAlg.m_nAlg].ContainsKey(keyPValue) == false)
+                                pAlg[nAlg.m_nAlg].Add(keyPValue
+                                    , new P_ALG.P_PUT.P_VALUE() {
                                         m_iId = putPar.m_Id
                                         , m_bDeny = !putPar.IsEnabled
                                         , m_idRatio = putPar.m_prjRatio
@@ -369,13 +382,35 @@ namespace TepCommon
             //    return iRes;
             //}
 
-            public abstract void Execute(Action <TYPE, IEnumerable<VALUE>, RESULT> delegateResultDataTable, Action<TYPE, string, RESULT> delegateResultPAlg);
+            public abstract void Execute(Action <TYPE, IEnumerable<VALUE>, RESULT> delegateResultListValue, Action<TYPE, int, RESULT> delegateResultNAlg);
+
+            protected static IEnumerable<VALUE> resultToListValue(P_ALG pAlg)
+            {
+                List<VALUE> listRes = new List<VALUE>();
+
+                foreach (P_ALG.P_PUT pPut in pAlg.Values)
+                    foreach (P_ALG.P_PUT.P_VALUE val in pPut.Values)
+                        if (listRes.FindIndex(item => { return item.m_IdPut == val.m_iId; }) < 0)
+                            listRes.Add(
+                                new VALUE() {
+                                    m_IdPut = val.m_iId
+                                    , m_iQuality = val.m_sQuality
+                                    , value = val.value
+                                }
+                            );
+                        else
+                            Logging.Logg().Error(string.Format(@"TaskCalculate::resultToListValue () - дублирование при преобразовании резудьтатов расчетов...")
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+
+                return listRes;
+            }
+            
             /// <summary>
             /// Преобразование словаря с результатом в таблицу для БД
             /// </summary>
             /// <param name="pAlg">Словарь с результатами расчета</param>
             /// <returns>Таблица для БД с результатами расчета</returns>
-            protected DataTable resultToTable(P_ALG pAlg)
+            protected static DataTable resultToTable(P_ALG pAlg)
             {
                 DataTable tableRes = new DataTable();
 
@@ -386,7 +421,7 @@ namespace TepCommon
                 });
 
                 foreach (P_ALG.P_PUT pPut in pAlg.Values)
-                    foreach (P_ALG.P_PUT.P_VAL val in pPut.Values)
+                    foreach (P_ALG.P_PUT.P_VALUE val in pPut.Values)
                         tableRes.Rows.Add(new object[]
                             {
                                 val.m_iId //ID_PUT

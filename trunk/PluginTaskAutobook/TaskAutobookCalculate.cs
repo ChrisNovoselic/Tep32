@@ -35,9 +35,14 @@ namespace PluginTaskAutobook
             {
             }
 
-            public override void Execute(Action<TYPE, IEnumerable<VALUE>, RESULT> delegateResultDataTable, Action<TYPE, string, RESULT> delegateResultPAlg)
+            public override void Execute(Action<TYPE, IEnumerable<VALUE>, RESULT> delegateResultListValue, Action<TYPE, int, RESULT> delegateResultNAlg)
             {
-                throw new NotImplementedException();
+                RESULT res = RESULT.Ok;
+
+                res = calculate(delegateResultNAlg);
+                // преобразование в таблицу, вернуть
+                // здесь _types всегда одно значение из набора: TYPE.OUT_VALUES
+                delegateResultListValue(_types, resultToListValue(_dictPAlg[_types]), res);                    
             }
 
             protected override int initValues(IEnumerable<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg
@@ -48,12 +53,40 @@ namespace PluginTaskAutobook
 
                 #region инициализация входных параметров/значений
                 iRes = initValues(In
-                    , listNAlg
+                    , listNAlg.Where(item => { return (item.m_type & TYPE.IN_VALUES) == TYPE.IN_VALUES; })
+                    , listPutPar
+                    , dictValues[new KEY_VALUES() { TypeCalculate = TYPE.IN_VALUES, TypeState = STATE_VALUE.EDIT }]);
+                #endregion
+
+                #region инициализация выходных параметров/значений
+                iRes = initValues(Out
+                    , listNAlg.Where(item => { return (item.m_type & TYPE.OUT_VALUES) == TYPE.OUT_VALUES; })
                     , listPutPar
                     , dictValues[new KEY_VALUES() { TypeCalculate = TYPE.IN_VALUES, TypeState = STATE_VALUE.EDIT }]);
                 #endregion
 
                 return iRes;
+            }
+
+            private RESULT calculate(Action<TYPE, int, RESULT> delegateResultNAlg)
+            {
+                RESULT res = RESULT.Ok;
+                RESULT[] resNAlg = new RESULT[_dictPAlg[TYPE.OUT_VALUES].Count];
+
+                foreach (KeyValuePair<string, P_ALG.P_PUT> pAlg in _dictPAlg[TYPE.OUT_VALUES]) {
+                    switch (pAlg.Key) {
+                        case "1":
+                            break;
+                        case "":
+                        default:
+                            throw new Exception(string.Format(@"TaskAutobookMonthValuesCalculate::calculate () - неизвестный параметр [NAlg={0}] расчета 1-го порядка...", pAlg.Key));
+                            break;
+                    }
+
+                    delegateResultNAlg(_types, pAlg.Value.m_iId, RESULT.Ok);
+                }
+
+                return res;
             }
         }
         /// <summary>
@@ -72,34 +105,6 @@ namespace PluginTaskAutobook
         {
             throw new NotImplementedException();
         }
-
-        //protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
-        //{
-        //    err = 0;
-
-        //    TaskCalculate.ListDATATABLE listDataTableRes;
-
-        //    listDataTableRes = new TaskCalculate.ListDATATABLE() {
-        //        new TaskCalculate.DATATABLE() {
-        //            m_indx = TaskCalculate.INDEX_DATATABLE.IN_PARAMETER
-        //            , m_table = Select(getQueryParameters(TaskCalculate.TYPE.IN_VALUES), out err).Copy()
-        //        }
-        //        , new TaskCalculate.DATATABLE() {
-        //            m_indx = TaskCalculate.INDEX_DATATABLE.IN_VALUES
-        //            , m_table = getVariableTableValues(TaskCalculate.TYPE.IN_VALUES, out err).Copy()
-        //        }
-        //        , new TaskCalculate.DATATABLE() {
-        //            m_indx = TaskCalculate.INDEX_DATATABLE.OUT_PARAMETER
-        //            , m_table = Select(getQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err).Copy()
-        //        }
-        //        , new TaskCalculate.DATATABLE() {
-        //            m_indx = TaskCalculate.INDEX_DATATABLE.OUT_VALUES
-        //            , m_table = Select(getQueryParameters(TaskCalculate.TYPE.OUT_VALUES), out err).Copy()
-        //        }
-        //    };
-
-        //    return listDataTableRes;
-        //}
     }
     /// <summary>
     /// PlanAutoBook
@@ -122,11 +127,6 @@ namespace PluginTaskAutobook
         {
             throw new NotImplementedException();
         }
-
-        //protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
-        //{
-        //    throw new NotImplementedException();
-        //}
     }
 }
 

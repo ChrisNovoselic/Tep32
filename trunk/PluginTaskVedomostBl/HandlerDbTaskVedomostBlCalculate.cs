@@ -26,7 +26,7 @@ namespace PluginTaskVedomostBl
             {
             }
 
-            public override void Execute(Action<TYPE, IEnumerable<VALUE>, RESULT> delegateResultDataTable, Action<TYPE, string, RESULT> delegateResultPAlg)
+            public override void Execute(Action<TYPE, IEnumerable<VALUE>, RESULT> delegateResultListValue, Action<TYPE, int, RESULT> delegateResultNAlg)
             {
                 throw new NotImplementedException();
             }
