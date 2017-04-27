@@ -67,6 +67,20 @@ namespace TepCommon
                 /// </summary>
                 public class P_PUT : Dictionary<KEY_P_VALUE, P_PUT.P_VALUE>
                 {
+                    private P_PUT()
+                        : base ()
+                    {
+                    }
+
+                    public P_PUT(int id, bool deny, AGREGATE_ACTION avg)
+                        : this()
+                    {
+                        m_iId = id;
+
+                        m_bDeny = deny;
+
+                        m_avg = avg;
+                    }
                     ///// <summary>
                     ///// Идентификатор - строка - номер алгоритма расчета
                     ///// </summary>
@@ -275,40 +289,49 @@ namespace TepCommon
                 int iRes = 0;
 
                 NALG_PARAMETER nAlg;
-                VALUE value;
+                IEnumerable<VALUE> putValues;
+                //VALUE value;
                 P_ALG.KEY_P_VALUE keyPValue;
 
                 foreach (PUT_PARAMETER putPar in listPutPar) {
                     if (putPar.IsNaN == false) {
                         nAlg = listNAlg.FirstOrDefault(item => { return item.m_Id == putPar.m_idNAlg; });
-                        value = values.FirstOrDefault(item => { return item.m_IdPut == putPar.m_Id; });
+                        putValues = values.Where(item => { return item.m_IdPut == putPar.m_Id; });
 
-                        if ((!(nAlg.m_Id < 0))
-                            && (value.m_IdPut > 0)
-                                && (((value.stamp_value.Equals(DateTime.MinValue) == false)))) {
-                            if (pAlg.ContainsKey(nAlg.m_nAlg) == false)
-                                pAlg.Add(nAlg.m_nAlg, new P_ALG.P_PUT());
+                        if (!(nAlg == null))
+                            if (!(nAlg.m_Id < 0))
+                                foreach (VALUE value in putValues)
+                                    if ((value.m_IdPut > 0)
+                                        /*&& (((value.stamp_value.Equals(DateTime.MinValue) == false)))*/) {
+                                        if (pAlg.ContainsKey(nAlg.m_nAlg) == false)
+                                            pAlg.Add(nAlg.m_nAlg, new P_ALG.P_PUT(nAlg.m_Id, !nAlg.m_bEnabled, nAlg.m_sAverage));
+                                        else
+                                            ;
+
+                                        keyPValue = new P_ALG.KEY_P_VALUE() { Id = putPar.IdComponent, Stamp = value.stamp_value };
+
+                                        if (pAlg[nAlg.m_nAlg].ContainsKey(keyPValue) == false)
+                                            pAlg[nAlg.m_nAlg].Add(keyPValue
+                                                , new P_ALG.P_PUT.P_VALUE() {
+                                                    m_iId = putPar.m_Id
+                                                    , m_bDeny = !putPar.IsEnabled
+                                                    , m_idRatio = putPar.m_prjRatio
+                                                    , m_sQuality = (value.stamp_value.Equals(DateTime.MinValue) == false) ? value.m_iQuality : ID_QUALITY_VALUE.NOT_REC
+                                                    , value = (value.stamp_value.Equals(DateTime.MinValue) == false) ? value.value : 0F
+                                                    , m_fMinValue = putPar.m_fltMinValue
+                                                    , m_fMaxValue = putPar.m_fltMaxValue
+                                                });
+                                        else
+                                        // для параметра 1-го порядка уже содержится значение параметра 2-го порядка
+                                            ;
+                                    } else
+                                    // некорректный параметр расчета 2-го порядка
+                                        ;
                             else
+                            // не найден либо параметр 1-го порядка, либо значение для параметра 2-го порядка
                                 ;
-
-                            keyPValue = new P_ALG.KEY_P_VALUE() { Id = putPar.IdComponent, Stamp = value.stamp_value };
-
-                            if (pAlg[nAlg.m_nAlg].ContainsKey(keyPValue) == false)
-                                pAlg[nAlg.m_nAlg].Add(keyPValue
-                                    , new P_ALG.P_PUT.P_VALUE() {
-                                        m_iId = putPar.m_Id
-                                        , m_bDeny = !putPar.IsEnabled
-                                        , m_idRatio = putPar.m_prjRatio
-                                        , m_sQuality = value.m_iQuality
-                                        , value = value.value
-                                        , m_fMinValue = putPar.m_fltMinValue
-                                        , m_fMaxValue = putPar.m_fltMaxValue
-                                    });
-                            else
-                            // для параметра 1-го порядка уже содержится значение параметра 2-го порядка
-                                ;
-                        } else
-                        // не найден либо параметр 1-го порядка, либо значение для параметра 2-го порядка
+                        else
+                        // не найден параметр 1-го порядка (не ошибка - возможно putPar для другого типа расчета)
                             ;
                     } else
                     // параметр 2-го порядка не достоверен
@@ -382,6 +405,46 @@ namespace TepCommon
             //    return iRes;
             //}
 
+            protected void validateKeyPValue(P_ALG.P_PUT pPut, P_ALG.KEY_P_VALUE keyGroupPValue)
+            {
+                P_ALG.P_PUT.P_VALUE emptyPValue
+                    , templatePValue;
+                P_ALG.KEY_P_VALUE keyEmptyPValue;
+
+                keyEmptyPValue.Stamp = DateTime.MinValue;
+
+                // сформировать ключ с датой "по умолчанию"
+                keyEmptyPValue.Id = keyGroupPValue.Id;
+                // попробовать найти элемент с датой "по умолчанию"
+                if (pPut.ContainsKey(keyEmptyPValue) == true) {
+                    // сохранить значение перед удалением элемента с датой "по умолчанию"
+                    emptyPValue = pPut[keyEmptyPValue];
+                    // удалить элемент с датой "по умолчанию"
+                    pPut.Remove(keyEmptyPValue);
+                    // добавить элемент с новым ключом и старым значением
+                    pPut.Add(keyGroupPValue, emptyPValue);
+                } else if (pPut.ContainsKey(keyGroupPValue) == false) {
+                    templatePValue = pPut.FirstOrDefault(put => { return put.Key.Id == keyGroupPValue.Id; }).Value;
+
+                    if (templatePValue.m_iId > 0)
+                        pPut.Add(
+                            keyGroupPValue
+                            , new P_ALG.P_PUT.P_VALUE() {
+                                m_iId = templatePValue.m_iId
+                                , m_bDeny = templatePValue.m_bDeny
+                                , m_idRatio = templatePValue.m_idRatio
+                                , m_sQuality = ID_QUALITY_VALUE.NOT_REC
+                                , value = 0F
+                                , m_fMinValue = templatePValue.m_fMinValue
+                                , m_fMaxValue = templatePValue.m_fMaxValue
+                            }
+                        );
+                    else
+                        ;
+                } else
+                    ;
+            }
+
             public abstract void Execute(Action <TYPE, IEnumerable<VALUE>, RESULT> delegateResultListValue, Action<TYPE, int, RESULT> delegateResultNAlg);
 
             protected static IEnumerable<VALUE> resultToListValue(P_ALG pAlg)
@@ -389,13 +452,15 @@ namespace TepCommon
                 List<VALUE> listRes = new List<VALUE>();
 
                 foreach (P_ALG.P_PUT pPut in pAlg.Values)
-                    foreach (P_ALG.P_PUT.P_VALUE val in pPut.Values)
-                        if (listRes.FindIndex(item => { return item.m_IdPut == val.m_iId; }) < 0)
+                    foreach (KeyValuePair<P_ALG.KEY_P_VALUE, P_ALG.P_PUT.P_VALUE> pair in pPut)
+                        if (listRes.FindIndex(item => { return (item.m_IdPut == pair.Value.m_iId) && (item.stamp_value == pair.Key.Stamp); }) < 0)
                             listRes.Add(
                                 new VALUE() {
-                                    m_IdPut = val.m_iId
-                                    , m_iQuality = val.m_sQuality
-                                    , value = val.value
+                                    m_IdPut = pair.Value.m_iId
+                                    , m_iQuality = pair.Value.m_sQuality
+                                    , value = pair.Value.value
+                                    , stamp_value = pair.Key.Stamp
+                                    , stamp_write = DateTime.MinValue
                                 }
                             );
                         else

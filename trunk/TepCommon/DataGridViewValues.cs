@@ -681,13 +681,14 @@ namespace TepCommon
                             && (col.Tag is HandlerDbTaskCalculate.PUT_PARAMETER)) {
                             try {
                                 putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag;
-                                columnValues = inValues.Where(value => { return value.m_IdPut == putPar.m_Id; });
+                                columnValues = inValues.Where(value => { return (value.m_IdPut == putPar.m_Id) && ((value.stamp_value- DateTime.MinValue).TotalDays > 0); });
+                                columnValues = columnValues.Union(outValues.Where(value => { return (value.m_IdPut == putPar.m_Id) && ((value.stamp_value - DateTime.MinValue).TotalDays > 0); }));
 
                                 idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_idNAlg;
                                 idPut = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id;
-                                iCol = Columns.IndexOf(col);
+                                iCol = col.Index;
                             } catch (Exception e) {
-                                Logging.Logg().Exception(e, @"DataGridViewValuesReaktivka::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                                Logging.Logg().Exception(e, @"DataGridViewValues::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                             }
 
                             if ((putPar.IdComponent > 0)
@@ -727,7 +728,7 @@ namespace TepCommon
                                         row.Cells[iCol].Style.BackColor = clrCell;
                                     } else
                                     // не найдена строка для даты в наборе данных для отображения
-                                        Logging.Logg().Warning(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - не найдена строка для даты [DATETIME={0}] в наборе данных для отображения..."
+                                        Logging.Logg().Warning(string.Format(@"DataGridViewValues::ShowValues () - не найдена строка для даты [DATETIME={0}] в наборе данных для отображения..."
                                                 , value.stamp_value.Date)
                                             , Logging.INDEX_MESSAGE.NOT_SET);
                                 }
@@ -744,7 +745,7 @@ namespace TepCommon
                                 } else
                                     ;
                             } else
-                                Logging.Logg().Error(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
+                                Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
                                         , ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id, inValues.Count())
                                     , Logging.INDEX_MESSAGE.NOT_SET);
                         } else
@@ -754,7 +755,7 @@ namespace TepCommon
 
                     activateCellValue_onChanged(true);
                 } else
-                    Logging.Logg().Error(string.Format(@"DataGridViewValuesReaktivka::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
     }

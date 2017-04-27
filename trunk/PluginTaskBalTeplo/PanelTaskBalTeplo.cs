@@ -1030,7 +1030,7 @@ namespace PluginTaskBalTeplo
             throw new NotImplementedException();
         }
 
-        protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
+        protected override void handlerDbTaskCalculate_onCalculateProcess(HandlerDbTaskCalculate.CalculateProccessEventArgs ev)
         {
             throw new NotImplementedException();
         }

@@ -23,9 +23,9 @@ namespace TepCommon
 
                 _idOwner = idOwner;
 
-                _iType = getType(_id);
+                _iType = GetType(_id);
 
-                _iTypeOwner = getType(_idOwner);
+                _iTypeOwner = GetType(_idOwner);
 
                 m_nameShr = nameShr;
 
@@ -38,11 +38,11 @@ namespace TepCommon
 
             private int _id;
 
-            public int m_Id { get { return _id; } set { if (!(_id == value)) { _id = value; _iType = getType(value); } else; } }
+            public int m_Id { get { return _id; } set { if (!(_id == value)) { _id = value; _iType = GetType(value); } else; } }
 
             private int _idOwner;
 
-            public int m_idOwner { get { return _idOwner; } set { if (!(_idOwner == value)) { _idOwner = value; _iTypeOwner = getType(value); } else; } }
+            public int m_idOwner { get { return _idOwner; } set { if (!(_idOwner == value)) { _idOwner = value; _iTypeOwner = GetType(value); } else; } }
 
             private TYPE _iType;
 
@@ -67,10 +67,18 @@ namespace TepCommon
             /// Признак отображения (отображать на вкладке/элементе интерфейса)
             /// </summary>
             public bool m_bVisibled { get { return _bVisibled; } }
-
+            /// <summary>
+            /// Установить значение для признака отображения
+            /// </summary>
+            /// <param name="value">Значение для признака отображения</param>
             public void SetVisibled(bool value) { _bVisibled = value; }
-
-            private static TYPE getType(int id)
+            /// <summary>
+            /// Возвратить тип компонента ТЭЦ по его идентификатору
+            ///  , т.к. присваивание идентификаторов подчиняется известным правилам
+            /// </summary>
+            /// <param name="id">Идентификатор компонента ТЭЦ</param>
+            /// <returns>Тип компонента ТЭЦ</returns>
+            public static TYPE GetType(int id)
             {
                 TYPE typeRes = TYPE.UNKNOWN;
 
@@ -181,7 +189,7 @@ namespace TepCommon
                 m_bVisibled = value;
             }
 
-            public bool IsNaN { get { return m_Id < 0; } }
+            public bool IsNaN { get { return !(m_Id > 0); } }
         }
         /// <summary>
         /// Свойства параметра в алгоритме расчета 1-го уровня (не связан с компонентом)
@@ -935,7 +943,7 @@ namespace TepCommon
         /// <summary>
         /// Событие для оповещения панелей о выполнении процесса расчета
         /// </summary>
-        public event Action<object> EventCalculateProccess;
+        public event Action<CalculateProccessEventArgs> EventCalculateProccess;
         /// <summary>
         /// Очистить объект (списки со значениями, параметрами, компонентами) - !!!удалить сессиию
         /// </summary>
@@ -1087,7 +1095,7 @@ namespace TepCommon
                 if (!(idDbTable == ID_DBTABLE.UNKNOWN)) {
                     // получить результирующаю таблицу
                     // получить входные для расчета значения для возможности редактирования
-                    strQuery = string.Format(@"SELECT [ID_PUT], [ID_SESSION], [QUALITY], [VALUE], [EXTENDED_DEFINITION], [WR_DATETIME]" // [ID_PUT] as [ID] 
+                    strQuery = string.Format(@"SELECT [ID_SESSION], [ID_PUT], [QUALITY], [VALUE], [EXTENDED_DEFINITION], [WR_DATETIME]" // [ID_PUT] as [ID] 
                         + @" FROM [{0}]"
                         + @" WHERE [ID_SESSION]={1}"
                             , HandlerDbValues.s_dictDbTables[idDbTable].m_name
@@ -1520,7 +1528,7 @@ namespace TepCommon
 
                 strQuery += @"(";
 
-                strQuery += string.Format(@"{0}, {1}, {2}, {3}, CONVERT(varchar, CONVERT(datetime2, '{4}', 102), 127), '{5}'"
+                strQuery += string.Format(@"{0}, {1}, {2}, {3}, '{4}', CONVERT(varchar, CONVERT(datetime2, '{5}'), 127)"
                     , idSession //ID_SEESION
                     , rPar[@"ID"] //ID_PUT
                     , ((int)ID_QUALITY_VALUE.NOT_REC).ToString() //QUALITY
@@ -2404,9 +2412,9 @@ namespace TepCommon
                 tableRes = new DataTable();
 
                 tableRes.Columns.AddRange(
-                    new DataColumn[] {
-                        new DataColumn (@"ID_PUT", typeof (int))
-                        , new DataColumn (@"ID_SESSION", typeof (long))
+                    new DataColumn[] {                        
+                        new DataColumn (@"ID_SESSION", typeof (long))
+                        , new DataColumn (@"ID_PUT", typeof (int))
                         , new DataColumn (@"QUALITY", typeof (int))
                         , new DataColumn (@"VALUE", typeof (float))
                         , new DataColumn (@"WR_DATETIME", typeof (DateTime))
@@ -2424,9 +2432,9 @@ namespace TepCommon
             object[] values;
 
             foreach (VALUE value in listValues) {
-                values = new object[] {
-                    value.m_IdPut
-                    , idSession
+                values = new object[] {                    
+                    idSession
+                    , value.m_IdPut
                     , (int)value.m_iQuality
                     , value.value
                     , value.stamp_write
@@ -2557,11 +2565,16 @@ namespace TepCommon
                 if (err == 0) {
                     tableOrigin = ListValueToTable(_Session.m_Id, _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }]);
                     // сохранить результаты вычисления вр временной таблице
-                    saveResult(tableOrigin, ListValueToTable(_Session.m_Id, values), out err);
+                    //saveResult(tableOrigin, ListValueToTable(_Session.m_Id, values), out err);
+                    RecUpdateInsertDelete(s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name, @"ID_PUT,EXTENDED_DEFINITION", string.Empty, tableOrigin, ListValueToTable(_Session.m_Id, values), out err);
                     // забрать значения из временной таблицы
                     _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }] = TableToListValues(getVariableTableValues(type, out err));
+                    // получить копию для редактирования
+                    _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.EDIT }] = new List<VALUE> (_dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }]);
+
+                    EventCalculateCompleted?.Invoke(res);
                 } else
-                    ;
+                    Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - ошибка при выполнеии расчета задачи ID=" + IdTask.ToString() + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
             };
             // делегат обработки расчета одного из параметров
             Action<TaskCalculate.TYPE, int, RESULT> recievedNAlgCalculateResult = (TaskCalculate.TYPE type, int idNAlg, RESULT res) =>
@@ -2588,15 +2601,6 @@ namespace TepCommon
                                     recievedTaskCalculate
                                     , recievedNAlgCalculateResult
                                 );
-
-                                if (!(err == 0)) {
-                                    EventCalculateCompleted?.Invoke(RESULT.Error);
-
-                                    Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - ошибка при выполнеии расчета задачи ID=" + IdTask.ToString() + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
-                                } else {
-
-                                    EventCalculateCompleted?.Invoke(RESULT.Ok);
-                                }
                             }                            
                             break;
                         default:
@@ -2606,7 +2610,7 @@ namespace TepCommon
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, string.Format(@""), Logging.INDEX_MESSAGE.NOT_SET);
 
-                    EventCalculateCompleted(RESULT.Exception);
+                    EventCalculateCompleted?.Invoke(RESULT.Exception);
                 }
             } else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при регистрации соединения...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -2618,40 +2622,42 @@ namespace TepCommon
                 ;
         }
 
-        /// <summary>
-        /// Сохранить результаты вычислений в таблице для временных значений
-        /// </summary>
-        /// <param name="tableOrigin">??? Таблица с оригинальными значениями</param>
-        /// <param name="tableRes">??? Таблица с оригинальными значениями</param>
-        /// <param name="err">Признак выполнения операции сохранения</param>
-        private void saveResult(DataTable tableOrigin, DataTable tableRes, out int err)
-        {
-            err = -1;
+        ///// <summary>
+        ///// Сохранить результаты вычислений в таблице для временных значений
+        ///// </summary>
+        ///// <param name="tableOrigin">??? Таблица с оригинальными значениями</param>
+        ///// <param name="tableRes">??? Таблица с оригинальными значениями</param>
+        ///// <param name="err">Признак выполнения операции сохранения</param>
+        //private void saveResult(DataTable tableOrigin, DataTable tableRes, out int err)
+        //{
+        //    err = -1;
 
-            DataTable tableEdit = new DataTable();
-            DataRow[] rowSel = null;
+        //    DataTable tableEdit = new DataTable();
+        //    DataRow[] rowSel = null;
 
-            tableEdit = tableOrigin.Clone();
+        //    tableEdit = tableOrigin.Clone();
 
-            foreach (DataRow r in tableOrigin.Rows) {
-                rowSel = tableRes.Select(@"ID_PUT=" + r[@"ID_PUT"]);
+        //    foreach (DataRow r in tableOrigin.Rows) {
+        //        rowSel = tableRes.Select(@"ID_PUT=" + r[@"ID_PUT"]);
 
-                if (rowSel.Length == 1) {
-                    tableEdit.Rows.Add(new object[] {
-                        //r[@"ID"],
-                        r[@"ID_SESSION"]
-                        , r[@"ID_PUT"]
-                        , rowSel[0][@"QUALITY"]
-                        , rowSel[0][@"VALUE"]
-                        , HDateTime.ToMoscowTimeZone ().ToString (CultureInfo.InvariantCulture)
-                        , rowSel[0][@"EXTENDED_DEFINITION"]
-                    });
-                } else
-                    ; //??? ошибка
-            }
+        //        try {
+        //            foreach (DataRow rowIns in rowSel)
+        //                tableEdit.Rows.Add(new object[] {
+        //                    //r[@"ID"],                            
+        //                    r[@"ID_PUT"]
+        //                    , r[@"ID_SESSION"]
+        //                    , rowSel[0][@"QUALITY"]
+        //                    , rowSel[0][@"VALUE"]
+        //                    , HDateTime.ToMoscowTimeZone ()
+        //                    , rowSel[0][@"EXTENDED_DEFINITION"]
+        //                });
+        //        } catch (Exception e) {
+        //            Logging.Logg().Exception(e, string.Format(@"HandlerDbTaskCalculate::saveResult () - для ID_PUT={0} ...", r[@"ID_PUT"]), Logging.INDEX_MESSAGE.NOT_SET);
+        //        }
+        //    }
 
-            RecUpdateInsertDelete(s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name, @"ID_PUT,EXTENDED_DEFINITION", string.Empty, tableOrigin, tableEdit, out err);
-        }
+        //    RecUpdateInsertDelete(s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name, @"ID_PUT,EXTENDED_DEFINITION", string.Empty, tableOrigin, tableEdit, out err);
+        //}
 
         public Dictionary<string, HTepUsers.VISUAL_SETTING> GetParameterVisualSettings(int[] fields, out int err)
         {

@@ -717,9 +717,9 @@ namespace PluginTaskAutobook
                 ;
         }
 
-        protected override void handlerDbTaskCalculate_onCalculateProcess(object obj)
+        protected override void handlerDbTaskCalculate_onCalculateProcess(HandlerDbTaskCalculate.CalculateProccessEventArgs ev)
         {
-            throw new NotImplementedException();
+            Logging.Logg().Debug(string.Format(@"PanelTaskAutobookYearlyPlan::handlerDbTaskCalculate_onCalculateProcess () - выполнен расчет <{0}>, тип={1}, рез-т={2}...", ev.m_nAlg.m_strNameShr, ev.m_type, ev.m_result), Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         /// <summary>

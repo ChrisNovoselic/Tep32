@@ -108,14 +108,14 @@ namespace PluginTaskBalTeplo
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++) {
                             keyPValue = new P_ALG.KEY_P_VALUE() { Id = ID_COMP[i], Stamp = stamp };
 
-                            double str = 9.771 * Math.Pow(10, -4) + 1.774 * Math.Pow(10, -5) * In["1.2"][keyPValue].value / 100
+                            double temp = 9.771 * Math.Pow(10, -4) + 1.774 * Math.Pow(10, -5) * In["1.2"][keyPValue].value / 100
                                 + 2.52 * Math.Pow(10, -5) * Math.Pow((In["1.2"][keyPValue].value / 100), 2) + 2.96 * Math.Pow(10, -6) * Math.Pow((In["1.2"][keyPValue].value / 100 - 1.5), 3) * In["1.2"][keyPValue].value / 100
                                 + (3.225 * Math.Pow(10, -6) + 1.3436 * Math.Pow(10, -6) * In["1.2"][keyPValue].value / 100 + 1.684 * Math.Pow(10, -8) * Math.Pow((In["1.2"][keyPValue].value / 100), 6)
                                 + 1.432 * Math.Pow(10, -7) * Math.Pow((1 / (In["1.2"][keyPValue].value / 100 + 0.5)), 3)) * ((50 - In["1.4"][keyPValue].value * 0.0980665) / 10)
                                 + (3.7 * Math.Pow(10, -8) + 3.588 * Math.Pow(10, -8) * Math.Pow((In["1.2"][keyPValue].value / 100), 3) - 4.05 * Math.Pow(10, -13) * Math.Pow((In["1.2"][keyPValue].value / 100), 9)) * Math.Pow(((50 - In["1.4"][keyPValue].value * 0.0980665) / 10), 2) +
                                 +1.1766 * Math.Pow(10, -13) * Math.Pow((In["1.2"][keyPValue].value / 100), 12) * Math.Pow(((50 - In["1.4"][keyPValue].value * 0.0980665) / 10), 4);
 
-                            Out[nAlg][keyPValue].value = (float)str /* 10000*/;
+                            Out[nAlg][keyPValue].value = (float)temp /* 10000*/;
                             fRes += Out[nAlg][keyPValue].value;
                             Out[nAlg][keyStationPValue].value = fRes / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
                         }
@@ -127,9 +127,9 @@ namespace PluginTaskBalTeplo
                         for (i = (int)INDX_COMP.iBL1; i < (int)INDX_COMP.iOP1; i++) {
                             keyPValue = new P_ALG.KEY_P_VALUE() { Id = ID_COMP[i], Stamp = stamp };
 
-                            double str = In["1.1"][keyPValue].value;
+                            double temp = In["1.1"][keyPValue].value;
 
-                            Out[nAlg][keyPValue].value = (float)str;
+                            Out[nAlg][keyPValue].value = (float)temp;
                             fRes += Out[nAlg][keyPValue].value;
                             Out[nAlg][keyStationPValue].value = fRes;
 
@@ -144,14 +144,14 @@ namespace PluginTaskBalTeplo
 
                             double p = In["1.4"][keyPValue].value;
                             double t = In["1.2"][keyPValue].value;
-                            double str = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
+                            double temp = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
                                 0.0333 * Math.Pow((t / 100), 6) +
                                 (-9.25 + 1.67 * t / 100 + 7.36 * Math.Pow(10, -3) * Math.Pow((t / 100), 6) -
                                 0.008 * Math.Pow((1 / (t / 100 + 0.5)), 5)) * ((50 - p * 0.0980665) / 10) +
                                 (-0.073 + 0.079 * t / 100 + 6.8 * Math.Pow(10, -4) * Math.Pow((t / 100), 6)) * Math.Pow(((50 - p * 0.0980665) / 10), 2) +
                                 3.39 * Math.Pow(10, -8) * Math.Pow((1 / 100), 12) * Math.Pow(((50 - p * 0.0980665) / 10), 4)) / 4.1868;
 
-                            Out[nAlg][keyPValue].value = (float)str;
+                            Out[nAlg][keyPValue].value = (float)temp;
                             fRes += Out[nAlg][keyPValue].value;
                             Out[nAlg][keyStationPValue].value = fRes / ((int)INDX_COMP.iOP1 - (int)INDX_COMP.iBL1);
 
@@ -166,7 +166,7 @@ namespace PluginTaskBalTeplo
 
                             double p = In["1.4"][keyPValue].value;//Индекс обратного давления
                             double t = In["1.2"][keyPValue].value;
-                            double str = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
+                            double temp = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
                                 0.0333 * Math.Pow((t / 100), 6) +
                                 (-9.25 + 1.67 * t / 100 + 7.36 * Math.Pow(10, -3) * Math.Pow((t / 100), 6) -
                                 0.008 * Math.Pow((1 / (t / 100 + 0.5)), 5)) * ((50 - p * 0.0980665) / 10) +
@@ -201,14 +201,14 @@ namespace PluginTaskBalTeplo
 
                             double p = In["2.5"][keyPValue].value;
                             double t = In["2.3"][keyPValue].value;
-                            double str = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
+                            double temp = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
                                 0.0333 * Math.Pow((t / 100), 6) +
                                 (-9.25 + 1.67 * t / 100 + 7.36 * Math.Pow(10, -3) * Math.Pow((t / 100), 6) -
                                 0.008 * Math.Pow((1 / (t / 100 + 0.5)), 5)) * ((50 - p * 0.0980665) / 10) +
                                 (-0.073 + 0.079 * t / 100 + 6.8 * Math.Pow(10, -4) * Math.Pow((t / 100), 6)) * Math.Pow(((50 - p * 0.0980665) / 10), 2) +
                                 3.39 * Math.Pow(10, -8) * Math.Pow((1 / 100), 12) * Math.Pow(((50 - p * 0.0980665) / 10), 4)) / 4.1868;
 
-                            Out[nAlg][keyPValue].value = (float)str;
+                            Out[nAlg][keyPValue].value = (float)temp;
                             fRes += Out[nAlg][keyPValue].value;
                             Out[nAlg][keyStationPValue].value = fRes / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
 
@@ -223,14 +223,14 @@ namespace PluginTaskBalTeplo
 
                             double p = In["2.6"][keyPValue].value;
                             double t = In["2.4"][keyPValue].value;
-                            double str = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
+                            double temp = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
                                 0.0333 * Math.Pow((t / 100), 6) +
                                 (-9.25 + 1.67 * t / 100 + 7.36 * Math.Pow(10, -3) * Math.Pow((t / 100), 6) -
                                 0.008 * Math.Pow((1 / (t / 100 + 0.5)), 5)) * ((50 - p * 0.0980665) / 10) +
                                 (-0.073 + 0.079 * t / 100 + 6.8 * Math.Pow(10, -4) * Math.Pow((t / 100), 6)) * Math.Pow(((50 - p * 0.0980665) / 10), 2) +
                                 3.39 * Math.Pow(10, -8) * Math.Pow((1 / 100), 12) * Math.Pow(((50 - p * 0.0980665) / 10), 4)) / 4.1868;
 
-                            Out[nAlg][keyPValue].value = (float)str;
+                            Out[nAlg][keyPValue].value = (float)temp;
                             fRes += Out[nAlg][keyPValue].value;
                             Out[nAlg][keyStationPValue].value = fRes / ((int)INDX_COMP.iPP2 - (int)INDX_COMP.iOP1);
 
@@ -270,7 +270,7 @@ namespace PluginTaskBalTeplo
                         for (i = (int)INDX_COMP.iST; i < (int)INDX_COMP.COUNT; i++) {
                             keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                            double str = 0;
+                            double temp = 0;
                             if (Out["3.2"][keyPValue].value == 0) {
                                 calculateOut("3.2", stamp);
                             }
@@ -288,14 +288,14 @@ namespace PluginTaskBalTeplo
 
                             double p = In["2.6"][keyPValue].value;
                             double t = In["2.4"][keyPValue].value;
-                            double str = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
+                            double temp = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
                                 0.0333 * Math.Pow((t / 100), 6) +
                                 (-9.25 + 1.67 * t / 100 + 7.36 * Math.Pow(10, -3) * Math.Pow((t / 100), 6) -
                                 0.008 * Math.Pow((1 / (t / 100 + 0.5)), 5)) * ((50 - p * 0.0980665) / 10) +
                                 (-0.073 + 0.079 * t / 100 + 6.8 * Math.Pow(10, -4) * Math.Pow((t / 100), 6)) * Math.Pow(((50 - p * 0.0980665) / 10), 2) +
                                 3.39 * Math.Pow(10, -8) * Math.Pow((1 / 100), 12) * Math.Pow(((50 - p * 0.0980665) / 10), 4)) / 4.1868;
 
-                            Out[nAlg][keyPValue].value = (float)str;
+                            Out[nAlg][keyPValue].value = (float)temp;
                             fRes += Out[nAlg][keyPValue].value;
                         }
                         break;
@@ -306,7 +306,7 @@ namespace PluginTaskBalTeplo
                         for (i = (int)INDX_COMP.iST; i < (int)INDX_COMP.COUNT; i++) {
                             keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                            double str = 0;
+                            double temp = 0;
                             Out[nAlg][keyPValue].value = Out["1.5"][keyStationPValue].value + Out["3.1"][keyPValue].value;
 
                             fRes += Out[nAlg][keyPValue].value;
@@ -333,7 +333,7 @@ namespace PluginTaskBalTeplo
                         for (i = (int)INDX_COMP.iST; i < (int)INDX_COMP.COUNT; i++) {
                             keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                            double str = 0;
+                            double temp = 0;
                             Out[nAlg][keyPValue].value = (In["4.1"][keyPValue].value * (Out["4.3"][keyPValue].value - In["5.2"][keyStationPValue].value)) / 1000;
 
                             fRes += Out[nAlg][keyPValue].value;
@@ -349,14 +349,14 @@ namespace PluginTaskBalTeplo
 
                             double p = In["4.4"][keyPValue].value;
                             double t = In["4.2"][keyPValue].value;
-                            double str = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
+                            double temp = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
                                 0.0333 * Math.Pow((t / 100), 6) +
                                 (-9.25 + 1.67 * t / 100 + 7.36 * Math.Pow(10, -3) * Math.Pow((t / 100), 6) -
                                 0.008 * Math.Pow((1 / (t / 100 + 0.5)), 5)) * ((50 - p * 0.0980665) / 10) +
                                 (-0.073 + 0.079 * t / 100 + 6.8 * Math.Pow(10, -4) * Math.Pow((t / 100), 6)) * Math.Pow(((50 - p * 0.0980665) / 10), 2) +
                                 3.39 * Math.Pow(10, -8) * Math.Pow((1 / 100), 12) * Math.Pow(((50 - p * 0.0980665) / 10), 4)) / 4.1868;
 
-                            Out[nAlg][keyPValue].value = (float)str;
+                            Out[nAlg][keyPValue].value = (float)temp;
                             fRes += Out[nAlg][keyPValue].value;
                         }
                         break;
@@ -380,6 +380,7 @@ namespace PluginTaskBalTeplo
 
                             fRes += In["2.1"][keyPValue].value * Out["2.1"][keyPValue].value - In["2.2"][keyPValue].value * Out["2.2"][keyPValue].value;
                         }
+
                         Out[nAlg][keyStationPValue].value = fRes / 1000;
                         break;
                     #endregion
@@ -389,7 +390,7 @@ namespace PluginTaskBalTeplo
                         for (i = (int)INDX_COMP.iST; i < (int)INDX_COMP.COUNT; i++) {
                             keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                            double str = 0;
+                            double temp = 0;
                             Out[nAlg][keyPValue].value = (In["2.1"][keyStationPValue].value - In["2.2"][keyStationPValue].value - In["4.1"][keyStationPValue].value) / In["2.1"][keyStationPValue].value * 100;
                             fRes += Out[nAlg][keyPValue].value;
                         }
@@ -401,7 +402,7 @@ namespace PluginTaskBalTeplo
                         for (i = (int)INDX_COMP.iPP2; i < (int)INDX_COMP.iST; i++) {
                             keyPValue.Id = ID_COMP[i]; keyPValue.Stamp = stamp;
 
-                            double str = 0;
+                            double temp = 0;
                             Out[nAlg][keyPValue].value = In["7.1"][keyPValue].value;
                             fRes += Out[nAlg][keyPValue].value;
                             Out[nAlg][keyStationPValue].value = fRes;
@@ -421,7 +422,6 @@ namespace PluginTaskBalTeplo
 
                             fRes += Out[nAlg][keyPValue].value;
                             Out[nAlg][keyStationPValue].value = fRes;
-
                         }
                         break;
                     #endregion
@@ -434,17 +434,16 @@ namespace PluginTaskBalTeplo
 
                             double p = In["6.5"][keyPValue].value;
                             double t = In["6.3"][keyPValue].value;
-                            double str = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
+                            double temp = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
                                 0.0333 * Math.Pow((t / 100), 6) +
                                 (-9.25 + 1.67 * t / 100 + 7.36 * Math.Pow(10, -3) * Math.Pow((t / 100), 6) -
                                 0.008 * Math.Pow((1 / (t / 100 + 0.5)), 5)) * ((50 - p * 0.0980665) / 10) +
                                 (-0.073 + 0.079 * t / 100 + 6.8 * Math.Pow(10, -4) * Math.Pow((t / 100), 6)) * Math.Pow(((50 - p * 0.0980665) / 10), 2) +
                                 3.39 * Math.Pow(10, -8) * Math.Pow((1 / 100), 12) * Math.Pow(((50 - p * 0.0980665) / 10), 4)) / 4.1868;
 
-                            Out[nAlg][keyPValue].value = (float)str;
+                            Out[nAlg][keyPValue].value = (float)temp;
                             fRes += Out[nAlg][keyPValue].value;
                             Out[nAlg][keyStationPValue].value = fRes / ((int)INDX_COMP.iST - (int)INDX_COMP.iPP2);
-
                         }
                         nAlg = "6.4";
                         fRes = 0;
@@ -460,17 +459,16 @@ namespace PluginTaskBalTeplo
 
                             double p = In["6.6"][keyPValue].value;//Индекс обратного давления
                             double t = In["6.4"][keyPValue].value;
-                            double str = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
+                            double temp = (49.4 + 402.5 * t / 100 + 4.767 * Math.Pow((t / 100), 2) +
                                 0.0333 * Math.Pow((t / 100), 6) +
                                 (-9.25 + 1.67 * t / 100 + 7.36 * Math.Pow(10, -3) * Math.Pow((t / 100), 6) -
                                 0.008 * Math.Pow((1 / (t / 100 + 0.5)), 5)) * ((50 - p * 0.0980665) / 10) +
                                 (-0.073 + 0.079 * t / 100 + 6.8 * Math.Pow(10, -4) * Math.Pow((t / 100), 6)) * Math.Pow(((50 - p * 0.0980665) / 10), 2) +
                                 3.39 * Math.Pow(10, -8) * Math.Pow((1 / 100), 12) * Math.Pow(((50 - p * 0.0980665) / 10), 4)) / 4.1868;
 
-                            Out[nAlg][keyPValue].value = (float)str;
+                            Out[nAlg][keyPValue].value = (float)temp;
                             fRes += Out[nAlg][keyPValue].value;
                             Out[nAlg][keyStationPValue].value = fRes / ((int)INDX_COMP.iST - (int)INDX_COMP.iPP2);
-
                         }
                         break;
                     #endregion

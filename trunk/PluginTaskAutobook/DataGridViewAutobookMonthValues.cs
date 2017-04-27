@@ -56,6 +56,31 @@ namespace PluginTaskAutobook
             {
                 List<TepCommon.HandlerDbTaskCalculate.TECComponent> listTECComponent;
                 TepCommon.HandlerDbTaskCalculate.TECComponent comp_tec;
+                // Функция поиска объекта 'PUT_PARAMETER' для его назначения в свойство 'Tag' для добавляемого столбца
+                Func<HandlerDbTaskCalculate.TaskCalculate.TYPE, int, TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> findPutParameterGTP = (HandlerDbTaskCalculate.TaskCalculate.TYPE type, int id) => {
+                    TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putRes = new TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER();
+
+                    IEnumerable<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> puts;
+                    TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER nAlgRes = null;
+
+                    puts = listPutParameter.Where(putPar => { return putPar.IdComponent == id; });
+                    if (puts.Count() > 0) {
+                        foreach (TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar in puts) {
+                            nAlgRes = listNAlgParameter.FirstOrDefault(nAlg => { return (nAlg.m_Id == putPar.m_idNAlg) && (nAlg.m_type == type); });
+
+                            if (!(nAlgRes == null)) {
+                                putRes = putPar;
+
+                                break;
+                            } else
+                                ;
+                        }
+                    } else
+                    // ошибка на 1-ом этапе - возвращается объект по умолчанию (IsNaN == true)
+                        ;
+
+                    return putRes;
+                };
 
                 listTECComponent = new List<TepCommon.HandlerDbTaskCalculate.TECComponent>();
 
@@ -75,7 +100,7 @@ namespace PluginTaskAutobook
                 listTECComponent.ForEach(comp => {
                     if (comp.IsGtp == true) {
                         Columns.Add(string.Format(@"COLUMN_CORRECT_{0}", comp.m_Id), string.Format(@"Корр-ка ПТО {0}", comp.m_nameShr));
-                        Columns[ColumnCount - 1].Tag = listPutParameter.Find(putPar => { return putPar.IdComponent == comp.m_Id; });
+                        Columns[ColumnCount - 1].Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, comp.m_Id);
                     } else
                         ;
                 });
@@ -83,7 +108,7 @@ namespace PluginTaskAutobook
                 listTECComponent.ForEach(comp => {
                     if (comp.IsGtp == true) {
                         Columns.Add(string.Format(@"COLUMN_{0}", comp.m_Id), string.Format(@"{0}", comp.m_nameShr));
-                        Columns[ColumnCount - 1].Tag = listPutParameter.Find(putPar => { return putPar.IdComponent == comp.m_Id; });
+                        Columns[ColumnCount - 1].Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp.m_Id);
                     } else
                         ;
                 });
@@ -91,6 +116,7 @@ namespace PluginTaskAutobook
                 comp_tec = listTECComponent.Find(comp => { return comp.IsTec; });
                 //Станция - Значения - ежесуточные
                 Columns.Add(string.Format(@"COLUMN_ST_DAY_{0}", comp_tec.m_Id), string.Format(@"{0} значения", comp_tec.m_nameShr));
+                Columns[ColumnCount - 1].Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp_tec.m_Id);
                 //Станция - Значения - нарастающие
                 Columns.Add(string.Format(@"COLUMN_ST_SUM_{0}", comp_tec.m_Id), string.Format(@"{0} нараст.", comp_tec.m_nameShr));
                 //Станция - План - ежесуточный

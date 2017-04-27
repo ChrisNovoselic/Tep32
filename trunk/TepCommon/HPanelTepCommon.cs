@@ -42,7 +42,7 @@ namespace TepCommon
 
             _handlerDb.EventSetValuesCompleted += new Action<RESULT>(handlerDbTaskCalculate_onSetValuesCompleted);
             _handlerDb.EventCalculateCompleted += new Action<RESULT>(handlerDbTaskCalculate_onCalculateCompleted);
-            _handlerDb.EventCalculateProccess += new Action<object>(handlerDbTaskCalculate_onCalculateProcess);
+            _handlerDb.EventCalculateProccess += new Action<CalculateProccessEventArgs>(handlerDbTaskCalculate_onCalculateProcess);
         }
         /// <summary>
         /// Поле
@@ -272,7 +272,7 @@ namespace TepCommon
         /// </summary>
         protected abstract void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res);
 
-        protected abstract void handlerDbTaskCalculate_onCalculateProcess(object obj);
+        protected abstract void handlerDbTaskCalculate_onCalculateProcess(CalculateProccessEventArgs ev);
         /// <summary>
         /// Ссылка на объект для обращения к БД
         /// </summary>
