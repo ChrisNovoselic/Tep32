@@ -999,7 +999,7 @@ namespace TepCommon
 
                 if (err == 0) {
                     // создать копии для возможности сохранения изменений
-                    cloneValues();
+                    cloneValues(TaskCalculate.TYPE.IN_VALUES, TaskCalculate.TYPE.OUT_VALUES);
                     // отобразить значения
                     EventSetValuesCompleted?.Invoke(RESULT.Ok);
                 } else {
@@ -1112,15 +1112,26 @@ namespace TepCommon
         /// <summary>
         /// Установить значения таблиц для редактирования
         /// </summary>
-        protected virtual void cloneValues()
+        protected virtual void cloneValues(params TaskCalculate.TYPE[] types)
         {
-            List<KEY_VALUES> keys = new List<KEY_VALUES>();
+            KEY_VALUES keySource
+                , keyDest;
 
-            keys = _dictValues.Keys.ToList();
+            foreach (TaskCalculate.TYPE type in types) {
+                keySource.TypeCalculate =
+                keyDest.TypeCalculate =
+                    type;
 
-            foreach (KEY_VALUES key in keys)
-                //??? создается ли новая копия
-                _dictValues.Add(new KEY_VALUES() { TypeCalculate = key.TypeCalculate, TypeState = HandlerDbValues.STATE_VALUE.EDIT }, new List<VALUE>(_dictValues[key]));
+                keySource.TypeState = STATE_VALUE.ORIGINAL;
+                keyDest.TypeState = STATE_VALUE.EDIT;
+
+                if (_dictValues.ContainsKey(keyDest) == false)
+                    //??? добавляем - создается ли новая копия
+                    _dictValues.Add(keyDest, new List<VALUE>(_dictValues[keySource]));
+                else
+                    //??? заменяем - создается ли новая копия
+                    _dictValues[keyDest] = new List<VALUE>(_dictValues[keySource]);
+            }
         }
         /// <summary>
         /// Принять отредактированное значение, сохранить в истории изменений
@@ -2570,7 +2581,7 @@ namespace TepCommon
                     // забрать значения из временной таблицы
                     _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }] = TableToListValues(getVariableTableValues(type, out err));
                     // получить копию для редактирования
-                    _dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.EDIT }] = new List<VALUE> (_dictValues[new KEY_VALUES() { TypeCalculate = type, TypeState = STATE_VALUE.ORIGINAL }]);
+                    cloneValues(type);
 
                     EventCalculateCompleted?.Invoke(res);
                 } else

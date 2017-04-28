@@ -156,7 +156,11 @@ namespace PluginTaskAutobook
                                 }
                                 // станция
                                 fltRes = 0F;
-                                IEnumerable<P_ALG.KEY_P_VALUE> groupPValueKeys = Out[pAlg.Key].Keys.Where(key => { return !(TECComponent.GetType(key.Id) == TECComponent.TYPE.TEC); });
+                                IEnumerable<P_ALG.KEY_P_VALUE> groupPValueKeys = Out[pAlg.Key].Keys.Where(key => {
+                                    return
+                                        !(TECComponent.GetType(key.Id) == TECComponent.TYPE.TEC)
+                                        && (key.Stamp == date);
+                                });
 
                                 foreach (P_ALG.KEY_P_VALUE keyPValue in groupPValueKeys) {
                                     switch (keyPValue.Id) {

@@ -444,9 +444,17 @@ namespace TepCommon
                 } else
                     ;
             }
-
+            /// <summary>
+            /// Выполнить расчет
+            /// </summary>
+            /// <param name="delegateResultListValue">Метод обратного вызова при завершении расчета</param>
+            /// <param name="delegateResultNAlg">Метод обратного вызова при завершении расчета одного из параметров алгоритма рачетов</param>
             public abstract void Execute(Action <TYPE, IEnumerable<VALUE>, RESULT> delegateResultListValue, Action<TYPE, int, RESULT> delegateResultNAlg);
-
+            /// <summary>
+            /// Преоразовать результаты расчетов в список со значениями для дальнейшей обработки(отображения)
+            /// </summary>
+            /// <param name="pAlg">Словарь с данными для расчетов или результатов расчетов</param>
+            /// <returns>Список со значенями для отображения</returns>
             protected static IEnumerable<VALUE> resultToListValue(P_ALG pAlg)
             {
                 List<VALUE> listRes = new List<VALUE>();

@@ -38,6 +38,9 @@
     <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ELW.Library.Math">
+      <HintPath>..\..\ExternalDLL\ELW.Library.Math.dll</HintPath>
+    </Reference>
     <Reference Include="HClassLibrary">
       <HintPath>..\..\ExternalDLL\HClassLibrary.dll</HintPath>
     </Reference>

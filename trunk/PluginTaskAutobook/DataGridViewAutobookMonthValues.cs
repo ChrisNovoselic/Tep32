@@ -119,10 +119,16 @@ namespace PluginTaskAutobook
                 Columns[ColumnCount - 1].Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp_tec.m_Id);
                 //Станция - Значения - нарастающие
                 Columns.Add(string.Format(@"COLUMN_ST_SUM_{0}", comp_tec.m_Id), string.Format(@"{0} нараст.", comp_tec.m_nameShr));
+                Columns[ColumnCount - 1].Tag =
+                    //ToolsHelper.Compiler.Compile(ToolsHelper.Parser.Parse(string.Format("INC(COLUMN_ST_DAY_{0})", comp_tec.m_Id)))
+                    new FormulaHelper(string.Format("SUMM(COLUMN_ST_DAY_{0})", comp_tec.m_Id))
+                    ;
                 //Станция - План - ежесуточный
                 Columns.Add(string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id), string.Format(@"План нараст."));
+                Columns[ColumnCount - 1].Tag = listPutParameter.Find(putPar => { return false; });
                 //Станция - План - отклонение
                 Columns.Add(string.Format(@"COLUMN_PALN_DEV_{0}", comp_tec.m_Id), string.Format(@"План отклон."));
+                Columns[ColumnCount - 1].Tag = new FormulaHelper (string.Format("COLUMN_PLAN_DAY_{0}-COLUMN_ST_DAY_{0}", comp_tec.m_Id));
 
                 //Columns.Add(string.Format(@""), string.Format(@""));
                 //Columns.Add(string.Format(@""), string.Format(@""));
