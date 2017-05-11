@@ -56,6 +56,8 @@ namespace PluginTaskAutobook
             {
                 List<TepCommon.HandlerDbTaskCalculate.TECComponent> listTECComponent;
                 TepCommon.HandlerDbTaskCalculate.TECComponent comp_tec;
+                string nameColumn = string.Empty
+                    , headerColumn = string.Empty;
                 // Функция поиска объекта 'PUT_PARAMETER' для его назначения в свойство 'Tag' для добавляемого столбца
                 Func<HandlerDbTaskCalculate.TaskCalculate.TYPE, int, TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> findPutParameterGTP = (HandlerDbTaskCalculate.TaskCalculate.TYPE type, int id) => {
                     TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putRes = new TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER();
@@ -115,68 +117,29 @@ namespace PluginTaskAutobook
                 //Станция - компонент
                 comp_tec = listTECComponent.Find(comp => { return comp.IsTec; });
                 //Станция - Значения - ежесуточные
-                Columns.Add(string.Format(@"COLUMN_ST_DAY_{0}", comp_tec.m_Id), string.Format(@"{0} значения", comp_tec.m_nameShr));
+                nameColumn = string.Format(@"COLUMN_ST_DAY_{0}", comp_tec.m_Id);
+                headerColumn = string.Format(@"{0} значения", comp_tec.m_nameShr);
+                Columns.Add(nameColumn, headerColumn);
                 Columns[ColumnCount - 1].Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp_tec.m_Id);
                 //Станция - Значения - нарастающие
-                Columns.Add(string.Format(@"COLUMN_ST_SUM_{0}", comp_tec.m_Id), string.Format(@"{0} нараст.", comp_tec.m_nameShr));
+                nameColumn = string.Format(@"COLUMN_ST_SUM_{0}", comp_tec.m_Id);
+                headerColumn = string.Format(@"{0} нараст.", comp_tec.m_nameShr);
+                Columns.Add(nameColumn, headerColumn);
                 Columns[ColumnCount - 1].Tag =
                     //ToolsHelper.Compiler.Compile(ToolsHelper.Parser.Parse(string.Format("INC(COLUMN_ST_DAY_{0})", comp_tec.m_Id)))
-                    new FormulaHelper(string.Format("SUMM(COLUMN_ST_DAY_{0})", comp_tec.m_Id))
+                    new FormulaHelper(string.Format("SUMM({0})", nameColumn))
                     ;
-                //Станция - План - ежесуточный
-                Columns.Add(string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id), string.Format(@"План нараст."));
-                Columns[ColumnCount - 1].Tag = listPutParameter.Find(putPar => { return false; });
+                //Станция - План - ежесуточный - накапливаемый
+                nameColumn = string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id);
+                headerColumn = string.Format(@"План нараст.");
+                Columns.Add(nameColumn, headerColumn);
+                Columns[ColumnCount - 1].Tag = new FormulaHelper(string.Format("SUMM({0})", nameColumn));
                 //Станция - План - отклонение
-                Columns.Add(string.Format(@"COLUMN_PALN_DEV_{0}", comp_tec.m_Id), string.Format(@"План отклон."));
+                nameColumn = string.Format(@"COLUMN_PLAN_DEV_{0}", comp_tec.m_Id);
+                headerColumn = string.Format(@"План отклон.");
+                Columns.Add(nameColumn, headerColumn);
                 Columns[ColumnCount - 1].Tag = new FormulaHelper (string.Format("COLUMN_PLAN_DAY_{0}-COLUMN_ST_DAY_{0}", comp_tec.m_Id));
-
-                //Columns.Add(string.Format(@""), string.Format(@""));
-                //Columns.Add(string.Format(@""), string.Format(@""));
-                //Columns.Add(string.Format(@""), string.Format(@""));
             }
-
-            ///// <summary>
-            ///// Добавить столбец
-            ///// </summary>
-            ///// <param name="text">Текст для заголовка столбца</param>
-            ///// <param name="bRead">Флаг изменения пользователем ячейки</param>
-            ///// <param name="nameCol">Наименование столбца</param>
-            //public void AddColumn(string txtHeader, bool bRead, string nameCol)
-            //{
-            //    DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
-            //    DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-            //    //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-
-            //    try {
-            //        HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false };
-            //        alignText = DataGridViewContentAlignment.MiddleRight;
-            //        autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
-            //        //column.Frozen = true;
-            //        column.ReadOnly = bRead;
-            //        column.Name = nameCol;
-            //        column.HeaderText = txtHeader;
-            //        column.DefaultCellStyle.Alignment = alignText;
-            //        column.AutoSizeMode = autoSzColMode;
-            //        Columns.Add(column as DataGridViewTextBoxColumn);
-            //    } catch (Exception e) {
-            //        HClassLibrary.Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", HClassLibrary.Logging.INDEX_MESSAGE.NOT_SET);
-            //    }
-            //}
-
-            ///// <summary>
-            ///// Установка идПута для столбца
-            ///// </summary>
-            ///// <param name="idPut">номер пута</param>
-            ///// <param name="nameCol">имя стобца</param>
-            //public void AddIdComp(int idPut, string nameCol)
-            //{
-            //    foreach (HDataGridViewColumn col in Columns)
-            //        if (col.Name == nameCol)
-            //            col.m_iIdComp = idPut;
-            //        else
-            //            ;
-            //}
-
             /// <summary>
             /// Установка возможности редактирования столбцов
             /// </summary>
@@ -190,9 +153,15 @@ namespace PluginTaskAutobook
                     else
                         ;
             }
-
+            /// <summary>
+            /// Словарь с перечнем компонентов станции
+            ///  , тлько те компоненты, с кот. связаны параметры алгоритма расчета 2-го порядка
+            /// </summary>
             private Dictionary<int, TepCommon.HandlerDbTaskCalculate.TECComponent> m_dictTECComponent;
-
+            /// <summary>
+            /// Добавить параметр алгоритма расчета 2-го порядка
+            /// </summary>
+            /// <param name="putPar">Параметр алгоритма расчета 2-го порядка (связаннй с компонентом станции)</param>
             public override void AddPutParameter(TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar)
             {
                 base.AddPutParameter(putPar);
@@ -209,7 +178,13 @@ namespace PluginTaskAutobook
 
                 m_dictTECComponent.Clear();
             }
-
+            /// <summary>
+            /// Признак, указывающий принажлежит ли значение строке
+            ///  иными словами: отображать ли значение в этой строке
+            /// </summary>
+            /// <param name="r">Строка (проверяемая) для отображения значения</param>
+            /// <param name="value">Значение для отображения в строке</param>
+            /// <returns>Признак - результат проверки условия (Истина - отображать/принадлежит)</returns>
             protected override bool isRowToShowValues(DataGridViewRow r, TepCommon.HandlerDbTaskCalculate.VALUE value)
             {
                 return (r.Tag is DateTime) ? value.stamp_value.Equals(((DateTime)(r.Tag))) == true : false;

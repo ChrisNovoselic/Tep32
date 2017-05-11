@@ -181,7 +181,7 @@ namespace PluginTaskAutobook
 
             InitializeComponent();
 
-            m_dgvValues.EventCellValueChanged += dgvValues_onEventCellValueChanged;
+            m_dgvValues.EventCellValueChanged += new Action<HandlerDbTaskCalculate.CHANGE_VALUE> (HandlerDb.SetValue);
         }
 
         /// <summary>

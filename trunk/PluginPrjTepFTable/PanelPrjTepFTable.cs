@@ -163,7 +163,7 @@ namespace PluginPrjTepFTable
             FTable.FRUNK runk = FTable.FRUNK.F1; // для блокировки/снятия с отображения столбцов
             DataRow[] rowsNAlg = null;
             int iSelIndex = dgv.SelectedRows.Count > 0 ? dgv.SelectedRows[0].Index : -1;
-            //Удалить все строки со значенями для прдыдущей функции
+            //Удалить все строки со значениями для прдыдущей функции
             dgv = Controls.Find(INDEX_CONTROL.DGV_VALUES.ToString(), true)[0] as DataGridView;
             dgv.Rows.Clear();
 

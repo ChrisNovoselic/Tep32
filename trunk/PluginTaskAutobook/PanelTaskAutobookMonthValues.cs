@@ -17,21 +17,6 @@ namespace PluginTaskAutobook
 {
     public partial class PanelTaskAutobookMonthValues : HPanelTepCommon
     {
-        ///// <summary>
-        ///// Объект для производства расчетов
-        ///// </summary>
-        //protected TaskAutobookCalculate m_AutoBookCalculate;
-        /// <summary>
-        /// Перечисление - столбцы отображения
-        /// </summary>
-        public enum INDEX_COLUMN : int
-        {
-            UNKNOW = -1
-            , CorGTP12, CorGTP36
-            , GTP12, GTP36
-            , TEC            
-                , COUNT
-        }
         /// <summary>
         /// Набор элементов
         /// </summary>
@@ -458,11 +443,10 @@ namespace PluginTaskAutobook
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
             HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
-            //m_AutoBookCalculate = new TaskAutobookCalculate();
 
             InitializeComponent();
 
-            m_dgvValues.EventCellValueChanged += dgvValues_onEventCellValueChanged;
+            m_dgvValues.EventCellValueChanged += new Action<HandlerDbTaskCalculate.CHANGE_VALUE> (HandlerDb.SetValue);
         }
 
         /// <summary>
@@ -1008,141 +992,6 @@ namespace PluginTaskAutobook
                 //saveInvalValue(out err);
             //else
             //    ;
-        }
-
-        /// <summary>
-        /// ??? получает структуру таблицы 
-        /// OUTVAL_XXXXXX
-        /// </summary>
-        /// <param name="err"></param>
-        /// <returns>таблица</returns>
-        private DataTable getStructurOutval(string nameTable, out int err)
-        {
-            return HandlerDb.Select("SELECT * FROM " + nameTable, out err);
-        }
-
-        /// <summary>
-        /// Получение имени таблицы вых.зн. в БД
-        /// </summary>
-        /// <param name="dtInsert">дата</param>
-        /// <returns>имя таблицы</returns>
-        private string getNameTableOut(DateTime dtInsert)
-        {
-            string strRes = string.Empty;
-
-            if (dtInsert == null)
-                throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
-
-            strRes = HandlerDbValues.s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
-
-            return strRes;
-        }
-
-        /// <summary>
-        /// ??? Получение имени таблицы вх.зн. в БД
-        /// </summary>
-        /// <param name="dtInsert">дата</param>
-        /// <returns>имя таблицы</returns>
-        private string getNameTableIn(DateTime dtInsert)
-        {
-            string strRes = string.Empty;
-
-            if (dtInsert == null)
-                throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
-
-            strRes = HandlerDbValues.s_dictDbTables[ID_DBTABLE.INVALUES] + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
-
-            return strRes;
-        }
-
-        /// <summary>
-        /// Обновить/Вставить/Удалить
-        /// </summary>
-        /// <param name="nameTable">имя таблицы</param>
-        /// <param name="m_origin">оригинальная таблица</param>
-        /// <param name="m_edit">таблица с данными</param>
-        /// <param name="unCol">столбец, неучаствующий в InsetUpdate</param>
-        /// <param name="err">номер ошибки</param>
-        private void updateInsertDel(string nameTable, DataTable m_origin, DataTable m_edit, string unCol, out int err)
-        {
-            err = -1;
-
-            __handlerDb.RecUpdateInsertDelete(nameTable
-                    , @"ID_PUT, DATE_TIME"
-                    , unCol
-                    , m_origin
-                    , m_edit
-                    , out err);
-        }
-
-        /// <summary>
-        /// разбор данных по разным табилца(взависимости от месяца)
-        /// </summary>
-        /// <param name="origin">оригинальная таблица</param>
-        /// <param name="edit">таблица с данными</param>
-        /// <param name="nameTable">имя таблицы</param>
-        /// <param name="unCol">столбец, неучаствующий в InsertUpdate</param>
-        /// <param name="err">номер ошибки</param>
-        private void sortingDataToTable(DataTable origin
-            , DataTable edit
-            , string nameTable
-            , string unCol
-            , out int err)
-        {
-            string nameTableExtrmRow = string.Empty
-                          , nameTableNew = string.Empty;
-            DataTable editTemporary = new DataTable()
-                , originTemporary = new DataTable();
-
-            err = -1;
-            editTemporary = edit.Clone();
-            originTemporary = origin.Clone();
-            nameTableNew = nameTable;
-
-            foreach (DataRow row in edit.Rows)
-            {
-                nameTableExtrmRow = extremeRow(row["DATE_TIME"].ToString(), nameTableNew);
-
-                if (nameTableExtrmRow != nameTableNew)
-                {
-                    foreach (DataRow rowOrigin in origin.Rows)
-                        if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month != Convert.ToDateTime(row["DATE_TIME"]).Month)
-                            originTemporary.Rows.Add(rowOrigin.ItemArray);
-
-                    updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);//сохранение данных
-
-                    nameTableNew = nameTableExtrmRow;
-                    editTemporary.Rows.Clear();
-                    originTemporary.Rows.Clear();
-                    editTemporary.Rows.Add(row.ItemArray);
-                }
-                else
-                    editTemporary.Rows.Add(row.ItemArray);
-            }
-
-            if (editTemporary.Rows.Count > 0)
-            {
-                foreach (DataRow rowOrigin in origin.Rows)
-                    if (extremeRow(Convert.ToDateTime(rowOrigin["DATE_TIME"]).ToString(), nameTableNew) == nameTableNew)
-                        originTemporary.Rows.Add(rowOrigin.ItemArray);
-
-                updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);//сохранение данных
-            }
-        }
-
-        /// <summary>
-        /// Нахождение имени таблицы для крайних строк
-        /// </summary>
-        /// <param name="strDate">дата</param>
-        /// <param name="nameTable">изначальное имя таблицы</param>
-        /// <returns>имя таблицы</returns>
-        private static string extremeRow(string strDate, string nameTable)
-        {
-            DateTime dtStr = Convert.ToDateTime(strDate);
-            string m_nametable = dtStr.Year.ToString() + dtStr.Month.ToString(@"00");
-            string[] pref = nameTable.Split('_');
-
-            return pref[0] + "_" + m_nametable;
         }
     }
 }

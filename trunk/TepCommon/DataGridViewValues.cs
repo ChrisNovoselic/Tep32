@@ -304,7 +304,7 @@ namespace TepCommon
                     , m_strDesc;
             }
             /// <summary>
-            /// Словарь со значенями коэффициентов при масштабировании физических величин (микро, милли, кило, Мега)
+            /// Словарь со значениями коэффициентов при масштабировании физических величин (микро, милли, кило, Мега)
             /// </summary>
             private Dictionary<int, RATIO> m_dictRatio;
             /// <summary>
@@ -539,7 +539,10 @@ namespace TepCommon
                 } else
                     throw new Exception(string.Format(@"DataGridViewValues::addRow () - нельзя добавить строку: элемент не в режиме 'ModeData.DATETIME'..."));
             }
-
+            /// <summary>
+            /// Добавить строку к представлению
+            /// </summary>
+            /// <param name="bEnded">Признак крайней строки</param>
             protected virtual void addRow(bool bEnded)
             {
                 DateTime dtRow = DateTime.MinValue;
@@ -613,7 +616,6 @@ namespace TepCommon
 
                 CellValueChanged += onCellValueChanged;
             }
-
             /// <summary>
             /// Возвратить цвет ячейки по номеру столбца, строки
             /// </summary>
@@ -646,10 +648,18 @@ namespace TepCommon
                     clrRes = s_arCellColors[(int)INDEX_COLOR.NAN];
 
                 return bRes;
-            }            
-
+            }
+            /// <summary>
+            /// Признак, указывающий принажлежит ли значение строке
+            ///  иными словами: отображать ли значение в этой строке
+            /// </summary>
+            /// <param name="r">Строка (проверяемая) для отображения значения</param>
+            /// <param name="value">Значение для отображения в строке</param>
+            /// <returns>Признак - результат проверки условия (Истина - отображать/принадлежит)</returns>
             protected abstract bool isRowToShowValues(DataGridViewRow r, HandlerDbTaskCalculate.VALUE value);
-
+            /// <summary>
+            /// Класс для расчета формулы в столбце
+            /// </summary>
             protected class FormulaHelper : IDisposable
             {
                 Dictionary<string, int> _dictVariables;
@@ -658,7 +668,7 @@ namespace TepCommon
 
                 private enum TYPE_SEGMENT { VAR, OPERATION, BRACE }
 
-                private enum TYPE_OPERATION { VAR, OPERATION, BRACE }
+                private enum PRORITY_OPERATION { ADDITIVE, MULTI, EXPONENT }
 
                 private enum TYPE_BRACE { OPENING, CLOSING }
 
@@ -719,7 +729,6 @@ namespace TepCommon
                 }
                 #endregion
             }
-
             /// <summary>
             /// Отобразить значения (!!! не забывать перед отображением значений отменить регистрацию события - изменение значения в ячейке
             ///  , а после отображения снова зарегистрировать !!!)

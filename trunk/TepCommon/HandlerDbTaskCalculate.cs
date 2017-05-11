@@ -999,7 +999,7 @@ namespace TepCommon
 
                 if (err == 0) {
                     // создать копии для возможности сохранения изменений
-                    cloneValues(TaskCalculate.TYPE.IN_VALUES, TaskCalculate.TYPE.OUT_VALUES);
+                    cloneValues(taskCalculateType);
                     // отобразить значения
                     EventSetValuesCompleted?.Invoke(RESULT.Ok);
                 } else {
@@ -1112,32 +1112,36 @@ namespace TepCommon
         /// <summary>
         /// Установить значения таблиц для редактирования
         /// </summary>
-        protected virtual void cloneValues(params TaskCalculate.TYPE[] types)
+        protected virtual void cloneValues(TaskCalculate.TYPE types)
         {
             KEY_VALUES keySource
                 , keyDest;
 
-            foreach (TaskCalculate.TYPE type in types) {
-                keySource.TypeCalculate =
-                keyDest.TypeCalculate =
-                    type;
+            foreach (TaskCalculate.TYPE type in Enum.GetValues(typeof(TaskCalculate.TYPE))) {
+                if ((!(type == TaskCalculate.TYPE.UNKNOWN))
+                    && (type & types) == type) {
+                    keySource.TypeCalculate =
+                    keyDest.TypeCalculate =
+                        type;
 
-                keySource.TypeState = STATE_VALUE.ORIGINAL;
-                keyDest.TypeState = STATE_VALUE.EDIT;
+                    keySource.TypeState = STATE_VALUE.ORIGINAL;
+                    keyDest.TypeState = STATE_VALUE.EDIT;
 
-                if (_dictValues.ContainsKey(keyDest) == false)
-                    //??? добавляем - создается ли новая копия
-                    _dictValues.Add(keyDest, new List<VALUE>(_dictValues[keySource]));
-                else
-                    //??? заменяем - создается ли новая копия
-                    _dictValues[keyDest] = new List<VALUE>(_dictValues[keySource]);
+                    if (_dictValues.ContainsKey(keyDest) == false)
+                        //??? добавляем - создается ли новая копия
+                        _dictValues.Add(keyDest, new List<VALUE>(_dictValues[keySource]));
+                    else
+                        //??? заменяем - создается ли новая копия
+                        _dictValues[keyDest] = new List<VALUE>(_dictValues[keySource]);
+                } else
+                    ;
             }
         }
         /// <summary>
         /// Принять отредактированное значение, сохранить в истории изменений
         /// </summary>
         /// <param name="value">Новое значение</param>
-        public void SetValue(CHANGE_VALUE changeValue)
+        public virtual void SetValue(CHANGE_VALUE changeValue)
         {
             int err = -1;
             string query = string.Empty;
@@ -2242,12 +2246,12 @@ namespace TepCommon
             return strRes;
         }
         /// <summary>
-        /// Возвратить объект-таблицу со значенями по умолчанию
+        /// Возвратить объект-таблицу со значениями по умолчанию
         /// </summary>
         /// <param name="idPeriod">Идентификатор </param>
         /// <param name="err">Признак выполнения функции</param>
-        /// <returns>Объект-таблица со значенями по умолчанию</returns>
-        protected virtual DataTable getDefaultValues(ID_PERIOD idPeriod, out int err)
+        /// <returns>Объект-таблица со значениями по умолчанию</returns>
+        protected virtual DataTable getDefaultTableValues(ID_PERIOD idPeriod, out int err)
         {
             DataTable tableRes = new DataTable();
 
@@ -2283,9 +2287,9 @@ namespace TepCommon
         /// </summary>
         /// <param name="idPeriod">Идентификатор расчета (HOUR, DAY, MONTH, YEAR)</param>
         /// <param name="cntBasePeriod">Количество периодов расчета в интервале запрашиваемых данных</param>
-        /// <param name="arQueryRanges">Массив диапазонов даты/времени - интервал(ы) заправшиваемых данных</param>
+        /// <param name="arQueryRanges">Массив диапазонов даты/времени - интервал(ы) запрашиваемых данных</param>
         /// <param name="err">Признак выполнения функции</param>
-        /// <returns>Таблица со значенями</returns>
+        /// <returns>Таблица со значениями</returns>
         protected virtual DataTable getArchiveTableValues(TaskCalculate.TYPE type
             , ID_PERIOD idPeriod
             , int cntBasePeriod
@@ -2303,9 +2307,9 @@ namespace TepCommon
         /// </summary>
         /// <param name="idPeriod">Идентификатор расчета (HOUR, DAY, MONTH, YEAR)</param>
         /// <param name="cntBasePeriod">Количество периодов расчета в интервале запрашиваемых данных</param>
-        /// <param name="arQueryRanges">Массив диапазонов даты/времени - интервал(ы) заправшиваемых данных</param>
+        /// <param name="arQueryRanges">Массив диапазонов даты/времени - интервал(ы) запрашиваемых данных</param>
         /// <param name="err">Признак выполнения функции</param>
-        /// <returns>Таблица со значенями</returns>
+        /// <returns>Таблица со значениями</returns>
         protected virtual DataTable getVariableTableValues(TaskCalculate.TYPE type
             , ID_PERIOD idPeriod
             , int cntBasePeriod
@@ -2392,11 +2396,11 @@ namespace TepCommon
             DateTime dtValue;
 
             foreach (DataRow r in table.Rows) {
-                if ((!(r[@"EXTENDED_DEFINITION"] is DBNull)) // интерпретируется как [DATE_TIME]
-                    && (DateTime.TryParse((string)r[@"EXTENDED_DEFINITION"], out dtValue) == true))
-                    ;
-                else
+                if ((r[@"EXTENDED_DEFINITION"] is DBNull) // интерпретируется как [DATE_TIME]
+                    || (DateTime.TryParse((string)r[@"EXTENDED_DEFINITION"], out dtValue) == false))
                     dtValue = DateTime.MinValue;
+                else
+                    ;
 
                 if (int.TryParse(r[@"QUALITY"].ToString(), out iQuality) == true)
                     quality = (ID_QUALITY_VALUE)iQuality;
@@ -2496,7 +2500,7 @@ namespace TepCommon
             //Проверить признак выполнения запроса
             if (err == 0) {
                 //Заполнить таблицу данными вводимых вручную (значения по умолчанию)
-                arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = getDefaultValues(_Session.ActualIdPeriod, out err);
+                arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = getDefaultTableValues(_Session.ActualIdPeriod, out err);
                 //arValuesOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] = getValues(arTableOrigin[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT]);
                 //Проверить признак выполнения запроса
                 if (err == 0) {
@@ -2551,7 +2555,7 @@ namespace TepCommon
         ///// Подготовить таблицы для проведения расчета
         ///// </summary>
         ///// <param name="err">Признак ошибки при выполнении функции</param>
-        ///// <returns>Массив таблиц со значенями для расчета</returns>
+        ///// <returns>Массив таблиц со значениями для расчета</returns>
         //protected abstract TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err);
 
         //protected virtual void correctValues(ref DataTable tableValues, ref DataTable tablePars) { }

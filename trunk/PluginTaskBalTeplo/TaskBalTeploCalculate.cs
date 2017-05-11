@@ -928,7 +928,7 @@ namespace PluginTaskBalTeplo
         ///// Подготовить таблицы для проведения расчета
         ///// </summary>
         ///// <param name="err">Признак ошибки при выполнении функции</param>
-        ///// <returns>Массив таблиц со значенями для расчета</returns>
+        ///// <returns>Массив таблиц со значениями для расчета</returns>
         //protected override TaskCalculate.ListDATATABLE prepareCalculateValues(TaskCalculate.TYPE type, out int err)
         //{
         //    TaskCalculate.ListDATATABLE listRes = new TaskCalculate.ListDATATABLE();

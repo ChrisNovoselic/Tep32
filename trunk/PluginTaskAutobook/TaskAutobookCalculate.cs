@@ -210,6 +210,103 @@ namespace PluginTaskAutobook
         {
             throw new NotImplementedException();
         }
+
+        protected override DataTable getArchiveTableValues(TaskCalculate.TYPE type
+            , ID_PERIOD idPeriod
+            , int cntBasePeriod
+            , DateTimeRange[] arQueryRanges
+            , out int err)
+        {
+            err = 0;
+
+            DataTable tableRes = base.getArchiveTableValues(type, idPeriod, cntBasePeriod, arQueryRanges, out err);
+
+            return tableRes;
+        }
+        /// <summary>
+        /// Возвратить объект-таблицу со значениями из таблицы с сохраняемыми значениями из источников информации
+        ///  + для текущей задачи "растиражировать" плановые значения за месяц
+        /// </summary>
+        /// <param name="idPeriod">Идентификатор расчета (HOUR, DAY, MONTH, YEAR)</param>
+        /// <param name="cntBasePeriod">Количество периодов расчета в интервале запрашиваемых данных</param>
+        /// <param name="arQueryRanges">Массив диапазонов даты/времени - интервал(ы) запрашиваемых данных</param>
+        /// <param name="err">Признак выполнения функции</param>
+        /// <returns>Таблица со значениями</returns>
+        protected override DataTable getVariableTableValues(TaskCalculate.TYPE type
+            , ID_PERIOD idPeriod
+            , int cntBasePeriod
+            , DateTimeRange[] arQueryRanges
+            , out int err)
+        {
+            DataTable tableRes = new DataTable()
+                , tableMonthPlan;
+
+            int iDay = -1
+                , periodTotalDays = -1
+                , iColumnDataDate = -1;
+            DateTime datetimeValue = DateTime.MinValue;
+            object[] rowValues;
+            double dayPlan = -1F;
+
+            err = -1;
+
+            tableRes = base.getVariableTableValues(type, idPeriod, cntBasePeriod, arQueryRanges, out err);
+
+            if ((type & TaskCalculate.TYPE.IN_VALUES) == TaskCalculate.TYPE.IN_VALUES) {
+                tableMonthPlan = Select(getQueryVariableValues(type, ID_PERIOD.MONTH, 1, arQueryRanges), out err);
+
+                if (tableMonthPlan.Rows.Count == 1) {
+                    periodTotalDays = (int)(_Session.m_DatetimeRange.End - _Session.m_DatetimeRange.Begin).TotalDays;
+                    dayPlan = (double)tableMonthPlan.Rows[0][@"VALUE"] / periodTotalDays;
+
+                    rowValues = new object[tableMonthPlan.Columns.Count];
+
+                    foreach (DataColumn column in tableMonthPlan.Columns)
+                        if (column.ColumnName.Equals(@"VALUE") == true)
+                            rowValues[column.Ordinal] = dayPlan;
+                        else {
+                            if (column.ColumnName.Equals(@"EXTENDED_DEFINITION") == true) {
+                                iColumnDataDate = column.Ordinal;
+                                DateTime.TryParse((string)tableMonthPlan.Rows[0][column.Ordinal], out datetimeValue);
+                            } else
+                                ;
+
+                            rowValues[column.Ordinal] = tableMonthPlan.Rows[0][column.Ordinal];
+                        }
+
+                    if (datetimeValue.Equals(DateTime.MinValue) == false) {
+                        for (iDay = 0; iDay < periodTotalDays; iDay++) {
+                            rowValues[iColumnDataDate] = string.Format(@"{0:s}", datetimeValue.AddDays(-1 * iDay));
+
+                            tableRes.Rows.Add(rowValues);
+                        }
+
+                        tableRes.AcceptChanges();
+                    } else
+                        Logging.Logg().Error(string.Format(@"HandlerDbTaskAutobookMonthValuesCalculate::getVariableTableValues () - не удалось преобразовать метку даты/времени {0} планового значения"
+                                , tableMonthPlan.Rows[0][iColumnDataDate])
+                            , Logging.INDEX_MESSAGE.NOT_SET);
+                } else
+                    Logging.Logg().Error(string.Format(@"HandlerDbTaskAutobookMonthValuesCalculate::getVariableTableValues () - нет плановых значений за {0:s} - {1:s}"
+                            , _Session.m_DatetimeRange.Begin, _Session.m_DatetimeRange.End)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+            } else
+            // план только во входных значениях, в выходных его нет
+                ;
+
+            return tableRes;
+        }
+
+        protected override DataTable getDefaultTableValues(ID_PERIOD idPeriod, out int err)
+        {
+            DataTable tableRes = new DataTable();
+
+            err = -1;
+
+            tableRes = base.getDefaultTableValues(idPeriod, out err);
+
+            return tableRes;
+        }
     }
     /// <summary>
     /// PlanAutoBook

@@ -454,7 +454,7 @@ namespace TepCommon
             /// Преоразовать результаты расчетов в список со значениями для дальнейшей обработки(отображения)
             /// </summary>
             /// <param name="pAlg">Словарь с данными для расчетов или результатов расчетов</param>
-            /// <returns>Список со значенями для отображения</returns>
+            /// <returns>Список со значениями для отображения</returns>
             protected static IEnumerable<VALUE> resultToListValue(P_ALG pAlg)
             {
                 List<VALUE> listRes = new List<VALUE>();

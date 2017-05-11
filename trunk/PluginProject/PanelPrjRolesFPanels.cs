@@ -1535,7 +1535,7 @@ namespace PluginProject
             /// </summary>
             /// <param name="id">ИД типа</param>
             /// <param name="bIsRole"></param>
-            /// <returns>Строка со значенями прав доступа</returns>
+            /// <returns>Строка со значениями прав доступа</returns>
             private DataRow getRowAllowed(int id)
             {
                 DataRow objRes = null;
