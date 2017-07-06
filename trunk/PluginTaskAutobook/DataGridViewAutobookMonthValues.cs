@@ -140,14 +140,14 @@ namespace PluginTaskAutobook
                     new FormulaHelper(string.Format("SUMM({0})", string.Format(@"COLUMN_ST_DAY_{0}", comp_tec.m_Id)))
                     ;
                 Columns.Add(column);
-                ////Станция - План - ежесуточный
-                //column = new DataGridViewTextBoxColumn();
-                //column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                //column.Name = string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id);
-                //column.HeaderText = string.Format(@"План сутки");
-                //column.Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp_tec.m_Id);
+                //Станция - План - ежесуточный
+                column = new DataGridViewTextBoxColumn();
+                column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                column.Name = string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id);
+                column.HeaderText = string.Format(@"План сутки");
+                column.Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, comp_tec.m_Id);
                 //column.Visible = false;
-                //Columns.Add(column);
+                Columns.Add(column);
                 //Станция - План - ежесуточный - накапливаемый
                 column = new DataGridViewTextBoxColumn();
                 column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
