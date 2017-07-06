@@ -54,10 +54,11 @@ namespace PluginTaskAutobook
             public override void AddColumns(List<TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter
                 , List<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
+                DataGridViewColumn column;
                 List<TepCommon.HandlerDbTaskCalculate.TECComponent> listTECComponent;
                 TepCommon.HandlerDbTaskCalculate.TECComponent comp_tec;
-                string nameColumn = string.Empty
-                    , headerColumn = string.Empty;
+                //string nameColumn = string.Empty
+                //    , headerColumn = string.Empty;
                 // Функция поиска объекта 'PUT_PARAMETER' для его назначения в свойство 'Tag' для добавляемого столбца
                 Func<HandlerDbTaskCalculate.TaskCalculate.TYPE, int, TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> findPutParameterGTP = (HandlerDbTaskCalculate.TaskCalculate.TYPE type, int id) => {
                     TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putRes = new TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER();
@@ -101,7 +102,10 @@ namespace PluginTaskAutobook
                 //ГТП - Корректировка ПТО
                 listTECComponent.ForEach(comp => {
                     if (comp.IsGtp == true) {
-                        Columns.Add(string.Format(@"COLUMN_CORRECT_{0}", comp.m_Id), string.Format(@"Корр-ка ПТО {0}", comp.m_nameShr));
+                        column = new DataGridViewTextBoxColumn();
+                        column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                        column.Name = string.Format(@"COLUMN_CORRECT_{0}", comp.m_Id); column.HeaderText = string.Format(@"Корр-ка ПТО {0}", comp.m_nameShr);
+                        Columns.Add(column);
                         Columns[ColumnCount - 1].Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, comp.m_Id);
                     } else
                         ;
@@ -109,7 +113,10 @@ namespace PluginTaskAutobook
                 //ГТП - Значения
                 listTECComponent.ForEach(comp => {
                     if (comp.IsGtp == true) {
-                        Columns.Add(string.Format(@"COLUMN_{0}", comp.m_Id), string.Format(@"{0}", comp.m_nameShr));
+                        column = new DataGridViewTextBoxColumn();
+                        column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                        column.Name = string.Format(@"COLUMN_{0}", comp.m_Id); column.HeaderText = string.Format(@"{0}", comp.m_nameShr);
+                        Columns.Add(column);
                         Columns[ColumnCount - 1].Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp.m_Id);
                     } else
                         ;
@@ -117,28 +124,44 @@ namespace PluginTaskAutobook
                 //Станция - компонент
                 comp_tec = listTECComponent.Find(comp => { return comp.IsTec; });
                 //Станция - Значения - ежесуточные
-                nameColumn = string.Format(@"COLUMN_ST_DAY_{0}", comp_tec.m_Id);
-                headerColumn = string.Format(@"{0} значения", comp_tec.m_nameShr);
-                Columns.Add(nameColumn, headerColumn);
-                Columns[ColumnCount - 1].Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp_tec.m_Id);
+                column = new DataGridViewTextBoxColumn();
+                column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                column.Name = string.Format(@"COLUMN_ST_DAY_{0}", comp_tec.m_Id);
+                column.HeaderText = string.Format(@"{0} значения", comp_tec.m_nameShr);
+                column.Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp_tec.m_Id);
+                Columns.Add(column);                
                 //Станция - Значения - нарастающие
-                nameColumn = string.Format(@"COLUMN_ST_SUM_{0}", comp_tec.m_Id);
-                headerColumn = string.Format(@"{0} нараст.", comp_tec.m_nameShr);
-                Columns.Add(nameColumn, headerColumn);
-                Columns[ColumnCount - 1].Tag =
+                column = new DataGridViewTextBoxColumn();
+                column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                column.Name = string.Format(@"COLUMN_ST_SUM_{0}", comp_tec.m_Id);
+                column.HeaderText = string.Format(@"{0} нараст.", comp_tec.m_nameShr);
+                column.Tag =
                     //ToolsHelper.Compiler.Compile(ToolsHelper.Parser.Parse(string.Format("INC(COLUMN_ST_DAY_{0})", comp_tec.m_Id)))
-                    new FormulaHelper(string.Format("SUMM({0})", nameColumn))
+                    new FormulaHelper(string.Format("SUMM({0})", string.Format(@"COLUMN_ST_DAY_{0}", comp_tec.m_Id)))
                     ;
+                Columns.Add(column);
+                ////Станция - План - ежесуточный
+                //column = new DataGridViewTextBoxColumn();
+                //column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                //column.Name = string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id);
+                //column.HeaderText = string.Format(@"План сутки");
+                //column.Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp_tec.m_Id);
+                //column.Visible = false;
+                //Columns.Add(column);
                 //Станция - План - ежесуточный - накапливаемый
-                nameColumn = string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id);
-                headerColumn = string.Format(@"План нараст.");
-                Columns.Add(nameColumn, headerColumn);
-                Columns[ColumnCount - 1].Tag = new FormulaHelper(string.Format("SUMM({0})", nameColumn));
+                column = new DataGridViewTextBoxColumn();
+                column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                column.Name = string.Format(@"COLUMN_PLAN_SUM_{0}", comp_tec.m_Id);
+                column.HeaderText = string.Format(@"План нараст.");
+                column.Tag = new FormulaHelper(string.Format("SUMM({0})", string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id)));
+                Columns.Add(column);
                 //Станция - План - отклонение
-                nameColumn = string.Format(@"COLUMN_PLAN_DEV_{0}", comp_tec.m_Id);
-                headerColumn = string.Format(@"План отклон.");
-                Columns.Add(nameColumn, headerColumn);
-                Columns[ColumnCount - 1].Tag = new FormulaHelper (string.Format("COLUMN_PLAN_DAY_{0}-COLUMN_ST_DAY_{0}", comp_tec.m_Id));
+                column = new DataGridViewTextBoxColumn();
+                column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                column.Name = string.Format(@"COLUMN_PLAN_DEV_{0}", comp_tec.m_Id);
+                column.HeaderText = string.Format(@"План отклон.");
+                column.Tag = new FormulaHelper(string.Format("COLUMN_PLAN_SUM_{0}-COLUMN_ST_SUM_{0}", comp_tec.m_Id));
+                Columns.Add(column);                
             }
             /// <summary>
             /// Установка возможности редактирования столбцов

@@ -148,9 +148,9 @@ namespace PluginTaskAutobook
 
                                     validateKeyPValue(Out[pAlg.Key], keyGroupPValue);
 
-                                    if (Out[pAlg.Key].ContainsKey(keyGroupPValue) == true)
-                                        Out[pAlg.Key][keyGroupPValue].value += In["1"][keyPValue].value;
-                                    else
+                                    if (Out[pAlg.Key].ContainsKey(keyGroupPValue) == true) {
+                                        Out[pAlg.Key][keyGroupPValue].value += In["1"][keyPValue].value;                                        
+                                    } else
                                         throw new Exception(string.Format(@"TaskAutobookMonthValuesCalculate::calculate () - отсутствует ключ [ID={0}, DATA_DATE={1}]..."
                                             , keyGroupPValue.Id, keyGroupPValue.Stamp));
                                 }
@@ -172,6 +172,12 @@ namespace PluginTaskAutobook
                                             throw new Exception(string.Format(@"TaskAutobookMonthValuesCalculate::calculate () - неизвестный идентификатор [ID_COMP={0}] компонента...", keyPValue.Id));
                                             break;
                                     }
+
+                                    // корректировка, если есть
+                                    if (In[@"3"].ContainsKey(keyPValue) == true)
+                                        Out[pAlg.Key][keyPValue].value += In[@"3"][keyPValue].value;
+                                    else
+                                        ;
 
                                     fltRes += Out[pAlg.Key][keyPValue].value;
                                 }

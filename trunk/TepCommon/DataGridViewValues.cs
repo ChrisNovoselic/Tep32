@@ -204,7 +204,33 @@ namespace TepCommon
                 RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders | DataGridViewRowHeadersWidthSizeMode.DisableResizing;
                 ////Ширина столбцов под видимую область
                 //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+                //RowsAdded += onRowsAdded;
+                Columns.CollectionChanged += columns_OnCollectionChanged;
             }
+
+            private void columns_OnCollectionChanged(object sender, System.ComponentModel.CollectionChangeEventArgs e)
+            {
+                FormulaHelper tagFormaula;
+
+                //if (e.RowIndex == 0)
+                    foreach (DataGridViewColumn column in Columns) {
+                        if (column.Tag is FormulaHelper) {
+                            tagFormaula = column.Tag as FormulaHelper;
+
+                            tagFormaula.Prepare((from col in Columns.Cast<DataGridViewColumn>() select col.Name));
+                            //tagFormaula.Prepare(Columns.Cast<DataGridViewColumn>().Select(col => { return col.Name; }));
+                        } else
+                            ;
+                    }
+                //else
+                //    ;
+            }
+
+            //private void onRowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
+            //{
+            //}
+
             /// <summary>
             /// Построить структуру представления (столбцы, строки)
             /// </summary>
@@ -662,39 +688,144 @@ namespace TepCommon
             /// </summary>
             protected class FormulaHelper : IDisposable
             {
-                Dictionary<string, int> _dictVariables;
+                /// <summary>
+                /// Строка формулы, переданная в качестве аргумента конструктору
+                /// </summary>
+                private string _formula;
 
+                private struct KEY
+                {
+                    public int m_index;
+
+                    public string m_name;
+
+                    public string m_variable;
+                }
+
+                private List<KEY> _listKeyColumns;
+
+                private bool _IsFunc = false;
+                /// <summary>
+                /// Перечисление - 
+                /// </summary>
                 private enum FUNC { SUMM }
-
+                /// <summary>
+                /// Перечисление - тип сегмента выражения (переменная, арифметическая операция, скобка)
+                /// </summary>
                 private enum TYPE_SEGMENT { VAR, OPERATION, BRACE }
-
+                /// <summary>
+                /// Перечисление - приоритет выполнения операции (сложение/вычитание - низкий, умножение/деление - средний, возведение в степень/извлечение корня - высокий)
+                /// </summary>
                 private enum PRORITY_OPERATION { ADDITIVE, MULTI, EXPONENT }
-
+                /// <summary>
+                /// Перечисление - тип скобки (открывающая, закрывающая)
+                /// </summary>
                 private enum TYPE_BRACE { OPENING, CLOSING }
-
+                /// <summary>
+                /// Массив - возможные к употреблению в выражении знаки арифмитических операций
+                /// </summary>
                 private readonly char[] OPERATION = { '+', '-', '*', '/', '^' };
-
+                /// <summary>
+                /// Массив - возможные к употреблению в выражении скобки
+                /// </summary>
                 private readonly char[] BRACE = { '[', ']', '{', '}', '(', ')' };
 
                 CompiledExpression _compiledExpression;
 
-                private List<int> _listIndexColumns;
-
                 public FormulaHelper(string formula)
                 {
-                    int iSeg = -1; // индекс сегмента
+                    _IsFunc = false;
 
-                    List<char> separates = OPERATION.Union(BRACE).ToList();
-                    List<TYPE_SEGMENT> segmentTypes;
-                    List<string> segments = formula.Split(separates.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
-
-                    foreach (string seg in segments) {
-                    }
+                    this._formula = formula;
                 }
 
-                public IEnumerable<int> IndexColumns { get { return _listIndexColumns; } }
+                public int Prepare(IEnumerable<string> columnNames)
+                {
+                    int iRes = 0; // успех
 
-                public bool IsNaN { get { return _compiledExpression == null; } }
+                    //int iSeg = -1; // индекс сегмента
+                    PreparedExpression preparedExpression;
+                    string formula = string.Empty;
+                    int indxVariable = -1;
+                    string variable = string.Empty;
+
+                    _listKeyColumns = new List<KEY>();
+
+                    //List<char> separates = OPERATION.Union(BRACE).ToList();
+                    //List<TYPE_SEGMENT> segmentTypes;
+                    //List<string> segments;
+
+                    //segments = formula.Split(separates.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
+                    //foreach (string seg in segments) {
+                    //}
+
+                    formula = _formula;
+                    indxVariable = 0;
+
+                    foreach (string colName in columnNames) {
+                        if (formula.Contains(colName) == true) {
+                            variable = string.Format(@"c{0}", indxVariable);
+                            formula = formula.Replace(colName, variable);
+
+                            _listKeyColumns.Add(new KEY() { m_name = colName, m_index = columnNames.ToList().IndexOf(colName), m_variable = variable });
+
+                            indxVariable ++;
+                        } else
+                            ;
+                    }
+
+                    foreach (string func in Enum.GetNames(typeof(FUNC)).ToList())
+                        if (formula.Contains(func) == true) {
+                            _IsFunc = true;
+
+                            break;
+                        } else
+                            ;
+
+                    if (_IsFunc == false) {
+                        preparedExpression = ToolsHelper.Parser.Parse(formula);
+                        _compiledExpression = ToolsHelper.Compiler.Compile(preparedExpression);
+                    } else
+                        ;
+
+                    return iRes;
+                }
+
+                public float Calculate(IEnumerable <float>args)
+                {
+                    float fltRes = -1F;
+
+                    List<ELW.Library.Math.Tools.VariableValue> vars;
+                    float arg = -1F;
+                    int cntNoValues = -1;
+
+                    vars = new List<ELW.Library.Math.Tools.VariableValue>();
+                    cntNoValues = 0;
+                    for (int indx = 0; indx < args.Count(); indx++) {
+                        arg = args.ElementAt(indx);
+                        // подсчитать кол-во аргументов без значения
+                        if (arg == float.MinValue) {
+                            cntNoValues ++;
+                            arg = 0F;
+                        } else
+                            ;
+
+                        vars.Add(new ELW.Library.Math.Tools.VariableValue(arg, _listKeyColumns[indx].m_variable));
+                    }
+
+                    if (cntNoValues < vars.Count)
+                        fltRes = (float)ToolsHelper.Calculator.Calculate(_compiledExpression, vars);
+                    else
+                        fltRes = float.MinValue;
+
+                    return fltRes;
+                }
+
+                public IEnumerable<int> IndexColumns { get { return Equals(_listKeyColumns, null) == false ? from key in _listKeyColumns select key.m_index : new List<int>(); } }
+
+                public bool IsNaN { get { return (object.Equals(_listKeyColumns, null) == true) && (_listKeyColumns.Count > 0); } }
+
+                public bool IsFunc { get { return _IsFunc; } }
 
                 #region IDisposable Support
                 private bool disposedValue = false; // Для определения избыточных вызовов
@@ -752,6 +883,9 @@ namespace TepCommon
                 HandlerDbTaskCalculate.PUT_PARAMETER putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
                 IEnumerable<HandlerDbTaskCalculate.VALUE> columnValues = null;
                 Color clrCell = Color.Empty;
+                FormulaHelper formula;
+                List<float> args;
+                string fmtRoundValue = string.Empty;
 
                 // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
                 if (RowCount > 1) {
@@ -830,9 +964,52 @@ namespace TepCommon
                                             , ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id, inValues.Count())
                                         , Logging.INDEX_MESSAGE.NOT_SET);
                             } else if (col.Tag is FormulaHelper) {
-                                FormulaHelper formula = (FormulaHelper)col.Tag;
+                                formula = (FormulaHelper)col.Tag;
 
-                                
+                                if (formula.IndexColumns.Count() > 0)
+                                    foreach (DataGridViewRow r in Rows) {
+                                        args = new List<float>();
+                                        foreach (int indxCol in formula.IndexColumns) {
+                                            fltVal = (Equals(r.Cells[indxCol].Value, null) == false)
+                                                ? float.Parse((string)r.Cells[indxCol].Value)
+                                                    : float.MinValue;
+
+                                            args.Add(fltVal);
+                                        }
+
+                                        if (formula.IsFunc == false)
+                                            fltVal = formula.Calculate(args);
+                                        else {
+                                            if (r.Index == 0)
+                                                fltVal = 0F;
+                                            else
+                                                // значение предыдущей строки
+                                                fltVal = (Equals(Rows[r.Index - 1].Cells[col.Index].Value, null) == false)
+                                                    ? float.Parse((string)Rows[r.Index - 1].Cells[col.Index].Value)
+                                                        : float.MinValue;
+
+                                            if ((fltVal > float.MinValue)
+                                                && (args[0] > float.MinValue))
+                                                fltVal += args[0];
+                                            else
+                                                ;
+                                        }
+
+                                        if (fltVal > float.MinValue) {
+                                            if (Columns[formula.IndexColumns.ElementAt(0)].Tag is HandlerDbTaskCalculate.PUT_PARAMETER) {
+                                                idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)Columns[formula.IndexColumns.ElementAt(0)].Tag).m_idNAlg;
+
+                                                fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
+                                            } else
+                                                fmtRoundValue = "F2";
+
+                                            r.Cells[col.Index].Value =
+                                                fltVal.ToString(fmtRoundValue, System.Globalization.CultureInfo.InvariantCulture);
+                                        } else
+                                            ;
+                                    }
+                                else
+                                    ;                                
                             } else
                                 ;
                         else
