@@ -267,6 +267,8 @@ namespace TepCommon
                         m_dictPutParameters;
 
                 public string FormatRound { get { return string.Format(@"F{0}", m_vsRound); } }
+
+                public static string DefaultFormatRound = @"F2";
             }
             /// <summary>
             /// Структура с дополнительными свойствами ячейки отображения
@@ -860,6 +862,24 @@ namespace TepCommon
                 }
                 #endregion
             }
+
+            private List<object> fFormatColumns (IEnumerable<int> indexes)
+            {
+                List<object> listRes = new List<object>();
+
+                foreach (int indx in indexes) {
+                    if (Columns[indx].Tag is HandlerDbTaskCalculate.PUT_PARAMETER) {
+                        listRes.Add(Columns[indx].Tag);
+                    } else
+                        if (Columns[indx].Tag is FormulaHelper)
+                            listRes = listRes.Union(fFormatColumns((Columns[indx].Tag as FormulaHelper).IndexColumns)).ToList();
+                        else
+                        //??? Исключение
+                            ;
+                }
+
+                return listRes;
+            }
             /// <summary>
             /// Отобразить значения (!!! не забывать перед отображением значений отменить регистрацию события - изменение значения в ячейке
             ///  , а после отображения снова зарегистрировать !!!)
@@ -886,6 +906,8 @@ namespace TepCommon
                 FormulaHelper formula;
                 List<float> args;
                 string fmtRoundValue = string.Empty;
+                List<object> tags; // tag-и столбцов, для поиска базового столбца для форматирования значения в тех столбцах, которые не являются входными/выходными параметрами
+                object tag;
 
                 // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
                 if (RowCount > 1) {
@@ -894,6 +916,7 @@ namespace TepCommon
                     foreach (DataGridViewColumn col in Columns) {
                         if (!(col.Tag == null))
                             if (col.Tag is HandlerDbTaskCalculate.PUT_PARAMETER) {
+                                #region Отображение значений в столбце для обычного параметра
                                 try {
                                     putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag;
                                     columnValues = inValues.Where(value => { return (value.m_IdPut == putPar.m_Id) && ((value.stamp_value- DateTime.MinValue).TotalDays > 0); });
@@ -963,50 +986,67 @@ namespace TepCommon
                                     Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
                                             , ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id, inValues.Count())
                                         , Logging.INDEX_MESSAGE.NOT_SET);
-                            } else if (col.Tag is FormulaHelper) {
+                                #endregion
+                            } else if (col.Tag is FormulaHelper) {                            
                                 formula = (FormulaHelper)col.Tag;
+
+                                #region Поиск 'tag' базавого столбца для форматирования значения
+                                tags = fFormatColumns(formula.IndexColumns);
+
+                                tag = tags[0];
+                                #endregion
+
+                                if (tag is HandlerDbTaskCalculate.PUT_PARAMETER) {
+                                    idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)tag).m_idNAlg;
+
+                                    fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
+                                } else
+                                    fmtRoundValue = NALG_PROPERTY.DefaultFormatRound;
 
                                 if (formula.IndexColumns.Count() > 0)
                                     foreach (DataGridViewRow r in Rows) {
-                                        args = new List<float>();
-                                        foreach (int indxCol in formula.IndexColumns) {
-                                            fltVal = (Equals(r.Cells[indxCol].Value, null) == false)
-                                                ? float.Parse((string)r.Cells[indxCol].Value)
-                                                    : float.MinValue;
+                                        try {
+                                            args = new List<float>();
 
-                                            args.Add(fltVal);
-                                        }
-
-                                        if (formula.IsFunc == false)
-                                            fltVal = formula.Calculate(args);
-                                        else {
-                                            if (r.Index == 0)
-                                                fltVal = 0F;
-                                            else
-                                                // значение предыдущей строки
-                                                fltVal = (Equals(Rows[r.Index - 1].Cells[col.Index].Value, null) == false)
-                                                    ? float.Parse((string)Rows[r.Index - 1].Cells[col.Index].Value)
+                                            foreach (int indxCol in formula.IndexColumns) {
+                                                fltVal = (Equals(r.Cells[indxCol].Value, null) == false)
+                                                    ? float.Parse((string)r.Cells[indxCol].Value, System.Globalization.CultureInfo.InvariantCulture)
                                                         : float.MinValue;
 
-                                            if ((fltVal > float.MinValue)
-                                                && (args[0] > float.MinValue))
-                                                fltVal += args[0];
-                                            else
-                                                ;
-                                        }
+                                                args.Add(fltVal);
+                                            }
 
-                                        if (fltVal > float.MinValue) {
-                                            if (Columns[formula.IndexColumns.ElementAt(0)].Tag is HandlerDbTaskCalculate.PUT_PARAMETER) {
-                                                idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)Columns[formula.IndexColumns.ElementAt(0)].Tag).m_idNAlg;
+                                            if (formula.IsFunc == false)
+                                            // не функция, а обычная формула с арифметическими действиями со значениями в столбцах строки
+                                                fltVal = formula.Calculate(args);
+                                            else {
+                                            // рассматривается функция - пока известна толко одна: SUMM
+                                            // и только с одним аргументом (значением одного из столбцов)
+                                                if (r.Index == 0)
+                                                // предыдущей строки нет
+                                                    fltVal = 0F;
+                                                else
+                                                // предыдущая строка в наличии - учесть ее значение
+                                                    // значение предыдущей строки
+                                                    fltVal = (Equals(Rows[r.Index - 1].Cells[col.Index].Value, null) == false)
+                                                        ? float.Parse((string)Rows[r.Index - 1].Cells[col.Index].Value, System.Globalization.CultureInfo.InvariantCulture)
+                                                            : float.MinValue;
+                                                // только одно значение - args[0] (из одного из столбцов)
+                                                if ((fltVal > float.MinValue)
+                                                    && (args[0] > float.MinValue))
+                                                    fltVal += args[0];
+                                                else
+                                                    ;
+                                            }
 
-                                                fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
+                                            if (fltVal > float.MinValue) {
+                                                r.Cells[col.Index].Value =
+                                                    fltVal.ToString(fmtRoundValue, System.Globalization.CultureInfo.InvariantCulture);
                                             } else
-                                                fmtRoundValue = "F2";
-
-                                            r.Cells[col.Index].Value =
-                                                fltVal.ToString(fmtRoundValue, System.Globalization.CultureInfo.InvariantCulture);
-                                        } else
-                                            ;
+                                                ;
+                                        } catch (Exception e) {
+                                            Logging.Logg().Exception(e, string.Format(@"HPanelTepCommon.DataGridViewValues::ShowValues (formula.IsFunc={0:c}, DateTime={1}) - ...", formula.IsFunc, r.Tag), Logging.INDEX_MESSAGE.NOT_SET);
+                                        }
                                     }
                                 else
                                     ;                                

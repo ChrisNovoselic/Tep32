@@ -83,18 +83,41 @@ namespace PluginTaskAutobook
             private class OutlookMessage : IDisposable
             {
                 /// <summary>
-                /// 
+                /// Объект обработки отправлений по электронной почты
                 /// </summary>
                 Outlook.Application m_outlookApp;
-
+                /// <summary>
+                /// Объект с данными для отправления в одном сообщении
+                /// </summary>
                 Outlook.MailItem _newMail;
 
+                private bool _bIsOutlookRunning;
+
                 /// <summary>
-                /// конструктор(основной)
+                /// Конструктор(основной)
                 /// </summary>
                 public OutlookMessage()
                 {
-                    m_outlookApp = new Outlook.Application();
+                    m_outlookApp = null;
+                    _bIsOutlookRunning = false;
+
+                    try {
+                        m_outlookApp = (Microsoft.Office.Interop.Outlook.Application)System.Runtime.InteropServices.Marshal.GetActiveObject("Outlook.Application");
+
+                        _bIsOutlookRunning = true;
+                    } catch (Exception e) {
+                        Logging.Logg().Exception(e, string.Format(@"ReportEMailNSS.OutlookMessage::ctor() - проверка использования выполняющегося экземпляра..."), Logging.INDEX_MESSAGE.NOT_SET);
+                    } finally {
+                        if (object.Equals(m_outlookApp, null) == true)
+                            // если не выполняется - создать объект MS Outlook
+                            try {
+                                m_outlookApp = new Outlook.Application();
+                            } catch (Exception e) {
+                                Logging.Logg().Exception(e, string.Format(@"ReportEMailNSS.OutlookMessage::ctor() - создание ..."), Logging.INDEX_MESSAGE.NOT_SET);
+                            }
+                        else
+                            ;
+                    }
                 }
 
                 public void Dispose()
@@ -120,7 +143,6 @@ namespace PluginTaskAutobook
                     } catch (Exception ex) {
                         MessageBox.Show(ex.Message);
                     }
-
                 }
 
                 public void Send()
@@ -150,12 +172,18 @@ namespace PluginTaskAutobook
                 }
 
                 /// <summary>
-                /// 
+                /// Завершить работу клиента обработки сообщений электронной почты
                 /// </summary>
                 private void closeOutlook()
                 {
-                    m_outlookApp.Quit();
+                    // проверить: не выполнялся ли ранее клиент
+                    if (_bIsOutlookRunning == false)
+                        m_outlookApp.Quit();
+                    else
+                        ;
+
                     Marshal.ReleaseComObject(m_outlookApp);
+
                     GC.Collect();
                 }
             }
@@ -199,7 +227,7 @@ namespace PluginTaskAutobook
                         + @"Блоки 1-2, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ";\r\n"
                         + @"Блоки 3-6, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]);*/
                 } else
-                    ;
+                    Logging.Logg().Error(string.Format(@"ReportEMailNSS::createBodyToSend (date={0}) - в аргументе нет набора за требуюмую дату...", reportDate), Logging.INDEX_MESSAGE.NOT_SET);
 
                 return strRes;
             }
@@ -646,19 +674,24 @@ namespace PluginTaskAutobook
         private void btnSend_onClick(object sender, EventArgs e)
         {
             ReportEMailNSS rep = new ReportEMailNSS();
+            TepCommon.HandlerDbTaskCalculate.KEY_VALUES key;
             DateTime dtValues = DateTime.MinValue;
             string e_mail = string.Empty;
 
+            key = new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+                , TypeState = HandlerDbValues.STATE_VALUE.EDIT
+            };
             dtValues = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CALENDAR_EMAIL.ToString(), true)[0] as DateTimePicker).Value;
             e_mail = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
-            //
-            rep.SendMailToNSS(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
-                    TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
-                    , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                , dtValues
-                , e_mail);
-        }
 
+            if (HandlerDb.Values.ContainsKey(key) == true)
+                rep.SendMailToNSS((from values in HandlerDb.Values[key] where values.stamp_value == dtValues.Add(Session.m_curOffsetUTC) select values)
+                    , dtValues
+                    , e_mail);
+            else
+                Logging.Logg().Error(string.Format(@"PanelTaskAutobookMonthValues::btnSend_onClick () - нет данных для отправления по e-mail..."), Logging.INDEX_MESSAGE.NOT_SET);
+        }
         /// <summary>
         /// Освободить (при закрытии), связанные с функционалом ресурсы
         /// </summary>

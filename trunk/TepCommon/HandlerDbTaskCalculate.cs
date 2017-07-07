@@ -2010,20 +2010,8 @@ namespace TepCommon
                     break;
             }
         }
-        ///// <summary>
-        ///// Возвратить наименование таблицы 
-        ///// </summary>
-        ///// <param name="req">Индекс таблицы, требуемой при расчете</param>
-        ///// <returns>Наименование таблицы</returns>
-        //private string getNameDbTable(TABLE_CALCULATE_REQUIRED req)
-        //{
-        //    return getNameDbTable(m_taskCalculate.Type, req);
-        //}
-        /// <summary>
-        /// Возвратить массив диапазонов даты/времени для запроса значений
-        /// </summary>
-        /// <returns>Массив диапазонов даты/времени</returns>
-        protected virtual DateTimeRange[] getDateTimeRangeVariableValues()
+
+        public static DateTimeRange[] GetDateTimeRangeVariableValues(ID_PERIOD idPeriod, DateTimeRange range, TimeSpan tsOffsetUTC, MODE_DATA_DATETIME modeDataDatetime)
         {
             DateTimeRange[] arRangesRes = null;
 
@@ -2032,11 +2020,11 @@ namespace TepCommon
             TimeSpan tsModeDataDatetimeBegin = TimeSpan.Zero
                 , tsModeDataDatetimeEnd = TimeSpan.Zero;
             // привести дату/время к UTC
-            DateTime dtBegin = _Session.m_DatetimeRange.Begin.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes)
-                , dtEnd = _Session.m_DatetimeRange.End.AddMinutes(-1 * _Session.m_curOffsetUTC.TotalMinutes);
+            DateTime dtBegin = range.Begin.AddMinutes(-1 * tsOffsetUTC.TotalMinutes)
+                , dtEnd = range.End.AddMinutes(-1 * tsOffsetUTC.TotalMinutes);
 
-            if (_modeDataDatetime == MODE_DATA_DATETIME.Begined) {
-                switch (_Session.ActualIdPeriod) {
+            if (modeDataDatetime == MODE_DATA_DATETIME.Begined) {
+                switch (idPeriod) {
                     case ID_PERIOD.HOUR:
                         tsModeDataDatetimeBegin =
                         tsModeDataDatetimeEnd =
@@ -2047,7 +2035,7 @@ namespace TepCommon
                         tsModeDataDatetimeEnd = dtEnd - dtEnd.AddMonths(-1);
                         break;
                     case ID_PERIOD.DAY:
-                    default:                    
+                    default:
                         tsModeDataDatetimeBegin =
                         tsModeDataDatetimeEnd =
                             TimeSpan.FromDays(1);
@@ -2059,7 +2047,7 @@ namespace TepCommon
                     dtBegin -= tsModeDataDatetimeBegin;
                     dtEnd -= tsModeDataDatetimeEnd;
                 } else
-                    throw new Exception (string.Format(@"HandlerDbTaskCalculate::getDateTimeRangeVariableValues () - не определено смещение для дат начала/окончания опроса..."));
+                    throw new Exception(string.Format(@"HandlerDbTaskCalculate::getDateTimeRangeVariableValues () - не определено смещение для дат начала/окончания опроса..."));
             } else
                 ;
 
@@ -2067,40 +2055,48 @@ namespace TepCommon
             bEndMonthBoudary = HDateTime.IsMonthBoundary(dtEnd);
             if (bEndMonthBoudary == false)
                 if (arRangesRes.Length == 1)
-                    // самый простой вариант - один элемент в массиве - одна таблица
+                // самый простой вариант - один элемент в массиве - одна таблица
                     arRangesRes[0] = new DateTimeRange(dtBegin, dtEnd);
                 else
-                    // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
+                // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц
                     for (i = 0; i < arRangesRes.Length; i++)
                         if (i == 0)
-                            // предыдущих значений нет
+                        // предыдущих значений нет
                             arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
                         else
                             if (i == arRangesRes.Length - 1)
                             // крайний элемент массива
-                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                        else
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                            else
                             // для элементов в "середине" массива
-                            arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
             else
                 if (bEndMonthBoudary == true)
                 // два ИЛИ более элементов в массиве - две ИЛИ болле таблиц ('diffMonth' всегда > 0)
                 // + использование следующей за 'dtEnd' таблицы
-                for (i = 0; i < arRangesRes.Length; i++)
-                    if (i == 0)
+                    for (i = 0; i < arRangesRes.Length; i++)
+                        if (i == 0)
                         // предыдущих значений нет
-                        arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
-                    else
-                        if (i == arRangesRes.Length - 1)
-                        // крайний элемент массива
-                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
-                    else
-                        // для элементов в "середине" массива
-                        arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
-            else
-                ;
+                            arRangesRes[i] = new DateTimeRange(dtBegin, HDateTime.ToNextMonthBoundary(dtBegin));
+                        else
+                            if (i == arRangesRes.Length - 1)
+                            // крайний элемент массива
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, dtEnd);
+                            else
+                            // для элементов в "середине" массива
+                                arRangesRes[i] = new DateTimeRange(arRangesRes[i - 1].End, HDateTime.ToNextMonthBoundary(arRangesRes[i - 1].End));
+                else
+                    ;
 
             return arRangesRes;
+        }
+        /// <summary>
+        /// Возвратить массив диапазонов даты/времени для запроса значений
+        /// </summary>
+        /// <returns>Массив диапазонов даты/времени</returns>
+        protected virtual DateTimeRange[] getDateTimeRangeVariableValues()
+        {
+            return GetDateTimeRangeVariableValues(_Session.ActualIdPeriod, _Session.m_DatetimeRange, _Session.m_curOffsetUTC, _modeDataDatetime);
         }
         /// <summary>
         /// Запрос для получения значений "по умолчанию"
