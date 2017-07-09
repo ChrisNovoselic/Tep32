@@ -131,23 +131,39 @@ namespace PluginTaskAutobook
                 /// <param name="subject">тема письма</param>
                 /// <param name="body">тело сообщения</param>
                 /// <param name="to">кому/куда</param>
-                public void Format(string subject, string body, string to)
+                public bool Format(string subject, string body, string to)
                 {
+                    bool bRes = false;
+
+                    string msgAbort = string.Empty;
+
                     try {
-                        _newMail = (Outlook.MailItem)m_outlookApp.CreateItem(Outlook.OlItemType.olMailItem);
-                        _newMail.To = to;
-                        _newMail.Subject = subject;
-                        _newMail.Body = body;
-                        _newMail.Importance = Outlook.OlImportance.olImportanceNormal;
-                        _newMail.Display();
-                    } catch (Exception ex) {
-                        MessageBox.Show(ex.Message);
+                        msgAbort = string.Format(@"PanelTaskAutobookMonthValues.ReportEMailNSS.OutlookMessage::Format (to={0}) - не создан объект MS Outlook...", to);
+
+                        if (Equals(m_outlookApp, null) == false) {
+                            _newMail = (Outlook.MailItem)m_outlookApp?.CreateItem(Outlook.OlItemType.olMailItem);
+                            _newMail.To = to;
+                            _newMail.Subject = subject;
+                            _newMail.Body = body;
+                            _newMail.Importance = Outlook.OlImportance.olImportanceNormal;
+                            _newMail.Display();
+
+                            bRes = true;
+                        } else
+                            Logging.Logg().Error(msgAbort, Logging.INDEX_MESSAGE.NOT_SET);
+                    } catch (Exception e) {
+                        Logging.Logg().Exception(e, msgAbort, Logging.INDEX_MESSAGE.NOT_SET);
                     }
+
+                    return bRes;
                 }
 
                 public void Send()
                 {
-                    _newMail.Send();
+                    if (Equals(_newMail, null) == false)
+                        _newMail.Send();
+                    else
+                        Logging.Logg().Error(string.Format(@"PanelTaskAutobookMonthValues.ReportEMailNSS.OutlookMessage::Send () - сообщение (не создано)не отправлено..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
                 /// <summary>
@@ -176,13 +192,16 @@ namespace PluginTaskAutobook
                 /// </summary>
                 private void closeOutlook()
                 {
-                    // проверить: не выполнялся ли ранее клиент
-                    if (_bIsOutlookRunning == false)
-                        m_outlookApp.Quit();
-                    else
-                        ;
+                    if (Equals(m_outlookApp, null) == false) {
+                        // проверить: не выполнялся ли ранее клиент
+                        if (_bIsOutlookRunning == false)
+                            m_outlookApp.Quit();
+                        else
+                            ;
 
-                    Marshal.ReleaseComObject(m_outlookApp);
+                        Marshal.ReleaseComObject(m_outlookApp);
+                    } else
+                        ;
 
                     GC.Collect();
                 }
@@ -260,8 +279,10 @@ namespace PluginTaskAutobook
 
                 if (sbjct.Equals(string.Empty) == false)
                     using (OutlookMessage outlookMessage = new OutlookMessage()) {
-                        outlookMessage.Format(sbjct, bodyMsg, to);
-                        outlookMessage.Send();
+                        if (outlookMessage.Format(sbjct, bodyMsg, to) == true)
+                            outlookMessage.Send();
+                        else
+                            ;
                     }
                 else
                     ;
@@ -679,14 +700,17 @@ namespace PluginTaskAutobook
             string e_mail = string.Empty;
 
             key = new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
-                TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+                TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
                 , TypeState = HandlerDbValues.STATE_VALUE.EDIT
             };
-            dtValues = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CALENDAR_EMAIL.ToString(), true)[0] as DateTimePicker).Value;
+            dtValues = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CALENDAR_EMAIL.ToString(), true)[0] as DateTimePicker).Value.Date;
             e_mail = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
 
             if (HandlerDb.Values.ContainsKey(key) == true)
-                rep.SendMailToNSS((from values in HandlerDb.Values[key] where values.stamp_value == dtValues.Add(Session.m_curOffsetUTC) select values)
+                rep.SendMailToNSS((from value in HandlerDb.Values[key]
+                        where (value.stamp_value == dtValues.Date.Add(-Session.m_curOffsetUTC))
+                            && (HandlerDb.GetPutParameters("191").Select(putPar => putPar.m_Id).Contains(value.m_IdPut))
+                        select value)
                     , dtValues
                     , e_mail);
             else

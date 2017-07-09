@@ -262,8 +262,17 @@ namespace PluginTaskAutobook
             if ((type & TaskCalculate.TYPE.IN_VALUES) == TaskCalculate.TYPE.IN_VALUES) {
                 // для плана выработки индивидуальный диапазон даты/времени
                 arMonthPlanQueryRanges = HandlerDbTaskCalculate.GetDateTimeRangeVariableValues(ID_PERIOD.MONTH, _Session.m_DatetimeRange, _Session.m_curOffsetUTC, MODE_DATA_DATETIME.Ended);
-
-                tableMonthPlan = Select(getQueryVariableValues(type, ID_PERIOD.MONTH, 1, arMonthPlanQueryRanges), out err);
+                // для плана выработки индивидуальный запрос значений
+                tableMonthPlan = Select(HandlerDbTaskCalculate.GetQueryVariableValues(IdTask
+                        , _Session.m_Id
+                        , type
+                        , ID_PERIOD.MONTH
+                        , 1
+                        , arMonthPlanQueryRanges
+                        , getWhereRangeAlg(type)
+                        , MODE_AGREGATE_GETVALUES.OFF
+                        , MODE_DATA_DATETIME.Ended)
+                    , out err);
 
                 if (tableMonthPlan.Rows.Count == 1) {
                     periodTotalDays = (int)(_Session.m_DatetimeRange.End - _Session.m_DatetimeRange.Begin).TotalDays;
@@ -278,10 +287,11 @@ namespace PluginTaskAutobook
                             if (column.ColumnName.Equals(@"EXTENDED_DEFINITION") == true) {
                                 iColumnDataDate = column.Ordinal;
                                 if (DateTime.TryParse((string)tableMonthPlan.Rows[0][column.Ordinal], out datetimeValue) == true)
-                                    //??? в запросе добавляется период(месяц)
-                                    datetimeValue = datetimeValue.AddMonths(-1);
+                                    ////??? в запросе добавляется период(месяц)
+                                    //datetimeValue = datetimeValue.AddMonths(-1)
+                                        ;
                                 else
-                                    ;
+                                    Logging.Logg().Error(string.Format(@"HandlerDbTaskAutobookMonthValuesCalculate::getVariableTableValues () - не распознано значение в {0}...", column.ColumnName), Logging.INDEX_MESSAGE.NOT_SET);
                             } else
                                 ;
 

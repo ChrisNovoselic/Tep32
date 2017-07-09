@@ -285,9 +285,10 @@ namespace Tep64
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие (форма)</param>
         /// <param name="e">Аргумент события</param>
-        private void FormMain_Load(object sender, EventArgs e)
+        private void FormMain_Load(object sender, EventArgs ev)
         {
             int iRes = -1;
+            string msg = string.Empty;
 
             m_report.ActionReport(@"Загрузка главного окна");
 
@@ -298,14 +299,21 @@ namespace Tep64
                 //Есть вызов 'Initialize...'
                 iRes = connectionSettings(CONN_SETT_TYPE.MAIN_DB);
             } else {
-                string msg = string.Empty;
-                HTepUsers.HTepProfilesXml.UpdateProfile(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett());
+                try {
+                    HTepUsers.HTepProfilesXml.UpdateProfile(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett());
 
-                iRes = Initialize (out msg);
+                    iRes = Initialize(out msg);
 
-                if (! (iRes == 0)) {
-                    Abort (msg, false);
-                } else {
+                    if (!(iRes == 0)) {
+                        Abort(msg, false);
+                    } else {
+                    }
+                } catch (Exception e) {
+                    msg = string.Format(@"::FormMain_Load () - ошибка при загрузке главного окна...");
+
+                    Logging.Logg().Exception(e, msg, Logging.INDEX_MESSAGE.NOT_SET);
+
+                    m_report.ErrorReport(msg);
                 }
             }
 

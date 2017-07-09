@@ -353,7 +353,7 @@ namespace TepCommon
         /// </summary>
         public struct VALUE
         {
-            public int m_IdPut;            
+            public int m_IdPut;
 
             public TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE m_iQuality;
 
@@ -1664,7 +1664,8 @@ namespace TepCommon
                             : ID_START_RECORD.ALG_NORMATIVE;
                     break;
                 default:
-                    break;
+                Logging.Logg().Error(string.Format(@"HandlerDbTaskCalculate::getRangeAlg (TaskCalculate.TYPE={0}) - неизвестный тип данных ...", type), Logging.INDEX_MESSAGE.NOT_SET);
+                break;
             }
 
             strRes = string.Format(@" BETWEEN {0} AND {1}", (int)(idRecStart - 1), (int)(idRecEnd - 1));
@@ -1675,7 +1676,7 @@ namespace TepCommon
         /// Строка - условие для TSQL-запроса для указания диапазона идентификаторов
         ///  выходных параметров алгоритма расчета
         /// </summary>
-        private string getWhereRangeAlg(TaskCalculate.TYPE type, string strNameFieldId = @"ID")
+        protected string getWhereRangeAlg(TaskCalculate.TYPE type, string strNameFieldId = @"ID")
         {
             string strRes = string.Empty;
 
@@ -1683,9 +1684,10 @@ namespace TepCommon
                 case TaskCalculate.TYPE.IN_VALUES:
                     break;
                 case TaskCalculate.TYPE.OUT_TEP_NORM_VALUES:
-                case TaskCalculate.TYPE.OUT_VALUES:                    
+                case TaskCalculate.TYPE.OUT_VALUES:
                     break;
                 default:
+                    Logging.Logg().Error(string.Format(@"HandlerDbTaskCalculate::getWhereRangeAlg (TaskCalculate.TYPE={0}) - неизвестный тип данных ...", type), Logging.INDEX_MESSAGE.NOT_SET);
                     break;
             }
 
@@ -2133,8 +2135,32 @@ namespace TepCommon
             , int cntBasePeriod
             , DateTimeRange[] arQueryRanges)
         {
+            return HandlerDbTaskCalculate.GetQueryVariableValues(_iIdTask
+                , _Session.m_Id
+                , type
+                , idPeriod
+                , cntBasePeriod
+                , arQueryRanges
+                , getWhereRangeAlg(type)
+                , ModeAgregateGetValues
+                , ModeDataDatetime);
+        }
+        /// <summary>
+        /// Запрос к БД по получению редактируемых значений (автоматически собираемые значения)
+        ///  , структура таблицы совместима с [inval], [outval]
+        /// </summary>
+        public static string GetQueryVariableValues(ID_TASK idTask
+            , long idSession
+            , TaskCalculate.TYPE type
+            , ID_PERIOD idPeriod
+            , int cntBasePeriod
+            , DateTimeRange[] arQueryRanges
+            , string whereParameters
+            , MODE_AGREGATE_GETVALUES modeAgregateGetValues
+            , MODE_DATA_DATETIME modeDataDatetime)
+        {
             string strRes = string.Empty
-                , whereParameters = string.Empty
+                //, whereParameters = string.Empty
                 , query = string.Empty, subQuery = string.Empty
                 , partDateadd = string.Empty;
 
@@ -2157,7 +2183,7 @@ namespace TepCommon
 
             if (!(type == TaskCalculate.TYPE.UNKNOWN)) {
                 // аналог в 'GetQueryParameters'
-                whereParameters = getWhereRangeAlg(type);
+                //whereParameters = getWhereRangeAlg(type);
                 if (whereParameters.Equals(string.Empty) == false)
                     whereParameters = @" AND a." + whereParameters;
                 else
@@ -2179,14 +2205,14 @@ namespace TepCommon
                             + @" RIGHT JOIN [dbo].[{4}] a ON a.ID = p.ID_ALG AND a.ID_TASK = {5}"
                             + @" LEFT JOIN [dbo].[measure] m ON a.ID_MEASURE = m.ID"
                         + @" WHERE v.[ID_TIME] = {6}" //???ID_PERIOD.HOUR //??? _currIdPeriod
-                            , (ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON ? @", m.[AVG]" : ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.OFF ? string.Empty : string.Empty)
-                            , (_modeDataDatetime == MODE_DATA_DATETIME.Begined) ? string.Format(@"DATEADD({0}, 1, v.[DATE_TIME])", partDateadd)
-                                : (_modeDataDatetime == MODE_DATA_DATETIME.Ended) ? @"v.[DATE_TIME]"
+                            , (modeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON ? @", m.[AVG]" : modeAgregateGetValues == MODE_AGREGATE_GETVALUES.OFF ? string.Empty : string.Empty)
+                            , (modeDataDatetime == MODE_DATA_DATETIME.Begined) ? string.Format(@"DATEADD({0}, 1, v.[DATE_TIME])", partDateadd)
+                                : (modeDataDatetime == MODE_DATA_DATETIME.Ended) ? @"v.[DATE_TIME]"
                                     : string.Empty
                             , string.Format(@"{0}_{1}", getNameDbTable(type, TABLE_CALCULATE_REQUIRED.VALUE), arQueryRanges[i].Begin.ToString(@"yyyyMM"))
                             , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.PUT)
                             , getNameDbTable(type, TABLE_CALCULATE_REQUIRED.ALG)
-                            , (int)_iIdTask + whereParameters
+                            , (int)idTask + whereParameters
                             , (int)idPeriod
                         );
                     // при попадании даты/времени на границу перехода между отчетными периодами (месяц)
@@ -2211,8 +2237,8 @@ namespace TepCommon
                 }
 
                 strRes = @"SELECT v.ID_PUT" // as [ID]"
-                        + @", " + _Session.m_Id + @" as [ID_SESSION]";
-                if (ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON)
+                        + @", " + idSession + @" as [ID_SESSION]";
+                if (modeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON)
                     strRes += @", CASE"
                             + @" WHEN COUNT (*) = " + cntBasePeriod + @" THEN MIN(v.[QUALITY])"
                             + @" WHEN COUNT (*) = 0 THEN " + (int)ID_QUALITY_VALUE.NOT_REC
@@ -2231,7 +2257,7 @@ namespace TepCommon
                            + @", [EXTENDED_DEFINITION]"
                     + @" FROM (" + query + @") as v";
 
-                if (ModeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON)
+                if (modeAgregateGetValues == MODE_AGREGATE_GETVALUES.ON)
                     strRes += @" GROUP BY v.ID_PUT"
                         + @", v.[AVG], v.[EXTENDED_DEFINITION]";
                 else
@@ -2612,7 +2638,7 @@ namespace TepCommon
                                     recievedTaskCalculate
                                     , recievedNAlgCalculateResult
                                 );
-                            }                            
+                            }
                             break;
                         default:
                             Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - неизвестный тип задачи расчета...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -2686,6 +2712,16 @@ namespace TepCommon
                 ;
 
             return dictRes;
+        }
+
+        public List<PUT_PARAMETER> GetPutParameters(params string[] listNAlg)
+        {
+            return (from putPar in ListPutParameter
+                where 
+                    (from nAlgPar in ListNAlgParameter
+                        where listNAlg.Contains(nAlgPar.m_nAlg)
+                        select nAlgPar.m_Id).Contains(putPar.m_idNAlg)
+                select putPar).ToList();
         }
     }
 }
