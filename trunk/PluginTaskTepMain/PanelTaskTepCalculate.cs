@@ -240,7 +240,7 @@ namespace PluginTaskTepMain
         /// </summary>
         protected abstract class DataGridViewTaskTepCalculate : DataGridViewValues
         {
-            public DataGridViewTaskTepCalculate() : base (ModeData.NALG)
+            public DataGridViewTaskTepCalculate(Func<int, int, float, int, float> fGetValueAsRatio) : base (ModeData.NALG, fGetValueAsRatio)
             {
                 InitializeComponents();
             }

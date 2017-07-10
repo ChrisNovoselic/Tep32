@@ -547,7 +547,7 @@ namespace PluginTaskVedomostBl
         {
             base.handlerDbTaskCalculate_onAddComponent(obj);
 
-            m_listDataGridViewVedomostBl.Add(new DataGridViewVedomostBl(obj));
+            m_listDataGridViewVedomostBl.Add(new DataGridViewVedomostBl(obj, HandlerDb.GetValueAsRatio));
         }
         #endregion
 

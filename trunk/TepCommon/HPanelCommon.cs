@@ -35,7 +35,9 @@ namespace TepCommon
             err = 0;
             errMsg = string.Empty;
 
-            // проверить наличие элементов при необходимости очистить
+            ID_DBTABLE idDbTable = ID_DBTABLE.UNKNOWN;
+
+            // проверить наличие элементов при, необходимости очистить
             __handlerDb.ValidateDictTableDictPrj();
 
             foreach (ID_DBTABLE id in /*Enum.GetValues(typeof(ID_DBTABLE))*/arIdTableDictPrj) {
@@ -79,7 +81,7 @@ namespace TepCommon
             }
 
             //??? обязательная таблица
-            ID_DBTABLE idDbTable = ID_DBTABLE.COMP_VALUES;
+            idDbTable = ID_DBTABLE.COMP_VALUES;
             __handlerDb.AddTableDictPrj(idDbTable, out err);            
         }
         /// <summary>

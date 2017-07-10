@@ -27,7 +27,7 @@ namespace PluginTaskTepMain
         /// </summary>
         private void InitializeComponent()
         {
-            m_dgvValues = new DataGridViewTEPRealTime();
+            m_dgvValues = new DataGridViewTEPRealTime(HandlerDb.GetValueAsRatio);
             int posColdgvTEPValues = 4
                 , heightRowdgvTEPValues = 10;
 
@@ -96,7 +96,7 @@ namespace PluginTaskTepMain
         /// </summary>
         protected class DataGridViewTEPRealTime : DataGridViewTaskTepCalculate
         {
-            public DataGridViewTEPRealTime() : base ()
+            public DataGridViewTEPRealTime(Func<int, int, float, int, float> fGetValueAsRatio) : base (fGetValueAsRatio)
             {
                 InitializeComponents();
             }

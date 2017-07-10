@@ -102,7 +102,7 @@ namespace PluginTaskReaktivka
         /// </summary>
         private void InitializeComponents()
         {
-            m_dgvValues = new DataGridViewValuesReaktivka(INDEX_CONTROL.DATAGRIDVIEW_VALUES.ToString());
+            m_dgvValues = new DataGridViewValuesReaktivka(INDEX_CONTROL.DATAGRIDVIEW_VALUES.ToString(), HandlerDb.GetValueAsRatio);
 
             foreach (DataGridViewColumn column in m_dgvValues.Columns)
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
@@ -185,8 +185,6 @@ namespace PluginTaskReaktivka
             HandlerDb.FilterDbTableCompList = HandlerDbTaskCalculate.DbTableCompList.Tg;
 
             if (err == 0) {
-                m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-
                 try {
                     //Заполнить элемент управления с периодами расчета
                     idProfilePeriod = ID_PERIOD.MONTH;

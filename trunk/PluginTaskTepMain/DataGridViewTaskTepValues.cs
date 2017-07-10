@@ -29,8 +29,8 @@ namespace PluginTaskTepMain
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public DataGridViewTaskTepValues()
-                : base()
+            public DataGridViewTaskTepValues(Func<int, int, float, int, float> fGetValueAsRatio)
+                : base(fGetValueAsRatio)
             {
                 //Разместить ячейки, установить свойства объекта
                 InitializeComponents();

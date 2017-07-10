@@ -22,7 +22,7 @@ namespace PluginTaskAutobook
         /// <summary>
         /// калькулятор значений
         /// </summary>
-        private class TaskAutobookMonthValuesCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
+        public class TaskAutobookMonthValuesCalculate : TepCommon.HandlerDbTaskCalculate.TaskCalculate
         {
             /// <summary>
             /// Конструктор - основной (с параметром)
@@ -48,7 +48,7 @@ namespace PluginTaskAutobook
             /// <summary>
             /// Константы - идентификаторы компонентов оборудования ТЭЦ
             /// </summary>
-            private const int BL1 = 1029
+            public const int BL1 = 1029
                 , BL2 = 1030
                 , BL3 = 1031
                 , BL4 = 1032

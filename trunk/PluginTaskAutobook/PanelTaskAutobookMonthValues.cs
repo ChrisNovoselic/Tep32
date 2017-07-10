@@ -58,7 +58,6 @@ namespace PluginTaskAutobook
         {
             return new HandlerDbTaskAutobookMonthValuesCalculate();
         }
-
         /// <summary>
         /// Класс по работе с формированием 
         /// и отправкой отчета NSS
@@ -76,7 +75,6 @@ namespace PluginTaskAutobook
             public ReportEMailNSS()
             {
             }
-
             /// <summary>
             /// Класс создания письма
             /// </summary>
@@ -165,7 +163,6 @@ namespace PluginTaskAutobook
                     else
                         Logging.Logg().Error(string.Format(@"PanelTaskAutobookMonthValues.ReportEMailNSS.OutlookMessage::Send () - сообщение (не создано)не отправлено..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
-
                 /// <summary>
                 /// Прикрепление файла к письму
                 /// </summary>
@@ -186,7 +183,6 @@ namespace PluginTaskAutobook
                     } else
                         ;
                 }
-
                 /// <summary>
                 /// Завершить работу клиента обработки сообщений электронной почты
                 /// </summary>
@@ -206,45 +202,43 @@ namespace PluginTaskAutobook
                     GC.Collect();
                 }
             }
-
             /// <summary>
-            /// Содание тела сообщения
+            /// Создать содержание сообщения для отправления по эл./почте
             /// </summary>
-            /// <param name="sourceTable">таблица с данными</param>
-            /// <param name="dtSend">дата</param>
-            private string createBodyToSend(IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> values
+            /// <param name="parameters">Список параметров для отправления</param>
+            /// <param name="values">Список значений для отправления</param>
+            /// <param name="fGetValueAsRatio">Делегат для преобразования значений</param>
+            /// <param name="reportDate">Дата за которую отправляются значения</param>
+            /// <returns>Строка(с переводами строк) - тело сообщения</returns>
+            private string createBodyToSend(IEnumerable<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> parameters
+                , IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> values
+                , Func<int, int, float, int, float> fGetValueAsRatio
                 , DateTime reportDate)
             {
                 string strRes = string.Empty;
 
-                TepCommon.HandlerDbTaskCalculate.VALUE[] dayValues;
+                int[] arIdComponent = {
+                    HandlerDbTaskAutobookMonthValuesCalculate.TaskAutobookMonthValuesCalculate.ST
+                    , HandlerDbTaskAutobookMonthValuesCalculate.TaskAutobookMonthValuesCalculate.GTP12
+                    , HandlerDbTaskAutobookMonthValuesCalculate.TaskAutobookMonthValuesCalculate.GTP36
+                };
+                HandlerDbTaskCalculate.PUT_PARAMETER putPar;
 
-                dayValues =
-                    values.Where(item => { return item.stamp_write.Equals(reportDate) == true; }).ToArray();
+                if (parameters.Count() == values.Count()) {
+                    strRes = string.Format(@"BEGIN {0}(DATE):{1}{0}"
+                        , Environment.NewLine
+                        , reportDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
 
-                if (dayValues.Length > 0) {
-                    strRes = @"BEGIN " + "\r\n"
-                        + @"(DATE):" + reportDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) + "\r\n"
-                        + @"(01): "
-                            +
-                                //Convert.ToString(getValueAsRatio(idAlg, double.Parse(drReportDay[(int)INDEX_COLUMN.TEC]["VALUE"].ToString())))
-                                @"??? Не работает"
-                            + ":\r\n"
-                        + @"(02): "
-                            +
-                                //Convert.ToString(getValueAsRatio(idAlg, double.Parse(drReportDay[(int)INDEX_COLUMN.GTP12]["VALUE"].ToString())))
-                                @"??? Не работает"
-                            + ":\r\n"
-                        + @"(03): "
-                            +
-                                //Convert.ToString(getValueAsRatio(idAlg, double.Parse(drReportDay[(int)INDEX_COLUMN.GTP36]["VALUE"].ToString())))
-                                @"??? Не работает"
-                            + ":\r\n"
-                        + @"END ";
-                    /*bodyMsg = @"Дата " + reportDate.ToShortDateString() + ".\r\n"
-                        + @"Станция, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.TEC]["VALUE"]) + ";\r\n"
-                        + @"Блоки 1-2, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP12]["VALUE"]) + ";\r\n"
-                        + @"Блоки 3-6, сутки: " + FewerValue((double)drReportDay[(int)INDEX_GTP.GTP36]["VALUE"]);*/
+                    for (int i = 0; i < arIdComponent.Length; i ++) {
+                        putPar = parameters.FirstOrDefault(par => { return par.IdComponent == arIdComponent[i]; });
+
+                        strRes += string.Format(@"({1:00}): {2}:{0}"
+                            , Environment.NewLine
+                            , (i + 1)
+                            , fGetValueAsRatio(putPar.m_idNAlg, putPar.m_Id, values.FirstOrDefault(value => { return value.m_IdPut == putPar.m_Id; }).value, -1));
+                    }
+
+                    strRes += @"END ";
                 } else
                     Logging.Logg().Error(string.Format(@"ReportEMailNSS::createBodyToSend (date={0}) - в аргументе нет набора за требуюмую дату...", reportDate), Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -267,7 +261,11 @@ namespace PluginTaskAutobook
             /// <param name="tableSource">таблица с данными</param>
             /// <param name="dtSend">выбранный промежуток</param>
             /// <param name="to">получатель</param>
-            public void SendMailToNSS(IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> values, DateTime dtSend, string to)
+            public void SendMailToNSS(IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> parameters
+                , IEnumerable<TepCommon.HandlerDbTaskCalculate.VALUE> values
+                , Func<int, int, float, int, float> fGetValueAsRatio
+                , DateTime dtSend
+                , string to)
             {
                 string bodyMsg = string.Empty
                     , sbjct = string.Empty;
@@ -275,7 +273,7 @@ namespace PluginTaskAutobook
 
                 reportDate = dtSend.AddHours(6).Date;//??
                 sbjct = @"Отчет о выработке электроэнергии НТЭЦ-5 за " + reportDate.ToShortDateString();
-                bodyMsg = createBodyToSend(values, reportDate);
+                bodyMsg = createBodyToSend(parameters, values, fGetValueAsRatio, reportDate);
 
                 if (sbjct.Equals(string.Empty) == false)
                     using (OutlookMessage outlookMessage = new OutlookMessage()) {
@@ -647,7 +645,7 @@ namespace PluginTaskAutobook
             SuspendLayout();
 
             posRow = 0;
-            m_dgvValues = new DataGridViewAutobookMonthValues(INDEX_CONTROL.DGV_VALUES.ToString());            
+            m_dgvValues = new DataGridViewAutobookMonthValues(INDEX_CONTROL.DGV_VALUES.ToString(), HandlerDb.GetValueAsRatio);            
             Controls.Add(m_dgvValues, posColdgvValues, posRow);
             SetColumnSpan(m_dgvValues, ColumnCount - posColdgvValues); SetRowSpan(m_dgvValues, 10);
             //
@@ -695,8 +693,9 @@ namespace PluginTaskAutobook
         private void btnSend_onClick(object sender, EventArgs e)
         {
             ReportEMailNSS rep = new ReportEMailNSS();
-            TepCommon.HandlerDbTaskCalculate.KEY_VALUES key;
+            TepCommon.HandlerDbTaskCalculate.KEY_VALUES key;            
             DateTime dtValues = DateTime.MinValue;
+            IEnumerable<HandlerDbTaskCalculate.PUT_PARAMETER> putParameters;
             string e_mail = string.Empty;
 
             key = new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
@@ -704,13 +703,20 @@ namespace PluginTaskAutobook
                 , TypeState = HandlerDbValues.STATE_VALUE.EDIT
             };
             dtValues = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CALENDAR_EMAIL.ToString(), true)[0] as DateTimePicker).Value.Date;
+            putParameters = HandlerDb.GetPutParameters("191");
             e_mail = (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.TXTBX_EMAIL.ToString(), true)[0] as TextBox).Text;
 
             if (HandlerDb.Values.ContainsKey(key) == true)
-                rep.SendMailToNSS((from value in HandlerDb.Values[key]
-                        where (value.stamp_value == dtValues.Date.Add(-Session.m_curOffsetUTC))
-                            && (HandlerDb.GetPutParameters("191").Select(putPar => putPar.m_Id).Contains(value.m_IdPut))
-                        select value)
+                rep.SendMailToNSS(putParameters
+                        , (from value in HandlerDb.Values[key]
+                            where (value.stamp_value == ((HandlerDb.ModeDataDatetime == HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined)
+                                    ? dtValues.AddDays(1).Add(-Session.m_curOffsetUTC) // в случае, если данные сохраняются с меткой "начало интервала"
+                                        : ((HandlerDb.ModeDataDatetime == HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended)
+                                            ? dtValues.Add(-Session.m_curOffsetUTC) // в случае, если данные сохраняются с меткой "окончание интервала"
+                                                : DateTime.MinValue)))
+                                && (putParameters.Select(putPar => putPar.m_Id).Contains(value.m_IdPut))
+                            select value)
+                    , HandlerDb.GetValueAsRatio
                     , dtValues
                     , e_mail);
             else
@@ -876,8 +882,6 @@ namespace PluginTaskAutobook
             }
 
             try {
-                m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-
                 if (err == 0) {
                     //Заполнить элемент управления с часовыми поясами
                     idProfileTimezone = (ID_TIMEZONE)Enum.Parse(typeof(ID_TIMEZONE), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.TIMEZONE));

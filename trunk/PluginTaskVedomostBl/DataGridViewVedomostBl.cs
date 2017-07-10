@@ -81,8 +81,8 @@ namespace PluginTaskVedomostBl
             /// Конструктор - основной (с параметром)
             /// </summary>
             /// <param name="nameDGV">Идентификатор оборудования - блока, данные которого отображаются в текущем представлении</param>
-            public DataGridViewVedomostBl(HandlerDbTaskCalculate.TECComponent comp)
-                : base (ModeData.DATETIME)
+            public DataGridViewVedomostBl(HandlerDbTaskCalculate.TECComponent comp, Func<int, int, float, int, float> fGetValueAsRatio)
+                : base (ModeData.DATETIME, fGetValueAsRatio)
             {
                 Tag = comp;
 

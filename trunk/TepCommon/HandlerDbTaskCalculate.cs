@@ -1730,6 +1730,108 @@ namespace TepCommon
 
             return strRes;
         }
+
+        #region RATIO
+        /// <summary>
+        /// Структура для хранения значений одной из записей в таблице со описанием коэфициентов  при масштабировании физических величин
+        /// </summary>
+        protected struct RATIO
+        {
+            public int m_id;
+
+            public int m_value;
+
+            public string m_nameRU
+                , m_nameEN
+                , m_strDesc;
+        }
+        /// <summary>
+        /// Словарь со значениями коэффициентов при масштабировании физических величин (микро, милли, кило, Мега)
+        /// </summary>
+        private Dictionary<int, RATIO> m_dictRatio;
+        /// <summary>
+        /// Установить значения для яччеек представления со значениями коэффициентов при масштабировании физических величин
+        /// </summary>
+        private void setRatio()
+        {
+            m_dictRatio = new Dictionary<int, RATIO>();
+
+            foreach (DataRow r in m_dictTableDictPrj[ID_DBTABLE.RATIO].Rows)
+                m_dictRatio.Add((int)r[@"ID"], new RATIO() {
+                    m_id = (int)r[@"ID"]
+                    , m_value = (int)r[@"VALUE"]
+                    , m_nameRU = (string)r[@"NAME_RU"]
+                    , m_nameEN = (string)r[@"NAME_RU"]
+                    , m_strDesc = (string)r[@"DESCRIPTION"]
+                });
+        }
+        /// <summary>
+        /// Идентификатор для определения множителя при отображении (проект, исходный множитель из БД источника)
+        /// </summary>
+        private int _prevPrjRatioValue;
+        /// <summary>
+        /// Идентификатор параметра алгоритма расчета 1-го уровня
+        ///  , использовавшийся ранее для определения множителя и точности при округлении для отображения
+        /// </summary>
+        private int _prevIdNAlgAsRatio;
+        /// <summary>
+        /// Идентификатор для определения множителя при отображении (настройка отображения)
+        /// </summary>
+        private int _prevVsRatioValue;
+        /// <summary>
+        /// Преобразовать значение(отображение/расчет) в соответствии с настройками в БД конфигурации
+        /// </summary>
+        /// <param name="idNAlg">Идентификатор параметра в алгоритме расчета 1-го порядка</param>
+        /// <param name="idPut">Идентификатор параметра в алгоритме расчета 2-го порядка</param>
+        /// <param name="value">Значение для преобразования</param>
+        /// <param name="iReverse">Признак направления преобразования</param>
+        /// <returns>Значение для отображения/расчета</returns>
+        public float GetValueAsRatio(int idNAlg, int idPut, float value, int iReverse)
+        {
+            float fltRes = -1F;
+
+            NALG_PARAMETER nAlgPar;
+            PUT_PARAMETER putPar;
+
+            int vsRatioValue = -1
+                , prjRatioValue = -1;
+
+            nAlgPar = ListNAlgParameter.Find(nAlg => { return nAlg.m_Id == idNAlg; });
+            putPar = ListPutParameter.Find(par => { return par.m_Id == idPut; });
+
+            if (!(_prevIdNAlgAsRatio == idNAlg)) {
+                // Множитель для значения - для отображения
+                vsRatioValue =
+                    //m_dictRatio[m_dictNAlgProperties[idNAlg].m_vsRatio].m_value
+                    m_dictRatio[nAlgPar.m_vsRatio].m_value
+                    ;
+                // Множитель для значения - исходный в БД
+                prjRatioValue =
+                    //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
+                    m_dictRatio[putPar.m_prjRatio].m_value
+                    ;
+
+                _prevVsRatioValue = vsRatioValue;
+                _prevPrjRatioValue = prjRatioValue;
+            } else {
+                vsRatioValue = _prevVsRatioValue;
+                prjRatioValue = _prevPrjRatioValue;
+            }
+            // проверить требуется ли преобразование
+            if (!(prjRatioValue == vsRatioValue))
+                // домножить значение на коэффициент
+                fltRes =
+                    //value * (float)Math.Pow(10F, -1 * iReverse * vsRatioValue + iReverse * prjRatioValue)
+                    value * (float)Math.Pow(10F, iReverse * (prjRatioValue - vsRatioValue))
+                    ;
+            else
+                //отображать без изменений
+                fltRes = value;
+
+            return fltRes;
+        }
+        #endregion
+
         /// <summary>
         /// Возвратить наименование таблицы 
         /// </summary>
@@ -2009,6 +2111,14 @@ namespace TepCommon
                     break;
                 default:
                     base.AddTableDictPrj(id, out err);
+
+                    if (id == ID_DBTABLE.RATIO)
+                        if (m_dictTableDictPrj.ContainsKey(ID_DBTABLE.RATIO) == true)
+                            setRatio();
+                        else
+                            throw new Exception(string.Format(@"HandlerDbTaskCalculate::AddTableDictPrj(ID_DBTABLE={0}) - добавленная таблица отсутствует в словаре...", id));
+                    else
+                        ;
                     break;
             }
         }

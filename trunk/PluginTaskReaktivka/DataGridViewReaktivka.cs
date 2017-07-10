@@ -29,8 +29,8 @@ namespace PluginTaskReaktivka
             /// Конструктор - основной (с параметрами)
             /// </summary>
             /// <param name="nameDGV">Наименование представления (используется для поиска элемента)</param>
-            public DataGridViewValuesReaktivka(string name)
-                : base (ModeData.DATETIME)
+            public DataGridViewValuesReaktivka(string name, Func<int, int, float, int, float> fGetValueAsRatio)
+                : base (ModeData.DATETIME, fGetValueAsRatio)
             {
                 Name = name;
 

@@ -25,7 +25,7 @@ namespace PluginTaskAutobook
             /// Конструктор - основной (без параметров)
             /// </summary>
             /// <param name="nameDGV">Наименование элемента управления</param>
-            public DataGridViewAutobookMonthValues(string name) : base(ModeData.DATETIME)
+            public DataGridViewAutobookMonthValues(string name, Func<int, int, float, int, float> fGetValueAsRatio) : base(ModeData.DATETIME, fGetValueAsRatio)
             {
                 Name = name;
 

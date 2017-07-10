@@ -22,7 +22,7 @@ namespace PluginTaskAutobook
             /// основной конструктор
             /// </summary>
             /// <param name="nameDGV"></param>
-            public DataGridViewAutobookYearlyPlan(string name) : base(ModeData.DATETIME)
+            public DataGridViewAutobookYearlyPlan(string name, Func<int, int, float, int, float> fGetValueAsRatio) : base(ModeData.DATETIME, fGetValueAsRatio)
             {
                 Name = name;
 

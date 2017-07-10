@@ -67,7 +67,7 @@ namespace PluginTaskTepMain
         /// </summary>
         private void InitializeComponents()
         {
-            m_dgvValues = new DataGridViewTaskTepValues();
+            m_dgvValues = new DataGridViewTaskTepValues(HandlerDb.GetValueAsRatio);
             int posColdgvValues = 4
                 , heightRowdgvValues = 10;
 

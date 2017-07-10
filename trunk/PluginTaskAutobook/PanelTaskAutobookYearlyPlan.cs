@@ -189,7 +189,7 @@ namespace PluginTaskAutobook
         /// </summary>
         private void InitializeComponent()
         {
-            m_dgvValues = new DataGridViewAutobookYearlyPlan(INDEX_CONTROL.DGV_VALUES.ToString());
+            m_dgvValues = new DataGridViewAutobookYearlyPlan(INDEX_CONTROL.DGV_VALUES.ToString(), HandlerDb.GetValueAsRatio);
 
             foreach (DataGridViewColumn column in m_dgvValues.Columns)
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
@@ -246,8 +246,6 @@ namespace PluginTaskAutobook
             HandlerDb.FilterDbTableTimezone = TepCommon.HandlerDbTaskCalculate.DbTableTimezone.Msk;
             HandlerDb.FilterDbTableTime = TepCommon.HandlerDbTaskCalculate.DbTableTime.Year;
             HandlerDb.FilterDbTableCompList = TepCommon.HandlerDbTaskCalculate.DbTableCompList.Tec;
-
-            m_dgvValues.SetRatio(m_dictTableDictPrj[ID_DBTABLE.RATIO]);
 
             try {
                 if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)

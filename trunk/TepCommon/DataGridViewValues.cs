@@ -77,10 +77,12 @@ namespace TepCommon
             /// Конструктор - основной (с параметром)
             /// </summary>
             /// <param name="modeData">Режим отображения значений</param>
-            public DataGridViewValues(ModeData modeData)
+            public DataGridViewValues(ModeData modeData, Func<int, int, float, int, float> fGetValueAsRatio)
                 : base()
             {
                 _modeData = modeData;
+
+                getValueAsRatio = new Func<int, int, float, int, float> (fGetValueAsRatio);
 
                 InitializeComponents();
 
@@ -318,41 +320,6 @@ namespace TepCommon
             protected DictNAlgProperty m_dictNAlgProperties;
 
             #region RATIO
-            /// <summary>
-            /// Структура для хранения значений одной из записей в таблице со описанием коэфициентов  при масштабировании физических величин
-            /// </summary>
-            protected struct RATIO
-            {
-                public int m_id;
-
-                public int m_value;
-
-                public string m_nameRU
-                    , m_nameEN
-                    , m_strDesc;
-            }
-            /// <summary>
-            /// Словарь со значениями коэффициентов при масштабировании физических величин (микро, милли, кило, Мега)
-            /// </summary>
-            private Dictionary<int, RATIO> m_dictRatio;
-            /// <summary>
-            /// Установить значения для яччеек представления со значениями коэффициентов при масштабировании физических величин
-            /// </summary>
-            /// <param name="tblRatio">Таблица БД со описанием коэфициентов</param>
-            public void SetRatio(DataTable tblRatio)
-            {
-                m_dictRatio = new Dictionary<int, RATIO>();
-
-                foreach (DataRow r in tblRatio.Rows)
-                    m_dictRatio.Add((int)r[@"ID"], new RATIO() {
-                        m_id = (int)r[@"ID"]
-                        , m_value = (int)r[@"VALUE"]
-                        , m_nameRU = (string)r[@"NAME_RU"]
-                        , m_nameEN = (string)r[@"NAME_RU"]
-                        , m_strDesc = (string)r[@"DESCRIPTION"]
-                    });
-            }
-
             private DateTimeStamp _datetimeRange;
             /// <summary>
             /// Метка времени отображающихся значений, интерперетируется в ~ от типа DataGridView
@@ -397,76 +364,32 @@ namespace TepCommon
 
                     return iRes;
                 }
-            }
+            }            
             /// <summary>
-            /// Идентификатор параметра алгоритма расчета 1-го уровня
-            ///  , использовавшийся ранее для определения множителя и точности при округлении для отображения
+            /// Делегат для преобразования значений
             /// </summary>
-            private int _prevIdNAlgAsRatio;
-            /// <summary>
-            /// Идентификатор для определения множителя при отображении (настройка отображения)
-            /// </summary>
-            private int _prevVsRatioValue;
-            /// <summary>
-            /// Идентификатор для определения множителя при отображении (проект, исходный множитель из БД источника)
-            /// </summary>
-            private int _prevPrjRatioValue;
-
-            public float get_value_as_ratio(int idNAlg, int idPut, float value, int iReverse)
-            {
-                float fltRes = -1F;
-
-                int vsRatioValue = -1
-                    , prjRatioValue = -1;
-
-                if (!(_prevIdNAlgAsRatio == idNAlg)) {
-                    // Множитель для значения - для отображения
-                    vsRatioValue =
-                        m_dictRatio[m_dictNAlgProperties[idNAlg].m_vsRatio].m_value
-                        ;
-                    // Множитель для значения - исходный в БД
-                    prjRatioValue =
-                        //m_dictRatio[m_dictPropertiesRows[idAlg].m_ratio].m_value
-                        m_dictRatio[m_dictNAlgProperties[idNAlg].m_dictPutParameters[idPut].m_prjRatio].m_value
-                        ;
-
-                    _prevVsRatioValue = vsRatioValue;
-                    _prevPrjRatioValue = prjRatioValue;
-                } else {
-                    vsRatioValue = _prevVsRatioValue;
-                    prjRatioValue = _prevPrjRatioValue;
-                }
-                // проверить требуется ли преобразование
-                if (!(prjRatioValue == vsRatioValue))
-                    // домножить значение на коэффициент
-                    fltRes = value * (float)Math.Pow(10F, -1 * iReverse * vsRatioValue + iReverse * prjRatioValue);
-                else
-                    //отображать без изменений
-                    fltRes = value;
-
-                return fltRes;
-            }
+            public Func<int, int, float, int, float> getValueAsRatio;
             /// <summary>
             /// Возвратить значение в соответствии 
             /// </summary>
             /// <param name="idNAlg">Идентификатор парметра в алгоритме расчета 1-го уровня</param>
             /// <param name="idPut">Идентификатор парметра в алгоритме расчета 2-го уровня</param>
             /// <param name="value">Значение, которое требуется преобразовать (применить множитель)</param>
-            /// <returns></returns>
+            /// <returns>Значение для отображения в ячейке</returns>
             public float GetValueCellAsRatio(int idNAlg, int idPut, float value)
             {
-                return get_value_as_ratio(idNAlg, idPut, value, -1);
+                return getValueAsRatio(idNAlg, idPut, value, -1);
             }
 
             public float GetValueDbAsRatio(int idNAlg, int idPut, float value)
             {
-                return get_value_as_ratio(idNAlg, idPut, value, 1);
+                return getValueAsRatio(idNAlg, idPut, value, 1);
             }
             #endregion
-                /// <summary>
-                /// Добавить объект с информацией о параметре в алгоритме расчета 1-го уровня
-                /// </summary>
-                /// <param name="nAlg">Объект с информацией о параметре в алгоритме расчета 1-го уровня</param>
+            /// <summary>
+            /// Добавить объект с информацией о параметре в алгоритме расчета 1-го уровня
+            /// </summary>
+            /// <param name="nAlg">Объект с информацией о параметре в алгоритме расчета 1-го уровня</param>
             public virtual void AddNAlgParameter(HandlerDbTaskCalculate.NALG_PARAMETER nAlg)
             {
                 if (m_dictNAlgProperties == null)
