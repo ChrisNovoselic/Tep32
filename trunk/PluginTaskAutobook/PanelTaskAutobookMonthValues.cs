@@ -166,7 +166,7 @@ namespace PluginTaskAutobook
                 /// <summary>
                 /// Прикрепление файла к письму
                 /// </summary>
-                /// <param name="mail"></param>
+                /// <param name="mail">Сообщение для отправления</param>
                 private void AddAttachment(Outlook.MailItem mail)
                 {
                     OpenFileDialog attachment = new OpenFileDialog();
@@ -519,16 +519,20 @@ namespace PluginTaskAutobook
             {
                 initializeLayoutStyleEvenly(cols, rows);
             }
-
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
             public PanelManagementAutobookMonthValues()
                 : base(ModeTimeControlPlacement.Twin | ModeTimeControlPlacement.Labels) //4, 3
             {
-                InitializeComponents();
-            }
+                Control ctrl;
 
+                InitializeComponents();
+
+                // обеспечить вкл./выкл. крнопки "Экспорт"
+                ctrl = findControl(INDEX_CONTROL.TXTBX_EMAIL.ToString());
+                (ctrl as TextBox).TextChanged += tbxEMail_OnTextChanged;
+            }
             /// <summary>
             /// Инициализация элементов управления объекта (создание, размещение)
             /// </summary>
@@ -594,7 +598,7 @@ namespace PluginTaskAutobook
                 ctrl = new Button();
                 ctrl.Name = INDEX_CONTROL.BUTTON_SEND_EMAIL.ToString();
                 ctrl.Text = @"Отправить";
-                //ctrlBSend.Enabled = false;
+                ctrl.Enabled = false;
                 //ctrl.Dock = DockStyle.Top;
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, ColumnCount / 2, posRow);
@@ -628,7 +632,26 @@ namespace PluginTaskAutobook
             {
                 // не используется
                 //throw new NotImplementedException();
-            }            
+            }
+
+            private void tbxEMail_OnTextChanged(object obj, EventArgs ev)
+            {
+                bool bEMailSendEnabled = false;
+                Button btnEMailSend;
+
+                try {
+                    new System.Net.Mail.MailAddress((obj as TextBox).Text);
+
+                    bEMailSendEnabled = true;
+                } catch {                    
+                }
+
+                btnEMailSend = findControl(INDEX_CONTROL.BUTTON_SEND_EMAIL.ToString()) as Button;
+                if (!(btnEMailSend.Enabled == bEMailSendEnabled))
+                    btnEMailSend.Enabled = bEMailSendEnabled;
+                else
+                    ;
+            }
         }
 
         /// <summary>
@@ -861,24 +884,17 @@ namespace PluginTaskAutobook
 
             // возможность_редактирвоания_значений
             try {
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
-                    if ((MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE)
-                        (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = true;
-                    else
-                        (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
-                else
-                    (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.CHKBX_EDIT.ToString(), true)[0] as CheckBox).Checked = false;
+                (findControl(PanelManagementAutobookMonthValues.INDEX_CONTROL.CHKBX_EDIT.ToString()) as CheckBox).Checked =
+                    m_dictProfile.GetBooleanAttribute(ID_PERIOD.MONTH, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM);
             } catch (Exception e) {
+                Logging.Logg().Exception(e, @"PanelTaskAutoBook::initialize () - установка признака Редактирование столбца...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             // активность_кнопки_сохранения
             try {
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == true)
-                    (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
-                        (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
-                else
-                    (Controls.Find(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
-            } catch (Exception exp) {
-                Logging.Logg().Exception(exp, @"PanelTaskAutoBook::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                (findControl(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SAVE.ToString()) as Button).Enabled =
+                    m_dictProfile.GetBooleanAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL);
+            } catch (Exception e) {
+                Logging.Logg().Exception(e, @"PanelTaskAutoBook::initialize () - установка признака доступности кнопки Сохранить...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             try {
@@ -910,6 +926,11 @@ namespace PluginTaskAutobook
             } catch (Exception e) {
                 Logging.Logg().Exception(e, @"PanelTaskAutobookMonthValues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
+        }
+
+        private void PanelTaskAutobookMonthValues_TextChanged(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private void addValueRows()

@@ -248,22 +248,13 @@ namespace PluginTaskAutobook
             HandlerDb.FilterDbTableCompList = TepCommon.HandlerDbTaskCalculate.DbTableCompList.Tec;
 
             try {
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
-                    bEnabled =
-                        (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
-                else
-                    bEnabled = false;
+                bEnabled = m_dictProfile.GetBooleanAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM);
 
                 (findControl(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString()) as CheckBox).Checked =
                 m_dgvValues.ReadOnly =
                     bEnabled;
 
-                bEnabled = true; // значение по умолчанию для кнопки "Сохранить"
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == true)
-                    bEnabled =
-                        (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
-                else
-                    bEnabled = false;
+                bEnabled = m_dictProfile.GetBooleanAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL); // значение по умолчанию для кнопки "Сохранить"
 
                 (findControl(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.BUTTON_SAVE.ToString()) as Button).Enabled =
                     bEnabled;

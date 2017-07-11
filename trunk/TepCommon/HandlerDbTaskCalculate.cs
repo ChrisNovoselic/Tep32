@@ -364,6 +364,10 @@ namespace TepCommon
             public DateTime stamp_write;
         }
 
+        public delegate void DelagateShowValues(IEnumerable<HandlerDbTaskCalculate.VALUE> inValues
+            , IEnumerable<HandlerDbTaskCalculate.VALUE> outValues
+            , out int err);
+
         public struct CHANGE_VALUE
         {
             ///// <summary>
@@ -376,6 +380,8 @@ namespace TepCommon
             public VALUE value;
 
             public DateTime stamp_action;
+
+            public DelagateShowValues fShowValues;
         }
         /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
@@ -1198,7 +1204,7 @@ namespace TepCommon
                         ;
 
                     if (prevChangeValue.stamp_action.Equals(DateTime.MinValue) == true)
-                        // параметр ни разу не изменялся с момента сохранения
+                    // параметр ни разу не изменялся с момента сохранения
                         _listChanges.Add(new CHANGE_VALUE() { m_keyValues = changeValue.m_keyValues, value = newValue, stamp_action = DateTime.UtcNow });
                     else {
                         prevChangeValue.value.value = newValue.value;
@@ -1216,7 +1222,13 @@ namespace TepCommon
             if (!(err == 0)) {
             //??? вернуть исходное значение
             } else
-                ;
+                changeValue.fShowValues(Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                        TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+                        , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                    , Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                        TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
+                        , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                    , out err);
         }
 
         private DataTable mergeTableValues(DataTable tablePars, DataTable[] arTableValues, int cntBasePeriod)

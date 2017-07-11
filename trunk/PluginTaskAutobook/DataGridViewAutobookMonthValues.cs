@@ -57,8 +57,8 @@ namespace PluginTaskAutobook
                 DataGridViewColumn column;
                 List<TepCommon.HandlerDbTaskCalculate.TECComponent> listTECComponent;
                 TepCommon.HandlerDbTaskCalculate.TECComponent comp_tec;
-                //string nameColumn = string.Empty
-                //    , headerColumn = string.Empty;
+                string strFormula = string.Empty;
+
                 // Функция поиска объекта 'PUT_PARAMETER' для его назначения в свойство 'Tag' для добавляемого столбца
                 Func<HandlerDbTaskCalculate.TaskCalculate.TYPE, int, TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> findPutParameterGTP = (HandlerDbTaskCalculate.TaskCalculate.TYPE type, int id) => {
                     TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putRes = new TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER();
@@ -105,19 +105,35 @@ namespace PluginTaskAutobook
                         column = new DataGridViewTextBoxColumn();
                         column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                         column.Name = string.Format(@"COLUMN_CORRECT_{0}", comp.m_Id); column.HeaderText = string.Format(@"Корр-ка ПТО {0}", comp.m_nameShr);
+                        column.Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, comp.m_Id);
+                        column.ReadOnly = false;
                         Columns.Add(column);
-                        Columns[ColumnCount - 1].Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, comp.m_Id);
                     } else
                         ;
                 });
-                //ГТП - Значения
+                //ГТП - Значения (без корректировки)
                 listTECComponent.ForEach(comp => {
                     if (comp.IsGtp == true) {
                         column = new DataGridViewTextBoxColumn();
                         column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                        column.Name = string.Format(@"COLUMN_{0}", comp.m_Id); column.HeaderText = string.Format(@"{0}", comp.m_nameShr);
+                        column.Name = string.Format(@"COLUMN_VALUE_{0}", comp.m_Id);
+                        column.HeaderText = string.Format(@"По прибору {0}", comp.m_nameShr);
+                        column.Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp.m_Id);
+                        column.Visible = false;
+                        column.ReadOnly = true;
                         Columns.Add(column);
-                        Columns[ColumnCount - 1].Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp.m_Id);
+                    } else
+                        ;
+                });
+                //ГТП - Значения (с учетом корректрировки)
+                listTECComponent.ForEach(comp => {
+                    if (comp.IsGtp == true) {
+                        column = new DataGridViewTextBoxColumn();
+                        column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                        column.Name = string.Format(@"CORRECT_VALUE_{0}", comp.m_Id); column.HeaderText = string.Format(@"+ коррект. {0}", comp.m_nameShr);
+                        column.Tag = new FormulaHelper(string.Format("COLUMN_CORRECT_{0}+COLUMN_VALUE_{0}", comp.m_Id));
+                        column.ReadOnly = true;
+                        Columns.Add(column);                        
                     } else
                         ;
                 });
@@ -128,7 +144,11 @@ namespace PluginTaskAutobook
                 column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 column.Name = string.Format(@"COLUMN_ST_DAY_{0}", comp_tec.m_Id);
                 column.HeaderText = string.Format(@"{0} значения", comp_tec.m_nameShr);
-                column.Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp_tec.m_Id);
+                listTECComponent.ForEach(comp => { if (comp.IsGtp == true) { strFormula += string.Format(@"{0}CORRECT_VALUE_{1}", string.IsNullOrEmpty(strFormula) == true ? string.Empty : @"+", comp.m_Id); } else { } });
+                column.Tag =
+                    //findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, comp_tec.m_Id)                    
+                    new FormulaHelper(strFormula);
+                    ;
                 Columns.Add(column);                
                 //Станция - Значения - нарастающие
                 column = new DataGridViewTextBoxColumn();
@@ -139,6 +159,7 @@ namespace PluginTaskAutobook
                     //ToolsHelper.Compiler.Compile(ToolsHelper.Parser.Parse(string.Format("INC(COLUMN_ST_DAY_{0})", comp_tec.m_Id)))
                     new FormulaHelper(string.Format("SUMM({0})", string.Format(@"COLUMN_ST_DAY_{0}", comp_tec.m_Id)))
                     ;
+                column.ReadOnly = true;
                 Columns.Add(column);
                 //Станция - План - ежесуточный
                 column = new DataGridViewTextBoxColumn();
@@ -146,7 +167,8 @@ namespace PluginTaskAutobook
                 column.Name = string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id);
                 column.HeaderText = string.Format(@"План сутки");
                 column.Tag = findPutParameterGTP(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, comp_tec.m_Id);
-                //column.Visible = false;
+                column.ReadOnly = true;
+                column.Visible = false;
                 Columns.Add(column);
                 //Станция - План - ежесуточный - накапливаемый
                 column = new DataGridViewTextBoxColumn();
@@ -154,6 +176,7 @@ namespace PluginTaskAutobook
                 column.Name = string.Format(@"COLUMN_PLAN_SUM_{0}", comp_tec.m_Id);
                 column.HeaderText = string.Format(@"План нараст.");
                 column.Tag = new FormulaHelper(string.Format("SUMM({0})", string.Format(@"COLUMN_PLAN_DAY_{0}", comp_tec.m_Id)));
+                column.ReadOnly = true;
                 Columns.Add(column);
                 //Станция - План - отклонение
                 column = new DataGridViewTextBoxColumn();
@@ -161,6 +184,7 @@ namespace PluginTaskAutobook
                 column.Name = string.Format(@"COLUMN_PLAN_DEV_{0}", comp_tec.m_Id);
                 column.HeaderText = string.Format(@"План отклон.");
                 column.Tag = new FormulaHelper(string.Format("COLUMN_PLAN_SUM_{0}-COLUMN_ST_SUM_{0}", comp_tec.m_Id));
+                column.ReadOnly = true;
                 Columns.Add(column);                
             }
             /// <summary>

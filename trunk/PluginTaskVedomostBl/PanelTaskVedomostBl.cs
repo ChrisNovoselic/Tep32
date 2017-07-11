@@ -380,13 +380,10 @@ namespace PluginTaskVedomostBl
 
                 //возможность_редактирвоания_значений
                 try {
-                    if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == true)
-                        (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).Checked =
-                            (MODE_CORRECT)Enum.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE, HTepUsers.ID_ALLOWED.ENABLED_ITEM)) == MODE_CORRECT.ENABLE;
-                    else
-                        (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).Checked = false;
+                    (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).Checked =
+                        m_dictProfile.GetBooleanAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE, HTepUsers.ID_ALLOWED.ENABLED_ITEM);
 
-                    if ((Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).Checked == true)
+                    if ((findControl(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString()) as CheckBox).Checked == true)
                         for (int t = 0; t < dgv.RowCount; t++)
                             dgv.ReadOnlyColumns = false;
                     else
@@ -432,11 +429,8 @@ namespace PluginTaskVedomostBl
 
             //активность_кнопки_сохранения
             try {
-                if (Enum.IsDefined(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == true)
-                    (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled =
-                        (MODE_CORRECT)MODE_CORRECT.Parse(typeof(MODE_CORRECT), m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL)) == MODE_CORRECT.ENABLE;
-                else
-                    (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString(), true)[0] as Button).Enabled = false;
+                (findControl(PanelManagementVedomostBl.INDEX_CONTROL.BUTTON_SAVE.ToString()) as Button).Enabled =
+                    m_dictProfile.GetBooleanAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL);
             } catch (Exception e) {
                 // ???
                 Logging.Logg().Exception(e, string.Format(@"PanelTaskVedomostBl::initialize () - BUTTON_SAVE.Enabled..."), Logging.INDEX_MESSAGE.NOT_SET);

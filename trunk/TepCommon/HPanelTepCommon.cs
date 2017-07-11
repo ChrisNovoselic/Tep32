@@ -18,10 +18,10 @@ namespace TepCommon
 {
     public abstract partial class HPanelTepCommon : HPanelCommon
     {
-        /// <summary>
-        /// Перечисление - режимы работы вкладки
-        /// </summary>
-        protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
+        ///// <summary>
+        ///// Перечисление - режимы работы вкладки
+        ///// </summary>
+        //protected enum MODE_CORRECT : int { UNKNOWN = -1, DISABLE, ENABLE, COUNT }
         /// <summary>
         /// Тип(ы) расчетов, выполняемых на вкладке (м.б. установлены смешанные)
         /// </summary>

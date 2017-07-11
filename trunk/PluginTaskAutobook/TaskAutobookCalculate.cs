@@ -173,11 +173,11 @@ namespace PluginTaskAutobook
                                             break;
                                     }
 
-                                    // корректировка, если есть
-                                    if (In[@"3"].ContainsKey(keyPValue) == true)
-                                        Out[pAlg.Key][keyPValue].value += In[@"3"][keyPValue].value;
-                                    else
-                                        ;
+                                    //// корректировка, если есть
+                                    //if (In[@"3"].ContainsKey(keyPValue) == true)
+                                    //    Out[pAlg.Key][keyPValue].value += In[@"3"][keyPValue].value;
+                                    //else
+                                    //    ;
 
                                     fltRes += Out[pAlg.Key][keyPValue].value;
                                 }

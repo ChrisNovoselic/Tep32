@@ -77,11 +77,12 @@ namespace TepCommon
             /// Конструктор - основной (с параметром)
             /// </summary>
             /// <param name="modeData">Режим отображения значений</param>
-            public DataGridViewValues(ModeData modeData, Func<int, int, float, int, float> fGetValueAsRatio)
+            public DataGridViewValues(ModeData modeData/*, Action<HandlerDbTaskCalculate.CHANGE_VALUE> handlerEventCellChangeValue*/, Func<int, int, float, int, float> fGetValueAsRatio)
                 : base()
             {
                 _modeData = modeData;
 
+                //EventCellValueChanged += new Action<HandlerDbTaskCalculate.CHANGE_VALUE> (handlerEventCellChangeValue);
                 getValueAsRatio = new Func<int, int, float, int, float> (fGetValueAsRatio);
 
                 InitializeComponents();
@@ -126,17 +127,17 @@ namespace TepCommon
                     ;
             }
 
-            private void onCellParsing(object sender, DataGridViewCellParsingEventArgs ev)
-            {
-                ev.ParsingApplied = true;
+            //private void onCellParsing(object sender, DataGridViewCellParsingEventArgs ev)
+            //{
+            //    ev.ParsingApplied = true;
 
-                EventCellValueChanged?.Invoke(new HandlerDbTaskCalculate.CHANGE_VALUE() {
-                    m_keyValues = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.UNKNOWN, TypeState = HandlerDbValues.STATE_VALUE.EDIT }
-                    //, m_taskCalculateType = HandlerDbTaskCalculate.TaskCalculate.TYPE.UNKNOWN //??? повтор                    
-                    , value = new HandlerDbTaskCalculate.VALUE() { m_iQuality = TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC }
-                    , stamp_action = DateTime.MinValue
-                });
-            }
+            //    EventCellValueChanged?.Invoke(new HandlerDbTaskCalculate.CHANGE_VALUE() {
+            //        m_keyValues = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.UNKNOWN, TypeState = HandlerDbValues.STATE_VALUE.EDIT }
+            //        //, m_taskCalculateType = HandlerDbTaskCalculate.TaskCalculate.TYPE.UNKNOWN //??? повтор                    
+            //        , value = new HandlerDbTaskCalculate.VALUE() { m_iQuality = TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC }
+            //        , stamp_action = DateTime.MinValue
+            //    });
+            //}
 
             private void onCellValueChanged(object sender, DataGridViewCellEventArgs e)
             {
@@ -145,6 +146,7 @@ namespace TepCommon
                     , idPut = -1;
                 float fltValue = -1F;
                 CELL_PROPERTY cellProperty;
+                bool bRecalculate = false;
                 DateTime stamp_value = DateTime.MinValue;
 
                 if ((!(e.ColumnIndex < 0))
@@ -155,7 +157,8 @@ namespace TepCommon
                         cellProperty = new CELL_PROPERTY() { m_iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC, m_Value = float.MinValue };
 
                     if ((!(cellProperty.IsEmpty == true))
-                        && (float.TryParse(Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString(), out fltValue) == true)) {
+                        && (string.IsNullOrEmpty(Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString()) == false)
+                        && (float.TryParse(Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString(), out fltValue) == true)) {
                         putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)Columns[e.ColumnIndex].Tag;
                         idNAlg = putPar.m_idNAlg;
                         idPut = putPar.m_Id;
@@ -169,13 +172,31 @@ namespace TepCommon
                         else
                             ;
 
+                        foreach (DataGridViewColumn col in Columns) {
+                            if (!(col.Index == e.ColumnIndex)) {
+                                if (col.Tag is FormulaHelper) {
+                                    bRecalculate = (col.Tag as FormulaHelper).IndexColumns.Contains(e.ColumnIndex);
+
+                                    if (bRecalculate == true)
+                                        break;
+                                    else
+                                        ;
+                                } else {
+                                // идентификатор столбца не является формулой
+                                }
+                            } else {
+                            // столбец является столбцом события
+                            }
+                        }
+
                         EventCellValueChanged?.Invoke(new HandlerDbTaskCalculate.CHANGE_VALUE() {
                             m_keyValues = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = m_dictNAlgProperties[idNAlg].m_type, TypeState = HandlerDbValues.STATE_VALUE.EDIT }
                             , value = new HandlerDbTaskCalculate.VALUE() { m_IdPut = idPut, m_iQuality = cellProperty.m_iQuality, value = cellProperty.m_Value, stamp_value = stamp_value }
+                            , fShowValues = ShowValues
                         });
                     } else
                         Logging.Logg().Error(string.Format(@"DataGridViewValues::onCellValueChanged ({0}) - не удалось преобразовать в значение..."
-                                , Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString())
+                                , Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString())
                             , Logging.INDEX_MESSAGE.NOT_SET);
                 } else
                     ;
@@ -541,7 +562,7 @@ namespace TepCommon
             /// </summary>
             public virtual void ClearValues()
             {
-                CellValueChanged -= onCellValueChanged;
+                activateCellValue_onChanged(false);
 
                 bool bCellClear = false;
 
@@ -565,7 +586,7 @@ namespace TepCommon
                 //??? если установить 'true' - редактирование невозможно
                 ReadOnly = false;
 
-                CellValueChanged += onCellValueChanged;
+                activateCellValue_onChanged(true);
             }
             /// <summary>
             /// Возвратить цвет ячейки по номеру столбца, строки
@@ -872,7 +893,7 @@ namespace TepCommon
 
                                         if (!(row == null)) {
                                             row.Cells[iCol].Tag = new CELL_PROPERTY() { m_Value = fltVal, m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality };
-                                            row.Cells[iCol].ReadOnly = double.IsNaN(fltVal);
+                                            row.Cells[iCol].ReadOnly = Columns[iCol].ReadOnly || double.IsNaN(fltVal);
 
                                             if (getColorCellToValue(idAlg, idPut, (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality, out clrCell) == true) {
                                                 //// символ (??? один для строки, но назначается много раз по числу столбцов)

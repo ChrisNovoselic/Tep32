@@ -405,6 +405,20 @@ namespace TepCommon
                         keys.ToList().Select(o => fToString(o)).ToArray()
                     );
             }
+
+            public bool GetBooleanAttribute(params object[] keys)
+            {
+                bool bRes = false;
+
+                short attr = -1;
+
+                if (short.TryParse(GetAttribute(keys), out attr) == true)
+                    bRes = attr == 1;
+                else
+                    ;
+
+                return bRes;
+            }
             /// <summary>
             /// Возвратить значение аттрибута по набору ключей
             /// </summary>
