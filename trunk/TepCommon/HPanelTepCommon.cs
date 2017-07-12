@@ -40,8 +40,7 @@ namespace TepCommon
             _handlerDb.EventAddPutParameter += new Action<PUT_PARAMETER>(handlerDbTaskCalculate_onAddPutParameter);
             _handlerDb.EventAddComponent += new Action<TECComponent>(handlerDbTaskCalculate_onAddComponent);
 
-            _handlerDb.EventSetValuesCompleted += new Action<RESULT>(handlerDbTaskCalculate_onSetValuesCompleted);
-            _handlerDb.EventCalculateCompleted += new Action<RESULT>(handlerDbTaskCalculate_onCalculateCompleted);
+            _handlerDb.EventCompleted += new Action<EVENT, RESULT>(handlerDbTaskCalculate_onEventCompleted);
             _handlerDb.EventCalculateProccess += new Action<CalculateProccessEventArgs>(handlerDbTaskCalculate_onCalculateProcess);
         }
         /// <summary>
@@ -266,7 +265,14 @@ namespace TepCommon
         /// <summary>
         /// Обраюотчик события - завершение загрузки значений из БД
         /// </summary>
-        protected abstract void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res);
+        protected abstract void handlerDbTaskCalculate_onEventCompleted(EVENT evt, HandlerDbTaskCalculate.RESULT res);
+
+        protected abstract void handlerDbTaskCalculate_onEditValueCompleted(HandlerDbTaskCalculate.RESULT res);
+
+        protected virtual void handlerDbTaskCalculate_onSaveChangesCompleted(HandlerDbTaskCalculate.RESULT res)
+        {
+            _panelManagement.
+        }
         /// <summary>
         /// Обраюотчик события - завершение выполнения расчета
         /// </summary>

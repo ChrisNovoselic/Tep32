@@ -364,10 +364,6 @@ namespace TepCommon
             public DateTime stamp_write;
         }
 
-        public delegate void DelagateShowValues(IEnumerable<HandlerDbTaskCalculate.VALUE> inValues
-            , IEnumerable<HandlerDbTaskCalculate.VALUE> outValues
-            , out int err);
-
         public struct CHANGE_VALUE
         {
             ///// <summary>
@@ -380,8 +376,6 @@ namespace TepCommon
             public VALUE value;
 
             public DateTime stamp_action;
-
-            public DelagateShowValues fShowValues;
 
             public void Update()
             {
@@ -896,13 +890,11 @@ namespace TepCommon
         /// </summary>
         public enum RESULT { Exception = -2, Error, Ok, Warning, Debug }
         /// <summary>
-        /// Событие для оповещения панелей о завершении загрузки значений из БД
+        /// Перечисление - типы событий для оповещения панелей о завершении (длительной) операции
         /// </summary>
-        public event Action<RESULT> EventSetValuesCompleted;
-        /// <summary>
-        /// Событие для оповещения панелей о завершении расчета
-        /// </summary>
-        public event Action<RESULT> EventCalculateCompleted;
+        public enum EVENT : short { SET_VALUES, EDIT_VALUE, SAVE_CHANGES, CALCULATE }
+
+        public event Action<EVENT, RESULT> EventCompleted;        
         /// <summary>
         /// Класс для описания события при завершении расчета одного из параметров
         /// </summary>
@@ -1012,10 +1004,10 @@ namespace TepCommon
                     // создать копии для возможности сохранения изменений
                     cloneValues(taskCalculateType);
                     // отобразить значения
-                    EventSetValuesCompleted?.Invoke(RESULT.Ok);
+                    EventCompleted?.Invoke(EVENT.SET_VALUES, RESULT.Ok);
                 } else {
                     // в случае ошибки "обнулить" идентификатор сессии
-                    EventSetValuesCompleted?.Invoke(RESULT.Error);
+                    EventCompleted?.Invoke(EVENT.SET_VALUES, RESULT.Error);
 
                     throw new Exception(@"PanelTaskTepValues::updatedataValues() - " + errMsg);
                 }
@@ -1196,12 +1188,12 @@ namespace TepCommon
                     //break;
                 } else {
                     query = string.Format("INSERT INTO [dbo].[{1}]"
-                            + @" ([ID_SESSION], [ID_PUT], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION])"
-                            + @" VALUES ({2}, {3}, {4}, {5}, GETUTCDATE(), CONVERT(varchar, CONVERT(datetime2(7), '{6}'), 127))"
-                            , "\t" //Environment.NewLine
-                            , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
-                            , _Session.m_Id
-                            , changeValue.value.m_IdPut, (int)changeValue.value.m_iQuality, changeValue.value.value.ToString(CultureInfo.InvariantCulture), changeValue.value.stamp_value.ToString(@"yyyyMMdd HH:mm:ss"));
+                        + @" ([ID_SESSION], [ID_PUT], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION])"
+                        + @" VALUES ({2}, {3}, {4}, {5}, GETUTCDATE(), CONVERT(varchar, CONVERT(datetime2(7), '{6}'), 127))"
+                        , "\t" //Environment.NewLine
+                        , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
+                        , _Session.m_Id
+                        , changeValue.value.m_IdPut, (int)changeValue.value.m_iQuality, changeValue.value.value.ToString(CultureInfo.InvariantCulture), changeValue.value.stamp_value.ToString(@"yyyyMMdd HH:mm:ss"));
                 }
             //}
 
@@ -1236,16 +1228,14 @@ namespace TepCommon
                         , query, err)
                     , Logging.INDEX_MESSAGE.NOT_SET);
 
-            if (!(err == 0)) {
-            //??? вернуть исходное значение
-            } else
-                changeValue.fShowValues(Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
-                        TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
-                        , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                    , Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
-                        TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
-                        , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                    , out err);
+            EventCompleted?.Invoke(EVENT.EDIT_VALUE, err == 0 ? RESULT.Ok : err < 0 ? RESULT.Error : err > 0 ? RESULT.Warning : RESULT.Exception);
+        }
+
+        public void SaveChanges(object obj)
+        {
+            int err = -1;
+
+            EventCompleted?.Invoke(EVENT.SAVE_CHANGES, err == 0 ? RESULT.Ok : err < 0 ? RESULT.Error : err > 0 ? RESULT.Warning : RESULT.Exception);
         }
 
         private DataTable mergeTableValues(DataTable tablePars, DataTable[] arTableValues, int cntBasePeriod)
@@ -2748,7 +2738,7 @@ namespace TepCommon
                     // получить копию для редактирования
                     cloneValues(type);
 
-                    EventCalculateCompleted?.Invoke(res);
+                    EventCompleted?.Invoke(EVENT.CALCULATE, res);
                 } else
                     Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - ошибка при выполнеии расчета задачи ID=" + IdTask.ToString() + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
             };
@@ -2786,7 +2776,7 @@ namespace TepCommon
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, string.Format(@""), Logging.INDEX_MESSAGE.NOT_SET);
 
-                    EventCalculateCompleted?.Invoke(RESULT.Exception);
+                    EventCompleted?.Invoke(EVENT.CALCULATE, RESULT.Exception);
                 }
             } else
                 Logging.Logg().Error(@"HandlerDbTaskCalculate::Calculate () - при регистрации соединения...", Logging.INDEX_MESSAGE.NOT_SET);

@@ -119,7 +119,12 @@ namespace PluginTaskTepForm3Tech
             base.handlerDbTaskCalculate_onAddComponent(obj);
         }
 
-        protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onEventCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void handlerDbTaskCalculate_onEditValueCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             throw new NotImplementedException();
         }

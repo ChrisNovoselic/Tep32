@@ -611,7 +611,7 @@ namespace PluginTaskReaktivka
             (m_dgvValues as DataGridViewValuesReaktivka).UpdateStructure(ev);
         }
 
-        protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onEventCompleted(HandlerDbTaskCalculate.RESULT res)
         {
             int err = -1;
 
@@ -625,6 +625,11 @@ namespace PluginTaskReaktivka
             outValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUE>();
 
             m_dgvValues.ShowValues(inValues, outValues, out err);
+        }
+
+        protected override void handlerDbTaskCalculate_onEditValueCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
         }
 
         protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)

@@ -188,19 +188,6 @@ namespace PluginTaskAutobook
                 Columns.Add(column);                
             }
             /// <summary>
-            /// Установка возможности редактирования столбцов
-            /// </summary>
-            /// <param name="nameCol">имя стобца</param>
-            /// <param name="bReadOnly">true/false</param>            
-            public void SetReadOnly(string nameCol, bool bReadOnly)
-            {
-                foreach (DataGridViewColumn col in Columns)
-                    if (col.Name == nameCol)
-                        col.ReadOnly = bReadOnly;
-                    else
-                        ;
-            }
-            /// <summary>
             /// Словарь с перечнем компонентов станции
             ///  , тлько те компоненты, с кот. связаны параметры алгоритма расчета 2-го порядка
             /// </summary>

@@ -1001,7 +1001,7 @@ namespace PluginTaskBalTeplo
         /// Обработчик события - завершение загрузки значений
         ///  , сигнал для их отображения
         /// </summary>
-        protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onEventCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             dgvBlock.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
                 , m_dictTableDictPrj);
@@ -1023,6 +1023,11 @@ namespace PluginTaskBalTeplo
             ////сохранить вых.корр. знач. в DataTable
             //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
             //    dgvBlock.FillTableCorValue(HandlerDb.OutValues(out err), dgvBlock);
+        }
+
+        protected override void handlerDbTaskCalculate_onEditValueCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
         }
 
         protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)

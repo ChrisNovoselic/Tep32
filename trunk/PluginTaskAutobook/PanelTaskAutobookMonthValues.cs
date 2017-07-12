@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using TepCommon;
 using Excel = Microsoft.Office.Interop.Excel;
 using Outlook = Microsoft.Office.Interop.Outlook;
+using System.Threading;
 
 namespace PluginTaskAutobook
 {
@@ -575,6 +576,7 @@ namespace PluginTaskAutobook
                 ctrl.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
                 ctrl.Text = @"Сохранить";
                 //ctrl.Dock = DockStyle.Top;
+                ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
@@ -755,14 +757,51 @@ namespace PluginTaskAutobook
             base.Stop();
         }
 
-        protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onEventCompleted(HandlerDbTaskCalculate.EVENT evt, TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
-            dataAskedHostMessageToStatusStrip(res, string.Format(@"Получение значений из БД"));
+            int err = -1;
+
+            string mesToStatusStrip = string.Empty;
+
+            switch (evt) {
+                case HandlerDbTaskCalculate.EVENT.SET_VALUES: // вычисление значений, сохранение во временной таблице
+                    mesToStatusStrip = string.Format(@"Получение значений из БД");
+                    break;
+                case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.EDIT_VALUE: // отобразить значения
+                        
+                    break;
+                case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                    break;
+                default:
+                    break;
+            }
+
+            dataAskedHostMessageToStatusStrip(res, mesToStatusStrip);
 
             if ((res == TepCommon.HandlerDbTaskCalculate.RESULT.Ok)
                 || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
-            // вычисление значений, сохранение во временной таблице
-                HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+                switch (evt) {
+                    case HandlerDbTaskCalculate.EVENT.SET_VALUES: // вычисление значений, сохранение во временной таблице
+                        HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.EDIT_VALUE: // отобразить значения
+                        m_dgvValues.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                                TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+                                , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                            , HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                                TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
+                                , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                            , out err);
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                        break;
+                    default:
+                        break;
+                }
             else
                 ;            
         }
@@ -1060,20 +1099,8 @@ namespace PluginTaskAutobook
         {
             int err = -1;
             string errMsg = string.Empty;
-            ////???сбор значений
-            //valuesFence();
 
-            //m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] = getStructurOutval(
-            //    getNameTableOut(PanelManagement.DatetimeRange.Begin), out err);
-
-            //m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD] =
-            //    HandlerDb.SaveResOut(m_TableOrigin, m_TableEdit, out err);
-
-            //if (m_TableEdit.Rows.Count > 0)
-                ////???save вх. значений
-                //saveInvalValue(out err);
-            //else
-            //    ;
+            new Thread(new ParameterizedThreadStart(HandlerDb.SaveChanges)) { IsBackground = true }.Start(null);
         }
     }
 }

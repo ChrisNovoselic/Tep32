@@ -119,7 +119,12 @@ namespace PluginTaskEJournal
             base.handlerDbTaskCalculate_onAddComponent(obj);
         }
 
-        protected override void handlerDbTaskCalculate_onSetValuesCompleted(HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onEventCompleted(HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void handlerDbTaskCalculate_onEditValueCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             throw new NotImplementedException();
         }

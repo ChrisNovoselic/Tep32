@@ -393,7 +393,7 @@ namespace PluginTaskAutobook
         /// Обработчик события - завершена загрузка данных (установка значений в коллекциях со значениями)
         /// </summary>
         /// <param name="res">Признак успещности/ошибки при выполнении операции</param>
-        protected override void handlerDbTaskCalculate_onSetValuesCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onEventCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             int err = -1;
 
@@ -411,6 +411,11 @@ namespace PluginTaskAutobook
                     , out err);
             else
                 ;
+        }
+
+        protected override void handlerDbTaskCalculate_onEditValueCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        {
+            throw new NotImplementedException();
         }
 
         protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
