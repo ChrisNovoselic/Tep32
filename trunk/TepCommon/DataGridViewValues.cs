@@ -139,8 +139,10 @@ namespace TepCommon
             //    });
             //}
 
-            private void onCellValueChanged(object sender, DataGridViewCellEventArgs e)
+            private void onCellValueChanged(object sender, DataGridViewCellEventArgs ev)
             {
+                int err = -1;
+
                 HandlerDbTaskCalculate.PUT_PARAMETER putPar;
                 int idNAlg = -1
                     , idPut = -1;
@@ -149,23 +151,44 @@ namespace TepCommon
                 bool bRecalculate = false;
                 DateTime stamp_value = DateTime.MinValue;
 
-                if ((!(e.ColumnIndex < 0))
-                    && (!(e.RowIndex < 0))) {
-                    if (!(Rows[e.RowIndex].Cells[e.ColumnIndex].Tag == null))
-                        cellProperty = (CELL_PROPERTY)Rows[e.RowIndex].Cells[e.ColumnIndex].Tag;
+                if ((!(ev.ColumnIndex < 0))
+                    && (!(ev.RowIndex < 0))) {
+                    // для исключения ошибки при сборке - значения по умолчанию
+                    putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
+
+                    if (!(Rows[ev.RowIndex].Cells[ev.ColumnIndex].Tag == null))
+                        cellProperty = (CELL_PROPERTY)Rows[ev.RowIndex].Cells[ev.ColumnIndex].Tag;
                     else
                         cellProperty = new CELL_PROPERTY() { m_iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC, m_Value = float.MinValue };
 
                     if ((!(cellProperty.IsEmpty == true))
-                        && (string.IsNullOrEmpty(Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString()) == false)
-                        && (float.TryParse(Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString(), out fltValue) == true)) {
-                        putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)Columns[e.ColumnIndex].Tag;
+                        && (string.IsNullOrEmpty(Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value?.ToString()) == false))
+                        if (float.TryParse(Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value?.ToString(), out fltValue) == false) {
+                            fltValue = 0F;
+
+                            Logging.Logg().Error(string.Format(@"DataGridViewValues::onCellValueChanged ({0}) - не удалось преобразовать в значение..."
+                                    , Rows[ev.RowIndex].Cells[ev.ColumnIndex].Value?.ToString())
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+                        } else
+                            ;
+                    else
+                        fltValue = 0F;
+
+                    try {
+                        putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)Columns[ev.ColumnIndex].Tag;
+
+                        err = 0;
+                    } catch (Exception e) {
+                        Logging.Logg().Exception(e, string.Format(@"HPanelTepCommon.DataGridViewValues::onCellValueChanged(Column={0}) - возможно, для столбца снят признак 'ReadOnly'...", ev.ColumnIndex), Logging.INDEX_MESSAGE.NOT_SET);
+                    }
+
+                    if (err == 0) {
                         idNAlg = putPar.m_idNAlg;
                         idPut = putPar.m_Id;
                         cellProperty.SetValue((float)GetValueDbAsRatio(idNAlg, idPut, fltValue));
                         cellProperty.SetQuality(HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER); // значение изменено пользователем
                         if (_modeData == ModeData.DATETIME) {
-                            stamp_value = (DateTime)Rows[e.RowIndex].Tag;
+                            stamp_value = (DateTime)Rows[ev.RowIndex].Tag;
                         } else if (_modeData == ModeData.NALG)
                             //??? метка даты/времени - константа 
                             stamp_value = (DateTime)Tag;
@@ -173,19 +196,17 @@ namespace TepCommon
                             ;
 
                         foreach (DataGridViewColumn col in Columns) {
-                            if (!(col.Index == e.ColumnIndex)) {
+                            if (!(col.Index == ev.ColumnIndex)) {
                                 if (col.Tag is FormulaHelper) {
-                                    bRecalculate = (col.Tag as FormulaHelper).IndexColumns.Contains(e.ColumnIndex);
-
-                                    if (bRecalculate == true)
+                                    if ((bRecalculate = (col.Tag as FormulaHelper).IndexColumns.Contains(ev.ColumnIndex)) == true)
                                         break;
                                     else
                                         ;
                                 } else {
-                                // идентификатор столбца не является формулой
+                                    // идентификатор столбца не является формулой
                                 }
                             } else {
-                            // столбец является столбцом события
+                                // столбец является столбцом события
                             }
                         }
 
@@ -195,10 +216,10 @@ namespace TepCommon
                             , fShowValues = ShowValues
                         });
                     } else
-                        Logging.Logg().Error(string.Format(@"DataGridViewValues::onCellValueChanged ({0}) - не удалось преобразовать в значение..."
-                                , Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString())
-                            , Logging.INDEX_MESSAGE.NOT_SET);
+                    // ошибка при определени идентификатора
+                        ;
                 } else
+                // не новый столбец или новая строка (индексы столбца/строки известны)
                     ;
             }            
 
@@ -234,20 +255,51 @@ namespace TepCommon
 
             private void columns_OnCollectionChanged(object sender, System.ComponentModel.CollectionChangeEventArgs e)
             {
+                int idAlg = -1;
+                string fmtRoundValue = string.Empty;
                 FormulaHelper tagFormaula;
+                List<object> tags; // tag-и столбцов, для поиска базового столбца для форматирования значения в тех столбцах, которые не являются входными/выходными параметрами
+                object tag;
+                DataGridViewColumn column;
 
-                //if (e.RowIndex == 0)
-                    foreach (DataGridViewColumn column in Columns) {
-                        if (column.Tag is FormulaHelper) {
-                            tagFormaula = column.Tag as FormulaHelper;
+                if (e.Action == System.ComponentModel.CollectionChangeAction.Add) {
+                    //foreach (DataGridViewColumn column in Columns) {
+                        column = e.Element as DataGridViewColumn;
 
-                            tagFormaula.Prepare((from col in Columns.Cast<DataGridViewColumn>() select col.Name));
-                            //tagFormaula.Prepare(Columns.Cast<DataGridViewColumn>().Select(col => { return col.Name; }));
+                        if (Equals(column.Tag, null) == false) {
+                            if (column.Tag is HandlerDbTaskCalculate.PUT_PARAMETER) {
+                                idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)column.Tag).m_idNAlg;
+
+                                fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
+                            } else if (column.Tag is FormulaHelper) {
+                                tagFormaula = column.Tag as FormulaHelper;                            
+
+                                tagFormaula.Prepare((from col in Columns.Cast<DataGridViewColumn>() select col.Name));
+                        
+                                #region Поиск 'tag' базового столбца для форматирования значения
+                                tags = fFormatColumns(tagFormaula.IndexColumns);
+                                //??? TODO: требуется выбрать из массива такой 'tag' у которого максимальное значение 'm_vsRound'
+                                tag = tags[0];
+                                #endregion
+
+                                if (tag is HandlerDbTaskCalculate.PUT_PARAMETER) {
+                                    idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)tag).m_idNAlg;
+
+                                    fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
+                                } else
+                                    fmtRoundValue = NALG_PROPERTY.DefaultFormatValue;                            
+                            } else
+                                throw new Exception (string.Format(@"HPanelTepCommon.DataGridViewValues::columns_OnCollectionChanged (tag type={0}) - неизвестный тип идентификатора столбца...", column.Tag.GetType().FullName));
+
+                            // установить свойства столбца для отображения
+                            column.ValueType = typeof(float);
+                            column.DefaultCellStyle.FormatProvider = CultureInfo.InvariantCulture;
+                            column.DefaultCellStyle.Format = fmtRoundValue;
                         } else
                             ;
-                    }
-                //else
-                //    ;
+                    //}
+                } else
+                    ;
             }
 
             //private void onRowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
@@ -291,7 +343,7 @@ namespace TepCommon
 
                 public string FormatRound { get { return string.Format(@"F{0}", m_vsRound); } }
 
-                public static string DefaultFormatRound = @"F2";
+                public static string DefaultFormatValue = @"F2";
             }
             /// <summary>
             /// Структура с дополнительными свойствами ячейки отображения
@@ -849,9 +901,6 @@ namespace TepCommon
                 Color clrCell = Color.Empty;
                 FormulaHelper formula;
                 List<float> args;
-                string fmtRoundValue = string.Empty;
-                List<object> tags; // tag-и столбцов, для поиска базового столбца для форматирования значения в тех столбцах, которые не являются входными/выходными параметрами
-                object tag;
 
                 // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
                 if (RowCount > 1) {
@@ -869,12 +918,16 @@ namespace TepCommon
                                     idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_idNAlg;
                                     idPut = ((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_Id;
                                     iCol = col.Index;
+
+                                    //fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
                                 } catch (Exception e) {
                                     Logging.Logg().Exception(e, @"DataGridViewValues::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                                 }
 
                                 if ((putPar.IdComponent > 0)
                                     && (!(columnValues == null))) {
+                                    //col.DefaultCellStyle.Format = fmtRoundValue;
+
                                     fltColumnAgregateValue = 0F;
                                     columnAction = Rows[RowCount - 1].Tag.GetType().IsPrimitive == true // есть ли итоговая строка?
                                         ? m_dictNAlgProperties[idAlg].m_sAverage // итоговая строка - есть (операция по агрегации известна)
@@ -903,7 +956,8 @@ namespace TepCommon
                                                 fltVal = GetValueCellAsRatio(idAlg, idPut, fltVal);
 
                                                 // отобразить с количеством знаков в соответствии с настройками
-                                                row.Cells[iCol].Value = fltVal.ToString(m_dictNAlgProperties[idAlg].FormatRound, System.Globalization.CultureInfo.InvariantCulture);
+                                                row.Cells[iCol].Value = fltVal;
+                                                row.Cells[iCol].ToolTipText = fltVal.ToString();
                                             } else
                                                 ;
 
@@ -923,7 +977,8 @@ namespace TepCommon
                                         else
                                             ;
 
-                                        Rows[Rows.Count - 1].Cells[iCol].Value = fltColumnAgregateValue.ToString(m_dictNAlgProperties[idAlg].FormatRound, CultureInfo.InvariantCulture);
+                                        Rows[Rows.Count - 1].Cells[iCol].Value =
+                                            fltColumnAgregateValue;
                                     } else
                                         ;
                                 } else
@@ -934,29 +989,16 @@ namespace TepCommon
                             } else if (col.Tag is FormulaHelper) {                            
                                 formula = (FormulaHelper)col.Tag;
 
-                                #region Поиск 'tag' базавого столбца для форматирования значения
-                                tags = fFormatColumns(formula.IndexColumns);
-
-                                tag = tags[0];
-                                #endregion
-
-                                if (tag is HandlerDbTaskCalculate.PUT_PARAMETER) {
-                                    idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)tag).m_idNAlg;
-
-                                    fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
-                                } else
-                                    fmtRoundValue = NALG_PROPERTY.DefaultFormatRound;
-
                                 if (formula.IndexColumns.Count() > 0)
                                     foreach (DataGridViewRow r in Rows) {
                                         try {
                                             args = new List<float>();
-
+                                            // получить значения из яччеек в столбцах, являющихся аргументами формулы
                                             foreach (int indxCol in formula.IndexColumns) {
                                                 fltVal = (Equals(r.Cells[indxCol].Value, null) == false)
-                                                    ? float.Parse((string)r.Cells[indxCol].Value, System.Globalization.CultureInfo.InvariantCulture)
-                                                        : float.MinValue;
-
+                                                    ? (float)r.Cells[indxCol].Value //float.Parse((string)r.Cells[indxCol].Value, System.Globalization.CultureInfo.InvariantCulture)
+                                                        : float.MinValue; // признак отсутствия значения в ячейке
+                                                // добавить значение - аргумент
                                                 args.Add(fltVal);
                                             }
 
@@ -973,7 +1015,7 @@ namespace TepCommon
                                                 // предыдущая строка в наличии - учесть ее значение
                                                     // значение предыдущей строки
                                                     fltVal = (Equals(Rows[r.Index - 1].Cells[col.Index].Value, null) == false)
-                                                        ? float.Parse((string)Rows[r.Index - 1].Cells[col.Index].Value, System.Globalization.CultureInfo.InvariantCulture)
+                                                        ? (float)Rows[r.Index - 1].Cells[col.Index].Value //float.Parse((string)Rows[r.Index - 1].Cells[col.Index].Value, System.Globalization.CultureInfo.InvariantCulture)
                                                             : float.MinValue;
                                                 // только одно значение - args[0] (из одного из столбцов)
                                                 if ((fltVal > float.MinValue)
@@ -984,8 +1026,7 @@ namespace TepCommon
                                             }
 
                                             if (fltVal > float.MinValue) {
-                                                r.Cells[col.Index].Value =
-                                                    fltVal.ToString(fmtRoundValue, System.Globalization.CultureInfo.InvariantCulture);
+                                                r.Cells[col.Index].Value = fltVal;
                                             } else
                                                 ;
                                         } catch (Exception e) {
@@ -995,6 +1036,7 @@ namespace TepCommon
                                 else
                                     ;                                
                             } else
+                            // для столбца указан не известный параметр алгоритма расчета 2-го порядка (связанный с компонентом станции)
                                 ;
                         else
                         // для столбца не указан параметр алгоритма расчета 2-го порядка (связанный с компонентом станции)

@@ -382,6 +382,11 @@ namespace TepCommon
             public DateTime stamp_action;
 
             public DelagateShowValues fShowValues;
+
+            public void Update()
+            {
+                stamp_action = DateTime.UtcNow;
+            }
         }
         /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
@@ -1149,24 +1154,34 @@ namespace TepCommon
         /// <param name="value">Новое значение</param>
         public virtual void SetValue(CHANGE_VALUE changeValue)
         {
-            int err = -1;
+            int err = -1
+                , iAction = -1 // новая запись, запись без метки, запись для обновления
+                , indxPrevValue = -1
+                , indxPrevChangeValue = -1;
             string query = string.Empty;
-            VALUE prevValue
-                , newValue;
-            CHANGE_VALUE prevChangeValue;
+            CHANGE_VALUE newChangeValue;
 
-            newValue = changeValue.value;
+            newChangeValue = new CHANGE_VALUE() { m_keyValues = changeValue.m_keyValues, value = changeValue.value, stamp_action = DateTime.UtcNow };
 
             //foreach (KeyValuePair<KEY_VALUES, List<VALUE>> pair in _dictValues) {
-                prevValue = _dictValues[changeValue.m_keyValues].Find(item => { return ((item.m_IdPut == changeValue.value.m_IdPut)
-                    && (item.stamp_value.Equals(newValue.stamp_value) == true)); });
+                indxPrevValue = _dictValues[changeValue.m_keyValues].FindIndex(value => {
+                    return (value.m_IdPut == changeValue.value.m_IdPut)
+                        && ((value.stamp_value == changeValue.value.stamp_value)
+                            || (value.stamp_value == DateTime.MinValue));
+                });
 
-                if (prevValue.stamp_value.Equals(DateTime.MinValue) == false) {
-                    prevChangeValue = _listChanges.Find(item => { return (item.m_keyValues == changeValue.m_keyValues)
-                        && (item.value.m_IdPut == prevValue.m_IdPut)
-                        && (item.value.stamp_value == newValue.stamp_value);
-                    });
+                if (indxPrevValue < 0) {
+                // NEW VALUE
+                    ; // оставить как есть
+                } else if (_dictValues[changeValue.m_keyValues][indxPrevValue].stamp_value.Equals(DateTime.MinValue) == true)
+                // NOT_REC
+                    iAction = 0;
+                else
+                // UPDATE
+                    iAction = 1;
+                    
 
+                if (!(iAction < 0)) {
                     query = string.Format("UPDATE [dbo].[{1}]"
                         + " SET [QUALITY] = {2}, [VALUE] = {3}, [WR_DATETIME] = GETUTCDATE()"
                         + " WHERE [ID_SESSION] = {4} AND [ID_PUT] = {5} AND CONVERT(datetime2(7), [EXTENDED_DEFINITION]) = '{6}'"
@@ -1175,22 +1190,18 @@ namespace TepCommon
                         //+ " WHERE [ID_SESSION] = {4} AND [ID_PUT] = {5} AND [EXTENDED_DEFINITION] = CONVERT(varchar, '{6}', 102);"
                         , "\t" //Environment.NewLine
                         , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
-                        , (int)newValue.m_iQuality, newValue.value.ToString(CultureInfo.InvariantCulture)
-                        , _Session.m_Id, newValue.m_IdPut, newValue.stamp_value.ToString(@"yyyyMMdd HH:mm:ss"));
+                        , (int)changeValue.value.m_iQuality, changeValue.value.value.ToString(CultureInfo.InvariantCulture)
+                        , _Session.m_Id, changeValue.value.m_IdPut, changeValue.value.stamp_value.ToString(@"yyyyMMdd HH:mm:ss"));
 
                     //break;
                 } else {
-                    prevChangeValue = new CHANGE_VALUE() { m_keyValues = changeValue.m_keyValues
-                        , value = new VALUE() { m_IdPut = newValue.m_IdPut, m_iQuality = newValue.m_iQuality, value = newValue.value, stamp_value = newValue.stamp_value }
-                    };
-
                     query = string.Format("INSERT INTO [dbo].[{1}]"
-                        + @" ([ID_SESSION], [ID_PUT], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION])"
-                        + @" VALUES ({2}, {3}, {4}, {5}, GETUTCDATE(), CONVERT(varchar, CONVERT(datetime2(7), '{6}'), 127))"
-                        , "\t" //Environment.NewLine
-                        , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
-                        , _Session.m_Id
-                        , newValue.m_IdPut, (int)newValue.m_iQuality, newValue.value.ToString(CultureInfo.InvariantCulture), newValue.stamp_value.ToString(@"yyyyMMdd HH:mm:ss"));
+                            + @" ([ID_SESSION], [ID_PUT], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION])"
+                            + @" VALUES ({2}, {3}, {4}, {5}, GETUTCDATE(), CONVERT(varchar, CONVERT(datetime2(7), '{6}'), 127))"
+                            , "\t" //Environment.NewLine
+                            , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
+                            , _Session.m_Id
+                            , changeValue.value.m_IdPut, (int)changeValue.value.m_iQuality, changeValue.value.value.ToString(CultureInfo.InvariantCulture), changeValue.value.stamp_value.ToString(@"yyyyMMdd HH:mm:ss"));
                 }
             //}
 
@@ -1198,17 +1209,23 @@ namespace TepCommon
                 ExecNonQuery(query, out err);
 
                 if (err == 0) {
-                    if (prevValue.stamp_value.Equals(DateTime.MinValue) == true)
-                        _dictValues[changeValue.m_keyValues].Add(prevChangeValue.value);
-                    else
-                        ;
+                    if (iAction < 0) {
+                        _dictValues[changeValue.m_keyValues].Add(changeValue.value);
 
-                    if (prevChangeValue.stamp_action.Equals(DateTime.MinValue) == true)
+                        indxPrevValue = _dictValues[changeValue.m_keyValues].Count - 1;
+                    } else
+                        _dictValues[changeValue.m_keyValues][indxPrevValue] = changeValue.value;
+
+                    indxPrevChangeValue = _listChanges.FindIndex(item => {
+                        return (item.m_keyValues == changeValue.m_keyValues)
+                            && (item.value.m_IdPut == _dictValues[changeValue.m_keyValues][indxPrevValue].m_IdPut)
+                            && (item.value.stamp_value == changeValue.value.stamp_value);
+                    });
+                    if (indxPrevChangeValue < 0)
                     // параметр ни разу не изменялся с момента сохранения
-                        _listChanges.Add(new CHANGE_VALUE() { m_keyValues = changeValue.m_keyValues, value = newValue, stamp_action = DateTime.UtcNow });
+                        _listChanges.Add(newChangeValue);
                     else {
-                        prevChangeValue.value.value = newValue.value;
-                        prevChangeValue.stamp_action = DateTime.UtcNow;
+                        _listChanges[indxPrevChangeValue] = newChangeValue;
                     }
                 } else
                     Logging.Logg().Error(string.Format(@"handlerDbTaskCalculate::SetValue () - изменения не зарегистрированы, запрос [QUERY={0}] на обновление выполнен с ошибкой [err={1}]..."
