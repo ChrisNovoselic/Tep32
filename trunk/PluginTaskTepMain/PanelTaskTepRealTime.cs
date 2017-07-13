@@ -150,19 +150,43 @@ namespace PluginTaskTepMain
             throw new NotImplementedException();
         }
 
-        protected override void handlerDbTaskCalculate_onEventCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onEventCompleted(HandlerDbTaskCalculate.EVENT evt, TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
-            throw new NotImplementedException();
-        }
+            int err = -1;
 
-        protected override void handlerDbTaskCalculate_onEditValueCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
-        {
-            throw new NotImplementedException();
-        }
+            string msgToStatusStrip = string.Empty;
 
-        protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
-        {
-            throw new NotImplementedException();
+            switch (evt) {
+                case HandlerDbTaskCalculate.EVENT.SET_VALUES:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                    break;
+                default:
+                    break;
+            }
+
+            dataAskedHostMessageToStatusStrip(res, msgToStatusStrip);
+
+            if ((res == TepCommon.HandlerDbTaskCalculate.RESULT.Ok)
+                || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
+                switch (evt) {
+                    case HandlerDbTaskCalculate.EVENT.SET_VALUES: // отображать значения при отсутствии ошибок                        
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                        break;
+                    default:
+                        break;
+                }
+            else
+                ;
         }
 
         protected override void handlerDbTaskCalculate_onCalculateProcess(HandlerDbTaskCalculate.CalculateProccessEventArgs ev)

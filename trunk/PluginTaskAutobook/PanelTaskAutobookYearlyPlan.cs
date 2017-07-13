@@ -393,34 +393,51 @@ namespace PluginTaskAutobook
         /// Обработчик события - завершена загрузка данных (установка значений в коллекциях со значениями)
         /// </summary>
         /// <param name="res">Признак успещности/ошибки при выполнении операции</param>
-        protected override void handlerDbTaskCalculate_onEventCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onEventCompleted(HandlerDbTaskCalculate.EVENT evt, TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             int err = -1;
 
-            dataAskedHostMessageToStatusStrip(res, string.Format(@"Получение значений из БД"));
+            string msgToStatusStrip = string.Empty;
+
+            switch (evt) {
+                case HandlerDbTaskCalculate.EVENT.SET_VALUES:
+                    msgToStatusStrip = string.Format(@"Получение значений из БД");
+                    break;
+                case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                    break;
+                default:
+                    break;
+            }
+
+            dataAskedHostMessageToStatusStrip(res, msgToStatusStrip);
 
             if ((res == TepCommon.HandlerDbTaskCalculate.RESULT.Ok)
                 || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
-            // отображать значения при отсутствии ошибок
-                m_dgvValues.ShowValues(((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
-                        ? HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                            : new List<TepCommon.HandlerDbTaskCalculate.VALUE>()
-                    , ((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
-                        ? HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                            : new List<TepCommon.HandlerDbTaskCalculate.VALUE>()
-                    , out err);
+                switch (evt) {
+                    case HandlerDbTaskCalculate.EVENT.SET_VALUES: // отображать значения при отсутствии ошибок
+                        m_dgvValues.ShowValues(((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
+                                ? HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                                    : new List<TepCommon.HandlerDbTaskCalculate.VALUE>()
+                            , ((TaskCalculateType & TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES) == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+                                ? HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                                    : new List<TepCommon.HandlerDbTaskCalculate.VALUE>()
+                            , out err);
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                        break;
+                    default:
+                        break;
+                }            
             else
                 ;
-        }
-
-        protected override void handlerDbTaskCalculate_onEditValueCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
-        {
-            throw new NotImplementedException();
         }
 
         protected override void handlerDbTaskCalculate_onCalculateProcess(HandlerDbTaskCalculate.CalculateProccessEventArgs ev)

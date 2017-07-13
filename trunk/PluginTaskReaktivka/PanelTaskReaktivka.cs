@@ -611,30 +611,54 @@ namespace PluginTaskReaktivka
             (m_dgvValues as DataGridViewValuesReaktivka).UpdateStructure(ev);
         }
 
-        protected override void handlerDbTaskCalculate_onEventCompleted(HandlerDbTaskCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onEventCompleted(HandlerDbTaskCalculate.EVENT evt, TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
             int err = -1;
+
+            string msgToStatusStrip = string.Empty;
 
             HandlerDbTaskCalculate.KEY_VALUES key;
             IEnumerable<HandlerDbTaskCalculate.VALUE> inValues
                 , outValues;
 
-            key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
-            inValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUE>();
-            key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
-            outValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUE>();
+            switch (evt) {
+                case HandlerDbTaskCalculate.EVENT.SET_VALUES:
+                    msgToStatusStrip = string.Format(@"Получение значений из БД");
+                    break;
+                case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                    break;
+                default:
+                    break;
+            }
 
-            m_dgvValues.ShowValues(inValues, outValues, out err);
-        }
+            dataAskedHostMessageToStatusStrip(res, msgToStatusStrip);
 
-        protected override void handlerDbTaskCalculate_onEditValueCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
-        {
-            throw new NotImplementedException();
-        }
+            if ((res == TepCommon.HandlerDbTaskCalculate.RESULT.Ok)
+                || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
+                switch (evt) {
+                    case HandlerDbTaskCalculate.EVENT.SET_VALUES: // отображать значения при отсутствии ошибок 
+                        key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
+                        inValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUE>();
+                        key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
+                        outValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUE>();
 
-        protected override void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res)
-        {
-            throw new NotImplementedException();
+                        m_dgvValues.ShowValues(inValues, outValues, out err);
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                        break;
+                    default:
+                        break;
+                }
+            else
+                ;
         }
 
         protected override void handlerDbTaskCalculate_onCalculateProcess(HandlerDbTaskCalculate.CalculateProccessEventArgs ev)

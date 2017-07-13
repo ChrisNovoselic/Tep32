@@ -998,41 +998,59 @@ namespace PluginTaskBalTeplo
         #endregion
 
         /// <summary>
-        /// Обработчик события - завершение загрузки значений
-        ///  , сигнал для их отображения
+        /// Обработчик события - завершение обработки (длительной) операции
         /// </summary>
-        protected override void handlerDbTaskCalculate_onEventCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
+        /// <param name="evt">Идентификатор (признак) выполняемой операции</param>
+        /// <param name="res">Признак результата выполнения операции</param>
+        protected override void handlerDbTaskCalculate_onEventCompleted(HandlerDbTaskCalculate.EVENT evt, TepCommon.HandlerDbTaskCalculate.RESULT res)
         {
-            dgvBlock.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                , m_dictTableDictPrj);
-            dgvOutput.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                , m_dictTableDictPrj);
-            dgvTeploBL.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                , m_dictTableDictPrj);
-            dgvTeploOP.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                , m_dictTableDictPrj);
-            dgvParam.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                , m_dictTableDictPrj);
-            dgvPromPlozsh.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
-                , m_dictTableDictPrj);
-            ////сохранить вых. знач. в DataTable
-            //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-            //    dgvBlock.FillTableValueDay(HandlerDb.OutValues(out err)
-            //       , dgvBlock
-            //       , HandlerDb.getOutPut(out err));
-            ////сохранить вых.корр. знач. в DataTable
-            //m_arTableEdit[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT] =
-            //    dgvBlock.FillTableCorValue(HandlerDb.OutValues(out err), dgvBlock);
-        }
+            int err = -1;
 
-        protected override void handlerDbTaskCalculate_onEditValueCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
-        {
-            throw new NotImplementedException();
-        }
+            string msgToStatusStrip = string.Empty;
 
-        protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
-        {
-            throw new NotImplementedException();
+            switch (evt) {
+                case HandlerDbTaskCalculate.EVENT.SET_VALUES:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                    break;
+                default:
+                    break;
+            }
+
+            dataAskedHostMessageToStatusStrip(res, msgToStatusStrip);
+
+            if ((res == TepCommon.HandlerDbTaskCalculate.RESULT.Ok)
+                || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
+                switch (evt) {
+                    case HandlerDbTaskCalculate.EVENT.SET_VALUES: // отображать значения при отсутствии ошибок
+                        dgvBlock.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                            , m_dictTableDictPrj);
+                        dgvOutput.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                            , m_dictTableDictPrj);
+                        dgvTeploBL.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                            , m_dictTableDictPrj);
+                        dgvTeploOP.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                            , m_dictTableDictPrj);
+                        dgvParam.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                            , m_dictTableDictPrj);
+                        dgvPromPlozsh.ShowValues(m_arTableOrigin_in, m_arTableOrigin_out
+                            , m_dictTableDictPrj);
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                        break;
+                    default:
+                        break;
+                }
+            else
+                ;
         }
 
         protected override void handlerDbTaskCalculate_onCalculateProcess(HandlerDbTaskCalculate.CalculateProccessEventArgs ev)

@@ -232,24 +232,47 @@ namespace PluginTaskTepMain
         //        ;
         //}
 
-        protected override void handlerDbTaskCalculate_onEventCompleted(HandlerDbTaskTepCalculate.RESULT res)
+        protected override void handlerDbTaskCalculate_onEventCompleted(HandlerDbTaskCalculate.EVENT evt, HandlerDbTaskTepCalculate.RESULT res)
         {
             int err = -1;
 
-            // отобразить значения
-            m_dgvValues.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                , HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                , out err);
-        }
+            string msgToStatusStrip = string.Empty;
 
-        protected override void handlerDbTaskCalculate_onEditValueCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
-        {
-            throw new NotImplementedException();
-        }
+            switch (evt) {
+                case HandlerDbTaskCalculate.EVENT.SET_VALUES:
+                    msgToStatusStrip = string.Format(@"Получение значений из БД");
+                    break;
+                case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
+                    break;
+                case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                    break;
+                default:
+                    break;
+            }
 
-        protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
-        {
-            throw new NotImplementedException();
+            dataAskedHostMessageToStatusStrip(res, msgToStatusStrip);
+
+            if ((res == TepCommon.HandlerDbTaskCalculate.RESULT.Ok)
+                || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
+                switch (evt) {
+                    case HandlerDbTaskCalculate.EVENT.SET_VALUES: // отображать значения при отсутствии ошибок
+                        m_dgvValues.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                            , HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                            , out err);
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.CALCULATE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                        break;
+                    default:
+                        break;
+                }
+            else
+                ;
         }
 
         protected override void handlerDbTaskCalculate_onCalculateProcess(HandlerDbTaskCalculate.CalculateProccessEventArgs ev)

@@ -372,10 +372,12 @@ namespace PluginTaskAutobook
             /// <returns>признак ошибки</returns>
             private bool addWorkBooks()
             {
+                bool bRes = true;
+
                 //string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xlsx";
                 string pathToTemplate = Path.GetFullPath(@"Template\TemplateAutobook.xlsx");
                 object pathToTemplateObj = pathToTemplate;
-                bool bflag = true;
+                
                 try
                 {
                     m_workBook = m_excApp.Workbooks.Add(pathToTemplate);
@@ -383,10 +385,10 @@ namespace PluginTaskAutobook
                 catch (Exception exp)
                 {
                     Close();
-                    bflag = false;
+                    bRes = false;
                     MessageBox.Show("Отсутствует шаблон для отчета Excel" + exp);
                 }
-                return bflag;
+                return bRes;
             }
 
             /// <summary>
@@ -654,6 +656,28 @@ namespace PluginTaskAutobook
                 else
                     ;
             }
+
+            #region Установить вкл./выкл. состояние для кнопки
+            private void setButtonEnabled(INDEX_CONTROL indx, bool value)
+            {
+                Control ctrl = null;
+                ctrl = findControl(indx.ToString());
+                if (!(ctrl.Enabled == value))
+                    ctrl.Enabled = value;
+                else
+                    ;
+            }
+
+            public bool ButtonSaveEnabled
+            {
+                set { setButtonEnabled(INDEX_CONTROL.BUTTON_SAVE, value); }
+            }
+
+            public bool ButtonExportEnabled
+            {
+                set { setButtonEnabled(INDEX_CONTROL.BUTTON_EXPORT, value); }
+            }
+            #endregion
         }
 
         /// <summary>
@@ -786,9 +810,8 @@ namespace PluginTaskAutobook
                     case HandlerDbTaskCalculate.EVENT.SET_VALUES: // вычисление значений, сохранение во временной таблице
                         HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
                         break;
-                    case HandlerDbTaskCalculate.EVENT.CALCULATE:
-                        break;
-                    case HandlerDbTaskCalculate.EVENT.EDIT_VALUE: // отобразить значения
+                    case HandlerDbTaskCalculate.EVENT.CALCULATE: // отобразить значения
+                    case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
                         m_dgvValues.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
                                 TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
                                 , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
@@ -804,26 +827,6 @@ namespace PluginTaskAutobook
                 }
             else
                 ;            
-        }
-
-        protected override void handlerDbTaskCalculate_onCalculateCompleted(TepCommon.HandlerDbTaskCalculate.RESULT res)
-        {
-            int err = -1;
-
-            dataAskedHostMessageToStatusStrip(res, string.Format(@"Расчет значений"));
-
-            if ((res == TepCommon.HandlerDbTaskCalculate.RESULT.Ok)
-                || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
-            // отобразить значения
-                m_dgvValues.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
-                        TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
-                        , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                    , HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
-                        TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
-                        , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                    , out err);
-            else
-                ;
         }
 
         protected override void handlerDbTaskCalculate_onCalculateProcess(HandlerDbTaskCalculate.CalculateProccessEventArgs ev)
@@ -1099,6 +1102,8 @@ namespace PluginTaskAutobook
         {
             int err = -1;
             string errMsg = string.Empty;
+
+            PanelManagement.ButtonSaveEnabled = false;
 
             new Thread(new ParameterizedThreadStart(HandlerDb.SaveChanges)) { IsBackground = true }.Start(null);
         }

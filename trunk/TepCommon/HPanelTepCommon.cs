@@ -109,18 +109,21 @@ namespace TepCommon
         /// Отправить сообщение главной форме для отображения в строке статуса
         /// </summary>
         /// <param name="res">Результат выполнения операции</param>
-        /// <param name="message"></param>
+        /// <param name="message">Строка - сообщение для отображения</param>
         protected void dataAskedHostMessageToStatusStrip(RESULT res, string message)
         {
-            (_iFuncPlugin as HFuncDbEdit).DataAskedHost(new object[] { m_Id
-                , (int)HFunc.ID_FUNC_DATA_ASKED_HOST.MESSAGE_TO_STATUSSTRIP // par[0] должен быть 'IsPrimitive'
-                , res == HandlerDbTaskCalculate.RESULT.Exception ? TYPE_MESSAGE.EXCEPTION
-                    : res == HandlerDbTaskCalculate.RESULT.Error ? TYPE_MESSAGE.ERROR
-                        : res == HandlerDbTaskCalculate.RESULT.Warning ? TYPE_MESSAGE.WARNING
-                            : res == HandlerDbTaskCalculate.RESULT.Ok ? TYPE_MESSAGE.ACTION
-                                : res == HandlerDbTaskCalculate.RESULT.Debug ? TYPE_MESSAGE.DEBUG
-                                    : TYPE_MESSAGE.UNKNOWN
-                , message });
+            if (string.IsNullOrEmpty(message) == false)
+                (_iFuncPlugin as HFuncDbEdit).DataAskedHost(new object[] { m_Id
+                    , (int)HFunc.ID_FUNC_DATA_ASKED_HOST.MESSAGE_TO_STATUSSTRIP // par[0] должен быть 'IsPrimitive'
+                    , res == HandlerDbTaskCalculate.RESULT.Exception ? TYPE_MESSAGE.EXCEPTION
+                        : res == HandlerDbTaskCalculate.RESULT.Error ? TYPE_MESSAGE.ERROR
+                            : res == HandlerDbTaskCalculate.RESULT.Warning ? TYPE_MESSAGE.WARNING
+                                : res == HandlerDbTaskCalculate.RESULT.Ok ? TYPE_MESSAGE.ACTION
+                                    : res == HandlerDbTaskCalculate.RESULT.Debug ? TYPE_MESSAGE.DEBUG
+                                        : TYPE_MESSAGE.UNKNOWN
+                    , message });
+            else
+                Logging.Logg().Warning(string.Format(@"HPanelTepCommon::dataAskedHostMessageToStatusStrip () - пустая строка для отображения в строке статуса..."), Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Очистить объекты, элементы управления от текущих данных
@@ -263,20 +266,9 @@ namespace TepCommon
         {
         }
         /// <summary>
-        /// Обраюотчик события - завершение загрузки значений из БД
+        /// Обработчик события - завершение загрузки значений из БД
         /// </summary>
         protected abstract void handlerDbTaskCalculate_onEventCompleted(EVENT evt, HandlerDbTaskCalculate.RESULT res);
-
-        protected abstract void handlerDbTaskCalculate_onEditValueCompleted(HandlerDbTaskCalculate.RESULT res);
-
-        protected virtual void handlerDbTaskCalculate_onSaveChangesCompleted(HandlerDbTaskCalculate.RESULT res)
-        {
-            _panelManagement.
-        }
-        /// <summary>
-        /// Обраюотчик события - завершение выполнения расчета
-        /// </summary>
-        protected abstract void handlerDbTaskCalculate_onCalculateCompleted(HandlerDbTaskCalculate.RESULT res);
 
         protected abstract void handlerDbTaskCalculate_onCalculateProcess(CalculateProccessEventArgs ev);
         /// <summary>

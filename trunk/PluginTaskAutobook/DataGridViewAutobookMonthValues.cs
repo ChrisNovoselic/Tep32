@@ -17,10 +17,6 @@ namespace PluginTaskAutobook
         /// </summary>
         private class DataGridViewAutobookMonthValues : DataGridViewValues
         {
-            ///// <summary>
-            ///// Перечисление для индексации столбцов со служебной информацией
-            ///// </summary>
-            //protected enum INDEX_SERVICE_COLUMN : uint { ALG, DATE, COUNT }
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
@@ -46,9 +42,6 @@ namespace PluginTaskAutobook
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
                 RowHeadersVisible = true;
-
-                //AddColumn(-2, string.Empty, INDEX_SERVICE_COLUMN.ALG.ToString(), true, false);
-                //AddColumn(-1, "Дата", INDEX_SERVICE_COLUMN.DATE.ToString(), true, true);
             }
 
             public override void AddColumns(List<TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter
@@ -125,7 +118,7 @@ namespace PluginTaskAutobook
                     } else
                         ;
                 });
-                //ГТП - Значения (с учетом корректрировки)
+                //ГТП - Значения по прибору учета с учетом корректрировки
                 listTECComponent.ForEach(comp => {
                     if (comp.IsGtp == true) {
                         column = new DataGridViewTextBoxColumn();
