@@ -364,24 +364,24 @@ namespace TepCommon
             public DateTime stamp_write;
         }
 
-        public struct CHANGE_VALUE
-        {
-            ///// <summary>
-            ///// Тип параметра (входной, выходной) 
-            ///// </summary>
-            //public TaskCalculate.TYPE m_taskCalculateType;
+        //public struct CHANGE_VALUE
+        //{
+        //    ///// <summary>
+        //    ///// Тип параметра (входной, выходной) 
+        //    ///// </summary>
+        //    //public TaskCalculate.TYPE m_taskCalculateType;
 
-            public KEY_VALUES m_keyValues;
+        //    public KEY_VALUES m_keyValues;
 
-            public VALUE value;
+        //    public VALUE value;
 
-            public DateTime stamp_action;
+        //    public DateTime stamp_action;
 
-            public void Update()
-            {
-                stamp_action = DateTime.UtcNow;
-            }
-        }
+        //    public void Update()
+        //    {
+        //        stamp_action = DateTime.UtcNow;
+        //    }
+        //}
         /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
         ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
@@ -872,7 +872,7 @@ namespace TepCommon
             _listPutParameter = new List<HandlerDbTaskCalculate.PUT_PARAMETER>();
 
             _dictValues = new Dictionary<KEY_VALUES, List<VALUE>>();
-            _listChanges = new List<CHANGE_VALUE>();
+            _dictChanges = new Dictionary<KEY_VALUES, List<VALUE>>();
 
             _filterDbTableCompList = DbTableCompList.NotSet;
             _filterDbTableTime = DbTableTime.NotSet;
@@ -899,7 +899,7 @@ namespace TepCommon
         /// </summary>
         public enum EVENT : short { SET_VALUES, EDIT_VALUE, SAVE_CHANGES, CALCULATE }
 
-        public event Action<EVENT, RESULT> EventCompleted;        
+        public event Action<EVENT, RESULT> EventCompleted;
         /// <summary>
         /// Класс для описания события при завершении расчета одного из параметров
         /// </summary>
@@ -1053,7 +1053,7 @@ namespace TepCommon
                 ;
             // очистить сессию
             if (err == 0) {
-                _listChanges.Clear();
+                _dictChanges.Clear();
                 _dictValues.Clear();
                 _Session.Clear();
             } else
@@ -1149,7 +1149,7 @@ namespace TepCommon
         /// Принять отредактированное значение, сохранить в истории изменений
         /// </summary>
         /// <param name="value">Новое значение</param>
-        public virtual void SetValue(CHANGE_VALUE changeValue)
+        public virtual void SetValue(KEY_VALUES keyValues, VALUE newValue)
         {
             int err = -1
                 , iAction = -1 // новая запись, запись без метки, запись для обновления
@@ -1157,28 +1157,25 @@ namespace TepCommon
                 , indxPrevChangeValue = -1;
             string query = string.Empty
                 , fmtSQLDatetime = string.Empty;
-            CHANGE_VALUE newChangeValue;
-
-            newChangeValue = new CHANGE_VALUE() { m_keyValues = changeValue.m_keyValues, value = changeValue.value, stamp_action = DateTime.UtcNow };
 
             fmtSQLDatetime = @"yyyyMMdd HH:mm:ss";
 
             //foreach (KeyValuePair<KEY_VALUES, List<VALUE>> pair in _dictValues) {
-                indxPrevValue = _dictValues[changeValue.m_keyValues].FindIndex(value => {
-                    return (value.m_IdPut == changeValue.value.m_IdPut)
-                        && ((value.stamp_value == changeValue.value.stamp_value)
+                indxPrevValue = _dictValues[keyValues].FindIndex(value => {
+                    return (value.m_IdPut == newValue.m_IdPut)
+                        && ((value.stamp_value == newValue.stamp_value)
                             || (value.stamp_value == DateTime.MinValue));
                 });
 
                 if (indxPrevValue < 0) {
                 // NEW VALUE
                     ; // оставить как есть
-                } else if (_dictValues[changeValue.m_keyValues][indxPrevValue].stamp_value.Equals(DateTime.MinValue) == true)
+                } else if (_dictValues[keyValues][indxPrevValue].stamp_value.Equals(DateTime.MinValue) == true)
                 // NOT_REC
                     iAction = 0;
                 else
                 // UPDATE
-                    iAction = 1;                    
+                    iAction = 1;
 
                 if (!(iAction < 0)) {
                     query = string.Format("UPDATE [dbo].[{1}]"
@@ -1188,16 +1185,16 @@ namespace TepCommon
                         //+ "{0}SELECT * FROM [inval]"
                         //+ " WHERE [ID_SESSION] = {4} AND [ID_PUT] = {5} AND [EXTENDED_DEFINITION] = CONVERT(varchar, '{6}', 102);"
                         , "\t" //Environment.NewLine
-                        , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
-                        , (int)changeValue.value.m_iQuality
-                        , changeValue.value.value.ToString(CultureInfo.InvariantCulture)
+                        , getNameDbTable(keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
+                        , (int)newValue.m_iQuality
+                        , newValue.value.ToString(CultureInfo.InvariantCulture)
                         , _Session.m_Id
-                        , changeValue.value.m_IdPut
-                        , changeValue.value.stamp_value // фактическая метка даты/времени
+                        , newValue.m_IdPut
+                        , newValue.stamp_value // фактическая метка даты/времени
                         , iAction == 0
                             ? DateTime.MinValue.ToString(fmtSQLDatetime) // NOT_REC - значение даты/времени миним.
                                 : iAction == 1
-                                    ? changeValue.value.stamp_value.ToString(fmtSQLDatetime) // UPDATE - значение даты/времени фактическое
+                                    ? newValue.stamp_value.ToString(fmtSQLDatetime) // UPDATE - значение даты/времени фактическое
                                         : DateTime.MaxValue.ToString(fmtSQLDatetime));
                     //break;
                 } else {
@@ -1205,12 +1202,12 @@ namespace TepCommon
                         + @" ([ID_SESSION], [ID_PUT], [QUALITY], [VALUE], [WR_DATETIME], [EXTENDED_DEFINITION])"
                         + @" VALUES ({2}, {3}, {4}, {5}, GETUTCDATE(), CONVERT(varchar, CONVERT(datetime2(7), '{6}'), 127))"
                         , "\t" //Environment.NewLine
-                        , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
+                        , getNameDbTable(keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
                         , _Session.m_Id
-                        , changeValue.value.m_IdPut
-                        , (int)changeValue.value.m_iQuality
-                        , changeValue.value.value.ToString(CultureInfo.InvariantCulture)
-                        , changeValue.value.stamp_value.ToString(fmtSQLDatetime));
+                        , newValue.m_IdPut
+                        , (int)newValue.m_iQuality
+                        , newValue.value.ToString(CultureInfo.InvariantCulture)
+                        , newValue.stamp_value.ToString(fmtSQLDatetime));
                 }
             //}
 
@@ -1219,22 +1216,25 @@ namespace TepCommon
 
                 if (err == 0) {
                     if (iAction < 0) {
-                        _dictValues[changeValue.m_keyValues].Add(changeValue.value);
+                        _dictValues[keyValues].Add(newValue);
 
-                        indxPrevValue = _dictValues[changeValue.m_keyValues].Count - 1;
+                        indxPrevValue = _dictValues[keyValues].Count - 1;
                     } else
-                        _dictValues[changeValue.m_keyValues][indxPrevValue] = changeValue.value;
+                        _dictValues[keyValues][indxPrevValue] = newValue;
 
-                    indxPrevChangeValue = _listChanges.FindIndex(item => {
-                        return (item.m_keyValues == changeValue.m_keyValues)
-                            && (item.value.m_IdPut == _dictValues[changeValue.m_keyValues][indxPrevValue].m_IdPut)
-                            && (item.value.stamp_value == changeValue.value.stamp_value);
-                    });
+                    if (_dictChanges.ContainsKey(keyValues) == false) {
+                        _dictChanges.Add(keyValues, new List<VALUE>());
+                    } else
+                        indxPrevChangeValue = _dictChanges[keyValues].FindIndex(item => {
+                            return (item.m_IdPut == _dictValues[keyValues][indxPrevValue].m_IdPut)
+                                && (item.stamp_value == newValue.stamp_value);
+                        });
+
                     if (indxPrevChangeValue < 0)
                     // параметр ни разу не изменялся с момента сохранения
-                        _listChanges.Add(newChangeValue);
+                        _dictChanges[keyValues].Add(newValue);
                     else {
-                        _listChanges[indxPrevChangeValue] = newChangeValue;
+                        _dictChanges[keyValues][indxPrevChangeValue] = newValue;
                     }
                 } else
                     Logging.Logg().Error(string.Format(@"handlerDbTaskCalculate::SetValue () - изменения не зарегистрированы, запрос [QUERY={0}] на обновление выполнен с ошибкой [err={1}]..."
@@ -1260,13 +1260,6 @@ namespace TepCommon
             RegisterDbConnection(out iRegDbConn);
 
             if (!(iRegDbConn < 0)) {
-                //List<IGrouping <Tuple<KEY_VALUES, string>, CHANGE_VALUE>>
-                var
-                    groupValues = (from changeValue in _listChanges select changeValue)
-                .GroupBy(value => new { value.m_keyValues.TypeCalculate })
-                .ToList()
-                ;
-
                 query = string.Format("{1}{0}, {2}{0}, {3}{0}, {4}{0}, {5}{0}, {6}{0}"
                     , "\t"
                     , @"DECLARE @tableSrc Table (id_put int, stamp datetime2(7), quality int, value float, wr_datetime datetime2(7))"
@@ -1299,10 +1292,13 @@ namespace TepCommon
                 //--OUTPUT $action, inserted.*, deleted.*
                 //;
 
-                foreach (IGrouping<string, CHANGE_VALUE> group in groupValues) {
-                    tablePrefix = getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE);
-                    tableName = group.Key;
-                }
+                // цикл по 'IN_VALUES', 'OUT_VALUES'
+                foreach (KEY_VALUES key in _dictChanges.Keys)
+                    // цикл по таблицамсо значениями
+                    foreach (IGrouping<string, VALUE> group in _dictChanges[key].GroupBy(g => g.stamp_value.ToString("yyyyMM"))) {
+                        tablePrefix = getNameDbTable(key.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE);
+                        tableName = string.Format(@"[dbo].[{0}_{1}]", tablePrefix, group.Key);
+                    }
 
                 DbTSQLInterface.ExecNonQuery(ref _dbConnection, query, null, null, out err);
 
@@ -1950,7 +1946,7 @@ namespace TepCommon
         /// <summary>
         /// Список изменений значений (редактирование значений), выполненных пользователем
         /// </summary>
-        protected List<CHANGE_VALUE> _listChanges;
+        protected Dictionary<KEY_VALUES, List<VALUE>> _dictChanges;
         /// <summary>
         /// Список значений, загруженных из БД
         /// </summary>
@@ -1958,7 +1954,7 @@ namespace TepCommon
         /// <summary>
         /// Список изменений значений (редактирование значений), выполненных пользователем
         /// </summary>
-        public List<CHANGE_VALUE> Changes { get { return _listChanges; } }
+        public Dictionary<KEY_VALUES, List<VALUE>> Changes { get { return _dictChanges; } }
         #region Добавление компонентов, параметров в алгоритме расчета
         /// <summary>
         /// Список параметров алгоритма расчета, не связанных с компонентом станции (верхний/1-ый уровень)

@@ -72,7 +72,7 @@ namespace TepCommon
                 public HandlerDbTaskCalculate.MODE_DATA_DATETIME ModeDataDatetime;
             }
 
-            public event Action<HandlerDbTaskCalculate.CHANGE_VALUE> EventCellValueChanged;
+            public event Action<HandlerDbTaskCalculate.KEY_VALUES, HandlerDbTaskCalculate.VALUE> EventCellValueChanged;
             /// <summary>
             /// Конструктор - основной (с параметром)
             /// </summary>
@@ -210,11 +210,11 @@ namespace TepCommon
                             }
                         }
                         // принудительно будет вызван метод ShowValues
-                        EventCellValueChanged?.Invoke(new HandlerDbTaskCalculate.CHANGE_VALUE() {
-                            m_keyValues = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = m_dictNAlgProperties[idNAlg].m_type, TypeState = HandlerDbValues.STATE_VALUE.EDIT }
-                            , value = new HandlerDbTaskCalculate.VALUE() { m_IdPut = idPut, m_iQuality = cellProperty.m_iQuality, value = cellProperty.m_Value, stamp_value = stamp_value }
+                        EventCellValueChanged?.Invoke(
+                            new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = m_dictNAlgProperties[idNAlg].m_type, TypeState = HandlerDbValues.STATE_VALUE.EDIT }
+                            , new HandlerDbTaskCalculate.VALUE() { m_IdPut = idPut, m_iQuality = cellProperty.m_iQuality, value = cellProperty.m_Value, stamp_value = stamp_value }
                             //, stamp_action = DateTime.MinValue
-                        });
+                        );
                     } else
                     // ошибка при определени идентификатора
                         ;
