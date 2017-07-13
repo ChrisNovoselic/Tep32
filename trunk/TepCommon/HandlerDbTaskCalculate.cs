@@ -726,6 +726,9 @@ namespace TepCommon
         #endregion
 
         #region DbTableTimezone
+        /// <summary>
+        /// Перечисление - возможные к использованию идентификаторы часовых поясов
+        /// </summary>
         [Flags]
         public enum DbTableTimezone
         {
@@ -736,7 +739,9 @@ namespace TepCommon
         }
 
         DbTableTimezone _filterDbTableTimezone;
-
+        /// <summary>
+        /// Ограничение(фильтр) для используемых на вкладке часовых поясов
+        /// </summary>
         public DbTableTimezone FilterDbTableTimezone
         {
             get { return _filterDbTableTimezone; }
@@ -1150,10 +1155,13 @@ namespace TepCommon
                 , iAction = -1 // новая запись, запись без метки, запись для обновления
                 , indxPrevValue = -1
                 , indxPrevChangeValue = -1;
-            string query = string.Empty;
+            string query = string.Empty
+                , fmtSQLDatetime = string.Empty;
             CHANGE_VALUE newChangeValue;
 
             newChangeValue = new CHANGE_VALUE() { m_keyValues = changeValue.m_keyValues, value = changeValue.value, stamp_action = DateTime.UtcNow };
+
+            fmtSQLDatetime = @"yyyyMMdd HH:mm:ss";
 
             //foreach (KeyValuePair<KEY_VALUES, List<VALUE>> pair in _dictValues) {
                 indxPrevValue = _dictValues[changeValue.m_keyValues].FindIndex(value => {
@@ -1170,21 +1178,27 @@ namespace TepCommon
                     iAction = 0;
                 else
                 // UPDATE
-                    iAction = 1;
-                    
+                    iAction = 1;                    
 
                 if (!(iAction < 0)) {
                     query = string.Format("UPDATE [dbo].[{1}]"
-                        + " SET [QUALITY] = {2}, [VALUE] = {3}, [WR_DATETIME] = GETUTCDATE()"
-                        + " WHERE [ID_SESSION] = {4} AND [ID_PUT] = {5} AND CONVERT(datetime2(7), [EXTENDED_DEFINITION]) = '{6}'"
+                        + " SET [QUALITY] = {2}, [VALUE] = {3}, [EXTENDED_DEFINITION] = '{6:s}', [WR_DATETIME] = GETUTCDATE()"
+                        + " WHERE [ID_SESSION] = {4} AND [ID_PUT] = {5} AND CONVERT(datetime2(7), [EXTENDED_DEFINITION]) = '{7}'"
                         //+ "{0}GO"
                         //+ "{0}SELECT * FROM [inval]"
                         //+ " WHERE [ID_SESSION] = {4} AND [ID_PUT] = {5} AND [EXTENDED_DEFINITION] = CONVERT(varchar, '{6}', 102);"
                         , "\t" //Environment.NewLine
                         , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
-                        , (int)changeValue.value.m_iQuality, changeValue.value.value.ToString(CultureInfo.InvariantCulture)
-                        , _Session.m_Id, changeValue.value.m_IdPut, changeValue.value.stamp_value.ToString(@"yyyyMMdd HH:mm:ss"));
-
+                        , (int)changeValue.value.m_iQuality
+                        , changeValue.value.value.ToString(CultureInfo.InvariantCulture)
+                        , _Session.m_Id
+                        , changeValue.value.m_IdPut
+                        , changeValue.value.stamp_value // фактическая метка даты/времени
+                        , iAction == 0
+                            ? DateTime.MinValue.ToString(fmtSQLDatetime) // NOT_REC - значение даты/времени миним.
+                                : iAction == 1
+                                    ? changeValue.value.stamp_value.ToString(fmtSQLDatetime) // UPDATE - значение даты/времени фактическое
+                                        : DateTime.MaxValue.ToString(fmtSQLDatetime));
                     //break;
                 } else {
                     query = string.Format("INSERT INTO [dbo].[{1}]"
@@ -1193,7 +1207,10 @@ namespace TepCommon
                         , "\t" //Environment.NewLine
                         , getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE)
                         , _Session.m_Id
-                        , changeValue.value.m_IdPut, (int)changeValue.value.m_iQuality, changeValue.value.value.ToString(CultureInfo.InvariantCulture), changeValue.value.stamp_value.ToString(@"yyyyMMdd HH:mm:ss"));
+                        , changeValue.value.m_IdPut
+                        , (int)changeValue.value.m_iQuality
+                        , changeValue.value.value.ToString(CultureInfo.InvariantCulture)
+                        , changeValue.value.stamp_value.ToString(fmtSQLDatetime));
                 }
             //}
 
@@ -1233,7 +1250,68 @@ namespace TepCommon
 
         public void SaveChanges(object obj)
         {
-            int err = -1;
+            int err = -1
+                , iRegDbConn = -1;
+
+            string query = string.Empty
+                , tablePrefix = string.Empty
+                , tableName = string.Empty;
+
+            RegisterDbConnection(out iRegDbConn);
+
+            if (!(iRegDbConn < 0)) {
+                //List<IGrouping <Tuple<KEY_VALUES, string>, CHANGE_VALUE>>
+                var
+                    groupValues = (from changeValue in _listChanges select changeValue)
+                .GroupBy(value => new { value.m_keyValues.TypeCalculate })
+                .ToList()
+                ;
+
+                query = string.Format("{1}{0}, {2}{0}, {3}{0}, {4}{0}, {5}{0}, {6}{0}"
+                    , "\t"
+                    , @"DECLARE @tableSrc Table (id_put int, stamp datetime2(7), quality int, value float, wr_datetime datetime2(7))"
+                    , @"@id_user int"
+                    , @"@id_time int"
+                    , @"@id_timezone int"
+                    , @"@id_source int"
+                    , @"@quality int");
+
+                query += string.Format("{1}{0}, {2}{0}, {3}{0}, {4}{0}, {5}{0}"
+                    , "\t"
+                    , string.Format("SELECT @id_user = {0}", HTepUsers.Id)
+                    , string.Format(@"@id_time = {0}", (int)_Session.CurrentIdPeriod)
+                    , string.Format(@"@id_timezone = {0}", (int)_Session.CurrentIdTimezone)
+                    , @"@id_source = 0"
+                    , string.Format(@"@quality = {0}", (int)ID_QUALITY_VALUE.USER));
+
+                //MERGE dbo.[inval_201511]
+                //        AS target
+                //USING @tableSrc AS source
+                //ON (target.ID_PUT = source.id_put)
+                //    AND (target.DATE_TIME = source.stamp)
+                //    AND (target.ID_TIME = @id_time)
+                //    AND (target.ID_TIMEZONE = @id_timezone)
+                //WHEN NOT MATCHED BY TARGET THEN
+                //    INSERT(ID_PUT, ID_USER, ID_SOURCE, DATE_TIME, ID_TIME, ID_TIMEZONE, QUALITY, VALUE, WR_DATETIME)
+                //    VALUES(source.id_put, @id_user, @id_source, source.stamp, @id_time, @id_timezone, @quality, source.value, source.wr_datetime)
+                //WHEN MATCHED THEN
+                //    UPDATE SET ID_USER = @id_user, DATE_TIME = source.stamp, QUALITY = @quality, VALUE = source.value, WR_DATETIME = source.wr_datetime
+                //--OUTPUT $action, inserted.*, deleted.*
+                //;
+
+                foreach (IGrouping<string, CHANGE_VALUE> group in groupValues) {
+                    tablePrefix = getNameDbTable(changeValue.m_keyValues.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE);
+                    tableName = group.Key;
+                }
+
+                DbTSQLInterface.ExecNonQuery(ref _dbConnection, query, null, null, out err);
+
+                if (!(iRegDbConn > 0)) {
+                    UnRegisterDbConnection();
+                } else
+                    ;
+            } else
+                err = -2;
 
             EventCompleted?.Invoke(EVENT.SAVE_CHANGES, err == 0 ? RESULT.Ok : err < 0 ? RESULT.Error : err > 0 ? RESULT.Warning : RESULT.Exception);
         }
@@ -2537,7 +2615,11 @@ namespace TepCommon
         /// <param name="id">Идентификатор часового пояса</param>
         /// <returns>Смещение относительно UTC</returns>
         public delegate TimeSpan TimeSpanDelegateIdTimezoneFunc(ID_TIMEZONE id);
-
+        /// <summary>
+        /// Преобразовать таблицу БД в список объектов со значениями
+        /// </summary>
+        /// <param name="table">Таблица БД со значениями(для временного хранения)</param>
+        /// <returns>Список объектов со значениями</returns>
         public static List<VALUE> TableToListValues(DataTable table)
         {
             List<VALUE> listRes = new List<VALUE>();
@@ -2590,7 +2672,12 @@ namespace TepCommon
                 return tableRes;
             }
         }
-
+        /// <summary>
+        /// Преобразовать список значений в таблицу БД для хранения временных значений
+        /// </summary>
+        /// <param name="idSession">Идентификатор сессии</param>
+        /// <param name="listValues">Список объектов со значенями</param>
+        /// <returns>Таблица БД для хранения временных значений</returns>
         public static DataTable ListValueToTable(long idSession, IEnumerable<VALUE> listValues)
         {
             DataTable tableRes = CloneVariableDataTable;

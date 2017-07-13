@@ -514,6 +514,12 @@ namespace PluginTaskAutobook
                 COUNT
             }
             /// <summary>
+            /// Признак разрешения сохранения значений (доступность кнопки сохранить)
+            ///  , должен коррелировать с доступностью столбцов для редактирования
+            /// </summary>
+            public bool AllowButtonSaveEnabled { get { return _allowButtonSaveEnabled; } set { _allowButtonSaveEnabled = value; } }
+            private bool _allowButtonSaveEnabled;
+            /// <summary>
             /// Инициализация размеров/стилей макета для размещения элементов управления
             /// </summary>
             /// <param name="cols">Количество столбцов в макете</param>
@@ -670,7 +676,7 @@ namespace PluginTaskAutobook
 
             public bool ButtonSaveEnabled
             {
-                set { setButtonEnabled(INDEX_CONTROL.BUTTON_SAVE, value); }
+                set { setButtonEnabled(INDEX_CONTROL.BUTTON_SAVE, value & AllowButtonSaveEnabled); }
             }
 
             public bool ButtonExportEnabled
@@ -794,9 +800,10 @@ namespace PluginTaskAutobook
                 case HandlerDbTaskCalculate.EVENT.CALCULATE:
                     break;
                 case HandlerDbTaskCalculate.EVENT.EDIT_VALUE: // отобразить значения
-                        
+                    mesToStatusStrip = string.Format(@"Редактирование значения на форме");
                     break;
                 case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
+                    mesToStatusStrip = string.Format(@"Сохранение значений в БД");
                     break;
                 default:
                     break;
@@ -811,7 +818,6 @@ namespace PluginTaskAutobook
                         HandlerDb.Calculate(TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES);
                         break;
                     case HandlerDbTaskCalculate.EVENT.CALCULATE: // отобразить значения
-                    case HandlerDbTaskCalculate.EVENT.EDIT_VALUE:
                         m_dgvValues.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
                                 TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
                                 , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
@@ -819,6 +825,17 @@ namespace PluginTaskAutobook
                                 TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
                                 , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
                             , out err);
+                        break;
+                    case HandlerDbTaskCalculate.EVENT.EDIT_VALUE: // отобразить значения + разблокировать кнопку "Сохранить"
+                        m_dgvValues.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                                TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+                                , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                            , HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                                TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES
+                                , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                            , out err);
+
+                        PanelManagement.ButtonSaveEnabled = true;
                         break;
                     case HandlerDbTaskCalculate.EVENT.SAVE_CHANGES:
                         break;
@@ -933,7 +950,7 @@ namespace PluginTaskAutobook
             }
             // активность_кнопки_сохранения
             try {
-                (findControl(PanelManagementAutobookMonthValues.INDEX_CONTROL.BUTTON_SAVE.ToString()) as Button).Enabled =
+                PanelManagement.AllowButtonSaveEnabled =
                     m_dictProfile.GetBooleanAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL);
             } catch (Exception e) {
                 Logging.Logg().Exception(e, @"PanelTaskAutoBook::initialize () - установка признака доступности кнопки Сохранить...", Logging.INDEX_MESSAGE.NOT_SET);
