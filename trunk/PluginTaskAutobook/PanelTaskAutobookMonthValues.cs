@@ -763,14 +763,14 @@ namespace PluginTaskAutobook
 
             if (HandlerDb.Values.ContainsKey(key) == true)
                 rep.SendMailToNSS(putParameters
-                        , (from value in HandlerDb.Values[key]
-                            where (value.stamp_value == ((HandlerDb.ModeDataDatetime == HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined)
-                                    ? dtValues.AddDays(1).Add(-Session.m_curOffsetUTC) // в случае, если данные сохраняются с меткой "начало интервала"
-                                        : ((HandlerDb.ModeDataDatetime == HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended)
-                                            ? dtValues.Add(-Session.m_curOffsetUTC) // в случае, если данные сохраняются с меткой "окончание интервала"
-                                                : DateTime.MinValue)))
-                                && (putParameters.Select(putPar => putPar.m_Id).Contains(value.m_IdPut))
-                            select value)
+                    , (from value in HandlerDb.Values[key]
+                        where (value.stamp_value == ((HandlerDb.ModeDataDatetime == HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined)
+                                ? dtValues.AddDays(1).Add(-Session.m_curOffsetUTC) // в случае, если данные сохраняются с меткой "начало интервала"
+                                    : ((HandlerDb.ModeDataDatetime == HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended)
+                                        ? dtValues.Add(-Session.m_curOffsetUTC) // в случае, если данные сохраняются с меткой "окончание интервала"
+                                            : DateTime.MinValue)))
+                            && (putParameters.Select(putPar => putPar.m_Id).Contains(value.m_IdPut))
+                        select value)
                     , HandlerDb.GetValueAsRatio
                     , dtValues
                     , e_mail);
@@ -875,6 +875,7 @@ namespace PluginTaskAutobook
         {
             try
             {
+                m_dgvValues.ClearValues();
                 // ... - загрузить/отобразить значения из БД
                 HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
             } catch (Exception e) {

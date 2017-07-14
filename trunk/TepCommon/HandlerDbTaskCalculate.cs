@@ -872,7 +872,7 @@ namespace TepCommon
             _listPutParameter = new List<HandlerDbTaskCalculate.PUT_PARAMETER>();
 
             _dictValues = new Dictionary<KEY_VALUES, List<VALUE>>();
-            _dictChanges = new Dictionary<KEY_VALUES, List<VALUE>>();
+            _dictChanges = new DictionaryChangeValues();
 
             _filterDbTableCompList = DbTableCompList.NotSet;
             _filterDbTableTime = DbTableTime.NotSet;
@@ -1101,7 +1101,7 @@ namespace TepCommon
                         ID_DBTABLE.UNKNOWN; // не найдено наименование таблицы, ошибка в запросе
 
                 if (!(idDbTable == ID_DBTABLE.UNKNOWN)) {
-                    // получить результирующаю таблицу
+                    // получить результирующую таблицу
                     // получить входные для расчета значения для возможности редактирования
                     strQuery = string.Format(@"SELECT [ID_SESSION], [ID_PUT], [QUALITY], [VALUE], [EXTENDED_DEFINITION], [WR_DATETIME]" // [ID_PUT] as [ID] 
                         + @" FROM [{0}]"
@@ -1146,9 +1146,10 @@ namespace TepCommon
             }
         }
         /// <summary>
-        /// Принять отредактированное значение, сохранить в истории изменений
+        /// Принять отредактированное значение, сохранить в: 1) редактируемом списке значений 2) истории изменений
         /// </summary>
-        /// <param name="value">Новое значение</param>
+        /// <param name="keyValues">Ключ для словаря со значениями (IN_VALUES/OUT_VALUES + всегда EDIT)</param>
+        /// <param name="newValue">Новое значение</param>
         public virtual void SetValue(KEY_VALUES keyValues, VALUE newValue)
         {
             int err = -1
@@ -1222,20 +1223,7 @@ namespace TepCommon
                     } else
                         _dictValues[keyValues][indxPrevValue] = newValue;
 
-                    if (_dictChanges.ContainsKey(keyValues) == false) {
-                        _dictChanges.Add(keyValues, new List<VALUE>());
-                    } else
-                        indxPrevChangeValue = _dictChanges[keyValues].FindIndex(item => {
-                            return (item.m_IdPut == _dictValues[keyValues][indxPrevValue].m_IdPut)
-                                && (item.stamp_value == newValue.stamp_value);
-                        });
-
-                    if (indxPrevChangeValue < 0)
-                    // параметр ни разу не изменялся с момента сохранения
-                        _dictChanges[keyValues].Add(newValue);
-                    else {
-                        _dictChanges[keyValues][indxPrevChangeValue] = newValue;
-                    }
+                    _dictChanges.Add(keyValues, newValue, ModeDataDatetime, TimeSpan.FromSeconds((int)Select(getQueryTimePeriods((int)_Session.ActualIdPeriod), out err).Rows[0][@"VALUE_SEC"]));
                 } else
                     Logging.Logg().Error(string.Format(@"handlerDbTaskCalculate::SetValue () - изменения не зарегистрированы, запрос [QUERY={0}] на обновление выполнен с ошибкой [err={1}]..."
                             , query, err)
@@ -1250,64 +1238,90 @@ namespace TepCommon
 
         public void SaveChanges(object obj)
         {
-            int err = -1
-                , iRegDbConn = -1;
+            int err = -1;
 
             string query = string.Empty
-                , tablePrefix = string.Empty
-                , tableName = string.Empty;
+                , prefixNameTable = string.Empty
+                , fmtSQLDatetime = string.Empty;
 
-            RegisterDbConnection(out iRegDbConn);
+            fmtSQLDatetime = @"yyyyMMdd HH:mm:ss";
 
-            if (!(iRegDbConn < 0)) {
-                query = string.Format("{1}{0}, {2}{0}, {3}{0}, {4}{0}, {5}{0}, {6}{0}"
-                    , "\t"
-                    , @"DECLARE @tableSrc Table (id_put int, stamp datetime2(7), quality int, value float, wr_datetime datetime2(7))"
-                    , @"@id_user int"
-                    , @"@id_time int"
-                    , @"@id_timezone int"
-                    , @"@id_source int"
-                    , @"@quality int");
+            query = string.Format("{1}{0}{2}{0}, {3}{0}, {4}{0}, {5}{0}, {6}{0}"
+                , "\t"
+                , @"DECLARE @tableSrc Table (prefix_name_table nchar(6), part_date_name_table nchar(6), id_put int, stamp datetime2(7), quality int, value float, wr_datetime datetime2(7))"
+                , @"DECLARE @id_user int"
+                , @"@id_time int"
+                , @"@id_timezone int"
+                , @"@id_source int"
+                , @"@quality int");
 
-                query += string.Format("{1}{0}, {2}{0}, {3}{0}, {4}{0}, {5}{0}"
-                    , "\t"
-                    , string.Format("SELECT @id_user = {0}", HTepUsers.Id)
-                    , string.Format(@"@id_time = {0}", (int)_Session.CurrentIdPeriod)
-                    , string.Format(@"@id_timezone = {0}", (int)_Session.CurrentIdTimezone)
-                    , @"@id_source = 0"
-                    , string.Format(@"@quality = {0}", (int)ID_QUALITY_VALUE.USER));
+            query += string.Format("{1}{0}, {2}{0}, {3}{0}, {4}{0}, {5}{0}"
+                , "\t"
+                , string.Format("SELECT @id_user = {0}", HTepUsers.Id)
+                , string.Format(@"@id_time = {0}", (int)_Session.ActualIdPeriod)
+                , string.Format(@"@id_timezone = {0}", (int)_Session.CurrentIdTimezone)
+                , @"@id_source = 0"
+                , string.Format(@"@quality = {0}", (int)ID_QUALITY_VALUE.USER));
 
-                //MERGE dbo.[inval_201511]
-                //        AS target
-                //USING @tableSrc AS source
-                //ON (target.ID_PUT = source.id_put)
-                //    AND (target.DATE_TIME = source.stamp)
-                //    AND (target.ID_TIME = @id_time)
-                //    AND (target.ID_TIMEZONE = @id_timezone)
-                //WHEN NOT MATCHED BY TARGET THEN
-                //    INSERT(ID_PUT, ID_USER, ID_SOURCE, DATE_TIME, ID_TIME, ID_TIMEZONE, QUALITY, VALUE, WR_DATETIME)
-                //    VALUES(source.id_put, @id_user, @id_source, source.stamp, @id_time, @id_timezone, @quality, source.value, source.wr_datetime)
-                //WHEN MATCHED THEN
-                //    UPDATE SET ID_USER = @id_user, DATE_TIME = source.stamp, QUALITY = @quality, VALUE = source.value, WR_DATETIME = source.wr_datetime
-                //--OUTPUT $action, inserted.*, deleted.*
-                //;
+            query += @"INSERT INTO @tableSrc (prefix_name_table, part_date_name_table, id_put, stamp, quality, value, wr_datetime) VALUES";
 
-                // цикл по 'IN_VALUES', 'OUT_VALUES'
-                foreach (KEY_VALUES key in _dictChanges.Keys)
-                    // цикл по таблицамсо значениями
-                    foreach (IGrouping<string, VALUE> group in _dictChanges[key].GroupBy(g => g.stamp_value.ToString("yyyyMM"))) {
-                        tablePrefix = getNameDbTable(key.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE);
-                        tableName = string.Format(@"[dbo].[{0}_{1}]", tablePrefix, group.Key);
-                    }
+            foreach (KEY_VALUES key in _dictChanges.Keys) {
+            // цикл по 'IN_VALUES', 'OUT_VALUES'
+                prefixNameTable = getNameDbTable(key.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE);
 
-                DbTSQLInterface.ExecNonQuery(ref _dbConnection, query, null, null, out err);
+                foreach (string partDateTableName in _dictChanges[key].Keys) {
+                // цикл по таблицам со значениями
+                    foreach (VALUE value in _dictChanges[key][partDateTableName])
+                    // цикл по значениям в таблице
+                        query += string.Format(@"('{0}','{1}',{2},'{3}',{4},{5},{6}),"
+                            , prefixNameTable
+                            , partDateTableName
+                            , value.m_IdPut
+                            , value.stamp_value.ToString(fmtSQLDatetime)
+                            , @"@quality"
+                            , value.value.ToString(CultureInfo.InvariantCulture)
+                            , @"GETDATE()"
+                        );                    
+                } // цикл по таблицам со значениями
+            }
 
-                if (!(iRegDbConn > 0)) {
-                    UnRegisterDbConnection();
-                } else
+            // исключить лишнюю запятую
+            query = query.Substring(0, query.Length - 1);
+
+            query += "\t";
+
+            foreach (KEY_VALUES key in _dictChanges.Keys) {
+            // цикл по 'IN_VALUES', 'OUT_VALUES'
+                prefixNameTable = getNameDbTable(key.TypeCalculate, TABLE_CALCULATE_REQUIRED.VALUE);
+
+                foreach (string partDateTableName in _dictChanges[key].Keys) {
+                // цикл по таблицам со значениями
+                    query += string.Format(@"MERGE {0} AS target"
+                        + @" USING (SELECT id_put, stamp, quality, value, wr_datetime FROM @tableSrc WHERE prefix_name_table='{1}' AND part_date_name_table='{2}') AS source"
+                        + @" ON (target.ID_PUT = source.id_put)"
+                            + @" AND (target.DATE_TIME = source.stamp)"
+                            + @" AND (target.ID_TIME = @id_time)"
+                            + @" AND (target.ID_TIMEZONE = @id_timezone)"
+                        + @" WHEN NOT MATCHED BY TARGET THEN"
+                            + @" INSERT(ID_PUT, ID_USER, ID_SOURCE, DATE_TIME, ID_TIME, ID_TIMEZONE, QUALITY, VALUE, WR_DATETIME)"
+                            + @" VALUES(source.id_put, @id_user, @id_source, source.stamp, @id_time, @id_timezone, @quality, source.value, source.wr_datetime)"
+                        + @" WHEN MATCHED THEN"
+                            + @" UPDATE SET ID_USER = @id_user, DATE_TIME = source.stamp, QUALITY = @quality, VALUE = source.value, WR_DATETIME = source.wr_datetime"
+                        //--OUTPUT $action, inserted.*, deleted.*
+                        + @";"
+                        , string.Format(@"[dbo].[{0}_{1}]", prefixNameTable, partDateTableName)
+                        , prefixNameTable
+                        , partDateTableName)
                     ;
-            } else
-                err = -2;
+                } // цикл по таблицам со значениями
+
+                query += "\t";
+            }
+
+            ExecNonQuery(query, out err);
+            //DataTable tableTest = Select(
+            //    , string.Format(@"{0}{1}{0}SELECT * FROM @tableSrc", "\t", query)
+            //    , out err);
 
             EventCompleted?.Invoke(EVENT.SAVE_CHANGES, err == 0 ? RESULT.Ok : err < 0 ? RESULT.Error : err > 0 ? RESULT.Warning : RESULT.Exception);
         }
@@ -1943,18 +1957,79 @@ namespace TepCommon
         /// Список значений, загруженных из БД
         /// </summary>
         protected Dictionary<KEY_VALUES, List<VALUE>> _dictValues;
+
+        private class DictionaryChangeValues : Dictionary<KEY_VALUES, Dictionary<string, List<VALUE>>>
+        {
+            private string getKeyTable(DateTime stamp)
+            {
+                return stamp.ToString(@"yyyyMM");
+            }
+            /// <summary>
+            /// Добавить значение, при необходимости заменить существующее
+            /// </summary>
+            /// <param name="key">Ключ(сложный) словаря, всегда EDIT + [IN_VALUES | OUT_VALUES]</param>
+            /// <param name="value">Значение для добавления</param>
+            public void Add(KEY_VALUES key, VALUE value, MODE_DATA_DATETIME mode, TimeSpan duration)
+            {
+                string keyTable = string.Empty;
+                int indxValue = -1;
+
+                if (mode == MODE_DATA_DATETIME.Begined)
+                    value.stamp_value = value.stamp_value.Add(-duration);
+                else
+                    ;
+
+                keyTable = getKeyTable(value.stamp_value);
+                if (this.ContainsKey(key) == false) {
+                    this.Add(key, new Dictionary<string, List<VALUE>>());
+                } else
+                    indxValue = findIndexValue(key, keyTable, value);
+
+                if (indxValue < 0) {
+                // параметр ни разу не изменялся с момента сохранения
+                    if (this[key].ContainsKey(keyTable) == false)
+                        this[key].Add(keyTable, new List<VALUE>());
+                    else
+                        ;
+
+                    this[key][keyTable].Add(value);
+                } else {
+                    this[key][keyTable][indxValue] = value;
+                }
+            }
+
+            private int findIndexValue(KEY_VALUES key, VALUE value)
+            {
+                return findIndexValue(key, getKeyTable(value.stamp_value), value);
+            }
+
+            private int findIndexValue(KEY_VALUES key, string keyTable, VALUE value)
+            {
+                int iRes = -1;
+
+                if (this[key].ContainsKey(keyTable) == true) {
+                    iRes = this[key][keyTable].FindIndex(item => {
+                        return (item.m_IdPut == value.m_IdPut)
+                            && (item.stamp_value == value.stamp_value);
+                    });
+                } else
+                    ;
+
+                return iRes;
+            }
+        }
         /// <summary>
         /// Список изменений значений (редактирование значений), выполненных пользователем
         /// </summary>
-        protected Dictionary<KEY_VALUES, List<VALUE>> _dictChanges;
+        private DictionaryChangeValues _dictChanges;
+        ///// <summary>
+        ///// Список изменений значений (редактирование значений), выполненных пользователем
+        ///// </summary>
+        //public DictionaryChangeValues Changes { get { return _dictChanges; } }
         /// <summary>
         /// Список значений, загруженных из БД
         /// </summary>
-        public Dictionary<KEY_VALUES, List<VALUE>> Values { get { return _dictValues; } }
-        /// <summary>
-        /// Список изменений значений (редактирование значений), выполненных пользователем
-        /// </summary>
-        public Dictionary<KEY_VALUES, List<VALUE>> Changes { get { return _dictChanges; } }
+        public Dictionary<KEY_VALUES, List<VALUE>> Values { get { return _dictValues; } }        
         #region Добавление компонентов, параметров в алгоритме расчета
         /// <summary>
         /// Список параметров алгоритма расчета, не связанных с компонентом станции (верхний/1-ый уровень)

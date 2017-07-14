@@ -570,7 +570,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM [" + s_dictDbTables[ID_DBTABLE.TIME].m_name + @"] WHERE [ID] IN (" + String.Join(@",", ids.Cast<string>().ToArray()) + @")";
+            strRes = @"SELECT * FROM [" + s_dictDbTables[ID_DBTABLE.TIME].m_name + @"] WHERE [ID] IN (" + string.Join(",", Array.ConvertAll(ids, x => x.ToString())) + @")";
 
             return strRes;
         }
@@ -579,7 +579,7 @@ namespace TepCommon
         {
             string strRes = string.Empty;
 
-            strRes = @"SELECT * FROM [" + s_dictDbTables[ID_DBTABLE.TIMEZONE].m_name + @"] WHERE [ID] IN (" + String.Join(@",", ids.Cast<string>().ToArray()) + @")";
+            strRes = @"SELECT * FROM [" + s_dictDbTables[ID_DBTABLE.TIMEZONE].m_name + @"] WHERE [ID] IN (" + string.Join(",", Array.ConvertAll(ids, x => x.ToString())) + @")";
 
             return strRes;
         }

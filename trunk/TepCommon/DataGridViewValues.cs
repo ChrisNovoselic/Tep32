@@ -590,7 +590,9 @@ namespace TepCommon
 
                 addRow(dtRow, bEnded);
             }
-
+            /// <summary>
+            /// Полная очистка представления: значения, строки, столбцы
+            /// </summary>
             public virtual void Clear()
             {
                 ClearValues();
@@ -626,7 +628,9 @@ namespace TepCommon
                                     ? ((HandlerDbTaskCalculate.TECComponent)Columns[c.ColumnIndex].Tag).m_Id > 0 // свойсто столбца - компонент - очищать, если это реальный, а не псевдо-компонент
                                         : Columns[c.ColumnIndex].Tag is HandlerDbTaskCalculate.PUT_PARAMETER // свойсто столбца - не компонент - значит это параметр алгоритма расчета 2-го порядка
                                             ? ((HandlerDbTaskCalculate.PUT_PARAMETER)Columns[c.ColumnIndex].Tag).m_Id > 0 // свойсто столбца - параметр алгоритма расчета 2-го порядка - очищать, если это реальный параметр
-                                                : false;
+                                                : Columns[c.ColumnIndex].Tag is FormulaHelper //     
+                                                    ? (Columns[c.ColumnIndex].Tag as FormulaHelper).IndexColumns.Count() > 0
+                                                        : false;
 
                         if (bCellClear == true) {
                             // только для реальных компонетов - нельзя удалять идентификатор параметра
