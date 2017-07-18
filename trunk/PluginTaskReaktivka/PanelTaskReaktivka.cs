@@ -37,7 +37,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Объект для создания отчета в MS Excel
         /// </summary>
-        protected ReportExcel m_reportExcel;
+        protected ReportMSExcel m_reportExcel;
         /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
         ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
@@ -146,8 +146,8 @@ namespace PluginTaskReaktivka
         /// <param name="ev">Аргумент события</param>
         void panelTaskReaktivka_btnExport_onClick(object sender, EventArgs e)
         {
-            m_reportExcel = new ReportExcel();//
-            m_reportExcel.CreateExcel(m_dgvValues, Session.m_DatetimeRange);
+            m_reportExcel = new ReportMSExcel();//
+            m_reportExcel.Create(m_dgvValues, Session.m_DatetimeRange);
         }
 
         /// <summary>
@@ -374,7 +374,7 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Класс формирования отчета MS Excel 
         /// </summary>
-        public class ReportExcel
+        public class ReportMSExcel
         {
             private Excel.Application m_excApp;
             private Excel.Workbook m_workBook;
@@ -384,7 +384,7 @@ namespace PluginTaskReaktivka
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public ReportExcel()
+            public ReportMSExcel()
             {
                 m_excApp = new Excel.Application();
                 m_excApp.Visible = false;
@@ -395,11 +395,11 @@ namespace PluginTaskReaktivka
             /// </summary>
             /// <param name="dgView">отрбражение данных</param>
             /// <param name="dtRange">дата</param>
-            public void CreateExcel(DataGridView dgView, DateTimeRange dtRange)
+            public void Create(DataGridView dgView, DateTimeRange dtRange)
             {
                 string cellValue = string.Empty;
 
-                if (addWorkBooks() == true) {
+                if (addWorkbook() == true) {
                     // успешное добавление листа в книгу
                     m_workBook.AfterSave += workBook_AfterSave;
                     m_workBook.BeforeClose += workBook_BeforeClose;
@@ -433,37 +433,42 @@ namespace PluginTaskReaktivka
                         //
                         setSignature(m_wrkSheet, dgView, dtRange);
                         m_excApp.Visible = true;
-                        closeExcel();
+                        close();
                         //System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
                     } catch (Exception e) {
-                        closeExcel();
+                        close();
 
-                        Logging.Logg().Exception(e, string.Format("Panelreaktivka.ReportExcel::CreateExcel () - ошибка экспорта данных..."), Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Exception(e, string.Format("Panelreaktivka.ReportExcel::Create () - ошибка экспорта данных..."), Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 } else
-                    throw new Exception(string.Format(@"Panelreaktivka.ReportExcel::CreateExcel () - ошибка добавления листа в книгу MS Excel..."));
+                    throw new Exception(string.Format(@"Panelreaktivka.ReportExcel::Create () - ошибка добавления листа в книгу MS Excel..."));
             }
 
             /// <summary>
             /// Подключение шаблона
             /// </summary>
             /// <returns>признак ошибки</returns>
-            private bool addWorkBooks()
+            private bool addWorkbook()
             {
+                bool bRes = false;
+
                 string pathToTemplate = Path.GetFullPath(@"Template\TemplateReaktivka.xlsx");
                 object pathToTemplateObj = pathToTemplate;
-                bool bflag = true;
+                
                 try
                 {
                     m_workBook = m_excApp.Workbooks.Add(pathToTemplate);
+
+                    bRes = true;
                 }
                 catch (Exception exp)
                 {
-                    closeExcel();
-                    bflag = false;
+                    close();
+
                     MessageBox.Show("Отсутствует шаблон для отчета Excel");
                 }
-                return bflag;
+
+                return bRes;
             }
 
             /// <summary>
@@ -472,16 +477,16 @@ namespace PluginTaskReaktivka
             /// <param name="Cancel"></param>
             void workBook_BeforeClose(ref bool Cancel)
             {
-                closeExcel();
+                //close();
             }
 
             /// <summary>
             /// обработка события сохранения книги
             /// </summary>
-            /// <param name="Success"></param>
+            /// <param name="Success">Признак результата выполнени яоперации сохранения</param>
             void workBook_AfterSave(bool Success)
             {
-                closeExcel();
+                close();
             }
 
             /// <summary>
@@ -571,7 +576,7 @@ namespace PluginTaskReaktivka
             /// <summary>
             /// вызов закрытия Excel
             /// </summary>
-            private void closeExcel()
+            private void close()
             {
                 //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
                 //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });

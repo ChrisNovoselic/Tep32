@@ -76,8 +76,8 @@ namespace PluginTaskReaktivka
                     // найти индекс нового столбца
                     // столбец для станции - всегда крайний
                     foreach (DataGridViewColumn col in Columns)
-                        if ((((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).IdComponent > 0)
-                            && (((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).m_component.IsTec == true)) {
+                        if ((((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).IdComponent > 0)
+                            && (((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).m_component.IsTec == true)) {
                             indxCol = Columns.IndexOf(col);
 
                             break;
@@ -85,7 +85,7 @@ namespace PluginTaskReaktivka
                             ;
 
                     DataGridViewColumn column = new DataGridViewTextBoxColumn();
-                    column.Tag = putPar;
+                    column.Tag = new COLUMN_TAG (putPar, ColumnCount + 2, false);
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
 
@@ -123,38 +123,6 @@ namespace PluginTaskReaktivka
                 }
             }
 
-            ///// <summary>
-            ///// Добавить столбец
-            ///// </summary>
-            ///// <param name="text">Текст для заголовка столбца</param>
-            ///// <param name="bRead">флаг изменения пользователем ячейки</param>
-            ///// <param name="nameCol">имя столбца</param>
-            ///// <param name="idPut">индентификатор источника</param>
-            //public void AddColumn(string txtHeader, string nameCol, bool bRead, bool bVisibled)
-            //{
-            //    DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
-            //    DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
-            //    //DataGridViewColumnHeadersHeightSizeMode HeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-
-            //    try
-            //    {
-            //        HDataGridViewColumn column = new HDataGridViewColumn() { m_bCalcDeny = false };
-            //        alignText = DataGridViewContentAlignment.MiddleRight;
-            //        autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
-            //        column.Frozen = true;
-            //        column.ReadOnly = bRead;
-            //        column.Name = nameCol;
-            //        column.HeaderText = txtHeader;
-            //        column.DefaultCellStyle.Alignment = alignText;
-            //        column.AutoSizeMode = autoSzColMode;
-            //        Columns.Add(column as DataGridViewTextBoxColumn);
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            //    }
-            //}
-
             /// <summary>
             /// Установка возможности редактирования столбцов
             /// </summary>
@@ -166,73 +134,6 @@ namespace PluginTaskReaktivka
                     else
                         ;
             }
-
-            ///// <summary>
-            ///// Очищение отображения от значений
-            ///// </summary>
-            //public void ClearValues()
-            //{
-            //    //CellValueChanged -= onCellValueChanged;
-
-            //    foreach (DataGridViewRow r in Rows)
-            //        foreach (DataGridViewCell c in r.Cells)
-            //            if (r.Cells.IndexOf(c) > ((int)INDEX_SERVICE_COLUMN.COUNT - 1)) // нельзя удалять идентификатор параметра
-            //                c.Value = string.Empty;
-
-            //    //??? если установить 'true' - редактирование невозможно
-            //    //ReadOnly = false;
-
-            //    //CellValueChanged += new DataGridViewCellEventHandler(onCellValueChanged);
-            //}
-
-            ///// <summary>
-            ///// Добавить строку в таблицу
-            ///// </summary>
-            //public void AddRow(ROW_PROPERTY rowProp)
-            //{
-            //    int i = -1;
-            //    // создать строку
-            //    DataGridViewRow row = new DataGridViewRow();
-            //    if (m_dictPropertiesRows == null)
-            //        m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-
-            //    if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
-            //        m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
-
-            //    // добавить строку
-            //    i = Rows.Add(row);
-            //    // установить значения в ячейках для служебной информации
-            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
-            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.ALG].Value = rowProp.m_idAlg;
-            //    // инициализировать значения в служебных ячейках
-            //    m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
-            //}
-
-            ///// <summary>
-            ///// Добавить строку в таблицу
-            ///// </summary>
-            //public void AddRow(ROW_PROPERTY rowProp, int DaysInMonth)
-            //{
-            //    int i = -1;
-            //    // создать строку
-            //    DataGridViewRow row = new DataGridViewRow();
-            //    if (m_dictPropertiesRows == null)
-            //        m_dictPropertiesRows = new Dictionary<int, ROW_PROPERTY>();
-
-            //    if (!m_dictPropertiesRows.ContainsKey(rowProp.m_idAlg))
-            //        m_dictPropertiesRows.Add(rowProp.m_idAlg, rowProp);
-
-            //    // добавить строку
-            //    i = Rows.Add(row);
-            //    // установить значения в ячейках для служебной информации
-            //    Rows[i].Cells[(int)INDEX_SERVICE_COLUMN.DATE].Value = rowProp.m_Value;
-            //    // инициализировать значения в служебных ячейках
-            //    //m_dictPropertiesRows[rowProp.m_idAlg].InitCells(Columns.Count);
-
-            //    if (i == DaysInMonth)
-            //        foreach (HDataGridViewColumn col in Columns)
-            //            Rows[i].Cells[col.Index].ReadOnly = true;//блокировка строк
-            //}
 
             /// <summary>
             /// Обновить структуру таблицы
@@ -254,9 +155,9 @@ namespace PluginTaskReaktivka
                 if (item.m_type == PanelManagementTaskCalculate.ItemCheckedParametersEventArgs.TYPE.VISIBLE) {
                     if (item.IsComponent == true)
                     // найти индекс столбца (компонента) - по идентификатору
-                        foreach (DataGridViewColumn c in Columns)
-                            if (((HandlerDbTaskCalculate.PUT_PARAMETER)c.Tag).IdComponent == item.m_idComp) {
-                                indx = Columns.IndexOf(c);
+                        foreach (DataGridViewColumn col in Columns)
+                            if (((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).IdComponent == item.m_idComp) {
+                                indx = Columns.IndexOf(col);
                                 break;
                             } else
                                 ;

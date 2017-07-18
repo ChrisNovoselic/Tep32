@@ -10,8 +10,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using TepCommon;
-using Excel = Microsoft.Office.Interop.Excel;
 using Outlook = Microsoft.Office.Interop.Outlook;
+using Excel = Microsoft.Office.Interop.Excel;
 using System.Threading;
 
 namespace PluginTaskAutobook
@@ -63,7 +63,7 @@ namespace PluginTaskAutobook
         /// Класс по работе с формированием 
         /// и отправкой отчета NSS
         /// </summary>
-        public class ReportEMailNSS
+        private class ReportEMailNSS
         {
             ///// <summary>
             ///// Экземпляр класса
@@ -288,209 +288,34 @@ namespace PluginTaskAutobook
             }
         }
 
-        /// <summary>
-        /// Класс формирования отчета Excel 
-        /// </summary>
-        public class ReportMSExcel
+        private class ReportMSExcel : TepCommon.ReportMSExcel
         {
-            /// <summary>
-            /// Экземпляр приложения Excel
-            /// </summary>
-            private Excel.Application m_excApp;
-            /// <summary>
-            /// Экземпляр книги Excel
-            /// </summary>
-            private Excel.Workbook m_workBook;
-            /// <summary>
-            /// Экземпляр листа Excel
-            /// </summary>
-            private Excel.Worksheet m_wrkSheet;
-            private object _missingObj = Missing.Value;
-
-            /// <summary>
-            /// Перечисление - индексы для указания признаков ячейки
-            /// </summary>
-            protected enum MODE_CELL_BORDER : int
+            protected override void create()
             {
-                UNKNOW = -1,
-                SEPARATE,
-                ADJACENT
-            }
-
-            /// <summary>
-            /// конструктор(основной)
-            /// </summary>
-            public ReportMSExcel()
-            {
-                m_excApp = new Excel.Application();
-                m_excApp.Visible = false;
-            }
-
-            private const int BEGIN_DATA_ROW = 9;
-
-            /// <summary>
-            /// Подключение шаблона листа экселя и его заполнение
-            /// </summary>
-            /// <param name="dgv">отрбражение данных</param>
-            /// <param name="dtRange">дата</param>
-            public void Create(DataGridView dgv, DateTimeRange dtRange)
-            {
-                Excel.Range range;
                 List<string> values;
+                Excel.Range range;
                 int address = -1;
 
-                if (addWorkbook() == true)
-                {
-                    values = new List<string>();
+                values = new List<string>();
+                range = (Excel.Range)m_wrkSheet.Columns[1];
+                setHeaderValues(range, dtRange, BEGIN_DATA_ROW);
 
-                    m_workBook.AfterSave += workBook_AfterSave;
-                    m_workBook.BeforeClose += workBook_BeforeClose;
-                    m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("Autobook");
+                for (int i = 0; i < dgv.Columns.Count; i++) {
+                    address = ((HPanelTepCommon.DataGridViewValues.COLUMN_TAG)dgv.Columns[i].Tag).TemplateReportAddress;
 
-                    try {
-                        range = (Excel.Range)m_wrkSheet.Columns[1];
-                        setHeaderValues(range, dtRange, BEGIN_DATA_ROW);
+                    if (!(address < 0)) {
+                        range = (Excel.Range)m_wrkSheet.Columns[address];
 
-                        for (int i = 0; i < dgv.Columns.Count; i++) {
-                            address = ((DataGridViewValues.COLUMN_TAG)dgv.Columns[i].Tag).TemplateReportAddress;
-
-                            if (!(address < 0)) {
-                                range = (Excel.Range)m_wrkSheet.Columns[address];
-
-                                values.Clear();
-                                dgv.Rows.Cast<DataGridViewRow>().ToList().ForEach(row => { values.Add(row.Cells[i].Value.ToString()); });
-                                setColumnValues(range, values.Take(values.Count - 1).ToList(), BEGIN_DATA_ROW);
-                            } else
-                                ;
-                        }
-
-                        // TODO: получить значение плановой выработки э/э
-                        m_wrkSheet.get_Range("C5").Value2 = m_wrkSheet.get_Range(string.Format("H{0}", (BEGIN_DATA_ROW + dgv.RowCount - 2))).Value2;
-                        m_wrkSheet.get_Range("A4").Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
-
-                        m_excApp.Visible = true;
-                        Marshal.ReleaseComObject(m_excApp);
-                    } catch (Exception e) {
-                        Close();
-
-                        Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues.ReportMSExcel::Create () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Подключение шаблона
-            /// </summary>
-            /// <returns>признак ошибки</returns>
-            private bool addWorkbook()
-            {
-                bool bRes = false;
-
-                //string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xlsx";
-                string pathToTemplate = Path.GetFullPath(@"Template\TemplateAutobook.xlsx");
-                object pathToTemplateObj = pathToTemplate;
-                
-                try
-                {
-                    m_workBook = m_excApp.Workbooks.Add(pathToTemplate);
-
-                    bRes = true;
-                }
-                catch (Exception e)
-                {
-                    Close();
-
-                    Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues.ReportMSExcel::addWorkbook () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
-                }
-
-                return bRes;
-            }
-
-            /// <summary>
-            /// Обработка события - закрытие экселя
-            /// </summary>
-            /// <param name="Cancel"></param>
-            void workBook_BeforeClose(ref bool Cancel)
-            {
-                //Close();
-            }
-
-            /// <summary>
-            /// обработка события сохранения книги
-            /// </summary>
-            /// <param name="Success"></param>
-            void workBook_AfterSave(bool Success)
-            {
-                Close();
-            }
-
-            /// <summary>
-            /// Деление 
-            /// </summary>
-            /// <param name="headerTxt">строка</param>
-            /// <returns>часть строки</returns>
-            private string splitString(string headerTxt)
-            {
-                string[] spltHeader = headerTxt.Split(',');
-
-                if (spltHeader.Length > (int)MODE_CELL_BORDER.ADJACENT)
-                    return spltHeader[(int)MODE_CELL_BORDER.ADJACENT].TrimStart();
-                else
-                    return spltHeader[(int)MODE_CELL_BORDER.SEPARATE];
-            }
-
-            private void setHeaderValues(Excel.Range range, HClassLibrary.DateTimeRange dates,int indxRowExcel)
-            {
-                int row = -1
-                    , cntDay = -1;
-                DateTime curDate;
-
-                row = indxRowExcel;
-                cntDay = (dates.End - dates.Begin).Days;
-
-                for (int j = 0; j < cntDay; j++)
-                    range.Cells[row++] = Convert.ToString(curDate = dates.Begin.AddDays(j));
-            }
-
-            /// <summary>
-            /// Заполнение выбранного стоблца в шаблоне
-            /// </summary>
-            /// <param name="range">столбец в excel</param>
-            /// <param name="dgv">отображение</param>
-            /// <param name="indxColDgv">индекс столбца</param>
-            /// <param name="indxRowExcel">индекс строки в excel</param>
-            private void setColumnValues(Excel.Range range
-                , List<string> values
-                , int indxRowExcel)
-            {
-                int row = 0;
-
-                for (int i = indxRowExcel; i < range.Rows.Count; i++)
-                    if ((((Excel.Range)range.Cells[i]).Value == null)
-                        && (((Excel.Range)range.Cells[i]).MergeCells.ToString().Equals(true.ToString()) == false)) {
-                        row = i;
-
-                        break;
+                        values.Clear();
+                        dgv.Rows.Cast<DataGridViewRow>().ToList().ForEach(row => { values.Add(row.Cells[i].Value.ToString()); });
+                        setColumnValues(range, values.Take(values.Count - 1).ToList(), BEGIN_DATA_ROW);
                     } else
                         ;
+                }
 
-                for (int j = 0; j < values.Count; j++)
-                    range.Cells[row++] = Convert.ToString(values[j]);
-            }
-
-            /// <summary>
-            /// вызов закрытия Excel
-            /// </summary>
-            public void Close()
-            {
-                //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
-                //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
-                Marshal.ReleaseComObject(m_excApp);
-
-                m_excApp = null;
-                m_workBook = null;
-                m_wrkSheet = null;
-                GC.Collect();
+                // TODO: получить значение плановой выработки э/э
+                m_wrkSheet.get_Range("C5").Value2 = m_wrkSheet.get_Range(string.Format("H{0}", (BEGIN_DATA_ROW + dgv.RowCount - 2))).Value2;
+                m_wrkSheet.get_Range("A4").Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
             }
         }
 
@@ -748,7 +573,7 @@ namespace PluginTaskAutobook
         private void btnExport_onClick(object sender, EventArgs e)
         {
             ReportMSExcel rep = new ReportMSExcel();
-            rep.Create(m_dgvValues, Session.m_DatetimeRange);
+            rep.Create(@"Autobook", m_dgvValues, Session.m_DatetimeRange);
         }
 
         /// <summary>
