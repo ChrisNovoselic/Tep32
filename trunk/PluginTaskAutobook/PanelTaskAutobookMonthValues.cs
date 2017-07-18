@@ -326,6 +326,8 @@ namespace PluginTaskAutobook
                 m_excApp.Visible = false;
             }
 
+            private const int BEGIN_DATA_ROW = 9;
+
             /// <summary>
             /// Подключение шаблона листа экселя и его заполнение
             /// </summary>
@@ -333,35 +335,45 @@ namespace PluginTaskAutobook
             /// <param name="dtRange">дата</param>
             public void Create(DataGridView dgv, DateTimeRange dtRange)
             {
-                if (addWorkBooks())
+                Excel.Range range;
+                List<string> values;
+                int address = -1;
+
+                if (addWorkbook() == true)
                 {
+                    values = new List<string>();
+
                     m_workBook.AfterSave += workBook_AfterSave;
                     m_workBook.BeforeClose += workBook_BeforeClose;
                     m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("Autobook");
-                    int indxRow = 1;
 
                     try {
+                        range = (Excel.Range)m_wrkSheet.Columns[1];
+                        setHeaderValues(range, dtRange, BEGIN_DATA_ROW);
+
                         for (int i = 0; i < dgv.Columns.Count; i++) {
-                            if (dgv.Columns[i].HeaderText != "") {
-                                Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxRow];
+                            address = ((DataGridViewValues.COLUMN_TAG)dgv.Columns[i].Tag).TemplateReportAddress;
 
-                                foreach (Excel.Range cell in colRange.Cells)
-                                    if (Convert.ToString(cell.Value) == splitString(dgv.Columns[i].HeaderText)) {
-                                        fillSheetExcel(colRange, dgv, i, cell.Row);
+                            if (!(address < 0)) {
+                                range = (Excel.Range)m_wrkSheet.Columns[address];
 
-                                        break;
-                                    } else
-                                        ;
-                                indxRow++;
+                                values.Clear();
+                                dgv.Rows.Cast<DataGridViewRow>().ToList().ForEach(row => { values.Add(row.Cells[i].Value.ToString()); });
+                                setColumnValues(range, values.Take(values.Count - 1).ToList(), BEGIN_DATA_ROW);
                             } else
                                 ;
                         }
-                        setPlanMonth(m_wrkSheet, dgv, dtRange);
+
+                        // TODO: получить значение плановой выработки э/э
+                        m_wrkSheet.get_Range("C5").Value2 = m_wrkSheet.get_Range(string.Format("H{0}", (BEGIN_DATA_ROW + dgv.RowCount - 2))).Value2;
+                        m_wrkSheet.get_Range("A4").Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
+
                         m_excApp.Visible = true;
                         Marshal.ReleaseComObject(m_excApp);
                     } catch (Exception e) {
                         Close();
-                        MessageBox.Show("Ошибка экспорта данных!" + e);
+
+                        Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues.ReportMSExcel::Create () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
             }
@@ -370,9 +382,9 @@ namespace PluginTaskAutobook
             /// Подключение шаблона
             /// </summary>
             /// <returns>признак ошибки</returns>
-            private bool addWorkBooks()
+            private bool addWorkbook()
             {
-                bool bRes = true;
+                bool bRes = false;
 
                 //string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xlsx";
                 string pathToTemplate = Path.GetFullPath(@"Template\TemplateAutobook.xlsx");
@@ -381,13 +393,16 @@ namespace PluginTaskAutobook
                 try
                 {
                     m_workBook = m_excApp.Workbooks.Add(pathToTemplate);
+
+                    bRes = true;
                 }
-                catch (Exception exp)
+                catch (Exception e)
                 {
                     Close();
-                    bRes = false;
-                    MessageBox.Show("Отсутствует шаблон для отчета Excel" + exp);
+
+                    Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues.ReportMSExcel::addWorkbook () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
+
                 return bRes;
             }
 
@@ -397,7 +412,7 @@ namespace PluginTaskAutobook
             /// <param name="Cancel"></param>
             void workBook_BeforeClose(ref bool Cancel)
             {
-                Close();
+                //Close();
             }
 
             /// <summary>
@@ -407,20 +422,6 @@ namespace PluginTaskAutobook
             void workBook_AfterSave(bool Success)
             {
                 Close();
-            }
-
-            /// <summary>
-            /// Добавление плана и месяца
-            /// </summary>
-            /// <param name="exclWrksht">лист экселя</param>
-            /// <param name="dgv">грид</param>
-            /// <param name="dtRange">дата</param>
-            private void setPlanMonth(Excel.Worksheet exclWrksht, DataGridView dgv, DateTimeRange dtRange)
-            {
-                Excel.Range exclRPL = exclWrksht.get_Range("C5");
-                Excel.Range exclRMonth = exclWrksht.get_Range("A4");
-                exclRPL.Value2 = dgv.Rows[dgv.Rows.Count - 1].Cells[@"PlanSwen"].Value;
-                exclRMonth.Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
             }
 
             /// <summary>
@@ -438,33 +439,43 @@ namespace PluginTaskAutobook
                     return spltHeader[(int)MODE_CELL_BORDER.SEPARATE];
             }
 
+            private void setHeaderValues(Excel.Range range, HClassLibrary.DateTimeRange dates,int indxRowExcel)
+            {
+                int row = -1
+                    , cntDay = -1;
+                DateTime curDate;
+
+                row = indxRowExcel;
+                cntDay = (dates.End - dates.Begin).Days;
+
+                for (int j = 0; j < cntDay; j++)
+                    range.Cells[row++] = Convert.ToString(curDate = dates.Begin.AddDays(j));
+            }
+
             /// <summary>
             /// Заполнение выбранного стоблца в шаблоне
             /// </summary>
-            /// <param name="cellRange">столбец в excel</param>
+            /// <param name="range">столбец в excel</param>
             /// <param name="dgv">отображение</param>
             /// <param name="indxColDgv">индекс столбца</param>
             /// <param name="indxRowExcel">индекс строки в excel</param>
-            private void fillSheetExcel(Excel.Range cellRange
-                , DataGridView dgv
-                , int indxColDgv
+            private void setColumnValues(Excel.Range range
+                , List<string> values
                 , int indxRowExcel)
             {
                 int row = 0;
 
-                for (int i = indxRowExcel; i < cellRange.Rows.Count; i++)
-                    if (((Excel.Range)cellRange.Cells[i]).Value == null &&
-                        ((Excel.Range)cellRange.Cells[i]).MergeCells.ToString() != "True")
-                    {
+                for (int i = indxRowExcel; i < range.Rows.Count; i++)
+                    if ((((Excel.Range)range.Cells[i]).Value == null)
+                        && (((Excel.Range)range.Cells[i]).MergeCells.ToString().Equals(true.ToString()) == false)) {
                         row = i;
-                        break;
-                    }
 
-                for (int j = 0; j < dgv.Rows.Count; j++)
-                {
-                    cellRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-                    row++;
-                }
+                        break;
+                    } else
+                        ;
+
+                for (int j = 0; j < values.Count; j++)
+                    range.Cells[row++] = Convert.ToString(values[j]);
             }
 
             /// <summary>

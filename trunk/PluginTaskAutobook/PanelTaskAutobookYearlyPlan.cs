@@ -4,6 +4,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Windows.Forms;
 
 using HClassLibrary;
@@ -13,16 +14,6 @@ namespace PluginTaskAutobook
 {
     public partial class PanelTaskAutobookYearlyPlan : HPanelTepCommon
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        public static string[] GetMonth =
-        {
-            "Январь", "Февраль", "Март", "Апрель",
-            "Май", "Июнь", "Июль", "Август", "Сентябрь",
-            "Октябрь", "Ноябрь", "Декабрь"//, "Январь сл. года"
-        };
-        
         /// <summary>
         /// Объект для работы с БД (чтение, сохранение значений)
         /// </summary>
@@ -250,9 +241,8 @@ namespace PluginTaskAutobook
             try {
                 bEnabled = m_dictProfile.GetBooleanAttribute(ID_PERIOD.YEAR, INDEX_CONTROL.DGV_VALUES, HTepUsers.ID_ALLOWED.ENABLED_ITEM);
 
-                (findControl(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString()) as CheckBox).Checked =
-                m_dgvValues.ReadOnly =
-                    bEnabled;
+                (findControl(PanelManagementAutobookYearlyPlan.INDEX_CONTROL.CHKBX_EDIT.ToString()) as CheckBox).Checked = bEnabled;
+                m_dgvValues.ReadOnly = !bEnabled;
 
                 bEnabled = m_dictProfile.GetBooleanAttribute(HTepUsers.ID_ALLOWED.ENABLED_CONTROL); // значение по умолчанию для кнопки "Сохранить"
 
@@ -469,7 +459,14 @@ namespace PluginTaskAutobook
         /// <param name="ev">Аргумент события(пустой)</param>
         protected override void panelTepCommon_btnSave_onClick(object obj, EventArgs ev)
         {
-            base.panelTepCommon_btnSave_onClick(obj, ev);
+            //base.panelTepCommon_btnSave_onClick(obj, ev);
+
+            int err = -1;
+            string errMsg = string.Empty;
+
+            //PanelManagement.ButtonSaveEnabled = false;
+
+            new Thread(new ParameterizedThreadStart(HandlerDb.SaveChanges)) { IsBackground = true }.Start(null);
         }        
 
         /// <summary>

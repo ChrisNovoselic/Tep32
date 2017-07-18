@@ -48,8 +48,8 @@ namespace PluginTaskAutobook
                 Columns.Add(@"VALUE", @"Значения");
                 Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 Columns[0].CellTemplate.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
-
-                Columns[0].Tag = putPar;
+                // номер столбца в соответствии с шаблоном книги MS Excel при экспорте
+                Columns[0].Tag = new COLUMN_TAG (putPar, ColumnCount + 2, false);
             }
 
             protected override bool isRowToShowValues(DataGridViewRow r, TepCommon.HandlerDbTaskCalculate.VALUE value)

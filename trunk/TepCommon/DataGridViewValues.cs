@@ -17,6 +17,15 @@ namespace TepCommon
         protected abstract class DataGridViewValues : DataGridView
         {
             /// <summary>
+            /// Массив - наименования месяцев в году (Ru-Ru)
+            /// </summary>
+            public static string[] s_NameMonths =
+            {
+                "Январь", "Февраль", "Март", "Апрель",
+                "Май", "Июнь", "Июль", "Август", "Сентябрь",
+                "Октябрь", "Ноябрь", "Декабрь"//, "Январь сл. года"
+            };
+            /// <summary>
             /// Перечисления для указания режима отображения значений
             /// </summary>
             public enum ModeData {
@@ -175,7 +184,7 @@ namespace TepCommon
                         fltValue = 0F;
 
                     try {
-                        putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)Columns[ev.ColumnIndex].Tag;
+                        putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)(((COLUMN_TAG)Columns[ev.ColumnIndex].Tag).value);
 
                         err = 0;
                     } catch (Exception e) {
@@ -197,8 +206,8 @@ namespace TepCommon
 
                         foreach (DataGridViewColumn col in Columns) {
                             if (!(col.Index == ev.ColumnIndex)) {
-                                if (col.Tag is FormulaHelper) {
-                                    if ((bRecalculate = (col.Tag as FormulaHelper).IndexColumns.Contains(ev.ColumnIndex)) == true)
+                                if (((COLUMN_TAG)col.Tag).Type == TYPE_COLUMN_TAG.FORMULA_HELPER) {
+                                    if ((bRecalculate = (((COLUMN_TAG)col.Tag).value as FormulaHelper).IndexColumns.Contains(ev.ColumnIndex)) == true)
                                         break;
                                     else
                                         ;
@@ -232,7 +241,7 @@ namespace TepCommon
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 //Установить режим "невидимые" заголовки столбцов
                 ColumnHeadersVisible = true;
-                // 
+                //Запрет изменения размеров столбцов
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
                 //Запрет изменения размера строк
                 AllowUserToResizeRows = false;
@@ -248,6 +257,8 @@ namespace TepCommon
                 RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders | DataGridViewRowHeadersWidthSizeMode.DisableResizing;
                 ////Ширина столбцов под видимую область
                 //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                //
+                ShowCellToolTips = true;
 
                 //RowsAdded += onRowsAdded;
                 Columns.CollectionChanged += columns_OnCollectionChanged;
@@ -265,20 +276,22 @@ namespace TepCommon
                 if (e.Action == System.ComponentModel.CollectionChangeAction.Add) {
                     //foreach (DataGridViewColumn column in Columns) {
                         column = e.Element as DataGridViewColumn;
+                        column.SortMode = DataGridViewColumnSortMode.NotSortable;
 
                         if (Equals(column.Tag, null) == false) {
                             if (((COLUMN_TAG)column.Tag).Type == TYPE_COLUMN_TAG.PUT_PARAMETER) {
+                            // идентификатор столбца - параметр в алгоритме расчета 2-го порядка (с принадлежностью к оборудованию)
                                 idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)column.Tag).value).m_idNAlg;
 
                                 fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
                             } else if (((COLUMN_TAG)column.Tag).Type == TYPE_COLUMN_TAG.FORMULA_HELPER) {
+                            // идентификатор столбца - формула
                                 tagFormaula = ((COLUMN_TAG)column.Tag).value as FormulaHelper;
-
+                                //Подготовить(разобрать) формулу к выполнению расчета
                                 tagFormaula.Prepare((from col in Columns.Cast<DataGridViewColumn>() select col.Name));
                         
-                                #region Поиск 'tag' базового столбца для форматирования значения
+                                //Поиск 'tag' базового столбца для форматирования значения
                                 tag = getBaseColumnTag(tagFormaula.IndexColumns);
-                                #endregion
 
                                 if (tag.IsNaN == false) {
                                     idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)tag).m_idNAlg;
@@ -348,13 +361,26 @@ namespace TepCommon
 
             public struct COLUMN_TAG
             {
+                /// <summary>
+                /// Идентификатор столбца
+                /// </summary>
                 public object value;
-
+                /// <summary>
+                /// Тип объекта, являющегося идентификатором столбца
+                /// </summary>
                 public TYPE_COLUMN_TAG Type;
-
+                /// <summary>
+                /// Признак отмены агрегационной функции
+                ///  (при наличии таковой, по, например, указанной в проекте единице измерения)
+                /// </summary>
                 public bool ActionAgregateCancel;
+                /// <summary>
+                /// Индекс(номер, адрес) столбца в книге MS Excel при экспорте значений столбца
+                ///  , отсутствие значения - признак отсутствия необходимости экпорта значений столбца
+                /// </summary>
+                public int TemplateReportAddress;
 
-                public COLUMN_TAG(object tag, bool bActionAgregateCancel)
+                public COLUMN_TAG(object tag, int indexMSExcelReportColumn, bool bActionAgregateCancel)
                 {
                     value = tag;
 
@@ -364,6 +390,8 @@ namespace TepCommon
                         Type = TYPE_COLUMN_TAG.FORMULA_HELPER;
                     else
                         Type = TYPE_COLUMN_TAG.UNKNOWN;
+
+                    TemplateReportAddress = indexMSExcelReportColumn;
 
                     ActionAgregateCancel = bActionAgregateCancel;
                 }
@@ -567,6 +595,7 @@ namespace TepCommon
             protected virtual void addRow(DateTime dtRow, bool bEnded)
             {
                 int indxRow = -1;
+                string dtLabelRow = string.Empty;
 
                 if (_modeData == ModeData.DATETIME) {
                     indxRow = Rows.Add();
@@ -578,10 +607,14 @@ namespace TepCommon
                     } else {
                         // обычные сутки
                         Rows[indxRow].Tag = dtRow;
+                        dtLabelRow = DatetimeStamp.Increment > TimeSpan.FromDays(1)
+                            ? s_NameMonths[dtRow.Month - 1]
+                                : dtRow.ToShortDateString();
+
                         if (RowHeadersVisible == true)
-                            Rows[indxRow].HeaderCell.Value = dtRow.ToShortDateString();
+                            Rows[indxRow].HeaderCell.Value = dtLabelRow;
                         else
-                            Rows[indxRow].Cells[0].Value = dtRow.ToShortDateString();
+                            Rows[indxRow].Cells[0].Value = dtLabelRow;
                     }
 
                     Rows[indxRow].DefaultCellStyle.BackColor = s_arCellColors[(int)INDEX_COLOR.EMPTY];
@@ -664,7 +697,8 @@ namespace TepCommon
                             bCellClear = false;
 
                         if (bCellClear == true) {
-                            // только для реальных компонетов - нельзя удалять идентификатор параметра
+                            // только для реальных компонентов (нельзя удалять идентификатор параметра)
+                            //??? в качестве идентификтора столбца может быть не только компонент (но и 'PUT_PARAMETER', 'FORMULA_HELPER')
                             c.Value = string.Empty;
                             c.Style.BackColor = s_arCellColors[(int)INDEX_COLOR.EMPTY];
                         } else
@@ -1117,7 +1151,7 @@ namespace TepCommon
                                                         // предыдущей строки нет
                                                         fltVal = 0F;
                                                     else
-                                                        // предыдущая строка в наличии - учесть ее значение
+                                                    // предыдущая строка в наличии - учесть ее значение
                                                         // значение предыдущей строки
                                                         fltVal = (Equals(Rows[r.Index - 1].Cells[col.Index].Value, null) == false)
                                                             ? (float)Rows[r.Index - 1].Cells[col.Index].Value //float.Parse((string)Rows[r.Index - 1].Cells[col.Index].Value, System.Globalization.CultureInfo.InvariantCulture)
@@ -1137,17 +1171,18 @@ namespace TepCommon
                                                         ;
                                                     // отобразить значение
                                                     r.Cells[iCol].Value = fltVal;
+                                                    r.Cells[iCol].ToolTipText = fltVal.ToString();
                                                 } else
                                                     ;
                                             } else
                                             // отобразить значение для крайней строки
                                                 if ((fltColumnAgregateValue > float.MinValue)
                                                     && (!(columnAction == AGREGATE_ACTION.UNKNOWN)))
-                                                r.Cells[iCol].Value = columnAction == AGREGATE_ACTION.SUMMA
-                                                    ? fltColumnAgregateValue
-                                                        : fltColumnAgregateValue / (Rows.Count - 1);
-                                            else
-                                                ;
+                                                    r.Cells[iCol].Value = columnAction == AGREGATE_ACTION.SUMMA
+                                                        ? fltColumnAgregateValue
+                                                            : fltColumnAgregateValue / (Rows.Count - 1);
+                                                else
+                                                    ;
 
                                             r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
                                         } catch (Exception e) {

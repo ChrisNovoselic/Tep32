@@ -6,6 +6,7 @@ using System.IO;
 using System.Windows.Forms;
 using TepCommon;
 using Excel = Microsoft.Office.Interop.Excel;
+using System.Threading;
 
 namespace PluginTaskReaktivka
 {
@@ -341,19 +342,7 @@ namespace PluginTaskReaktivka
         {
             int err = -1;
 
-            //DateTimeRange[] dtR = HandlerDb.getDateTimeRangeVariableValues();
-
-            //m_arTableOrigin[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] = 
-            //    HandlerDb.GetDataOutval(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, dtR, out err);
-            ////HandlerDb.GetInVal(Type
-            ////, dtR
-            ////, ActualIdPeriod
-            ////, out err);
-
-            //m_arTableEdit[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE] =
-            //    HandlerDb.SaveValues(m_TableOrigin, valuesFence, (int)Session.CurrentIdTimezone, out err);
-
-            //saveInvalValue(out err);
+            new Thread(new ParameterizedThreadStart(HandlerDb.SaveChanges)) { IsBackground = true }.Start(null);
         }
 
         /// <summary>
@@ -718,60 +707,60 @@ namespace PluginTaskReaktivka
             return pref[0] + "_" + newNameTable;
         }
 
-        /// <summary>
-        /// разбор данных по разным табилца(взависимости от месяца)
-        /// </summary>
-        /// <param name="origin">оригинальная таблица</param>
-        /// <param name="edit">таблица с данными</param>
-        /// <param name="nameTable">имя таблицы</param>
-        /// <param name="unCol">столбец, неучаствующий в InsertUpdate</param>
-        /// <param name="err">номер ошибки</param>
-        private void sortingDataToTable(DataTable origin
-            , DataTable edit
-            , string nameTable
-            , string unCol
-            , out int err)
-        {
-            string nameTableExtrmRow = string.Empty
-                          , nameTableNew = string.Empty;
-            DataTable editTemporary = new DataTable()
-                , originTemporary = new DataTable();
+        ///// <summary>
+        ///// разбор данных по разным табилца(взависимости от месяца)
+        ///// </summary>
+        ///// <param name="origin">оригинальная таблица</param>
+        ///// <param name="edit">таблица с данными</param>
+        ///// <param name="nameTable">имя таблицы</param>
+        ///// <param name="unCol">столбец, неучаствующий в InsertUpdate</param>
+        ///// <param name="err">номер ошибки</param>
+        //private void sortingDataToTable(DataTable origin
+        //    , DataTable edit
+        //    , string nameTable
+        //    , string unCol
+        //    , out int err)
+        //{
+        //    string nameTableExtrmRow = string.Empty
+        //                  , nameTableNew = string.Empty;
+        //    DataTable editTemporary = new DataTable()
+        //        , originTemporary = new DataTable();
 
-            err = -1;
-            editTemporary = edit.Clone();
-            originTemporary = origin.Clone();
-            nameTableNew = nameTable;
+        //    err = -1;
+        //    editTemporary = edit.Clone();
+        //    originTemporary = origin.Clone();
+        //    nameTableNew = nameTable;
 
-            foreach (DataRow row in edit.Rows)
-            {
-                nameTableExtrmRow = extremeRow(row["DATE_TIME"].ToString(), nameTableNew);
+        //    foreach (DataRow row in edit.Rows)
+        //    {
+        //        nameTableExtrmRow = extremeRow(row["DATE_TIME"].ToString(), nameTableNew);
 
-                if (nameTableExtrmRow != nameTableNew)
-                {
-                    foreach (DataRow rowOrigin in origin.Rows)
-                        if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month != Convert.ToDateTime(row["DATE_TIME"]).Month)
-                            originTemporary.Rows.Add(rowOrigin.ItemArray);
+        //        if (nameTableExtrmRow != nameTableNew)
+        //        {
+        //            foreach (DataRow rowOrigin in origin.Rows)
+        //                if (Convert.ToDateTime(rowOrigin["DATE_TIME"]).Month != Convert.ToDateTime(row["DATE_TIME"]).Month)
+        //                    originTemporary.Rows.Add(rowOrigin.ItemArray);
 
-                    updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
+        //            updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
 
-                    nameTableNew = nameTableExtrmRow;
-                    editTemporary.Rows.Clear();
-                    originTemporary.Rows.Clear();
-                    editTemporary.Rows.Add(row.ItemArray);
-                }
-                else
-                    editTemporary.Rows.Add(row.ItemArray);
-            }
+        //            nameTableNew = nameTableExtrmRow;
+        //            editTemporary.Rows.Clear();
+        //            originTemporary.Rows.Clear();
+        //            editTemporary.Rows.Add(row.ItemArray);
+        //        }
+        //        else
+        //            editTemporary.Rows.Add(row.ItemArray);
+        //    }
 
-            if (editTemporary.Rows.Count > 0)
-            {
-                foreach (DataRow rowOrigin in origin.Rows)
-                    if (extremeRow(Convert.ToDateTime(rowOrigin["DATE_TIME"]).ToString(), nameTableNew) == nameTableNew)
-                        originTemporary.Rows.Add(rowOrigin.ItemArray);
+        //    if (editTemporary.Rows.Count > 0)
+        //    {
+        //        foreach (DataRow rowOrigin in origin.Rows)
+        //            if (extremeRow(Convert.ToDateTime(rowOrigin["DATE_TIME"]).ToString(), nameTableNew) == nameTableNew)
+        //                originTemporary.Rows.Add(rowOrigin.ItemArray);
 
-                updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
-            }
-        }
+        //        updateInsertDel(nameTableNew, originTemporary, editTemporary, unCol, out err);
+        //    }
+        //}
 
         /// <summary>
         /// Освободить (при закрытии), связанные с функционалом ресурсы
