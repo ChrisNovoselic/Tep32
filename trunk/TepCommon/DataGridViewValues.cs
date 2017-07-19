@@ -14,6 +14,9 @@ namespace TepCommon
 {
     partial class HPanelTepCommon
     {
+        /// <summary>
+        /// Класс для представления в табличном виде значений параметров из алгоритма расчета
+        /// </summary>
         protected abstract class DataGridViewValues : DataGridView
         {
             /// <summary>
@@ -510,6 +513,7 @@ namespace TepCommon
                 return getValueAsRatio(idNAlg, idPut, value, 1);
             }
             #endregion
+
             /// <summary>
             /// Добавить объект с информацией о параметре в алгоритме расчета 1-го уровня
             /// </summary>
@@ -1203,6 +1207,28 @@ namespace TepCommon
                     activateCellValue_onChanged(true);
                 } else
                     Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
+            public Dictionary<int, List<string>> GetValuesToReportMSExcel()
+            {
+                Dictionary<int, List<string>> dictRes;
+
+                int address = -1;
+
+                dictRes = new Dictionary<int, List<string>>();
+                foreach (DataGridViewColumn column in Columns) {
+                    address = ((HPanelTepCommon.DataGridViewValues.COLUMN_TAG)column.Tag).TemplateReportAddress;
+
+                    if (!(address < 0))
+                        dictRes.Add(address
+                            , (from row in Rows.Cast<DataGridViewRow>().ToList()
+                                select Equals(row.Cells[column.Index].Value, null) == false ? row.Cells[column.Index].Value.ToString() : string.Empty
+                            ).ToList());
+                    else
+                        ;
+                }
+
+                return dictRes;
             }
         }
     }

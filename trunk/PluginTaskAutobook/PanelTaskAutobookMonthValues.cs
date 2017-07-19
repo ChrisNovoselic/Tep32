@@ -290,32 +290,20 @@ namespace PluginTaskAutobook
 
         private class ReportMSExcel : TepCommon.ReportMSExcel
         {
-            protected override void create()
+            public ReportMSExcel(string nameTemplateWorkbook) : base(nameTemplateWorkbook)
             {
-                List<string> values;
-                Excel.Range range;
-                int address = -1;
+            }
 
-                values = new List<string>();
-                range = (Excel.Range)m_wrkSheet.Columns[1];
-                setHeaderValues(range, dtRange, BEGIN_DATA_ROW);
+            protected override void create(int headerColumn, int beginDataRow, Dictionary<int, List<string>> allValues, DateTimeRange dtRange)
+            {
+                int cntDays = -1;
 
-                for (int i = 0; i < dgv.Columns.Count; i++) {
-                    address = ((HPanelTepCommon.DataGridViewValues.COLUMN_TAG)dgv.Columns[i].Tag).TemplateReportAddress;
+                base.create(headerColumn, beginDataRow, allValues, dtRange);
 
-                    if (!(address < 0)) {
-                        range = (Excel.Range)m_wrkSheet.Columns[address];
-
-                        values.Clear();
-                        dgv.Rows.Cast<DataGridViewRow>().ToList().ForEach(row => { values.Add(row.Cells[i].Value.ToString()); });
-                        setColumnValues(range, values.Take(values.Count - 1).ToList(), BEGIN_DATA_ROW);
-                    } else
-                        ;
-                }
-
+                cntDays = (int)(dtRange.End.Date - dtRange.Begin.Date).TotalDays;
                 // TODO: получить значение плановой выработки э/э
-                m_wrkSheet.get_Range("C5").Value2 = m_wrkSheet.get_Range(string.Format("H{0}", (BEGIN_DATA_ROW + dgv.RowCount - 2))).Value2;
-                m_wrkSheet.get_Range("A4").Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
+                m_wrkSheet.get_Range("C5").Value2 = m_wrkSheet.get_Range(string.Format("H{0}", (beginDataRow + cntDays - 1))).Value2;
+                m_wrkSheet.get_Range("A4").Value2 = string.Format(@"{0} {1}", HDateTime.NameMonths[dtRange.Begin.Month - 1], dtRange.Begin.Year);
             }
         }
 
@@ -572,8 +560,8 @@ namespace PluginTaskAutobook
         /// <param name="e">данные события</param>
         private void btnExport_onClick(object sender, EventArgs e)
         {
-            ReportMSExcel rep = new ReportMSExcel();
-            rep.Create(@"Autobook", m_dgvValues, Session.m_DatetimeRange);
+            new ReportMSExcel(@"TemplateAutobook.xlsx")
+                .Create(@"Autobook", 1, 9, m_dgvValues.GetValuesToReportMSExcel(), Session.m_DatetimeRange);
         }
 
         /// <summary>

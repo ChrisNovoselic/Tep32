@@ -35,10 +35,6 @@ namespace PluginTaskReaktivka
         /// </summary>
         protected HandlerDbTaskReaktivkaCalculate HandlerDb { get { return __handlerDb as HandlerDbTaskReaktivkaCalculate; } }
         /// <summary>
-        /// Объект для создания отчета в MS Excel
-        /// </summary>
-        protected ReportMSExcel m_reportExcel;
-        /// <summary>
         /// Перечисление - признак типа загруженных из БД значений
         ///  "сырые" - от источников информации, "архивные" - сохраненные в БД
         /// </summary>
@@ -146,8 +142,8 @@ namespace PluginTaskReaktivka
         /// <param name="ev">Аргумент события</param>
         void panelTaskReaktivka_btnExport_onClick(object sender, EventArgs e)
         {
-            m_reportExcel = new ReportMSExcel();//
-            m_reportExcel.Create(m_dgvValues, Session.m_DatetimeRange);
+            new ReportMSExcel(@"TemplateReaktivka.xlsx")
+                .Create(@"Reaktivka", 1, 6, m_dgvValues.GetValuesToReportMSExcel(), Session.m_DatetimeRange);
         }
 
         /// <summary>
@@ -374,218 +370,22 @@ namespace PluginTaskReaktivka
         /// <summary>
         /// Класс формирования отчета MS Excel 
         /// </summary>
-        public class ReportMSExcel
+        public class ReportMSExcel : TepCommon.ReportMSExcel
         {
-            private Excel.Application m_excApp;
-            private Excel.Workbook m_workBook;
-            private Excel.Worksheet m_wrkSheet;
-            private object _missingObj = System.Reflection.Missing.Value;
-
             /// <summary>
             /// Конструктор - основной (без параметров)
             /// </summary>
-            public ReportMSExcel()
-            {
-                m_excApp = new Excel.Application();
-                m_excApp.Visible = false;
+            public ReportMSExcel(string nameTemplateWorkbook) : base(nameTemplateWorkbook)
+            {                
             }
 
-            /// <summary>
-            /// Подключение шаблона листа экселя и его заполнение
-            /// </summary>
-            /// <param name="dgView">отрбражение данных</param>
-            /// <param name="dtRange">дата</param>
-            public void Create(DataGridView dgView, DateTimeRange dtRange)
+            protected override void create(int headerColumn, int beginDataRow, Dictionary<int, List<string>> allValues, DateTimeRange dtRange)
             {
-                string cellValue = string.Empty;
+                base.create(headerColumn, beginDataRow, allValues, dtRange);
 
-                if (addWorkbook() == true) {
-                    // успешное добавление листа в книгу
-                    m_workBook.AfterSave += workBook_AfterSave;
-                    m_workBook.BeforeClose += workBook_BeforeClose;
-                    m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item("Reaktivka");
-                    int indxCol = 1;
-
-                    try {
-                        for (int i = 0; i < dgView.Columns.Count; i++) {
-                            if (dgView.Columns[i].HeaderText.Equals(string.Empty) == false) {
-                                Excel.Range colRange = (Excel.Range)m_wrkSheet.Columns[indxCol];
-
-                                foreach (Excel.Range cell in colRange.Cells) {
-                                    cellValue = Convert.ToString(cell.Value);
-
-                                    if (cellValue.Equals(string.Empty) == false)
-                                        if (cellValue == splitString(dgView.Columns[i].HeaderText)) {
-                                            fillSheetExcel(colRange, dgView, i, cell.Row);
-
-                                            break;
-                                        } else
-                                        // продолжать поиск
-                                            ;
-                                    else
-                                    // продолжать поиск
-                                        ;
-                                }
-
-                                indxCol++;
-                            }
-                        }
-                        //
-                        setSignature(m_wrkSheet, dgView, dtRange);
-                        m_excApp.Visible = true;
-                        close();
-                        //System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
-                    } catch (Exception e) {
-                        close();
-
-                        Logging.Logg().Exception(e, string.Format("Panelreaktivka.ReportExcel::Create () - ошибка экспорта данных..."), Logging.INDEX_MESSAGE.NOT_SET);
-                    }
-                } else
-                    throw new Exception(string.Format(@"Panelreaktivka.ReportExcel::Create () - ошибка добавления листа в книгу MS Excel..."));
-            }
-
-            /// <summary>
-            /// Подключение шаблона
-            /// </summary>
-            /// <returns>признак ошибки</returns>
-            private bool addWorkbook()
-            {
-                bool bRes = false;
-
-                string pathToTemplate = Path.GetFullPath(@"Template\TemplateReaktivka.xlsx");
-                object pathToTemplateObj = pathToTemplate;
-                
-                try
-                {
-                    m_workBook = m_excApp.Workbooks.Add(pathToTemplate);
-
-                    bRes = true;
-                }
-                catch (Exception exp)
-                {
-                    close();
-
-                    MessageBox.Show("Отсутствует шаблон для отчета Excel");
-                }
-
-                return bRes;
-            }
-
-            /// <summary>
-            /// Обработка события - закрытие экселя
-            /// </summary>
-            /// <param name="Cancel"></param>
-            void workBook_BeforeClose(ref bool Cancel)
-            {
-                //close();
-            }
-
-            /// <summary>
-            /// обработка события сохранения книги
-            /// </summary>
-            /// <param name="Success">Признак результата выполнени яоперации сохранения</param>
-            void workBook_AfterSave(bool Success)
-            {
-                close();
-            }
-
-            /// <summary>
-            /// Добавление подписи месяца
-            /// </summary>
-            /// <param name="exclWrksht">лист экселя</param>
-            /// <param name="dgv">грид</param>
-            /// <param name="dtRange">дата</param>
-            private void setSignature(Excel.Worksheet exclWrksht, DataGridView dgv, DateTimeRange dtRange)
-            {
-                Excel.Range exclTEC = exclWrksht.get_Range("B2");
-                Excel.Range exclRMonth = exclWrksht.get_Range("A2");
-                exclRMonth.Value2 = HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
-            }
-
-            /// <summary>
-            /// Возвратить одну из частей строки, при наличии разделителя
-            /// </summary>
-            /// <param name="headerTxt">Исходная строка, в которой присутствует разделитель</param>
-            /// <returns>Часть строки</returns>
-            private string splitString(string headerTxt, char chSeparate = ',')
-            {
-                string[] spltHeader = headerTxt.Split(chSeparate);
-
-                if (spltHeader.Length > 1)
-                // разделитель присутствует - вернуть крайнюю часть
-                    return spltHeader[1].TrimStart();
-                else
-                // разделитель отсутствует - вернуть исходную строку
-                    return spltHeader[0];
-            }
-
-            /// <summary>
-            /// Заполнение выбранного стоблца в шаблоне
-            /// </summary>
-            /// <param name="colRange">столбец в excel</param>
-            /// <param name="dgv">отображение</param>
-            /// <param name="indxColDgv">индекс столбца</param>
-            /// <param name="indxRowExcel">индекс строки в excel</param>
-            private void fillSheetExcel(Excel.Range colRange
-                , DataGridView dgv
-                , int indxColDgv
-                , int indxRowExcel)
-            {
-                int row = 0;
-
-                for (int i = indxRowExcel; i < colRange.Rows.Count; i++)
-                    if (((Excel.Range)colRange.Cells[i]).Value == null &&
-                        ((Excel.Range)colRange.Cells[i]).MergeCells.ToString() != "True")
-                    {
-                        row = i;
-                        break;
-                    }
-
-                for (int j = 0; j < dgv.Rows.Count; j++)
-                    if (dgv.Rows.Count - 1 != j)
-                    {
-                        colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-                        row++;
-                    }
-                    else
-                    {
-                        deleteNullRow(colRange, row);
-
-                        if (Convert.ToString(((Excel.Range)colRange.Cells[row]).Value) == "")
-                            colRange.Cells[row] = Convert.ToString(dgv.Rows[j].Cells[indxColDgv].Value);
-                    }
-
-            }
-
-            /// <summary>
-            /// Удаление пустой строки
-            /// </summary>
-            /// <param name="colRange">столбец в excel</param>
-            /// <param name="row">номер строки</param>
-            private void deleteNullRow(Excel.Range colRange, int row)
-            {
-                Excel.Range rangeCol = (Excel.Range)m_wrkSheet.Columns[1];
-
-                while (Convert.ToString(((Excel.Range)rangeCol.Cells[row]).Value) == "")
-                {
-                    Excel.Range rangeRow = (Excel.Range)m_wrkSheet.Rows[row];
-                    rangeRow.Delete(Excel.XlDeleteShiftDirection.xlShiftUp);
-                }
-            }
-
-            /// <summary>
-            /// вызов закрытия Excel
-            /// </summary>
-            private void close()
-            {
-                //Вызвать метод 'Close' для текущей книги 'WorkBook' с параметром 'true'
-                //workBook.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, workBook, new object[] { true });
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(m_excApp);
-
-                m_excApp = null;
-                m_workBook = null;
-                m_wrkSheet = null;
-                GC.Collect();
+                m_wrkSheet.get_Range("A2").Value2 = string.Format(@"{0} {1}", HDateTime.NameMonths[dtRange.Begin.Month - 1], dtRange.Begin.Year);
+                //// TODO: Наименование ТЭЦ
+                //m_wrkSheet.get_Range("B2").Value2 = string.Format(@"");
             }
         }
 

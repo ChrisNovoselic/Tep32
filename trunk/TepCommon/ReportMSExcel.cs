@@ -31,6 +31,12 @@ namespace TepCommon
         protected Excel.Worksheet m_wrkSheet;
         private object _missingObj = Missing.Value;
 
+        private const string TEMPLATE_FOLDER = @"Template";
+
+        private int _begin_data_row;
+
+        private string _name_template_workbook;
+
         /// <summary>
         /// Перечисление - индексы для указания признаков ячейки
         /// </summary>
@@ -44,22 +50,39 @@ namespace TepCommon
         /// <summary>
         /// конструктор(основной)
         /// </summary>
-        public ReportMSExcel()
+        public ReportMSExcel(string nameTemplateWorkbook)
         {
+            _name_template_workbook = nameTemplateWorkbook;
+
             m_excApp = new Excel.Application();
             m_excApp.Visible = false;
         }
 
-        private const int BEGIN_DATA_ROW = 9;
 
-        protected abstract void create();
+        protected virtual void create(int headerColumn, int beginDataRow, Dictionary<int, List<string>> allValues, DateTimeRange dtRange)
+        {
+            List<string> values;
+            Excel.Range range;            
+
+            //values = new List<string>();
+            range = (Excel.Range)m_wrkSheet.Columns[headerColumn];
+            setHeaderValues(range, dtRange, beginDataRow);
+
+            foreach (int address in allValues.Keys) {
+                range = (Excel.Range)m_wrkSheet.Columns[address];
+
+                values = allValues[address];
+
+                setColumnValues(range, values.Take(values.Count() - 1).ToList(), beginDataRow);
+            }
+        }
 
         /// <summary>
         /// Подключение шаблона листа экселя и его заполнение
         /// </summary>
         /// <param name="dgv">отрбражение данных</param>
         /// <param name="dtRange">дата</param>
-        public void Create(string nameSheet, DataGridView dgv, DateTimeRange dtRange)
+        public void Create(string nameSheet, int headerColumn, int beginDataRow, Dictionary<int, List<string>> allValues, DateTimeRange dtRange)
         {
             if (addWorkbook() == true) {
                 m_workBook.AfterSave += workBook_AfterSave;
@@ -67,16 +90,17 @@ namespace TepCommon
                 m_wrkSheet = (Excel.Worksheet)m_workBook.Worksheets.get_Item(nameSheet);
 
                 try {
-                    create();
+                    create(headerColumn, beginDataRow, allValues, dtRange);
 
                     m_excApp.Visible = true;
                     Marshal.ReleaseComObject(m_excApp);
                 } catch (Exception e) {
                     close();
 
-                    Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues.ReportMSExcel::Create () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Exception(e, string.Format(@"TepCommon.ReportMSExcel::Create () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
-            }
+            } else
+                Logging.Logg().Error(string.Format(@"TepCommon.ReportMSExcel::Create () - добавление книги..."), Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         /// <summary>
@@ -87,8 +111,7 @@ namespace TepCommon
         {
             bool bRes = false;
 
-            //string pathToTemplate = @"D:\MyProjects\C.Net\TEP32\Tep\bin\Debug\Template\TemplateAutobook.xlsx";
-            string pathToTemplate = Path.GetFullPath(@"Template\TemplateAutobook.xlsx");
+            string pathToTemplate = Path.GetFullPath(string.Format(@"{0}\{1}", TEMPLATE_FOLDER, _name_template_workbook));
             object pathToTemplateObj = pathToTemplate;
 
             try {
@@ -98,7 +121,7 @@ namespace TepCommon
             } catch (Exception e) {
                 close();
 
-                Logging.Logg().Exception(e, string.Format(@"PanelTaskAutobookMonthValues.ReportMSExcel::addWorkbook () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Exception(e, string.Format(@"TepCommon.ReportMSExcel::addWorkbook () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             return bRes;
@@ -123,18 +146,35 @@ namespace TepCommon
         }
 
         ///// <summary>
-        ///// Деление 
+        ///// Возвратить одну из частей строки, при наличии разделителя
         ///// </summary>
-        ///// <param name="headerTxt">строка</param>
-        ///// <returns>часть строки</returns>
-        //private string splitString(string headerTxt)
+        ///// <param name="headerTxt">Исходная строка, в которой присутствует разделитель</param>
+        ///// <returns>Часть строки</returns>
+        //private string splitString(string headerTxt, char chSeparate = ',')
         //{
-        //    string[] spltHeader = headerTxt.Split(',');
+        //    string[] spltHeader = headerTxt.Split(chSeparate);
 
-        //    if (spltHeader.Length > (int)MODE_CELL_BORDER.ADJACENT)
-        //        return spltHeader[(int)MODE_CELL_BORDER.ADJACENT].TrimStart();
+        //    if (spltHeader.Length > 1)
+        //        // разделитель присутствует - вернуть крайнюю часть
+        //        return spltHeader[1].TrimStart();
         //    else
-        //        return spltHeader[(int)MODE_CELL_BORDER.SEPARATE];
+        //        // разделитель отсутствует - вернуть исходную строку
+        //        return spltHeader[0];
+        //}
+
+        ///// <summary>
+        ///// Удаление пустой строки
+        ///// </summary>
+        ///// <param name="colRange">столбец в excel</param>
+        ///// <param name="row">номер строки</param>
+        //private void deleteNullRow(Excel.Range colRange, int row)
+        //{
+        //    Excel.Range rangeCol = (Excel.Range)m_wrkSheet.Columns[1];
+
+        //    while (Convert.ToString(((Excel.Range)rangeCol.Cells[row]).Value) == "") {
+        //        Excel.Range rangeRow = (Excel.Range)m_wrkSheet.Rows[row];
+        //        rangeRow.Delete(Excel.XlDeleteShiftDirection.xlShiftUp);
+        //    }
         //}
 
         protected void setHeaderValues(Excel.Range range, HClassLibrary.DateTimeRange dates, int indxRowExcel)
@@ -157,7 +197,7 @@ namespace TepCommon
         /// <param name="dgv">отображение</param>
         /// <param name="indxColDgv">индекс столбца</param>
         /// <param name="indxRowExcel">индекс строки в excel</param>
-        private void setColumnValues(Excel.Range range
+        protected void setColumnValues(Excel.Range range
             , List<string> values
             , int indxRowExcel)
         {
