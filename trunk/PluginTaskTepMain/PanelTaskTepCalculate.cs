@@ -253,10 +253,12 @@ namespace PluginTaskTepMain
 
                 MultiSelect = false;
                 SelectionMode = DataGridViewSelectionMode.CellSelect;
-                AllowUserToAddRows = false;
-                AllowUserToDeleteRows = false;
-                AllowUserToOrderColumns = false;
-                AllowUserToResizeRows = false;
+                #region Уже установлено в базовом классе
+                //AllowUserToResizeRows = false;
+                //AllowUserToAddRows = false;
+                //AllowUserToDeleteRows = false;
+                //AllowUserToOrderColumns = false;
+                #endregion
                 RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders | DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             }
 

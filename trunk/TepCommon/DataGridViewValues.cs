@@ -94,6 +94,8 @@ namespace TepCommon
             {
                 _modeData = modeData;
 
+                ModeReportMSExcelAllowColumnVisibled = true;
+
                 //EventCellValueChanged += new Action<HandlerDbTaskCalculate.CHANGE_VALUE> (handlerEventCellChangeValue);
                 getValueAsRatio = new Func<int, int, float, int, float> (fGetValueAsRatio);
 
@@ -279,10 +281,13 @@ namespace TepCommon
                 if (e.Action == System.ComponentModel.CollectionChangeAction.Add) {
                     //foreach (DataGridViewColumn column in Columns) {
                         column = e.Element as DataGridViewColumn;
-                        column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                        column.SortMode = DataGridViewColumnSortMode.Programmatic;
 
                         if (Equals(column.Tag, null) == false) {
-                            if (((COLUMN_TAG)column.Tag).Type == TYPE_COLUMN_TAG.PUT_PARAMETER) {
+                            if (((COLUMN_TAG)column.Tag).Type == TYPE_COLUMN_TAG.COMPONENT) {
+                            // идентификатор столбца - компонент(оборудование) станции
+                                // формат ячеек устанавливается в наследуемых классах ПО-СТРОЧНО (в методе AddRow)
+                            } else if (((COLUMN_TAG)column.Tag).Type == TYPE_COLUMN_TAG.PUT_PARAMETER) {
                             // идентификатор столбца - параметр в алгоритме расчета 2-го порядка (с принадлежностью к оборудованию)
                                 idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)column.Tag).value).m_idNAlg;
 
@@ -308,7 +313,10 @@ namespace TepCommon
                             // установить свойства столбца для отображения
                             column.ValueType = typeof(float);
                             column.DefaultCellStyle.FormatProvider = CultureInfo.InvariantCulture;
-                            column.DefaultCellStyle.Format = fmtRoundValue;
+                            if (string.IsNullOrEmpty(fmtRoundValue) == false)
+                                column.DefaultCellStyle.Format = fmtRoundValue;
+                            else
+                                ;
                         } else
                             ;
                     //}
@@ -387,7 +395,9 @@ namespace TepCommon
                 {
                     value = tag;
 
-                    if (tag is HandlerDbTaskCalculate.PUT_PARAMETER)
+                    if (tag is HandlerDbTaskCalculate.TECComponent)
+                        Type = TYPE_COLUMN_TAG.COMPONENT;
+                    else if (tag is HandlerDbTaskCalculate.PUT_PARAMETER)
                         Type = TYPE_COLUMN_TAG.PUT_PARAMETER;
                     else if (tag is FormulaHelper)
                         Type = TYPE_COLUMN_TAG.FORMULA_HELPER;
@@ -1021,16 +1031,52 @@ namespace TepCommon
                 int idAlg = -1
                    , idPut = -1
                    , iCol = 0;
-                TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC;
+                //TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC;
                 float fltVal = -1F,
                     fltColumnAgregateValue = 0;
-                AGREGATE_ACTION columnAction;
+                AGREGATE_ACTION columnAction = AGREGATE_ACTION.UNKNOWN;
                 DataGridViewRow row;
+                HandlerDbTaskCalculate.TECComponent component;
                 HandlerDbTaskCalculate.PUT_PARAMETER putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
                 IEnumerable<HandlerDbTaskCalculate.VALUE> columnValues = null;
                 Color clrCell = Color.Empty;
                 FormulaHelper formula;
                 List<float> args;
+                // делегат для поиска значений во входных аргументах (для столбца; для ячейки)
+                Func<HandlerDbTaskCalculate.VALUE, int, bool> get_values = (HandlerDbTaskCalculate.VALUE value, int id_put) => {
+                    return (value.m_IdPut == id_put)
+                        && (((value.stamp_value - DateTime.MinValue).TotalDays > 0)
+                            || ((!((value.stamp_value - DateTime.MinValue).TotalDays > 0))
+                                && (_modeData == ModeData.NALG))
+                        );
+                };
+                // делегат для отображения значений с попутной установкой значений свойств ячейки, локальных переменных
+                Action<DataGridViewCell, HandlerDbTaskCalculate.VALUE, AGREGATE_ACTION> show_value = (DataGridViewCell cell, HandlerDbTaskCalculate.VALUE value, AGREGATE_ACTION c_action) => {
+                    fltVal = value.value;
+                    //iQuality = value.m_iQuality;
+
+                    if (!(c_action == AGREGATE_ACTION.UNKNOWN))
+                        fltColumnAgregateValue += fltVal;
+                    else
+                        ;
+
+                    cell.Tag = new CELL_PROPERTY() { m_Value = fltVal, m_iQuality = value.m_iQuality };
+                    cell.ReadOnly = Columns[iCol].ReadOnly
+                        || double.IsNaN(fltVal);
+
+                    if (getColorCellToValue(idAlg, idPut, value.m_iQuality, out clrCell) == false) {
+                        clrCell = s_arCellColors[(int)INDEX_COLOR.EMPTY];
+                    } else
+                        ;
+
+                    fltVal = GetValueCellAsRatio(idAlg, idPut, fltVal);
+
+                    // отобразить с количеством знаков в соответствии с настройками
+                    cell.Value = fltVal;
+                    cell.ToolTipText = fltVal.ToString();
+
+                    cell.Style.BackColor = clrCell;
+                };
 
                 // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
                 if (RowCount > 1) {
@@ -1042,163 +1088,173 @@ namespace TepCommon
                         fltColumnAgregateValue = 0F;
 
                         if (!(col.Tag == null))
-                            if (((COLUMN_TAG)col.Tag).Type == TYPE_COLUMN_TAG.PUT_PARAMETER) {
-                                #region Отображение значений в столбце для обычного параметра
-                                try {
-                                    putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value;
-                                    columnValues = inValues.Where(value => { return (value.m_IdPut == putPar.m_Id) && ((value.stamp_value - DateTime.MinValue).TotalDays > 0); });
-                                    columnValues = columnValues.Union(outValues.Where(value => { return (value.m_IdPut == putPar.m_Id) && ((value.stamp_value - DateTime.MinValue).TotalDays > 0); }));
+                            switch (((COLUMN_TAG)col.Tag).Type) {
+                                case TYPE_COLUMN_TAG.COMPONENT:
+                                    #region Отображение значений в столбце для компонента(оборудования) станции
+                                    component = (HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)col.Tag).value;
 
-                                    idAlg = putPar.m_idNAlg;
-                                    idPut = putPar.m_Id;
+                                    if (!(component.m_iType == HandlerDbTaskCalculate.TECComponent.TYPE.UNKNOWN)) {
+                                        //columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
 
-                                    //fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
-                                } catch (Exception e) {
-                                    Logging.Logg().Exception(e, @"DataGridViewValues::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                                }
+                                        foreach (DataGridViewRow r in Rows) {
+                                            idAlg = (int)r.Tag;
 
-                                if ((putPar.IdComponent > 0)
-                                    && (!(columnValues == null))) {
-                                    //col.DefaultCellStyle.Format = fmtRoundValue;
+                                            putPar = m_dictNAlgProperties[idAlg].m_dictPutParameters.Values.FirstOrDefault(value => { return value.IdComponent == component.m_Id; });
+                                            idPut = putPar.m_Id;
 
-                                    columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
+                                            columnValues = inValues.Where(value => get_values(value, idPut));
+                                            columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
 
-                                    foreach (DataGridViewRow r in Rows) {
-                                        if (columnValues.Count() > 0)
+                                            if (columnValues.Count() > 0)
                                             // есть значение хотя бы для одной строки
-                                            foreach (HandlerDbTaskCalculate.VALUE value in columnValues) {
-                                                if (isRowToShowValues(r, value) == true) {
-                                                    fltVal = value.value;
-                                                    iQuality = value.m_iQuality;
+                                                foreach (HandlerDbTaskCalculate.VALUE value in columnValues) {
+                                                    show_value(r.Cells[iCol]
+                                                        , value
+                                                        , AGREGATE_ACTION.UNKNOWN);
 
-                                                    if (!(columnAction == AGREGATE_ACTION.UNKNOWN))
-                                                        fltColumnAgregateValue += fltVal;
-                                                    else
-                                                        ;
-
-                                                    r.Cells[iCol].Tag = new CELL_PROPERTY() { m_Value = fltVal, m_iQuality = (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality };
-                                                    r.Cells[iCol].ReadOnly = Columns[iCol].ReadOnly
-                                                        || double.IsNaN(fltVal);
-
-                                                    if (getColorCellToValue(idAlg, idPut, (TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE)iQuality, out clrCell) == false) {
-                                                        clrCell = s_arCellColors[(int)INDEX_COLOR.EMPTY];
-                                                    } else
-                                                        ;
-
-                                                    fltVal = GetValueCellAsRatio(idAlg, idPut, fltVal);
-
-                                                    // отобразить с количеством знаков в соответствии с настройками
-                                                    r.Cells[iCol].Value = fltVal;
-                                                    r.Cells[iCol].ToolTipText = fltVal.ToString();
-
-                                                    r.Cells[iCol].Style.BackColor = clrCell;
-                                                } else
-                                                    r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
-                                            } else {
-                                            // нет значений ни для одной строки
-                                            r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                                                    //r.Cells[iCol].Style.Format = m_dictNAlgProperties[idAlg].FormatRound;
+                                                }
+                                            else
+                                                ;
                                         }
-                                    } // цикл по строкам
-
-                                    if (!(columnAction == AGREGATE_ACTION.UNKNOWN)) {
-                                        if (columnAction == AGREGATE_ACTION.SUMMA)
-                                            fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
-                                        else if (columnAction == AGREGATE_ACTION.AVERAGE)
-                                            fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
-                                        else
-                                            ;
-
-                                        Rows[Rows.Count - 1].Cells[iCol].Value =
-                                            fltColumnAgregateValue;
                                     } else
                                         ;
-                                } else
-                                    Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
-                                            , ((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).m_Id, inValues.Count())
-                                        , Logging.INDEX_MESSAGE.NOT_SET);
-                                #endregion
-                            } else if (((COLUMN_TAG)col.Tag).Type == TYPE_COLUMN_TAG.FORMULA_HELPER) {
-                                formula = (FormulaHelper)((COLUMN_TAG)col.Tag).value;
+                                    #endregion
+                                    break;
+                                case TYPE_COLUMN_TAG.PUT_PARAMETER:
+                                    #region Отображение значений в столбце для обычного параметра
+                                    try {
+                                        putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value;
+                                        idPut = putPar.m_Id;
 
-                                if (formula.IndexColumns.Count() > 0) {
-                                    idAlg = getBaseColumnTag(formula.IndexColumns).m_idNAlg;
+                                        columnValues = inValues.Where(value => get_values(value, idPut));
+                                        columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
 
-                                    columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
+                                        idAlg = putPar.m_idNAlg;                                    
+                                    } catch (Exception e) {
+                                        Logging.Logg().Exception(e, @"DataGridViewValues::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                                    }
 
-                                    foreach (DataGridViewRow r in Rows) {
-                                        fltVal = float.MinValue;
+                                    if ((putPar.IdComponent > 0)
+                                        && (!(columnValues == null))) {
+                                        columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
 
-                                        try {
-                                            if (r.Index < (Rows.Count - 1)) {
-                                                // отобразить значения для обычных(не крайних) строк
-                                                args = new List<float>();
-                                                // получить значения из яччеек в столбцах, являющихся аргументами формулы
-                                                foreach (int indxCol in formula.IndexColumns) {
-                                                    fltVal = (Equals(r.Cells[indxCol].Value, null) == false)
-                                                        ? r.Cells[indxCol].Value.GetType().Equals(typeof(float)) == true
-                                                            ? (float)r.Cells[indxCol].Value
-                                                                : r.Cells[indxCol].Value.GetType().Equals(typeof(string)) == true
-                                                                    ? float.MinValue // значение в ячейке - строка //float.Parse((string)r.Cells[indxCol].Value, System.Globalization.CultureInfo.InvariantCulture)
-                                                                        : float.MinValue // неизвестный тип значения (не 'float', не 'string')
-                                                                            : float.MinValue; // признак отсутствия значения в ячейке
-                                                    // добавить значение - аргумент
-                                                    args.Add(fltVal);
+                                        foreach (DataGridViewRow r in Rows) {
+                                            if (columnValues.Count() > 0)
+                                            // есть значение хотя бы для одной строки
+                                                foreach (HandlerDbTaskCalculate.VALUE value in columnValues) {
+                                                    if (isRowToShowValues(r, value) == true) {
+                                                        show_value(r.Cells[iCol]
+                                                            , value
+                                                            , columnAction);
+                                                    } else
+                                                        r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
                                                 }
+                                            else {
+                                            // нет значений ни для одной строки
+                                                r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                                            }
+                                        } // цикл по строкам
 
-                                                if (formula.IsFunc == false)
-                                                    // не функция, а обычная формула с арифметическими действиями со значениями в столбцах строки
-                                                    fltVal = formula.Calculate(args);
-                                                else {
-                                                    // рассматривается функция - пока известна толко одна: SUMM
-                                                    // и только с одним аргументом (значение одного из столбцов)
-                                                    if (r.Index == 0)
-                                                        // предыдущей строки нет
-                                                        fltVal = 0F;
-                                                    else
-                                                    // предыдущая строка в наличии - учесть ее значение
-                                                        // значение предыдущей строки
-                                                        fltVal = (Equals(Rows[r.Index - 1].Cells[col.Index].Value, null) == false)
-                                                            ? (float)Rows[r.Index - 1].Cells[col.Index].Value //float.Parse((string)Rows[r.Index - 1].Cells[col.Index].Value, System.Globalization.CultureInfo.InvariantCulture)
-                                                                : float.MinValue;
-                                                    // только одно значение - args[0] (из одного из столбцов)
-                                                    if ((fltVal > float.MinValue)
-                                                        && (args[0] > float.MinValue))
-                                                        fltVal += args[0];
-                                                    else
-                                                        ;
-                                                }
-                                                // отображать только значения ('float.MinValue' - значение отсутствует)
-                                                if (fltVal > float.MinValue) {
-                                                    if (!(columnAction == AGREGATE_ACTION.UNKNOWN)) {
-                                                        fltColumnAgregateValue += fltVal;
+                                        if (!(columnAction == AGREGATE_ACTION.UNKNOWN)) {                                            
+                                            fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
+                                            
+                                            Rows[Rows.Count - 1].Cells[iCol].Value =
+                                                fltColumnAgregateValue;
+                                        } else
+                                            ;
+                                    } else
+                                        Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
+                                                , ((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).m_Id, inValues.Count())
+                                            , Logging.INDEX_MESSAGE.NOT_SET);
+                                    #endregion
+                                    break;
+                                case TYPE_COLUMN_TAG.FORMULA_HELPER:
+                                    formula = (FormulaHelper)((COLUMN_TAG)col.Tag).value;
+
+                                    #region Отображение значений для столбца с формулой (в ~ от базовых столбцов в формуле)
+                                    if (formula.IndexColumns.Count() > 0) {
+                                        idAlg = getBaseColumnTag(formula.IndexColumns).m_idNAlg;
+
+                                        columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
+
+                                        foreach (DataGridViewRow r in Rows) {
+                                            fltVal = float.MinValue;
+
+                                            try {
+                                                if (r.Index < (Rows.Count - 1)) {
+                                                    // отобразить значения для обычных(не крайних) строк
+                                                    args = new List<float>();
+                                                    // получить значения из яччеек в столбцах, являющихся аргументами формулы
+                                                    foreach (int indxCol in formula.IndexColumns) {
+                                                        fltVal = (Equals(r.Cells[indxCol].Value, null) == false)
+                                                            ? r.Cells[indxCol].Value.GetType().Equals(typeof(float)) == true
+                                                                ? (float)r.Cells[indxCol].Value
+                                                                    : r.Cells[indxCol].Value.GetType().Equals(typeof(string)) == true
+                                                                        ? float.MinValue // значение в ячейке - строка //float.Parse((string)r.Cells[indxCol].Value, System.Globalization.CultureInfo.InvariantCulture)
+                                                                            : float.MinValue // неизвестный тип значения (не 'float', не 'string')
+                                                                                : float.MinValue; // признак отсутствия значения в ячейке
+                                                        // добавить значение - аргумент
+                                                        args.Add(fltVal);
+                                                    }
+
+                                                    if (formula.IsFunc == false)
+                                                        // не функция, а обычная формула с арифметическими действиями со значениями в столбцах строки
+                                                        fltVal = formula.Calculate(args);
+                                                    else {
+                                                        // рассматривается функция - пока известна толко одна: SUMM
+                                                        // и только с одним аргументом (значение одного из столбцов)
+                                                        if (r.Index == 0)
+                                                            // предыдущей строки нет
+                                                            fltVal = 0F;
+                                                        else
+                                                        // предыдущая строка в наличии - учесть ее значение
+                                                            // значение предыдущей строки
+                                                            fltVal = (Equals(Rows[r.Index - 1].Cells[col.Index].Value, null) == false)
+                                                                ? (float)Rows[r.Index - 1].Cells[col.Index].Value //float.Parse((string)Rows[r.Index - 1].Cells[col.Index].Value, System.Globalization.CultureInfo.InvariantCulture)
+                                                                    : float.MinValue;
+                                                        // только одно значение - args[0] (из одного из столбцов)
+                                                        if ((fltVal > float.MinValue)
+                                                            && (args[0] > float.MinValue))
+                                                            fltVal += args[0];
+                                                        else
+                                                            ;
+                                                    }
+                                                    // отображать только значения ('float.MinValue' - значение отсутствует)
+                                                    if (fltVal > float.MinValue) {
+                                                        if (!(columnAction == AGREGATE_ACTION.UNKNOWN)) {
+                                                            fltColumnAgregateValue += fltVal;
+                                                        } else
+                                                            ;
+                                                        // отобразить значение
+                                                        r.Cells[iCol].Value = fltVal;
+                                                        r.Cells[iCol].ToolTipText = fltVal.ToString();
                                                     } else
                                                         ;
-                                                    // отобразить значение
-                                                    r.Cells[iCol].Value = fltVal;
-                                                    r.Cells[iCol].ToolTipText = fltVal.ToString();
                                                 } else
-                                                    ;
-                                            } else
-                                            // отобразить значение для крайней строки
-                                                if ((fltColumnAgregateValue > float.MinValue)
-                                                    && (!(columnAction == AGREGATE_ACTION.UNKNOWN)))
-                                                    r.Cells[iCol].Value = columnAction == AGREGATE_ACTION.SUMMA
-                                                        ? fltColumnAgregateValue
-                                                            : fltColumnAgregateValue / (Rows.Count - 1);
-                                                else
-                                                    ;
+                                                // отобразить значение для крайней строки
+                                                    if ((fltColumnAgregateValue > float.MinValue)
+                                                        && (!(columnAction == AGREGATE_ACTION.UNKNOWN)))
+                                                        r.Cells[iCol].Value = columnAction == AGREGATE_ACTION.SUMMA
+                                                            ? fltColumnAgregateValue
+                                                                : fltColumnAgregateValue / (Rows.Count - 1);
+                                                    else
+                                                        ;
 
-                                            r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
-                                        } catch (Exception e) {
-                                            Logging.Logg().Exception(e, string.Format(@"HPanelTepCommon.DataGridViewValues::ShowValues (formula.IsFunc={0:c}, DateTime={1}) - ...", formula.IsFunc, r.Tag), Logging.INDEX_MESSAGE.NOT_SET);
-                                        }
-                                    } // цикл по всем строкам
-                                } else
-                                // количество индексов столбцов в формуле == 0
-                                    ;
-                            } else
-                            // для столбца указан не известный тип идентификатора ('tag')
-                                Logging.Logg().Error(string.Format(@"HPanelTepCommon.DataGridViewValues::ShowValues () - {0}-неизвестный тип идентификатора столбца ...", col.Tag.GetType().FullName), Logging.INDEX_MESSAGE.NOT_SET);
+                                                r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                                            } catch (Exception e) {
+                                                Logging.Logg().Exception(e, string.Format(@"HPanelTepCommon.DataGridViewValues::ShowValues (formula.IsFunc={0:c}, DateTime={1}) - ...", formula.IsFunc, r.Tag), Logging.INDEX_MESSAGE.NOT_SET);
+                                            }
+                                        } // цикл по всем строкам
+                                    } else
+                                    // количество индексов столбцов в формуле == 0
+                                        ;
+                                    #endregion
+                                    break;
+                                default: // для столбца указан не известный тип идентификатора ('tag')
+                                    Logging.Logg().Error(string.Format(@"HPanelTepCommon.DataGridViewValues::ShowValues () - {0}-неизвестный тип идентификатора столбца ...", col.Tag.GetType().FullName), Logging.INDEX_MESSAGE.NOT_SET);
+                                    break;
+                            }
                         else
                         // для столбца не указан идентификатор ('tag')
                             Logging.Logg().Error(string.Format(@"HPanelTepCommon.DataGridViewValues::ShowValues () - не укахан идентификатор столбца ..."), Logging.INDEX_MESSAGE.NOT_SET);
@@ -1208,7 +1264,17 @@ namespace TepCommon
                 } else
                     Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
-
+            /// <summary>
+            /// Режим учета видимости столбца при экспорте его значений  в книгу MS Excel
+            ///  , включен - учитывать видимость столбца
+            ///  , выключен - не учитывать (экспортировать всегда)
+            /// </summary>
+            public bool ModeReportMSExcelAllowColumnVisibled;
+            /// <summary>
+            /// Возвратить словарь списков со значениями для экспорта в книгу MS Excel
+            ///  (ключ - номер столбца в книге MS Excel)
+            /// </summary>
+            /// <returns>Словарь списков со значениями для экспорта в книгу MS Excel</returns>
             public Dictionary<int, List<string>> GetValuesToReportMSExcel()
             {
                 Dictionary<int, List<string>> dictRes;
@@ -1219,7 +1285,12 @@ namespace TepCommon
                 foreach (DataGridViewColumn column in Columns) {
                     address = ((HPanelTepCommon.DataGridViewValues.COLUMN_TAG)column.Tag).TemplateReportAddress;
 
-                    if (!(address < 0))
+                    if ((!(address < 0)) // только, если указан номер столбца в книге MS Excel
+                        && ((column.Visible == true) // если столбец отображается ИЛИ
+                            || ((column.Visible == false) // если столбец не отображается, то 
+                                && (ModeReportMSExcelAllowColumnVisibled == false)) // режим учета видимости столбца "выключен"
+                        )
+                    )
                         dictRes.Add(address
                             , (from row in Rows.Cast<DataGridViewRow>().ToList()
                                 select Equals(row.Cells[column.Index].Value, null) == false ? row.Cells[column.Index].Value.ToString() : string.Empty

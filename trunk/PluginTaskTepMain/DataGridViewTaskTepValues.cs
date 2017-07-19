@@ -58,7 +58,7 @@ namespace PluginTaskTepMain
                     listIndxToRemove = new List<DataGridViewColumn>();
 
                     foreach (DataGridViewColumn col in Columns)
-                        if (!(((TepCommon.HandlerDbTaskCalculate.TECComponent)col.Tag).m_Id < 0))
+                        if (!(((TepCommon.HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)col.Tag).value).m_Id < 0))
                             listIndxToRemove.Add(col);
                         else
                             ;
@@ -91,8 +91,8 @@ namespace PluginTaskTepMain
                     // найти индекс нового столбца
                     // столбец для станции - всегда крайний
                     foreach (DataGridViewColumn col in Columns)
-                        if ((((TepCommon.HandlerDbTaskCalculate.TECComponent)col.Tag).m_Id > 0)
-                            && (((TepCommon.HandlerDbTaskCalculate.TECComponent)col.Tag).m_Id < (int)TepCommon.HandlerDbTaskCalculate.TECComponent.TYPE.TG)) {
+                        if ((((TepCommon.HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)col.Tag).value).m_Id > 0)
+                            && (((TepCommon.HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)col.Tag).value).m_Id < (int)TepCommon.HandlerDbTaskCalculate.TECComponent.TYPE.TG)) {
                             indxCol = Columns.IndexOf(col);
 
                             break;
@@ -100,7 +100,7 @@ namespace PluginTaskTepMain
                             ;
 
                     DataGridViewColumn column = new DataGridViewTextBoxColumn();
-                    column.Tag = comp;
+                    column.Tag = new COLUMN_TAG (comp, -1, true);
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
 
@@ -158,6 +158,8 @@ namespace PluginTaskTepMain
                 Rows[iRes].HeaderCell.ToolTipText = obj.m_strDescription;
                 // установить значение для обозначения параметра и его ед./измерения
                 Rows[iRes].Cells[0].Value = string.Format(@"{0},[{1}]", obj.m_strSymbol, obj.m_strMeausure);
+                // установить формат ячеек по умолчанию
+                Rows[iRes].DefaultCellStyle.Format = m_dictNAlgProperties[obj.m_Id].FormatRound;
 
                 activateCellValue_onChanged(true);
 

@@ -259,7 +259,7 @@ namespace PluginTaskTepMain
                 switch (evt) {
                     case HandlerDbTaskCalculate.EVENT.SET_VALUES: // отображать значения при отсутствии ошибок
                         m_dgvValues.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                            , HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                            , new List<HandlerDbTaskCalculate.VALUE>() //HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
                             , out err);
                         break;
                     case HandlerDbTaskCalculate.EVENT.CALCULATE:
@@ -423,8 +423,8 @@ namespace PluginTaskTepMain
             //??? зачем и столбцы тоже - вероятно, предполагаем, что в другом периоде другие компоненты?
             m_dgvValues.ClearColumns();
 
-            //Очистить списки - элементы интерфейса
-            (PanelManagement as PanelManagementTaskTepValues).Clear();
+            ////Очистить списки - элементы интерфейса
+            //(PanelManagement as PanelManagementTaskTepValues).Clear();
 
             base.panelManagement_Period_onChanged();
             // здесь заканчились все параметры расчета, компоненты станции - можно начать формировать структуру представления

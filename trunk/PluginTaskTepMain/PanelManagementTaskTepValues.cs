@@ -324,7 +324,7 @@ namespace PluginTaskTepMain
                         bChecked = false;
 
                     if (!(ctrl == null))
-                        (ctrl as CheckedListBoxTaskCalculate).AddItem(nAlgPar.m_Id, nAlgPar.m_strNameShr, bChecked);
+                        (ctrl as CheckedListBoxTaskCalculate).AddItem(nAlgPar.m_Id, string.Format(@"[{0}]-{1}", nAlgPar.m_nAlg, nAlgPar.m_strNameShr), bChecked);
                     else
                         Logging.Logg().Error(@"PanelManagementTaskTepValues::AddNAlgParameter () - не найден элемент =" + indxCtrl.ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 }

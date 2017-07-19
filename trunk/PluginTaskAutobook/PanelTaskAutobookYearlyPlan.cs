@@ -182,11 +182,7 @@ namespace PluginTaskAutobook
         {
             m_dgvValues = new DataGridViewAutobookYearlyPlan(INDEX_CONTROL.DGV_VALUES.ToString(), HandlerDb.GetValueAsRatio);
 
-            foreach (DataGridViewColumn column in m_dgvValues.Columns)
-                column.SortMode = DataGridViewColumnSortMode.NotSortable;
-
             Control ctrl = new Control();
-            ;
             // переменные для инициализации кнопок "Добавить", "Удалить"
             int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
                 , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"

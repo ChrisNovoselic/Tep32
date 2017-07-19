@@ -499,8 +499,11 @@ namespace TepCommon
                 {
                     return m_ViewValues == ID_VIEW_VALUES.SOURCE_LOAD
                         ? _currentIdPeriod == ID_PERIOD.YEAR ? ID_PERIOD.MONTH
-                            : ID_PERIOD.DAY // для SOURCE_LOAD
-                                : _currentIdPeriod; // не для SOURCE_LOAD
+                            : _currentIdPeriod == ID_PERIOD.MONTH ? ID_PERIOD.DAY // для SOURCE_LOAD
+                                : _currentIdPeriod == ID_PERIOD.DAY ? ID_PERIOD.HOUR // для SOURCE_LOAD
+                                    : _currentIdPeriod == ID_PERIOD.HOUR ? _currentIdPeriod // для SOURCE_LOAD
+                                        : ID_PERIOD.UNKNOWN
+                                            : _currentIdPeriod; // не для SOURCE_LOAD
                 }
             }
             /// <summary>
