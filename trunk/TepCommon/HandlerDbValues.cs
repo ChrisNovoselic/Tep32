@@ -313,10 +313,13 @@ namespace TepCommon
         /// <param name="table">Таблица с данными для добавления</param>
         protected void addTableDictPrj(ID_DBTABLE idDbTable, DataTable table)
         {
-            if (m_dictTableDictPrj.ContainsKey(idDbTable) == false) {
-                m_dictTableDictPrj.Add(idDbTable, table);
+            // для исключения повторного добавления таблицы
+            if (m_dictTableDictPrj.ContainsKey(idDbTable) == true) {
+                m_dictTableDictPrj.Remove(idDbTable);
             } else
                 ;
+
+            m_dictTableDictPrj.Add(idDbTable, table);            
         }
         /// <summary>
         /// Конструктор - основной (без параметров)

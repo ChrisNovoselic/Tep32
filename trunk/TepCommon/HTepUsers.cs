@@ -549,18 +549,17 @@ namespace TepCommon
 
         public static Dictionary<string, VISUAL_SETTING> GetParameterVisualSettings(DbConnection dbConn, int[] fields, out int err)
         {
-            err = -1; //Общая ошибка
+            err = 0; // предположительно успешное выполнение
 
             DictionaryProfileItem dictProfileItem = null
                 , objects = null;
             string strQuery = string.Empty;
-            int id_unit = -1 // идентификатор параметра настроек при отображении значения [profiles_unit]
-                , ratio = -1 // коэффициент
+            short id_unit = -1; // идентификатор параметра настроек при отображении значения [profiles_unit]
+            int ratio = -1 // коэффициент
                 , round = -1 // кол-во знаков при округлении
                 , checkSum = (int)ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND
                     + (int)ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO
                 , curSum = -1;
-            string n_alg = string.Empty;
             Dictionary<string, VISUAL_SETTING> dictRes = new Dictionary<string, VISUAL_SETTING>();
             DataTable tblRes = new DataTable()
                 //, tblRatio
@@ -573,7 +572,8 @@ namespace TepCommon
                 objects = null;
 
                 if ((!(dictProfileItem == null))
-                    && (dictProfileItem.Count == 1)) {
+                    //&& (dictProfileItem.Count == 1) // может быть несколько ключей-элементов (например, для Расчет ТЭП - час/сутки/месяц)
+                    ) {
                 //Перебор Item'ов в панели
                     if (dictProfileItem.ContainsKey(fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()) == true) {
                         dictProfileItem = 
@@ -581,32 +581,51 @@ namespace TepCommon
                         objects =
                             dictProfileItem[fields[(int)INDEX_VISUALSETTINGS_PARAMS.ITEM].ToString()];
 
-                        foreach (string rAlg in objects.Keys) {
+                        foreach (string nAlg in objects.Keys) {
+                            curSum = 0;
+
                             ratio = 0;
                             round = 0;
 
-                            foreach (string idUnit in objects[rAlg].Attributes.Keys) {
-                                switch ((ID_ALLOWED)short.Parse(idUnit)) {
-                                    case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
-                                        ratio = int.Parse(objects[rAlg].Attributes[idUnit]);
-                                        break;
-                                    case ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND:
-                                        round = int.Parse(objects[rAlg].Attributes[idUnit]);
-                                        break;
-                                    default:
-                                        break;
-                                }
+                            foreach (string idUnit in objects[nAlg].Attributes.Keys) {
+                                if (short.TryParse(idUnit, out id_unit) == true) {
+                                    switch ((ID_ALLOWED)id_unit) {
+                                        case ID_ALLOWED.VISUAL_SETTING_VALUE_RATIO:
+                                            if (int.TryParse(objects[nAlg].Attributes[idUnit], out ratio) == false)
+                                                curSum -= id_unit;
+                                            else
+                                                ;
+                                            break;
+                                        case ID_ALLOWED.VISUAL_SETTING_VALUE_ROUND:
+                                            if (int.TryParse(objects[nAlg].Attributes[idUnit], out round) == false)
+                                                curSum -= id_unit;
+                                            else
+                                                ;
+                                            break;
+                                        default:
+                                            curSum -= id_unit;
+                                            break;
+                                    }
 
-                                curSum += id_unit;
+                                    curSum += id_unit;
 
-                                if (curSum == checkSum)
+                                    if (curSum == checkSum)
+                                        break;
+                                    else
+                                        ;
+                                } else
                                     break;
-                                else
-                                    ;
-                            }
+                            } // цикл по параметрам для параеметра алгоритма расчета
 
-                            dictRes.Add(rAlg.Trim(), new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
-                        }
+                            if (curSum == checkSum)
+                                dictRes.Add(nAlg.Trim(), new VISUAL_SETTING() { m_ratio = ratio, m_round = round });
+                            else {
+                                Logging.Logg().Error(string.Format(@"HTepUsers::::GetParameterVisualSettings () - NAlg={0}, не установлены все значения визуальных настроек ...", nAlg), Logging.INDEX_MESSAGE.NOT_SET);
+
+                                err = -1;
+                                break;
+                            }
+                        } // цикл по параметрам алгоритма расчета
                     }
                 } else
                     ;

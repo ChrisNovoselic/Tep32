@@ -103,28 +103,43 @@ namespace TepCommon
 
             public bool IsTec { get { return m_iType == TYPE.TEC; } }
         }
+
+        public interface IPUT_PARAMETERChange
+        {
+            int m_idNAlg { get; set; }
+
+            int m_Id { get; set; }
+
+            int IdComponent { get; }
+
+            string NameShrComponent { get; }
+
+            bool IsNaN { get; }
+
+            bool IsEnabled { get; }
+
+            bool IsVisibled { get; }
+
+            void SetEnabled(bool value);
+
+            void SetVisibled(bool value);
+        }
         /// <summary>
         /// Свойства параметра в алгоритме расчета 2-го уровня (связан с компонентом)
         /// </summary>
-        public struct PUT_PARAMETER
+        public class PUT_PARAMETER : IPUT_PARAMETERChange
         {
-            //public struct KEY
-            //{
+            private int _idNAlg;
             /// <summary>
             /// Идентификатор в БД элемента в алгоритме расчета
             /// </summary>
-            public int m_idNAlg;
-            //    /// <summary>
-            //    /// Идентификатор в БД компонента(оборудования)
-            //    /// </summary>
-            //    public int m_idComp;
-            //}
+            public int m_idNAlg { get { return _idNAlg; } set { _idNAlg = value; } }
 
-            //public KEY Key;
+            private int _id;
             /// <summary>
             /// Идентификатор в БД (в соответствии с компонентом-оборудованием)
             /// </summary>
-            public int m_Id;
+            public int m_Id { get { return _id; } set { _id = value; } }
 
             public TECComponent m_component;
 
@@ -132,19 +147,19 @@ namespace TepCommon
 
             public string NameShrComponent { get { return m_component.m_nameShr; } }
 
-            public bool IsEnabled { get { return m_bEnabled; } }
+            public bool IsEnabled { get { return _bEnabled; } }
 
-            public bool IsVisibled { get { return m_bVisibled; } }
+            public bool IsVisibled { get { return _bVisibled; } }
 
             public int m_prjRatio;
             /// <summary>
             /// Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)
             /// </summary>
-            public bool m_bEnabled;
+            private bool _bEnabled;
             /// <summary>
             /// Признак отображения
             /// </summary>
-            public bool m_bVisibled;
+            private bool _bVisibled;
 
             public float m_fltMinValue;
 
@@ -168,25 +183,25 @@ namespace TepCommon
 
             public PUT_PARAMETER(int id_alg/*KEY key*/, int id_put, TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue)
             {
-                m_idNAlg = id_alg //Key = key
+                _idNAlg = id_alg //Key = key
                     ;
-                m_Id = id_put;
+                _id = id_put;
                 m_component = comp;
                 m_prjRatio = prjRatio;
-                m_bEnabled = enabled;
-                m_bVisibled = visibled;
+                _bEnabled = enabled;
+                _bVisibled = visibled;
                 m_fltMinValue = minValue;
                 m_fltMaxValue = maxValue;
             }
 
             public void SetEnabled(bool value)
             {
-                m_bEnabled = value;
+                _bEnabled = value;
             }
 
-            public void SetVisible(bool value)
+            public void SetVisibled(bool value)
             {
-                m_bVisibled = value;
+                _bVisibled = value;
             }
 
             public bool IsNaN { get { return !(m_Id > 0); } }
@@ -1932,7 +1947,7 @@ namespace TepCommon
                 // домножить значение на коэффициент
                 fltRes =
                     //value * (float)Math.Pow(10F, -1 * iReverse * vsRatioValue + iReverse * prjRatioValue)
-                    value * (float)Math.Pow(10F, iReverse * (prjRatioValue - vsRatioValue))
+                    value * (float)Math.Pow(10F, iReverse * (vsRatioValue - prjRatioValue))
                     ;
             else
                 //отображать без изменений
@@ -2132,6 +2147,78 @@ namespace TepCommon
                     Logging.Logg().Error(string.Format(@"HPanelTepCommon::panelManagement_PeriodChanged () - не определенный идентификатор компонента..."), Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
+
+        private class NAlgComparer<T> : IComparer<T>
+        {
+            /// <summary>
+            /// Сравнить строки с параметрами алгоритма расчета по строковому номеру в алгоритме
+            ///  для сортировки при отображении списка параметров расчета
+            /// </summary>
+            /// <param name="r1">1-я строка для сравнения</param>
+            /// <param name="r2">2-я строка для сравнения</param>
+            /// <returns>Результат сравнения (-1 - 1-я МЕНЬШЕ 2-ой, 1 - 1-я БОЛЬШЕ 2-ой)</returns>
+            public int Compare(T obj1, T obj2)
+            {
+                int iRes = 0;
+
+                string nameField = string.Empty
+                    , nAlg1 = string.Empty
+                    , nAlg2 = string.Empty;
+
+                int i1 = -1, i2 = -1
+                    , iLength = -1
+                    , indx = -1;
+                char[] delimeter = new char[] { '.' };
+
+                string[] arParts1 = { }
+                    , arParts2 = { };
+
+                if (typeof(T).Equals(typeof(DataRow)) == true) {
+                    nAlg1 = (obj1 as DataRow)[nameField].ToString().Trim();
+                    nAlg2 = (obj2 as DataRow)[nameField].ToString().Trim();
+                } else if (typeof(T).Equals(typeof(string)) == true) {
+                    nAlg1 = Convert.ToString(obj1).Trim();
+                    nAlg2 = Convert.ToString(obj2).Trim();
+                } else
+                    throw new Exception ();
+
+                arParts1 = nAlg1.Split(delimeter, StringSplitOptions.RemoveEmptyEntries);
+                arParts2 = nAlg2.Split(delimeter, StringSplitOptions.RemoveEmptyEntries);
+
+                if ((!(arParts1.Length < 1)) && (!(arParts2.Length < 1))) {
+                    indx = 0;
+                    if ((int.TryParse(arParts1[indx], out i1) == true)
+                        && (int.TryParse(arParts2[indx], out i2) == true))
+                        iRes = i1 > i2 ? 1
+                             : i1 < i2 ? -1 : 0;
+                    else
+                        iRes = arParts1[indx].CompareTo(arParts2[indx]);
+
+                    if (iRes == 0) {
+                        iLength = arParts1.Length > arParts2.Length ? 1 :
+                            arParts1.Length < arParts2.Length ? -1 : 0;
+
+                        if (iLength == 0) {
+                            if ((!(arParts1.Length < 2)) && (!(arParts2.Length < 2))) {
+                                indx = 1;
+                                iRes = int.Parse(arParts1[indx]) > int.Parse(arParts2[indx]) ? 1
+                                    : int.Parse(arParts1[indx]) < int.Parse(arParts2[indx]) ? -1 : 0;
+                            } else
+                                ;
+                        } else
+                            iRes = iLength;
+                    } else
+                        ;
+                } else
+                    throw new Exception(@":HandlerDbTaskCalculate.NAlgComparer:Compare () - номер алгоритма некорректен (не найдены цифры)...");
+
+                return iRes;
+            }
+        }
+
+        public enum MODE_NALG_SORTING : short { NotSet,  NotSortable, Programmatic }
+
+        public MODE_NALG_SORTING ModeNAlgSorting;
         /// <summary>
         /// Добавить параметры из алгоритма расчета
         /// </summary>
@@ -2245,10 +2332,12 @@ namespace TepCommon
                             , m_Id = (int)r[@"ID"]
                             , m_component = component
                             , m_prjRatio = prjRatio
-                            , m_bEnabled = bEnabled
-                            , m_bVisibled = bVisibled
+                            //, _bEnabled = bEnabled
+                            //, _bVisibled = bVisibled
                             ,
                         };
+                        putPar.SetEnabled(bEnabled);
+                        putPar.SetVisibled(bVisibled);
 
                         _listPutParameter.Add(putPar);
                         // только, если назначенн обработчик в 'PanelTaskTepOutVal'
@@ -2271,14 +2360,22 @@ namespace TepCommon
         /// <param name="err">Признак ошибки при чтении данных таблицы из БД</param>
         sealed public override void AddTableDictPrj(ID_DBTABLE id, out int err)
         {
+            TaskCalculate.TYPE type = TaskCalculate.TYPE.UNKNOWN;
+
             switch (id) {
                 case ID_DBTABLE.IN_PARAMETER:
-                    addTableDictPrj(id
-                        , Select(getQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES), out err));
-                    break;
                 case ID_DBTABLE.OUT_PARAMETER:
-                    addTableDictPrj(id
-                        , Select(getQueryParameters(HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES), out err));
+                    type = id == ID_DBTABLE.IN_PARAMETER ? HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+                        : id == ID_DBTABLE.OUT_PARAMETER ? TaskCalculate.TYPE.OUT_VALUES
+                            : TaskCalculate.TYPE.UNKNOWN;
+
+                    addTableDictPrj(id, Select(getQueryParameters(type), out err));
+
+                    if (ModeNAlgSorting == MODE_NALG_SORTING.Programmatic) {
+                        NAlgComparer<string> comparer = new NAlgComparer<string>();
+                        m_dictTableDictPrj[id] = m_dictTableDictPrj[id].AsEnumerable().OrderBy(r => r.Field<string>(@"N_ALG"), comparer).CopyToDataTable();
+                    } else
+                        ;
                     break;
                 default:
                     base.AddTableDictPrj(id, out err);
@@ -3000,6 +3097,9 @@ namespace TepCommon
                 UnRegisterDbConnection();
             else
                 ;
+
+            if (err < 0)
+                Logging.Logg().Error(string.Format(@"HandlerDbTaskCalculate::GetParameterVisualSettings () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
 
             return dictRes;
         }

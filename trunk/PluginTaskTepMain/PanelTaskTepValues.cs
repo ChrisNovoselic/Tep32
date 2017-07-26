@@ -302,63 +302,6 @@ namespace PluginTaskTepMain
             HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE);
         }
 
-        /// <summary>
-        /// Сравнить строки с параметрами алгоритма расчета по строковому номеру в алгоритме
-        ///  для сортировки при отображении списка параметров расчета
-        /// </summary>
-        /// <param name="r1">1-я строка для сравнения</param>
-        /// <param name="r2">2-я строка для сравнения</param>
-        /// <returns>Результат сравнения (-1 - 1-я МЕНЬШЕ 2-ой, 1 - 1-я БОЛЬШЕ 2-ой)</returns>
-        private int compareNAlg(DataRow r1, DataRow r2)
-        {
-            int iRes = 0
-                , i1 = -1, i2 = -1
-                , iLength = -1
-                , indx = -1;
-            char[] delimeter = new char[] { '.' };
-            string nAlg1 = ((string)r1[@"N_ALG"]).Trim()
-                , nAlg2 = ((string)r2[@"N_ALG"]).Trim();
-
-            string[] arParts1 = nAlg1.Split(delimeter, StringSplitOptions.RemoveEmptyEntries)
-                , arParts2 = nAlg2.Split(delimeter, StringSplitOptions.RemoveEmptyEntries);
-
-            if ((!(arParts1.Length < 1)) && (!(arParts2.Length < 1)))
-            {
-                indx = 0;
-                if ((int.TryParse(arParts1[indx], out i1) == true)
-                    && (int.TryParse(arParts2[indx], out i2) == true))
-                    iRes = i1 > i2 ? 1
-                         : i1 < i2 ? -1 : 0;
-                else
-                    iRes = arParts1[indx].CompareTo(arParts2[indx]);
-
-                if (iRes == 0)
-                {
-                    iLength = arParts1.Length > arParts2.Length ? 1 :
-                        arParts1.Length < arParts2.Length ? -1 : 0;
-
-                    if (iLength == 0)
-                    {
-                        if ((!(arParts1.Length < 2)) && (!(arParts2.Length < 2)))
-                        {
-                            indx = 1;
-                            iRes = int.Parse(arParts1[indx]) > int.Parse(arParts2[indx]) ? 1
-                                : int.Parse(arParts1[indx]) < int.Parse(arParts2[indx]) ? -1 : 0;
-                        }
-                        else
-                            ;
-                    }
-                    else
-                        iRes = iLength;
-                }
-                else
-                    ;
-            }
-            else
-                throw new Exception(@":PanelTaskTepValues:compareNAlg () - номер алгоритма некорректен (не найдены цифры)...");
-            return iRes;
-        }
-
         #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
         /// <summary>
         /// Обработчик события при изменении значения

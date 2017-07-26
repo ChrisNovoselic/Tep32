@@ -125,8 +125,8 @@ namespace TepCommon
                 , Color.Yellow //DEFAULT
                 , Color.LightGray //DISABLED
                 , Color.White //NAN
-                , Color.BlueViolet //PARTIAL
-                , Color.Sienna //NOT_REC
+                , Color.Azure //PARTIAL
+                , Color.DarkGray //NOT_REC
                 , Color.Red //LIMIT
                 , Color.White //USER
             };
@@ -337,7 +337,22 @@ namespace TepCommon
             {
                 public void SetEnabled(int id_alg, int id_comp, bool value)
                 {
-                    this[id_alg].m_dictPutParameters[id_comp].SetEnabled(value);
+                    HandlerDbTaskCalculate.IPUT_PARAMETERChange put_par;
+
+                    if (ContainsKey(id_alg) == true) {
+                        put_par = FirstPutParameter(id_alg, id_comp);
+
+                        if (Equals(put_par, null) == false)
+                            put_par.SetEnabled(value);
+                        else
+                            ;
+                    } else
+                        ;
+                }
+
+                public HandlerDbTaskCalculate.IPUT_PARAMETERChange FirstPutParameter (int id_alg, int id_comp)
+                {
+                    return this[id_alg].m_dictPutParameters.FirstOrDefault(putPar => putPar.Value.IdComponent == id_comp).Value;
                 }
             }
 
@@ -360,7 +375,7 @@ namespace TepCommon
 
                 public
                     //DictPutParameter
-                    Dictionary<int, HandlerDbTaskCalculate.PUT_PARAMETER>
+                    Dictionary<int, HandlerDbTaskCalculate.IPUT_PARAMETERChange>
                         m_dictPutParameters;
 
                 public string FormatRound { get { return string.Format(@"F{0}", m_vsRound); } }
@@ -368,7 +383,7 @@ namespace TepCommon
                 public static string DefaultFormatValue = @"F2";
             }
 
-            public enum TYPE_COLUMN_TAG : short { UNKNOWN = short.MinValue, COMPONENT, PUT_PARAMETER, FORMULA_HELPER }
+            public enum TYPE_COLUMN_TAG : short { UNKNOWN = short.MinValue, COMPONENT, PUT_PARAMETER, FORMULA_HELPER, GROUP_PARAMETR }
 
             public struct COLUMN_TAG
             {
@@ -407,7 +422,25 @@ namespace TepCommon
                     TemplateReportAddress = indexMSExcelReportColumn;
 
                     ActionAgregateCancel = bActionAgregateCancel;
+
+                    //m_textTopHeader =
+                    //m_textMiddleHeader =
+                    //m_textLowHeader =
+                    //    string.Empty;
                 }
+
+                ///// <summary>
+                ///// Имя общей группы колонки
+                ///// </summary>
+                //public string m_textTopHeader;
+                ///// <summary>
+                ///// Имя колонки
+                ///// </summary>
+                //public string m_textMiddleHeader;
+                ///// <summary>
+                ///// Текст в колонке
+                ///// </summary>
+                //public string m_textLowHeader;                
             }
             /// <summary>
             /// Структура с дополнительными свойствами ячейки отображения
@@ -548,7 +581,7 @@ namespace TepCommon
             {
                 if (m_dictNAlgProperties.ContainsKey(putPar.m_idNAlg) == true) {
                     if (m_dictNAlgProperties[putPar.m_idNAlg].m_dictPutParameters == null)
-                        m_dictNAlgProperties[putPar.m_idNAlg].m_dictPutParameters = new Dictionary<int, HandlerDbTaskCalculate.PUT_PARAMETER>();
+                        m_dictNAlgProperties[putPar.m_idNAlg].m_dictPutParameters = new Dictionary<int, HandlerDbTaskCalculate.IPUT_PARAMETERChange>();
                     else
                         ;
 
@@ -723,6 +756,43 @@ namespace TepCommon
 
                 activateCellValue_onChanged(true);
             }
+
+            protected INDEX_COLOR getIndexcolorOfQuality(HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
+            {
+                INDEX_COLOR indxRes = INDEX_COLOR.DISABLED;
+
+                switch (iQuality) {//??? LIMIT
+                    case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
+                        indxRes = INDEX_COLOR.USER;
+                        break;
+                    case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.SOURCE:
+                        indxRes = INDEX_COLOR.VARIABLE;
+                        break;
+                    case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL:
+                        indxRes = INDEX_COLOR.PARTIAL;
+                        break;
+                    case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC:
+                        indxRes = INDEX_COLOR.NOT_REC;
+                        break;
+                    case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT:
+                        indxRes = INDEX_COLOR.DEFAULT;
+                        break;
+                    default:
+                        ; //??? throw
+                        break;
+                }
+
+                return indxRes;
+            }
+
+            protected Color getColorOfQuality(HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality)
+            {
+                Color clrRes;
+
+                clrRes = s_arCellColors[(int)getIndexcolorOfQuality(iQuality)];
+
+                return clrRes;
+            }
             /// <summary>
             /// Возвратить цвет ячейки по номеру столбца, строки
             /// </summary>
@@ -732,29 +802,31 @@ namespace TepCommon
             /// <returns>Признак возможности размещения значения в ячейке</returns>
             private bool getColorCellToValue(int id_alg, int id_put, TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality, out Color clrRes)
             {
-                bool bRes = false;
+                int iRes = -1;
 
-                bRes = !m_dictNAlgProperties[id_alg].m_dictPutParameters[id_put].IsNaN;
+                if (m_dictNAlgProperties.ContainsKey(id_alg) == true)
+                    if (m_dictNAlgProperties[id_alg].m_dictPutParameters.ContainsKey(id_put) == true)
+                        iRes = m_dictNAlgProperties[id_alg].m_dictPutParameters[id_put].IsNaN == true ? 1 : 2;
+                    else
+                        iRes = 0;
+                else
+                    ;
+
                 clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
 
-                if (bRes == true)
-                    switch (iQuality) { //??? USER, LIMIT
-                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT: // только для входной таблицы - значение по умолчанию [inval_def]
-                            clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
-                            break;
-                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL: // см. 'getQueryValuesVar' - неполные данные
-                            clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
-                            break;
-                        case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC: // см. 'getQueryValuesVar' - нет ни одной записи
-                            clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
-                            break;
-                        default:
-                            clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
-                            break;
-                    } else
-                    clrRes = s_arCellColors[(int)INDEX_COLOR.NAN];
+                switch (iRes) {
+                    case 2:
+                        clrRes = getColorOfQuality(iQuality);
+                        break;
+                    case 1:
+                        clrRes = s_arCellColors[(int)INDEX_COLOR.NAN];
+                        break;
+                    default:
+                        clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                        break;
+                }
 
-                return bRes;
+                return iRes > 0;
             }
             /// <summary>
             /// Признак, указывающий принажлежит ли значение строке
@@ -1037,7 +1109,7 @@ namespace TepCommon
                 AGREGATE_ACTION columnAction = AGREGATE_ACTION.UNKNOWN;
                 DataGridViewRow row;
                 HandlerDbTaskCalculate.TECComponent component;
-                HandlerDbTaskCalculate.PUT_PARAMETER putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
+                HandlerDbTaskCalculate.IPUT_PARAMETERChange putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
                 IEnumerable<HandlerDbTaskCalculate.VALUE> columnValues = null;
                 Color clrCell = Color.Empty;
                 FormulaHelper formula;
@@ -1066,14 +1138,13 @@ namespace TepCommon
 
                     if (getColorCellToValue(idAlg, idPut, value.m_iQuality, out clrCell) == false) {
                         clrCell = s_arCellColors[(int)INDEX_COLOR.EMPTY];
-                    } else
-                        ;
+                    } else {
+                        fltVal = GetValueCellAsRatio(idAlg, idPut, fltVal);
 
-                    fltVal = GetValueCellAsRatio(idAlg, idPut, fltVal);
-
-                    // отобразить с количеством знаков в соответствии с настройками
-                    cell.Value = fltVal;
-                    cell.ToolTipText = fltVal.ToString();
+                        // отобразить с количеством знаков в соответствии с настройками
+                        cell.Value = fltVal;
+                        cell.ToolTipText = fltVal.ToString();
+                    }
 
                     cell.Style.BackColor = clrCell;
                 };
@@ -1099,11 +1170,15 @@ namespace TepCommon
                                         foreach (DataGridViewRow r in Rows) {
                                             idAlg = (int)r.Tag;
 
-                                            putPar = m_dictNAlgProperties[idAlg].m_dictPutParameters.Values.FirstOrDefault(value => { return value.IdComponent == component.m_Id; });
-                                            idPut = putPar.m_Id;
+                                            putPar = m_dictNAlgProperties.FirstPutParameter(idAlg, component.m_Id);
 
-                                            columnValues = inValues.Where(value => get_values(value, idPut));
-                                            columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
+                                            if (!(putPar == null)) {
+                                                idPut = putPar.m_Id;
+
+                                                columnValues = inValues.Where(value => get_values(value, idPut));
+                                                columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
+                                            } else
+                                                ;
 
                                             if (columnValues.Count() > 0)
                                             // есть значение хотя бы для одной строки

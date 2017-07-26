@@ -699,7 +699,8 @@ namespace PluginTaskAutobook
         {
             try
             {
-                m_dgvValues.ClearValues();
+                // m_dgvValues.ClearValues();
+                clear(false); //!!! нельзя вызывать, т.к. будет выполнен базовый метод
                 // ... - загрузить/отобразить значения из БД
                 HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
             } catch (Exception e) {
@@ -746,6 +747,9 @@ namespace PluginTaskAutobook
             string strItem = string.Empty
                 , key = string.Empty;
             Control ctrl = null;
+
+            // ВАЖНО! Обязательно до инициализации таблиц проекта (сортировка призойдет при вызове этой функции).
+            HandlerDb.ModeNAlgSorting = HandlerDbTaskCalculate.MODE_NALG_SORTING.NotSortable;
 
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMEZONE, COMP, MEASURE, RATIO

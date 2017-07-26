@@ -160,6 +160,9 @@ namespace PluginTaskReaktivka
 
             int role = (int)HTepUsers.Role;
 
+            // ВАЖНО! Обязательно до инициализации таблиц проекта (сортировка призойдет при вызове этой функции).
+            HandlerDb.ModeNAlgSorting = HandlerDbTaskCalculate.MODE_NALG_SORTING.NotSortable;
+
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, COMP, TIMEZONE, RATIO
             initialize(
@@ -346,7 +349,7 @@ namespace PluginTaskReaktivka
         protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
             ////???
-            //clear();
+            clear();
             // ... - загрузить/отобразить значения из БД
             HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
         }

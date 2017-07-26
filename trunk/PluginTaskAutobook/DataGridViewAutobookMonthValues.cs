@@ -58,8 +58,8 @@ namespace PluginTaskAutobook
                 string strFormula = string.Empty;
 
                 // Функция поиска объекта 'PUT_PARAMETER' для его назначения в свойство 'Tag' для добавляемого столбца
-                Func<HandlerDbTaskCalculate.TaskCalculate.TYPE, int, TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> findPutParameterGTP = (HandlerDbTaskCalculate.TaskCalculate.TYPE type, int id) => {
-                    TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putRes = new TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER();
+                Func<HandlerDbTaskCalculate.TaskCalculate.TYPE, int, TepCommon.HandlerDbTaskCalculate.IPUT_PARAMETERChange> findPutParameterGTP = (HandlerDbTaskCalculate.TaskCalculate.TYPE type, int id) => {
+                    TepCommon.HandlerDbTaskCalculate.IPUT_PARAMETERChange putRes = new TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER();
 
                     IEnumerable<TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER> puts;
                     TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER nAlgRes = null;

@@ -133,12 +133,12 @@ namespace TepCommon
         /// <param name="bClose">Признак полной/частичной очистки</param>
         protected override void clear(bool bClose = false)
         {
-            if (bClose == true)
+            if (bClose == true) {
                 _panelManagement.Clear();
-            else
-                ;
 
-            _handlerDb.Clear();          
+                _handlerDb.Clear();
+            } else
+                ;          
 
             base.clear();
         }

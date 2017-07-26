@@ -410,6 +410,9 @@ namespace PluginTaskVedomostBl
             string strItem = string.Empty;
             Control ctrl = null;
 
+            // ВАЖНО! Обязательно до инициализации таблиц проекта (сортировка призойдет при вызове этой функции).
+            HandlerDb.ModeNAlgSorting = HandlerDbTaskCalculate.MODE_NALG_SORTING.NotSortable;
+
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMWZONE, COMP, PARAMETER, RATIO
             initialize

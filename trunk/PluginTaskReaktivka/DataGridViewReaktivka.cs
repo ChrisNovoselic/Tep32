@@ -65,7 +65,7 @@ namespace PluginTaskReaktivka
             /// <param name="nameCol">имя столбца</param>
             /// <param name="bRead">"только чтение"</param>
             /// <param name="bVisibled">видимость столбца</param>
-            public void AddColumn(HandlerDbTaskCalculate.PUT_PARAMETER putPar)
+            public void AddColumn(HandlerDbTaskCalculate.IPUT_PARAMETERChange putPar)
             {
                 int indxCol = -1; // индекс столбца при вставке
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
@@ -95,7 +95,7 @@ namespace PluginTaskReaktivka
                     {// для псевдо-столбцов
                         if (putPar.IdComponent < 0)
                         {// для служебных столбцов
-                            if (putPar.m_bVisibled == true) {// только для столбца с [SYMBOL]
+                            if (putPar.IsVisibled == true) {// только для столбца с [SYMBOL]
                                 alignText = DataGridViewContentAlignment.MiddleLeft;
                                 autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
                             } else
@@ -108,11 +108,11 @@ namespace PluginTaskReaktivka
                     }
 
                     column.HeaderText = putPar.NameShrComponent;
-                    column.ReadOnly = putPar.m_bEnabled;
+                    column.ReadOnly = putPar.IsEnabled;
                     column.Name = @"???";
                     column.DefaultCellStyle.Alignment = alignText;
                     column.AutoSizeMode = autoSzColMode;
-                    column.Visible = putPar.m_bVisibled;
+                    column.Visible = putPar.IsVisibled;
 
                     if (!(indxCol < 0))
                         Columns.Insert(indxCol, column as DataGridViewTextBoxColumn);
@@ -143,7 +143,6 @@ namespace PluginTaskReaktivka
             /// <param name="bCheckedItem">Признак участия в расчете/отображения</param>
             public void UpdateStructure(PanelManagementReaktivka.ItemCheckedParametersEventArgs item)
             {
-                Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
                 int indx = -1
                     , cIndx = -1
                     , rKey = -1;

@@ -81,6 +81,9 @@ namespace PluginTaskTepMain
             string strItem = string.Empty;
             int i = -1;
 
+            // ВАЖНО! Обязательно до инициализации таблиц проекта (сортировка призойдет при вызове этой функции).
+            HandlerDb.ModeNAlgSorting = HandlerDbTaskCalculate.MODE_NALG_SORTING.Programmatic;
+
             //Заполнить таблицы со словарными, проектными величинами
             // PERIOD, TIMEZONE, COMP_LIST, PARAMETERS(Type), MODE_DEV, RATIO
             initialize(new ID_DBTABLE[] {
@@ -90,6 +93,7 @@ namespace PluginTaskTepMain
                     , IsInParameters == true ? ID_DBTABLE.IN_PARAMETER : ID_DBTABLE.UNKNOWN
                     , IsOutParameters == true ? ID_DBTABLE.OUT_PARAMETER : ID_DBTABLE.UNKNOWN
                     , ID_DBTABLE.MODE_DEV
+                    , ID_DBTABLE.MEASURE
                     , ID_DBTABLE.RATIO }
                 , out err, out errMsg
             );
@@ -108,6 +112,9 @@ namespace PluginTaskTepMain
                     //Заполнить элемент управления с часовыми поясами
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE]
                         , ID_TIMEZONE.MSK); //??? активный пояс требуется прочитать из [profile]
+
+                    PanelManagement.AllowUserPeriodChanged = true;
+                    PanelManagement.AllowUserTimezoneChanged = true;
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelTaskTepValues::initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }

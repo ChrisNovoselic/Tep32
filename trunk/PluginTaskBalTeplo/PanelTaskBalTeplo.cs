@@ -854,6 +854,9 @@ namespace PluginTaskBalTeplo
             int i = -1;
             string strItem = string.Empty;
 
+            // ВАЖНО! Обязательно до инициализации таблиц проекта (сортировка призойдет при вызове этой функции).
+            HandlerDb.ModeNAlgSorting = HandlerDbTaskCalculate.MODE_NALG_SORTING.NotSortable;
+
             initialize(new ID_DBTABLE[] {
                 ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP_LIST, ID_DBTABLE.MEASURE, ID_DBTABLE.RATIO
                 , ID_DBTABLE.INALG, ID_DBTABLE.OUTALG, }

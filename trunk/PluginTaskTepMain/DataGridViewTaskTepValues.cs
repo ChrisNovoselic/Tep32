@@ -86,6 +86,7 @@ namespace PluginTaskTepMain
                 int indxCol = -1; // индекс столбца при вставке
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
                 DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
+                Color clrColumn = s_arCellColors[(int)INDEX_COLOR.EMPTY];
 
                 try {
                     // найти индекс нового столбца
@@ -105,11 +106,13 @@ namespace PluginTaskTepMain
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
 
                     if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
-                        ; // оставить значения по умолчанию
+                    // оставить значения по умолчанию
+                        ;
                     else {// для добавлямых столбцов
                         if ((mode & ModeAddColumn.Service) == ModeAddColumn.Service) {// для служебных столбцов
                             if ((mode & ModeAddColumn.Visibled) == ModeAddColumn.Visibled) {// только для столбца с [SYMBOL]
                                 alignText = DataGridViewContentAlignment.MiddleLeft;
+                                clrColumn = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
                                 autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
                             } else
                                 ;
@@ -122,6 +125,7 @@ namespace PluginTaskTepMain
 
                     column.HeaderText = comp.m_nameShr;
                     column.DefaultCellStyle.Alignment = alignText;
+                    column.DefaultCellStyle.BackColor = clrColumn;
                     column.AutoSizeMode = autoSzColMode;
                     column.Visible = (mode & ModeAddColumn.Visibled) == ModeAddColumn.Visibled;
 
@@ -180,7 +184,9 @@ namespace PluginTaskTepMain
 
                 int id_alg = -1
                     , id_comp = -1;
+                INDEX_COLOR indxColor = INDEX_COLOR.DISABLED;
                 TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality;
+                TepCommon.HandlerDbTaskCalculate.IPUT_PARAMETERChange putPar;
 
                 clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
                 id_alg = -1;
@@ -188,34 +194,24 @@ namespace PluginTaskTepMain
 
                 if ((!(Rows[iRow].Cells[iCol].Tag == null))
                     && (Rows[iRow].Cells[iCol].Tag is CELL_PROPERTY)) {
+                    id_alg = (int)Rows[iRow].Tag;
+                    id_comp = ((TepCommon.HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)Columns[iCol].Tag).value).m_Id;
                     iQuality = ((CELL_PROPERTY)Rows[iRow].Cells[iCol].Tag).m_iQuality;
 
-                    bRes = ((m_dictNAlgProperties[id_alg].m_dictPutParameters[id_comp].m_bEnabled == false)
-                        && ((m_dictNAlgProperties[id_alg].m_dictPutParameters[id_comp].IsNaN == false)));
-                    if (bRes == true)
+                    putPar = m_dictNAlgProperties.FirstPutParameter(id_alg, id_comp);
+                    bRes = (Equals(putPar, null) == true)
+                        && ((putPar.IsEnabled == false)
+                            && (putPar.IsNaN == false));
+
+                    if (bRes == true) {
                         if (bNewEnabled == true)
-                            switch (iQuality) {//??? LIMIT
-                                case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
-                                    clrRes = s_arCellColors[(int)INDEX_COLOR.USER];
-                                    break;
-                                case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.SOURCE:
-                                    clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
-                                    break;
-                                case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL:
-                                    clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
-                                    break;
-                                case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC:
-                                    clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
-                                    break;
-                                case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT:
-                                    clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
-                                    break;
-                                default:
-                                    ; //??? throw
-                                    break;
-                            } else
-                            clrRes = s_arCellColors[(int)INDEX_COLOR.DISABLED];
-                    else
+                            indxColor = getIndexcolorOfQuality(iQuality);
+                        else
+                        // индекс по умолчанию 'INDEX_COLOR.DISABLED'
+                            ;
+
+                        clrRes = s_arCellColors[(int)indxColor];
+                    } else
                         ;
                 } else
                     //??? значению в ячейке не присвоена квалификация - значение не присваивалось
@@ -234,47 +230,34 @@ namespace PluginTaskTepMain
             /// <returns>Признак возможности изменения цвета ячейки</returns>
             private bool getColorCellToRow(int iCol, int iRow, bool bNewEnabled, out Color clrRes)
             {
-                bool bRes = false;
+                bool bRes = true;
 
                 int id_alg = -1
                     , id_comp = -1;
                 TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE iQuality;
                 bool bPrevEnabled = false;
 
-                bRes = m_dictNAlgProperties[id_alg].m_dictPutParameters[id_comp].IsNaN == false;
                 clrRes = s_arCellColors[(int)INDEX_COLOR.EMPTY];
-                id_alg = -1;
-                id_comp = -1;
-                iQuality = ((CELL_PROPERTY)Rows[iRow].Cells[iCol].Tag).m_iQuality;
+                id_alg = (int)Rows[iRow].Tag;
+                id_comp = ((HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)Columns[iCol].Tag).value).m_Id;
+                iQuality = HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC; //((CELL_PROPERTY)Rows[iRow].Cells[iCol].Tag).m_iQuality
 
-                //??? определить предыдущее состояние
-                bPrevEnabled = ((TepCommon.HandlerDbTaskCalculate.TECComponent)Columns.Cast<DataGridViewColumn>().First(col => { return ((TepCommon.HandlerDbTaskCalculate.TECComponent)col.Tag).m_Id == id_comp; }).Tag).m_bEnabled;
+                bRes = ((id_alg > 0) && (!(id_comp < 0)))
+                    ? m_dictNAlgProperties.ContainsKey(id_alg) == true
+                        ? m_dictNAlgProperties.FirstPutParameter(id_alg, id_comp).IsNaN == false
+                            : false // не найден ключ id_alg
+                                : false; // либо id_alg, либо id_comp не удовлетв. условию
 
-                if (bRes == true)
+                if (bRes == true) {
+                    //??? определить предыдущее состояние
+                    bPrevEnabled = m_dictNAlgProperties.FirstPutParameter(id_alg, id_comp).IsEnabled;
+
                     if ((bNewEnabled == true)
                         && (bPrevEnabled == false))
-                        switch (iQuality) {//??? LIMIT
-                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER:
-                                clrRes = s_arCellColors[(int)INDEX_COLOR.USER];
-                                break;
-                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.SOURCE:
-                                clrRes = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
-                                break;
-                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.PARTIAL:
-                                clrRes = s_arCellColors[(int)INDEX_COLOR.PARTIAL];
-                                break;
-                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC:
-                                clrRes = s_arCellColors[(int)INDEX_COLOR.NOT_REC];
-                                break;
-                            case TepCommon.HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT:
-                                clrRes = s_arCellColors[(int)INDEX_COLOR.DEFAULT];
-                                break;
-                            default:
-                                ; //??? throw
-                                break;
-                        } else
+                        clrRes = getColorOfQuality(iQuality);
+                    else
                         clrRes = s_arCellColors[(int)INDEX_COLOR.DISABLED];
-                else
+                } else
                     ;
 
                 return bRes;
@@ -286,7 +269,7 @@ namespace PluginTaskTepMain
             /// <param name="item">Аргумент события для обновления структуры представления</param>
             public /*override*/ void UpdateStructure(PanelManagementTaskTepValues.ItemCheckedParametersEventArgs item)
             {
-                Color clrCell = Color.Empty; //Цвет фона для ячеек, не участвующих в расчете
+                Color clrCell = s_arCellColors[(int)INDEX_COLOR.EMPTY]; //Цвет фона для ячеек, не участвующих в расчете
                 int indx = -1;
                 bool bItemChecked = item.NewCheckState == CheckState.Checked ? true :
                     item.NewCheckState == CheckState.Unchecked ? false :
@@ -296,7 +279,7 @@ namespace PluginTaskTepMain
                 if (item.IsComponent == true) {
                     // найти индекс столбца (компонента) - по идентификатору
                     foreach (DataGridViewColumn c in Columns)
-                        if (((TepCommon.HandlerDbTaskCalculate.TECComponent)c.Tag).m_Id == item.m_idComp) {
+                        if (((TepCommon.HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)c.Tag).value).m_Id == item.m_idComp) {
                             indx = Columns.IndexOf(c);
                             break;
                         } else
@@ -331,7 +314,7 @@ namespace PluginTaskTepMain
                                 else
                                     ;
                             }
-                            ((TepCommon.HandlerDbTaskCalculate.TECComponent)Columns[indx].Tag).SetEnabled(bItemChecked);
+                            ((TepCommon.HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)Columns[indx].Tag).value).SetEnabled(bItemChecked);
                         } else if (item.IsNAlg == true) { // NALG ENABLE
                             // для всех ячеек в строке
                             foreach (DataGridViewCell c in Rows[indx].Cells) {
@@ -340,7 +323,7 @@ namespace PluginTaskTepMain
                                 else
                                     ;
 
-                                m_dictNAlgProperties.SetEnabled((int)Rows[indx].Tag, ((TepCommon.HandlerDbTaskCalculate.TECComponent)Columns[c.ColumnIndex].Tag).m_Id, bItemChecked);
+                                m_dictNAlgProperties.SetEnabled((int)Rows[indx].Tag, ((TepCommon.HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)Columns[c.ColumnIndex].Tag).value).m_Id, bItemChecked);
                             }
                         } else
                             ;

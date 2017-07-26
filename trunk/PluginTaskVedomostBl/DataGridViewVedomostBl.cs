@@ -124,57 +124,64 @@ namespace PluginTaskVedomostBl
                 //ConfigureColumns();
             }
 
-            /// <summary>
-            /// Структура для описания добавляемых столбцов
-            /// </summary>
-            public class COLUMN_PROPERTY
-            {
-                /// <summary>
-                /// Параметр в алгоритме расчета, связанный с компонентом станции
-                /// </summary>
-                public HandlerDbTaskCalculate.PUT_PARAMETER m_putParameter;
-                /// <summary>
-                /// Имя колонки
-                /// </summary>
-                public string m_textMiddleHeader;
-                /// <summary>
-                /// Текст в колонке
-                /// </summary>
-                public string m_textLowHeader;
-                /// <summary>
-                /// Имя общей группы колонки
-                /// </summary>
-                public string m_textTopHeader;
-            }
+            ///// <summary>
+            ///// Структура для описания добавляемых столбцов
+            ///// </summary>
+            //public class COLUMN_PROPERTY
+            //{
+            //    /// <summary>
+            //    /// Параметр в алгоритме расчета, связанный с компонентом станции
+            //    /// </summary>
+            //    public HandlerDbTaskCalculate.PUT_PARAMETER m_putParameter;
+            //    ///// <summary>
+            //    ///// Имя колонки
+            //    ///// </summary>
+            //    //public string m_textMiddleHeader;
+            //    ///// <summary>
+            //    ///// Текст в колонке
+            //    ///// </summary>
+            //    //public string m_textLowHeader;
+            //    ///// <summary>
+            //    ///// Имя общей группы колонки
+            //    ///// </summary>
+            //    //public string m_textTopHeader;
+            //}
 
             /// <summary>
             /// Добавление столбца
             /// </summary>
-            /// <param name="col_prop">Свойство столбца (Tag)</param>
-            private void addColumn(COLUMN_PROPERTY col_prop)
+            /// <param name="name"></param>
+            /// <param name="text"></param>
+            /// <param name="bVisible"></param>
+            /// <return>Индекс добавленного столбца</return>
+            private int addColumn(string name, string text, bool bVisible)
             {
+                int iRes = -1; // индекс добавленного столбца
+
                 DataGridViewTextBoxColumn column;
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
 
                 try
                 {
                     column = new DataGridViewTextBoxColumn();
-                    column.Tag = col_prop;
+                    //column.Tag = col_prop;
                     alignText = DataGridViewContentAlignment.MiddleRight;
                     //column.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
                     column.Frozen = true;
-                    column.Visible = col_prop.m_putParameter.m_bVisibled;
+                    column.Visible = bVisible; // col_prop.m_putParameter.IsVisibled;
                     column.ReadOnly = false;
-                    column.Name = col_prop.m_textMiddleHeader;
-                    column.HeaderText = col_prop.m_textLowHeader;
+                    column.Name = name; // col_prop.m_textMiddleHeader;
+                    column.HeaderText = text; // col_prop.m_textLowHeader;
                     column.DefaultCellStyle.Alignment = alignText;
                     //column.AutoSizeMode = autoSzColMode;
-                    Columns.Add(column as DataGridViewTextBoxColumn);
+                    iRes = Columns.Add(column as DataGridViewTextBoxColumn);
                 }
                 catch (Exception e)
                 {
                     Logging.Logg().Exception(e, @"DataGridViewVedomostBl::addColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
+
+                return iRes;
             }
         
             /// <summary>
@@ -210,13 +217,26 @@ namespace PluginTaskVedomostBl
                 Paint += new PaintEventHandler(dataGridView_onPaint);
             }
 
+            private class GROUPING_PARAMETER : HandlerDbTaskCalculate.PUT_PARAMETER
+            {
+                public GROUPING_PARAMETER(int id_alg, int id_put, HandlerDbTaskCalculate.TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue)
+                    : base(id_alg, id_put, comp, prjRatio, enabled, visibled, minValue, maxValue)
+                {
+                }
+
+                public string[]m_headers;
+            }
+
             /// <summary>
             /// Формирование списков заголовков
             /// </summary>
             private void formingTitleLists()
             {
                 string prevValue = string.Empty;
-                COLUMN_PROPERTY col_prop;
+                COLUMN_TAG col_prop;
+                GROUPING_PARAMETER groupPutPar;
+                string[] headers;
+
                 //List<string> listTop = new List<string>()
                 //    , listMiddle = new List<string>();
 
@@ -225,21 +245,27 @@ namespace PluginTaskVedomostBl
 
                 m_listTextHeaderTop.Clear();
 
+                //TODO: оптимизировать (непонятно, что выполняется в цикле)
                 foreach (DataGridViewColumn col in Columns) {
-                    col_prop = (COLUMN_PROPERTY)col.Tag;
+                    col_prop = (COLUMN_TAG)col.Tag;
 
-                    if (!(col_prop.m_putParameter.m_idNAlg < 0))
-                        if (col.Visible == true)
-                            if (col_prop.m_textTopHeader.Equals(string.Empty) == false)
-                                if (col_prop.m_textTopHeader.Equals(prevValue) == false) {
-                                    prevValue = col_prop.m_textTopHeader;
-                                    m_listTextHeaderTop.Add(col_prop.m_textTopHeader);
-                                } else;
+                    if (col_prop.Type == TYPE_COLUMN_TAG.GROUP_PARAMETR) {
+                        groupPutPar = (GROUPING_PARAMETER)col_prop.value;
+
+                        if (!(groupPutPar.m_idNAlg < 0))
+                            if (col.Visible == true)
+                                if (groupPutPar.m_headers[(int)INDEX_HEADER.TOP].Equals(string.Empty) == false)
+                                    if (groupPutPar.m_headers[(int)INDEX_HEADER.TOP].Equals(prevValue) == false) {
+                                        prevValue = groupPutPar.m_headers[(int)INDEX_HEADER.TOP];
+                                        m_listTextHeaderTop.Add(groupPutPar.m_headers[(int)INDEX_HEADER.TOP]);
+                                    } else;
+                                else
+                                    m_listTextHeaderTop.Add(groupPutPar.m_headers[(int)INDEX_HEADER.TOP]);
                             else
-                                m_listTextHeaderTop.Add(col_prop.m_textTopHeader);
+                                ;
                         else
                             ;
-                    else
+                    } else
                         ;
                 }
 
@@ -254,9 +280,10 @@ namespace PluginTaskVedomostBl
                 prevValue = string.Empty;
 
                 foreach (DataGridViewColumn col in Columns) {
-                    col_prop = (COLUMN_PROPERTY)col.Tag;
+                    col_prop = (COLUMN_TAG)col.Tag;
+                    groupPutPar = (GROUPING_PARAMETER)col_prop.value;
 
-                    if (!(col_prop.m_putParameter.m_idNAlg < 0))
+                    if (!(groupPutPar.m_idNAlg < 0))
                         if (col.Visible == true)
                             if (col.Name.Equals(prevValue) == false) {
                                 prevValue = col.Name;
@@ -282,7 +309,8 @@ namespace PluginTaskVedomostBl
                 int indx = 0
                     , untdCol = -1;
 
-                COLUMN_PROPERTY col_prop;
+                COLUMN_TAG col_prop;
+                HandlerDbTaskCalculate.PUT_PARAMETER putPar;
 
                 m_arCounterHeaderTop = new int[m_listTextHeaderTop/*[idDgv]*/.Count];
                 m_arCounterHeaderMiddle = new int[m_listTextHeaderMiddle/*[idDgv]*/.Count];
@@ -296,7 +324,8 @@ namespace PluginTaskVedomostBl
                     untdCol = 0;
 
                     foreach (DataGridViewColumn col in Columns) {
-                        col_prop = (COLUMN_PROPERTY)col.Tag;
+                        col_prop = (COLUMN_TAG)col.Tag;
+                        putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)col_prop.value;
 
                         if (col.Visible == true)
                             if (col_prop.m_textTopHeader.Equals(item) == true)
@@ -323,9 +352,10 @@ namespace PluginTaskVedomostBl
                     untdCol = 0;
 
                     foreach (DataGridViewColumn col in Columns) {
-                        col_prop = (COLUMN_PROPERTY)col.Tag;
+                        col_prop = (COLUMN_TAG)col.Tag;
+                        putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)col_prop.value;
 
-                        if (col_prop.m_putParameter.m_idNAlg > -1)
+                        if (putPar.m_idNAlg > -1)
                             if (item == col.Name)
                                 untdCol++;
                             else
@@ -349,12 +379,12 @@ namespace PluginTaskVedomostBl
             /// <param name="isCheck">проверка чека</param>
             public void SetHeaderVisibled(List<string> listHeaderTop, bool isCheck)
             {
-                COLUMN_PROPERTY col_prop;
+                COLUMN_TAG col_prop;
 
                 try {
                     foreach (var item in listHeaderTop)
                         foreach (DataGridViewColumn col in Columns) {
-                            col_prop = (COLUMN_PROPERTY)col.Tag;
+                            col_prop = (COLUMN_TAG)col.Tag;
 
                             if (col_prop.m_textTopHeader.Equals(item) == true)
                                 col.Visible = isCheck;
@@ -403,13 +433,14 @@ namespace PluginTaskVedomostBl
                 //
                 for (int i = 0; i < Columns.Count; i++)
                     if ((GetCellDisplayRectangle(i, -1, true).Height > 0)
-                        & (GetCellDisplayRectangle(i, -1, true).X > 0))
-                    {
+                        & (GetCellDisplayRectangle(i, -1, true).X > 0)) {
                         rectParentColumn = GetCellDisplayRectangle(i, -1, true);
                         r1 = rectParentColumn;
                         r2 = rectParentColumn;
+
                         break;
-                    }
+                    } else
+                        ;
 
                 height = r1.Height / s_GroupHeaderCount;
 
@@ -465,33 +496,51 @@ namespace PluginTaskVedomostBl
             {
                 int i = -1;
 
-                if (RowHeadersVisible == false)
-                    addColumn(new DataGridViewVedomostBl.COLUMN_PROPERTY {
-                        m_textTopHeader = string.Empty
+                COLUMN_TAG col_prop;
+                HandlerDbTaskCalculate.PUT_PARAMETER putPar;
+
+                if (RowHeadersVisible == false) {
+                    putPar = new HandlerDbTaskCalculate.PUT_PARAMETER() {
+                        m_idNAlg = -1
+                        , m_Id = -1
+                        , m_component = new HandlerDbTaskCalculate.TECComponent() {
+                            m_Id = -1
+                            , m_idOwner = -1
+                            , m_nameShr = string.Empty
+                        }
+                        //, m_bEnabled = false
+                        //, m_bVisibled = true
+                    };
+                    putPar.SetEnabled(false);
+                    putPar.SetVisibled(true);
+
+                    col_prop = new COLUMN_TAG() {
+                        value = putPar
+                        , m_textTopHeader = string.Empty
                         , m_textMiddleHeader = "DATE"
                         , m_textLowHeader = "Дата"
-                        , m_putParameter = new HandlerDbTaskCalculate.PUT_PARAMETER() {
-                            m_idNAlg = -1
-                            , m_Id = -1
-                            , m_component = new HandlerDbTaskCalculate.TECComponent() {
-                                m_Id = -1
-                                , m_idOwner = -1
-                                , m_nameShr = string.Empty
-                            }
-                            , m_bEnabled = false
-                            , m_bVisibled = true
-                        }
-                    });
-                else
+                        , 
+                    };                    
+
+                    i = addColumn(col_prop.m_textMiddleHeader, col_prop.m_textLowHeader, putPar.IsVisibled);
+                    Columns[i].Tag = col_prop;
+                } else
                     ;
 
                 for (int col = 0; col < m_listHeaders.Count; col++) {
-                    addColumn(new DataGridViewVedomostBl.COLUMN_PROPERTY {
-                            m_textTopHeader = m_listHeaders[col].values[(int)DataGridViewVedomostBl.INDEX_HEADER.TOP].ToString()
-                            , m_textMiddleHeader = m_listHeaders[col].values[(int)DataGridViewVedomostBl.INDEX_HEADER.MIDDLE].ToString()
-                            , m_textLowHeader = m_listHeaders[col].values[(int)DataGridViewVedomostBl.INDEX_HEADER.LOW].ToString()
-                            , m_putParameter = listPutParameter[col]
-                        });
+                    putPar = listPutParameter[col];
+                    putPar.SetEnabled(listPutParameter[col].IsEnabled);
+                    putPar.SetVisibled(listPutParameter[col].IsVisibled);
+
+                    col_prop = new COLUMN_TAG {
+                        value = putPar
+                        , m_textTopHeader = m_listHeaders[col].values[(int)DataGridViewVedomostBl.INDEX_HEADER.TOP].ToString()
+                        , m_textMiddleHeader = m_listHeaders[col].values[(int)DataGridViewVedomostBl.INDEX_HEADER.MIDDLE].ToString()
+                        , m_textLowHeader = m_listHeaders[col].values[(int)DataGridViewVedomostBl.INDEX_HEADER.LOW].ToString()                        
+                    };                    
+
+                    i = addColumn(col_prop.m_textMiddleHeader, col_prop.m_textLowHeader, listPutParameter[col].IsVisibled);
+                    Columns[i].Tag = col_prop;
                 }
             }
 
