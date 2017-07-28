@@ -29,6 +29,8 @@ namespace PluginTaskVedomostBl
 
             public string[] values;
 
+            public short[] order;
+
             public int idNAlg;
 
             public int idComponent;
@@ -42,7 +44,7 @@ namespace PluginTaskVedomostBl
             }
         }
         /// <summary>
-        /// класс вьюхи
+        /// Класс представления для отображения значений
         /// </summary>
         protected class DataGridViewVedomostBl : DataGridViewValues
         {
@@ -61,16 +63,7 @@ namespace PluginTaskVedomostBl
             /// словарь соотношения заголовков
             /// </summary>
             public int[] m_arCounterHeaderTop = new int[] { }
-                , m_arCounterHeaderMiddle = new int[] { };
-            /// <summary>
-            /// перечисление уровней заголовка грида
-            /// </summary>
-            public enum INDEX_HEADER
-            {
-                UNKNOW = -1,
-                TOP, MIDDLE, LOW,
-                COUNT
-            }
+                , m_arCounterHeaderMiddle = new int[] { };            
             ///// <summary>
             ///// Перечисление для индексации столбцов со служебной информацией
             ///// </summary>
@@ -216,17 +209,6 @@ namespace PluginTaskVedomostBl
 
                 Paint += new PaintEventHandler(dataGridView_onPaint);
             }
-
-            private class GROUPING_PARAMETER : HandlerDbTaskCalculate.PUT_PARAMETER
-            {
-                public GROUPING_PARAMETER(int id_alg, int id_put, HandlerDbTaskCalculate.TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue)
-                    : base(id_alg, id_put, comp, prjRatio, enabled, visibled, minValue, maxValue)
-                {
-                }
-
-                public string[]m_headers;
-            }
-
             /// <summary>
             /// Формирование списков заголовков
             /// </summary>
@@ -234,7 +216,7 @@ namespace PluginTaskVedomostBl
             {
                 string prevValue = string.Empty;
                 COLUMN_TAG col_prop;
-                GROUPING_PARAMETER groupPutPar;
+                HandlerDbTaskCalculate.GROUPING_PARAMETER groupPutPar;
                 string[] headers;
 
                 //List<string> listTop = new List<string>()
@@ -249,18 +231,18 @@ namespace PluginTaskVedomostBl
                 foreach (DataGridViewColumn col in Columns) {
                     col_prop = (COLUMN_TAG)col.Tag;
 
-                    if (col_prop.Type == TYPE_COLUMN_TAG.GROUP_PARAMETR) {
-                        groupPutPar = (GROUPING_PARAMETER)col_prop.value;
+                    if (col_prop.Type == TYPE_COLUMN_TAG.GROUPING_PARAMETR) {
+                        groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)col_prop.value;
 
                         if (!(groupPutPar.m_idNAlg < 0))
                             if (col.Visible == true)
-                                if (groupPutPar.m_headers[(int)INDEX_HEADER.TOP].Equals(string.Empty) == false)
-                                    if (groupPutPar.m_headers[(int)INDEX_HEADER.TOP].Equals(prevValue) == false) {
-                                        prevValue = groupPutPar.m_headers[(int)INDEX_HEADER.TOP];
-                                        m_listTextHeaderTop.Add(groupPutPar.m_headers[(int)INDEX_HEADER.TOP]);
+                                if (groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP].Equals(string.Empty) == false)
+                                    if (groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP].Equals(prevValue) == false) {
+                                        prevValue = groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP];
+                                        m_listTextHeaderTop.Add(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP]);
                                     } else;
                                 else
-                                    m_listTextHeaderTop.Add(groupPutPar.m_headers[(int)INDEX_HEADER.TOP]);
+                                    m_listTextHeaderTop.Add(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP]);
                             else
                                 ;
                         else
@@ -281,7 +263,7 @@ namespace PluginTaskVedomostBl
 
                 foreach (DataGridViewColumn col in Columns) {
                     col_prop = (COLUMN_TAG)col.Tag;
-                    groupPutPar = (GROUPING_PARAMETER)col_prop.value;
+                    groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)col_prop.value;
 
                     if (!(groupPutPar.m_idNAlg < 0))
                         if (col.Visible == true)
@@ -310,7 +292,7 @@ namespace PluginTaskVedomostBl
                     , untdCol = -1;
 
                 COLUMN_TAG col_prop;
-                HandlerDbTaskCalculate.PUT_PARAMETER putPar;
+                HandlerDbTaskCalculate.GROUPING_PARAMETER groupPutPar;
 
                 m_arCounterHeaderTop = new int[m_listTextHeaderTop/*[idDgv]*/.Count];
                 m_arCounterHeaderMiddle = new int[m_listTextHeaderMiddle/*[idDgv]*/.Count];
@@ -325,10 +307,10 @@ namespace PluginTaskVedomostBl
 
                     foreach (DataGridViewColumn col in Columns) {
                         col_prop = (COLUMN_TAG)col.Tag;
-                        putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)col_prop.value;
+                        groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)col_prop.value;
 
                         if (col.Visible == true)
-                            if (col_prop.m_textTopHeader.Equals(item) == true)
+                            if (groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP].Equals(item) == true)
                                 if (string.IsNullOrEmpty(item) == false)
                                     untdCol++;
                                 else {
@@ -353,9 +335,9 @@ namespace PluginTaskVedomostBl
 
                     foreach (DataGridViewColumn col in Columns) {
                         col_prop = (COLUMN_TAG)col.Tag;
-                        putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)col_prop.value;
+                        groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)col_prop.value;
 
-                        if (putPar.m_idNAlg > -1)
+                        if (groupPutPar.m_idNAlg > -1)
                             if (item == col.Name)
                                 untdCol++;
                             else
@@ -380,13 +362,15 @@ namespace PluginTaskVedomostBl
             public void SetHeaderVisibled(List<string> listHeaderTop, bool isCheck)
             {
                 COLUMN_TAG col_prop;
+                HandlerDbTaskCalculate.GROUPING_PARAMETER groupPutPar;
 
                 try {
                     foreach (var item in listHeaderTop)
                         foreach (DataGridViewColumn col in Columns) {
                             col_prop = (COLUMN_TAG)col.Tag;
+                            groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)col_prop.value;
 
-                            if (col_prop.m_textTopHeader.Equals(item) == true)
+                            if (groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP].Equals(item) == true)
                                 col.Visible = isCheck;
                             else
                                 ;
@@ -497,49 +481,39 @@ namespace PluginTaskVedomostBl
                 int i = -1;
 
                 COLUMN_TAG col_prop;
-                HandlerDbTaskCalculate.PUT_PARAMETER putPar;
+                HandlerDbTaskCalculate.GROUPING_PARAMETER groupPutPar;
 
                 if (RowHeadersVisible == false) {
-                    putPar = new HandlerDbTaskCalculate.PUT_PARAMETER() {
-                        m_idNAlg = -1
-                        , m_Id = -1
-                        , m_component = new HandlerDbTaskCalculate.TECComponent() {
+                    groupPutPar = new HandlerDbTaskCalculate.GROUPING_PARAMETER(-1, -1, new HandlerDbTaskCalculate.TECComponent() {
                             m_Id = -1
                             , m_idOwner = -1
                             , m_nameShr = string.Empty
                         }
-                        //, m_bEnabled = false
-                        //, m_bVisibled = true
-                    };
-                    putPar.SetEnabled(false);
-                    putPar.SetVisibled(true);
+                        , -1
+                        , false, true
+                        , float.MinValue, float.MaxValue
+                        , string.Empty, "DATE", "Дата");
 
-                    col_prop = new COLUMN_TAG() {
-                        value = putPar
-                        , m_textTopHeader = string.Empty
-                        , m_textMiddleHeader = "DATE"
-                        , m_textLowHeader = "Дата"
-                        , 
-                    };                    
-
-                    i = addColumn(col_prop.m_textMiddleHeader, col_prop.m_textLowHeader, putPar.IsVisibled);
-                    Columns[i].Tag = col_prop;
+                    i = addColumn(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.MIDDLE]
+                        , groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.LOW]
+                        , groupPutPar.IsVisibled);
+                    Columns[i].Tag = new COLUMN_TAG(groupPutPar, -1, true);
                 } else
                     ;
 
                 for (int col = 0; col < m_listHeaders.Count; col++) {
-                    putPar = listPutParameter[col];
-                    putPar.SetEnabled(listPutParameter[col].IsEnabled);
-                    putPar.SetVisibled(listPutParameter[col].IsVisibled);
+                    groupPutPar = new HandlerDbTaskCalculate.GROUPING_PARAMETER(listPutParameter[col]
+                        , m_listHeaders[col].values);
 
                     col_prop = new COLUMN_TAG {
-                        value = putPar
-                        , m_textTopHeader = m_listHeaders[col].values[(int)DataGridViewVedomostBl.INDEX_HEADER.TOP].ToString()
-                        , m_textMiddleHeader = m_listHeaders[col].values[(int)DataGridViewVedomostBl.INDEX_HEADER.MIDDLE].ToString()
-                        , m_textLowHeader = m_listHeaders[col].values[(int)DataGridViewVedomostBl.INDEX_HEADER.LOW].ToString()                        
+                        value = groupPutPar
+                        , TemplateReportAddress = -1
+                        , ActionAgregateCancel = true
                     };                    
 
-                    i = addColumn(col_prop.m_textMiddleHeader, col_prop.m_textLowHeader, listPutParameter[col].IsVisibled);
+                    i = addColumn(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.MIDDLE]
+                        , groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.LOW]
+                        , groupPutPar.IsVisibled);
                     Columns[i].Tag = col_prop;
                 }
             }
@@ -728,6 +702,7 @@ namespace PluginTaskVedomostBl
                 int cntHeader = 0;
                 HandlerDbTaskCalculate.NALG_PARAMETER nalg_prop;
                 string[] arStrHeader;
+                short[] arShortOrder;
                 List<HEADER> listHeaderSrc;            
 
                 listHeaderSrc = new List<HEADER>(listPutParameter.Count);
@@ -754,6 +729,12 @@ namespace PluginTaskVedomostBl
                                 //.m_strNameShr
                                 .m_nAlg
                                 .Split('.', ',')
+                        , order =
+                            nalg_prop
+                                .m_nAlg
+                                .Split('.', ',')
+                                .Select<string, short>((s) => { return short.Parse(s); })
+                                .ToArray()
                     });
                 }
 
@@ -762,10 +743,13 @@ namespace PluginTaskVedomostBl
                 for (int j = 0; j < listHeaderSrc.Count; j++) {
                     //??? почему 3
                     //  , может у всех по 3(количество уровней) элемента
-                    if (listHeaderSrc[j].values.Length < 3)
+                    if (listHeaderSrc[j].values.Length < 3) {
                         arStrHeader = new string[listHeaderSrc[j].values.Length + 1];
-                    else
+                        arShortOrder = new short[listHeaderSrc[j].values.Length + 1];
+                    } else {
                         arStrHeader = new string[listHeaderSrc[j].values.Length];
+                        arShortOrder = new short[listHeaderSrc[j].values.Length];
+                    }
 
                     cntHeader = 0;
 
@@ -785,6 +769,7 @@ namespace PluginTaskVedomostBl
                                         try {
                                             if (int.Parse(listHeaderSrc[j].values.ElementAt((int)LEVEL_HEADER.TOP)) == cntHeader) {
                                                 arStrHeader[level] = s_listGroupHeaders[t][n];
+                                                arShortOrder[level] = listHeaderSrc[j].order[(int)LEVEL_HEADER.TOP];
 
                                                 listHeaderRes.Add(new HEADER() {
                                                     idNAlg = listHeaderSrc[j].idNAlg
@@ -794,6 +779,7 @@ namespace PluginTaskVedomostBl
                                                         //.m_strNameShr
                                                         .m_nAlg
                                                     , values = arStrHeader
+                                                    , order = arShortOrder
                                                 });
 
                                                 t = s_listGroupHeaders.Count; // прервать внешний цикл
@@ -808,15 +794,18 @@ namespace PluginTaskVedomostBl
                                 break;
                             case LEVEL_HEADER.MIDDLE:
                                 // ??? почему < 3
-                                if (listHeaderSrc[j].values.Length < 3)
+                                if (listHeaderSrc[j].values.Length < 3) {
                                     arStrHeader[level + 1] = string.Empty;
-                                else
+                                    arShortOrder[level + 1] = -1;
+                                } else
                                     ;
 
                                 arStrHeader[(int)LEVEL_HEADER.MIDDLE] = nalg_prop.m_strNameShr; // listHeader[j].src
+                                arShortOrder[(int)LEVEL_HEADER.MIDDLE] = listHeaderSrc[j].order[(int)LEVEL_HEADER.MIDDLE];
                                 break;
                             case LEVEL_HEADER.LOW:
                                 arStrHeader[level] = nalg_prop.m_strDescription;
+                                arShortOrder[level] = listHeaderSrc[j].order[level];
                                 break;
                             default:
                                 break;

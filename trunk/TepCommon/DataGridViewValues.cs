@@ -292,6 +292,11 @@ namespace TepCommon
                                 idAlg = ((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)column.Tag).value).m_idNAlg;
 
                                 fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
+                            } else if (((COLUMN_TAG)column.Tag).Type == TYPE_COLUMN_TAG.GROUPING_PARAMETR) {
+                            // идентификатор столбца - параметр в алгоритме расчета 2-го порядка (с принадлежностью к оборудованию)
+                                idAlg = ((HandlerDbTaskCalculate.GROUPING_PARAMETER)((COLUMN_TAG)column.Tag).value).m_idNAlg;
+
+                                fmtRoundValue = m_dictNAlgProperties[idAlg].FormatRound;
                             } else if (((COLUMN_TAG)column.Tag).Type == TYPE_COLUMN_TAG.FORMULA_HELPER) {
                             // идентификатор столбца - формула
                                 tagFormaula = ((COLUMN_TAG)column.Tag).value as FormulaHelper;
@@ -383,7 +388,7 @@ namespace TepCommon
                 public static string DefaultFormatValue = @"F2";
             }
 
-            public enum TYPE_COLUMN_TAG : short { UNKNOWN = short.MinValue, COMPONENT, PUT_PARAMETER, FORMULA_HELPER, GROUP_PARAMETR }
+            public enum TYPE_COLUMN_TAG : short { UNKNOWN = short.MinValue, COMPONENT, PUT_PARAMETER, FORMULA_HELPER, GROUPING_PARAMETR }
 
             public struct COLUMN_TAG
             {
@@ -414,6 +419,8 @@ namespace TepCommon
                         Type = TYPE_COLUMN_TAG.COMPONENT;
                     else if (tag is HandlerDbTaskCalculate.PUT_PARAMETER)
                         Type = TYPE_COLUMN_TAG.PUT_PARAMETER;
+                    else if (tag is HandlerDbTaskCalculate.GROUPING_PARAMETER)
+                        Type = TYPE_COLUMN_TAG.GROUPING_PARAMETR;
                     else if (tag is FormulaHelper)
                         Type = TYPE_COLUMN_TAG.FORMULA_HELPER;
                     else
@@ -734,7 +741,7 @@ namespace TepCommon
 
                             bCellClear = tag.Type == TYPE_COLUMN_TAG.COMPONENT // свойства установлены - это компонент?
                                 ? ((HandlerDbTaskCalculate.TECComponent)tag.value).m_Id > 0 // свойсто столбца - компонент - очищать, если это реальный, а не псевдо-компонент
-                                    : tag.Type == TYPE_COLUMN_TAG.PUT_PARAMETER // свойсто столбца - не компонент - значит это параметр алгоритма расчета 2-го порядка
+                                    : ((tag.Type == TYPE_COLUMN_TAG.PUT_PARAMETER) || (tag.Type == TYPE_COLUMN_TAG.GROUPING_PARAMETR)) // свойсто столбца - не компонент - значит это параметр алгоритма расчета 2-го порядка
                                         ? ((HandlerDbTaskCalculate.PUT_PARAMETER)tag.value).m_Id > 0 // свойсто столбца - параметр алгоритма расчета 2-го порядка - очищать, если это реальный параметр
                                             : tag.Type == TYPE_COLUMN_TAG.FORMULA_HELPER //     
                                                 ? (tag.value as FormulaHelper).IndexColumns.Count() > 0
@@ -1056,7 +1063,7 @@ namespace TepCommon
                 foreach (int indx in indexes) {
                     tag = (COLUMN_TAG)Columns[indx].Tag;
 
-                    if (tag.Type == TYPE_COLUMN_TAG.PUT_PARAMETER) {
+                    if ((tag.Type == TYPE_COLUMN_TAG.PUT_PARAMETER) || (tag.Type == TYPE_COLUMN_TAG.GROUPING_PARAMETR)) {
                         listRes.Add((HandlerDbTaskCalculate.PUT_PARAMETER)tag.value);
                     } else if (tag.Type == TYPE_COLUMN_TAG.FORMULA_HELPER)
                         listRes = listRes.Union(fFormatColumns((tag.value as FormulaHelper).IndexColumns)).ToList();
@@ -1197,6 +1204,7 @@ namespace TepCommon
                                     #endregion
                                     break;
                                 case TYPE_COLUMN_TAG.PUT_PARAMETER:
+                                case TYPE_COLUMN_TAG.GROUPING_PARAMETR:
                                     #region Отображение значений в столбце для обычного параметра
                                     try {
                                         putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value;

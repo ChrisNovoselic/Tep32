@@ -164,23 +164,30 @@ namespace TepCommon
             public float m_fltMinValue;
 
             public float m_fltMaxValue;
+
+            public PUT_PARAMETER()
+            {
+                _idNAlg = -1;
+                _id = -1;
+                m_component = new TECComponent();
+                m_prjRatio = -1;
+                _bEnabled = false;
+                _bVisibled = false;
+                m_fltMinValue = float.MinValue;
+                m_fltMaxValue = float.MaxValue;
+            }
             /// <summary>
             /// Конструктор объекта - 
             /// </summary>
             /// <param name="id_alg">Идентификатор в БД элемента в алгоритме расчета</param>
-            /// <param name="id_comp">Идентификатор в БД компонента(оборудования)</param>
             /// <param name="id_put">Идентификатор в БД (в соответствии с компонентом-оборудованием)</param>
+            /// <param name="id_comp">Идентификатор в БД компонента(оборудования)</param>
             /// <param name="comp">Объект компонента</param>
+            /// <param name="prjRatio">Объект компонента</param>
             /// <param name="enabled">Признак доступности (участия в расчете, если 'NALG' выключен, то и 'PUT' тоже выключен)</param>
-            //public PUT_PARAMETER(int id_alg, int id_put, TECComponent comp, bool enabled, bool visibled)
-            //    : this(/*new TepCommon.HPanelTepCommon.PUT_PARAMETER.KEY() { m_idNAlg =*/ id_alg/*, m_idComp = id_comp }*/
-            //        , id_put
-            //        , comp
-            //        , enabled
-            //        , visibled)
-            //{
-            //}
-
+            /// <param name="visibled">Признак отобр</param>
+            /// <param name="minValue">Объект компонента</param>
+            /// <param name="maxValue">Объект компонента</param>
             public PUT_PARAMETER(int id_alg/*KEY key*/, int id_put, TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue)
             {
                 _idNAlg = id_alg //Key = key
@@ -194,6 +201,11 @@ namespace TepCommon
                 m_fltMaxValue = maxValue;
             }
 
+            public PUT_PARAMETER(PUT_PARAMETER putParSource)
+                : this(putParSource.m_idNAlg, putParSource.m_Id, putParSource.m_component, putParSource.m_prjRatio, putParSource.IsEnabled, putParSource.IsVisibled, putParSource.m_fltMinValue, putParSource.m_fltMaxValue)
+            {
+            }
+
             public void SetEnabled(bool value)
             {
                 _bEnabled = value;
@@ -205,6 +217,42 @@ namespace TepCommon
             }
 
             public bool IsNaN { get { return !(m_Id > 0); } }
+        }
+
+        public class GROUPING_PARAMETER : HandlerDbTaskCalculate.PUT_PARAMETER
+        {
+            /// <summary>
+            /// Перечисление уровней заголовка грида
+            /// </summary>
+            public enum INDEX_HEADER
+            {
+                UNKNOW = -1,
+                TOP, MIDDLE, LOW,
+                COUNT
+            }
+
+            public GROUPING_PARAMETER(int id_alg, int id_put, HandlerDbTaskCalculate.TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue, string textHeaderTop, string textHeaderMiddle, string textHeaderLow)
+                : base(id_alg, id_put, comp, prjRatio, enabled, visibled, minValue, maxValue)
+            {
+                m_headers = new string[] { textHeaderTop, textHeaderMiddle, textHeaderLow };
+            }
+
+            public GROUPING_PARAMETER(int id_alg, int id_put, HandlerDbTaskCalculate.TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue, string[] textHeaders)
+                : this(id_alg, id_put, comp, prjRatio, enabled, visibled, minValue, maxValue, textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.TOP])
+            {
+            }
+
+            public GROUPING_PARAMETER(HandlerDbTaskCalculate.PUT_PARAMETER putPar, string textHeaderTop, string textHeaderMiddle, string textHeaderLow)
+                : this(putPar.m_idNAlg, putPar.m_Id, putPar.m_component, putPar.m_prjRatio, putPar.IsEnabled, putPar.IsVisibled, putPar.m_fltMinValue, putPar.m_fltMaxValue, textHeaderTop, textHeaderMiddle, textHeaderLow)
+            {
+            }
+
+            public GROUPING_PARAMETER(HandlerDbTaskCalculate.PUT_PARAMETER putPar, string[] textHeaders)
+                : this(putPar.m_idNAlg, putPar.m_Id, putPar.m_component, putPar.m_prjRatio, putPar.IsEnabled, putPar.IsVisibled, putPar.m_fltMinValue, putPar.m_fltMaxValue, textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.TOP])
+            {
+            }
+
+            public string[] m_headers;
         }
         /// <summary>
         /// Свойства параметра в алгоритме расчета 1-го уровня (не связан с компонентом)
@@ -2325,19 +2373,9 @@ namespace TepCommon
                         else
                             ;
 
-                        prjRatio = (int)r[@"ID_RATIO"];
+                        //prjRatio = (int)r[@"ID_RATIO"];
 
-                        putPar = new PUT_PARAMETER() {
-                            /*Key = new PUT_PARAMETER.KEY() {*/ m_idNAlg = id_alg/*, m_idComp = id_comp }*/
-                            , m_Id = (int)r[@"ID"]
-                            , m_component = component
-                            , m_prjRatio = prjRatio
-                            //, _bEnabled = bEnabled
-                            //, _bVisibled = bVisibled
-                            ,
-                        };
-                        putPar.SetEnabled(bEnabled);
-                        putPar.SetVisibled(bVisibled);
+                        putPar = new PUT_PARAMETER(id_alg, (int)r[@"ID"], component, (int)r[@"ID_RATIO"], bEnabled, bVisibled, (float)r[@"MINVALUE"], (float)r[@"MAXVALUE"]);
 
                         _listPutParameter.Add(putPar);
                         // только, если назначенн обработчик в 'PanelTaskTepOutVal'
