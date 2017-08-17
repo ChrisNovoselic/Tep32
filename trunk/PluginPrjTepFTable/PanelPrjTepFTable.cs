@@ -117,7 +117,8 @@ namespace PluginPrjTepFTable
         /// <returns>Панель управления</returns>
         protected override HandlerDbValues createHandlerDb()
         {
-            throw new NotImplementedException();
+            //TODO: создать объект для обращения к БД, использовать далее по тексту модуля
+            return null;
         }
 
         /// <summary>
