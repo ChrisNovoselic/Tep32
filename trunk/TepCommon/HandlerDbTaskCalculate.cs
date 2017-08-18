@@ -238,7 +238,7 @@ namespace TepCommon
             }
 
             public GROUPING_PARAMETER(int id_alg, int id_put, HandlerDbTaskCalculate.TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue, string[] textHeaders)
-                : this(id_alg, id_put, comp, prjRatio, enabled, visibled, minValue, maxValue, textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.TOP])
+                : this(id_alg, id_put, comp, prjRatio, enabled, visibled, minValue, maxValue, textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.MIDDLE], textHeaders[(int)INDEX_HEADER.LOW])
             {
             }
 
@@ -248,7 +248,7 @@ namespace TepCommon
             }
 
             public GROUPING_PARAMETER(HandlerDbTaskCalculate.PUT_PARAMETER putPar, string[] textHeaders)
-                : this(putPar.m_idNAlg, putPar.m_Id, putPar.m_component, putPar.m_prjRatio, putPar.IsEnabled, putPar.IsVisibled, putPar.m_fltMinValue, putPar.m_fltMaxValue, textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.TOP])
+                : this(putPar.m_idNAlg, putPar.m_Id, putPar.m_component, putPar.m_prjRatio, putPar.IsEnabled, putPar.IsVisibled, putPar.m_fltMinValue, putPar.m_fltMaxValue, textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.MIDDLE], textHeaders[(int)INDEX_HEADER.LOW])
             {
             }
 

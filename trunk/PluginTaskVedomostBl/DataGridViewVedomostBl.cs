@@ -64,12 +64,6 @@ namespace PluginTaskVedomostBl
             /// </summary>
             public int[] m_arCounterHeaderTop = new int[] { }
                 , m_arCounterHeaderMiddle = new int[] { };            
-            ///// <summary>
-            ///// Перечисление для индексации столбцов со служебной информацией
-            ///// </summary>
-            //public enum INDEX_SERVICE_COLUMN : uint { ALG = 0, DATE, COUNT }
-
-            private List<HEADER> m_listHeaders;
             /// <summary>
             /// Конструктор - основной (с параметром)
             /// </summary>
@@ -103,11 +97,11 @@ namespace PluginTaskVedomostBl
 
             public override void AddColumns(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
             {
-                m_listHeaders = new List<HEADER>(getListHeaders(listNAlgParameter, listPutParameter)); // cловарь заголовков                
                 ////??? каждый раз получаем полный список и выбираем необходимый
                 //dictVisualSett = getVisualSettingsOfIdComponent((int)dgv.Tag);
 
-                AddColumns(listPutParameter);
+                AddColumns(listPutParameter
+                    , getListHeaders(listNAlgParameter, listPutParameter));
 
                 ////???
                 //addRows();
@@ -237,15 +231,24 @@ namespace PluginTaskVedomostBl
                         if (!(groupPutPar.m_idNAlg < 0))
                             if (col.Visible == true)
                                 if (groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP].Equals(string.Empty) == false)
+                                //??? заголовок верхнего уровня не пустой
                                     if (groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP].Equals(prevValue) == false) {
+                                    // предыдущее значение строки заголовка верхнего уровня НЕ совпадает с предыдущим значением
+                                        // запомнить текущее значение
                                         prevValue = groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP];
+                                        // добавить в список с заголовками верхнего уровня
                                         m_listTextHeaderTop.Add(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP]);
-                                    } else;
+                                    } else
+                                    // предыдущее значение строки заголовка верхнего уровня совпадает с предыдущим значением
+                                        ;
                                 else
+                                //??? заголовок верхнего уровня - пустой (зачем добавлять пустую строку)
                                     m_listTextHeaderTop.Add(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP]);
                             else
+                            // столбец не отображается
                                 ;
                         else
+                        // неизвестный номер алгоритма расчета 1-го порядка
                             ;
                     } else
                         ;
@@ -476,7 +479,7 @@ namespace PluginTaskVedomostBl
                 //(sender as DGVVedomostBl).Paint -= new PaintEventHandler(dataGridView1_Paint);
             }
 
-            public void AddColumns(List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
+            public void AddColumns(List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter, List<HEADER>listHeaders)
             {
                 int i = -1;
 
@@ -501,13 +504,12 @@ namespace PluginTaskVedomostBl
                 } else
                     ;
 
-                for (int col = 0; col < m_listHeaders.Count; col++) {
+                for (int col = 0; col < listHeaders.Count; col++) {
                     groupPutPar = new HandlerDbTaskCalculate.GROUPING_PARAMETER(listPutParameter[col]
-                        , m_listHeaders[col].values);
+                        , listHeaders[col].values);
 
-                    col_prop = new COLUMN_TAG {
-                        value = groupPutPar
-                        , TemplateReportAddress = -1
+                    col_prop = new COLUMN_TAG (groupPutPar) {
+                        TemplateReportAddress = -1
                         , ActionAgregateCancel = true
                     };                    
 
@@ -569,125 +571,16 @@ namespace PluginTaskVedomostBl
                     e.Handled = true;
                 }
             }
-
-            /// <summary>
-            /// Получение суммы по столбцу
-            /// </summary>
-            /// <param name="indxCol">индекс столбца</param>
-            /// <returns>сумма по столбцу</returns>
-            private double summaColumnValues(int indxCol, out int counter)
-            {
-                counter = 0;
-                double dblRes = 0F;
-
-                try {
-                    foreach (DataGridViewRow row in Rows)
-                        if (row.Index < Rows.Count - 1)
-                        // все кроме крайней строки
-                            if ((!(row.Cells[indxCol].Value == null))
-                                && (string.IsNullOrEmpty(row.Cells[indxCol].Value.ToString()) == false)) {
-                            // только, если есть значение для разбора
-                                dblRes += HMath.doubleParse(row.Cells[indxCol].Value.ToString());
-
-                                counter++;
-                            } else
-                                ;
-                        else
-                            ;
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format(@"PanelTaskVedomostBl::summaColumnValues () - суммирования столбца №{0}...", indxCol), Logging.INDEX_MESSAGE.NOT_SET);
-                }
-
-                return dblRes;
-            }
-
-            /// <summary>
-            /// Получение среднего по столбцу
-            /// </summary>
-            /// <param name="indxCol">индекс столбца</param>
-            /// <returns>среднее по столбцу</returns>
-            private double averageColumnValues(int indxCol, out int counter)
-            {
-                counter = 0;
-                double summaValue = summaColumnValues(indxCol, out counter)
-                    , dblRes = 0F;
-
-                if (counter > 0)
-                    dblRes = summaValue / counter;
-                else
-                    dblRes = double.NaN;
-
-                return dblRes;
-            }            
-
-            /// <summary>
-            /// ??? Сортировка таблицы по столбцу
-            /// </summary>
-            /// <param name="table">таблица для сортировки</param>
-            /// <param name="sortStr">имя столбца/ов для сортировки</param>
-            /// <returns>отсортированная таблица</returns>
-            private DataTable sortDataTable(DataTable table, string colSort)
-            {
-                DataView dView = null;
-                string sortExpression = string.Empty;
-
-                try {
-                    dView = table.DefaultView;
-                    sortExpression = string.Format(colSort);
-
-                    dView.Sort = sortExpression;
-                    table = dView.ToTable();
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, @"DataGridViewVedomostBl::sortDataTable () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-
-                return table;
-            }
-
-            /// <summary>
-            /// Проверка на изменение значений в двух таблицах
-            /// </summary>
-            /// <param name="origin">оригинальная таблица</param>
-            /// <param name="editValue">значение</param>
-            /// <param name="i">номер строки</param>
-            /// <param name="idAlg">номер алгоритма</param>
-            /// <param name="typeValues">тип данных</param>
-            /// <returns>показатель изменения</returns>
-            private int diffRowsInTables(DataTable origin, double editValue, int i, string formatRound, HandlerDbTaskCalculate.ID_VIEW_VALUES typeValues)
-            {
-                int quality = 1;
-                double originValues;
-                //??? зачем сортировка
-                origin = sortDataTable(origin, "ID_PUT, WR_DATETIME");
-
-                if (origin.Rows.Count - 1 < i)
-                    originValues = 0;
-                else
-                    originValues =
-                        //HPanelTepCommon.AsParseToF(
-                        HMath.doubleParse(
-                            origin.Rows[i]["VALUE"].ToString()
-                        );
-
-                switch (typeValues)
-                {
-                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.ARCHIVE:
-                        //??? почему сравниваются строки
-                        if (originValues.ToString(formatRound, CultureInfo.InvariantCulture).Equals(editValue.ToString().Trim()) == false)
-                            quality = 2;
-                        break;
-                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD:
-                        quality = 1;
-                        break;
-                    case HandlerDbTaskCalculate.ID_VIEW_VALUES.DEFAULT:
-                        break;
-                    default:
-                        break;
-                }
-
-                return quality;
-            }
-
+            ///// <summary>
+            ///// Класс для сравнения/сортировки 2-х объектов 'HEADER'
+            ///// </summary>
+            //private class HeaderComparer : IComparer<HEADER>
+            //{
+            //    public int Compare(HEADER x, HEADER y)
+            //    {
+            //        throw new NotImplementedException();
+            //    }
+            //}
             /// <summary>
             /// Возвратить список с заголовками представления для отображения значений
             /// </summary>
@@ -813,9 +706,31 @@ namespace PluginTaskVedomostBl
                     } // for - level
                 }
 
-                //var linqRes = from header in listHeaderRes select new string[] { header.values };
-                //listRes = linqRes as List<string[]>;
+                Comparison<HEADER> comparision = (h1, h2) => {
+                    int iRes = 0;
 
+                    int lOrder = Math.Min(h1.order.Length, h2.order.Length);
+
+                    for (int i = 0; i < lOrder; i++) {
+                        if (h1.order[i] > h2.order[i])
+                            iRes = 1;
+                        else if (h1.order[i] < h2.order[i])
+                            iRes = -1;
+                        else
+                            ;
+
+                        if (!(iRes == 0))
+                            break;
+                        else
+                            ;
+                    }
+
+                    return iRes;
+                };
+
+                //HeaderComparer comparer = new HeaderComparer();
+                //listHeaderRes.Sort(comparer);
+                listHeaderRes.Sort(comparision);                
                 return listHeaderRes;
             }
 

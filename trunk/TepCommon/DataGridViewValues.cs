@@ -411,29 +411,39 @@ namespace TepCommon
                 /// </summary>
                 public int TemplateReportAddress;
 
-                public COLUMN_TAG(object tag, int indexMSExcelReportColumn, bool bActionAgregateCancel)
+                public COLUMN_TAG(object tag)
                 {
                     value = tag;
 
                     if (tag is HandlerDbTaskCalculate.TECComponent)
                         Type = TYPE_COLUMN_TAG.COMPONENT;
-                    else if (tag is HandlerDbTaskCalculate.PUT_PARAMETER)
-                        Type = TYPE_COLUMN_TAG.PUT_PARAMETER;
+                    // 1-ым проверяется наследуемый тип
                     else if (tag is HandlerDbTaskCalculate.GROUPING_PARAMETER)
                         Type = TYPE_COLUMN_TAG.GROUPING_PARAMETR;
+                    // , затем проверяется базовый тип
+                    else if (tag is HandlerDbTaskCalculate.PUT_PARAMETER)
+                        Type = TYPE_COLUMN_TAG.PUT_PARAMETER;
                     else if (tag is FormulaHelper)
                         Type = TYPE_COLUMN_TAG.FORMULA_HELPER;
                     else
                         Type = TYPE_COLUMN_TAG.UNKNOWN;
 
-                    TemplateReportAddress = indexMSExcelReportColumn;
+                    TemplateReportAddress = -1;
 
-                    ActionAgregateCancel = bActionAgregateCancel;
+                    ActionAgregateCancel = false;
 
                     //m_textTopHeader =
                     //m_textMiddleHeader =
                     //m_textLowHeader =
                     //    string.Empty;
+                }
+
+                public COLUMN_TAG(object tag, int indexMSExcelReportColumn, bool bActionAgregateCancel)
+                    : this(tag)
+                {
+                    TemplateReportAddress = indexMSExcelReportColumn;
+
+                    ActionAgregateCancel = bActionAgregateCancel;
                 }
 
                 ///// <summary>
