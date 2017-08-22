@@ -130,7 +130,7 @@ namespace PluginTaskTepMain
             /// <param name="iChecked">Признак нового состояния элемента управленияЮ и, соответственно, параметра алгоритма расчета</param>
             protected void onItemCheck(int idItem, int iChecked)
             {
-                itemCheck(idItem
+                PerformItemCheck(idItem
                     , ItemCheckedParametersEventArgs.TYPE.ENABLE
                     ,  iChecked == 1 ? CheckState.Checked : CheckState.Unchecked);
             }

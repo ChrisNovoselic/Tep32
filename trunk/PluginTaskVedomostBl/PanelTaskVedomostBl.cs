@@ -14,26 +14,26 @@ namespace PluginTaskVedomostBl
 {
     public partial class PanelTaskVedomostBl : HPanelTepCommon
     {
-        /// <summary>
-        /// ??? переменная с текущем отклоненеим от UTC
-        /// </summary>
-        private static int s_currentOffSet;
-        /// <summary>
-        /// Для обозначения выбора 1 или 6 блоков
-        /// </summary>
-        private static bool s_flagBl = true;
-        /// <summary>
-        /// флаг очистки отображения
-        /// </summary>
-        private bool m_bflgClear = false;
-        /// <summary>
-        /// ??? экземпляр делегата(возврат PictureBox для активного представления)
-        /// </summary>
-        public static Func<PictureBox> s_delegateGetActivePictureBox;
-        /// <summary>
-        /// ??? экземпляр делегата(возврат Ид)
-        /// </summary>
-        public static Func<int> s_delegateGetIdActiveComponent;        
+        ///// <summary>
+        ///// ??? переменная с текущем отклоненеим от UTC
+        ///// </summary>
+        //private static int s_currentOffSet;
+        ///// <summary>
+        ///// Для обозначения выбора 1 или 6 блоков
+        ///// </summary>
+        //private static bool s_bChoiceBl16 = true;
+        ///// <summary>
+        ///// флаг очистки отображения
+        ///// </summary>
+        //private bool m_bflgClear = false;
+        ///// <summary>
+        ///// ??? экземпляр делегата(возврат PictureBox для активного представления)
+        ///// </summary>
+        //public static Func<PictureBox> s_delegateGetActivePictureBox;
+        ///// <summary>
+        ///// ??? экземпляр делегата(возврат Ид)
+        ///// </summary>
+        //public static Func<int> s_delegateGetIdActiveComponent;        
         /// <summary>
         /// Список представлений для каждого из компонентов станции 
         /// </summary>
@@ -58,11 +58,6 @@ namespace PluginTaskVedomostBl
             , LABEL_DESC, TBLP_HGRID, /*PICTURE_BOXDGV,*/ PANEL_PICTUREBOX
                 , COUNT
         }
-        /// <summary>
-        /// Таблицы со значениями для редактирования
-        /// </summary>
-        protected DataTable[] m_arTableOrigin
-            , m_arTableEdit;
         /// <summary>
         /// Объект для обращения к БД
         /// </summary>
@@ -109,9 +104,8 @@ namespace PluginTaskVedomostBl
         protected class PictureBoxVedomostBl : PictureBox
         {
             /// <summary>
-            /// Конструктор
+            /// Конструктор - основной (без параметров)
             /// </summary>
-            /// <param name="viewActive">активный грид</param>
             public PictureBoxVedomostBl()
             {
                 InitializeComponents();
@@ -121,20 +115,39 @@ namespace PluginTaskVedomostBl
             /// Инициализация компонента
             /// </summary>
             private void InitializeComponents()
-            {                
+            {
+                Dock = DockStyle.None;
             }
 
             public void AddControl(DataGridViewVedomostBl dgv)
             {
-                int height = -1;
-
                 Tag = dgv.IdComponent;
 
-                height = (dgv.Rows.Count) * dgv.Rows[0].Height + DataGridViewVedomostBl.HEIGHT_HEADER;
+                dgv.SizeChanged += dataGridView_SizeChanged;
 
-                this.Size = new Size(dgv.Width - DataGridViewVedomostBl.PADDING_COLUMN, height);
+                setSize(dgv);
 
                 Controls.Add(dgv);
+            }
+
+            private void dataGridView_SizeChanged(object sender, EventArgs e)
+            {
+                setSize((DataGridViewVedomostBl)sender);
+            }
+
+            private void setSize()
+            {
+                setSize((DataGridViewVedomostBl)Controls[0]);
+            }
+
+            private void setSize(DataGridViewVedomostBl dgv)
+            {
+                int height = -1;
+
+                height = (dgv.Rows.Count) * dgv.Rows[0].Height + DataGridViewVedomostBl.HEIGHT_HEADER;
+                this.Size = new Size(
+                    dgv.Width - DataGridViewVedomostBl.PADDING_COLUMN + SystemInformation.VerticalScrollBarWidth
+                    , height);
             }
         }
 
@@ -151,15 +164,12 @@ namespace PluginTaskVedomostBl
             
             m_listDataGridViewVedomostBl = new List<DataGridViewVedomostBl>();
 
-            m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
-            m_arTableEdit = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];
-
             InitializeComponent();            
 
-            //???
-            s_delegateGetActivePictureBox = new Func<PictureBox>(GetActivePictureBox);
+            ////???
+            //s_delegateGetActivePictureBox = new Func<PictureBox>(GetActivePictureBox);
             //s_getDGV = new Func<DataGridView>(GetDGVOfIdComp);
-            s_delegateGetIdActiveComponent = new Func<int>(GetIdActiveComponent);
+            //s_delegateGetIdActiveComponent = new Func<int>(GetIdActiveComponent);
         }
 
         /// <summary>
@@ -236,7 +246,7 @@ namespace PluginTaskVedomostBl
         //}
 
         /// <summary>
-        /// Обработчик события - изменение отображения кол-во групп заголовка
+        /// Обработчик события - изменение отображения кол-ва групп заголовка
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргумент события, описывающий состояние элемента</param>
@@ -251,16 +261,19 @@ namespace PluginTaskVedomostBl
             bool bItemChecked = ev.NewCheckState == CheckState.Checked ? true :
                   ev.NewCheckState == CheckState.Unchecked ? false : false;
             DataGridViewVedomostBl dgv = ActiveDataGridView;
+            PictureBox pictrure;
 
             if (ev.m_type == PanelManagementTaskCalculate.ItemCheckedParametersEventArgs.TYPE.VISIBLE) {
                 //if (ev.IsComponent == true) {
-                    dgv.SetHeaderVisibled(s_listGroupHeaders[ev.m_idComp], bItemChecked);
-                    dgv.ResizeControls();
+                    dgv.SetColumnVisibled(s_listGroupHeaders[ev.m_idComp], bItemChecked);
+                    dgv.ConfigureHeaders();
+                    dgv.SetSize();
                 //} else
                 ////??? другие случаи
                 //    ;
+            } else if (ev.m_type == PanelManagementTaskCalculate.ItemCheckedParametersEventArgs.TYPE.ENABLE) {
+                EnablePictureBox(ev.m_idComp, bItemChecked);
             } else
-            //??? ENABLE
                 ;
         }
 
@@ -295,49 +308,29 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// Возвращает PictureBox по идентификатору активного представления (компонента)
+        /// Вызывает/снимает с отображения рисунок с многоуровниевым заголовком представления
         /// </summary>
         /// <param name="idComp">Идентификатор компонента, установленный также идентификатором и для представления</param>
-        /// <returns>Объект активного PictureBox</returns>
-        public PictureBox GetActivePictureBox()
+        /// <param name="bEnabled">Признак назначения/снятия с отображения</param>
+        public void EnablePictureBox(int idComp, bool bEnabled)
         {
-            int cnt = 0
-                , outCnt = 0
-                , idComp = -1;
-            PictureBox cntrl = new PictureBox();
-
-            idComp = ActiveDataGridView.IdComponent;
+            PictureBox picture = null;
 
             foreach (PictureBoxVedomostBl item in findControl(INDEX_CONTROL.PANEL_PICTUREBOX.ToString()).Controls)
-            {
-                if (idComp == (int)item.Tag)
-                {
-                    outCnt = cnt;
-                    cntrl = (item as PictureBox);
-                }
-                else
-                {
-                    (item as PictureBox).Visible = false;
-                    (item as PictureBox).Enabled = false;
-                }
-                cnt++;
-            }
+                if (idComp == (int)item.Tag) {
+                    picture = (item as PictureBox);
 
-            if (outCnt == 0 || outCnt == 5)
-                WhichBlIsSelected = true;
-            else
-                WhichBlIsSelected = false;
+                    break;
+                } else
+                    ;
 
-            return cntrl;
-        }
-
-        /// <summary>
-        /// Возвращает idComp
-        /// </summary>
-        /// <returns>индентификатор объекта</returns>
-        public int GetIdActiveComponent()
-        {
-            return ActiveDataGridView.IdComponent;
+            if (Equals(picture, null) == false) {
+                picture.Enabled =
+                picture.Visible =
+                    bEnabled;
+            } else
+                Logging.Logg().Error(string.Format(@"PanelTaskVedomostBl::EnablePictureBox (ID_COMPONENT={0}, операция={1}) - не найден рисунок для заголовка ...", idComp, bEnabled)
+                    , Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         /// <summary>
@@ -354,7 +347,7 @@ namespace PluginTaskVedomostBl
             PictureBoxVedomostBl pictureBox;
             TimeSpan tsOffsetUTC = TimeSpan.MinValue;
 
-            tsOffsetUTC = TimeSpan.FromDays(1) - Session.m_curOffsetUTC;
+            tsOffsetUTC = /*TimeSpan.FromDays(1)*/ - Session.m_curOffsetUTC;
 
             //создание грида со значениями
             //for (int i = 0; i < m_listTECComponent.Count; i++)
@@ -364,19 +357,25 @@ namespace PluginTaskVedomostBl
                 //    Start = PanelManagement.DatetimeRange.Begin
                 //    , Increment = TimeSpan.FromDays(1)
                 //};
-                dgv.AddColumns(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));
+                dgv.AddColumns(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));                
+                dgv.ConfigureHeaders();
                 dgv.AddRows(new DataGridViewValues.DateTimeStamp() {
                     Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC
                     , Increment = TimeSpan.FromDays(1)
                     , ModeDataDatetime = HandlerDb.ModeDataDatetime
                 });
-                dgv.ResizeControls();
-                dgv.ConfigureColumns();
+                dgv.SetSize();
 
                 pictureBox = new PictureBoxVedomostBl();
                 pictureBox.AddControl(dgv);
                 //??? панель одновременно содержит все picureBox-ы
                 (findControl(INDEX_CONTROL.PANEL_PICTUREBOX.ToString()) as Panel).Controls.Add(pictureBox);
+
+                pictureBox.Enabled =
+                pictureBox.Visible =
+                    //dgv.IdComponent == PanelManagement.SelectedBlockId
+                    m_listDataGridViewVedomostBl.IndexOf(dgv) == 0
+                    ;
 
                 //возможность_редактирвоания_значений
                 try {
@@ -443,8 +442,8 @@ namespace PluginTaskVedomostBl
 
             if (err == 0) {
                 try {
-                    //???
-                    m_bflgClear = !m_bflgClear;
+                    ////???
+                    //m_bflgClear = !m_bflgClear;
 
                     //Заполнить элемент управления с часовыми поясами
                     idProfileTimezone = ID_TIMEZONE.MSK;
@@ -594,15 +593,6 @@ namespace PluginTaskVedomostBl
         protected override void handlerDbTaskCalculate_onCalculateProcess(HandlerDbTaskCalculate.CalculateProccessEventArgs ev)
         {
             throw new NotImplementedException();
-        }
-        /// <summary>
-        /// ??? проверка выборки блока(для 1 и 6)
-        /// </summary>
-        public bool WhichBlIsSelected
-        {
-            get { return s_flagBl; }
-
-            set { s_flagBl = value; }
         }
         /// <summary>
         /// Обработчик события - нажатие кнопки сохранить

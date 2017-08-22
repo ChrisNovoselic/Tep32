@@ -51,8 +51,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Количество строк/столбцов(уровней) в заголовках столбцов
             /// </summary>
-            static int s_iCountColumn,
-                s_GroupHeaderCount = s_listGroupHeaders.Count;            
+            static int s_GroupHeaderCount = s_listGroupHeaders.Count;            
             /// <summary>
             /// словарь названий заголовков 
             /// верхнего и среднего уровней
@@ -74,6 +73,8 @@ namespace PluginTaskVedomostBl
                 Tag = comp;
 
                 InitializeComponents();
+
+                Paint += new PaintEventHandler(dataGridView_onPaint);
             }
 
             /// <summary>
@@ -111,35 +112,12 @@ namespace PluginTaskVedomostBl
                 //ConfigureColumns();
             }
 
-            ///// <summary>
-            ///// Структура для описания добавляемых столбцов
-            ///// </summary>
-            //public class COLUMN_PROPERTY
-            //{
-            //    /// <summary>
-            //    /// Параметр в алгоритме расчета, связанный с компонентом станции
-            //    /// </summary>
-            //    public HandlerDbTaskCalculate.PUT_PARAMETER m_putParameter;
-            //    ///// <summary>
-            //    ///// Имя колонки
-            //    ///// </summary>
-            //    //public string m_textMiddleHeader;
-            //    ///// <summary>
-            //    ///// Текст в колонке
-            //    ///// </summary>
-            //    //public string m_textLowHeader;
-            //    ///// <summary>
-            //    ///// Имя общей группы колонки
-            //    ///// </summary>
-            //    //public string m_textTopHeader;
-            //}
-
             /// <summary>
-            /// Добавление столбца
+            /// Добавить столбец
             /// </summary>
-            /// <param name="name"></param>
-            /// <param name="text"></param>
-            /// <param name="bVisible"></param>
+            /// <param name="name">Наименование столбца</param>
+            /// <param name="text">Заголовок столбца</param>
+            /// <param name="bVisible">Признак отображения</param>
             /// <return>Индекс добавленного столбца</return>
             private int addColumn(string name, string text, bool bVisible)
             {
@@ -151,20 +129,21 @@ namespace PluginTaskVedomostBl
                 try
                 {
                     column = new DataGridViewTextBoxColumn();
-                    //column.Tag = col_prop;
+
                     alignText = DataGridViewContentAlignment.MiddleRight;
+
                     //column.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
                     column.Frozen = true;
+
                     column.Visible = bVisible; // col_prop.m_putParameter.IsVisibled;
                     column.ReadOnly = false;
                     column.Name = name; // col_prop.m_textMiddleHeader;
                     column.HeaderText = text; // col_prop.m_textLowHeader;
                     column.DefaultCellStyle.Alignment = alignText;
-                    //column.AutoSizeMode = autoSzColMode;
                     iRes = Columns.Add(column as DataGridViewTextBoxColumn);
-                }
-                catch (Exception e)
-                {
+
+                    //column.Tag = col_prop;
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"DataGridViewVedomostBl::addColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
@@ -187,26 +166,16 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// ??? зачем в аргументе указывать объект Подготовка параметров к рисовке хидера
             /// </summary>
-            /// <param name="dgv">активное окно отображения данных</param>
-            public void ConfigureColumns()
+            public void ConfigureHeaders()
             {
-                int cntCol = 0;
-                formingTitleLists();
+                formingHeaderLists();
 
                 formingRelationsHeading();
-
-                foreach (DataGridViewColumn col in Columns)
-                    if (col.Visible == true)
-                        cntCol++;
-
-                s_iCountColumn = cntCol * WIDTH_COLUMN + WIDTH_COLUMN / s_listGroupHeaders.Count;
-
-                Paint += new PaintEventHandler(dataGridView_onPaint);
             }
             /// <summary>
             /// Формирование списков заголовков
             /// </summary>
-            private void formingTitleLists()
+            private void formingHeaderLists()
             {
                 string prevValue = string.Empty;
                 COLUMN_TAG col_prop;
@@ -362,7 +331,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="listHeaderTop">лист с именами заголовков</param>
             /// <param name="isCheck">проверка чека</param>
-            public void SetHeaderVisibled(List<string> listHeaderTop, bool isCheck)
+            public void SetColumnVisibled(List<string> listHeaderTop, bool isCheck)
             {
                 COLUMN_TAG col_prop;
                 HandlerDbTaskCalculate.GROUPING_PARAMETER groupPutPar;
@@ -381,8 +350,6 @@ namespace PluginTaskVedomostBl
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"DataGridViewVedomostBl::SetHeaderVisibled () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
-
-                ConfigureColumns();
             }
 
             public static int PADDING_COLUMN = 10;
@@ -521,9 +488,9 @@ namespace PluginTaskVedomostBl
             }
 
             /// <summary>
-            /// Настройка размеров контролов отображения
+            /// Настройка размеров столбцов и, в ~ от них собственного размера
             /// </summary>
-            public void ResizeControls()
+            public void SetSize()
             {
                 int cntVisibleColumns = 0
                     , width = -1

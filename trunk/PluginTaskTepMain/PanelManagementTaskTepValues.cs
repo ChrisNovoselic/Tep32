@@ -369,7 +369,7 @@ namespace PluginTaskTepMain
                             break;
                     }
 
-                    itemCheck((obj as IControl).SelectedId, type, (ev as ItemCheckEventArgs).NewValue);
+                    PerformItemCheck((obj as IControl).SelectedId, type, (ev as ItemCheckEventArgs).NewValue);
                 } else
                     Logging.Logg().Error(string.Format(@""), Logging.INDEX_MESSAGE.NOT_SET);
             }

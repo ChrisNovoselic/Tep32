@@ -189,7 +189,7 @@ namespace TepCommon
             /// </summary>
             /// <param name="address">Адрес элемента</param>
             /// <param name="checkState">Значение признака элемента</param>
-            protected void itemCheck(int idItem, ItemCheckedParametersEventArgs.TYPE type, CheckState checkState)
+            public void PerformItemCheck(int idItem, ItemCheckedParametersEventArgs.TYPE type, CheckState checkState)
             {
                 ItemCheck(new ItemCheckedParametersEventArgs(idItem, type, checkState));
             }

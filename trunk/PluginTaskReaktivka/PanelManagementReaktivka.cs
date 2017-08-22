@@ -175,7 +175,7 @@ namespace PluginTaskReaktivka
                 int iSelectedId = (obj as IControl).SelectedId;
 
                 if (!(iSelectedId < 0))
-                    itemCheck(iSelectedId, ItemCheckedParametersEventArgs.TYPE.VISIBLE, (ev as ItemCheckEventArgs).NewValue);
+                    PerformItemCheck(iSelectedId, ItemCheckedParametersEventArgs.TYPE.VISIBLE, (ev as ItemCheckEventArgs).NewValue);
                 else
                     ;
             }

@@ -171,15 +171,15 @@ namespace PluginTaskVedomostBl
                 private class CheckedListBoxGroupHeaders : CheckedListBoxTaskCalculate
                 {
                     /// <summary>
-                    /// подсказка
+                    /// Объект со строкой подсказки
                     /// </summary>
                     System.Windows.Forms.ToolTip m_ToolTip = new System.Windows.Forms.ToolTip();
                     /// <summary>
                     /// текст подсказки
                     /// </summary>
-                    private string[] m_ToolTipText;
+                    private string[] m_arToolTipTextValue;
                     /// <summary>
-                    /// индекс подсказки
+                    /// Индекс подсказки
                     /// </summary>
                     private int _indexToolTipText;
                     /// <summary>
@@ -189,7 +189,7 @@ namespace PluginTaskVedomostBl
                         : base()
                     {
                         try {
-                            m_ToolTipText = new string[s_listGroupHeaders.Count];
+                            m_arToolTipTextValue = new string[s_listGroupHeaders.Count];
 
                             Dock = DockStyle.Fill;
                             CheckOnClick = true;
@@ -199,47 +199,18 @@ namespace PluginTaskVedomostBl
                             Logging.Logg().Exception(e, @"CheckedListBoxGroupHeaders::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
                     }
-                    ///// <summary>
-                    ///// Возвращает имя итема
-                    ///// </summary>
-                    ///// <param name="id">ИдИтема</param>
-                    ///// <returns>имя итема</returns>
-                    //public string GetNameItem(int id)
-                    //{
-                    //    string strRes = string.Empty;
-
-                    //    strRes = (string)Items[m_listId.IndexOf(id)];
-
-                    //    return strRes;
-                    //}
                     /// <summary>
-                    /// обработчик события - отображения всплывающей подсказки по группам
+                    /// Обработчик события - отображения всплывающей подсказки по группам
                     /// </summary>
-                    /// <param name="sender"></param>
+                    /// <param name="sender">Объект - инициатор события</param>
                     /// <param name="e">Аргумент события</param>
                     private void showCheckBoxToolTip(object sender, MouseEventArgs e)
                     {
-                        //CheckedListBoxTaskVedomostBl clb = (this.Controls.Find(INDEX_CONTROL.CLBX_GROUPHEADER_VISIBLED.ToString(), true)[0] as CheckedListBoxTaskVedomostBl);
-
                         if (!(_indexToolTipText == /*clb.*/IndexFromPoint(e.Location))) {
                             _indexToolTipText = /*clb.*/IndexFromPoint(/*clb.*/PointToClient(MousePosition));
 
                             if (!(_indexToolTipText < 0)) {
-                                ////Свич по элементам находящимся в чеклистбоксе
-                                //switch (clb.Items[_indexToolTipText].ToString()) {
-                                //    case "Группа 1":
-                                //        m_ToolTip.SetToolTip(clb, m_ToolTipText[_indexToolTipText]);
-                                //        break;
-                                //    case "Группа 2":
-                                //        m_ToolTip.SetToolTip(clb, m_ToolTipText[_indexToolTipText]);
-                                //        break;
-                                //    case "Группа 3":
-                                //        m_ToolTip.SetToolTip(clb, m_ToolTipText[_indexToolTipText]);
-                                //        break;
-                                //    default:
-                                //        break;
-                                //}
-                                m_ToolTip.SetToolTip(/*clb*/this, m_ToolTipText[_indexToolTipText]);
+                                m_ToolTip.SetToolTip(/*clb*/this, m_arToolTipTextValue[_indexToolTipText]);
                             } else
                                 // нет индекса для отображения
                                 ;
@@ -282,7 +253,7 @@ namespace PluginTaskVedomostBl
                     /// <param name="arChecked">Массив признаков состояния для элементов</param>
                     public void AddItem(int id, string text, List<string> textToolTip, bool bChecked)
                     {
-                        m_ToolTipText[id] = formatToolTipText(textToolTip);
+                        m_arToolTipTextValue[id] = formatToolTipText(textToolTip);
 
                         AddItem(id, text, bChecked);
                     }
@@ -470,15 +441,16 @@ namespace PluginTaskVedomostBl
                 /// <param name="e">Аргумент события (не используется)</param>
                 public void radioButtonBlockChecked_onChanged(object sender, EventArgs e)
                 {
-                    int id = SelectedBlockId
-                        , indx = (sender as RadioButtonBlock).Index;
+                    int cur_id = (int)(sender as RadioButtonBlock).Tag
+                        //, sel_id = SelectedBlockId
+                        , indx = (sender as RadioButtonBlock).Index; // для получения 
                     List<CheckState> listCheckStateValues = new List<CheckState>();
-                    PictureBox pictrure;
                     Control ctrl =
                         //findControl(INDEX_CONTROL.CLBX_GROUPHEADER_VISIBLED)
                         m_clbGroupHeaderCheckStates
                         ;
 
+                    // сохранить состояние отображаемых/скрытых групп сигналов для СТАРОГО объекта(блока)
                     if ((sender as RadioButtonBlock).Checked == false) {
                         for (int i = 0; i < (ctrl as CheckedListBoxGroupHeaders).Items.Count; i++)
                             listCheckStateValues.Add((ctrl as CheckedListBoxGroupHeaders).GetItemCheckState(i));
@@ -486,18 +458,20 @@ namespace PluginTaskVedomostBl
                         m_arGroupHeaderCheckStates[indx] = listCheckStateValues;
                     } else
                         ;
-
+                    //Инициировать событие включить/выключить представление(+ многоуровниевый заголовок) для НОВОГО объекта(блока)
+                    (_panelParent as PanelManagementTaskCalculate).PerformItemCheck(cur_id
+                        , ItemCheckedParametersEventArgs.TYPE.ENABLE
+                        , ((sender as RadioButtonBlock).Checked == true) ? CheckState.Checked
+                            : ((sender as RadioButtonBlock).Checked == false) ? CheckState.Unchecked
+                                : CheckState.Indeterminate);
+                    // установить состояние списка отображаемых/скрываемых групп сигналов для НОВОГО объекта(блока)
                     if ((sender as RadioButtonBlock).Checked == true) {
-                        pictrure = s_delegateGetActivePictureBox(); //GetPictureOfIdComp
-                        pictrure.Visible = true;
-                        pictrure.Enabled = true;
-
                         setCheckStateValues();
                     } else
                         ;
                 }
                 /// <summary>
-                /// Установка состояния элемента 
+                /// Установка состояний для элементов списка отображаемых/скрываемых групп сигналов 
                 /// </summary>
                 private void setCheckStateValues()
                 {
@@ -544,6 +518,16 @@ namespace PluginTaskVedomostBl
 
                     m_clbGroupHeaderCheckStates.ClearItems();
                     //m_arGroupHeaderCheckStates.
+                }
+            }
+
+            /// <summary>
+            /// Идентификатор выбранного элемента списка
+            /// </summary>
+            public int SelectedBlockId
+            {
+                get {
+                    return m_managementVisible.SelectedBlockId;
                 }
             }
 
@@ -611,7 +595,7 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Очистить значения для элемента(ов) управления
             /// </summary>
-            /// <param name="arIndexIdToClear"></param>
+            /// <param name="arIndexIdToClear">Массив идентификаторов(прототипов) элементов управления, к которым должна быть применена операция</param>
             public void Clear(INDEX_CONTROL[] arIndexIdToClear)
             {
                 foreach (INDEX_CONTROL indx in arIndexIdToClear)
@@ -639,12 +623,16 @@ namespace PluginTaskVedomostBl
             /// <param name="ev">Аргумент события</param>
             protected override void onItemCheck(object obj, EventArgs ev)
             {
-                itemCheck((obj as IControl).SelectedId, ItemCheckedParametersEventArgs.TYPE.VISIBLE, (ev as ItemCheckEventArgs).NewValue);
+                PerformItemCheck((obj as IControl).SelectedId, ItemCheckedParametersEventArgs.TYPE.VISIBLE, (ev as ItemCheckEventArgs).NewValue);
             }
 
             protected override void activateControlChecked_onChanged(bool bActivate)
             {
-                activateControlChecked_onChanged(new INDEX_CONTROL[] { INDEX_CONTROL.CLBX_GROUPHEADER_VISIBLED }.ToList().ConvertAll<string>(indx => { return indx.ToString(); }).ToArray(), bActivate);
+                activateControlChecked_onChanged(
+                    new INDEX_CONTROL[] { INDEX_CONTROL.CLBX_GROUPHEADER_VISIBLED }.ToList().ConvertAll<string>(indx => {
+                            return indx.ToString();
+                        }).ToArray()
+                    , bActivate);
             }
         }
 
