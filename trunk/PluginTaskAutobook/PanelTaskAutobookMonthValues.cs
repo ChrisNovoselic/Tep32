@@ -823,10 +823,8 @@ namespace PluginTaskAutobook
 
         private void addValueRows()
         {
-            TimeSpan tsOffsetUTC = TimeSpan.FromDays(1) - Session.m_curOffsetUTC;
-
             m_dgvValues.AddRows (new DataGridViewValues.DateTimeStamp() {
-                Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC
+                Start = PanelManagement.DatetimeRange.Begin + HandlerDb.OffsetUTC
                 , Increment = TimeSpan.FromDays(1)
                 , ModeDataDatetime = HandlerDb.ModeDataDatetime
             });

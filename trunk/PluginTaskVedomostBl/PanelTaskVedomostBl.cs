@@ -360,7 +360,7 @@ namespace PluginTaskVedomostBl
                 dgv.AddColumns(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));                
                 dgv.ConfigureHeaders();
                 dgv.AddRows(new DataGridViewValues.DateTimeStamp() {
-                    Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC
+                    Start = PanelManagement.DatetimeRange.Begin + HandlerDb.OffsetUTC
                     , Increment = TimeSpan.FromDays(1)
                     , ModeDataDatetime = HandlerDb.ModeDataDatetime
                 });
@@ -515,7 +515,7 @@ namespace PluginTaskVedomostBl
             //??? Dgv's
             initializeDataGridView(out err, out errMsg);
             //Переключатели для выбора компонентов(эн./блоков, котлов)
-            PanelManagement.AddComponent(HandlerDb.ListTECComponent, out err, out errMsg);
+            PanelManagement.AddComponents(HandlerDb.ListTECComponent, out err, out errMsg);
         }
         /// <summary>
         /// Обработчик события - добавить NAlg-параметр

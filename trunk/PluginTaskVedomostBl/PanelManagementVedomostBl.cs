@@ -434,6 +434,32 @@ namespace PluginTaskVedomostBl
                         m_arGroupHeaderCheckStates[i] = new List<CheckState>(arGroupHeaderCheckStates[i]);
                     }
                 }
+
+                /// <summary>
+                /// Переместить элеменнты управления в ~ от количества блоков(строк)
+                /// </summary>
+                /// <param name="offsetRow">Количество строк для перемещения в направлении "вниз" формы</param>
+                public void RelocateControl(int offsetRow)
+                {
+                    Label label;
+                    CheckBox cbxModeEnabled;
+                    TableLayoutPanelCellPosition pos;
+
+                    // перемещаем элемент управления для редактирования признака "Редактирование включено"
+                    // , сначала этот элемент, т.к. он снизу
+                    cbxModeEnabled = _panelParent.Controls.Find(INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox;
+                    pos = _panelParent.GetCellPosition(cbxModeEnabled);
+
+                    _panelParent.SetCellPosition(cbxModeEnabled, new TableLayoutPanelCellPosition(pos.Column, pos.Row + offsetRow));
+
+                    // перемещаем элементы управления: подпись + список признаков отображения/снятия_с_отображения групп сигналов
+                    pos = _panelParent.GetCellPosition(m_clbGroupHeaderCheckStates);
+                    label = _panelParent.GetControlFromPosition(pos.Column, pos.Row - 1) as Label;
+
+                    _panelParent.SetCellPosition(m_clbGroupHeaderCheckStates, new TableLayoutPanelCellPosition(pos.Column, pos.Row + offsetRow));
+                    _panelParent.SetCellPosition(label, new TableLayoutPanelCellPosition(pos.Column, (pos.Row - 1) + offsetRow));
+                    
+                } 
                 /// <summary>
                 /// Обработчик события - переключение блока(ТГ)
                 /// </summary>
@@ -536,13 +562,16 @@ namespace PluginTaskVedomostBl
             ///  для каждого из блоков (??? отобразить все)
             /// </summary>
             /// <param name="tableCompList">Таблица с компонентами ТЭЦ (!!! только блоки)</param>
-            public void AddComponent(IEnumerable<HandlerDbTaskCalculate.TECComponent> listComponent, out int err, out string strMsg)
+            public void AddComponents(IEnumerable<HandlerDbTaskCalculate.TECComponent> listComponent, out int err, out string strMsg)
             {
                 err = 0;
                 strMsg = string.Empty;
 
-                int indxRadioButton = -1;
+                int indxRadioButton = -1
+                    , indxLastRowControl = -1;
                 HandlerDbTaskCalculate.TECComponent comp;
+
+                m_managementVisible.RelocateControl(listComponent.Count());
 
                 //создание списка по блокам
                 for (indxRadioButton = 0; indxRadioButton < listComponent.Count(); indxRadioButton++) {

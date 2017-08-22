@@ -129,7 +129,7 @@ namespace PluginTaskReaktivka
             public void SetReadOnly (bool value)
             {
                 foreach (DataGridViewColumn col in Columns)
-                    if (((HandlerDbTaskCalculate.PUT_PARAMETER)col.Tag).IdComponent > 0)
+                    if (((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).IdComponent > 0)
                         col.ReadOnly = value;
                     else
                         ;

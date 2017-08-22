@@ -45,11 +45,18 @@ namespace PluginTaskAutobook
 
             private void addColumn(TepCommon.HandlerDbTaskCalculate.NALG_PARAMETER nAlgPar, TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar)
             {
-                Columns.Add(@"VALUE", @"Значения");
-                Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                Columns[0].CellTemplate.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
+                DataGridViewTextBoxColumn column;
+
+                column = new DataGridViewTextBoxColumn();
+                column.Name = @"VALUE";
+                column.HeaderText = @"Значения";
+                column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                column.CellTemplate.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
                 // номер столбца в соответствии с шаблоном книги MS Excel при экспорте
-                Columns[0].Tag = new COLUMN_TAG (putPar, ColumnCount + 2, false);
+                column.Tag = new COLUMN_TAG(putPar, ColumnCount + 2, false);
+                // 'Tag' присваивается ДО добавления в коллекцию
+                Columns.Add(column);
+                
             }
 
             protected override bool isRowToShowValues(DataGridViewRow r, TepCommon.HandlerDbTaskCalculate.VALUE value)

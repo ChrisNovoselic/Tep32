@@ -490,6 +490,16 @@ namespace TepCommon
         private MODE_DATA_DATETIME _modeDataDatetime;
 
         public MODE_DATA_DATETIME ModeDataDatetime { get { return _modeDataDatetime; } set { if (!(_modeDataDatetime == value)) _modeDataDatetime = value; else; } }
+
+        public TimeSpan OffsetUTC
+        {
+            get
+            {
+                return ModeDataDatetime == MODE_DATA_DATETIME.Begined ? TimeSpan.FromDays(1) - _Session.m_curOffsetUTC
+                    : ModeDataDatetime == MODE_DATA_DATETIME.Ended ? - _Session.m_curOffsetUTC
+                        : TimeSpan.Zero;
+            }
+        }
         /// <summary>
         /// Параметры сессии
         /// </summary>

@@ -288,10 +288,8 @@ namespace PluginTaskAutobook
 
         private void addValueRows()
         {
-            TimeSpan tsOffsetUTC = /*TimeSpan.FromDays(1)*/ - Session.m_curOffsetUTC;
-
             m_dgvValues.AddRows(new DataGridViewValues.DateTimeStamp() {
-                Start = PanelManagement.DatetimeRange.Begin + tsOffsetUTC
+                Start = PanelManagement.DatetimeRange.Begin + HandlerDb.OffsetUTC
                 , Increment = TimeSpan.MaxValue // значение неизвестно (в каждом месяце - разное кол-во суток), но является признаком для определения рассчитываемого значения
                 , ModeDataDatetime = HandlerDb.ModeDataDatetime
             });

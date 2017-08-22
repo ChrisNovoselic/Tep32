@@ -1131,7 +1131,8 @@ namespace TepCommon
                 Color clrCell = Color.Empty;
                 FormulaHelper formula;
                 List<float> args;
-                // делегат для поиска значений во входных аргументах (для столбца; для ячейки)
+
+                #region делегат для поиска значений во входных аргументах (для столбца; для ячейки)
                 Func<HandlerDbTaskCalculate.VALUE, int, bool> get_values = (HandlerDbTaskCalculate.VALUE value, int id_put) => {
                     return (value.m_IdPut == id_put)
                         && (((value.stamp_value - DateTime.MinValue).TotalDays > 0)
@@ -1139,7 +1140,9 @@ namespace TepCommon
                                 && (_modeData == ModeData.NALG))
                         );
                 };
-                // делегат для отображения значений с попутной установкой значений свойств ячейки, локальных переменных
+                #endregion
+
+                #region делегат для отображения значений с попутной установкой значений свойств ячейки, локальных переменных
                 Action<DataGridViewCell, HandlerDbTaskCalculate.VALUE, AGREGATE_ACTION> show_value = (DataGridViewCell cell, HandlerDbTaskCalculate.VALUE value, AGREGATE_ACTION c_action) => {
                     fltVal = value.value;
                     //iQuality = value.m_iQuality;
@@ -1165,6 +1168,7 @@ namespace TepCommon
 
                     cell.Style.BackColor = clrCell;
                 };
+                #endregion
 
                 // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
                 if (RowCount > 1) {
