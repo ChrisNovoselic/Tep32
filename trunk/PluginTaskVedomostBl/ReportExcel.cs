@@ -177,7 +177,7 @@ namespace PluginTaskVedomostBl
                         colRange = (m_workSheet.Cells[rowSheet, colSheetBegin] as Excel.Range);
                         //записываем данные в ячейки
                         colRange.Value2 = item;
-                        colSheetEnd += (dgvActive as DataGridViewVedomostBl).m_arCounterHeaderTop[indxCol];
+                        colSheetEnd += (dgvActive as DataGridViewVedomostBl).ListHeaderTopLevel[indxCol].count_low_column;
                         //выделяем область(левый верхний угол и правый нижний)
                         var cells = m_workSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
                         //объединяем ячейки
@@ -200,12 +200,13 @@ namespace PluginTaskVedomostBl
                 colSheetEnd = 1;
                 rowSheet = 3;
 
-                foreach (var item in (dgvActive as DataGridViewVedomostBl).m_listTextHeaderMiddle[idComponent]) {
+                (dgvActive as DataGridViewVedomostBl).ListHeaderMiddleLevel.ForEach(item => {
                     //получаем диапазон
                     colRange = (m_workSheet.Cells[rowSheet, colSheetBegin] as Excel.Range);
                     //записываем данные в ячейки
                     colRange.Value2 = item;
-                    colSheetEnd += (dgvActive as DataGridViewVedomostBl).m_arCounterHeaderMiddle[(dgvActive as DataGridViewVedomostBl).m_listTextHeaderMiddle[idComponent].ToList().IndexOf(item)];
+                    //TODO: ???
+                    colSheetEnd += item.count_low_column;
                     // выделяем область(левый верхний угол и правый нижний)
                     var cells = m_workSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));
                     //объединяем ячейки
@@ -217,7 +218,7 @@ namespace PluginTaskVedomostBl
                     cells.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
 
                     colSheetBegin = colSheetEnd + 1;
-                }
+                });
                 colSheetBegin = 2;
                 //       
                 Commoncells = m_workSheet.get_Range(getAdressRangeRow(rowSheet, colSheetBegin, colSheetEnd));

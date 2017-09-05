@@ -231,28 +231,32 @@ namespace TepCommon
                 COUNT
             }
 
-            public GROUPING_PARAMETER(int id_alg, int id_put, HandlerDbTaskCalculate.TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue, string textHeaderTop, string textHeaderMiddle, string textHeaderLow)
+            public GROUPING_PARAMETER(int id_alg, int id_put, HandlerDbTaskCalculate.TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue, string textHeaderTop, string textHeaderMiddle, string textHeaderLow, short orderHeaderTop, short orderHeaderMiddle, short orderHeaderLow)
                 : base(id_alg, id_put, comp, prjRatio, enabled, visibled, minValue, maxValue)
             {
                 m_headers = new string[] { textHeaderTop, textHeaderMiddle, textHeaderLow };
+
+                m_orders = new short[] { orderHeaderTop, orderHeaderMiddle, orderHeaderLow };
             }
 
-            public GROUPING_PARAMETER(int id_alg, int id_put, HandlerDbTaskCalculate.TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue, string[] textHeaders)
-                : this(id_alg, id_put, comp, prjRatio, enabled, visibled, minValue, maxValue, textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.MIDDLE], textHeaders[(int)INDEX_HEADER.LOW])
+            public GROUPING_PARAMETER(int id_alg, int id_put, HandlerDbTaskCalculate.TECComponent comp, int prjRatio, bool enabled, bool visibled, float minValue, float maxValue, string[] textHeaders, short[] orderHeaders)
+                : this(id_alg, id_put, comp, prjRatio, enabled, visibled, minValue, maxValue, textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.MIDDLE], textHeaders[(int)INDEX_HEADER.LOW], orderHeaders[(int)INDEX_HEADER.TOP], orderHeaders[(int)INDEX_HEADER.MIDDLE], orderHeaders[(int)INDEX_HEADER.LOW])
             {
             }
 
-            public GROUPING_PARAMETER(HandlerDbTaskCalculate.PUT_PARAMETER putPar, string textHeaderTop, string textHeaderMiddle, string textHeaderLow)
-                : this(putPar.m_idNAlg, putPar.m_Id, putPar.m_component, putPar.m_prjRatio, putPar.IsEnabled, putPar.IsVisibled, putPar.m_fltMinValue, putPar.m_fltMaxValue, textHeaderTop, textHeaderMiddle, textHeaderLow)
+            public GROUPING_PARAMETER(HandlerDbTaskCalculate.PUT_PARAMETER putPar, string textHeaderTop, string textHeaderMiddle, string textHeaderLow, short orderHeaderTop, short orderHeaderMiddle, short orderHeaderLow)
+                : this(putPar.m_idNAlg, putPar.m_Id, putPar.m_component, putPar.m_prjRatio, putPar.IsEnabled, putPar.IsVisibled, putPar.m_fltMinValue, putPar.m_fltMaxValue, textHeaderTop, textHeaderMiddle, textHeaderLow, orderHeaderTop, orderHeaderMiddle, orderHeaderLow)
             {
             }
 
-            public GROUPING_PARAMETER(HandlerDbTaskCalculate.PUT_PARAMETER putPar, string[] textHeaders)
-                : this(putPar.m_idNAlg, putPar.m_Id, putPar.m_component, putPar.m_prjRatio, putPar.IsEnabled, putPar.IsVisibled, putPar.m_fltMinValue, putPar.m_fltMaxValue, textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.MIDDLE], textHeaders[(int)INDEX_HEADER.LOW])
+            public GROUPING_PARAMETER(HandlerDbTaskCalculate.PUT_PARAMETER putPar, string[] textHeaders, short[] orderHeaders)
+                : this(putPar.m_idNAlg, putPar.m_Id, putPar.m_component, putPar.m_prjRatio, putPar.IsEnabled, putPar.IsVisibled, putPar.m_fltMinValue, putPar.m_fltMaxValue, textHeaders[(int)INDEX_HEADER.TOP], textHeaders[(int)INDEX_HEADER.MIDDLE], textHeaders[(int)INDEX_HEADER.LOW], orderHeaders[(int)INDEX_HEADER.TOP], orderHeaders[(int)INDEX_HEADER.MIDDLE], orderHeaders[(int)INDEX_HEADER.LOW])
             {
             }
 
             public string[] m_headers;
+
+            public short[] m_orders;
         }
         /// <summary>
         /// Свойства параметра в алгоритме расчета 1-го уровня (не связан с компонентом)
@@ -484,8 +488,20 @@ namespace TepCommon
         ///// Объект для произведения расчетов
         ///// </summary>
         //protected TaskCalculate m_taskCalculate;
-
-        public enum MODE_DATA_DATETIME { Begined, Ended }
+        //TODO: перенести в общую библиотеку, т.к.
+        /// <summary>
+        /// Перечисление - способы назначения меток времени
+        /// </summary>
+        public enum MODE_DATA_DATETIME {
+            /// <summary>
+            /// Метка для значения за интервал назначается началом интервала
+            /// </summary>
+            Begined
+            /// <summary>
+            /// Метка для значения за интервал назначается окончанием интервала
+            /// </summary>
+            , Ended
+        }
 
         private MODE_DATA_DATETIME _modeDataDatetime;
 

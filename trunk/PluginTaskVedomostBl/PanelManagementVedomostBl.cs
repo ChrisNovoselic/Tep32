@@ -457,8 +457,7 @@ namespace PluginTaskVedomostBl
                     label = _panelParent.GetControlFromPosition(pos.Column, pos.Row - 1) as Label;
 
                     _panelParent.SetCellPosition(m_clbGroupHeaderCheckStates, new TableLayoutPanelCellPosition(pos.Column, pos.Row + offsetRow));
-                    _panelParent.SetCellPosition(label, new TableLayoutPanelCellPosition(pos.Column, (pos.Row - 1) + offsetRow));
-                    
+                    _panelParent.SetCellPosition(label, new TableLayoutPanelCellPosition(pos.Column, (pos.Row - 1) + offsetRow));                    
                 } 
                 /// <summary>
                 /// Обработчик события - переключение блока(ТГ)

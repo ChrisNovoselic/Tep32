@@ -48,21 +48,61 @@ namespace PluginTaskVedomostBl
         /// </summary>
         protected class DataGridViewVedomostBl : DataGridViewValues
         {
+            public interface IHeaderUpLevelChange
+            {
+                /// <summary>
+                /// Порядок следования(индекс/ключ) ячейки родительского уровня
+                /// </summary>
+                int order_owner_level { get; set; }
+                /// <summary>
+                /// Содержание объединенной(возможно) ячейки
+                /// </summary>
+                string text { get; set; }
+                /// <summary>
+                /// Кол-во столбцов(заголовков) самого низкого уровня
+                ///  , для вычисления ширины объединенной(возможно) ячейки
+                /// </summary>
+                int count_low_column { get; set; }
+
+                void SetCountLowColumn(int count);
+
+                void IncCountLowColumn();
+            }
             /// <summary>
-            /// Количество строк/столбцов(уровней) в заголовках столбцов
+            /// Структура для хранения информации о подписи для объединенной(возможно) ячейки заголовка уровня, отличного от самого низкого
+            ///  , т.е. TOP, MIDDLE
             /// </summary>
-            static int s_GroupHeaderCount = s_listGroupHeaders.Count;            
+            public struct HEADER_UPLEVEL : IHeaderUpLevelChange
+            {
+                public int order_owner_level { get; set; }
+
+                public string text { get; set; }
+
+                public int count_low_column { get; set; }
+
+                public void SetCountLowColumn(int count)
+                {
+                    count_low_column = count;
+                }
+
+                public void IncCountLowColumn()
+                {
+                    count_low_column++;
+                }
+            }          
             /// <summary>
-            /// словарь названий заголовков 
+            /// Список названий заголовков 
             /// верхнего и среднего уровней
             /// </summary>
-            public List<string> m_listTextHeaderTop = new List<string>()
-                , m_listTextHeaderMiddle = new List<string>();
-            /// <summary>
-            /// словарь соотношения заголовков
-            /// </summary>
-            public int[] m_arCounterHeaderTop = new int[] { }
-                , m_arCounterHeaderMiddle = new int[] { };            
+            private List<IHeaderUpLevelChange> m_listHeaderTopLevel = new List<IHeaderUpLevelChange>()
+                , m_listHeaderMiddleLevel = new List<IHeaderUpLevelChange>();
+            public List<IHeaderUpLevelChange> ListHeaderTopLevel { get { return m_listHeaderTopLevel; } }
+            public List<IHeaderUpLevelChange> ListHeaderMiddleLevel { get { return m_listHeaderMiddleLevel; } }
+            ///// <summary>
+            ///// словарь соотношения заголовков
+            ///// </summary>
+            //public int[] m_arCounterHeaderTop = new int[] { }
+            //    , m_arCounterHeaderMiddle = new int[] { };            
             /// <summary>
             /// Конструктор - основной (с параметром)
             /// </summary>
@@ -89,7 +129,7 @@ namespace PluginTaskVedomostBl
                 RowHeadersVisible = true;
                 
                 ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.BottomCenter;
-                ColumnHeadersHeight = ColumnHeadersHeight * s_GroupHeaderCount;//высота от нижнего(headerText)
+                ColumnHeadersHeight = ColumnHeadersHeight * (int)LEVEL_HEADER.COUNT;//высота от нижнего(headerText)
 
                 ScrollBars = ScrollBars.None;
             }
@@ -115,16 +155,22 @@ namespace PluginTaskVedomostBl
             /// <summary>
             /// Добавить столбец
             /// </summary>
-            /// <param name="name">Наименование столбца</param>
-            /// <param name="text">Заголовок столбца</param>
-            /// <param name="bVisible">Признак отображения</param>
+            /// <param name="tag">Дополнительные(прикрепляемые) сведения для столбца</param>
             /// <return>Индекс добавленного столбца</return>
-            private int addColumn(string name, string text, bool bVisible)
+            private int addColumn(COLUMN_TAG tag)
             {
                 int iRes = -1; // индекс добавленного столбца
 
+                string name = string.Empty //Наименование столбца
+                    , text = string.Empty; //Текст заголовка столбца
+                bool bVisibled = false; //Признак отображения
+
                 DataGridViewTextBoxColumn column;
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
+
+                name = ((HandlerDbTaskCalculate.GROUPING_PARAMETER)tag.value).m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.MIDDLE];
+                text = ((HandlerDbTaskCalculate.GROUPING_PARAMETER)tag.value).m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.LOW];
+                bVisibled = ((HandlerDbTaskCalculate.GROUPING_PARAMETER)tag.value).IsVisibled;
 
                 try
                 {
@@ -135,14 +181,15 @@ namespace PluginTaskVedomostBl
                     //column.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
                     column.Frozen = true;
 
-                    column.Visible = bVisible; // col_prop.m_putParameter.IsVisibled;
+                    column.Visible = bVisibled; // col_prop.m_putParameter.IsVisibled;
                     column.ReadOnly = false;
                     column.Name = name; // col_prop.m_textMiddleHeader;
                     column.HeaderText = text; // col_prop.m_textLowHeader;
                     column.DefaultCellStyle.Alignment = alignText;
-                    iRes = Columns.Add(column as DataGridViewTextBoxColumn);
 
-                    //column.Tag = col_prop;
+                    column.Tag = tag;
+
+                    iRes = Columns.Add(column as DataGridViewTextBoxColumn);
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"DataGridViewVedomostBl::addColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -177,43 +224,57 @@ namespace PluginTaskVedomostBl
             /// </summary>
             private void formingHeaderLists()
             {
-                string prevValue = string.Empty;
-                COLUMN_TAG col_prop;
+                string prevTextHeaderTop = string.Empty
+                    , prevTextHeaderMiddle = string.Empty;
+                COLUMN_TAG tag;
                 HandlerDbTaskCalculate.GROUPING_PARAMETER groupPutPar;
-                string[] headers;
+                int indxHeaderTop = -1;
 
-                //List<string> listTop = new List<string>()
-                //    , listMiddle = new List<string>();
+                //TODO: оптимизировать (непонятно, что выполняется в цикле)                
+                m_listHeaderTopLevel.Clear();
+                m_listHeaderMiddleLevel.Clear();
 
-                //if (m_headerTop.ContainsKey(idTG))
-                //    m_headerTop.Remove(idTG);
-
-                m_listTextHeaderTop.Clear();
-
-                //TODO: оптимизировать (непонятно, что выполняется в цикле)
+                indxHeaderTop = (int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP;
+                
                 foreach (DataGridViewColumn col in Columns) {
-                    col_prop = (COLUMN_TAG)col.Tag;
+                    tag = (COLUMN_TAG)col.Tag;
 
-                    if (col_prop.Type == TYPE_COLUMN_TAG.GROUPING_PARAMETR) {
-                        groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)col_prop.value;
+                    if (tag.Type == TYPE_COLUMN_TAG.GROUPING_PARAMETR) {
+                        groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)tag.value;
 
                         if (!(groupPutPar.m_idNAlg < 0))
-                            if (col.Visible == true)
-                                if (groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP].Equals(string.Empty) == false)
+                            if (col.Visible == true) {
+                                #region Формировать список заголовков высшего(TOP) уровня
+                                if (string.IsNullOrEmpty(groupPutPar.m_headers[indxHeaderTop]) == false)
                                 //??? заголовок верхнего уровня не пустой
-                                    if (groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP].Equals(prevValue) == false) {
+                                    if (groupPutPar.m_headers[indxHeaderTop].Equals(prevTextHeaderTop) == false) {
                                     // предыдущее значение строки заголовка верхнего уровня НЕ совпадает с предыдущим значением
                                         // запомнить текущее значение
-                                        prevValue = groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP];
+                                        prevTextHeaderTop = groupPutPar.m_headers[indxHeaderTop];
                                         // добавить в список с заголовками верхнего уровня
-                                        m_listTextHeaderTop.Add(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP]);
+                                        m_listHeaderTopLevel.Add(new HEADER_UPLEVEL() {
+                                            order_owner_level = -1 // порядка(индекса/ключа) ячейки верхнего уровня для ячейки верхнего уровня НЕТ
+                                            , text = groupPutPar.m_headers[indxHeaderTop]
+                                            , count_low_column = 0 });
                                     } else
                                     // предыдущее значение строки заголовка верхнего уровня совпадает с предыдущим значением
                                         ;
                                 else
                                 //??? заголовок верхнего уровня - пустой (зачем добавлять пустую строку)
-                                    m_listTextHeaderTop.Add(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP]);
-                            else
+                                    m_listHeaderTopLevel.Add(new HEADER_UPLEVEL() { order_owner_level = -1, text = string.Empty, count_low_column = 0 });
+                                #endregion
+
+                                #region Формировать список заголовков среднего(MIDDLE) уровня
+                                if (col.Name.Equals(prevTextHeaderMiddle) == false) {
+                                    prevTextHeaderMiddle = col.Name;
+                                    m_listHeaderMiddleLevel.Add(new HEADER_UPLEVEL() {
+                                        order_owner_level = groupPutPar.m_orders[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP]
+                                        , text = col.Name
+                                        , count_low_column = 0 });
+                                } else
+                                    ;
+                                #endregion
+                            } else
                             // столбец не отображается
                                 ;
                         else
@@ -222,35 +283,6 @@ namespace PluginTaskVedomostBl
                     } else
                         ;
                 }
-
-                //m_headerTop.Add(idTG, listTop);
-
-                //if (m_headerMiddle.ContainsKey(idTG))
-                //    m_headerMiddle.Remove(idTG);
-                //else
-                //    ;
-
-                m_listTextHeaderMiddle.Clear();
-                prevValue = string.Empty;
-
-                foreach (DataGridViewColumn col in Columns) {
-                    col_prop = (COLUMN_TAG)col.Tag;
-                    groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)col_prop.value;
-
-                    if (!(groupPutPar.m_idNAlg < 0))
-                        if (col.Visible == true)
-                            if (col.Name.Equals(prevValue) == false) {
-                                prevValue = col.Name;
-                                m_listTextHeaderMiddle.Add(col.Name);
-                            } else
-                                ;
-                        else
-                            ;
-                    else
-                        ;
-                }
-
-                //m_headerMiddle.Add(idTG, listMiddle);
             }
 
             /// <summary>
@@ -260,33 +292,26 @@ namespace PluginTaskVedomostBl
             private void formingRelationsHeading()
             {
                 string oldItem = string.Empty;
-                int indx = 0
-                    , untdCol = -1;
+                short order = -1;
+                int cntSpanColumn = -1;
 
-                COLUMN_TAG col_prop;
+                COLUMN_TAG tag;
                 HandlerDbTaskCalculate.GROUPING_PARAMETER groupPutPar;
 
-                m_arCounterHeaderTop = new int[m_listTextHeaderTop/*[idDgv]*/.Count];
-                m_arCounterHeaderMiddle = new int[m_listTextHeaderMiddle/*[idDgv]*/.Count];
-
-                //if (m_arIntTopHeader.ContainsKey(idDgv))
-                //    m_arIntTopHeader.Remove(idDgv);
-                //else
-                //    ;
-
-                foreach (var item in m_listTextHeaderTop/*[idDgv]*/) {
-                    untdCol = 0;
+                #region Найти кол-во ячеек нижнего уровня, присоединенных к ячейке верхнего уровня
+                m_listHeaderTopLevel.ForEach(item => {
+                    cntSpanColumn = 0;
 
                     foreach (DataGridViewColumn col in Columns) {
-                        col_prop = (COLUMN_TAG)col.Tag;
-                        groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)col_prop.value;
+                        tag = (COLUMN_TAG)col.Tag;
+                        groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)tag.value;
 
                         if (col.Visible == true)
-                            if (groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP].Equals(item) == true)
-                                if (string.IsNullOrEmpty(item) == false)
-                                    untdCol++;
+                            if (item.text.Equals(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP]) == true)
+                                if (string.IsNullOrEmpty(item.text) == false)
+                                    cntSpanColumn++;
                                 else {
-                                    untdCol = 1;
+                                    cntSpanColumn = 1;
 
                                     break;
                                 }
@@ -296,34 +321,36 @@ namespace PluginTaskVedomostBl
                             ;
                     }
 
-                    m_arCounterHeaderTop[indx] = untdCol;
-                    indx++;
-                }
+                    item.count_low_column = cntSpanColumn;
+                });
+                #endregion
 
-                indx = 0;                
-
-                foreach (var item in m_listTextHeaderMiddle/*[idDgv]*/) {
-                    untdCol = 0;
+                #region Найти кол-во ячеек нижнего уровня, присоединенных к ячейке среднего уровня, и порядок(индекс/ключ) ячейки верхнего уровня
+                m_listHeaderMiddleLevel.ForEach(item => {
+                    cntSpanColumn = 0;
 
                     foreach (DataGridViewColumn col in Columns) {
-                        col_prop = (COLUMN_TAG)col.Tag;
-                        groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)col_prop.value;
+                        tag = (COLUMN_TAG)col.Tag;
+                        groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)tag.value;
 
                         if (groupPutPar.m_idNAlg > -1)
-                            if (item == col.Name)
-                                untdCol++;
+                            if ((item.text.Equals(col.Name) == true)
+                                && (item.order_owner_level == groupPutPar.m_orders[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP]))
+                                cntSpanColumn++;
                             else
-                                if (untdCol > 0)
+                                if (cntSpanColumn > 0) {
+                                    order = groupPutPar.m_orders[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP];
+
                                     break;
-                                else
+                                } else
                                     ;
                         else
                             ;
                     }
 
-                    m_arCounterHeaderMiddle[indx] = untdCol;
-                    indx++;
-                }
+                    item.count_low_column = cntSpanColumn;
+                });
+                #endregion
             }
 
             /// <summary>
@@ -333,14 +360,14 @@ namespace PluginTaskVedomostBl
             /// <param name="isCheck">проверка чека</param>
             public void SetColumnVisibled(List<string> listHeaderTop, bool isCheck)
             {
-                COLUMN_TAG col_prop;
+                COLUMN_TAG tag;
                 HandlerDbTaskCalculate.GROUPING_PARAMETER groupPutPar;
 
                 try {
                     foreach (var item in listHeaderTop)
                         foreach (DataGridViewColumn col in Columns) {
-                            col_prop = (COLUMN_TAG)col.Tag;
-                            groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)col_prop.value;
+                            tag = (COLUMN_TAG)col.Tag;
+                            groupPutPar = (HandlerDbTaskCalculate.GROUPING_PARAMETER)tag.value;
 
                             if (groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.TOP].Equals(item) == true)
                                 col.Visible = isCheck;
@@ -363,14 +390,13 @@ namespace PluginTaskVedomostBl
             private int WIDTH_COLUMN { get { return Columns[RowHeadersVisible == true ? 0 : 1].Width; }  }
 
             /// <summary>
-            /// обработчик события перерисовки грида(построение шапки заголовка)
+            /// Обработчик события перерисовки представления(построение строк заголовка)
             /// </summary>
             /// <param name="sender">Объект, инициировавший событие</param>
             /// <param name="ev">Аргумент события</param>
             void dataGridView_onPaint(object sender, PaintEventArgs e)
             {
-                int indxCol = 0
-                    , height = -1;
+                int height = -1;
                 
                 // Область, занятая родительским заголовком столбца
                 Rectangle rectParentColumn
@@ -396,52 +422,56 @@ namespace PluginTaskVedomostBl
                     } else
                         ;
 
-                height = r1.Height / s_GroupHeaderCount;
+                height = r1.Height / (int)LEVEL_HEADER.COUNT;
 
-                foreach (var item in m_listTextHeaderMiddle/*[idComp]*/)
-                {
-                    //get the column header cell
-                    r1.Width = m_arCounterHeaderMiddle[m_listTextHeaderMiddle/*[idComp]*/.ToList().IndexOf(item)] * WIDTH_COLUMN;
+                // отобразить заголовки среднего(MIDDLE) уровня
+                m_listHeaderMiddleLevel.ForEach(item => {
+                    // ширину изменяем ПОСЛЕ изменения координаты X, т.к. требуется сохранить ее предыдущее значение
+                    // высоту изменяем ПЕРЕД 1-ой итерацией
                     r1.Height = height + 3;//??? 
-
-                    if ((m_listTextHeaderMiddle/*[idComp]*/.ToList().IndexOf(item) - 1) > -1)
-                        r1.X = r1.X + m_arCounterHeaderMiddle[m_listTextHeaderMiddle/*[idComp]*/.ToList().IndexOf(item) - 1] * WIDTH_COLUMN;
-                    else
-                    {
+                    // определить 1-ую итерацию
+                    if ((m_listHeaderMiddleLevel.IndexOf(item) - 1) > -1)
+                    // добавить ширину предыдущего элемента
+                        r1.X += r1.Width;
+                    else {
+                    // только для 1-ой итерации
                         r1.X += WIDTH_COLUMN_DATE;
-                        r1.Y = r1.Y + r1.Height;
+                        r1.Y += r1.Height;
                     }
 
+                    r1.Width = item.count_low_column * WIDTH_COLUMN;                    
+
                     e.Graphics.FillRectangle(new SolidBrush(ColumnHeadersDefaultCellStyle.BackColor), r1);
-                    e.Graphics.DrawString(item, ColumnHeadersDefaultCellStyle.Font,
-                      new SolidBrush(ColumnHeadersDefaultCellStyle.ForeColor),
-                      r1,
-                      format);
+                    e.Graphics.DrawString(item.text, ColumnHeadersDefaultCellStyle.Font
+                        , new SolidBrush(ColumnHeadersDefaultCellStyle.ForeColor)
+                        , r1
+                        , format);
                     e.Graphics.DrawRectangle(pen, r1);
-                }
-
-                foreach (var item in m_listTextHeaderTop/*[idComp]*/)
-                {
-                    //get the column header cell
-                    r2.Width = m_arCounterHeaderTop[indxCol] * WIDTH_COLUMN;
+                });
+                // отобразить заголовки самого верхнего(TOP) уровня
+                m_listHeaderTopLevel.ForEach(item => {
+                    // ширину изменяем ПОСЛЕ изменения координаты X, т.к. требуется сохранить ее предыдущее значение
+                    // высоту изменяем НЕВОЗБРАННО (можем в т.ч. вынести из тела анонимной функции)
                     r2.Height = height + 2;//??? 
-
-                    if (indxCol - 1 > -1)
-                        r2.X = r2.X + m_arCounterHeaderTop[indxCol - 1] * WIDTH_COLUMN;
-                    else
-                    {
+                                           // определить 1-ую итерацию
+                    if ((m_listHeaderTopLevel.IndexOf(item) - 1) > -1)
+                        // добавить ширину предыдущего элемента
+                        r2.X += r2.Width;
+                    else {
+                        // только для 1-ой итерации
                         r2.X += WIDTH_COLUMN_DATE;
                         r2.Y += r2.Y;
                     }
 
+                    r2.Width = item.count_low_column * WIDTH_COLUMN;
+
                     e.Graphics.FillRectangle(new SolidBrush(ColumnHeadersDefaultCellStyle.BackColor), r2);
-                    e.Graphics.DrawString(item, ColumnHeadersDefaultCellStyle.Font,
-                      new SolidBrush(ColumnHeadersDefaultCellStyle.ForeColor),
-                      r2,
-                      format);
+                    e.Graphics.DrawString(item.text, ColumnHeadersDefaultCellStyle.Font
+                        , new SolidBrush(ColumnHeadersDefaultCellStyle.ForeColor)
+                        , r2
+                        , format);
                     e.Graphics.DrawRectangle(pen, r2);
-                    indxCol++;
-                }
+                });
 
                 //(sender as DGVVedomostBl).Paint -= new PaintEventHandler(dataGridView1_Paint);
             }
@@ -450,7 +480,6 @@ namespace PluginTaskVedomostBl
             {
                 int i = -1;
 
-                COLUMN_TAG col_prop;
                 HandlerDbTaskCalculate.GROUPING_PARAMETER groupPutPar;
 
                 if (RowHeadersVisible == false) {
@@ -462,28 +491,22 @@ namespace PluginTaskVedomostBl
                         , -1
                         , false, true
                         , float.MinValue, float.MaxValue
-                        , string.Empty, "DATE", "Дата");
-
-                    i = addColumn(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.MIDDLE]
-                        , groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.LOW]
-                        , groupPutPar.IsVisibled);
-                    Columns[i].Tag = new COLUMN_TAG(groupPutPar, -1, true);
+                        , string.Empty, "DATE", "Дата"
+                        , -1, -1, -1);
+                    // обязательно присваивать 'tag' до вызова Columns.Add
+                    i = addColumn(new COLUMN_TAG(groupPutPar, -1, true));
                 } else
                     ;
 
                 for (int col = 0; col < listHeaders.Count; col++) {
                     groupPutPar = new HandlerDbTaskCalculate.GROUPING_PARAMETER(listPutParameter[col]
-                        , listHeaders[col].values);
-
-                    col_prop = new COLUMN_TAG (groupPutPar) {
+                        , listHeaders[col].values
+                        , listHeaders[col].order);
+                    // обязательно присваивать 'tag' до вызова Columns.Add
+                    i = addColumn(new COLUMN_TAG (groupPutPar) {
                         TemplateReportAddress = -1
-                        , ActionAgregateCancel = true
-                    };                    
-
-                    i = addColumn(groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.MIDDLE]
-                        , groupPutPar.m_headers[(int)HandlerDbTaskCalculate.GROUPING_PARAMETER.INDEX_HEADER.LOW]
-                        , groupPutPar.IsVisibled);
-                    Columns[i].Tag = col_prop;
+                        , ActionAgregateCancel = false
+                    });
                 }
             }
 
@@ -532,8 +555,8 @@ namespace PluginTaskVedomostBl
                     e.PaintBackground(e.CellBounds, false);
 
                     Rectangle r2 = e.CellBounds;
-                    r2.Y += e.CellBounds.Height / s_GroupHeaderCount;
-                    r2.Height = e.CellBounds.Height / s_GroupHeaderCount;
+                    r2.Y += e.CellBounds.Height / (int)LEVEL_HEADER.COUNT;
+                    r2.Height = e.CellBounds.Height / (int)LEVEL_HEADER.COUNT;
                     e.PaintContent(r2);
                     e.Handled = true;
                 }
