@@ -9,14 +9,14 @@ using System.Windows.Forms;
 using System.Data; //DataTable
 using System.Data.Common;
 
-using HClassLibrary;
 using InterfacePlugIn;
+using ASUTP.PlugIn;
 
 namespace TepCommon
 {
     public abstract class HPanelEditTree : HPanelCommon
     {
-        public HPanelEditTree(IPlugIn plugIn)
+        public HPanelEditTree(ASUTP.PlugIn.IPlugIn plugIn)
             : base(plugIn)
         {
         }

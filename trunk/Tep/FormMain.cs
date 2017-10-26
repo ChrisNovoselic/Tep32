@@ -11,13 +11,16 @@ using System.Data.Common; //DbConnection
 using System.Reflection; //Assembly
 using System.IO; //Stream
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
+using ASUTP.PlugIn;
+using ASUTP;
+using ASUTP.Database;
 
 namespace Tep64
 {
-    public partial class FormMain : FormMainBaseWithStatusStrip
+    public partial class FormMain : ASUTP.Forms.FormMainBaseWithStatusStrip
     {        
         /// <summary>
         /// Форма для редактирования параметров приложения
@@ -42,8 +45,8 @@ namespace Tep64
 
             //??? принять наименование файла из командной строки
             s_fileConnSett = new FIleConnSett(@"connsett.ini", FIleConnSett.MODE.FILE);
-            s_listFormConnectionSettings = new List<FormConnectionSettings> ();
-            s_listFormConnectionSettings.Add(new FormConnectionSettings(-1, s_fileConnSett.ReadSettingsFile, s_fileConnSett.SaveSettingsFile));
+            s_listFormConnectionSettings = new List<ASUTP.Forms.FormConnectionSettings> ();
+            s_listFormConnectionSettings.Add(new ASUTP.Forms.FormConnectionSettings (-1, s_fileConnSett.ReadSettingsFile, s_fileConnSett.SaveSettingsFile));
 
             int idListener = DbSources.Sources().Register(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett(), false, CONN_SETT_TYPE.MAIN_DB.ToString ());
 
@@ -57,7 +60,7 @@ namespace Tep64
 
             DbSources.Sources().UnRegister(idListener);
 
-            m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
+            m_TabCtrl.EventHTabCtrlExClose += new ASUTP.Control.HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
         }
         /// <summary>
         /// Инициализация пользовательских настроек
@@ -81,7 +84,7 @@ namespace Tep64
         /// <summary>
         /// ??? Обязательное переопределение от 'FormMainBaseWithStatusStrip'
         /// </summary>
-        /// <param name="type"></param>
+        /// <param name="type">Тип изменений в графическом интерфейсе</param>
         protected override void UpdateActiveGui(int type) { }
         /// <summary>
         /// Загрузить вкладки, сохраненные в профиле пользователя
@@ -292,7 +295,7 @@ namespace Tep64
 
             m_report.ActionReport(@"Загрузка главного окна");
 
-            ProgramBase.s_iAppID = Int32.Parse((string)Properties.Resources.AppID);
+            ASUTP.Helper.ProgramBase.s_iAppID = Int32.Parse((string)Properties.Resources.AppID);
 
             if (!(s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].Ready == 0))
             {
@@ -414,7 +417,7 @@ namespace Tep64
         /// Дополнительные действия по инициализации плюг'ина
         /// </summary>
         /// <param name="plugIn">объект плюг'ина</param>
-        private void initializePlugIn (IPlugIn plugIn) {
+        private void initializePlugIn (ASUTP.PlugIn.IPlugIn plugIn) {
             if (plugIn is HFunc) {
             } else {
             }
@@ -423,22 +426,11 @@ namespace Tep64
         /// Инициализация логгирования
         /// </summary>
         private void initializeLogging () {
-            //Если ранее тип логирования не был назанчен...
-            if (Logging.s_mode == Logging.LOG_MODE.UNKNOWN)
-            {
-                //назначить тип логирования - БД
-                Logging.s_mode = Logging.LOG_MODE.DB;
-            }
-            else { }
             if (Logging.s_mode == Logging.LOG_MODE.DB)
             {
                 //Инициализация БД-логирования
                 int err = -1;
-                //Вариант №1
-                //DataRow rowConnSettLog = null;
-                //HClassLibrary.Logging.ConnSett = new ConnectionSettings(rowConnSettLog);
-                //Вариант №2
-                HClassLibrary.Logging.ConnSett = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
+                Logging.ConnSett = s_listFormConnectionSettings[(int)CONN_SETT_TYPE.MAIN_DB].getConnSett();
             }
             else { }
         }
@@ -522,7 +514,7 @@ namespace Tep64
                             //Добавить обработчик запросов для плюг'ина от главной формы
                             // только ОДИН раз
                             if ((s_plugIns[iKeyPlugIn] as PlugInBase).IsEvtDataAskedHostHandled == false)
-                                (s_plugIns[iKeyPlugIn] as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(s_plugIns.OnEvtDataAskedHost);
+                                (s_plugIns[iKeyPlugIn] as PlugInBase).EvtDataAskedHost += new ASUTP.Core.DelegateObjectFunc (s_plugIns.OnEvtDataAskedHost);
                             else
                                 ;
 
@@ -586,7 +578,7 @@ namespace Tep64
                 //m_TabCtrl.AddTabPage(plugIn.GetNameMenuItem(idFPanel), idFPanel, HTabCtrlEx.TYPE_TAB.FIXED);
                 //m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add((Control)plugIn.GetObject(idFPanel));
 
-                m_TabCtrl.AddTabPage((Control)plugIn.GetObject(idFPanel), plugIn.GetNameMenuItem(idFPanel), idFPanel, HTabCtrlEx.TYPE_TAB.FIXED);
+                m_TabCtrl.AddTabPage((Control)plugIn.GetObject(idFPanel), plugIn.GetNameMenuItem(idFPanel), idFPanel, ASUTP.Control.HTabCtrlEx.TYPE_TAB.FIXED);
             } else {
                 //Закрыть вкладку
                 bTabRemoved = m_TabCtrl.RemoveTabPage(m_TabCtrl.IndexOfID(idFPanel)); //plugIn.GetNameMenuItem(idFPanel)
@@ -628,7 +620,7 @@ namespace Tep64
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие (???)</param>
         /// <param name="e">Аргумент события</param>
-        private void onCloseTabPage(object sender, HTabCtrlExEventArgs e)
+        private void onCloseTabPage(object sender, ASUTP.Control.HTabCtrlExEventArgs e)
         {
             ////Вариант №1
             //FindMainMenuItemOfText (e.TabHeaderText).Checked = false;
@@ -757,7 +749,7 @@ namespace Tep64
         /// <param name="ev">Аргумент события</param>
         private void TabCtrl_OnSelectedIndexChanged (object obj, EventArgs ev)
         {
-            (obj as HTabCtrlEx).PrevSelectedIndex = (obj as HTabCtrlEx).SelectedIndex;
+            (obj as ASUTP.Control.HTabCtrlEx).PrevSelectedIndex = (obj as ASUTP.Control.HTabCtrlEx).SelectedIndex;
         }
         /// <summary>
         /// Изменить подписи в строке состояния

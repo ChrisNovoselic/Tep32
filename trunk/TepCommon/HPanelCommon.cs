@@ -9,13 +9,16 @@ using System.Windows.Forms;
 using System.Data; //DataTable
 using System.Data.Common;
 
-using HClassLibrary;
 using InterfacePlugIn;
 using System.Globalization;
+using ASUTP.PlugIn;
+using ASUTP.Core;
+using ASUTP;
+using ASUTP.Database;
 
 namespace TepCommon
 {
-    public abstract partial class HPanelCommon : HClassLibrary.HPanelCommon, IObjectDbEdit
+    public abstract partial class HPanelCommon : ASUTP.Control.HPanelCommon, IObjectDbEdit
     {
         /// <summary>
         /// Дополнительные действия при сохранении значений
@@ -149,7 +152,7 @@ namespace TepCommon
             base.Dispose(disposing);
         }
 
-        public HPanelCommon(IPlugIn plugIn)
+        public HPanelCommon(ASUTP.PlugIn.IPlugIn plugIn)
             : base(13, 13)
         {
             this._iFuncPlugin = plugIn;

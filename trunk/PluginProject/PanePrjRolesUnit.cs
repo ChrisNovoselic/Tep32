@@ -11,9 +11,11 @@ using System.Data;
 using System.Data.Common;
 
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
+using ASUTP.Database;
+using ASUTP;
 
 namespace PluginProject
 {
@@ -112,7 +114,7 @@ namespace PluginProject
         /// Конструктор
         /// </summary>
         /// <param name="iFunc">Плагин</param>
-        public PanelPrjRolesUnit(IPlugIn iFunc)
+        public PanelPrjRolesUnit(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();

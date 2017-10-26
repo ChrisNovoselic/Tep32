@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
 
@@ -12,7 +12,7 @@ namespace PluginTaskEng6Graf
 {
     public class PanelTaskEng6Graf : HPanelTepCommon
     {
-        public PanelTaskEng6Graf(IPlugIn iFunc)
+        public PanelTaskEng6Graf(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             InitializeComponent();

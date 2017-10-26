@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Data;
 
-using HClassLibrary;
+using ASUTP;
+using ASUTP.Core;
 
 namespace TepCommon
 {
@@ -693,10 +694,10 @@ namespace TepCommon
 
             public void NewId()
             {
-                _id = HMath.GetRandomNumber();
+                _id = ASUTP.Core.HMath.GetRandomNumber();
             }
 
-            public void SetDatetimeRange(DateTimeRange dtRange)
+            public void SetDatetimeRange(ASUTP.Core.DateTimeRange dtRange)
             {
                 SetDatetimeRange(dtRange.Begin, dtRange.End);
             }
@@ -1133,7 +1134,7 @@ namespace TepCommon
                     strQuery = @"DELETE FROM [dbo].[" + HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.SESSION].m_name + @"]"
                         + @" WHERE [ID_CALCULATE]=" + _Session.m_Id;
 
-                    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+                    ASUTP.Database.DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
                 } else
                     ;
 
@@ -1448,7 +1449,7 @@ namespace TepCommon
                                 , _Session.m_Id //ID_SESSION
                                 , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.NOT_REC //QUALITY
                                 , 0F //VALUE
-                                , HDateTime.ToMoscowTimeZone() //??? GETADTE()
+                                , ASUTP.Core.HDateTime.ToMoscowTimeZone() //??? GETADTE()
                                 , string.Format(@"{0}", DateTime.MinValue) //EXTENSION_DEFAULT
                             });
                         } else if (rowsSel.Length == 1)
@@ -1459,7 +1460,7 @@ namespace TepCommon
                                 , _Session.m_Id //ID_SESSION
                                 , (int)HandlerDbTaskCalculate.ID_QUALITY_VALUE.DEFAULT //QUALITY
                                 , (iAVG == 0) ? cntBasePeriod * (double)rowsSel[0][@"VALUE"] : (double)rowsSel[0][@"VALUE"] //VALUE
-                                , HDateTime.ToMoscowTimeZone() //??? GETADTE()
+                                , ASUTP.Core.HDateTime.ToMoscowTimeZone() //??? GETADTE()
                                 , string.Format(@"{0}", DateTime.MinValue) //EXTENSION_DEFAULT
                             });
                         else
@@ -1609,7 +1610,7 @@ namespace TepCommon
             strQuery += @")";
 
             //Вставить в таблицу БД строку с идентификтором новой сессии
-            DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+            ASUTP.Database.DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
         }
         /// <summary>
         /// Вставить значения в таблицу для временных входных значений
@@ -1651,7 +1652,7 @@ namespace TepCommon
                 strQuery += @"(";
                 // вставить значения в запрос
                 foreach (DataColumn c in tableInValues.Columns)
-                    strQuery += DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
+                    strQuery += ASUTP.Database.DbTSQLInterface.ValueToQuery(r[c.Ordinal], arTypeColumns[c.Ordinal]) + @",";
 
                 // исключить лишнюю запятую
                 strQuery = strQuery.Substring(0, strQuery.Length - 1);
@@ -1664,7 +1665,7 @@ namespace TepCommon
                     // исключить лишнюю запятую
                     strQuery = strQuery.Substring(0, strQuery.Length - 1);
                     //Вставить во временную таблицу в БД входные для расчета значения
-                    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+                    ASUTP.Database.DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
                     // обнулить счетчик строк, основной запрос
                     iCntToInsert = 0;
                     strQuery = strBaseQuery;
@@ -1674,7 +1675,7 @@ namespace TepCommon
             // исключить лишнюю запятую
             strQuery = strQuery.Substring(0, strQuery.Length - 1);
             //Вставить во временную таблицу в БД входные для расчета значения
-            DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+            ASUTP.Database.DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
         }
         /// <summary>
         /// Вставить значения в таблицу для временных выходных значений сессии расчета
@@ -1727,7 +1728,7 @@ namespace TepCommon
                     // исключить лишнюю запятую
                     strQuery = strQuery.Substring(0, strQuery.Length - 1);
                     // вставить строки в таблицу
-                    DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+                    ASUTP.Database.DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
 
                     if (!(err == 0))
                         // при ошибке - не продолжать
@@ -1760,7 +1761,7 @@ namespace TepCommon
                 // исключить лишнюю запятую
                 strQuery = strQuery.Substring(0, strQuery.Length - 1);
                 // вставить строки в таблицу
-                DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
+                ASUTP.Database.DbTSQLInterface.ExecNonQuery(ref _dbConnection, strQuery, null, null, out err);
             } else
                 ; // при ошибке - не продолжать
         }
@@ -2721,7 +2722,7 @@ namespace TepCommon
 
             err = -1;
 
-            tableRes = DbTSQLInterface.Select(ref _dbConnection, getQueryDefaultValues(idPeriod), null, null, out err);
+            tableRes = ASUTP.Database.DbTSQLInterface.Select(ref _dbConnection, getQueryDefaultValues(idPeriod), null, null, out err);
 
             return tableRes;
         }
@@ -2739,7 +2740,7 @@ namespace TepCommon
 
             err = -1;
 
-            tableRes = DbTSQLInterface.Select(ref _dbConnection
+            tableRes = ASUTP.Database.DbTSQLInterface.Select(ref _dbConnection
                 , getQueryVariableValues(type)
                 , null, null
                 , out err);
@@ -2784,7 +2785,7 @@ namespace TepCommon
 
             err = -1;
 
-            tableRes = DbTSQLInterface.Select(ref _dbConnection
+            tableRes = ASUTP.Database.DbTSQLInterface.Select(ref _dbConnection
                 , getQueryVariableValues(type
                     , idPeriod
                     , cntBasePeriod
@@ -2816,7 +2817,7 @@ namespace TepCommon
 
             if (!(iRegDbConn < 0)) {
                 // прочитать параметры сессии для текущего пользователя
-                tableSession = DbTSQLInterface.Select(ref _dbConnection, querySession, null, null, out err);//??ID_PANEL
+                tableSession = ASUTP.Database.DbTSQLInterface.Select(ref _dbConnection, querySession, null, null, out err);//??ID_PANEL
                 // получить количество зарегистрированных сессий для пользователя
                 iCntSession = tableSession.Rows.Count;
 
@@ -3009,7 +3010,7 @@ namespace TepCommon
 
             if (!(iRegDbConn < 0)) {
                 tsRes = TimeSpan.FromMinutes(
-                    (int)DbTSQLInterface.Select(ref _dbConnection
+                    (int)ASUTP.Database.DbTSQLInterface.Select(ref _dbConnection
                         , string.Format(@"SELECT [OFFSET_UTC] FROM [{0}] WHERE [ID]={1}", s_dictDbTables[ID_DBTABLE.TIMEZONE].m_name, (int)id)
                         , null, null, out err)
                         .Rows[0][0]
@@ -3080,6 +3081,7 @@ namespace TepCommon
                         //case ID_TASK.REAKTIVKA:// для этой задачи нет вычислений
                         case ID_TASK.AUTOBOOK:
                         case ID_TASK.BAL_TEPLO: //Для работы с балансом тепла 6.06.2016 Апельганс
+                        //case ID_TASK.VEDOM_BL:// для этой задачи нет вычислений
                             // произвести вычисления
                             using (TaskCalculate taskCalculate = createTaskCalculate(types
                                 , ListNAlgParameter

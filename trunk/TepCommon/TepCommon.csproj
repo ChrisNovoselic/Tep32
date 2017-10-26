@@ -38,11 +38,26 @@
     <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ASUTP.Control">
+      <HintPath>..\..\ExternalDLL\ASUTP.Control.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Core">
+      <HintPath>..\..\ExternalDLL\ASUTP.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Database">
+      <HintPath>..\..\ExternalDLL\ASUTP.Database.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Helper">
+      <HintPath>..\..\ExternalDLL\ASUTP.Helper.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Logging">
+      <HintPath>..\..\ExternalDLL\ASUTP.Logging.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.PlugIn">
+      <HintPath>..\..\ExternalDLL\ASUTP.PlugIn.dll</HintPath>
+    </Reference>
     <Reference Include="ELW.Library.Math">
       <HintPath>..\..\ExternalDLL\ELW.Library.Math.dll</HintPath>
-    </Reference>
-    <Reference Include="HClassLibrary">
-      <HintPath>..\..\ExternalDLL\HClassLibrary.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">

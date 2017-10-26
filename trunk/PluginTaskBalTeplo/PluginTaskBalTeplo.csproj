@@ -31,8 +31,25 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="HClassLibrary">
-      <HintPath>..\..\ExternalDLL\HClassLibrary.dll</HintPath>
+    <Reference Include="ASUTP.Control, Version=1.1.1.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ExternalDLL\ASUTP.Control.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Core, Version=1.1.1.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ExternalDLL\ASUTP.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Helper, Version=1.1.1.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ExternalDLL\ASUTP.Helper.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Logging, Version=1.1.1.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ExternalDLL\ASUTP.Logging.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.PlugIn, Version=1.1.1.3, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ExternalDLL\ASUTP.PlugIn.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

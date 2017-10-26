@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
 
-using HClassLibrary;
-
 namespace PluginTaskTepMain
 {
     public class PanelTaskTepOutNorm : PanelTaskTepOutVal
@@ -14,7 +12,7 @@ namespace PluginTaskTepMain
         ///// </summary>
         //private enum INDEX_TABLE_VALUES : int { REGISTRED, COUNT }
 
-        public PanelTaskTepOutNorm(IPlugIn iFunc)
+        public PanelTaskTepOutNorm(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_NORM_VALUES)
         {
             //m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];

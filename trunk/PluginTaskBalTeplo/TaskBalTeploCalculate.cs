@@ -5,9 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Data;
 
-using HClassLibrary;
+
 using InterfacePlugIn;
 using TepCommon;
+using ASUTP;
 
 namespace PluginTaskBalTeplo
 {
@@ -846,7 +847,7 @@ namespace PluginTaskBalTeplo
                     tableEdit.Rows.Add(new object[]
                             {
                                 rowSel
-                                , HUsers.Id.ToString()
+                                , ASUTP.Helper.HUsers.Id.ToString()
                                 , 0.ToString()
                                 , (_Session.m_DatetimeRange.Begin - getOffsetMoscowToUTC).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY
@@ -904,7 +905,7 @@ namespace PluginTaskBalTeplo
                     tableEdit.Rows.Add(new object[]
                             {
                                 rowSel
-                                , HUsers.Id.ToString()
+                                , ASUTP.Helper.HUsers.Id.ToString()
                                 , 0.ToString()
                                 , (_Session.m_DatetimeRange.Begin - getOffsetMoscowToUTC).ToString(CultureInfo.InvariantCulture)
                                 , ID_PERIOD.DAY

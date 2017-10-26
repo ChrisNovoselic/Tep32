@@ -8,9 +8,10 @@ using System.Data.Common; //DbConnection
 //using System.Drawing;
 using System.Data; //DataTable
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
+using ASUTP.Core;
 
 namespace PluginProject
 {
@@ -20,7 +21,7 @@ namespace PluginProject
         private static string s_strPswdPropName = @"PASSWORD";
         private DataTable m_tblOriginPswd, m_tblEditPswd;
 
-        public PanelPrjSources(IPlugIn iFunc)
+        public PanelPrjSources(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, @"SOURCE", @"ID", @"NAME_SHR")
         {
             InitializeComponent();

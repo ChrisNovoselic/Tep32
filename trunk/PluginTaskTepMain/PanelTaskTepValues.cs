@@ -9,7 +9,6 @@ using System.Text.RegularExpressions;
 using System.Drawing;
 using System.Diagnostics;
 
-using HClassLibrary;
 using InterfacePlugIn;
 using TepCommon;
 
@@ -50,7 +49,7 @@ namespace PluginTaskTepMain
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
-        protected PanelTaskTepValues(IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        protected PanelTaskTepValues(ASUTP.PlugIn.IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc, type)
         {
             m_arTableOrigin = new DataTable[(int)TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];

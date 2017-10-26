@@ -4,10 +4,11 @@ using System.Linq;
 using System.Data;
 using System.Data.Common;
 
-using HClassLibrary;
+
 using InterfacePlugIn;
 using TepCommon;
 using System.Collections.Generic;
+using ASUTP;
 
 namespace PluginTaskAutobook
 {
@@ -220,7 +221,7 @@ namespace PluginTaskAutobook
         protected override DataTable getArchiveTableValues(TaskCalculate.TYPE type
             , ID_PERIOD idPeriod
             , int cntBasePeriod
-            , DateTimeRange[] arQueryRanges
+            , ASUTP.Core.DateTimeRange [] arQueryRanges
             , out int err)
         {
             err = 0;
@@ -241,7 +242,7 @@ namespace PluginTaskAutobook
         protected override DataTable getVariableTableValues(TaskCalculate.TYPE type
             , ID_PERIOD idPeriod
             , int cntBasePeriod
-            , DateTimeRange[] arQueryRanges
+            , ASUTP.Core.DateTimeRange [] arQueryRanges
             , out int err)
         {
             DataTable tableRes = new DataTable()
@@ -253,7 +254,7 @@ namespace PluginTaskAutobook
             DateTime datetimeValue = DateTime.MinValue;
             object[] rowValues;
             double dayPlan = -1F;
-            DateTimeRange[] arMonthPlanQueryRanges;
+            ASUTP.Core.DateTimeRange [] arMonthPlanQueryRanges;
 
             err = -1;
 

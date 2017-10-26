@@ -8,10 +8,10 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.Data;
 
-using HClassLibrary;
 using System.Data.OleDb;
 using System.IO;
 using System.Data.Odbc;
+using ASUTP;
 
 namespace PluginTaskTepMain
 {
@@ -148,7 +148,7 @@ namespace PluginTaskTepMain
                                         idComp = Int32.Parse(r[@"ID_COMP"].ToString().Trim());
                                         numColumnComp = listLinkIdToNumColumn.Find(item => { return item.id == idComp; }).iNumColumn;
 
-                                        val = HMath.doubleParse((string)vals[numColumnComp]);
+                                        val = ASUTP.Core.HMath.doubleParse((string)vals[numColumnComp]);
 
                                         dbRatioValue = 0;
                                         arSelDictPrjRatio = tableDictPrjRatio.Select(string.Format(@"ID ={0}", (int)r[@"ID_RATIO"]));

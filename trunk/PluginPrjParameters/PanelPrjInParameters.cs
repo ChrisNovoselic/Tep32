@@ -6,7 +6,7 @@ using System.Data; //DataTable
 using System.Data.Common; //DbConnection
 using System.Windows.Forms; //DataGridView...
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
 
@@ -14,7 +14,7 @@ namespace PluginPrjParameters
 {
     public class PanelPrjInParameters : PanelPrjParametersEditTree
     {
-        public PanelPrjInParameters(IPlugIn iFunc)
+        public PanelPrjInParameters(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, @"inalg, input")
         {
             //Вариант "1-1

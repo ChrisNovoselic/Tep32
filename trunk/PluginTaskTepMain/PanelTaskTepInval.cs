@@ -7,7 +7,6 @@ using System.Data;
 using System.Data.Common;
 using System.Globalization;
 
-using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
@@ -19,7 +18,7 @@ namespace PluginTaskTepMain
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для связи с вызывающим приложением</param>
-        public PanelTaskTepInval(IPlugIn iFunc)
+        public PanelTaskTepInval(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {            
             InitializeComponents();
@@ -139,14 +138,14 @@ namespace PluginTaskTepMain
                     // выполнить расчет
                     HandlerDb.Calculate(type);
                 } else
-                    Logging.Logg().Warning(@"PanelTaskTepInval::btnRun_onClick (type=" + type.ToString() + @") - попытка расчета без загрузки входных данных..."
-                        , Logging.INDEX_MESSAGE.NOT_SET);
+                    ASUTP.Logging.Logg().Warning(@"PanelTaskTepInval::btnRun_onClick (type=" + type.ToString() + @") - попытка расчета без загрузки входных данных..."
+                        , ASUTP.Logging.INDEX_MESSAGE.NOT_SET);
             }
             catch (Exception e)
             {
                 //deleteSession ();
 
-                Logging.Logg().Exception(e, @"PanelTaskTepInval::btnRun_onClick (type=" + type.ToString() + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                ASUTP.Logging.Logg().Exception(e, @"PanelTaskTepInval::btnRun_onClick (type=" + type.ToString() + @") - ...", ASUTP.Logging.INDEX_MESSAGE.NOT_SET);
             }
             finally
             {

@@ -8,10 +8,10 @@ using System.Data.Common;
 using System.Text.RegularExpressions;
 using System.Drawing;
 
-using HClassLibrary;
 using InterfacePlugIn;
 using TepCommon;
 using System.Reflection;
+using ASUTP;
 
 namespace PluginTaskTepMain
 {
@@ -42,7 +42,7 @@ namespace PluginTaskTepMain
         /// <param name="strNameTableAlg">Строка - наименование таблицы с параметрами алгоритма расчета</param>
         /// <param name="strNameTablePut">Строка - наименование таблицы с параметрами, детализированных до принадлежности к компоненту станции (оборудования)</param>
         /// <param name="strNameTableValues">Строка - наименование таблицы со значениями</param>
-        protected PanelTaskTepCalculate(IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        protected PanelTaskTepCalculate(ASUTP.PlugIn.IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc, type)
         {
             HandlerDb.IdTask = ID_TASK.TEP;

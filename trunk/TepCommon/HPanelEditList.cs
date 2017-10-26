@@ -9,8 +9,9 @@ using System.Windows.Forms; //DataGridView
 using System.Data.Common; //DbConnection
 using System.Data; //DataTable
 
-using HClassLibrary;
 using InterfacePlugIn;
+using ASUTP.PlugIn;
+using ASUTP;
 
 namespace TepCommon
 {
@@ -21,7 +22,7 @@ namespace TepCommon
         protected string m_nameTable;
         protected string m_strKeyFields;
 
-        public HPanelEditListCommon(IPlugIn plugIn, string nameTable, string keyFields)
+        public HPanelEditListCommon(ASUTP.PlugIn.IPlugIn plugIn, string nameTable, string keyFields)
             : base(plugIn)
         {
             m_nameTable = nameTable;
@@ -253,7 +254,7 @@ namespace TepCommon
     {
         protected string m_nameDescField;
 
-        public HPanelEditList(IPlugIn plugIn, string nameTable, string keyFields, string nameDescField)
+        public HPanelEditList(ASUTP.PlugIn.IPlugIn plugIn, string nameTable, string keyFields, string nameDescField)
             : base(plugIn, nameTable, keyFields)
         {
             InitializeComponent();

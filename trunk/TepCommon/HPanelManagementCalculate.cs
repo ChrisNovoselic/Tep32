@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using HClassLibrary;
 using TepCommon;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Data;
 using System.ComponentModel;
 using System.Reflection;
+using ASUTP;
+using ASUTP.Core;
 
 namespace TepCommon
 {
@@ -39,7 +40,7 @@ namespace TepCommon
         /// <summary>
         /// Класс для размещения управляющих элементов управления
         /// </summary>
-        protected abstract class PanelManagementTaskCalculate : HClassLibrary.HPanelCommon
+        protected abstract class PanelManagementTaskCalculate : ASUTP.Control.HPanelCommon
         {
             /// <summary>
             /// Класс для размещения элементов (компонентов станции, параметров расчета) с признаком "Использовать/Не_использовать"
@@ -369,7 +370,7 @@ namespace TepCommon
             {
             }
 
-            public DateTimeRange DatetimeRange
+            public ASUTP.Core.DateTimeRange DatetimeRange
             {
                 get
                 {

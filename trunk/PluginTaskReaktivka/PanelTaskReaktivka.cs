@@ -1,4 +1,4 @@
-﻿using HClassLibrary;
+﻿
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using TepCommon;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Threading;
+using ASUTP;
 
 namespace PluginTaskReaktivka
 {
@@ -82,12 +83,12 @@ namespace PluginTaskReaktivka
         /// Конструктор
         /// </summary>
         /// <param name="iFunc">Объект для взаимодействия с вызывающей программой</param>
-        public PanelTaskReaktivka(IPlugIn iFunc)
+        public PanelTaskReaktivka(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.REAKTIVKA;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
-            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
+            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
 
             InitializeComponents();
 
@@ -225,6 +226,7 @@ namespace PluginTaskReaktivka
         {
             m_dgvValues.AddRows(new DataGridViewValues.DateTimeStamp() {
                 Start = PanelManagement.DatetimeRange.Begin + HandlerDb.OffsetUTC
+                , Finish = PanelManagement.DatetimeRange.End + HandlerDb.OffsetUTC
                 , Increment = TimeSpan.FromDays(1)
                 , ModeDataDatetime = HandlerDb.ModeDataDatetime
             });
@@ -377,11 +379,11 @@ namespace PluginTaskReaktivka
             {                
             }
 
-            protected override void create(int headerColumn, int beginDataRow, Dictionary<int, List<string>> allValues, DateTimeRange dtRange)
+            protected override void create(int headerColumn, int beginDataRow, Dictionary<int, List<string>> allValues, ASUTP.Core.DateTimeRange dtRange)
             {
                 base.create(headerColumn, beginDataRow, allValues, dtRange);
 
-                m_wrkSheet.get_Range("A2").Value2 = string.Format(@"{0} {1}", HDateTime.NameMonths[dtRange.Begin.Month - 1], dtRange.Begin.Year);
+                m_wrkSheet.get_Range("A2").Value2 = string.Format(@"{0} {1}", ASUTP.Core.HDateTime.NameMonths[dtRange.Begin.Month - 1], dtRange.Begin.Year);
                 //// TODO: Наименование ТЭЦ
                 //m_wrkSheet.get_Range("B2").Value2 = string.Format(@"");
             }

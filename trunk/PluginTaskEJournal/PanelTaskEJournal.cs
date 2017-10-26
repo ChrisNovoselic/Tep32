@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
 
@@ -12,7 +12,7 @@ namespace PluginTaskEJournal
 {
     public class PanelTaskEJournal : HPanelTepCommon
     {
-        public PanelTaskEJournal(IPlugIn iFunc)
+        public PanelTaskEJournal(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             InitializeComponent();

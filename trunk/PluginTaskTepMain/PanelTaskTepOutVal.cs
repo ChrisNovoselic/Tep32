@@ -2,9 +2,11 @@
 using System.Windows.Forms;
 using System.Data;
 
-using HClassLibrary;
 using TepCommon;
 using System.Collections.Generic;
+using ASUTP.Core;
+using ASUTP;
+using ASUTP.PlugIn;
 
 namespace PluginTaskTepMain
 {
@@ -20,7 +22,7 @@ namespace PluginTaskTepMain
         /// Конструктор - основной (с параметром)
         /// </summary>
         /// <param name="iFunc">Объект для взаимной связи с главной формой приложения</param>
-        protected PanelTaskTepOutVal(IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        protected PanelTaskTepOutVal(ASUTP.PlugIn.IPlugIn iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base(iFunc, type)
         {
             InitializeComponents();

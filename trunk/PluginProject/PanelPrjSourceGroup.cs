@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
 
@@ -11,7 +11,7 @@ namespace PluginProject
 {
     public class PanelPrjSourceGroup : HPanelEditList
     {
-        public PanelPrjSourceGroup(IPlugIn iFunc)
+        public PanelPrjSourceGroup(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, @"source_group", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();

@@ -1,5 +1,4 @@
-﻿using HClassLibrary;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -13,6 +12,8 @@ using TepCommon;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Threading;
+using ASUTP;
+using ASUTP.Core;
 
 namespace PluginTaskAutobook
 {
@@ -311,12 +312,12 @@ namespace PluginTaskAutobook
         /// Конструктор
         /// </summary>
         /// <param name="iFunc"></param>
-        public PanelTaskAutobookMonthValues(IPlugIn iFunc)
+        public PanelTaskAutobookMonthValues(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
-            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Begined;
+            HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
 
             InitializeComponent();
 
@@ -381,7 +382,7 @@ namespace PluginTaskAutobook
                 posRow = 6;
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
-                ctrl = new DropDownButton();
+                ctrl = new ASUTP.Control.DropDownButton ();
                 ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
                 ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
@@ -816,15 +817,11 @@ namespace PluginTaskAutobook
             }
         }
 
-        private void PanelTaskAutobookMonthValues_TextChanged(object sender, EventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
         private void addValueRows()
         {
             m_dgvValues.AddRows (new DataGridViewValues.DateTimeStamp() {
                 Start = PanelManagement.DatetimeRange.Begin + HandlerDb.OffsetUTC
+                , Finish = PanelManagement.DatetimeRange.End + HandlerDb.OffsetUTC
                 , Increment = TimeSpan.FromDays(1)
                 , ModeDataDatetime = HandlerDb.ModeDataDatetime
             });

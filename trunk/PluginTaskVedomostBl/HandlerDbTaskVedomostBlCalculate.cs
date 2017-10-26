@@ -1,5 +1,4 @@
-﻿using HClassLibrary;
-using System;
+﻿using System;
 using System.Data;
 using System.Globalization;
 using System.Windows.Forms;
@@ -10,6 +9,10 @@ namespace PluginTaskVedomostBl
 {
     public class HandlerDbTaskVedomostBlCalculate : HandlerDbTaskCalculate
     {
+        public HandlerDbTaskVedomostBlCalculate ()
+            : base ()
+        {
+        }
         /// <summary>
         ///класс для обработки данных
         /// </summary>

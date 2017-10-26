@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ASUTP;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -7,7 +8,6 @@ using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
 
-using HClassLibrary;
 using TepCommon;
 
 namespace PluginTaskAutobook
@@ -163,7 +163,7 @@ namespace PluginTaskAutobook
         /// Класс панели - ИРЗ Учет активной электроэнергии - плановые значения (месяц-год)
         /// </summary>
         /// <param name="iFunc">Объект для взаимодействия с вызывающей программой</param>
-        public PanelTaskAutobookYearlyPlan(IPlugIn iFunc)
+        public PanelTaskAutobookYearlyPlan(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.AUTOBOOK;
@@ -290,6 +290,7 @@ namespace PluginTaskAutobook
         {
             m_dgvValues.AddRows(new DataGridViewValues.DateTimeStamp() {
                 Start = PanelManagement.DatetimeRange.Begin + HandlerDb.OffsetUTC
+                , Finish = PanelManagement.DatetimeRange.End + HandlerDb.OffsetUTC
                 , Increment = TimeSpan.MaxValue // значение неизвестно (в каждом месяце - разное кол-во суток), но является признаком для определения рассчитываемого значения
                 , ModeDataDatetime = HandlerDb.ModeDataDatetime
             });

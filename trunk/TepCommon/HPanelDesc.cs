@@ -9,7 +9,6 @@ using System.Windows.Forms;
 using System.Data; //DataTable
 using System.Data.Common;
 
-using HClassLibrary;
 using InterfacePlugIn;
 using System.Globalization;
 

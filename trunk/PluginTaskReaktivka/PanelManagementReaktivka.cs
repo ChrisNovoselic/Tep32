@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-using HClassLibrary;
+
 using TepCommon;
 using System.Drawing;
 
@@ -63,7 +63,7 @@ namespace PluginTaskReaktivka
                 posRow = 6;
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
-                ctrl = new DropDownButton();
+                ctrl = new ASUTP.Control.DropDownButton ();
                 ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
                 ctrl.ContextMenuStrip = new ContextMenuStrip();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));

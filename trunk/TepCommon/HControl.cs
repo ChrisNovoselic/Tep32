@@ -6,12 +6,12 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-
-using HClassLibrary;
+using ASUTP;
+using ASUTP.Core;
 
 namespace TepCommon
 {
-    public partial class HDateTimePicker : HClassLibrary.HPanelCommon
+    public partial class HDateTimePicker : ASUTP.Control.HPanelCommon
     {
         /// <summary>
         /// Перечисление для режимов группового элемента управления

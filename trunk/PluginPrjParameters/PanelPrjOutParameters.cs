@@ -6,7 +6,7 @@ using System.Data; //DataTable
 using System.Data.Common; //DbConnection
 using System.Windows.Forms; //DataGridView...
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
 
@@ -14,7 +14,7 @@ namespace PluginPrjParameters
 {
     public class PanelPrjOutParameters : PanelPrjParametersEditTree
     {
-        public PanelPrjOutParameters(IPlugIn iFunc)
+        public PanelPrjOutParameters(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, @"outalg, output")
         {
             //Вариант №1-1
@@ -236,7 +236,7 @@ namespace PluginPrjParameters
                     else
                         throw new Exception(@"PanelPrjOutParameters::getIdNextAlgoritm () - неизвестный тип ");
 
-                iRes = DbTSQLInterface.GetIdNext(m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], out err, @"ID", min - 1, max - 1);
+                iRes = ASUTP.Database.DbTSQLInterface.GetIdNext(m_arTableEdit[(int)INDEX_PARAMETER.ALGORITM], out err, @"ID", min - 1, max - 1);
                 if (iRes == 0) iRes += (int)ID_START_RECORD.ALG; else ;
             }
             else

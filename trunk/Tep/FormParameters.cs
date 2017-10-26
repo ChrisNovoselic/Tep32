@@ -1,14 +1,15 @@
+using ASUTP.Database;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 
-using HClassLibrary;
+using ASUTP.Helper;
 
 namespace Tep64
 {
-    public abstract partial class FormParameters : FormParametersBase
-    {
+    public abstract partial class FormParameters : ASUTP.Forms.FormParametersBase {
+
         public enum PARAMETR_SETUP { POLL_TIME, ERROR_DELAY, MAX_ATTEMPT, WAITING_TIME, WAITING_COUNT, MAIN_DATASOURCE,
                                     USERS_DOMAIN_NAME, USERS_ID_TEC, USERS_ID_ROLE                                    
                                     //, ID_APP
@@ -136,7 +137,7 @@ namespace Tep64
                                                     //, @"ID_APP"
                                                     };
 
-        private ConnectionSettings m_connSett;
+        private ASUTP.Database.ConnectionSettings m_connSett;
         private DbConnection m_dbConn;
 
         public FormParameters_DB(int idListener)

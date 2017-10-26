@@ -1,12 +1,14 @@
-﻿using HClassLibrary;
-using System;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
 //using System.Windows.Controls;
 using System.Windows.Forms;
+
 using TepCommon;
+using ASUTP;
 
 namespace PluginTaskVedomostBl
 {
@@ -63,7 +65,7 @@ namespace PluginTaskVedomostBl
                 //tlTipHeader.AutoPopDelay = 5000;
                 //tlTipHeader.InitialDelay = 1000;
                 //tlTipHeader.ReshowDelay = 500;
-                Control ctrl = null;
+                System.Windows.Forms.Control ctrl = null;
                 //IControl lcbxGroupHeaderVodibled;
 
                 // переменные для инициализации кнопок "Добавить", "Удалить"
@@ -76,7 +78,7 @@ namespace PluginTaskVedomostBl
                 posRow = 6;
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
-                ctrl = new DropDownButton();
+                ctrl = new ASUTP.Control.DropDownButton ();
                 ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
                 ctrl.ContextMenuStrip = new ContextMenuStrip();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
@@ -94,7 +96,7 @@ namespace PluginTaskVedomostBl
                 ctrl.Text = @"Сохранить";
                 //ctrl.Dock = DockStyle.Top;
                 ctrl.Dock = DockStyle.Fill;
-                this.Controls.Add(ctrl, ColumnCount / 2, posRow = posRow + 1);
+                this.Controls.Add(ctrl, ColumnCount / 2, posRow);
                 SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //Кнопка - экспорт
                 ctrl = new Button();
@@ -102,7 +104,7 @@ namespace PluginTaskVedomostBl
                 ctrl.Text = @"Экспорт";
                 //ctrl.Dock = DockStyle.Top;
                 ctrl.Dock = DockStyle.Fill;
-                this.Controls.Add(ctrl, 0, posRow);
+                this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
                 //
                 // передать текущий объект для динамического размещения дочерних элементов управления
@@ -195,7 +197,7 @@ namespace PluginTaskVedomostBl
                             CheckOnClick = true;
 
                             MouseMove += new MouseEventHandler(showCheckBoxToolTip);
-                        } catch (Exception e) {
+                        } catch (System.Exception e) {
                             Logging.Logg().Exception(e, @"CheckedListBoxGroupHeaders::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
                     }
@@ -273,7 +275,7 @@ namespace PluginTaskVedomostBl
                 /// <summary>
                 /// Элемент упаравления - родитель, для размещения элементов управления
                 /// </summary>
-                private HClassLibrary.HPanelCommon _panelParent;
+                private ASUTP.Control.HPanelCommon _panelParent;
 
                 //private ItemCheckEventHandler checkListBox_onItemCheck;
                 /// <summary>
@@ -282,7 +284,7 @@ namespace PluginTaskVedomostBl
                 /// <param name="panelParent">Родительский элемент управления (для динамического размещения элементов)</param>>
                 public ManagementVisibled(TableLayoutPanel panelParent/*, ItemCheckEventHandler checkListBoxEventHandler*/)
                 {
-                    _panelParent = panelParent as HClassLibrary.HPanelCommon;
+                    _panelParent = panelParent as ASUTP.Control.HPanelCommon;
                     //checkListBox_onItemCheck = checkListBoxEventHandler;
 
                     InitializeComponents();
@@ -450,7 +452,7 @@ namespace PluginTaskVedomostBl
                     cbxModeEnabled = _panelParent.Controls.Find(INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox;
                     pos = _panelParent.GetCellPosition(cbxModeEnabled);
 
-                    _panelParent.SetCellPosition(cbxModeEnabled, new TableLayoutPanelCellPosition(pos.Column, pos.Row + offsetRow));
+                    _panelParent.SetCellPosition(cbxModeEnabled, new TableLayoutPanelCellPosition(pos.Column, pos.Row + offsetRow > _panelParent.RowCount - 1 ? _panelParent.RowCount - 1 : pos.Row + offsetRow));
 
                     // перемещаем элементы управления: подпись + список признаков отображения/снятия_с_отображения групп сигналов
                     pos = _panelParent.GetCellPosition(m_clbGroupHeaderCheckStates);

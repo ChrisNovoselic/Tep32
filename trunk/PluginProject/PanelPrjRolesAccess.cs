@@ -6,7 +6,7 @@ using System.Data; //DataTable
 using System.Data.Common; //DbConnection
 using System.Windows.Forms; //DataGridView...
 
-using HClassLibrary;
+
 using InterfacePlugIn;
 using TepCommon;
 
@@ -91,7 +91,7 @@ namespace PluginProject
 
         protected static string[] m_arButtonText = { @"Сохранить", @"Обновить" };
 
-        public PanelPrjRolesAccess(IPlugIn iFunc)
+        public PanelPrjRolesAccess(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -230,12 +230,12 @@ namespace PluginProject
             int err = 0;
 
             if (e.IdComp == (int)ID_Table.Role) {
-                ID = DbTSQLInterface.GetIdNext(m_arr_UserRolesTable[(int)ID_Table.Role], out err);
+                ID = ASUTP.Database.DbTSQLInterface.GetIdNext(m_arr_UserRolesTable[(int)ID_Table.Role], out err);
             } else
                 ;
 
             if (e.IdComp == (int)ID_Table.User) {
-                ID = DbTSQLInterface.GetIdNext(m_arr_UserRolesTable[(int)ID_Table.User], out err);
+                ID = ASUTP.Database.DbTSQLInterface.GetIdNext(m_arr_UserRolesTable[(int)ID_Table.User], out err);
             } else
                 ;
 

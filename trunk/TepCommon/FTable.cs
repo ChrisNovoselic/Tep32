@@ -5,8 +5,6 @@ using System.Text;
 using System.Data;
 //using System.Drawing;
 
-using HClassLibrary;
-
 namespace TepCommon
 {
     // http://pmpu.ru/vf4/interpolation

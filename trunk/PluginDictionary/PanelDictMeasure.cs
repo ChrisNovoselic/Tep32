@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
 
@@ -11,7 +11,7 @@ namespace PluginDictionary
 {
     public class PanelDictMeasure : HPanelEditList
     {
-        public PanelDictMeasure(IPlugIn iFunc)
+        public PanelDictMeasure(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, @"measure", @"ID", @"DESCRIPTION")
         {
             InitializeComponent();

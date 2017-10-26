@@ -7,12 +7,13 @@ using System.Windows.Forms;
 
 //using Outlook = Microsoft.Office.Interop.Outlook;
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
 using System.Drawing;
 using System.Data;
 using System.Reflection;
+using ASUTP;
 
 namespace PluginTaskBalTeplo
 {
@@ -134,7 +135,7 @@ namespace PluginTaskBalTeplo
         /// Конструктор - основной
         /// </summary>
         /// <param name="iFunc">Объект для взаимодействия с вызывающим приложением</param>
-        public PanelTaskBalTeplo(IPlugIn iFunc)
+        public PanelTaskBalTeplo(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.BAL_TEPLO;
@@ -260,7 +261,7 @@ namespace PluginTaskBalTeplo
                 posRow = 6;
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
-                ctrl = new DropDownButton();
+                ctrl = new ASUTP.Control.DropDownButton ();
                 ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
                 ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));
@@ -919,7 +920,7 @@ namespace PluginTaskBalTeplo
                 value = m_dictProfile.GetAttribute(tag, context, HTepUsers.ID_ALLOWED.INPUT_PARAM);
 
                 ids.Clear();
-                value.Trim().Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Cast<string>().ToList().ForEach(val => { ids.Add(HMath.doubleParse(val)); });
+                value.Trim().Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Cast<string>().ToList().ForEach(val => { ids.Add(ASUTP.Core.HMath.doubleParse(val)); });
 
                 type = context.Equals(contexts[0]) == true ? TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES : //??? 33
                     context.Equals(contexts[1]) == true ? TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES : //??? 34; как в 'INPUT_PARAM' оказались 'OUT_VALUES'

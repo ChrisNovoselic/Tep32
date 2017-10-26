@@ -11,9 +11,11 @@ using System.Drawing; //Graphics
 using ZedGraph;
 //using DataGridViewAutoFilter; //фильт значений "А3"
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
+using ASUTP.Database;
+using ASUTP;
 
 namespace PluginPrjTepFTable
 {
@@ -304,7 +306,7 @@ namespace PluginPrjTepFTable
         /// Конструктор с параметром
         /// </summary>
         /// <param name="iFunc"></param>
-        public PanelPrjTepFTable(IPlugIn iFunc)
+        public PanelPrjTepFTable(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();
@@ -317,7 +319,7 @@ namespace PluginPrjTepFTable
         {
             DataGridView dgv = null;
             // переменные для инициализации кнопок "Добавить", "Удалить"
-            DropDownButton btnDropDown = null;
+            ASUTP.Control.DropDownButton btnDropDown = null;
             int iButtonDropDownMenuItem = -1;
             string strPartLabelButtonDropDownMenuItem = string.Empty;
             string[] arLabelButtonDropDownMenuItem = new string[] { @"точку", @"функцию" };
@@ -334,7 +336,7 @@ namespace PluginPrjTepFTable
                 {
                     case INDEX_CONTROL.BUTTON_ADD:
                     case INDEX_CONTROL.BUTTON_DELETE:
-                        btnDropDown = new DropDownButton();
+                        btnDropDown = new ASUTP.Control.DropDownButton ();
                         addButton(btnDropDown, i.ToString(), (int)i, m_arButtonText[(int)i]);
 
                         btnDropDown.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
@@ -582,13 +584,13 @@ namespace PluginPrjTepFTable
             PerformLayout();
 
             //Обработчика нажатия кнопок
-            btnDropDown = ((Button)Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]) as DropDownButton;
+            btnDropDown = ((Button)Controls.Find(INDEX_CONTROL.BUTTON_ADD.ToString(), true)[0]) as ASUTP.Control.DropDownButton;
             btnDropDown.Click += new System.EventHandler(btnAddToPoint_OnClick);
             menuItem = (btnDropDown.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_ADD_POINT.ToString(), true)[0]);
             menuItem.Click += new System.EventHandler(btnAddToPoint_OnClick);
             menuItem = (btnDropDown.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_ADD_FUNCTION.ToString(), true)[0]);
             menuItem.Click += new System.EventHandler(btnAddToFunction_OnClick);
-            btnDropDown = ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]) as DropDownButton;
+            btnDropDown = ((Button)Controls.Find(INDEX_CONTROL.BUTTON_DELETE.ToString(), true)[0]) as ASUTP.Control.DropDownButton;
             btnDropDown.Click += new System.EventHandler(btnDeleteToPoint_OnClick);
             menuItem = (btnDropDown.ContextMenuStrip.Items.Find(INDEX_CONTROL.MENUITEM_DELETE_POINT.ToString(), true)[0]);
             menuItem.Click += new System.EventHandler(btnDeleteToPoint_OnClick);

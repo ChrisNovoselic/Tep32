@@ -1,10 +1,10 @@
-﻿using System;
+﻿using ASUTP;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using HClassLibrary;
 using TepCommon;
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -59,7 +59,7 @@ namespace PluginTaskVedomostBl
             /// </summary>
             /// <param name="dgView">отрбражение данных</param>
             /// <param name="dtRange">дата</param>
-            public void CreateExcel(DataGridView dgView, DateTimeRange dtRange)
+            public void CreateExcel(DataGridView dgView, ASUTP.Core.DateTimeRange dtRange)
             {
                 if (addWorkBooks()) {
                     m_workBook.AfterSave += workBook_AfterSave;
@@ -72,7 +72,7 @@ namespace PluginTaskVedomostBl
                     } catch (Exception e) {
                         closeExcel();
 
-                        Logging.Logg().Exception(e, @"PanelTaskVedomostBl.ReportExcel::CreateExcel () - вызов 'paintTable () - '...", Logging.INDEX_MESSAGE.NOT_SET);
+                        ASUTP.Logging.Logg().Exception(e, @"PanelTaskVedomostBl.ReportExcel::CreateExcel () - вызов 'paintTable () - '...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
 
                     try {
@@ -136,7 +136,7 @@ namespace PluginTaskVedomostBl
                             //if (j > ((int)DataGridViewVedomostBl.INDEX_SERVICE_COLUMN.COUNT - 1))
                                 arrayData[i, indexArray] =
                                     //s_VedCalculate.AsParseToF
-                                    HMath.doubleParse
+                                    ASUTP.Core.HMath.doubleParse
                                         (dgvActive.Rows[i].Cells[j].Value.ToString());
                             //else
                             //??? получить дату
@@ -381,12 +381,12 @@ namespace PluginTaskVedomostBl
             /// <param name="exclWrksht">лист экселя</param>
             /// <param name="dgv">грид</param>
             /// <param name="dtRange">дата</param>
-            private void setSignature(Excel.Worksheet exclWrksht, DataGridView dgv, DateTimeRange dtRange)
+            private void setSignature(Excel.Worksheet exclWrksht, DataGridView dgv, ASUTP.Core.DateTimeRange dtRange)
             {
                 //Excel.Range exclTEC = exclWrksht.get_Range("B2");
                 Excel.Range exclRMonth = exclWrksht.get_Range("R1");
                 exclRMonth.Value2 = string.Format("Ведомость {0} за {1} месяц {2} года"
-                    , ((HandlerDbTaskCalculate.TECComponent)(dgv as DataGridViewVedomostBl).Tag).m_nameShr, HDateTime.NameMonths[dtRange.Begin.Month - 1], dtRange.Begin.Year);
+                    , ((HandlerDbTaskCalculate.TECComponent)(dgv as DataGridViewVedomostBl).Tag).m_nameShr, ASUTP.Core.HDateTime.NameMonths[dtRange.Begin.Month - 1], dtRange.Begin.Year);
                 exclRMonth.Font.Bold = true;
                 //HDateTime.NameMonths[dtRange.Begin.Month - 1] + " " + dtRange.Begin.Year;
             }

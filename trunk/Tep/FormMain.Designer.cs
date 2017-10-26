@@ -1,4 +1,4 @@
-﻿using HClassLibrary;
+﻿
 
 namespace Tep64
 {
@@ -41,7 +41,7 @@ namespace Tep64
             this.настройкаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.бДКонфигурацииToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 
-            this.m_TabCtrl = new HTabCtrlEx ();
+            this.m_TabCtrl = new ASUTP.Control.HTabCtrlEx ();
 
             this.MainMenuStrip.SuspendLayout();
             this.SuspendLayout();
@@ -150,7 +150,7 @@ namespace Tep64
             this.m_TabCtrl.Size = new System.Drawing.Size(this.ClientSize.Width, this.ClientSize.Height - MainMenuStrip.ClientSize.Height - m_statusStripMain.ClientSize.Height);
             this.m_TabCtrl.TabIndex = 3;
             this.m_TabCtrl.SelectedIndexChanged += new System.EventHandler(this.TabCtrl_OnSelectedIndexChanged);
-            this.m_TabCtrl.EventPrevSelectedIndexChanged += new DelegateIntFunc(TabCtrl_EventPrevSelectedIndexChanged);
+            this.m_TabCtrl.EventPrevSelectedIndexChanged += new ASUTP.Core.DelegateIntFunc (TabCtrl_EventPrevSelectedIndexChanged);
             this.Controls.Add(this.m_TabCtrl);
 
             this.ResumeLayout(false);
@@ -169,7 +169,7 @@ namespace Tep64
         private System.Windows.Forms.ToolStripMenuItem настройкаToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem бДКонфигурацииToolStripMenuItem;
 
-        private HTabCtrlEx m_TabCtrl;
+        private ASUTP.Control.HTabCtrlEx m_TabCtrl;
     }
 }
 

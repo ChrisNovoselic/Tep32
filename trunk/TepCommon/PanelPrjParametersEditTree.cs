@@ -9,8 +9,10 @@ using System.Windows.Forms;
 using System.Data; //DataTable
 using System.Data.Common;
 
-using HClassLibrary;
 using InterfacePlugIn;
+using ASUTP.PlugIn;
+using ASUTP;
+using ASUTP.Database;
 
 namespace TepCommon
 {
@@ -344,7 +346,7 @@ namespace TepCommon
             get { return Controls.Find(INDEX_CONTROL.TREECTRL_PRJ_ALG.ToString(), true)[0] as TreeView; }
         }
 
-        public PanelPrjParametersEditTree(IPlugIn plugIn, string tableNames)
+        public PanelPrjParametersEditTree(ASUTP.PlugIn.IPlugIn plugIn, string tableNames)
             : base(plugIn)
         {
             _level = ID_LEVEL.UNKNOWN;

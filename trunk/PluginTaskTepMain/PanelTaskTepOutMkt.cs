@@ -6,7 +6,6 @@ using System.Windows.Forms;
 using System.Data;
 using System.Data.Common;
 
-using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 
@@ -21,7 +20,7 @@ namespace PluginTaskTepMain
         ///// </summary>
         //private enum INDEX_TABLE_VALUES : int { REGISTRED, COUNT }
 
-        public PanelTaskTepOutMkt(IPlugIn iFunc)
+        public PanelTaskTepOutMkt(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             //m_arTableOrigin = new DataTable[(int)HandlerDbTaskCalculate.ID_VIEW_VALUES.COUNT];

@@ -9,9 +9,9 @@ using System.Text.RegularExpressions;
 using System.Drawing;
 using System.Diagnostics;
 
-using HClassLibrary;
 using InterfacePlugIn;
 using TepCommon;
+using ASUTP;
 
 namespace PluginTaskTepMain
 {
@@ -68,7 +68,7 @@ namespace PluginTaskTepMain
 
                 //Кнопки обновления/сохранения, импорта/экспорта
                 //Кнопка - обновить
-                ctrl = new DropDownButton();
+                ctrl = new ASUTP.Control.DropDownButton ();
                 ctrl.Name = INDEX_CONTROL.BUTTON_LOAD.ToString();
                 ctrl.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
                 indx = ctrl.ContextMenuStrip.Items.Add(new ToolStripMenuItem(@"Входные значения"));

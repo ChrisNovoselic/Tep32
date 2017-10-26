@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
 
@@ -12,7 +12,7 @@ namespace PluginTaskTepForm3Tech
 {
     public class PanelTaskTepForm3Tech : TepCommon.HPanelTepCommon
     {
-        public PanelTaskTepForm3Tech(IPlugIn iFunc)
+        public PanelTaskTepForm3Tech(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES | HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
         {
             InitializeComponent();

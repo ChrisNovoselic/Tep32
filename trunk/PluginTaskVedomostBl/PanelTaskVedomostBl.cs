@@ -1,6 +1,4 @@
-﻿using HClassLibrary;
-using InterfacePlugIn;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -10,30 +8,13 @@ using System.Reflection;
 using System.Windows.Forms;
 using TepCommon;
 
+using ASUTP;
+using InterfacePlugIn;
+
 namespace PluginTaskVedomostBl
 {
     public partial class PanelTaskVedomostBl : HPanelTepCommon
     {
-        ///// <summary>
-        ///// ??? переменная с текущем отклоненеим от UTC
-        ///// </summary>
-        //private static int s_currentOffSet;
-        ///// <summary>
-        ///// Для обозначения выбора 1 или 6 блоков
-        ///// </summary>
-        //private static bool s_bChoiceBl16 = true;
-        ///// <summary>
-        ///// флаг очистки отображения
-        ///// </summary>
-        //private bool m_bflgClear = false;
-        ///// <summary>
-        ///// ??? экземпляр делегата(возврат PictureBox для активного представления)
-        ///// </summary>
-        //public static Func<PictureBox> s_delegateGetActivePictureBox;
-        ///// <summary>
-        ///// ??? экземпляр делегата(возврат Ид)
-        ///// </summary>
-        //public static Func<int> s_delegateGetIdActiveComponent;        
         /// <summary>
         /// Список представлений для каждого из компонентов станции 
         /// </summary>
@@ -152,16 +133,16 @@ namespace PluginTaskVedomostBl
         }
 
         /// <summary>
-        /// Конструктор
+        /// Конструктор - основной (с аргументами)
         /// </summary>
-        /// <param name="iFunc"></param>
-        public PanelTaskVedomostBl(IPlugIn iFunc)
+        /// <param name="iFunc">Объект для связи с внешним приложением</param>
+        public PanelTaskVedomostBl(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
         {
             HandlerDb.IdTask = ID_TASK.VEDOM_BL;
             HandlerDb.ModeAgregateGetValues = TepCommon.HandlerDbTaskCalculate.MODE_AGREGATE_GETVALUES.OFF;
             HandlerDb.ModeDataDatetime = TepCommon.HandlerDbTaskCalculate.MODE_DATA_DATETIME.Ended;
-            
+
             m_listDataGridViewVedomostBl = new List<DataGridViewVedomostBl>();
 
             InitializeComponent();            
@@ -351,47 +332,47 @@ namespace PluginTaskVedomostBl
 
             //создание грида со значениями
             //for (int i = 0; i < m_listTECComponent.Count; i++)
-            foreach (DataGridViewVedomostBl dgv in m_listDataGridViewVedomostBl)
-            {
+            m_listDataGridViewVedomostBl.ForEach (dgv => {
                 //dgv.DatetimeStamp = new DataGridViewValues.DateTimeStamp() {
                 //    Start = PanelManagement.DatetimeRange.Begin
                 //    , Increment = TimeSpan.FromDays(1)
                 //};
-                dgv.AddColumns(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter.FindAll(put => { return put.IdComponent == dgv.IdComponent; }));                
-                dgv.ConfigureHeaders();
-                dgv.AddRows(new DataGridViewValues.DateTimeStamp() {
+                dgv.AddColumns (HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter.FindAll (put => { return put.IdComponent == dgv.IdComponent; }));
+                dgv.ConfigureHeaders ();
+                dgv.AddRows (new DataGridViewValues.DateTimeStamp () {
                     Start = PanelManagement.DatetimeRange.Begin + HandlerDb.OffsetUTC
-                    , Increment = TimeSpan.FromDays(1)
+                    , Finish = PanelManagement.DatetimeRange.End + HandlerDb.OffsetUTC
+                    , Increment = TimeSpan.FromDays (1)
                     , ModeDataDatetime = HandlerDb.ModeDataDatetime
                 });
-                dgv.SetSize();
+                dgv.SetSize ();
 
-                pictureBox = new PictureBoxVedomostBl();
-                pictureBox.AddControl(dgv);
+                pictureBox = new PictureBoxVedomostBl ();
+                pictureBox.AddControl (dgv);
                 //??? панель одновременно содержит все picureBox-ы
-                (findControl(INDEX_CONTROL.PANEL_PICTUREBOX.ToString()) as Panel).Controls.Add(pictureBox);
+                (findControl (INDEX_CONTROL.PANEL_PICTUREBOX.ToString ()) as Panel).Controls.Add (pictureBox);
 
                 pictureBox.Enabled =
                 pictureBox.Visible =
                     //dgv.IdComponent == PanelManagement.SelectedBlockId
-                    m_listDataGridViewVedomostBl.IndexOf(dgv) == 0
+                    m_listDataGridViewVedomostBl.IndexOf (dgv) == 0
                     ;
 
                 //возможность_редактирвоания_значений
                 try {
-                    (Controls.Find(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString(), true)[0] as CheckBox).Checked =
-                        m_dictProfile.GetBooleanAttribute(ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE, HTepUsers.ID_ALLOWED.ENABLED_ITEM);
+                    (Controls.Find (PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString (), true) [0] as CheckBox).Checked =
+                        m_dictProfile.GetBooleanAttribute (ID_PERIOD.MONTH, PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE, HTepUsers.ID_ALLOWED.ENABLED_ITEM);
 
-                    if ((findControl(PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString()) as CheckBox).Checked == true)
+                    if ((findControl (PanelManagementVedomostBl.INDEX_CONTROL.CHKBX_MODE_ENABLE.ToString ()) as CheckBox).Checked == true)
                         for (int t = 0; t < dgv.RowCount; t++)
                             dgv.ReadOnlyColumns = false;
                     else
                         ;
                 } catch (Exception e) {
-                //???
-                    Logging.Logg().Exception (e, string.Format(@"PanelVedomostBl::InitializeDataGridView () - ошибки проверки возможности редактирования ячеек..."), Logging.INDEX_MESSAGE.NOT_SET);
+                    //???
+                    Logging.Logg ().Exception (e, string.Format (@"PanelVedomostBl::InitializeDataGridView () - ошибки проверки возможности редактирования ячеек..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
-            }
+            });
         }
 
         /// <summary>
@@ -464,6 +445,19 @@ namespace PluginTaskVedomostBl
                 Logging.Logg().Error(MethodBase.GetCurrentMethod(), @"...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
+        private void addValueRows ()
+        {
+            m_listDataGridViewVedomostBl.ForEach (dgv => {
+                dgv.AddRows (new DataGridViewValues.DateTimeStamp () {
+                    Start = PanelManagement.DatetimeRange.Begin + HandlerDb.OffsetUTC
+                    , Finish = PanelManagement.DatetimeRange.End + HandlerDb.OffsetUTC
+                    , Increment = TimeSpan.FromDays (1)
+                    , ModeDataDatetime = HandlerDb.ModeDataDatetime });
+
+                dgv.SetSize ();
+            });
+        }
+
         #region Обработка измнения значений основных элементов управления на панели управления 'PanelManagement'
         /// <summary>
         /// Обработчик события при изменении значения
@@ -490,6 +484,8 @@ namespace PluginTaskVedomostBl
         protected override void panelManagement_DatetimeRange_onChanged()
         {
             base.panelManagement_DatetimeRange_onChanged();
+
+            addValueRows ();
         }
         /// <summary>
         /// Метод при обработке события 'EventIndexControlBaseValueChanged' (изменение часового пояса)
@@ -534,6 +530,10 @@ namespace PluginTaskVedomostBl
         protected override void handlerDbTaskCalculate_onAddPutParameter(HandlerDbTaskCalculate.PUT_PARAMETER obj)
         {
             base.handlerDbTaskCalculate_onAddPutParameter(obj);
+
+            m_listDataGridViewVedomostBl.ForEach (dgv => {
+                dgv.AddPutParameter (obj);
+            });
         }
         /// <summary>
         /// Обработчик события - добавить NAlg - параметр
@@ -573,8 +573,10 @@ namespace PluginTaskVedomostBl
                 || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
                 switch (evt) {
                     case HandlerDbTaskCalculate.EVENT.SET_VALUES: // отображать значения при отсутствии ошибок
-                        ActiveDataGridView.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
-                            , HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                        ActiveDataGridView.ShowValues(HandlerDb.Values[new TepCommon.HandlerDbTaskCalculate.KEY_VALUES() {
+                                TypeCalculate = TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES
+                                , TypeState = HandlerDbValues.STATE_VALUE.EDIT }]
+                            , new List<HandlerDbTaskCalculate.VALUE>()
                             , out err);
                         break;
                     case HandlerDbTaskCalculate.EVENT.CALCULATE:
@@ -594,6 +596,7 @@ namespace PluginTaskVedomostBl
         {
             throw new NotImplementedException();
         }
+
         /// <summary>
         /// Обработчик события - нажатие кнопки сохранить
         /// </summary>

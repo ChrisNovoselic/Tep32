@@ -5,9 +5,11 @@ using System.Data;
 using System.Data.Common;
 using System.Text;
 
-using HClassLibrary;
 using InterfacePlugIn;
 using TepCommon;
+using ASUTP.Helper;
+using ASUTP.Database;
+using ASUTP;
 
 namespace TepCommon
 {
@@ -364,7 +366,7 @@ namespace TepCommon
             throw new NotImplementedException();
         }
 
-        protected ConnectionSettings _connSett;
+        protected ASUTP.Database.ConnectionSettings _connSett;
 
         protected int _iListenerId;
 
@@ -372,7 +374,7 @@ namespace TepCommon
 
         protected bool isRegisterDbConnection { get { return (_iListenerId > 0) && (!(_dbConnection == null)) && (_dbConnection.State == ConnectionState.Open); } }
 
-        public void InitConnectionSettings(ConnectionSettings connSett)
+        public void InitConnectionSettings(ASUTP.Database.ConnectionSettings connSett)
         {
             _connSett = connSett;
         }
@@ -426,7 +428,7 @@ namespace TepCommon
         /// <summary>
         /// Объект с параметрами для установления соединения с БД
         /// </summary>
-        public ConnectionSettings ConnectionSettings
+        public ASUTP.Database.ConnectionSettings ConnectionSettings
         {
             get { return _connSett; }
         }

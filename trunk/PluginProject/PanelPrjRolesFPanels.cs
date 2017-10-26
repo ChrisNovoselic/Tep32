@@ -9,11 +9,13 @@ using System.Windows.Forms; //DataGridView...
 using System.ComponentModel;
 using System.Collections;
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
 using System.Xml;
 using System.Drawing;
+using ASUTP.Database;
+using ASUTP;
 
 namespace PluginProject
 {
@@ -130,7 +132,7 @@ namespace PluginProject
         }
         #endregion
 
-        public PanelPrjRolesFPanels(IPlugIn iFunc)
+        public PanelPrjRolesFPanels(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc)
         {
             InitializeComponent();

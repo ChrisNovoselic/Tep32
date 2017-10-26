@@ -6,7 +6,6 @@ using System.Windows.Forms;
 using System.Data;
 using System.Data.Common;
 
-using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
 using System.Drawing;
@@ -15,7 +14,7 @@ namespace PluginTaskTepMain
 {
     public partial class PanelTaskTepRealTime : PanelTaskTepCalculate
     {
-        public PanelTaskTepRealTime(IPlugIn iFunc)
+        public PanelTaskTepRealTime(ASUTP.PlugIn.IPlugIn iFunc)
             : base(iFunc, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_TEP_REALTIME)
         {
             InitializeComponent();

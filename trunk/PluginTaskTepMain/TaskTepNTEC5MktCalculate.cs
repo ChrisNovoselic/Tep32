@@ -1,6 +1,5 @@
 ﻿using System;
 
-using HClassLibrary;
 using TepCommon;
 
 namespace PluginTaskTepMain
@@ -2916,7 +2915,8 @@ namespace PluginTaskTepMain
                     #endregion
 
                     default:
-                        Logging.Logg().Error(@"TaskTepCalculate::calculateMaket (N_ALG=" + nAlg + @") - неизвестный параметр...", Logging.INDEX_MESSAGE.NOT_SET);
+                        ASUTP.Logging.Logg().Error(@"TaskTepCalculate::calculateMaket (N_ALG=" + nAlg + @") - неизвестный параметр..."
+                            , ASUTP.Logging.INDEX_MESSAGE.NOT_SET);
                         break;
                 }
                 return fRes;

@@ -5,13 +5,12 @@ using System.Text;
 using System.Data; //DataTable
 using System.Data.Common; //DbConnection
 using System.Xml;
-
-using HClassLibrary;
+using ASUTP;
+using ASUTP.Database;
 
 namespace TepCommon
 {
-    public class HTepUsers : HUsers
-    {
+    public class HTepUsers : ASUTP.Helper.HUsers {
         /// <summary>
         /// Перечисление - идентификаторы ролей (групп) пользователей из БД [roles_unit]
         /// </summary>
@@ -78,7 +77,7 @@ namespace TepCommon
 
             DataTable tableRoles = null;
 
-            HUsers.GetRoles(ref dbConn, @"(ID_EXT=" + Role + @" AND IS_ROLE=1)"
+            ASUTP.Helper.HUsers.GetRoles(ref dbConn, @"(ID_EXT=" + Role + @" AND IS_ROLE=1)"
                 + @" OR (ID_EXT=" + Id + @" AND IS_ROLE=0)"
                 , string.Empty, out tableRoles, out iRes);
 

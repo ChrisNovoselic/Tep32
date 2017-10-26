@@ -8,7 +8,8 @@ using System.Text;
 using System.Windows.Forms;
 using ELW.Library.Math;
 using ELW.Library.Math.Expressions;
-using HClassLibrary;
+
+using ASUTP;
 
 namespace TepCommon
 {
@@ -57,6 +58,8 @@ namespace TepCommon
                 /// Значение начальной метки даты/времени
                 /// </summary>
                 public DateTime Start;
+
+                public DateTime Finish;
                 /// <summary>
                 /// Приращение для начальной метки даты/времени (от строки - к строке)
                 ///  , зависит от периода расчета (например, для месяца - сутки, для суток - час)
@@ -543,7 +546,7 @@ namespace TepCommon
                             ? DatetimeStamp.Increment.Equals(TimeSpan.MaxValue) == false
                                 ? DatetimeStamp.Increment < TimeSpan.FromDays(1)
                                     ? 24 // сутки - час
-                                        : DateTime.DaysInMonth(DatetimeStamp.Start.Year, DatetimeStamp.Start.Month) // месяц - сутки
+                                        : (DatetimeStamp.Finish - DatetimeStamp.Start).Days // DateTime.DaysInMonth(DatetimeStamp.Start.Year, DatetimeStamp.Start.Month) // месяц - сутки
                                             : 12 // год - месяц
                                                 : -1;
                     else
@@ -632,8 +635,8 @@ namespace TepCommon
                             //for (int i = 0; i < cnt + 1; i++, dtCurrent += tsIncrement)
                             //    addRow(dtCurrent, !(i < cnt));
                             // вариант №2
-                            for (int i = 0; i < cnt + 1; i++)
-                                addRow((RowCount + 1) == cnt + 1);
+                            while (RowCount < cnt + 1)
+                                addRow((RowCount + 1) == (cnt + 1));
                         else
                             throw new Exception(@"HPanelTepCommon.DataGridViewValues::addRows () - не установлена метка даты для DataGridView в целом...");
                     else

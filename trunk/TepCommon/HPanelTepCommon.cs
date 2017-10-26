@@ -9,10 +9,12 @@ using System.Windows.Forms;
 using System.Data; //DataTable
 using System.Data.Common;
 
-using HClassLibrary;
 using InterfacePlugIn;
 using System.Globalization;
 using static TepCommon.HandlerDbTaskCalculate;
+using ASUTP.PlugIn;
+using ASUTP.Core;
+using ASUTP;
 
 namespace TepCommon
 {
@@ -31,7 +33,7 @@ namespace TepCommon
         /// </summary>
         /// <param name="plugIn">Объект для связи с вызывающей программой</param>
         /// <param name="type">Тип(ы) расчетов, выполняемых на вкладке</param>
-        public HPanelTepCommon(IPlugIn plugIn, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
+        public HPanelTepCommon(ASUTP.PlugIn.IPlugIn plugIn, TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE type)
             : base (plugIn)
         {
             TaskCalculateType = type;            

@@ -1,14 +1,14 @@
-﻿using System;
+﻿using ASUTP.Control;
+using ASUTP.PlugIn;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-using HClassLibrary;
-
 namespace InterfacePlugIn
 {
-    public abstract class HFunc : PlugInMenuItem
+    public abstract class HFunc : ASUTP.PlugIn.PlugInMenuItem
     {
         /// <summary>
         /// Перечисление - идентификаторы обмена данными между приложением и функциональными библиотеками
@@ -39,19 +39,15 @@ namespace InterfacePlugIn
             pair = new KeyValuePair<int, int>(id, (int)ID_FUNC_DATA_ASKED_HOST.CONNSET_MAIN_DB);
 
             //Проверить признак выполнения запроса к вызвавшему объекту на получение параметров соединения с БД 
-            if (m_dictDataHostCounter.ContainsKey(pair) == false)
+            if (isDataHostMarked(id, (int)ID_FUNC_DATA_ASKED_HOST.CONNSET_MAIN_DB) == false)
                 // отправить запрос на получение параметров соединения с БД
                 DataAskedHost(new object [] {id, (int)ID_FUNC_DATA_ASKED_HOST.CONNSET_MAIN_DB}); //Start
-            else
-                if (m_dictDataHostCounter[pair] % 2 == 0)
-                    DataAskedHost(new object [] {id, (int)ID_FUNC_DATA_ASKED_HOST.CONNSET_MAIN_DB}); //Start
-                else
-                {
-                    m_dictDataHostCounter[pair]++;
+            else {
+                SetDataHostMark (id, (int)ID_FUNC_DATA_ASKED_HOST.CONNSET_MAIN_DB, true);
 
-                    (_objects[id] as HPanelCommon).Activate(false);
-                    (_objects[id] as HPanelCommon).Stop();
-                }
+                (_objects[id] as HPanelCommon).Activate(false);
+                (_objects[id] as HPanelCommon).Stop();
+            }
 
             //Вернуть главной форме параметр
             DataAskedHost(new object [] {id, obj});

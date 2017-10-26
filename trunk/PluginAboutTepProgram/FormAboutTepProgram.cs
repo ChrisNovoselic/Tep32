@@ -7,21 +7,22 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-using HClassLibrary;
+
 using TepCommon;
 using InterfacePlugIn;
 using System.Collections;
 using System.Threading;
+using ASUTP.PlugIn;
 
 namespace PluginAboutTepProgram
 {
     public partial class FormAboutTepProgram : Form
     {
-        IPlugIn _iFuncPlugin;
+        ASUTP.PlugIn.IPlugIn _iFuncPlugin;
 
         public ManualResetEvent m_mnlResetEventReady;
 
-        public FormAboutTepProgram(IPlugIn iFunc)
+        public FormAboutTepProgram(ASUTP.PlugIn.IPlugIn iFunc)
         {
             InitializeComponent();
             this._iFuncPlugin = iFunc;
@@ -47,7 +48,7 @@ namespace PluginAboutTepProgram
 
         public void UpdateGUI (object obj) {
             if (this.InvokeRequired == true)
-                this.BeginInvoke(new DelegateObjectFunc(updateGUI), obj);
+                this.BeginInvoke(new ASUTP.Core.DelegateObjectFunc (updateGUI), obj);
             else
                 updateGUI(obj);
         }
@@ -95,18 +96,18 @@ namespace PluginAboutTepProgram
             pairProductVersion = new KeyValuePair<int, int>(id, (int)ID_FUNC_DATA_ASKED_HOST.STR_PRODUCTVERSION);
             //pairShowDialog = new KeyValuePair<int, int>(id, (int)ID_DATAASKED_HOST.FORMABOUT_SHOWDIALOG);
 
-            if ((m_dictDataHostCounter.ContainsKey(pairIconMainForm) == true)
-                && (m_dictDataHostCounter.ContainsKey(pairProductVersion) == true)) {
+            if ((isDataHostMarked(pairIconMainForm) == true)
+                && (isDataHostMarked(pairProductVersion) == true)) {
                 ShowDialog();
             } else {
             // запрашиваем значения
                 // пиктограмма
-                if (m_dictDataHostCounter.ContainsKey(pairIconMainForm) == false)
+                if (isDataHostMarked(pairIconMainForm) == false)
                     DataAskedHost(new object[] { pairIconMainForm.Key, (int)pairIconMainForm.Value });
                 else
                     ;
                 // версия программы
-                if (m_dictDataHostCounter.ContainsKey(pairProductVersion) == false)
+                if (isDataHostMarked(pairProductVersion) == false)
                     DataAskedHost(new object[] { pairProductVersion.Key, (int)pairProductVersion.Value });
                 else
                     ;

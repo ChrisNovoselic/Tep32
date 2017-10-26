@@ -1,6 +1,6 @@
-﻿using System;
+﻿using ASUTP;
+using System;
 
-using HClassLibrary;
 using TepCommon;
 
 namespace PluginTaskTepMain
@@ -27,7 +27,8 @@ namespace PluginTaskTepMain
             /// </summary>
             private void logErrorUnknownModeDev(string nAlg, P_ALG.KEY_P_VALUE keyPValue)
             {
-                Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @", ID_COMP=" + keyPValue.Id + @") - неизвестный режим работы оборудования ...", Logging.INDEX_MESSAGE.NOT_SET);
+                ASUTP.Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @", ID_COMP=" + keyPValue.Id + @") - неизвестный режим работы оборудования ..."
+                    , ASUTP.Logging.INDEX_MESSAGE.NOT_SET);
             }
             /// <summary>
             /// Рассчитать значения для параметра в алгоритме расчета по идентификатору
@@ -454,7 +455,8 @@ namespace PluginTaskTepMain
                                 {
                                     case MODE_DEV.COND_1: //[MODE_DEV].1 - Конденсационный
                                         fTmp = -1F;
-                                        Logging.Logg().Warning(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - не расчитывается при режиме '1 - Конденсационный'...", Logging.INDEX_MESSAGE.NOT_SET);
+                                        ASUTP.Logging.Logg().Warning(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - не расчитывается при режиме '1 - Конденсационный'..."
+                                            , Logging.INDEX_MESSAGE.NOT_SET);
                                         break;
                                     case MODE_DEV.ELEKTRO2_2: //[MODE_DEV].2 - Электр.граф (2 ст.)
                                         fTmp = fTable.F1(@"2.6:1", Norm[@"10.1"][keyPValue].value);
@@ -3096,13 +3098,13 @@ namespace PluginTaskTepMain
 
                         case @"":
                         default:
-                            Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный параметр...", Logging.INDEX_MESSAGE.NOT_SET);
+                            ASUTP.Logging.Logg().Error(@"TaskTepCalculate::calculateNormative (N_ALG=" + nAlg + @") - неизвестный параметр...", ASUTP.Logging.INDEX_MESSAGE.NOT_SET);
                             break;
                     }
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, @"TaskTepCalculate::calculateNormative (nAlg=" + nAlg + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    ASUTP.Logging.Logg().Exception(e, @"TaskTepCalculate::calculateNormative (nAlg=" + nAlg + @") - ...", ASUTP.Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
                 return fRes;

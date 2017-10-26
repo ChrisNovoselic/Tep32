@@ -9,9 +9,10 @@ using System.Data; //DataTable
 
 //using System.Security.Policy.Evidence;
 
-using HClassLibrary;
 using TepCommon;
 using InterfacePlugIn;
+using ASUTP;
+using ASUTP.PlugIn;
 
 namespace Tep64
 {
@@ -141,7 +142,11 @@ namespace Tep64
 
                         if (ContainsKey(idPlugIn) == false)
                         {
-                            plugIn = load(tableFPanels.Rows[i][@"NAME_PLUGIN"].ToString().Trim(), out err) as PlugInMenuItem;
+                            plugIn = load(tableFPanels.Rows[i][@"NAME_PLUGIN"].ToString().Trim()
+#if _SEPARATE_APPDOMAIN
+                                , ASUTP.Helper.ProgramBase.SeparateAppDomain_UnhandledException
+#endif
+                                , out err) as PlugInMenuItem;
 
                             if (err == 0)
                             {

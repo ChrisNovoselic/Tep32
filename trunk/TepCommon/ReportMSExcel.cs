@@ -5,10 +5,11 @@ using System.Reflection;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 
-using HClassLibrary;
 using System.Windows.Forms;
 using System.IO;
 using System.Runtime.InteropServices;
+
+using ASUTP;
 
 namespace TepCommon
 {
@@ -59,7 +60,7 @@ namespace TepCommon
         }
 
 
-        protected virtual void create(int headerColumn, int beginDataRow, Dictionary<int, List<string>> allValues, DateTimeRange dtRange)
+        protected virtual void create(int headerColumn, int beginDataRow, Dictionary<int, List<string>> allValues, ASUTP.Core.DateTimeRange dtRange)
         {
             List<string> values;
             Excel.Range range;            
@@ -82,7 +83,7 @@ namespace TepCommon
         /// </summary>
         /// <param name="dgv">отрбражение данных</param>
         /// <param name="dtRange">дата</param>
-        public void Create(string nameSheet, int headerColumn, int beginDataRow, Dictionary<int, List<string>> allValues, DateTimeRange dtRange)
+        public void Create(string nameSheet, int headerColumn, int beginDataRow, Dictionary<int, List<string>> allValues, ASUTP.Core.DateTimeRange dtRange)
         {
             if (addWorkbook() == true) {
                 m_workBook.AfterSave += workBook_AfterSave;
@@ -177,7 +178,7 @@ namespace TepCommon
         //    }
         //}
 
-        protected void setHeaderValues(Excel.Range range, HClassLibrary.DateTimeRange dates, int indxRowExcel)
+        protected void setHeaderValues(Excel.Range range, ASUTP.Core.DateTimeRange dates, int indxRowExcel)
         {
             int row = -1
                 , cntDay = -1;

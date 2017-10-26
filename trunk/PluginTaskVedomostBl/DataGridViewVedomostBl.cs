@@ -1,4 +1,4 @@
-﻿using HClassLibrary;
+﻿using ASUTP;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -726,7 +726,8 @@ namespace PluginTaskVedomostBl
 
             protected override bool isRowToShowValues(DataGridViewRow r, TepCommon.HandlerDbTaskCalculate.VALUE value)
             {
-                throw new NotImplementedException();
+                //??? копия метода 'PanelTaskAutobookMonthValues::isRowToShowValues' (или любого другого в режиме "строки - дата/время") 
+                return (r.Tag is DateTime) ? value.stamp_value.Equals (((DateTime)(r.Tag))) == true : false;
             }
         }
     }
