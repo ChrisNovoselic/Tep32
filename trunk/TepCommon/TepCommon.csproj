@@ -47,7 +47,8 @@
     <Reference Include="ASUTP.Database">
       <HintPath>..\..\ExternalDLL\ASUTP.Database.dll</HintPath>
     </Reference>
-    <Reference Include="ASUTP.Helper">
+    <Reference Include="ASUTP.Helper, Version=1.1.2.3, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\ExternalDLL\ASUTP.Helper.dll</HintPath>
     </Reference>
     <Reference Include="ASUTP.Logging">
