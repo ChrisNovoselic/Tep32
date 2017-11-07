@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{96E92AAE-CC42-4F6B-B737-C9AADA560D20}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>TepCommon</RootNamespace>
+    <AssemblyName>TepCommon</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Tep\bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ASUTP.Control">
+      <HintPath>..\..\ExternalDLL\ASUTP.Control.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Core">
+      <HintPath>..\..\ExternalDLL\ASUTP.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Database">
+      <HintPath>..\..\ExternalDLL\ASUTP.Database.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Helper, Version=1.1.2.3, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ExternalDLL\ASUTP.Helper.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.Logging">
+      <HintPath>..\..\ExternalDLL\ASUTP.Logging.dll</HintPath>
+    </Reference>
+    <Reference Include="ASUTP.PlugIn">
+      <HintPath>..\..\ExternalDLL\ASUTP.PlugIn.dll</HintPath>
+    </Reference>
+    <Reference Include="ELW.Library.Math">
+      <HintPath>..\..\ExternalDLL\ELW.Library.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Framework" />
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+      <HintPath>..\..\ExternalDLL\Microsoft.Office.Interop.Excel.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DataGridViewValues.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Define.cs" />
+    <Compile Include="FTable.cs" />
+    <Compile Include="HandlerDbTaskCalculate.cs" />
+    <Compile Include="HControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HPanelManagementCalculate.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HPanelCommon.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HPanelDesc.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HPanelTepCommon.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HTepUsers.cs" />
+    <Compile Include="PanelPrjParametersEditTree.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="HPanelEditList.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HPanelEditTree.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HandlerDbValues.cs" />
+    <Compile Include="ReportMSExcel.cs" />
+    <Compile Include="TaskCalculate.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\InterfacePlugIn\InterfacePlugIn.csproj">
+      <Project>{25637BE7-4002-46BE-A0D4-4C7EAAAA5148}</Project>
+      <Name>InterfacePlugIn</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="key.snk" />
+    <None Include="Resources\TepApp.ico" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
