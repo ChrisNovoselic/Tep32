@@ -94,7 +94,7 @@ namespace PluginTaskBalTeplo
             private float calculateOut(string nAlg, DateTime stamp)
             {
                 float fRes = 0F,
-                     fTmp = -1F;//промежуточная велечина
+                     fTmp = -1F; //промежуточная величина
                 float sum = 0,
                     sum1 = 0;
                 P_ALG.KEY_P_VALUE keyStationPValue
@@ -484,7 +484,7 @@ namespace PluginTaskBalTeplo
             private float calculateIn(string nAlg, DateTime stamp)
             {
                 float fRes = 0F,
-                     fTmp = -1F;//промежуточная велечина
+                     fTmp = -1F;//промежуточная величина
                 float sum = 0,
                     sum1 = 0;
                 int i = -1;
@@ -808,6 +808,78 @@ namespace PluginTaskBalTeplo
                 delegateResultListValue(TYPE.OUT_VALUES, resultToListValue(_dictPAlg[TYPE.OUT_VALUES]), RESULT.Ok);
             }
         }
+        /// <summary>
+        /// Таблицы со значениями для редактирования входные
+        /// </summary>
+        public DataTable[] m_arTableOrigin_in
+            , m_arTableEdit_in;
+
+        public DataTable m_dt_profile;
+
+        /// <summary>
+        /// Таблицы со значениями для редактирования выходные
+        /// </summary>
+        public DataTable[] m_arTableOrigin_out
+            , m_arTableEdit_out;
+
+        /// <summary>
+        /// Получает структуру таблицы 
+        /// OUTVAL_XXXXXX
+        /// </summary>
+        /// <param name="err"></param>
+        /// <param name="dateBegin">Дата</param>
+        /// <returns>таблица</returns>
+        public DataTable getStructurOutval(out int err, DateTime dateBegin)
+        {
+            string strRes = string.Empty;
+            DataTable res = new DataTable();
+
+            strRes = "SELECT * FROM "
+                + GetNameTableOut(dateBegin);
+
+            res = Select(strRes, out err).Clone();
+            res.Columns.Remove("ID");
+            return res;
+        }
+
+        /// <summary>
+        /// Получение имени таблицы вых.зн. в БД
+        /// </summary>
+        /// <param name="dtInsert">Дата</param>
+        /// <returns>Имя таблицы</returns>
+        public string GetNameTableOut(DateTime dtInsert)
+        {
+            string strRes = string.Empty;
+
+            if (dtInsert == null)
+                throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
+            else
+                ;
+
+            strRes = TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.OUTVALUES].m_name + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+
+            return strRes;
+        }
+
+        /// <summary>
+        /// Получение имени таблицы вх.зн. в БД
+        /// </summary>
+        /// <param name="dtInsert"></param>
+        /// <returns>Имя таблицы</returns>
+        public string GetNameTableIn(DateTime dtInsert)
+        {
+            string strRes = string.Empty;
+
+            if (dtInsert == null)
+                throw new Exception(@"PanelTaskAutobook::GetNameTable () - невозможно определить наименование таблицы...");
+            else
+                ;
+
+            strRes = TepCommon.HandlerDbTaskCalculate.s_dictDbTables[ID_DBTABLE.INVALUES].m_name + @"_" + dtInsert.Year.ToString() + dtInsert.Month.ToString(@"00");
+
+            return strRes;
+        }
+
         /// <summary>
         /// Создать объект расчета для типа задачи
         /// </summary>
