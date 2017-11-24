@@ -39,6 +39,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\ExternalDLL\ASUTP.Core.dll</HintPath>
     </Reference>
+    <Reference Include="ASUTP.Database, Version=1.1.1.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ASUTP.Library\ASUTP.Database\obj\Debug\ASUTP.Database.dll</HintPath>
+    </Reference>
     <Reference Include="ASUTP.Helper, Version=1.1.1.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\ExternalDLL\ASUTP.Helper.dll</HintPath>

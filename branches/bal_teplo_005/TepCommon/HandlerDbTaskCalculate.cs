@@ -3,9 +3,11 @@ using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data;
+using System.Data.Common;
 
 using ASUTP;
 using ASUTP.Core;
+using ASUTP.Database;
 
 namespace TepCommon
 {
@@ -2747,6 +2749,67 @@ namespace TepCommon
 
             return tableRes;
         }
+
+        #region параметры для имитации загрузки
+
+        ///// <summary>
+        ///// Строка, содержащая наименование таблицы в локальной БД
+        ///// </summary>
+        //public static string DB_TABLE_TMP = @"[TEP_NTEC_5].[dbo].[inval_201612]";
+
+        ///// <summary>
+        ///// Поля таблицы данных
+        ///// </summary>
+        //private enum DB_TABLE_DATA
+        //{
+        //    ID, ID_TG, G_sv, t_pr, t_obr, P_pr, Sh, V, G_sv_p, Q_bl, DATE
+        //};
+
+        ///// <summary>
+        ///// Возвратить строку запроса для получения данных
+        ///// </summary>
+        ///// <returns>Строка запроса</returns>
+        //public static string getQueryDataTable()
+        //{
+        //    string strRes = "SELECT ";
+        //    foreach (DB_TABLE_DATA indx in Enum.GetValues(typeof(DB_TABLE_DATA)))
+        //    {
+        //        strRes += "[" + indx.ToString() + "], ";
+        //    }
+        //    strRes = strRes.Remove(strRes.Length - 2, 2);
+        //    strRes += " FROM " + DB_TABLE_TMP;
+        //    return strRes;
+        //}
+
+        ///// <summary>
+        ///// Возвратить таблицу из БД конфигурации
+        ///// </summary>
+        ///// <param name="iListenerId">Идентификатор подписчика для обращения к БД</param>
+        ///// <param name="err">Идентификатор ошибки при выполнении запроса</param>
+        ///// <returns>Таблица - с данными</returns>
+        //public static DataTable getDataTable(int iListenerId, out int err)
+        //{
+        //    DataTable tableRes = new DataTable();
+
+        //    DbConnection connConfigDB;
+        //    string req = string.Empty;
+
+        //    connConfigDB = DbSources.Sources().GetConnection(iListenerId, out err);
+
+        //    if (err == 0)
+        //    {
+        //        req = getQueryDataTable();
+
+        //        tableRes = DbTSQLInterface.Select(ref connConfigDB, req, null, null, out err);
+        //    }
+        //    else
+        //    { }
+
+        //    return tableRes;
+        //}
+
+        #endregion
+
         /// <summary>
         /// Возвратить объект-таблицу со значениями из таблицы с сохраняемыми значениями из источников информации
         /// </summary>
@@ -2764,6 +2827,12 @@ namespace TepCommon
             err = 0;
 
             DataTable tableRes = new DataTable();
+
+            tableRes = getDefaultTableValues(idPeriod, out err);
+
+            //#region имитация загрузки значений (локальная БД)
+
+            //#endregion
 
             return tableRes;
         }

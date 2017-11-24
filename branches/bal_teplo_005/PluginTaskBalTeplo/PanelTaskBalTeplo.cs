@@ -780,7 +780,12 @@ namespace PluginTaskBalTeplo
         protected override void panelTepCommon_btnUpdate_onClick(object obj, EventArgs ev)
         {
             // ... - загрузить/отобразить значения из БД
+
             HandlerDb.UpdateDataValues(m_Id, TaskCalculateType, TepCommon.HandlerDbTaskCalculate.ID_VIEW_VALUES.SOURCE_LOAD);
+
+            // Имитация загрузки данных из БД (за выбранный период)
+
+            //GetDataFromDB.getDataTable();
         }
         ///// <summary>
         ///// 
@@ -844,7 +849,7 @@ namespace PluginTaskBalTeplo
 
             initialize(new ID_DBTABLE[] {
                 ID_DBTABLE.TIMEZONE, ID_DBTABLE.COMP_LIST, ID_DBTABLE.MEASURE, ID_DBTABLE.RATIO
-                , ID_DBTABLE.INALG, ID_DBTABLE.OUTALG, ID_DBTABLE.TIME}
+                , ID_DBTABLE.INALG, ID_DBTABLE.OUTALG, ID_DBTABLE.TIME, ID_DBTABLE.IN_PARAMETER, ID_DBTABLE.OUT_PARAMETER}
                 , out err, out errMsg
             );
 
