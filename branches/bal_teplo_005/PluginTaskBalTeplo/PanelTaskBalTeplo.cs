@@ -1001,6 +1001,11 @@ namespace PluginTaskBalTeplo
         {
             int err = -1;
 
+
+            HandlerDbTaskCalculate.KEY_VALUES key;
+            IEnumerable<HandlerDbTaskCalculate.VALUE> inValues
+                , outValues;
+
             string msgToStatusStrip = string.Empty;
 
             switch (evt) {
@@ -1022,17 +1027,23 @@ namespace PluginTaskBalTeplo
                 || (res == TepCommon.HandlerDbTaskCalculate.RESULT.Warning))
                 switch (evt) {
                     case HandlerDbTaskCalculate.EVENT.SET_VALUES: // отображать значения при отсутствии ошибок
-                        dgvBlock.ShowValues(HandlerDb.m_arTableOrigin_in, HandlerDb.m_arTableOrigin_out
+
+                        key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
+                        inValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUE>();
+                        key = new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES, TypeState = HandlerDbValues.STATE_VALUE.EDIT };
+                        outValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUE>();
+
+                        dgvBlock.ShowValues(inValues, outValues
                             , m_dictTableDictPrj);
-                        dgvOutput.ShowValues(HandlerDb.m_arTableOrigin_in, HandlerDb.m_arTableOrigin_out
+                        dgvOutput.ShowValues(inValues, outValues
                             , m_dictTableDictPrj);
-                        dgvTeploBL.ShowValues(HandlerDb.m_arTableOrigin_in, HandlerDb.m_arTableOrigin_out
+                        dgvTeploBL.ShowValues(inValues, outValues
                             , m_dictTableDictPrj);
-                        dgvTeploOP.ShowValues(HandlerDb.m_arTableOrigin_in, HandlerDb.m_arTableOrigin_out
+                        dgvTeploOP.ShowValues(inValues, outValues
                             , m_dictTableDictPrj);
-                        dgvParam.ShowValues(HandlerDb.m_arTableOrigin_in, HandlerDb.m_arTableOrigin_out
+                        dgvParam.ShowValues(inValues, outValues
                             , m_dictTableDictPrj);
-                        dgvPromPlozsh.ShowValues(HandlerDb.m_arTableOrigin_in, HandlerDb.m_arTableOrigin_out
+                        dgvPromPlozsh.ShowValues(inValues, outValues
                             , m_dictTableDictPrj);
                         break;
                     case HandlerDbTaskCalculate.EVENT.CALCULATE:
