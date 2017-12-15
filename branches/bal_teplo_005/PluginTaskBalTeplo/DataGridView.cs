@@ -27,29 +27,29 @@ namespace PluginTaskBalTeplo
 
             public enum TYPE_COLUMN_TAG : short { UNKNOWN = short.MinValue, COMPONENT, PUT_PARAMETER, FORMULA_HELPER, GROUPING_PARAMETR }
 
-            //public struct COLUMN_TAG
-            //{
-            //    /// <summary>
-            //    /// Идентификатор столбца
-            //    /// </summary>
-            //    public object value;
-            //    /// <summary>
-            //    /// Тип объекта, являющегося идентификатором столбца
-            //    /// </summary>
-            //    public TYPE_COLUMN_TAG Type;
-            //    /// <summary>
-            //    /// Признак отмены агрегационной функции
-            //    ///  (при наличии таковой, по, например, указанной в проекте единице измерения)
-            //    /// </summary>
-            //    public bool ActionAgregateCancel;
-            //    /// <summary>
-            //    /// Индекс(номер, адрес) столбца в книге MS Excel при экспорте значений столбца
-            //    ///  , отсутствие значения - признак отсутствия необходимости экпорта значений столбца
-            //    /// </summary>
-            //    public int TemplateReportAddress;
-            //}
+            public struct COLUMN_TAG
+            {
+                /// <summary>
+                /// Идентификатор столбца
+                /// </summary>
+                public object value;
+                /// <summary>
+                /// Тип объекта, являющегося идентификатором столбца
+                /// </summary>
+                public TYPE_COLUMN_TAG Type;
+                /// <summary>
+                /// Признак отмены агрегационной функции
+                ///  (при наличии таковой, по, например, указанной в проекте единице измерения)
+                /// </summary>
+                public bool ActionAgregateCancel;
+                /// <summary>
+                /// Индекс(номер, адрес) столбца в книге MS Excel при экспорте значений столбца
+                ///  , отсутствие значения - признак отсутствия необходимости экпорта значений столбца
+                /// </summary>
+                public int TemplateReportAddress;
+            }
 
-                #endregion
+            #endregion
 
 
             public enum INDEX_VIEW_VALUES { Block = 2001, Output = 2002, TeploBL = 2003, TeploOP = 2004, Param = 2005, PromPlozsh = 2006 };
@@ -243,6 +243,18 @@ namespace PluginTaskBalTeplo
             }
 
             /// <summary>
+            /// Признак, указывающий принажлежит ли значение строке
+            ///  иными словами: отображать ли значение в этой строке
+            /// </summary>
+            /// <param name="r">Строка (проверяемая) для отображения значения</param>
+            /// <param name="value">Значение для отображения в строке</param>
+            /// <returns>Признак - результат проверки условия (Истина - отображать/принадлежит)</returns>
+            protected bool isRowToShowValues(DataGridViewRow r, HandlerDbTaskCalculate.VALUE value)
+            {
+                return true; // необходимость проверки? способ?
+            }
+
+            /// <summary>
             /// заполнение датагрида
             /// </summary>
             /// <param name="tbOrigin_in">таблица значений</param>
@@ -254,7 +266,8 @@ namespace PluginTaskBalTeplo
                 int idAlg = -1
                    , idPut = -1
                    , iCol = 0;
-                float fltColumnAgregateValue = 0;
+                float fltVal = -1F,
+                        fltColumnAgregateValue = 0;
                 AGREGATE_ACTION columnAction = AGREGATE_ACTION.UNKNOWN;
                 HandlerDbTaskCalculate.IPUT_PARAMETERChange putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
                 IEnumerable<HandlerDbTaskCalculate.VALUE> columnValues = null;
@@ -269,7 +282,8 @@ namespace PluginTaskBalTeplo
                 #endregion
 
                 #region делегат для отображения значений с попутной установкой значений свойств ячейки, локальных переменных
-                Action<DataGridViewCell, HandlerDbTaskCalculate.VALUE, AGREGATE_ACTION> show_value = (DataGridViewCell cell, HandlerDbTaskCalculate.VALUE value, AGREGATE_ACTION c_action) => {
+                Action<DataGridViewCell, HandlerDbTaskCalculate.VALUE, AGREGATE_ACTION> show_value = (DataGridViewCell cell, HandlerDbTaskCalculate.VALUE value, AGREGATE_ACTION c_action) =>
+                {
                     fltVal = value.value;
                     //iQuality = value.m_iQuality;
 
@@ -278,27 +292,125 @@ namespace PluginTaskBalTeplo
                     else
                         ;
 
-                    cell.Tag = new CELL_PROPERTY() { m_Value = fltVal, m_iQuality = value.m_iQuality };
+                    //cell.Tag = new CELL_PROPERTY() { m_Value = fltVal, m_iQuality = value.m_iQuality };
                     cell.ReadOnly = Columns[iCol].ReadOnly
                         || double.IsNaN(fltVal);
 
-                    if (getColorCellToValue(idAlg, idPut, value.m_iQuality, out clrCell) == false)
-                    {
-                        clrCell = s_arCellColors[(int)INDEX_COLOR.EMPTY];
-                    }
-                    else
-                    {
-                        fltVal = GetValueCellAsRatio(idAlg, idPut, fltVal);
-
                         // отобразить с количеством знаков в соответствии с настройками
-                        cell.Value = fltVal;
-                        cell.ToolTipText = fltVal.ToString();
-                    }
+                    cell.Value = fltVal;
+                    cell.ToolTipText = fltVal.ToString();
 
-                    cell.Style.BackColor = clrCell;
+                    //cell.Style.BackColor = clrCell;
                 };
                 #endregion
 
+
+
+                #region Отображение значений в столбце для обычного параметра
+                //try
+                //{
+                //    putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value;
+                //    idPut = putPar.m_Id;
+
+                //    columnValues = inValues.Where(value => get_values(value, idPut));
+                //    columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
+
+                //    idAlg = putPar.m_idNAlg;
+                //}
+                //catch (Exception e)
+                //{
+                //    Logging.Logg().Exception(e, @"DataGridViewValues::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                //}
+
+                //if ((putPar.IdComponent > 0)
+                //    && (!(columnValues == null)))
+                //{
+                //    columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
+
+                //    foreach (DataGridViewRow r in Rows)
+                //    {
+                //        if (columnValues.Count() > 0)
+                //            // есть значение хотя бы для одной строки
+                //            foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
+                //            {
+                //                if (isRowToShowValues(r, value) == true)
+                //                {
+                //                    show_value(r.Cells[iCol]
+                //                        , value
+                //                        , columnAction);
+                //                }
+                //                else
+                //                    r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                //            }
+                //        else
+                //        {
+                //            // нет значений ни для одной строки
+                //            r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                //        }
+                //    } // цикл по строкам
+
+                //    if (!(columnAction == AGREGATE_ACTION.UNKNOWN))
+                //    {
+                //        fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
+
+                //        Rows[Rows.Count - 1].Cells[iCol].Value =
+                //            fltColumnAgregateValue;
+                //    }
+                //    else
+                //        ;
+                //}
+                //else
+                //    Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
+                //            , ((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).m_Id, inValues.Count())
+                //        , Logging.INDEX_MESSAGE.NOT_SET);
+                #endregion
+
+                #region comment
+
+                //component = (HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)col.Tag).value;
+
+                //if (!(component.m_iType == HandlerDbTaskCalculate.TECComponent.TYPE.UNKNOWN))
+                //{
+                //    //columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
+
+                //    foreach (DataGridViewRow r in Rows)
+                //    {
+                //        idAlg = (int)r.Tag;
+
+                //        putPar = m_dictNAlgProperties.FirstPutParameter(idAlg, component.m_Id);
+
+                //        if (!(putPar == null))
+                //        {
+                //            idPut = putPar.m_Id;
+
+                //            columnValues = inValues.Where(value => get_values(value, idPut));
+                //            columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
+                //        }
+                //        else
+                //            ;
+
+                //        if (columnValues.Count() > 0)
+                //            // есть значение хотя бы для одной строки
+                //            foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
+                //            {
+                //                show_value(r.Cells[iCol]
+                //                    , value
+                //                    , AGREGATE_ACTION.UNKNOWN);
+
+                //                //r.Cells[iCol].Style.Format = m_dictNAlgProperties[idAlg].FormatRound;
+                //            }
+                //        else
+                //            ;
+                //    }
+                //}
+                //else
+                //    ;
+
+                #endregion
+
+
+
+                // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
                 if (RowCount > 1)
                 {
                     // отменить обработку события - изменение значения в ячейке представления
@@ -309,53 +421,13 @@ namespace PluginTaskBalTeplo
                         iCol = col.Index;
                         fltColumnAgregateValue = 0F;
 
-                        // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
-                        if (RowCount > 1)
-                        {
-                            // отменить обработку события - изменение значения в ячейке представления
-                            //activateCellValue_onChanged(false);
-
-                            foreach (DataGridViewColumn col in Columns)
-                            {
-                                iCol = col.Index;
-                                fltColumnAgregateValue = 0F;
-
-                                if (!(col.Tag == null))
-                                    switch (((COLUMN_TAG)col.Tag).Type)
-                                    {
-                                        case TYPE_COLUMN_TAG.COMPONENT:
-                                         
-                                            break;
-                                        case TYPE_COLUMN_TAG.PUT_PARAMETER:
-                                        case TYPE_COLUMN_TAG.GROUPING_PARAMETR:
-                                           
-                                            break;
-                                        case TYPE_COLUMN_TAG.FORMULA_HELPER:
-                                            break;
-                                        default: // для столбца указан не известный тип идентификатора ('tag')
-                                            Logging.Logg().Error(string.Format(@"HPanelTepCommon.DataGridViewValues::ShowValues () - {0}-неизвестный тип идентификатора столбца ...", col.Tag.GetType().FullName), Logging.INDEX_MESSAGE.NOT_SET);
-                                            break;
-                                    }
-                                else
-                                    // для столбца не указан идентификатор ('tag')
-                                    Logging.Logg().Error(string.Format(@"HPanelTepCommon.DataGridViewValues::ShowValues () - не укахан идентификатор столбца ..."), Logging.INDEX_MESSAGE.NOT_SET);
-                            }
-                            // восстановить обработку события - изменение значение в ячейке
-                            //activateCellValue_onChanged(true);
-                        }
-                        else
-                            Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
-
-
-
-                        #region Отображение значений в столбце для обычного параметра
                         try
                         {
                             putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value;
                             idPut = putPar.m_Id;
 
                             columnValues = inValues.Where(value => get_values(value, idPut));
-                            columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
+                            //columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
 
                             idAlg = putPar.m_idNAlg;
                         }
@@ -364,100 +436,55 @@ namespace PluginTaskBalTeplo
                             Logging.Logg().Exception(e, @"DataGridViewValues::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
 
-                        if ((putPar.IdComponent > 0)
-                            && (!(columnValues == null)))
+                        foreach (DataGridViewRow r in Rows)
                         {
-                            columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
-
-                            foreach (DataGridViewRow r in Rows)
-                            {
-                                if (columnValues.Count() > 0)
-                                    // есть значение хотя бы для одной строки
-                                    foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
-                                    {
-                                        if (isRowToShowValues(r, value) == true)
-                                        {
-                                            show_value(r.Cells[iCol]
-                                                , value
-                                                , columnAction);
-                                        }
-                                        else
-                                            r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
-                                    }
-                                else
+                            if (columnValues.Count() > 0)
+                                // есть значение хотя бы для одной строки
+                                foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
                                 {
-                                    // нет значений ни для одной строки
-                                    r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
-                                }
-                            } // цикл по строкам
-
-                            if (!(columnAction == AGREGATE_ACTION.UNKNOWN))
-                            {
-                                fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
-
-                                Rows[Rows.Count - 1].Cells[iCol].Value =
-                                    fltColumnAgregateValue;
-                            }
-                            else
-                                ;
-                        }
-                        else
-                            Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - не найдено ни одного значения для [ID_PUT={0}] в наборе данных [COUNT={1}] для отображения..."
-                                    , ((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).m_Id, inValues.Count())
-                                , Logging.INDEX_MESSAGE.NOT_SET);
-                        #endregion
-
-                        #region
-
-                        component = (HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)col.Tag).value;
-
-                        if (!(component.m_iType == HandlerDbTaskCalculate.TECComponent.TYPE.UNKNOWN))
-                        {
-                            //columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
-
-                            foreach (DataGridViewRow r in Rows)
-                            {
-                                idAlg = (int)r.Tag;
-
-                                putPar = m_dictNAlgProperties.FirstPutParameter(idAlg, component.m_Id);
-
-                                if (!(putPar == null))
-                                {
-                                    idPut = putPar.m_Id;
-
-                                    columnValues = inValues.Where(value => get_values(value, idPut));
-                                    columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
-                                }
-                                else
-                                    ;
-
-                                if (columnValues.Count() > 0)
-                                    // есть значение хотя бы для одной строки
-                                    foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
+                                    if (isRowToShowValues(r, value) == true)
                                     {
                                         show_value(r.Cells[iCol]
                                             , value
-                                            , AGREGATE_ACTION.UNKNOWN);
-
-                                        //r.Cells[iCol].Style.Format = m_dictNAlgProperties[idAlg].FormatRound;
+                                            , columnAction);
                                     }
-                                else
-                                    ;
+                                    else
+                                    {
+                                        //r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                                    }
+                                }
+                            else
+                            {
+                                // нет значений ни для одной строки
+                                //r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
                             }
-                        }
+                        } // цикл по строкам
+
+                        if (!(col.Tag == null))
+                            switch (false) //(((COLUMN_TAG)col.Tag).Type)
+                            {
+                                //case TYPE_COLUMN_TAG.COMPONENT:
+                                //    break;
+                                //case TYPE_COLUMN_TAG.PUT_PARAMETER:
+                                //case TYPE_COLUMN_TAG.GROUPING_PARAMETR:
+                                //    break;
+                                //case TYPE_COLUMN_TAG.FORMULA_HELPER:
+                                //    break;
+                                //default: // для столбца указан не известный тип идентификатора ('tag')
+                                //    Logging.Logg().Error(string.Format(@"HPanelTepCommon.DataGridViewValues::ShowValues () - {0}-неизвестный тип идентификатора столбца ...", col.Tag.GetType().FullName), Logging.INDEX_MESSAGE.NOT_SET);
+                                //    break;
+                            }
                         else
-                            ;
-
-                        #endregion
-
-
-
+                            // для столбца не указан идентификатор ('tag')
+                            Logging.Logg().Error(string.Format(@"HPanelTepCommon.DataGridViewValues::ShowValues () - не укахан идентификатор столбца ..."), Logging.INDEX_MESSAGE.NOT_SET);
                     }
                     // восстановить обработку события - изменение значение в ячейке
                     //activateCellValue_onChanged(true);
                 }
                 else
                     Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
+
+
 
 
 
