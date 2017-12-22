@@ -396,7 +396,7 @@ namespace PluginTaskBalTeplo
             posRow = 0;
 
             #region DGV
-            dgvBlock = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_Block.ToString());
+            dgvBlock = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_Block.ToString(), HandlerDb.GetValueAsRatio);
             dgvBlock.Dock = DockStyle.Fill;
             dgvBlock.Name = INDEX_CONTROL.DGV_Block.ToString();
             dgvBlock.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.Block;
@@ -406,7 +406,7 @@ namespace PluginTaskBalTeplo
             this.Controls.Add(dgvBlock, 4, posRow);
             this.SetColumnSpan(dgvBlock, 9); this.SetRowSpan(dgvBlock, 5);
             //
-            dgvOutput = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_Output.ToString());
+            dgvOutput = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_Output.ToString(), HandlerDb.GetValueAsRatio);
             dgvOutput.Dock = DockStyle.Fill;
             dgvOutput.Name = INDEX_CONTROL.DGV_Output.ToString();
             dgvOutput.AllowUserToResizeRows = false;
@@ -416,7 +416,7 @@ namespace PluginTaskBalTeplo
             this.Controls.Add(dgvOutput, 4, posRow);
             this.SetColumnSpan(dgvOutput, 9); this.SetRowSpan(dgvOutput, 5);
             //
-            dgvTeploBL = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_TeploBL.ToString());
+            dgvTeploBL = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_TeploBL.ToString(), HandlerDb.GetValueAsRatio);
             dgvTeploBL.Dock = DockStyle.Fill;
             dgvTeploBL.Name = INDEX_CONTROL.DGV_TeploBL.ToString();
             dgvTeploBL.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.TeploBL;
@@ -426,7 +426,7 @@ namespace PluginTaskBalTeplo
             this.Controls.Add(dgvTeploBL, 4, posRow + 5);
             this.SetColumnSpan(dgvTeploBL, 9); this.SetRowSpan(dgvTeploBL, 5);
             //
-            dgvTeploOP = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_TeploOP.ToString());
+            dgvTeploOP = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_TeploOP.ToString(), HandlerDb.GetValueAsRatio);
             dgvTeploOP.Dock = DockStyle.Fill;
             dgvTeploOP.Name = INDEX_CONTROL.DGV_TeploOP.ToString();
             dgvTeploOP.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.TeploOP;
@@ -436,7 +436,7 @@ namespace PluginTaskBalTeplo
             this.Controls.Add(dgvTeploOP, 4, posRow + 5);
             this.SetColumnSpan(dgvTeploOP, 9); this.SetRowSpan(dgvTeploOP, 5);
             //
-            dgvPromPlozsh = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_PromPlozsh.ToString());
+            dgvPromPlozsh = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_PromPlozsh.ToString(), HandlerDb.GetValueAsRatio);
             dgvPromPlozsh.Dock = DockStyle.Fill;
             dgvPromPlozsh.Name = INDEX_CONTROL.DGV_PromPlozsh.ToString();
             dgvPromPlozsh.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.PromPlozsh;
@@ -446,7 +446,7 @@ namespace PluginTaskBalTeplo
             this.Controls.Add(dgvPromPlozsh, 4, posRow);
             this.SetColumnSpan(dgvPromPlozsh, 9); this.SetRowSpan(dgvPromPlozsh, 5);
             //
-            dgvParam = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_Param.ToString());
+            dgvParam = new DataGridViewBalTeploValues(INDEX_CONTROL.DGV_Param.ToString(), HandlerDb.GetValueAsRatio);
             dgvParam.Dock = DockStyle.Fill;
             dgvParam.Name = INDEX_CONTROL.DGV_Param.ToString();
             dgvParam.m_ViewValues = DataGridViewBalTeploValues.INDEX_VIEW_VALUES.Param;

@@ -16,47 +16,19 @@ namespace PluginTaskBalTeplo
         /// <summary>
         /// Класс для грида
         /// </summary>
-        protected class DataGridViewBalTeploValues : DataGridView
+        protected class DataGridViewBalTeploValues : DataGridViewValues
         {
             private Dictionary<string, HTepUsers.DictionaryProfileItem> m_dict_ProfileNALG_IN
                 , m_dict_ProfileNALG_OUT;
 
             private DataTable m_dbRatio;
 
-            #region Таги datagridvalue (???)
-
-            public enum TYPE_COLUMN_TAG : short { UNKNOWN = short.MinValue, COMPONENT, PUT_PARAMETER, FORMULA_HELPER, GROUPING_PARAMETR }
-
-            public struct COLUMN_TAG
-            {
-                /// <summary>
-                /// Идентификатор столбца
-                /// </summary>
-                public object value;
-                /// <summary>
-                /// Тип объекта, являющегося идентификатором столбца
-                /// </summary>
-                public TYPE_COLUMN_TAG Type;
-                /// <summary>
-                /// Признак отмены агрегационной функции
-                ///  (при наличии таковой, по, например, указанной в проекте единице измерения)
-                /// </summary>
-                public bool ActionAgregateCancel;
-                /// <summary>
-                /// Индекс(номер, адрес) столбца в книге MS Excel при экспорте значений столбца
-                ///  , отсутствие значения - признак отсутствия необходимости экпорта значений столбца
-                /// </summary>
-                public int TemplateReportAddress;
-            }
-
-            #endregion
-
-
             public enum INDEX_VIEW_VALUES { Block = 2001, Output = 2002, TeploBL = 2003, TeploOP = 2004, Param = 2005, PromPlozsh = 2006 };
 
             public INDEX_VIEW_VALUES m_ViewValues;
 
-            public DataGridViewBalTeploValues(string name)
+            public DataGridViewBalTeploValues(string name, Func<int, int, float, int, float> fGetValueAsRatio)
+                : base(ModeData.NALG, fGetValueAsRatio)
             {
                 m_dict_ProfileNALG_IN = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
                 m_dict_ProfileNALG_OUT = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
@@ -90,6 +62,83 @@ namespace PluginTaskBalTeplo
                 //Ширина столбцов под видимую область
                 //AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                 ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            }
+
+            public override void AddColumns(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlgParameter, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
+            /// Добавить столбец
+            /// </summary>
+            /// <param name="id_comp">номер компонента</param>
+            /// <param name="txtHeader">заголовок столбца</param>
+            /// <param name="nameCol">имя столбца</param>
+            /// <param name="bRead">"только чтение"</param>
+            /// <param name="bVisibled">видимость столбца</param>
+            public void AddColumn(HandlerDbTaskCalculate.IPUT_PARAMETERChange putPar)
+            {
+                int indxCol = -1; // индекс столбца при вставке
+                DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
+                DataGridViewAutoSizeColumnMode autoSzColMode = DataGridViewAutoSizeColumnMode.NotSet;
+
+                try
+                {
+                    // найти индекс нового столбца
+                    // столбец для станции - всегда крайний
+                    foreach (DataGridViewColumn col in Columns)
+                        if ((((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).IdComponent > 0)
+                            && (((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).m_component.IsTec == true))
+                        {
+                            indxCol = Columns.IndexOf(col);
+
+                            break;
+                        }
+                        else
+                            ;
+
+                    DataGridViewColumn column = new DataGridViewTextBoxColumn();
+                    column.Tag = new COLUMN_TAG(putPar, ColumnCount + 2, false);
+                    alignText = DataGridViewContentAlignment.MiddleRight;
+                    autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
+
+                    if (!(indxCol < 0))// для вставляемых столбцов (компонентов ТЭЦ)
+                        ; // оставить значения по умолчанию
+                    else
+                    {// для псевдо-столбцов
+                        if (putPar.IdComponent < 0)
+                        {// для служебных столбцов
+                            if (putPar.IsVisibled == true)
+                            {// только для столбца с [SYMBOL]
+                                alignText = DataGridViewContentAlignment.MiddleLeft;
+                                autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
+                            }
+                            else
+                                ;
+
+                            column.Frozen = true;
+                        }
+                        else
+                            ;
+                    }
+
+                    column.HeaderText = putPar.NameShrComponent;
+                    column.ReadOnly = putPar.IsEnabled;
+                    column.Name = @"???";
+                    column.DefaultCellStyle.Alignment = alignText;
+                    column.AutoSizeMode = autoSzColMode;
+                    column.Visible = putPar.IsVisibled;
+
+                    if (!(indxCol < 0))
+                        Columns.Insert(indxCol, column as DataGridViewTextBoxColumn);
+                    else
+                        Columns.Add(column as DataGridViewTextBoxColumn);
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, string.Format(@"DataGridViewTReaktivka::AddColumn (id_comp={0}) - ...", putPar.IdComponent), Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
 
             private void cellEndEdit(object sender, DataGridViewCellEventArgs e)
@@ -165,8 +214,12 @@ namespace PluginTaskBalTeplo
                     column.HeaderText = txtHeader;
                     column.DefaultCellStyle.Alignment = alignText;
                     column.AutoSizeMode = autoSzColMode;
+                    column.Tag = -1;
+                    //column.Tag = new COLUMN_TAG(putPar, ColumnCount + 2, false);
                     Columns.Add(column as DataGridViewTextBoxColumn);
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -178,7 +231,7 @@ namespace PluginTaskBalTeplo
             /// <param name="bRead">флаг изменения пользователем ячейки</param>
             /// <param name="nameCol">имя столбца</param>
             /// <param name="idPut">индентификатор источника</param>
-            public void AddColumn(string txtHeader, bool bRead, string nameCol, string N_ALG, bool bInPut)
+            public void AddColumn(string txtHeader, bool bRead, string nameCol, string N_ALG, bool bInPut, int Tag)
             {
                 HDataGridViewColumn column;
                 DataGridViewContentAlignment alignText = DataGridViewContentAlignment.NotSet;
@@ -194,6 +247,9 @@ namespace PluginTaskBalTeplo
                     column.HeaderText = txtHeader;
                     column.DefaultCellStyle.Alignment = alignText;
                     column.AutoSizeMode = autoSzColMode;
+                    column.Tag = Tag;
+                    //column.Tag = new COLUMN_TAG(putPar, ColumnCount + 2, false);
+                    //column.Tag = 23573;
                     Columns.Add(column as DataGridViewTextBoxColumn);
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -249,9 +305,9 @@ namespace PluginTaskBalTeplo
             /// <param name="r">Строка (проверяемая) для отображения значения</param>
             /// <param name="value">Значение для отображения в строке</param>
             /// <returns>Признак - результат проверки условия (Истина - отображать/принадлежит)</returns>
-            protected bool isRowToShowValues(DataGridViewRow r, HandlerDbTaskCalculate.VALUE value)
+            protected override bool isRowToShowValues(DataGridViewRow r, HandlerDbTaskCalculate.VALUE value)
             {
-                return true; // необходимость проверки? способ?
+                return (r.Tag is DateTime) ? value.stamp_value.Equals(((DateTime)(r.Tag))) == true : false;
             }
 
             /// <summary>
@@ -365,51 +421,6 @@ namespace PluginTaskBalTeplo
                 //        , Logging.INDEX_MESSAGE.NOT_SET);
                 #endregion
 
-                #region comment
-
-                //component = (HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)col.Tag).value;
-
-                //if (!(component.m_iType == HandlerDbTaskCalculate.TECComponent.TYPE.UNKNOWN))
-                //{
-                //    //columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
-
-                //    foreach (DataGridViewRow r in Rows)
-                //    {
-                //        idAlg = (int)r.Tag;
-
-                //        putPar = m_dictNAlgProperties.FirstPutParameter(idAlg, component.m_Id);
-
-                //        if (!(putPar == null))
-                //        {
-                //            idPut = putPar.m_Id;
-
-                //            columnValues = inValues.Where(value => get_values(value, idPut));
-                //            columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
-                //        }
-                //        else
-                //            ;
-
-                //        if (columnValues.Count() > 0)
-                //            // есть значение хотя бы для одной строки
-                //            foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
-                //            {
-                //                show_value(r.Cells[iCol]
-                //                    , value
-                //                    , AGREGATE_ACTION.UNKNOWN);
-
-                //                //r.Cells[iCol].Style.Format = m_dictNAlgProperties[idAlg].FormatRound;
-                //            }
-                //        else
-                //            ;
-                //    }
-                //}
-                //else
-                //    ;
-
-                #endregion
-
-
-
                 // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
                 if (RowCount > 1)
                 {
@@ -425,40 +436,41 @@ namespace PluginTaskBalTeplo
                         {
                             putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value;
                             idPut = putPar.m_Id;
+                            //idPut = (Int32)col.Tag;
 
                             columnValues = inValues.Where(value => get_values(value, idPut));
                             //columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
 
                             idAlg = putPar.m_idNAlg;
+
+                            foreach (DataGridViewRow r in Rows)
+                            {
+                                if (columnValues.Count() > 0)
+                                    // есть значение хотя бы для одной строки
+                                    foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
+                                    {
+                                        //if (isRowToShowValues(r, value) == true)
+                                        //{
+                                            show_value(r.Cells[iCol]
+                                                , value
+                                                , columnAction);
+                                        //}
+                                        //else
+                                        //{
+                                            //r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                                        //}
+                                    }
+                                else
+                                {
+                                    // нет значений ни для одной строки
+                                    //r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
+                                }
+                            } // цикл по строкам
                         }
                         catch (Exception e)
                         {
                             Logging.Logg().Exception(e, @"DataGridViewValues::ShowValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
-
-                        foreach (DataGridViewRow r in Rows)
-                        {
-                            if (columnValues.Count() > 0)
-                                // есть значение хотя бы для одной строки
-                                foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
-                                {
-                                    if (isRowToShowValues(r, value) == true)
-                                    {
-                                        show_value(r.Cells[iCol]
-                                            , value
-                                            , columnAction);
-                                    }
-                                    else
-                                    {
-                                        //r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
-                                    }
-                                }
-                            else
-                            {
-                                // нет значений ни для одной строки
-                                //r.Cells[iCol].Style.BackColor = s_arCellColors[(int)INDEX_COLOR.VARIABLE];
-                            }
-                        } // цикл по строкам
 
                         if (!(col.Tag == null))
                             switch (false) //(((COLUMN_TAG)col.Tag).Type)
@@ -635,12 +647,12 @@ namespace PluginTaskBalTeplo
                 this.AddColumn("Компонент", true, "Comp");
                 foreach (DataRow c in colums_in)
                 {
-                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), true);
+                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), true, (Int32)c[0]);
                 }
 
                 foreach (DataRow c in colums_out)
                 {
-                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), false);
+                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), false, (Int32)c[0]);
                 }
 
                 foreach (DataRow r in rows)
@@ -699,6 +711,7 @@ namespace PluginTaskBalTeplo
                 //}
                 return editTable;
             }
+
         }
     }
 }
