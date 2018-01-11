@@ -9,6 +9,7 @@ using System.Data;
 using InterfacePlugIn;
 using TepCommon;
 using ASUTP;
+using System.Windows.Forms;
 
 namespace PluginTaskBalTeplo
 {
@@ -808,6 +809,9 @@ namespace PluginTaskBalTeplo
                 delegateResultListValue(TYPE.OUT_VALUES, resultToListValue(_dictPAlg[TYPE.OUT_VALUES]), RESULT.Ok);
             }
         }
+
+        //private DataTable m_dbRatio;
+
         /// <summary>
         /// Таблицы со значениями для редактирования входные
         /// </summary>
@@ -995,6 +999,45 @@ namespace PluginTaskBalTeplo
         public override DataTable GetImportTableValues(TaskCalculate.TYPE type, long idSession, DataTable tableInParameter, DataTable tableRatio, out int err)
         {
             throw new NotImplementedException();
+        }
+
+
+
+        /// <summary>
+        /// ??? Формирование таблицы вых. значений
+        /// </summary>
+        /// <param name="editTable">таблица</param>
+        /// <param name="dgvView">отображение</param>
+        /// <param name="dtOut">таблица с вых.зн.</param>
+        public DataTable FillTableValueDay(DataTable editTable, DataGridView dgvView, DataTable dtOut)
+        {
+            //Array namePut = Enum.GetValues(typeof(INDEX_GTP));
+            //string put;
+            //double valueToRes;
+            //editTable.Rows.Clear();
+
+            //foreach (DataGridViewRow row in dgvView.Rows)
+            //{
+            //    if (Convert.ToDateTime(row.Cells["Date"].Value) < DateTime.Now.Date)
+            //    {
+            //        for (int i = (int)INDEX_GTP.GTP12; i < (int)INDEX_GTP.CorGTP12; i++)
+            //        {
+            //            put = dtOut.Rows[i]["ID"].ToString();
+            //            valueToRes = Convert.ToDouble(row.Cells[namePut.GetValue(i).ToString()].Value) * Math.Pow(10, 6);
+
+            //            editTable.Rows.Add(new object[] 
+            //            {
+            //                put
+            //                , -1
+            //                , 1.ToString()
+            //                , valueToRes                
+            //                , Convert.ToDateTime(row.Cells["Date"].Value.ToString()).ToString(CultureInfo.InvariantCulture)
+            //                , i
+            //            });
+            //        }
+            //    }
+            //}
+            return editTable;
         }
 
         ///// <summary>

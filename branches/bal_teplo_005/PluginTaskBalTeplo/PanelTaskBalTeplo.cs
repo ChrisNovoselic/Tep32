@@ -809,6 +809,7 @@ namespace PluginTaskBalTeplo
         {
             bool bRes = false;
             int err = -1;
+            string errMsg;
 
             bRes = base.Activate(activate);
 
@@ -821,6 +822,8 @@ namespace PluginTaskBalTeplo
             }
             else
                 ;
+
+            //initialize(out err, out errMsg);
 
             return bRes;
         }
@@ -859,12 +862,12 @@ namespace PluginTaskBalTeplo
             if (err == 0) {
                 try {
                     //??? m_dt_profile = HandlerDb.GetProfilesContext(m_id_panel);
-                    dgvBlock.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvBlock.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvOutput.InitializeStruct(m_dictTableDictPrj[(ID_DBTABLE.INALG)], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvOutput.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvTeploBL.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploBL.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvTeploOP.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploOP.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvPromPlozsh.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvPromPlozsh.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
-                    dgvParam.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvParam.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO]);
+                    dgvBlock.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvBlock.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter);
+                    dgvOutput.InitializeStruct(m_dictTableDictPrj[(ID_DBTABLE.INALG)], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvOutput.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter);
+                    dgvTeploBL.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploBL.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter);
+                    dgvTeploOP.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploOP.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter);
+                    dgvPromPlozsh.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvPromPlozsh.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter);
+                    dgvParam.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvParam.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter);
 
                     //Заполнить элемент управления с часовыми поясами
                     idProfileTimezone = (ID_TIMEZONE)int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.TIMEZONE));
@@ -1034,17 +1037,17 @@ namespace PluginTaskBalTeplo
                         outValues = (HandlerDb.Values.ContainsKey(key) == true) ? HandlerDb.Values[key] : new List<HandlerDbTaskCalculate.VALUE>();
 
                         dgvBlock.ShowValues(inValues, outValues
-                            , m_dictTableDictPrj);
+                            /*, m_dictTableDictPrj*/);
                         dgvOutput.ShowValues(inValues, outValues
-                            , m_dictTableDictPrj);
+                            /*, m_dictTableDictPrj*/);
                         dgvTeploBL.ShowValues(inValues, outValues
-                            , m_dictTableDictPrj);
+                           /*, m_dictTableDictPrj*/);
                         dgvTeploOP.ShowValues(inValues, outValues
-                            , m_dictTableDictPrj);
+                            /*, m_dictTableDictPrj*/);
                         dgvParam.ShowValues(inValues, outValues
-                            , m_dictTableDictPrj);
+                            /*, m_dictTableDictPrj*/);
                         dgvPromPlozsh.ShowValues(inValues, outValues
-                            , m_dictTableDictPrj);
+                            /*, m_dictTableDictPrj*/);
                         break;
                     case HandlerDbTaskCalculate.EVENT.CALCULATE:
                         break;
