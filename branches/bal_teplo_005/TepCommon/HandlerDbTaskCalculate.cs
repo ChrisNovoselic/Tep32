@@ -2830,10 +2830,6 @@ namespace TepCommon
 
             tableRes = getDefaultTableValues(idPeriod, out err);
 
-            //#region имитация загрузки значений (локальная БД)
-
-            //#endregion
-
             return tableRes;
         }
         /// <summary>

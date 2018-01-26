@@ -1,5 +1,4 @@
-﻿
-using ASUTP;
+﻿using ASUTP;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -115,12 +114,12 @@ namespace PluginTaskBalTeplo
                                 autoSzColMode = DataGridViewAutoSizeColumnMode.AllCells;
                             }
                             else
-                                ;
+                            { }
 
                             column.Frozen = true;
                         }
                         else
-                            ;
+                        { }
                     }
 
                     column.HeaderText = putPar.NameShrComponent;
@@ -214,8 +213,7 @@ namespace PluginTaskBalTeplo
                     column.HeaderText = txtHeader;
                     column.DefaultCellStyle.Alignment = alignText;
                     column.AutoSizeMode = autoSzColMode;
-                    column.Tag = -1;
-                    //column.Tag = new COLUMN_TAG(putPar, ColumnCount + 2, false);
+                    column.Tag = -1; // заголовок столбца -1
                     Columns.Add(column as DataGridViewTextBoxColumn);
                 }
                 catch (Exception e)
@@ -241,7 +239,6 @@ namespace PluginTaskBalTeplo
                     column = new HDataGridViewColumn() { m_bCalcDeny = false, m_N_ALG = N_ALG, m_bInPut = bInPut };
                     alignText = DataGridViewContentAlignment.MiddleLeft;
                     autoSzColMode = DataGridViewAutoSizeColumnMode.Fill;
-                    //column.Frozen = true;
                     column.ReadOnly = bRead;
                     column.Name = nameCol;
                     column.HeaderText = txtHeader;
@@ -250,7 +247,6 @@ namespace PluginTaskBalTeplo
                     //column.Tag = Tag;
                     // Putpar - получение?
                     column.Tag = new COLUMN_TAG(putPar, ColumnCount + 2, false);
-                    //column.Tag = 23573;
                     Columns.Add(column as DataGridViewTextBoxColumn);
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"DGVAutoBook::AddColumn () - ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -290,15 +286,27 @@ namespace PluginTaskBalTeplo
                     foreach (DataGridViewCell c in r.Cells)
                         if (r.Cells.IndexOf(c) > 0) // нельзя удалять идентификатор параметра
                         {
-                            c.Value = null;
+                            c.Value = null; // нужен ли вызов onCellValueChanged??
                         }
                         else
                             ;
             }
 
             /// <summary>
+            /// Установка возможности редактирования столбцов
+            /// </summary>
+            public void SetReadOnly(bool value)
+            {
+                foreach (DataGridViewColumn col in Columns)
+                    if (((HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value).IdComponent > 0)
+                        col.ReadOnly = value;
+                    else
+                        ;
+            }
+
+            /// <summary>
             /// Признак, указывающий принажлежит ли значение строке
-            ///  иными словами: отображать ли значение в этой строке
+            /// иными словами: отображать ли значение в этой строке
             /// </summary>
             /// <param name="r">Строка (проверяемая) для отображения значения</param>
             /// <param name="value">Значение для отображения в строке</param>
@@ -309,7 +317,7 @@ namespace PluginTaskBalTeplo
             }
 
             /// <summary>
-            /// заполнение датагрида
+            /// Заполнение датагрида
             /// </summary>
             /// <param name="inValues">Список входных значений</param>
             /// <param name="outValues">Список выходных значений</param>
@@ -325,6 +333,8 @@ namespace PluginTaskBalTeplo
                 HandlerDbTaskCalculate.IPUT_PARAMETERChange putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
                 IEnumerable<HandlerDbTaskCalculate.VALUE> columnValues = null;
 
+                DataGridViewRow row;
+
                 #region делегат для поиска значений во входных аргументах (для столбца; для ячейки)
                 Func<HandlerDbTaskCalculate.VALUE, int, bool> get_values = (HandlerDbTaskCalculate.VALUE value, int id_put) => {
                     return (value.m_IdPut == id_put)
@@ -339,7 +349,7 @@ namespace PluginTaskBalTeplo
                 {
                     fltVal = value.value;
 
-                    if (!(c_action == AGREGATE_ACTION.UNKNOWN))
+                    if ((c_action == AGREGATE_ACTION.UNKNOWN))
                         fltColumnAgregateValue += fltVal;
                     else
                         ;
@@ -354,7 +364,7 @@ namespace PluginTaskBalTeplo
                 };
                 #endregion
 
-                // почему "1"? т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
+                // Т.к. предполагается, что в наличии минимальный набор: "строка с данными" + "итоговая строка"
                 if (RowCount > 1)
                 {
                     // отменить обработку события - изменение значения в ячейке представления
@@ -368,27 +378,35 @@ namespace PluginTaskBalTeplo
                         {
                             putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value;
                             idPut = putPar.m_Id;
-                            //idPut = (Int32)col.Tag;
 
                             columnValues = inValues.Where(value => get_values(value, idPut));
-                            //columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
+                            columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
 
                             idAlg = putPar.m_idNAlg;
 
-                            foreach (DataGridViewRow r in Rows)
+                            for (int ind = 0; ind < Rows.Count - 1; ind++) // исключая строку "Итого"
                             {
+                                row = Rows[ind];
                                 if (columnValues.Count() > 0)
                                     // есть значение хотя бы для одной строки
                                     foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
                                     {
-                                        show_value(r.Cells[iCol], value , columnAction);
+                                        show_value(row.Cells[iCol], value , columnAction);
+
+                                        //fltColumnAgregateValue = GetValueCellAsRatio(idAlg, idPut, fltColumnAgregateValue);
+
+                                        // (float)(Rows[Rows.Count - 1].Cells[iCol].Value) + value.value;
+                                            //fltColumnAgregateValue;
                                     }
                                 else
                                 {
                                     // нет значений ни для одной строки
                                     Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
                                 }
-                            } // цикл по строкам
+                            }
+                            // вывод суммарных значений (строка "Итого")
+                            Rows[Rows.Count - 1].Cells[iCol].Value = fltColumnAgregateValue;
+
                         }
                         catch (Exception e)
                         {
@@ -415,6 +433,8 @@ namespace PluginTaskBalTeplo
                 List<DataRow> col_in = new List<DataRow>();
                 List<DataRow> col_out = new List<DataRow>();
                 m_dbRatio = tableRatio.Copy();
+
+                TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
 
                 switch (m_ViewValues)
                 {
@@ -465,7 +485,7 @@ namespace PluginTaskBalTeplo
                             col_in.Add(tableInNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
                     }
                     else
-                        ;
+                    { }
 
                     if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
                     {
@@ -475,7 +495,7 @@ namespace PluginTaskBalTeplo
                             col_out.Add(tableOutNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
                     }
                     else
-                        ;
+                    { }
                 }
                 colums_in = col_in.ToArray();
                 colums_out = col_out.ToArray();
@@ -483,12 +503,20 @@ namespace PluginTaskBalTeplo
                 this.AddColumn("Компонент", true, "Comp");
                 foreach (DataRow c in colums_in)
                 {
-                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), true, (Int32)c[0], listPutParameter[0]);
+                    putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
+                    putPar.m_Id = 23573;
+                    //HandlerDb.ListPutParameter.
+                    putPar.m_idNAlg = (Int32)(c[0]);
+                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), true, (Int32)c[0], putPar);
+                    
                 }
 
                 foreach (DataRow c in colums_out)
                 {
-                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), false, (Int32)c[0], listPutParameter[0]);
+                    putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
+                    //putPar.m_Id = 23573;
+                    putPar.m_idNAlg = (Int32)(c[0]);
+                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), false, (Int32)c[0], putPar);
                 }
 
                 foreach (DataRow r in rows)
@@ -506,7 +534,7 @@ namespace PluginTaskBalTeplo
                     this.Rows[Rows.Count - 1].HeaderCell.Value = rows[0]["ID"].ToString().Trim();
                 }
                 else
-                    ;
+                { }
 
                 this.CellValueChanged += new DataGridViewCellEventHandler(cellEndEdit);
             }

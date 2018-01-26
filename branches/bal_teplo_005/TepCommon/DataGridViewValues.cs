@@ -195,7 +195,9 @@ namespace TepCommon
                         putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)(((COLUMN_TAG)Columns[ev.ColumnIndex].Tag).value);
 
                         err = 0;
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e)
+                    {
                         Logging.Logg().Exception(e, string.Format(@"HPanelTepCommon.DataGridViewValues::onCellValueChanged(Column={0}) - возможно, для столбца снят признак 'ReadOnly'...", ev.ColumnIndex), Logging.INDEX_MESSAGE.NOT_SET);
                     }
 
@@ -204,28 +206,33 @@ namespace TepCommon
                         idPut = putPar.m_Id;
                         cellProperty.SetValue((float)GetValueDbAsRatio(idNAlg, idPut, fltValue));
                         cellProperty.SetQuality(HandlerDbTaskCalculate.ID_QUALITY_VALUE.USER); // значение изменено пользователем
-                        if (_modeData == ModeData.DATETIME) {
+                        if (_modeData == ModeData.DATETIME)
+                        {
                             stamp_value = (DateTime)Rows[ev.RowIndex].Tag;
-                        } else if (_modeData == ModeData.NALG)
-                            //??? метка даты/времени - константа 
-                            stamp_value = (DateTime)Tag;
+                        }
+                        else if (_modeData == ModeData.NALG)
+                        //??? метка даты/времени - константа 
+                        { }//stamp_value = (DateTime)Tag;
                         else
                             ;
 
-                        foreach (DataGridViewColumn col in Columns) {
-                            if (!(col.Index == ev.ColumnIndex)) {
-                                if (((COLUMN_TAG)col.Tag).Type == TYPE_COLUMN_TAG.FORMULA_HELPER) {
-                                    if ((bRecalculate = (((COLUMN_TAG)col.Tag).value as FormulaHelper).IndexColumns.Contains(ev.ColumnIndex)) == true)
-                                        break;
-                                    else
-                                        ;
-                                } else {
-                                    // идентификатор столбца не является формулой
-                                }
-                            } else {
-                                // столбец является столбцом события
-                            }
-                        }
+                        //foreach (DataGridViewColumn col in Columns) {
+                        //    if (!(col.Index == ev.ColumnIndex))
+                        //    {
+                        //        if (((COLUMN_TAG)col.Tag).Type == TYPE_COLUMN_TAG.FORMULA_HELPER)
+                        //        {
+                        //            if ((bRecalculate = (((COLUMN_TAG)col.Tag).value as FormulaHelper).IndexColumns.Contains(ev.ColumnIndex)) == true)
+                        //                break;
+                        //            else
+                        //                ;
+                        //        } else
+                        //        {
+                        //            // идентификатор столбца не является формулой
+                        //        }
+                        //    } else {
+                        //        // столбец является столбцом события
+                        //    }
+                        //}
                         // принудительно будет вызван метод ShowValues
                         EventCellValueChanged?.Invoke(
                             new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = m_dictNAlgProperties[idNAlg].m_type, TypeState = HandlerDbValues.STATE_VALUE.EDIT }
