@@ -20,7 +20,7 @@ namespace PluginTaskBalTeplo
         private INDEX_VIEW_VALUES m_ViewValues;
 
         /// <summary>
-        /// ???
+        /// Объект класса для расчета технико-экономических показателей
         /// </summary>
         protected HandlerDbTaskBalTeploCalculate m_calculate;
 
@@ -32,7 +32,7 @@ namespace PluginTaskBalTeplo
             UNKNOWN = -1
             , CALC
             , CorCALC
-                , COUNT
+            , COUNT
         }
 
         /// <summary>
@@ -187,8 +187,8 @@ namespace PluginTaskBalTeplo
         {
             public enum INDEX_CONTROL
             {
-                UNKNOWN = -1
-                    , BUTTON_IMPORT, BUTTON_SAVE,
+                UNKNOWN = -1,
+                BUTTON_IMPORT, BUTTON_SAVE,
                 BUTTON_LOAD,
                 BUTTON_EXPORT,
                 MENUITEM_UPDATE,
@@ -230,8 +230,6 @@ namespace PluginTaskBalTeplo
                 string strPartLabelButtonDropDownMenuItem = string.Empty;
                 int posRow = -1 // позиция по оси "X" при позиционировании элемента управления
                     , indx = -1; // индекс п. меню для кнопки "Обновить-Загрузить"
-
-                //CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
 
                 SuspendLayout();
 
@@ -1059,7 +1057,6 @@ namespace PluginTaskBalTeplo
         /// <param name="bClose">Параметр, указывающий, закрывается ли панель</param>
         protected override void clear(bool bClose = false)
         {
-            //??? повторная проверка
             if (bClose)
             {
                 dgvBlock.ClearRows();
