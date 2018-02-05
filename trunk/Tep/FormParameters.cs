@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.Common;
 
 using ASUTP.Helper;
+using TepCommon;
 
 namespace Tep64
 {
@@ -217,7 +218,8 @@ namespace Tep64
         //                                            //, @"ID_APP"
         //                                            };
 
-        private ASUTP.Database.ConnectionSettings m_connSett;
+        //private ASUTP.Database.ConnectionSettings m_connSett;
+        private HandlerDbValues _handlerDb;
 
         public FormParameters_DB(int idListener)
             : base()
@@ -229,7 +231,9 @@ namespace Tep64
         {
             int err = -1;
 
-            m_connSett = connSett;
+            //m_connSett = connSett;
+            _handlerDb = new HandlerDbValues();
+            _handlerDb.InitConnectionSettings (connSett as ConnectionSettings);
 
             loadParam (true);
         }
@@ -262,12 +266,16 @@ namespace Tep64
         {
             int err = -1;
 
-            DbTSQLInterface.ModeStaticConnectionLeave = DbTSQLInterface.ModeStaticConnectionLeaving.Yes;
+            //DbTSQLInterface.ModeStaticConnectionLeave = DbTSQLInterface.ModeStaticConnectionLeaving.Yes;
+            _handlerDb.RegisterDbConnection (out err);
 
             string query = string.Empty;
             //query = @"SELECT * FROM [dbo].[setup] WHERE [KEY]='" + key + @"'";
             query = string.Format(@"SELECT * FROM setup");
-            DataTable table = DbTSQLInterface.Select(m_connSett, query, out err);
+            DataTable table =
+                //DbTSQLInterface.Select(m_connSett, query, out err)
+                _handlerDb.Select(query, out err)
+                ;
             DataRow[] rowRes;
             if (err == (int)DbTSQLInterface.Error.NO_ERROR)
                 if (Equals(table, null) == false)
@@ -277,7 +285,7 @@ namespace Tep64
                     if (table.Rows.Count > 0)
                         for (PARAMETR_SETUP i = PARAMETR_SETUP.POLL_TIME; i < PARAMETR_SETUP.COUNT_PARAMETR_SETUP; i++) {
                             //strRead = readString(NAME_PARAMETR_SETUP[(int)i], strDefault, out err);
-                            rowRes = table.Select($"KEY='{m_dictParametrSetup[i].Key}");
+                            rowRes = table.Select($"KEY='{m_dictParametrSetup[i].Key}'");
                             switch (rowRes.Length)
                             {
                                 case 1:
@@ -295,7 +303,7 @@ namespace Tep64
                         query = m_dictParametrSetup.GetWriteRequest(true);
 
                     if (query.Equals(string.Empty) == false)
-                        DbTSQLInterface.ExecNonQuery(m_connSett, query, out err);
+                        _handlerDb.ExecNonQuery(query, out err);
                     else
                         ;
                 }
@@ -304,7 +312,8 @@ namespace Tep64
             else
                 ;
 
-            DbTSQLInterface.ModeStaticConnectionLeave = DbTSQLInterface.ModeStaticConnectionLeaving.No;
+            //DbTSQLInterface.ModeStaticConnectionLeave = DbTSQLInterface.ModeStaticConnectionLeaving.No;
+            _handlerDb.UnRegisterDbConnection ();
 
             setDataGUI(bInit);
         }
@@ -318,7 +327,8 @@ namespace Tep64
             query = m_dictParametrSetup.GetWriteRequest(false);
 
             if (query.Equals(string.Empty) == false)
-                DbTSQLInterface.ExecNonQuery(m_connSett, query, out err);
+                //DbTSQLInterface.ExecNonQuery(m_connSett, query, out err);
+                _handlerDb.ExecNonQuery (query, out err);
             else
                 ;
         }
@@ -328,7 +338,7 @@ namespace Tep64
             int err = -1;
             DataTable table = null;
 
-            table = DbTSQLInterface.Select (m_connSett, $"SELECT [VALUE] FROM [dbo].[setup] WHERE [KEY]='{key}", out err);
+            table = _handlerDb.Select (/*m_connSett, */$"SELECT [VALUE] FROM [dbo].[setup] WHERE [KEY]='{key}", out err);
             if (table.Rows.Count == 1)
                 strRes = table.Rows [0][0].ToString ().Trim ();
             else
@@ -341,7 +351,8 @@ namespace Tep64
         {
             int err = -11;
 
-            DbTSQLInterface.ModeStaticConnectionLeave = DbTSQLInterface.ModeStaticConnectionLeaving.Yes;
+            //DbTSQLInterface.ModeStaticConnectionLeave = DbTSQLInterface.ModeStaticConnectionLeaving.Yes;
+            _handlerDb.RegisterDbConnection (out err);
 
             string defValue = "NotRecord"
                 , prevValue = string.Empty
@@ -355,9 +366,11 @@ namespace Tep64
             else
                 query = string.Format(@"UPDATE [dbo].[setup] SET [VALUE]='{1}' WHERE [KEY]='{0}'", key, newValue);
 
-            DbTSQLInterface.ExecNonQuery (m_connSett, query, out err);
+            //DbTSQLInterface.ExecNonQuery (m_connSett, query, out err);
+            _handlerDb.ExecNonQuery (query, out err);
 
-            DbTSQLInterface.ModeStaticConnectionLeave = DbTSQLInterface.ModeStaticConnectionLeaving.No;
+            //DbTSQLInterface.ModeStaticConnectionLeave = DbTSQLInterface.ModeStaticConnectionLeaving.No;
+            _handlerDb.UnRegisterDbConnection ();
         }
     }
 }

@@ -365,7 +365,7 @@ namespace Tep64
         {
             foreach (TabPage page in m_TabCtrl.TabPages)
                 //FindMainMenuItemOfText(page.Text.Trim()).PerformClick();
-                findMainMenuItemOfTag(m_TabCtrl.GetTabPageId(m_TabCtrl.TabPages.IndexOf(page))).PerformClick();
+                findMainMenuItemOfTag(m_TabCtrl.GetTabPageId(m_TabCtrl.TabPages.IndexOf(page)))?.PerformClick();
         }
 
         private void removePluginMenuItem()
@@ -456,7 +456,7 @@ namespace Tep64
             s_plugIns.Load(HTepUsers.GetPlugins(idListener, out iRes), out iRes);
 
             if (iRes == 0) {
-                arIdFPanels = HTepUsers.GetIdIsUseFPanels(idListener, out iRes).Split(new char[] { ',' }, StringSplitOptions.None);
+                arIdFPanels = HTepUsers.GetIdIsUseFPanels(idListener, out iRes).Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 //Проверить рез-т чтения наименования плюгина
                 if (iRes == 0)
                 {
@@ -476,7 +476,7 @@ namespace Tep64
                             //Проверка найден ли "родительский" пункт меню для плюг'ина
                             if (miOwner == null)
                             {//НЕ найден - создаем
-                                int indx = -1; // индекс для добавляемого пункта                                
+                                int indx = -1; // индекс для добавляемого пункта
                                 if (arHierarchyOwnerMenuItems[0].Equals(@"Помощь") == false)
                                     // индекс для всех пунктов кроме "Помощь"
                                     indx = this.MainMenuStrip.Items.Count - 1;
@@ -648,6 +648,8 @@ namespace Tep64
             }
             catch (Exception e)
             {
+                Logging.Logg ().Exception (e, "FormMain::Initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+
                 iRes = -1;
                 strErr = e.Message;
             }
