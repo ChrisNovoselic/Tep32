@@ -827,6 +827,57 @@ namespace PluginTaskBalTeplo
             , m_arTableEdit_out;
 
         /// <summary>
+        /// Получает список ID устройств для конкретного idAlg
+        /// </summary>
+        /// <param name="dateBegin">Дата</param>
+        /// <returns>таблица</returns>
+        private List<Int32> getListIDfromTable(DataTable tableNAlg, string tableName)
+        {
+            int err = -1;
+            string strRes = string.Empty;
+            DataTable res = new DataTable();
+            List<Int32> listIDforCells = new List<int>();
+
+
+
+            foreach (DataRow r in tableNAlg.Rows)
+            {
+                strRes = "SELECT [ID] FROM"
+                    + tableName
+                    + "INPUT WHERE [ID_ALG] = "
+                    + ((Int32)(r[0]));
+
+                res = Select(strRes, out err).Clone();
+
+                foreach (DataRow row in res.Rows)
+                {
+                    listIDforCells.Add((Int32)row.ItemArray[0]);
+                }
+            }
+
+            return listIDforCells;
+        }
+
+        /// <summary>
+        /// Получает список ID устройств для конкретного idAlg
+        /// </summary>
+        /// <param name="tableInNAlg">Таблица входных параметров</param>
+        /// <param name="tableOutNAlg">Таблица вых. параметров</param>
+        /// <returns>таблица</returns>
+        public List<Int32> getIDforCells(DataTable tableInNAlg, DataTable tableOutNAlg)
+        {
+            List<Int32> listIDforCells = new List<int>();
+
+            string strRes = string.Empty;
+            DataTable res = new DataTable();
+
+            listIDforCells.AddRange(getListIDfromTable(tableInNAlg, "INPUT"));
+            listIDforCells.AddRange(getListIDfromTable(tableOutNAlg, "OUTPUT"));
+
+            return listIDforCells;
+        }
+
+        /// <summary>
         /// Получает структуру таблицы 
         /// OUTVAL_XXXXXX
         /// </summary>

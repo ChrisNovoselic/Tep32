@@ -331,12 +331,14 @@ namespace PluginTaskBalTeplo
             {
                 int idAlg = -1
                    , idPut = -1
+                   , idPutCell = -1
                    , iCol = 0;
                 float fltVal = -1F,
                         fltColumnAgregateValue = 0;
                 AGREGATE_ACTION columnAction = AGREGATE_ACTION.UNKNOWN;
                 HandlerDbTaskCalculate.IPUT_PARAMETERChange putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
                 IEnumerable<HandlerDbTaskCalculate.VALUE> columnValues = null;
+                IEnumerable<HandlerDbTaskCalculate.VALUE> cellValues = null;
 
                 DataGridViewRow row;
 
@@ -386,76 +388,29 @@ namespace PluginTaskBalTeplo
                             putPar = (HandlerDbTaskCalculate.PUT_PARAMETER)((COLUMN_TAG)col.Tag).value;
                             idPut = putPar.m_Id;
 
-                            // все значения, относящиеся к выбранному id
+                            // все значения, относящиеся к выбранному id (общестанц.) ??? перенести
                             columnValues = inValues.Where(value => get_values(value, idPut));
                             columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
 
                             idAlg = putPar.m_idNAlg;
 
-
-
-
-
-
-
-
-
-
-
-
-
-                            #region donor
-
-                            HandlerDbTaskCalculate.TECComponent component = (HandlerDbTaskCalculate.TECComponent)((COLUMN_TAG)col.Tag).value;
-
-                            if (!(component.m_iType == HandlerDbTaskCalculate.TECComponent.TYPE.UNKNOWN))
-                            {
-                                //columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
-
-                                foreach (DataGridViewRow r in Rows)
-                                {
-                                    idAlg = (int)r.Tag;
-
-                                    putPar = m_dictNAlgProperties.FirstPutParameter(idAlg, component.m_Id);
-
-                                    if (!(putPar == null))
-                                    {
-                                        idPut = putPar.m_Id;
-
-                                        columnValues = inValues.Where(value => get_values(value, idPut));
-                                        columnValues = columnValues.Union(outValues.Where(value => get_values(value, idPut)));
-                                    }
-                                    else
-                                        ;
-
-                                    if (columnValues.Count() > 0)
-                                        // есть значение хотя бы для одной строки
-                                        foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
-                                        {
-                                            show_value(r.Cells[iCol]
-                                                , value
-                                                , AGREGATE_ACTION.UNKNOWN);
-
-                                            //r.Cells[iCol].Style.Format = m_dictNAlgProperties[idAlg].FormatRound;
-                                        }
-                                    else
-                                        ;
-                                }
-                            }
-                            else
-                                ;
-
-                            #endregion
-
-
-
+                            // получить тип действия над переменной (суммирование/усреднение)
+                            columnAction = ((COLUMN_TAG)col.Tag).ActionAgregateCancel == true ? AGREGATE_ACTION.UNKNOWN : getColumnAction(idAlg);
 
                             for (int ind = 0; ind < Rows.Count - 1; ind++) // исключая строку "Итого"
                             {
                                 row = Rows[ind];
+
+                                // id параметра для конкретной ТГ
+                                idPutCell = (Int32)row.Cells[iCol].Tag;
+
+                                // все значения, относящиеся к выбранному id (конкр. оборуд.)
+                                cellValues = inValues.Where(value => get_values(value, idPutCell));
+                                cellValues = columnValues.Union(outValues.Where(value => get_values(value, idPutCell)));
+
                                 if (columnValues.Count() > 0)
                                     // есть значение хотя бы для одной строки
-                                    foreach (HandlerDbTaskCalculate.VALUE value in columnValues)
+                                    foreach (HandlerDbTaskCalculate.VALUE value in cellValues)
                                     {
                                         show_value(row.Cells[iCol], value , columnAction);
                                     }
@@ -465,9 +420,15 @@ namespace PluginTaskBalTeplo
                                     Logging.Logg().Error(string.Format(@"DataGridViewValues::ShowValues () - нет строк для отображения..."), Logging.INDEX_MESSAGE.NOT_SET);
                                 }
                             }
-                            // вывод суммарных значений (строка "Итого")
-                            Rows[Rows.Count - 1].Cells[iCol].Value = fltColumnAgregateValue;
 
+                            // вывод суммарных значений (строка "Итого") ??? необходим отдельный метод для усреднения, зачем???
+                            if ((fltColumnAgregateValue > float.MinValue)
+                                                        && (!(columnAction == AGREGATE_ACTION.UNKNOWN)))
+                                Rows[Rows.Count - 1].Cells[iCol].Value = columnAction == AGREGATE_ACTION.SUMMA
+                                    ? fltColumnAgregateValue
+                                        : fltColumnAgregateValue / (Rows.Count - 1);
+                            else
+                                ;
                         }
                         catch (Exception e)
                         {
@@ -482,21 +443,32 @@ namespace PluginTaskBalTeplo
             
             }
 
-            public void InitializeStruct(DataTable tableInNAlg, DataTable tableOutNAlg, DataTable tableComp, Dictionary<int, object[]> dict_profile, DataTable tableRatio
-                , List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParameter)
+            /// <summary>
+            /// Возвратить тип агрегационной функции над множеством значений в столбце
+            /// </summary>
+            /// <param name="id_alg">Идентификатор параметра в аогоритме расчета 1-го порядка</param>
+            /// <returns>Тип агрегационной функции над множеством значений в столбце</returns>
+            private AGREGATE_ACTION getColumnAction(int id_alg)
             {
-                this.CellValueChanged -= new DataGridViewCellEventHandler(cellEndEdit);
-                this.Rows.Clear();
-                this.Columns.Clear();
-                DataRow[] colums_in;
-                DataRow[] colums_out;
-                DataRow[] rows;
+                //return Rows[RowCount - 1].Tag.GetType().IsPrimitive == true // есть ли итоговая строка?
+                //    ? m_dictNAlgProperties[id_alg].m_sAverage // итоговая строка - есть (операция по агрегации известна)
+                //        : AGREGATE_ACTION.UNKNOWN; // итоговой строки - нет (операция по агрегации неизвестна и не выполняется)
+
+                return AGREGATE_ACTION.SUMMA;
+            }
+
+            DataRow[] colums_in;
+            DataRow[] colums_out;
+            DataRow[] rows;
+
+            /// <summary>
+            /// Сформировать списки строк, содержащих параметры для указанной таблицы (входной и выходной)
+            /// </summary>
+            /// <param name=""></param>
+            public void getTableNalg(DataTable tableInNAlg, DataTable tableOutNAlg, DataTable tableComp, Dictionary<int, object[]> dict_profile)
+            {
                 List<DataRow> col_in = new List<DataRow>();
                 List<DataRow> col_out = new List<DataRow>();
-                m_dbRatio = tableRatio.Copy();
-                int indx;
-
-                TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
 
                 switch (m_ViewValues)
                 {
@@ -561,6 +533,33 @@ namespace PluginTaskBalTeplo
                 }
                 colums_in = col_in.ToArray();
                 colums_out = col_out.ToArray();
+            }
+
+            /// <summary>
+            /// Инициализация dataGridView 
+            /// </summary>
+            /// <param name="tableInNAlg"></param>
+            /// <param name="tableOutNAlg"></param>
+            /// <param name="tableComp"></param>
+            /// <returns></returns>
+            public void InitializeStruct(DataTable tableInNAlg, DataTable tableOutNAlg, DataTable tableComp, Dictionary<int, object[]> dict_profile, DataTable tableRatio
+                , List<Int32> listIDCells)
+            {
+                this.CellValueChanged -= new DataGridViewCellEventHandler(cellEndEdit);
+                this.Rows.Clear();
+                this.Columns.Clear();
+                DataTable tableNAlg = new DataTable();
+
+                List<DataRow> col_in = new List<DataRow>();
+                List<DataRow> col_out = new List<DataRow>();
+                m_dbRatio = tableRatio.Copy();
+                int indx;
+
+                TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
+
+                getTableNalg(tableInNAlg, tableOutNAlg, tableComp, dict_profile);
+
+                // получить список ID из таблицы inval, для размещения в TAG столбцов и ячеек ???
 
                 indx = 0;
                 this.AddColumn("Компонент", true, "Comp");

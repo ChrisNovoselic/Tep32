@@ -212,27 +212,31 @@ namespace TepCommon
                         }
                         else if (_modeData == ModeData.NALG)
                         //??? метка даты/времени - константа 
-                        { }//stamp_value = (DateTime)Tag;
+                        stamp_value = (DateTime)Tag;
                         else
                             ;
 
-                        //foreach (DataGridViewColumn col in Columns) {
-                        //    if (!(col.Index == ev.ColumnIndex))
-                        //    {
-                        //        if (((COLUMN_TAG)col.Tag).Type == TYPE_COLUMN_TAG.FORMULA_HELPER)
-                        //        {
-                        //            if ((bRecalculate = (((COLUMN_TAG)col.Tag).value as FormulaHelper).IndexColumns.Contains(ev.ColumnIndex)) == true)
-                        //                break;
-                        //            else
-                        //                ;
-                        //        } else
-                        //        {
-                        //            // идентификатор столбца не является формулой
-                        //        }
-                        //    } else {
-                        //        // столбец является столбцом события
-                        //    }
-                        //}
+                        foreach (DataGridViewColumn col in Columns)
+                        {
+                            if (!(col.Index == ev.ColumnIndex))
+                            {
+                                if (((COLUMN_TAG)col.Tag).Type == TYPE_COLUMN_TAG.FORMULA_HELPER)
+                                {
+                                    if ((bRecalculate = (((COLUMN_TAG)col.Tag).value as FormulaHelper).IndexColumns.Contains(ev.ColumnIndex)) == true)
+                                        break;
+                                    else
+                                        ;
+                                }
+                                else
+                                {
+                                    // идентификатор столбца не является формулой
+                                }
+                            }
+                            else
+                            {
+                                // столбец является столбцом события
+                            }
+                        }
                         // принудительно будет вызван метод ShowValues
                         EventCellValueChanged?.Invoke(
                             new HandlerDbTaskCalculate.KEY_VALUES() { TypeCalculate = m_dictNAlgProperties[idNAlg].m_type, TypeState = HandlerDbValues.STATE_VALUE.EDIT }
