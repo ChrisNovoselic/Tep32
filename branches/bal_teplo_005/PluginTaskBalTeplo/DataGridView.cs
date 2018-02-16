@@ -38,9 +38,6 @@ namespace PluginTaskBalTeplo
                 m_dict_ProfileNALG_OUT = new Dictionary<string, HTepUsers.DictionaryProfileItem>();
                 m_dbRatio = new DataTable();
 
-                m_put_params_in = new List<int> { 23573, 23580, 23587, 23594, 23601, 23573 }; // id?
-                m_put_params_out = new List<int> { 23573 };
-
                 this.Name = name;
                 InitializeComponents();
 
@@ -457,83 +454,81 @@ namespace PluginTaskBalTeplo
                 return AGREGATE_ACTION.SUMMA;
             }
 
-            DataRow[] colums_in;
-            DataRow[] colums_out;
-            DataRow[] rows;
 
-            /// <summary>
-            /// Сформировать списки строк, содержащих параметры для указанной таблицы (входной и выходной)
-            /// </summary>
-            /// <param name=""></param>
-            public void getTableNalg(DataTable tableInNAlg, DataTable tableOutNAlg, DataTable tableComp, Dictionary<int, object[]> dict_profile)
-            {
-                List<DataRow> col_in = new List<DataRow>();
-                List<DataRow> col_out = new List<DataRow>();
 
-                switch (m_ViewValues)
-                {
-                    case INDEX_VIEW_VALUES.Block:
+            ///// <summary>
+            ///// Сформировать списки строк, содержащих параметры для указанной таблицы (входной и выходной)
+            ///// </summary>
+            ///// <param name=""></param>
+            //public void getTableNalg(DataTable tableInNAlg, DataTable tableOutNAlg, DataTable tableComp, Dictionary<int, object[]> dict_profile)
+            //{
+            //    List<DataRow> col_in = new List<DataRow>();
+            //    List<DataRow> col_out = new List<DataRow>();
 
-                        rows = tableComp.Select("ID_COMP=1000 or ID_COMP=1");
-                        break;
-                    case INDEX_VIEW_VALUES.Output:
-                        //colums_in = nAlgTable.Select("N_ALG='2'");
-                        //colums_out = nAlgOutTable.Select("N_ALG='2'");
-                        rows = tableComp.Select("ID_COMP=2000 or ID_COMP=1");
-                        break;
-                    case INDEX_VIEW_VALUES.TeploBL:
-                        //colums_in = nAlgTable.Select("N_ALG='3'");
-                        //colums_out = nAlgOutTable.Select("N_ALG='3'");
-                        rows = tableComp.Select("ID_COMP=1");
-                        break;
-                    case INDEX_VIEW_VALUES.TeploOP:
-                        //colums_in = nAlgTable.Select("N_ALG='4'");
-                        //colums_out = nAlgOutTable.Select("N_ALG='4'");
-                        rows = tableComp.Select("ID_COMP=1");
-                        break;
-                    case INDEX_VIEW_VALUES.Param:
-                        //colums_in = nAlgTable.Select("N_ALG='5'");
-                        //colums_out = nAlgOutTable.Select("N_ALG='5'");
-                        rows = tableComp.Select("ID_COMP=1");
-                        break;
-                    case INDEX_VIEW_VALUES.PromPlozsh:
-                        //colums_in = nAlgTable.Select("N_ALG='6'");
-                        //colums_out = nAlgOutTable.Select("N_ALG='6'");
-                        rows = tableComp.Select("ID_COMP=3000 or ID_COMP=1");
-                        break;
-                    default:
-                        //colums_in = nAlgTable.Select();
-                        //colums_out = nAlgOutTable.Select();
-                        rows = tableComp.Select();
-                        break;
-                }
+            //    switch (m_ViewValues)
+            //    {
+            //        case INDEX_VIEW_VALUES.Block:
 
-                foreach (object[] list in dict_profile[(int)m_ViewValues])
-                {
-                    if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
-                    {
+            //            rows = tableComp.Select("ID_COMP=1000 or ID_COMP=1");
+            //            break;
+            //        case INDEX_VIEW_VALUES.Output:
+            //            //colums_in = nAlgTable.Select("N_ALG='2'");
+            //            //colums_out = nAlgOutTable.Select("N_ALG='2'");
+            //            rows = tableComp.Select("ID_COMP=2000 or ID_COMP=1");
+            //            break;
+            //        case INDEX_VIEW_VALUES.TeploBL:
+            //            //colums_in = nAlgTable.Select("N_ALG='3'");
+            //            //colums_out = nAlgOutTable.Select("N_ALG='3'");
+            //            rows = tableComp.Select("ID_COMP=1");
+            //            break;
+            //        case INDEX_VIEW_VALUES.TeploOP:
+            //            //colums_in = nAlgTable.Select("N_ALG='4'");
+            //            //colums_out = nAlgOutTable.Select("N_ALG='4'");
+            //            rows = tableComp.Select("ID_COMP=1");
+            //            break;
+            //        case INDEX_VIEW_VALUES.Param:
+            //            //colums_in = nAlgTable.Select("N_ALG='5'");
+            //            //colums_out = nAlgOutTable.Select("N_ALG='5'");
+            //            rows = tableComp.Select("ID_COMP=1");
+            //            break;
+            //        case INDEX_VIEW_VALUES.PromPlozsh:
+            //            //colums_in = nAlgTable.Select("N_ALG='6'");
+            //            //colums_out = nAlgOutTable.Select("N_ALG='6'");
+            //            rows = tableComp.Select("ID_COMP=3000 or ID_COMP=1");
+            //            break;
+            //        default:
+            //            //colums_in = nAlgTable.Select();
+            //            //colums_out = nAlgOutTable.Select();
+            //            rows = tableComp.Select();
+            //            break;
+            //    }
 
-                        m_dict_ProfileNALG_IN = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
+            //    foreach (object[] list in dict_profile[(int)m_ViewValues])
+            //    {
+            //        if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
+            //        {
 
-                        foreach (Double id in (double[])list[0])
-                            col_in.Add(tableInNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
-                    }
-                    else
-                    { }
+            //            m_dict_ProfileNALG_IN = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
 
-                    if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
-                    {
-                        m_dict_ProfileNALG_OUT = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
+            //            foreach (Double id in (double[])list[0])
+            //                col_in.Add(tableInNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
+            //        }
+            //        else
+            //        { }
 
-                        foreach (Double id in (double[])list[0])
-                            col_out.Add(tableOutNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
-                    }
-                    else
-                    { }
-                }
-                colums_in = col_in.ToArray();
-                colums_out = col_out.ToArray();
-            }
+            //        if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+            //        {
+            //            m_dict_ProfileNALG_OUT = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
+
+            //            foreach (Double id in (double[])list[0])
+            //                col_out.Add(tableOutNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
+            //        }
+            //        else
+            //        { }
+            //    }
+            //    colums_in = col_in.ToArray();
+            //    colums_out = col_out.ToArray();
+            //}
 
             /// <summary>
             /// Инициализация dataGridView 
@@ -542,31 +537,63 @@ namespace PluginTaskBalTeplo
             /// <param name="tableOutNAlg"></param>
             /// <param name="tableComp"></param>
             /// <returns></returns>
-            public void InitializeStruct(DataTable tableInNAlg, DataTable tableOutNAlg, DataTable tableComp, Dictionary<int, object[]> dict_profile, DataTable tableRatio
-                , List<Int32> listIDCells)
+            public void InitializeStruct(List<HandlerDbTaskCalculate.NALG_PARAMETER> listNAlg, List<HandlerDbTaskCalculate.PUT_PARAMETER> listPut, Dictionary<int, object[]> dict_profile/*DataTable tableInNAlg, DataTable tableOutNAlg, DataTable tableComp, DataTable tableRatio
+                , List<HandlerDbTaskCalculate.PUT_PARAMETER> listPutParemeters*/)
             {
                 this.CellValueChanged -= new DataGridViewCellEventHandler(cellEndEdit);
                 this.Rows.Clear();
                 this.Columns.Clear();
                 DataTable tableNAlg = new DataTable();
 
-                List<DataRow> col_in = new List<DataRow>();
-                List<DataRow> col_out = new List<DataRow>();
-                m_dbRatio = tableRatio.Copy();
+                DataRow[] colums_in = null;
+                DataRow[] colums_out = null;
+                DataRow[] rows = null;
+
+                List<HandlerDbTaskCalculate.NALG_PARAMETER> col_in = new List<HandlerDbTaskCalculate.NALG_PARAMETER>();
+                List<HandlerDbTaskCalculate.NALG_PARAMETER> col_out = new List<HandlerDbTaskCalculate.NALG_PARAMETER>();
+                //m_dbRatio = tableRatio.Copy();
                 int indx;
 
                 TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
 
-                getTableNalg(tableInNAlg, tableOutNAlg, tableComp, dict_profile);
+                //getTableNalg(tableInNAlg, tableOutNAlg, tableComp, dict_profile);
 
                 // получить список ID из таблицы inval, для размещения в TAG столбцов и ячеек ???
 
-                indx = 0;
+                //foreach (object[] list in dict_profile[(int)m_ViewValues])
+                //{
+                //    if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
+                //    {
+
+                //        m_dict_ProfileNALG_IN = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
+
+                //        foreach (Double id in (double[])list[0])
+                //        { col_in.Add(listNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]); }
+                //            //col_in.Add(tableInNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
+                //    }
+                //    else
+                //    { }
+
+                //    if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+                //    {
+                //        m_dict_ProfileNALG_OUT = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
+
+                //        foreach (Double id in (double[])list[0])
+                //        { col_out.Add(listNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]); }
+                //            //col_out.Add(tableOutNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
+                //    }
+                //    else
+                //    { }
+
+                //    string a = listNAlg[0].m_nAlg;
+                //    int p = listPut[0].m_Id;
+                //}
+
+                    indx = 0;
                 this.AddColumn("Компонент", true, "Comp");
                 foreach (DataRow c in colums_in)
                 {
-                    putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
-                    //putPar.m_Id = 23573;
+                    putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();;
                     putPar.m_Id = m_put_params_in[indx];
                     putPar.m_idNAlg = (Int32)(c[0]);
                     this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), true, (Int32)c[0], putPar);
@@ -582,11 +609,21 @@ namespace PluginTaskBalTeplo
                     this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), false, (Int32)c[0], putPar);
                 }
 
+                // получить список putParametrs для текущего грида
+
+                int rowInd = 0;
                 foreach (DataRow r in rows)
                 {
                     this.Rows.Add(new object[this.ColumnCount]);
                     this.Rows[Rows.Count - 1].Cells[0].Value = r["DESCRIPTION"].ToString().Trim();
                     this.Rows[Rows.Count - 1].HeaderCell.Value = r["ID"];
+
+                    for (int ind = 0; ind < r.ItemArray.Count(); ind++)
+                    {
+                        this.Rows[rowInd].Cells[ind].Tag = 0;
+                    }
+
+                    rowInd++;
                 }
 
                 if (Rows.Count > 1)

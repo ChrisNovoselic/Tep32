@@ -803,8 +803,6 @@ namespace PluginTaskBalTeplo
             ID_PERIOD idProfilePeriod;
             ID_TIMEZONE idProfileTimezone;
 
-            List<Int32> listIDCells;
-
             HTepUsers.ID_ROLES role = (HTepUsers.ID_ROLES)HTepUsers.Role;
 
             Control ctrl = null;
@@ -833,27 +831,27 @@ namespace PluginTaskBalTeplo
             if (err == 0) {
                 try {
 
-                    listIDCells = HandlerDb.getIDforCells(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG]);
-
-                    dgvBlock.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], 
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvBlock.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], listIDCells);
-                    dgvOutput.InitializeStruct(m_dictTableDictPrj[(ID_DBTABLE.INALG)], m_dictTableDictPrj[ID_DBTABLE.OUTALG], 
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvOutput.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], listIDCells);
-                    dgvTeploBL.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], 
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploBL.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], listIDCells);
-                    dgvTeploOP.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], 
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploOP.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], listIDCells);
-                    dgvPromPlozsh.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], 
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvPromPlozsh.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], listIDCells);
-                    dgvParam.InitializeStruct(m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG], 
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvParam.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], listIDCells);
-
                     //Заполнить элемент управления с часовыми поясами
                     idProfileTimezone = (ID_TIMEZONE)int.Parse(m_dictProfile.GetAttribute(HTepUsers.ID_ALLOWED.TIMEZONE));
                     PanelManagement.FillValueTimezone(m_dictTableDictPrj[ID_DBTABLE.TIMEZONE], idProfileTimezone);
                     //Заполнить элемент управления с периодами расчета
                     idProfilePeriod = ID_PERIOD.HOUR;
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME], idProfilePeriod);
+
+                    //HandlerDb.ListNAlgParameter
+                    
+                    dgvBlock.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
+                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
+                    dgvOutput.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[(ID_DBTABLE.INALG)], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
+                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvOutput.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
+                    dgvTeploBL.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
+                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploBL.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
+                    dgvTeploOP.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
+                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploOP.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
+                    dgvPromPlozsh.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
+                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvPromPlozsh.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
+                    dgvParam.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
+                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvParam.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
                     //из profiles
