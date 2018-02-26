@@ -51,7 +51,7 @@ namespace PluginTaskBalTeplo
         }
 
         /// <summary>
-        /// 
+        /// ???
         /// </summary>
         protected enum INDEX_CONTEXT
         {
@@ -262,7 +262,6 @@ namespace PluginTaskBalTeplo
                 ctrl = new Button();
                 ctrl.Name = INDEX_CONTROL.BUTTON_SAVE.ToString();
                 ctrl.Text = @"Сохранить";
-                //ctrl.Dock = DockStyle.Top;
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
@@ -272,7 +271,6 @@ namespace PluginTaskBalTeplo
                 ctrl.Text = @"Экспорт";
                 ctrl.Visible = true;
                 ctrl.Enabled = false;
-                //ctrl.Dock = DockStyle.Top;
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, ColumnCount / 2, posRow);
                 SetColumnSpan(ctrl, ColumnCount / 2); //SetRowSpan(ctrl, 1);
@@ -282,7 +280,6 @@ namespace PluginTaskBalTeplo
                 ctrl.Text = @"По блокам";
                 ctrl.Tag = INDEX_VIEW_VALUES.Block;
                 (ctrl as RadioButton).Checked = true;
-                //ctrl.Dock = DockStyle.Top;
                 ctrl.Dock = DockStyle.Fill;
                 this.Controls.Add(ctrl, 0, posRow = posRow + 1);
                 SetColumnSpan(ctrl, ColumnCount); //SetRowSpan(ctrl, 1);
@@ -355,7 +352,6 @@ namespace PluginTaskBalTeplo
                     : base()
                 {
                     m_Comp = null;
-
                 }
 
                 public CheckedChangedIndexViewValuesEventArgs(int comp)
@@ -838,23 +834,20 @@ namespace PluginTaskBalTeplo
                     idProfilePeriod = ID_PERIOD.HOUR;
                     PanelManagement.FillValuePeriod(m_dictTableDictPrj[ID_DBTABLE.TIME], idProfilePeriod);
 
-                    //HandlerDb.ListNAlgParameter
-                    
-                    dgvBlock.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
-                    dgvOutput.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[(ID_DBTABLE.INALG)], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvOutput.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
-                    dgvTeploBL.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploBL.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
-                    dgvTeploOP.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvTeploOP.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
-                    dgvPromPlozsh.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvPromPlozsh.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
-                    dgvParam.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues)/*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
-                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], GetProfileDataGridView((int)dgvParam.m_ViewValues), m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/);
+                    /*m_dictTableDictPrj[ID_DBTABLE.INALG], m_dictTableDictPrj[ID_DBTABLE.OUTALG],
+                        m_dictTableDictPrj[ID_DBTABLE.COMP_LIST], m_dictTableDictPrj[ID_DBTABLE.RATIO], HandlerDb.ListPutParameter*/
+
+                    dgvBlock.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues));
+                    dgvOutput.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues));
+                    dgvTeploBL.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues));
+                    dgvTeploOP.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues));
+                    dgvPromPlozsh.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues));
+                    dgvParam.InitializeStruct(HandlerDb.ListNAlgParameter, HandlerDb.ListPutParameter, GetProfileDataGridView((int)dgvBlock.m_ViewValues));
 
                     ctrl = Controls.Find(INDEX_CONTEXT.ID_CON.ToString(), true)[0];
+
                     //из profiles
+
                     for (int j = 0; j < HandlerDb.m_dt_profile.Rows.Count; j++)
                         if (Convert.ToInt32(HandlerDb.m_dt_profile.Rows[j]["CONTEXT"]) == (int)INDEX_CONTEXT.ID_CON)
                             ctrl.Text = HandlerDb.m_dt_profile.Rows[j]["VALUE"].ToString().TrimEnd();
@@ -928,7 +921,7 @@ namespace PluginTaskBalTeplo
         /// </summary>
         protected override void panelManagement_DatetimeRange_onChanged()
         {
-            clear();
+            base.clear(); // базовый? или наследовать?
 
             base.panelManagement_DatetimeRange_onChanged();
         }
@@ -937,7 +930,7 @@ namespace PluginTaskBalTeplo
         /// </summary>
         protected override void panelManagement_TimezoneChanged()
         {
-            clear();
+            base.clear();
 
             base.panelManagement_TimezoneChanged();
 
@@ -947,7 +940,7 @@ namespace PluginTaskBalTeplo
         /// </summary>
         protected override void panelManagement_Period_onChanged()
         {
-            clear();
+            base.clear();
 
             base.panelManagement_Period_onChanged();
         }
@@ -1066,26 +1059,28 @@ namespace PluginTaskBalTeplo
         /// <param name="bClose">Параметр, указывающий, закрывается ли панель</param>
         protected override void clear(bool bClose = false)
         {
-            if (bClose)
-            {
-                dgvBlock.ClearRows();
-                dgvOutput.ClearRows();
-                dgvTeploBL.ClearRows();
-                dgvTeploOP.ClearRows();
-                dgvParam.ClearRows();
-                dgvPromPlozsh.ClearRows();
-            }
-            else
-            {
-                // очистить содержание представления
-                dgvBlock.ClearValues();
-                dgvOutput.ClearValues();
-                dgvTeploBL.ClearValues();
-                dgvTeploOP.ClearValues();
-                dgvParam.ClearValues();
-                dgvPromPlozsh.ClearValues();
-            }
-            base.clear(bClose);
+            // Вызов из базового класса??? Дублирование? 
+
+            //if (bClose)
+            //{
+            //    dgvBlock.ClearRows();
+            //    dgvOutput.ClearRows();
+            //    dgvTeploBL.ClearRows();
+            //    dgvTeploOP.ClearRows();
+            //    dgvParam.ClearRows();
+            //    dgvPromPlozsh.ClearRows();
+            //}
+            //else
+            //{
+            //    // очистить содержание представления
+            //    dgvBlock.ClearValues();
+            //    dgvOutput.ClearValues();
+            //    dgvTeploBL.ClearValues();
+            //    dgvTeploOP.ClearValues();
+            //    dgvParam.ClearValues();
+            //    dgvPromPlozsh.ClearValues();
+            //}
+            //base.clear(bClose);
         }
 
         /// <summary>

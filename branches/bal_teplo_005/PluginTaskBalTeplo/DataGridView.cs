@@ -545,9 +545,9 @@ namespace PluginTaskBalTeplo
                 this.Columns.Clear();
                 DataTable tableNAlg = new DataTable();
 
-                DataRow[] colums_in = null;
-                DataRow[] colums_out = null;
-                DataRow[] rows = null;
+                //DataRow[] colums_in = null;
+                //DataRow[] colums_out = null;
+                //DataRow[] rows = null;
 
                 List<HandlerDbTaskCalculate.NALG_PARAMETER> col_in = new List<HandlerDbTaskCalculate.NALG_PARAMETER>();
                 List<HandlerDbTaskCalculate.NALG_PARAMETER> col_out = new List<HandlerDbTaskCalculate.NALG_PARAMETER>();
@@ -556,85 +556,106 @@ namespace PluginTaskBalTeplo
 
                 TepCommon.HandlerDbTaskCalculate.PUT_PARAMETER putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
 
-                //getTableNalg(tableInNAlg, tableOutNAlg, tableComp, dict_profile);
-
                 // получить список ID из таблицы inval, для размещения в TAG столбцов и ячеек ???
 
-                //foreach (object[] list in dict_profile[(int)m_ViewValues])
-                //{
-                //    if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
-                //    {
+                foreach (object[] list in dict_profile[(int)m_ViewValues])
+                {
+                    if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.IN_VALUES)
+                    {
 
-                //        m_dict_ProfileNALG_IN = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
+                        m_dict_ProfileNALG_IN = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
 
-                //        foreach (Double id in (double[])list[0])
-                //        { col_in.Add(listNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]); }
-                //            //col_in.Add(tableInNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
-                //    }
-                //    else
-                //    { }
+                        foreach (Double id in (double[])list[0])
+                        { col_in.Add(listNAlg.Find(x => x.m_nAlg == id.ToString().Trim().Replace(',', '.')));
+                            //listNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]); }
+                            //col_in.Add(tableInNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
+                        }
+                    }
+                    else
+                    { }
 
-                //    if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
-                //    {
-                //        m_dict_ProfileNALG_OUT = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
+                    if ((TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE)list[1] == TepCommon.HandlerDbTaskCalculate.TaskCalculate.TYPE.OUT_VALUES)
+                    {
+                        m_dict_ProfileNALG_OUT = (Dictionary<string, HTepUsers.DictionaryProfileItem>)list[2];
 
-                //        foreach (Double id in (double[])list[0])
-                //        { col_out.Add(listNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]); }
-                //            //col_out.Add(tableOutNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
-                //    }
-                //    else
-                //    { }
+                        foreach (Double id in (double[])list[0])
+                        {
+                            col_out.Add(listNAlg.Find(x => x.m_nAlg == id.ToString().Trim().Replace(',', '.')));
+                            //Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]); }
+                            //col_out.Add(tableOutNAlg.Select("N_ALG='" + id.ToString().Trim().Replace(',', '.') + "'")[0]);
+                        }
+                    }
+                    else
+                    { }
 
-                //    string a = listNAlg[0].m_nAlg;
-                //    int p = listPut[0].m_Id;
-                //}
+                    string a = listNAlg[0].m_nAlg;
+                    int p = listPut[0].m_Id;
+                }
 
-                    indx = 0;
+
+                indx = 0;
                 this.AddColumn("Компонент", true, "Comp");
-                foreach (DataRow c in colums_in)
+                //foreach (DataRow c in colums_in)
+                for (int ind = 0; ind < col_in.Count(); ind++)
                 {
                     putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();;
                     putPar.m_Id = m_put_params_in[indx];
-                    putPar.m_idNAlg = (Int32)(c[0]);
-                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), true, (Int32)c[0], putPar);
+                    putPar.m_idNAlg = (Int32)(col_in[ind].m_Id);
+                    this.AddColumn(col_in[ind].m_nAlg.Trim(), true, col_in[ind].m_nAlg.Trim(), (col_in[ind].m_Id).ToString(), true, (Int32)(col_in[ind].m_Id), putPar);
+                        //(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), true, (Int32)c[0], putPar);
                     indx++;
                 }
                 indx = 0;
-                foreach (DataRow c in colums_out)
+                //foreach (DataRow c in colums_out)
+                for (int ind = 0; ind < col_out.Count(); ind++)
                 {
                     putPar = new HandlerDbTaskCalculate.PUT_PARAMETER();
-                    //putPar.m_Id = 23573;
                     putPar.m_Id = m_put_params_out[indx];
-                    putPar.m_idNAlg = (Int32)(c[0]);
-                    this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), false, (Int32)c[0], putPar);
+                    putPar.m_idNAlg = (Int32)(col_out[ind].m_Id);
+                    this.AddColumn(col_out[ind].m_nAlg.Trim(), true, col_out[ind].m_nAlg.Trim(), (col_out[ind].m_Id).ToString(), true, (Int32)(col_out[ind].m_Id), putPar);
+                    //this.AddColumn(c["NAME_SHR"].ToString().Trim(), true, c["NAME_SHR"].ToString().Trim(), (c["N_ALG"]).ToString(), false, (Int32)c[0], putPar);
                 }
 
                 // получить список putParametrs для текущего грида
+                #region закомментированный участок
 
-                int rowInd = 0;
-                foreach (DataRow r in rows)
+                //int rowInd = 0;
+                ////foreach (DataRow r in rows)
+                //for (int ind = 0; ind < listPut.Count(); ind++)
+                //{
+                //    this.Rows.Add(new object[this.ColumnCount]);
+                //    this.Rows[Rows.Count - 1].Cells[0].Value = listPut[ind].NameShrComponent.ToString().Trim();//.["DESCRIPTION"].ToString().Trim();
+                //    this.Rows[Rows.Count - 1].HeaderCell.Value = listPut[ind].m_Id;//r["ID"];
+
+                //    for (int i = 0; i < r.ItemArray.Count(); i++) // ???
+                //    {
+                //        //if ()
+                //        this.Rows[rowInd].Cells[ind].Tag = listPut[ind].m_Id;
+                //    }
+
+                //    rowInd++;
+                //}
+
+                //if (Rows.Count > 1)
+                //{
+                //    //Rows.RemoveAt(0);
+                //    this.Rows.Add();
+                //    this.Rows[Rows.Count - 1].Cells[0].Value = "Итого";
+                //    this.Rows[Rows.Count - 1].HeaderCell.Value = listPut[0].m_Id;// rows[0]["ID"].ToString().Trim();
+                //}
+                //else
+                //{ }
+
+                #endregion
+
+                try
                 {
-                    this.Rows.Add(new object[this.ColumnCount]);
-                    this.Rows[Rows.Count - 1].Cells[0].Value = r["DESCRIPTION"].ToString().Trim();
-                    this.Rows[Rows.Count - 1].HeaderCell.Value = r["ID"];
-
-                    for (int ind = 0; ind < r.ItemArray.Count(); ind++)
-                    {
-                        this.Rows[rowInd].Cells[ind].Tag = 0;
-                    }
-
-                    rowInd++;
+                    throw new Exception("Ошибка сборки");
                 }
-
-                if (Rows.Count > 1)
+                catch (Exception e)
                 {
-                    Rows.RemoveAt(0);
-                    this.Rows.Add();
-                    this.Rows[Rows.Count - 1].Cells[0].Value = "Итого";
-                    this.Rows[Rows.Count - 1].HeaderCell.Value = rows[0]["ID"].ToString().Trim();
+                    Logging.Logg().Exception(e, @"Исключение произошло т.к. закомментированный код выше препятствует сборке", Logging.INDEX_MESSAGE.NOT_SET);
                 }
-                else
-                { }
 
                 this.CellValueChanged += new DataGridViewCellEventHandler(cellEndEdit);
             }
